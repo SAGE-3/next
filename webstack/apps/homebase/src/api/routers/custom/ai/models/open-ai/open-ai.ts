@@ -26,6 +26,10 @@ export class OpenAiModel extends AiModel {
     this._openai = new OpenAI({ apiKey: config.services.openai.apiKey });
   }
 
+  public info() {
+    return { name: this.name, model: this._model };
+  }
+
   public async health(): Promise<boolean> {
     // We dont want to ping OpenAI constantly
     // Just check for the API Key

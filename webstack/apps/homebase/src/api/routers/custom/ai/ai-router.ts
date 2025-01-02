@@ -17,7 +17,7 @@ import { config } from '../../../../config';
 import { AiStatusResponse, getFileType } from '@sage3/shared';
 import { SBAuthSchema } from '@sage3/sagebase';
 import { AssetsCollection } from '../../../collections';
-import { CodeLlamaModel, OpenAiModel, YoloModel, ChatModel } from './models';
+import { CodeLlamaModel, OpenAiModel, YoloModel, LlamaModel } from './models';
 
 // Request Return Type
 export type GenerateResponseType = {
@@ -36,7 +36,7 @@ export function AiRouter(): express.Router {
   const codeLlama = new CodeLlamaModel(config);
   const openai = new OpenAiModel(config);
   const yolo = new YoloModel(config);
-  const chat = new ChatModel(config);
+  const chat = new LlamaModel(config);
 
   // Check if the chat models are online
   router.get('/chat_status', async (req, res) => {
@@ -47,6 +47,11 @@ export function AiRouter(): express.Router {
     if (chatHealth) {
       onlineModels.push(chat.info());
     }
+    // Check openai
+    const openaiHealth = await openai.health();
+    if (openaiHealth) {
+      onlineModels.push(openai.info());
+    }
     // Return the response
     const responseMessage = { onlineModels } as AiStatusResponse;
     res.status(200).json(responseMessage);
@@ -55,12 +60,13 @@ export function AiRouter(): express.Router {
   // Post a chat request
   router.post('/chat_query', async ({ body, user }, res) => {
     // Get the request parameters
-    const { input, model, max_new_tokens, app_id } = body;
+    const { input, model, max_new_tokens, app_id, previousQ, previousA } = body;
     // Try/catch block to handle errors
     try {
       if (model === chat.name) {
         // Query Llama with the input
-        const response = await chat.asking(input, max_new_tokens, app_id, user.id);
+        // const response = await chat.asking(input, max_new_tokens, app_id, user.id);
+        const response = await chat.ask(input, max_new_tokens, previousQ, previousA);
         // Return the response
         res.status(200).json(response);
       } else {

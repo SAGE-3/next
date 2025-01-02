@@ -35,11 +35,11 @@ export function passportSpectatorSetup(): boolean {
         }
       })
     );
-    console.log('Spectator Login> Setup done');
+    console.log('Login> Spectator setup done');
     return true;
   } catch (error) {
     console.log(error);
-    console.log('Spectator Login> Failed to Connect');
+    console.log('Login> Spectator failed to Connect');
     return false;
   }
 }

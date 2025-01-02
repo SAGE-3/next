@@ -1,8 +1,10 @@
 // SAGE3 Generated from apps.json file
 
 import { state as AIPaneState, name as AIPaneName } from './apps/AIPane';
+import { state as AssetLinkState, name as AssetLinkName } from './apps/AssetLink';
 import { state as BoardLinkState, name as BoardLinkName } from './apps/BoardLink';
 import { state as CSVViewerState, name as CSVViewerName } from './apps/CSVViewer';
+import { state as CalculatorState, name as CalculatorName } from './apps/Calculator';
 import { state as ChartGeneratorState, name as ChartGeneratorName } from './apps/ChartGenerator';
 import { state as ChatState, name as ChatName } from './apps/Chat';
 import { state as ClockState, name as ClockName } from './apps/Clock';
@@ -30,20 +32,22 @@ import { state as SeerState, name as SeerName } from './apps/Seer';
 import { state as SensorOverviewState, name as SensorOverviewName } from './apps/SensorOverview';
 import { state as StickieState, name as StickieName } from './apps/Stickie';
 import { state as TLDrawState, name as TLDrawName } from './apps/TLDraw';
+import { state as TimerState, name as TimerName } from './apps/Timer';
 import { state as TwilioScreenshareState, name as TwilioScreenshareName } from './apps/TwilioScreenshare';
 import { state as VegaLiteState, name as VegaLiteName } from './apps/VegaLite';
 import { state as VegaLiteViewerState, name as VegaLiteViewerName } from './apps/VegaLiteViewer';
 import { state as VideoViewerState, name as VideoViewerName } from './apps/VideoViewer';
 import { state as WebpageLinkState, name as WebpageLinkName } from './apps/WebpageLink';
 import { state as WebviewState, name as WebviewName } from './apps/Webview';
-import { state as CalculatorState, name as CalculatorName } from './apps/Calculator';
 
 
 export type AppState =
   | {}
   | AIPaneState
+  | AssetLinkState
   | BoardLinkState
   | CSVViewerState
+  | CalculatorState
   | ChartGeneratorState
   | ChatState
   | ClockState
@@ -71,13 +75,13 @@ export type AppState =
   | SensorOverviewState
   | StickieState
   | TLDrawState
+  | TimerState
   | TwilioScreenshareState
   | VegaLiteState
   | VegaLiteViewerState
   | VideoViewerState
   | WebpageLinkState
-  | WebviewState
-  | CalculatorState;
+  | WebviewState;
 
 
-export type AppName = typeof AIPaneName | typeof BoardLinkName | typeof CSVViewerName | typeof ChartGeneratorName | typeof ChatName | typeof ClockName | typeof CobrowseName | typeof CodeEditorName | typeof CounterName | typeof DeepZoomImageName | typeof EChartsViewerName | typeof GLTFViewerName | typeof HCDPName | typeof IFrameName | typeof ImageViewerName | typeof JupyterLabName | typeof LeafLetName | typeof LinkerName | typeof MapGLName | typeof NotepadName | typeof PDFResultName | typeof PDFViewerName | typeof PluginAppName | typeof PollName | typeof RTCChatName | typeof SageCellName | typeof SeerName | typeof SensorOverviewName | typeof StickieName | typeof TLDrawName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebpageLinkName | typeof WebviewName | typeof CalculatorName;
+export type AppName = typeof AIPaneName | typeof AssetLinkName | typeof BoardLinkName | typeof CSVViewerName | typeof CalculatorName | typeof ChartGeneratorName | typeof ChatName | typeof ClockName | typeof CobrowseName | typeof CodeEditorName | typeof CounterName | typeof DeepZoomImageName | typeof EChartsViewerName | typeof GLTFViewerName | typeof HCDPName | typeof IFrameName | typeof ImageViewerName | typeof JupyterLabName | typeof LeafLetName | typeof LinkerName | typeof MapGLName | typeof NotepadName | typeof PDFResultName | typeof PDFViewerName | typeof PluginAppName | typeof PollName | typeof RTCChatName | typeof SageCellName | typeof SeerName | typeof SensorOverviewName | typeof StickieName | typeof TLDrawName | typeof TimerName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebpageLinkName | typeof WebviewName;

@@ -1,6 +1,6 @@
 {
   "name": "SAGE3",
-  "version": "1.0.40",
+  "version": "1.0.45",
   "description": "Electron-based SAGE3 client",
   "main": "electron.js",
   "repository": {
@@ -20,7 +20,7 @@
   },
   "devDependencies": {
     "@electron/notarize": "^2.3.2",
-    "electron": "^32.0.1",
+    "electron": "^33.2.1",
     "electron-packager": "latest"
   },
   "optionalDependencies": {
@@ -31,7 +31,7 @@
     "electron-winstaller": "latest"
   },
   "scripts": {
-    "electron": "electron electron.js -s https://sage3.app/",
+    "electron": "electron electron.js -s https://chicago.sage3.app/",
     "local": "electron electron.js -s http://localhost:4200/",
     "build_mac": "build_mac",
     "build_win": "build_win.bat",

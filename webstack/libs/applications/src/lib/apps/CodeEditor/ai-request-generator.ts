@@ -12,12 +12,25 @@ type CodeEditorRequest = 'explain' | 'refactor' | 'comment' | 'generate';
 export function generateRequest(language: string, content: string, type: CodeEditorRequest) {
   switch (type) {
     case 'explain':
-      return `[INST] <<SYS>>\nYou are an expert programmer that helps to write ${language} code.\n<</SYS>>\n\nExplain the following code: ${content}[/INST]`;
+      return `Explain the following code: ${content}`;
     case 'refactor':
-      return `[INST] <<SYS>>\nYou are an expert programmer that helps to write ${language} code. Only return code. Do not include any other text.\n<</SYS>>\n\nCan you refactor this code: ${content}[/INST]`;
+      return `Can you refactor this code: ${content}`;
     case 'comment':
-      return `[INST] <<SYS>>\nYou are a expert in documentation for ${language} code.\n<</SYS>>\n\nCan you add comments in this code to explain clearly what each instruction is supposed to do and be concise: ${content} [/INST]`;
+      return `Can you add comments in this code to explain clearly what each instruction is supposed to do: ${content}`;
     case 'generate':
-      return `[INST] <<SYS>>\nYou are an expert programmer that helps to write ${language} code based on the user request. Don't be too verbose. Return only commented code.\n<</SYS>>${content} [/INST]`;
+      return content;
+  }
+}
+
+export function generateSystemPrompt(language: string, content: string, type: CodeEditorRequest) {
+  switch (type) {
+    case 'explain':
+      return `You are an expert programmer that helps to write ${language} code. Do not hallucinate. Do not make up factual information.\n`;
+    case 'refactor':
+      return `You are an expert programmer that helps to write ${language} code. Only return code. Do not include any other text. Do not hallucinate. Do not make up factual information.\n`;
+    case 'comment':
+      return `You are a expert in documentation for ${language} code. Do not hallucinate. Do not make up factual information. Be concise.\n`;
+    case 'generate':
+      return `You are an expert programmer that helps to write ${language} code based on the user request. Don't be too verbose. Return only commented code. Do not hallucinate. Do not make up factual information.\n`;
   }
 }

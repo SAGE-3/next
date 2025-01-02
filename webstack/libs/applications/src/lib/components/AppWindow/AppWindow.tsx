@@ -10,14 +10,15 @@ import { useEffect, useMemo, useState } from 'react';
 import { Box, useToast, useColorModeValue, Icon } from '@chakra-ui/react';
 
 import { DraggableData, ResizableDelta, Position, Rnd, RndDragEvent } from 'react-rnd';
-
-import { useAppStore, useUIStore, useKeyPress, useHexColor, useThrottleScale, useAbility, useInsightStore } from '@sage3/frontend';
-
-// Window Components
-import { ProcessingBox, BlockInteraction, WindowTitle, WindowBorder } from './components';
-import { App } from '../../schema';
 import { MdWindow } from 'react-icons/md';
 import { IconType } from 'react-icons/lib';
+
+// SAGE3 Frontend
+import { useAppStore, useUIStore, useHexColor, useThrottleScale, useAbility, useInsightStore, useUserSettings } from '@sage3/frontend';
+
+// Window Components
+import { App } from '../../schema';
+import { ProcessingBox, BlockInteraction, WindowTitle, WindowBorder } from './components';
 
 // Consraints on the app window size
 const APP_MIN_WIDTH = 200;
@@ -41,6 +42,10 @@ type WindowProps = {
 };
 
 export function AppWindow(props: WindowProps) {
+  // Settings
+  const { settings } = useUserSettings();
+  const primaryActionMode = settings.primaryActionMode;
+
   // Can update
   const canMove = useAbility('move', 'apps');
   const canResize = useAbility('resize', 'apps');
@@ -65,6 +70,8 @@ export function AppWindow(props: WindowProps) {
   const selectedTag = useUIStore((state) => state.selectedTag);
   const localDeltaMove = useUIStore((state) => state.deltaLocalMove[props.app._id]);
   const setLocalDeltaMove = useUIStore((state) => state.setDeltaLocalMove);
+  const boardSynced = useUIStore((state) => state.boardSynced);
+  const rndSafeForAction = useUIStore((state) => state.rndSafeForAction);
 
   // Selected Apps Info
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
@@ -116,9 +123,6 @@ export function AppWindow(props: WindowProps) {
   // Display messages
   const toast = useToast();
   const toastID = 'error-toast';
-
-  // Detect if spacebar is held down to allow for board dragging through apps
-  const spacebarPressed = useKeyPress(' ');
 
   // Track the app store errors
   useEffect(() => {
@@ -190,7 +194,7 @@ export function AppWindow(props: WindowProps) {
       updateAppLocationByDelta({ x: dx, y: dy }, selectedApps);
       setLocalDeltaMove({ x: 0, y: 0 }, []);
     } else {
-      update(props.app._id, { position: { x, y, z: props.app.data.position.z, } });
+      update(props.app._id, { position: { x, y, z: props.app.data.position.z } });
     }
   }
 
@@ -253,24 +257,44 @@ export function AppWindow(props: WindowProps) {
 
   function handleAppClick(e: MouseEvent) {
     e.stopPropagation();
-    handleBringAppForward();
+
+    // Uncomment me to block selection behaviour on AppWindows
+    if (primaryActionMode === 'grab') {
+      return;
+    }
+
     // Set the selected app in the UI store
     if (appWasDragged) setAppWasDragged(false);
     else {
+      handleBringAppForward();
       clearSelectedApps();
       setSelectedApp(props.app._id);
+      // // Uncomment to allow for selection in grab mode to change interaction modes
+      // if (primaryActionMode === 'grab') {
+      //   setPrimaryActionMode('lasso');
+      // }
     }
   }
 
   function handleAppTouchStart(e: PointerEvent) {
     e.stopPropagation();
-    handleBringAppForward();
+
+    // Uncomment me to block selection behaviour on AppWindows
+    if (primaryActionMode === 'grab') {
+      return;
+    }
+
     // Set the selected app in the UI store
     if (appWasDragged) {
       setAppWasDragged(false);
     } else {
+      handleBringAppForward();
       clearSelectedApps();
       setSelectedApp(props.app._id);
+      // // Uncomment to allow for selection in grab mode to change interaction modes
+      // if (primaryActionMode === 'grab') {
+      //   setPrimaryActionMode('lasso');
+      // }
     }
   }
 
@@ -312,6 +336,8 @@ export function AppWindow(props: WindowProps) {
   const hideApp = outsideView || boardDragging;
   const hideBackgroundColorHex = useHexColor(props.hideBackgroundColor || backgroundColor);
 
+  const memoizedChildren = useMemo(() => props.children, [props.children]);
+
   return (
     <Rnd
       bounds="parent"
@@ -328,12 +354,16 @@ export function AppWindow(props: WindowProps) {
       // select an app on touch
       onPointerDown={handleAppTouchStart}
       onPointerMove={handleAppTouchMove}
-      enableResizing={enableResize && canResize && !isPinned}
-      disableDragging={!canMove || isPinned}
+      // enableResizing={enableResize && canResize && !isPinned}
+      enableResizing={enableResize && canResize && !isPinned && primaryActionMode === 'lasso'} // Temporary solution to fix resize while drag -> && (selectedApp !== "")
+      // boardSync && rndSafeForAction is a temporary solution to prevent the most common type of bug which is zooming followed by a click
+      disableDragging={!canMove || isPinned || !(boardSynced && rndSafeForAction) || primaryActionMode === 'grab'}
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{
         zIndex: props.lockToBackground ? 0 : myZ,
-        pointerEvents: spacebarPressed || lassoMode || (!canMove && !canResize) ? 'none' : 'auto',
+        pointerEvents: lassoMode || (!canMove && !canResize) ? 'none' : 'auto',
+        borderRadius: outerBorderRadius, // This is used to prevent selection at very edge of corner in grab mode
+        touchAction: 'none', // needed to prevent pinch to zoom
       }}
       resizeHandleStyles={{
         bottom: { transform: `scaleY(${handleScale})` },
@@ -344,6 +374,16 @@ export function AppWindow(props: WindowProps) {
         top: { transform: `scaleY(${handleScale})` },
         topLeft: { transform: `scale(${handleScale})` },
         topRight: { transform: `scale(${handleScale})` },
+      }}
+      resizeHandleClasses={{
+        bottom: 'app-window-resize-handle',
+        bottomLeft: 'app-window-resize-handle',
+        bottomRight: 'app-window-resize-handle',
+        left: 'app-window-resize-handle',
+        right: 'app-window-resize-handle',
+        top: 'app-window-resize-handle',
+        topLeft: 'app-window-resize-handle',
+        topRight: 'app-window-resize-handle',
       }}
       // min/max app window dimensions
       minWidth={APP_MIN_WIDTH}
@@ -362,6 +402,7 @@ export function AppWindow(props: WindowProps) {
         selected={selected}
         isGrouped={isGrouped}
         dragging={!appDragging && props.app.data.dragging}
+        scale={scale}
         borderWidth={borderWidth}
         borderColor={borderColor}
         selectColor={selectColor}
@@ -380,10 +421,10 @@ export function AppWindow(props: WindowProps) {
         zIndex={2}
         background={background || outsideView ? backgroundColor : 'unset'}
         borderRadius={innerBorderRadius}
-        boxShadow={hideApp || isPinned || !background ? '' : `4px 4px 12px 0px ${shadowColor}`}
+        boxShadow={hideApp || isPinned || !background ? '' : `4px 4px 12px 0px ${shadowColor}`} //|| primaryActionMode === 'grab'
         style={{ contentVisibility: hideApp ? 'hidden' : 'visible' }}
       >
-        {props.children}
+        {memoizedChildren}
       </Box>
 
       {/* This div is to allow users to drag anywhere within the window when the app isnt selected*/}
@@ -395,10 +436,19 @@ export function AppWindow(props: WindowProps) {
           top="0px"
           width="100%"
           height="100%"
-          cursor="move"
+          cursor={primaryActionMode === 'grab' ? 'grab' : 'move'}
+          sx={
+            primaryActionMode === 'grab'
+              ? {
+                '&:active': {
+                  cursor: 'grabbing',
+                },
+              }
+              : {}
+          }
           userSelect={'none'}
           zIndex={3}
-          borderRadius={innerBorderRadius}
+        // borderRadius={innerBorderRadius}
         ></Box>
       )}
 

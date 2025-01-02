@@ -38,6 +38,7 @@ import {
   Alert,
   AlertIcon,
   AlertDescription,
+  Spacer,
 } from '@chakra-ui/react';
 
 import {
@@ -74,11 +75,12 @@ import {
   useUserSettings,
   ColorPicker,
 } from '@sage3/frontend';
-import { Applications } from '@sage3/applications/apps';
+import { AI_ENABLED_APPS, Applications } from '@sage3/applications/apps';
 import { AppSchema } from '@sage3/applications/schema';
 import { SAGEColors } from '@sage3/shared';
 import { Board } from '@sage3/shared/types';
 import { initialValues } from '@sage3/applications/initialValues';
+import { IoSparklesSharp } from 'react-icons/io5';
 
 type LassoToolbarProps = {
   downloadAssets: () => void;
@@ -123,6 +125,10 @@ export function LassoToolbar(props: LassoToolbarProps) {
   const panelBackground = useHexColor(background);
   const textColor = useColorModeValue('gray.800', 'gray.100');
   const borderColor = useColorModeValue('gray.200', 'gray.500');
+  const commonButtonColors = useColorModeValue('gray.300', 'gray.200');
+  const buttonTextColor = useColorModeValue('white', 'black');
+  const intelligenceColor = useColorModeValue('purple.500', 'purple.400');
+  const intelligenceBgColor = useColorModeValue('purple.400', 'purple.500');
 
   // Modal disclosure for the Close selected apps
   const { isOpen: deleteIsOpen, onClose: deleteOnClose, onOpen: deleteOnOpen } = useDisclosure();
@@ -187,6 +193,18 @@ export function LassoToolbar(props: LassoToolbarProps) {
     }
   };
 
+  const selectedAppNames = (): string => {
+    const selectedApps = apps.filter((el) => lassoApps.includes(el._id));
+    // Check if all of same type
+    let isAllOfSameType = selectedApps.every((element) => element.data.type === selectedApps[0].data.type);
+
+    if (isAllOfSameType) {
+      return (selectedApps[0]?.data?.type || '') + (selectedApps.length > 1 ? 's' : '');
+    } else {
+      return 'Apps';
+    }
+  };
+
   // This function will check if the selected apps are all of the same type
   // Then, it will check if that type has a GroupedToolbarComponent to display
   const selectedAppFunctions = (): JSX.Element | null => {
@@ -208,6 +226,19 @@ export function LassoToolbar(props: LassoToolbarProps) {
     }
     // Return the component
     return component;
+  };
+
+  // Check if all the selected apps are of the same type and are Ai_Enabled
+  const isAllOfSameTypeAndAiEnabled = (): boolean => {
+    const selectedApps = apps.filter((el) => lassoApps.includes(el._id));
+    const sameApps = selectedApps.every((element) => element.data.type === selectedApps[0].data.type);
+    if (sameApps) {
+      const firstApp = selectedApps[0];
+      if (!firstApp) return false;
+      return AI_ENABLED_APPS.includes(firstApp.data.type);
+    } else {
+      return false;
+    }
   };
 
   // Duplicate all the selected apps
@@ -386,16 +417,22 @@ export function LassoToolbar(props: LassoToolbarProps) {
       // Check if all of same type
       const selectedApps = apps.filter((el) => lassoApps.includes(el._id));
       let isAllOfSameType = selectedApps.every((element) => element.data.type === selectedApps[0].data.type);
-      let context = '';
       if (isAllOfSameType) {
+        let context = '';
         if (selectedApps[0].data.type === 'Stickie') {
           context = selectedApps.reduce((acc, el) => {
-            acc += el.data.state.text + '\n';
+            acc += el.data.state.text + '\n\n';
             return acc;
           }, '');
         }
+        if (selectedApps[0].data.type === 'PDFViewer') {
+          console.log('apps', selectedApps);
+          console.log('lasso apps', lassoApps);
+        }
+        createApp(setupApp('Chat', 'Chat', x, y, roomId, boardId, { w: 800, h: 420 }, { context: context, sources: lassoApps }));
+      } else {
+        createApp(setupApp('Chat', 'Chat', x, y, roomId, boardId, { w: 800, h: 420 }, { sources: lassoApps }));
       }
-      createApp(setupApp('Chat', 'Chat', x, y, roomId, boardId, { w: 800, h: 420 }, { context: context }));
     }
   };
 
@@ -561,27 +598,62 @@ for b in bits:
           zIndex={1410} // above the drawer but with tooltips
         >
           <Box display="flex" flexDirection="column">
-            <Text
-              w="100%"
-              textAlign="left"
-              mx={1}
-              color={textColor}
-              fontSize={12}
-              fontWeight="bold"
-              h={'auto'}
-              userSelect={'none'}
-              className="handle"
-            >
-              {'Actions'}
-            </Text>
-            <Box alignItems="center" p="0" m="0" width="100%" display="flex" height="32px" userSelect={'none'}>
-              {/* Show the GroupedToolberComponent here */}
-              {selectedAppFunctions()}
+            <Box display="flex" flexDirection="row">
+              <Text
+                textAlign="left"
+                mx={0}
+                p={0}
+                color={textColor}
+                fontSize={14}
+                fontWeight="bold"
+                h={'auto'}
+                userSelect={'none'}
+                className="handle"
+              >
+                Actions
+              </Text>
 
+              <Spacer />
+
+              {/* Sage Intelligence */}
+              {
+                // Are apps all the same type and Ai_Enabled
+                isAllOfSameTypeAndAiEnabled() && (
+                  <Box>
+                    <Tooltip
+                      placement="top"
+                      hasArrow={true}
+                      openDelay={400}
+                      ml="1"
+                      label={'Open selected application in Chat with SAGE Intelligence'}
+                    >
+                      <Button
+                        onClick={openInChat}
+                        backgroundColor={intelligenceColor}
+                        variant="solid"
+                        size="xs"
+                        m={0}
+                        mr={1}
+                        p={0}
+                        _hover={{ cursor: 'pointer', transform: 'scale(1.2)', opacity: 1, backgroundColor: intelligenceBgColor }}
+                      >
+                        <IoSparklesSharp size="16px" color={'white'} />{' '}
+                      </Button>
+                    </Tooltip>
+                  </Box>
+                )
+              }
+            </Box>
+
+            <Box alignItems="center" mt="1" p="1" width="100%" display="flex" height="32px" userSelect={'none'} minWidth={'100px'}>
+              {/* Show the GroupedToolbarComponent here */}
+              {selectedAppFunctions()}
               <Menu>
-                <MenuButton size="xs" as={Button} mr={'2px'} colorScheme="yellow">
-                  <MdMenu />
-                </MenuButton>
+                <Tooltip hasArrow={true} label={'Actions'} openDelay={300}>
+                  <MenuButton size="xs" as={Button} p={0} display="grid" placeItems="center" mx="1" backgroundColor={commonButtonColors}>
+                    <MdMenu size="14px" color={buttonTextColor} />
+                  </MenuButton>
+                </Tooltip>
                 <MenuList p="0" m="0">
                   <MenuGroup title="Actions" m="1">
                     <MenuItem onClick={fitSelectedApps} icon={<MdZoomOutMap />} py="0" m="0">
@@ -692,30 +764,16 @@ for b in bits:
 
                   <MenuDivider />
 
-                  <MenuGroup title="AI Actions" m="1">
+                  <MenuGroup title="Actions" m="1">
                     <MenuItem isDisabled={!canCreateApp} onClick={openInCell} icon={<FaPython />} py="0" m="0">
                       Open in SAGECell
-                    </MenuItem>
-                    <MenuItem isDisabled={!canCreateApp} onClick={openInChat} icon={<MdChat />} py="0" m="0">
-                      Open in Chat
                     </MenuItem>
                   </MenuGroup>
                 </MenuList>
               </Menu>
 
-              <Tooltip placement="top" hasArrow={true} label={'Open in Chat'} openDelay={400}>
-                <Button onClick={openInChat} size="xs" p="0" mx="2px" colorScheme={'yellow'} isDisabled={!canDeleteApp}>
-                  <MdChat size="18px" />
-                </Button>
-              </Tooltip>
-              <Tooltip placement="top" hasArrow={true} label={'Open in SageCell'} openDelay={400}>
-                <Button onClick={openInCell} size="xs" p="0" mx="2px" colorScheme={'yellow'} isDisabled={!canDeleteApp}>
-                  <FaPython size="18px" />
-                </Button>
-              </Tooltip>
-
-              <Tooltip placement="top" hasArrow={true} label={'Close the selected Apps'} openDelay={400}>
-                <Button onClick={deleteOnOpen} size="xs" p="0" mx="2px" colorScheme={'red'} isDisabled={!canDeleteApp}>
+              <Tooltip placement="top" hasArrow={true} label={'Delete Applications'} openDelay={400}>
+                <Button onClick={deleteOnOpen} size="xs" p="0" colorScheme="red" isDisabled={!canDeleteApp}>
                   <HiOutlineTrash size="18px" />
                 </Button>
               </Tooltip>
@@ -728,11 +786,14 @@ for b in bits:
         isOpen={deleteIsOpen}
         onClose={deleteOnClose}
         onConfirm={closeSelectedApps}
-        title="Close Selected Apps"
-        message={`Are you sure you want to close the selected ${lassoApps.length > 1 ? `${lassoApps.length} apps?` : 'app?'} `}
+        title="Delete Selected Applications"
+        message={`Are you sure you want to delete the selected ${
+          lassoApps.length > 1 ? `${lassoApps.length} applications?` : 'application?'
+        } `}
         cancelText="Cancel"
-        confirmText="Yes"
-        confirmColor="teal"
+        confirmText="Delete"
+        confirmColor="red"
+        size="lg"
       ></ConfirmModal>
     </>
   );

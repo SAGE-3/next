@@ -1,8 +1,10 @@
 // SAGE3 Generated from apps.json file
 
 import { name as AIPaneName, init as defaultAIPane } from './apps/AIPane';
+import { name as AssetLinkName, init as defaultAssetLink } from './apps/AssetLink';
 import { name as BoardLinkName, init as defaultBoardLink } from './apps/BoardLink';
 import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewer';
+import { name as CalculatorName, init as defaultCalculator } from './apps/Calculator';
 import { name as ChartGeneratorName, init as defaultChartGenerator } from './apps/ChartGenerator';
 import { name as ChatName, init as defaultChat } from './apps/Chat';
 import { name as ClockName, init as defaultClock } from './apps/Clock';
@@ -30,18 +32,20 @@ import { name as SeerName, init as defaultSeer } from './apps/Seer';
 import { name as SensorOverviewName, init as defaultSensorOverview } from './apps/SensorOverview';
 import { name as StickieName, init as defaultStickie } from './apps/Stickie';
 import { name as TLDrawName, init as defaultTLDraw } from './apps/TLDraw';
+import { name as TimerName, init as defaultTimer } from './apps/Timer';
 import { name as TwilioScreenshareName, init as defaultTwilioScreenshare } from './apps/TwilioScreenshare';
 import { name as VegaLiteName, init as defaultVegaLite } from './apps/VegaLite';
 import { name as VegaLiteViewerName, init as defaultVegaLiteViewer } from './apps/VegaLiteViewer';
 import { name as VideoViewerName, init as defaultVideoViewer } from './apps/VideoViewer';
 import { name as WebpageLinkName, init as defaultWebpageLink } from './apps/WebpageLink';
 import { name as WebviewName, init as defaultWebview } from './apps/Webview';
-import { name as CalculatorName, init as defaultCalculator } from './apps/Calculator';
 
 export const initialValues = {
   [AIPaneName]: defaultAIPane,
+  [AssetLinkName]: defaultAssetLink,
   [BoardLinkName]: defaultBoardLink,
   [CSVViewerName]: defaultCSVViewer,
+  [CalculatorName]: defaultCalculator,
   [ChartGeneratorName]: defaultChartGenerator,
   [ChatName]: defaultChat,
   [ClockName]: defaultClock,
@@ -69,12 +73,12 @@ export const initialValues = {
   [SensorOverviewName]: defaultSensorOverview,
   [StickieName]: defaultStickie,
   [TLDrawName]: defaultTLDraw,
+  [TimerName]: defaultTimer,
   [TwilioScreenshareName]: defaultTwilioScreenshare,
   [VegaLiteName]: defaultVegaLite,
   [VegaLiteViewerName]: defaultVegaLiteViewer,
   [VideoViewerName]: defaultVideoViewer,
   [WebpageLinkName]: defaultWebpageLink,
   [WebviewName]: defaultWebview,
-  [CalculatorName]: defaultCalculator,
 };
 

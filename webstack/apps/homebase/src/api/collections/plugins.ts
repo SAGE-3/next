@@ -9,11 +9,10 @@
 import { PluginSchema } from '@sage3/shared/types';
 import { SAGE3Collection, sageRouter } from '@sage3/backend';
 
-import * as fs from 'fs';
 // Node modules
+import * as fs from 'fs';
 import * as multer from 'multer';
 import * as path from 'path';
-// import { v4 as getUUID } from 'uuid';
 
 import * as jszip from 'jszip';
 import { isZip } from '@sage3/shared';
@@ -63,6 +62,7 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
       const pluginName = req.body.name as string;
       const description = req.body.description as string;
       const username = req.body.username as string;
+      const roomId = req.body.roomId ? req.body.roomId : '';
 
       // Check if the request is valid
       if (!username || !description || !pluginName) {
@@ -131,7 +131,7 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
           }
           // Update the database
           this.add(
-            { name: pluginName, description, ownerId: req.user.id, ownerName: username, dateCreated: Date.now().toString() },
+            { name: pluginName, description, ownerId: req.user.id, ownerName: username, dateCreated: Date.now().toString(), roomId },
             req.user.id
           );
           removeUploadedFile();
@@ -163,6 +163,54 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
     });
 
     this.httpRouter = router;
+  }
+
+  // Delete all the plugisn belonging to a specific room
+  public async deletePluginsInRoom(roomId: string): Promise<number> {
+    // Delete the plugins on the room
+    const roomPlugins = await this.query('roomId', roomId);
+    const pluginIds = roomPlugins ? roomPlugins.map((plugin) => plugin._id) : [];
+    // Delete the plugins in a Promise.all
+    const deletePromises = pluginIds.map((pluginId) => this.deletePlugin(pluginId));
+    const results = await Promise.all(deletePromises);
+    const numberDeleted = results.filter((r) => r).length;
+    return numberDeleted;
+  }
+
+  // Delete a specific plugin
+  // This will delete the plugin and all the associated files
+  private async deletePlugin(pluginId: string): Promise<boolean> {
+    const docRef = this.collection.docRef(pluginId);
+    const doc = await docRef.read();
+    if (doc === undefined) {
+      return false;
+    }
+    // Get Name of Plugin and remove directory
+    const name = doc.data.name;
+    fs.rmSync(path.join(appsPath, name), { recursive: true, force: true });
+    const deleteSuccess = await this.delete(pluginId);
+    return deleteSuccess ? true : false;
+  }
+
+  // Delete all plugins belong to a specific user
+  public async deletePluginsByUser(userId: string): Promise<number> {
+    // Delete the plugins on the room
+    const userPlugins = await this.query('ownerId', userId);
+    const pluginIds = userPlugins ? userPlugins.map((plugin) => plugin._id) : [];
+    // Delete the plugins in a Promise.all
+    const deletePromises = pluginIds.map((pluginId) => this.deletePlugin(pluginId));
+    const results = await Promise.all(deletePromises);
+    const numberDeleted = results.filter((r) => r).length;
+    return numberDeleted;
+  }
+
+  // Transfer all the plugins of a user to another user
+  public async transferUsersPlugins(oldUserId: string, newOwnerId: string): Promise<boolean> {
+    // Get all the plugins of the user
+    const userPlugins = await this.query('ownerId', oldUserId);
+    const pluginIds = userPlugins ? userPlugins.map((plugin) => plugin._id) : [];
+    const res = await Promise.all(pluginIds.map((pluginId) => this.update(pluginId, newOwnerId, { ownerId: newOwnerId })));
+    return res ? true : false;
   }
 }
 

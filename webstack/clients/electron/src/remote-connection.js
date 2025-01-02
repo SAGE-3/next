@@ -60,7 +60,7 @@ const PREDEFINED_LOCAL_PORT = '3333';
 var favorites = {
   list: [
     {
-      host: 'https://sage3.app',
+      host: 'https://chicago.sage3.app',
       name: 'SAGE3 Main',
       pinned: true,
     },

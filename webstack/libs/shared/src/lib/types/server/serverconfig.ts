@@ -45,8 +45,15 @@ export interface ServerConfiguration {
     databaseLevel: 'all' | 'partial' | 'none';
   };
 
-  // FastAPI
-  fastapi: { url: string };
+  // Python server for jupyter kernels
+  kernels: { url: string };
+  // Python server for agents
+  agents: { url: string };
+  // Webserver configuration
+  webserver: {
+    logLevel: 'all' | 'partial' | 'none';
+    uploadLimit: string; // in bytes with optional units (KB, MB, GB, TB)
+  };
 
   // Feedback server
   feedback: { url: string };
@@ -55,7 +62,7 @@ export interface ServerConfiguration {
   services: {
     twilio: TwilioConfiguration;
     openai: OpenAIConfiguration;
-    chat: AIChatConfiguration;
+    llama: LlamaConfiguration;
     codellama: CodeLlamaConfiguration;
     yolo: YoloConfiguration;
   };
@@ -96,6 +103,7 @@ export type OpenConfiguration = Pick<
   logins: ServerConfiguration['auth']['strategies'];
   features: ServerConfiguration['features'];
   openai: ServerConfiguration['services']['openai'];
+  llama: ServerConfiguration['services']['llama'];
 };
 
 /**
@@ -156,8 +164,8 @@ export interface OpenAIConfiguration {
   model: string; // LLM model
 }
 
-// AI Chat Configuration
-export interface AIChatConfiguration {
+// Llama Configuration
+export interface LlamaConfiguration {
   url: string;
   model: string; // LLM model
   apiKey: string; // API Key
@@ -166,6 +174,7 @@ export interface AIChatConfiguration {
 
 export interface CodeLlamaConfiguration {
   url: string;
+  model: string; // LLM model
   apiKey: string;
   max_tokens: number;
 }

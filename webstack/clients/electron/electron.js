@@ -455,7 +455,7 @@ function createWindow() {
     show: !commander.fullscreen,
     // autoHideMenuBar: true,
     fullscreenable: commander.fullscreen,
-    alwaysOnTop: commander.fullscreen,
+    alwaysOnTop: false, // commander.fullscreen,
     // kiosk: commander.fullscreen,
     // a default color while loading
     backgroundColor: '#565656',
@@ -725,6 +725,16 @@ function createWindow() {
     // Can still use the remote server menu
     if (isAtBoard && destinationHostname !== currentDomain) {
       ev.preventDefault();
+    }
+  });
+
+  // Detect when the title of the webpage changes to see if the user has ended up on the Gray CANNOT GET page
+  mainWindow.on('page-title-updated', function (event, title) {
+    // If the title is Error, then the page is not found
+    if (title === 'Error') {
+      // The user has ended up on the Gray CANNOT GET page
+      // Redirect them back to the landing page
+      mainWindow.loadFile('./html/landing.html');
     }
   });
 
@@ -1003,7 +1013,7 @@ if (process.platform === 'win32') {
         mainWindow.loadURL(newurl);
       } else {
         // save the URL for later
-        gotoURL = newurl;
+        // gotoURL = newurl;
       }
     });
   }

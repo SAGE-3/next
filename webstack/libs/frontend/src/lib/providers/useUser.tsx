@@ -45,7 +45,7 @@ function setAbilityUser(user: User) {
 }
 
 export function UserProvider(props: React.PropsWithChildren<Record<string, unknown>>) {
-  const { auth } = useAuth();
+  const { auth, logout } = useAuth();
   const [user, setUser] = useState<User | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [accessId, setAccessId] = useState(genId());
@@ -89,11 +89,18 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
     async function SubtoUser() {
       // Subscribe to user updates since user might login from multiple locations
       const route = `/users/${auth?.id}`;
-      // Socket Listenting to updates from server about the current board
+      // Socket Listenting to updates from server about the current user
       userSub = await SocketAPI.subscribe<User>(route, (message) => {
-        const user = message.doc as User[];
-        setAbilityUser(user[0]);
-        setUser(user[0]);
+        if (message.type === 'UPDATE') {
+          const user = message.doc as User[];
+          setAbilityUser(user[0]);
+          setUser(user[0]);
+        }
+        // If the user is deleted, logout
+        if (message.type === 'DELETE') {
+          setUser(undefined);
+          logout();
+        }
       });
     }
     SubtoUser();

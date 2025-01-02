@@ -39,8 +39,8 @@ export function getStaticAssetUrl(filename: string): string {
 
 // Zustand store to communicate with toolbar
 interface MapStore {
-  map: { [key: string]: maplibregl.Map },
-  saveMap: (id: string, map: maplibregl.Map) => void,
+  map: { [key: string]: maplibregl.Map };
+  saveMap: (id: string, map: maplibregl.Map) => void;
 }
 
 const useStore = create<MapStore>()((set) => ({
@@ -156,7 +156,6 @@ const MapGL = (
       // when the map is loaded, add the source and layers
       map.on('load', async () => {
         const newURL = getStaticAssetUrl(file.data.file);
-        console.log('MapGL> Adding source to map', newURL);
         // Get the GEOJSON data from the asset
         const response = await fetch(newURL, {
           headers: {
@@ -275,122 +274,89 @@ const MapGL = (
 
   useEffect(() => {
     if (map) {
+      const updateMapSources = () => {
+        const selectedStations = stationDataRef.current.filter((stationData) => s.stationNames.includes(stationData.id));
+
+        const notSelectedStations = stationDataRef.current.filter((stationData) => !s.stationNames.includes(stationData.id));
+
+        // Update the 'selectedStations' source
+        if (map.getSource('selectedStations')) {
+          //@ts-ignore
+          map.getSource('selectedStations').setData({
+            type: 'FeatureCollection',
+            features: selectedStations.map((station) => ({
+              type: 'Feature',
+              geometry: {
+                type: 'Point',
+                coordinates: [station.lon, station.lat],
+              },
+              properties: {
+                stationInfo: station,
+              },
+            })),
+          });
+        }
+
+        // Update the 'notSelectedStations' source
+        if (map.getSource('notSelectedStations')) {
+          //@ts-ignore
+          map.getSource('notSelectedStations').setData({
+            type: 'FeatureCollection',
+            features: notSelectedStations.map((station) => ({
+              type: 'Feature',
+              geometry: {
+                type: 'Point',
+                coordinates: [station.lon, station.lat],
+              },
+              properties: {
+                stationInfo: station,
+              },
+            })),
+          });
+        }
+      };
+
       if (props.isSelectingStations) {
-        const selectedStations = stationDataRef.current.filter((stationData) => s.stationNames.includes(stationData.name));
-        const notSelectedStations = stationDataRef.current.filter((stationData) => !s.stationNames.includes(stationData.name));
         map.on('load', () => {
-          console.log(s.stationNames);
+          const selectedStations = stationDataRef.current.filter((stationData) => s.stationNames.includes(stationData.id));
 
-          // map.addImage('custom-marker', image);
-          // Add a GeoJSON source with 3 points.
-
-          /**
-           * NOT SELECTED STATION
-           */
-          map.addSource('notSelectedStations', {
-            type: 'geojson',
-            data: {
-              type: 'FeatureCollection',
-              features: notSelectedStations.map((s) => {
-                return {
-                  type: 'Feature',
-                  geometry: {
-                    type: 'Point',
-                    coordinates: [s.lon, s.lat],
-                  },
-                  properties: {
-                    stationInfo: s,
-                  },
-                };
-              }),
-            },
-          });
-
-          map.addLayer({
-            id: 'notSelectedCircle',
-            type: 'circle',
-            source: 'notSelectedStations',
-            paint: {
-              'circle-radius': 10,
-              'circle-stroke-color': 'black',
-              'circle-stroke-width': 2,
-              'circle-color': 'white',
-            },
-          });
-
-          // Center the map on the coordinates of any clicked symbol from the 'symbols' layer.
-          map.on('click', 'notSelectedCircle', (e: any) => {
-            // map.flyTo({
-            //   center: e.features[0].geometry.coordinates,
-            // });
-            const stationInfo = JSON.parse(e.features[0].properties.stationInfo);
-            const element = document.getElementById(`marker-${stationInfo.name}`);
-            const stationIsSelected = s.stationNames.includes(stationInfo.name) || props.stationNameRef.current.includes(stationInfo.name);
-
-            if (element && stationIsSelected) {
-              const tmpSelectedStations = s.stationNames;
-              // tmpSelectedStations = tmpSelectedStations.filter((name: string) => name !== stationInfo.name);
-              for (let i = 0; i < tmpSelectedStations.length; i++) {
-                if (tmpSelectedStations[i] === stationInfo.name) {
-                  tmpSelectedStations.splice(i, 1);
-                }
-              }
-              updateState(props._id, { stationNames: tmpSelectedStations });
-
-              // stationNameRef.current = s.stationNames.filter((name: string) => name !== stationInfo.name);
-              element?.remove();
-            } else {
-              const el = document.createElement('div');
-              el.className = 'marker';
-              el.id = `marker-${stationInfo.name}`;
-              // el.style.backgroundImage =
-              //   'url(https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRra1KaZfDLJB7aDhaXpGKAg8IVxS8phSpXP2iOJcUq_VGVSjLZ7YueJm_Dvys4nuW_8_E&usqp=CAU)';
-              el.style.width = '23px';
-              el.style.height = '23px';
-              el.style.borderRadius = '50%';
-              el.style.cursor = 'pointer';
-              el.style.border = '2px solid black';
-              el.style.backgroundColor = '#CC4833';
-              el.style.zIndex = '1000';
-              new maplibregl.Marker({ element: el }).setLngLat(e.features[0].geometry.coordinates).addTo(map);
-              const tmpSelectedStations = s.stationNames;
-              tmpSelectedStations.push(stationInfo.name);
-              updateState(props._id, { stationNames: tmpSelectedStations });
-              props.stationNameRef.current = [...s.stationNames, stationInfo.name];
-            }
-          });
-
-          // Change the cursor to a pointer when the it enters a feature in the 'symbols' layer.
-          map.on('mouseenter', 'notSelectedCircle', () => {
-            map.getCanvas().style.cursor = 'pointer';
-          });
-          // Change it back to a pointer when it leaves.
-          map.on('mouseleave', 'notSelectedCircle', () => {
-            map.getCanvas().style.cursor = '';
-          });
-
-          /**
-           * SELECTED STATION
-           */
+          const notSelectedStations = stationDataRef.current.filter((stationData) => !s.stationNames.includes(stationData.id));
+          // Add sources
           map.addSource('selectedStations', {
             type: 'geojson',
             data: {
               type: 'FeatureCollection',
-              features: selectedStations.map((s) => {
-                return {
-                  type: 'Feature',
-                  geometry: {
-                    type: 'Point',
-                    coordinates: [s.lon, s.lat],
-                  },
-                  properties: {
-                    stationInfo: s,
-                  },
-                };
-              }),
+              features: selectedStations.map((station) => ({
+                type: 'Feature',
+                geometry: {
+                  type: 'Point',
+                  coordinates: [station.lon, station.lat],
+                },
+                properties: {
+                  stationInfo: station,
+                },
+              })),
             },
           });
 
+          map.addSource('notSelectedStations', {
+            type: 'geojson',
+            data: {
+              type: 'FeatureCollection',
+              features: notSelectedStations.map((station) => ({
+                type: 'Feature',
+                geometry: {
+                  type: 'Point',
+                  coordinates: [station.lon, station.lat],
+                },
+                properties: {
+                  stationInfo: station,
+                },
+              })),
+            },
+          });
+
+          // Add layers
           map.addLayer({
             id: 'selectedCircle',
             type: 'circle',
@@ -403,57 +369,113 @@ const MapGL = (
             },
           });
 
-          map.on('click', 'selectedCircle', (e: any) => {
-            console.log('CLIKED< I AM SUPPOSED TO BE CLICKED');
+          map.addLayer({
+            id: 'notSelectedCircle',
+            type: 'circle',
+            source: 'notSelectedStations',
+            paint: {
+              'circle-radius': 10,
+              'circle-color': 'white',
+              'circle-stroke-color': 'black',
+              'circle-stroke-width': 2,
+            },
+          });
 
+          map.on('click', 'notSelectedCircle', (e: any) => {
             const stationInfo = JSON.parse(e.features[0].properties.stationInfo);
-            const element = document.getElementById(`marker-${stationInfo.name}`);
-            const stationIsSelected = s.stationNames.includes(stationInfo.name) || props.stationNameRef.current.includes(stationInfo.name);
-            const tmpSelectedStations = s.stationNames;
 
-            if (element && stationIsSelected) {
-              element?.remove();
-              tmpSelectedStations.push(stationInfo.name);
-            } else {
-              const el = document.createElement('div');
-              el.className = 'marker';
-              el.id = `marker-${stationInfo.name}`;
-              // el.style.backgroundImage =
-              //   'url(https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRra1KaZfDLJB7aDhaXpGKAg8IVxS8phSpXP2iOJcUq_VGVSjLZ7YueJm_Dvys4nuW_8_E&usqp=CAU)';
-              el.style.width = '23px';
-              el.style.height = '23px';
-              el.style.borderRadius = '50%';
-              el.style.cursor = 'pointer';
-              el.style.border = '2px black solid';
+            // Create marker
+            const el = document.createElement('div');
+            el.className = 'marker';
+            el.id = `marker-${stationInfo.id}`;
+            el.style.width = '23px';
+            el.style.height = '23px';
+            el.style.borderRadius = '50%';
+            el.style.cursor = 'pointer';
+            el.style.border = '2px solid black';
+            el.style.backgroundColor = '#CC4833';
+            el.style.zIndex = '1000';
 
-              el.style.backgroundColor = 'white';
-              // el.style.opacity = '0.1';
-              el.style.zIndex = '1000';
-              new maplibregl.Marker({ element: el }).setLngLat(e.features[0].geometry.coordinates).addTo(map);
+            new maplibregl.Marker({ element: el }).setLngLat(e.features[0].geometry.coordinates).addTo(map);
 
-              // tmpSelectedStations = tmpSelectedStations.filter((name: string) => name !== stationInfo.name);
-              for (let i = 0; i < tmpSelectedStations.length; i++) {
-                if (tmpSelectedStations[i] === stationInfo.name) {
-                  tmpSelectedStations.splice(i, 1);
-                }
-              }
+            // Update state by adding the station to the selected list
+            if (!props.stationNameRef.current.includes(stationInfo.id)) {
+              props.stationNameRef.current.push(stationInfo.id);
+              updateState(props._id, { stationNames: props.stationNameRef.current });
             }
-            updateState(props._id, { stationNames: tmpSelectedStations });
-            props.stationNameRef.current = [...s.stationNames, stationInfo.name];
-            // stationNameRef.current = tmpSelectedStations;
           });
-          // Change the cursor to a pointer when the it enters a feature in the 'symbols' layer.
-          map.on('mouseenter', 'selectedCircle', () => {
+
+          map.on('click', 'selectedCircle', (e: any) => {
+            const stationInfo = JSON.parse(e.features[0].properties.stationInfo);
+            const element = document.getElementById(`marker-${stationInfo.id}`);
+
+            if (element) {
+              // Remove marker from the map
+              element.remove();
+            }
+
+            // Update state by removing the station from the selected list
+            const updatedStations = props.stationNameRef.current.filter((name: string) => name !== stationInfo.id);
+            props.stationNameRef.current = updatedStations;
+            updateState(props._id, { stationNames: updatedStations });
+          });
+
+          // Add tooltip
+          const tooltip = document.createElement('div');
+          tooltip.style.position = 'absolute';
+          tooltip.style.backgroundColor = 'white';
+          tooltip.style.border = '2px solid black';
+          tooltip.style.borderRadius = '8px';
+          tooltip.style.padding = '5px';
+          tooltip.style.pointerEvents = 'none';
+          tooltip.style.display = 'none';
+          tooltip.style.zIndex = '999999';
+          tooltip.style.color = 'black';
+          document.body.appendChild(tooltip);
+
+          const showTooltip = (e: any, data: any) => {
+            console.log(data);
+            tooltip.style.display = 'block';
+            tooltip.style.left = `${e.clientX + 5}px`;
+            tooltip.style.top = `${e.clientY + 5}px`;
+            tooltip.innerHTML = `
+            <strong>Name:</strong> ${data.name} (${data.id})<br/>
+            <strong>Coordinates:</strong> [${data.lon.toFixed(1)}, ${data.lat.toFixed(1)}]<br/>
+            <strong>Elevation:</strong> ${data.elevation.toFixed(1)}
+          `;
+          };
+
+          const hideTooltip = () => {
+            tooltip.style.display = 'none';
+          };
+
+          map.on('mouseenter', 'notSelectedCircle', (e: any) => {
             map.getCanvas().style.cursor = 'pointer';
+            const stationInfo = JSON.parse(e.features[0].properties.stationInfo);
+            showTooltip(e.originalEvent, stationInfo);
           });
-          // Change it back to a pointer when it leaves.
+
+          map.on('mouseleave', 'notSelectedCircle', () => {
+            map.getCanvas().style.cursor = '';
+            hideTooltip();
+          });
+
+          map.on('mouseenter', 'selectedCircle', (e: any) => {
+            map.getCanvas().style.cursor = 'pointer';
+            const stationInfo = JSON.parse(e.features[0].properties.stationInfo);
+            showTooltip(e.originalEvent, stationInfo);
+          });
+
           map.on('mouseleave', 'selectedCircle', () => {
             map.getCanvas().style.cursor = '';
+            hideTooltip();
           });
         });
       }
+
+      updateMapSources(); // Ensure sources are updated when s.stationNames changes
     }
-  }, [map, JSON.stringify(s.stationNames), stationDataRef.current, props.stationNameRef.current]);
+  }, [map, props.isSelectingStations, s.stationNames]);
 
   return (
     <>

@@ -11,7 +11,8 @@ export function getHTTPBoardUrl(roomId: string, boardId: string): string {
 }
 
 export function getSAGE3BoardUrl(roomId: string, boardId: string): string {
-  return `sage3://${window.location.host}/#/enter/${roomId}/${boardId}`;
+  return `${window.location.protocol}//${window.location.host}/#/enter/${roomId}/${boardId}`;
+  // return `sage3://${window.location.host}/#/enter/${roomId}/${boardId}`;
 }
 
 export function copyBoardUrlToClipboard(roomId: string, boardId: string): void {

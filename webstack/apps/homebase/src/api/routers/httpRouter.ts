@@ -44,9 +44,10 @@ import {
   TimeRouter,
   NLPRouter,
   LogsRouter,
-  FastAPIRouter,
+  KernelsRouter,
   PresenceThrottle,
   AiRouter,
+  AgentRouter,
 } from './custom';
 
 import { config } from '../../config';
@@ -73,8 +74,8 @@ export function expressAPIRouter(): express.Router {
   // Authenticate all API Routes
   router.use(SAGEBase.Auth.authenticate);
 
-  // FastAPI Routes
-  router.use('/fastapi', FastAPIRouter());
+  // Kernels Routes
+  router.use('/kernels', KernelsRouter());
 
   // Collections
   router.use('/users', UsersCollection.router());
@@ -101,6 +102,9 @@ export function expressAPIRouter(): express.Router {
 
   // Ai Routes
   router.use('/ai', AiRouter());
+
+  // Agent Routes
+  router.use('/agents', AgentRouter());
 
   // Initialize Custom Presence Throttle
   PresenceThrottle.init();

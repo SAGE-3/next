@@ -12,7 +12,7 @@ import * as mime from 'mime';
 import hljs from 'highlight.js';
 
 hljs.configure({
-  languages: ['json', 'yaml', 'typescript', 'javascript', 'java', 'python', 'html', 'css', 'cs', 'c', 'cpp', 'r'],
+  languages: ['markdown', 'json', 'yaml', 'typescript', 'javascript', 'java', 'python', 'html', 'css', 'cs', 'c', 'cpp', 'r'],
 });
 
 // Define extra MIME types
@@ -80,6 +80,9 @@ export function isCode(mimeType: string): boolean {
 export function mimeToCode(code: string) {
   const result = 'js';
   switch (code) {
+    case 'application/python':
+    case 'text/x-python-script':
+      return 'python';
     case 'text/javascript':
     case 'application/javascript':
       return 'js';
@@ -90,6 +93,7 @@ export function mimeToCode(code: string) {
     case 'text/x-java-source':
       return 'java';
     case 'application/json':
+    case 'application/geo+json':
       return 'json';
     case 'text/yaml':
       return 'yaml';

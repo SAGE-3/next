@@ -7,8 +7,9 @@
  */
 
 // React Imports
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useParams } from 'react-router';
+import { renderToStaticMarkup } from 'react-dom/server';
 
 // Library imports
 import {
@@ -25,11 +26,13 @@ import {
   MenuItem,
 } from '@chakra-ui/react';
 import { debounce } from 'throttle-debounce';
-import { MdLock, MdLockOpen, MdRemove, MdAdd, MdFileDownload, MdFileUpload, MdOutlineLightbulb, MdCode } from 'react-icons/md';
+import { MdLock, MdLockOpen, MdRemove, MdAdd, MdFileDownload, MdFileUpload, MdCode } from 'react-icons/md';
+import { FaMarkdown } from "react-icons/fa";
 
+// Markdown
+import Markdown from 'markdown-to-jsx';
 // Date manipulation (for filename)
 import { format as dateFormat } from 'date-fns/format';
-
 // Import Monaco Editor
 import Editor, { OnMount } from '@monaco-editor/react';
 import { editor } from 'monaco-editor';
@@ -40,16 +43,14 @@ import {
   downloadFile,
   ConfirmValueModal,
   apiUrls,
-  setupApp,
-  AiAPI,
   useYjs,
   serverTime,
   useUser,
   YjsRoomConnection,
+  setupApp,
 } from '@sage3/frontend';
-import { AiQueryRequest } from '@sage3/shared';
 
-import { App, AppGroup } from '../../schema';
+import { App } from '../../schema';
 import { AppWindow } from '../../components';
 import { state as AppState } from '.';
 
@@ -58,9 +59,9 @@ import { MonacoBinding } from 'y-monaco';
 
 // CodeEditor API
 import { create } from 'zustand';
-import { generateRequest } from './ai-request-generator';
 
 const languageExtensions = [
+  { name: 'markdown', extension: 'md' },
   { name: 'json', extension: 'json' },
   { name: 'yaml', extension: 'yaml' },
   { name: 'javascript', extension: 'js' },
@@ -73,7 +74,10 @@ const languageExtensions = [
   { name: 'c', extension: 'c' },
   { name: 'java', extension: 'java' },
   { name: 'r', extension: 'r' },
-];
+].sort((a, b) => {
+  return a.name.localeCompare(b.name);
+});
+
 interface CodeStore {
   editor: { [key: string]: editor.IStandaloneCodeEditor };
   setEditor: (id: string, r: editor.IStandaloneCodeEditor) => void;
@@ -231,25 +235,13 @@ function ToolbarComponent(props: App): JSX.Element {
   const createApp = useAppStore((state) => state.create);
 
   // Editor in Store
-  const editor = useStore((state) => state.editor[props._id] as editor.IStandaloneCodeEditor);
+  // const editor = useStore((state) => state.editor[props._id] as editor.IStandaloneCodeEditor);
 
   const fontSizeBackground = useColorModeValue('teal.500', 'teal.200');
   const fontSizeColor = useColorModeValue('white', 'black');
 
-  // Online Models
-  const [onlineModels, setOnlineModels] = useState<string[]>([]);
-  const [selectedModel, setSelectedModel] = useState<string>('');
-
   // Check if the AI is online
   useEffect(() => {
-    async function fetchStatus() {
-      const response = await AiAPI.code.status();
-      setOnlineModels(response.onlineModels);
-      if (response.onlineModels.length > 0) setSelectedModel(response.onlineModels[0]);
-      else setSelectedModel('');
-    }
-    fetchStatus();
-
     // Set the title
     if (s.filename) update(props._id, { title: `CodeEditor: ${s.filename}` });
     else update(props._id, { title: `CodeEditor: ${s.language}` });
@@ -267,6 +259,22 @@ function ToolbarComponent(props: App): JSX.Element {
     const filename = 'code-' + dt + '.' + extension;
     // Go for download
     downloadFile(txturl, filename);
+  };
+
+  // Preview the markdown
+  const previewMD = (): void => {
+    if (!roomId || !boardId) return;
+    // Create a new app with the markdown
+    const elt = <Markdown>{s.content}</Markdown>;
+    const htmlResult = renderToStaticMarkup(elt);
+    const w = props.data.size.width;
+    const h = props.data.size.height;
+    const x = props.data.position.x + w + 20;
+    const y = props.data.position.y;
+    createApp(
+      setupApp('Markdown', 'IFrame', x, y, roomId, boardId, { w, h }, { doc: htmlResult })
+    );
+
   };
 
   // Save the code in the asset manager
@@ -328,108 +336,6 @@ function ToolbarComponent(props: App): JSX.Element {
     else update(props._id, { title: `CodeEditor: ${lang}` });
   }
 
-  function handleModelChange(model: string) {
-    setSelectedModel(model);
-  }
-
-  async function refactor() {
-    if (!editor) return;
-    const selection = editor.getSelection();
-    // Get the line before the selection
-    if (!selection) return;
-    const selectionText = editor.getModel()?.getValueInRange(selection);
-    if (!selectionText) return;
-    const queryRequest = {
-      input: generateRequest(s.language, selectionText, 'refactor'),
-      model: selectedModel,
-    } as AiQueryRequest;
-    const result = await AiAPI.code.query(queryRequest);
-    if (result.success && result.output) {
-      // Create new range with the same start and end line
-      editor.executeEdits('handleHighlight', [{ range: selection, text: result.output }]);
-    } else {
-      toast({
-        title: 'Refactor Code',
-        description: 'Refactor failed: ' + result.error_message,
-        status: 'warning',
-        duration: 4000,
-        isClosable: true,
-      });
-    }
-  }
-
-  // Explain the code
-  async function explain() {
-    if (!roomId || !boardId) return;
-    if (!editor) return;
-    const selection = editor.getSelection();
-    // Get the line before the selection
-    if (!selection) return;
-    const selectionText = editor.getModel()?.getValueInRange(selection);
-    if (!selectionText) return;
-    const queryRequest = {
-      input: generateRequest(s.language, selectionText, 'explain'),
-      model: selectedModel,
-    } as AiQueryRequest;
-    const result = await AiAPI.code.query(queryRequest);
-    if (result.success && result.output) {
-      const w = props.data.size.width;
-      const h = props.data.size.height;
-      const x = props.data.position.x + w + 20;
-      const y = props.data.position.y;
-      createApp(
-        setupApp('Explain Code', 'Stickie', x, y, roomId, boardId, { w, h }, { text: result.output, fontSize: 24, color: 'yellow' })
-      );
-    } else {
-      toast({
-        title: 'Explain Code',
-        description: 'Explain failed: ' + result.error_message,
-        status: 'warning',
-        duration: 4000,
-        isClosable: true,
-      });
-    }
-  }
-
-  // Comment the code
-  async function comment() {
-    if (!editor) return;
-    const selection = editor.getSelection();
-    // Get the line before the selection
-    if (!selection) return;
-    const selectionText = editor.getModel()?.getValueInRange(selection);
-    if (!selectionText) return;
-    const queryRequest = {
-      input: generateRequest(s.language, selectionText, 'comment'),
-      model: selectedModel,
-    } as AiQueryRequest;
-    const result = await AiAPI.code.query(queryRequest);
-    if (result.success && result.output) {
-      // Remove all instances of ``` from generated_text
-      const cleanedText = result.output.replace(/```/g, '');
-      editor.executeEdits('handleHighlight', [{ range: selection, text: cleanedText }]);
-    }
-  }
-
-  // Generate code
-  async function generate() {
-    if (!editor) return;
-    const selection = editor.getSelection();
-    // Get the line before the selection
-    if (!selection) return;
-    const selectionText = editor.getModel()?.getValueInRange(selection);
-    if (!selectionText) return;
-    const queryRequest = {
-      input: generateRequest(s.language, selectionText, 'generate'),
-      model: selectedModel,
-    } as AiQueryRequest;
-    const result = await AiAPI.code.query(queryRequest);
-    if (result.success && result.output) {
-      // Remove all instances of ``` from generated_text
-      const cleanedText = result.output.replace(/```/g, '');
-      editor.executeEdits('handleHighlight', [{ range: selection, text: cleanedText }]);
-    }
-  }
 
   return (
     <>
@@ -441,9 +347,9 @@ function ToolbarComponent(props: App): JSX.Element {
         message="Select a file name:"
         initiaValue={
           'code-' +
-            dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss') +
-            '.' +
-            languageExtensions.find((obj) => obj.name === s.language)?.extension || 'txt'
+          dateFormat(new Date(), 'yyyy-MM-dd-HH:mm:ss') +
+          '.' +
+          languageExtensions.find((obj) => obj.name === s.language)?.extension || 'txt'
         }
         cancelText="Cancel"
         confirmText="Save"
@@ -452,7 +358,7 @@ function ToolbarComponent(props: App): JSX.Element {
 
       <ButtonGroup isAttached size="xs" ml={1} minWidth="100px">
         <Menu placement="top-start">
-          <Tooltip hasArrow={true} label={'Remote Actions'} openDelay={300}>
+          <Tooltip hasArrow={true} label={'Language'} openDelay={300}>
             <MenuButton as={Button} colorScheme="teal" aria-label="layout" minWidth="100px">
               {s.language}
             </MenuButton>
@@ -485,14 +391,14 @@ function ToolbarComponent(props: App): JSX.Element {
         </Tooltip>
       </ButtonGroup>
 
-      <ButtonGroup isAttached size="xs" colorScheme="teal">
+      <ButtonGroup isAttached size="xs" colorScheme="teal" ml={1}>
         <Tooltip placement="top" hasArrow={true} label={s.readonly ? 'Read only' : 'Edit'} openDelay={400}>
           <Button onClick={handleReadonly} size="xs" p="0" mx="2px" colorScheme={'teal'}>
             {s.readonly ? <MdLock /> : <MdLockOpen />}
           </Button>
         </Tooltip>
       </ButtonGroup>
-      <ButtonGroup isAttached size="xs" colorScheme="teal">
+      <ButtonGroup isAttached size="xs" colorScheme="teal" ml={1}>
         <Tooltip placement="top-start" hasArrow={true} label={'Save Code in Asset Manager'} openDelay={400}>
           <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }} isDisabled={s.content.length === 0}>
             <MdFileUpload />
@@ -505,9 +411,195 @@ function ToolbarComponent(props: App): JSX.Element {
           </Button>
         </Tooltip>
       </ButtonGroup>
+      {s.language === 'markdown' && (
+        <ButtonGroup isAttached size="xs" colorScheme="teal" ml={1}>
+          <Tooltip placement="top-start" hasArrow={true} label={'Preview Markdown'} openDelay={400}>
+            <Button onClick={previewMD} _hover={{ opacity: 0.7 }}>
+              <FaMarkdown />
+            </Button>
+          </Tooltip>
+        </ButtonGroup>
+      )}
+    </>
+  );
+}
 
-      {/* AI Model selection */}
-      <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1} isDisabled={onlineModels.length == 0}>
+/**
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
+ */
+const GroupedToolbarComponent = () => { return null; };
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
+
+/*
+import {  Range } from 'monaco-editor';
+import { AiQueryRequest } from '@sage3/shared';
+import { generateRequest, generateSystemPrompt } from './ai-request-generator';
+
+  async function refactor() {
+    if (!editor) return;
+    const selection = editor.getSelection();
+    // Get the line before the selection
+    if (!selection) return;
+    const selectionText = editor.getModel()?.getValueInRange(selection);
+    if (!selectionText) return;
+    const queryRequest = {
+      prompt: generateSystemPrompt(s.language, selectionText, 'refactor'),
+      input: generateRequest(s.language, selectionText, 'refactor'),
+      model: selectedModel,
+    } as AiQueryRequest;
+    const result = await AiAPI.code.query(queryRequest);
+    if (result.success && result.output) {
+      // Create new range with the same start and end line
+      editor.executeEdits('handleHighlight', [{ range: selection, text: result.output }]);
+    } else {
+      toast({
+        title: 'Refactor Code',
+        description: 'Refactor failed: ' + result.error_message,
+        status: 'warning',
+        duration: 4000,
+        isClosable: true,
+      });
+    }
+  }
+
+  // Explain the code
+  async function explain() {
+    if (!roomId || !boardId) return;
+    if (!editor) return;
+    const selection = editor.getSelection();
+    // Get the line before the selection
+    if (!selection) return;
+    const selectionText = editor.getModel()?.getValueInRange(selection);
+    if (!selectionText) return;
+    const queryRequest = {
+      prompt: generateSystemPrompt(s.language, selectionText, 'explain'),
+      input: generateRequest(s.language, selectionText, 'explain'),
+      model: selectedModel,
+    } as AiQueryRequest;
+    const result = await AiAPI.code.query(queryRequest);
+    if (result.success && result.output) {
+      const w = props.data.size.width;
+      const h = props.data.size.height;
+      const x = props.data.position.x + w + 20;
+      const y = props.data.position.y;
+      createApp(
+        setupApp('Explain Code', 'Stickie', x, y, roomId, boardId, { w, h }, { text: result.output, fontSize: 24, color: 'yellow' })
+      );
+    } else {
+      toast({
+        title: 'Explain Code',
+        description: 'Explain failed: ' + result.error_message,
+        status: 'warning',
+        duration: 4000,
+        isClosable: true,
+      });
+    }
+  }
+
+  // Comment the code
+  async function comment() {
+    if (!editor) return;
+    const selection = editor.getSelection();
+    // Get the line before the selection
+    if (!selection) return;
+    const selectionText = editor.getModel()?.getValueInRange(selection);
+    if (!selectionText) return;
+    const queryRequest = {
+      prompt: generateSystemPrompt(s.language, selectionText, 'comment'),
+      input: generateRequest(s.language, selectionText, 'comment'),
+      model: selectedModel,
+    } as AiQueryRequest;
+    const result = await AiAPI.code.query(queryRequest);
+    if (result.success && result.output) {
+      // Remove all instances of ``` from generated text
+      const cleanedText = result.output.replace(/```.* /g, '');
+      editor.executeEdits('handleHighlight', [{ range: selection, text: cleanedText.trim() }]);
+    }
+  }
+
+// Generate code
+async function generate() {
+  if (!editor) return;
+  const selection = editor.getSelection();
+  if (!selection) return;
+  let selectionText;
+  if (selection.isEmpty()) {
+    // Get the whole document
+    selectionText = editor.getModel()?.getValue();
+  } else {
+    // Get the selected text
+    selectionText = editor.getModel()?.getValueInRange(selection);
+    // Comment out the selected text
+    editor.trigger('comment', 'editor.action.commentLine', null);
+  }
+  if (!selectionText) return;
+  const queryRequest = {
+    prompt: generateSystemPrompt(s.language, selectionText, 'generate'),
+    input: generateRequest(s.language, selectionText, 'generate'),
+    model: selectedModel,
+  } as AiQueryRequest;
+  const result = await AiAPI.code.query(queryRequest);
+  if (result.success && result.output) {
+    // Remove all instances of ``` from generated text
+    const cleanedText = result.output.replace(/```.* /g, '');
+// Get the current cursor position
+const position = editor.getPosition();
+if (!position) return;
+if (selection.isEmpty()) {
+  // Add the code after the current cursor position
+  // Create a new position right after the current cursor position
+  const newPosition = {
+    lineNumber: position.lineNumber,
+    column: position.column,
+  };
+  // The text to append
+  const textToAppend = '\n' + cleanedText.trim();
+  // Execute the edit to insert the text
+  editor.executeEdits('my-source', [
+    {
+      range: new Range(newPosition.lineNumber, newPosition.column, newPosition.lineNumber, newPosition.column),
+      text: textToAppend,
+      forceMoveMarkers: true,
+    },
+  ]);
+} else {
+  // editor.executeEdits('handleHighlight', [{ range: selection, text: cleanedText.trim() }]);
+  // Create a new position right after the current cursor position
+  const newPosition = {
+    lineNumber: position.lineNumber + 1,
+    column: position.column,
+  };
+  // Execute the edit to insert the text
+  editor.executeEdits('my-source', [
+    {
+      range: new Range(newPosition.lineNumber, newPosition.column, newPosition.lineNumber, newPosition.column),
+      text: cleanedText.trim(),
+      forceMoveMarkers: true,
+    },
+  ]);
+}
+  }
+}
+
+// Online Models
+const [onlineModels, setOnlineModels] = useState<string[]>([]);
+const [selectedModel, setSelectedModel] = useState<string>('');
+
+// Check if the AI is online
+useEffect(() => {
+  async function fetchStatus() {
+    const response = await AiAPI.code.status();
+    setOnlineModels(response.onlineModels);
+    if (response.onlineModels.length > 0) setSelectedModel(response.onlineModels[0]);
+    else setSelectedModel('');
+  }
+  fetchStatus();
+}, []);
+
+
+  <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1} isDisabled={onlineModels.length == 0}>
         <Menu placement="top-start">
           <Tooltip hasArrow={true} label={'Ai Model Selection'} openDelay={300}>
             <MenuButton as={Button} colorScheme="orange" width="100px" aria-label="layout">
@@ -524,7 +616,6 @@ function ToolbarComponent(props: App): JSX.Element {
         </Menu>
       </ButtonGroup>
 
-      {/* Smart Action */}
       <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1} isDisabled={selectedModel === ''}>
         <Menu placement="top-start">
           <Tooltip hasArrow={true} label={'Remote Actions'} openDelay={300}>
@@ -540,16 +631,5 @@ function ToolbarComponent(props: App): JSX.Element {
           </MenuList>
         </Menu>
       </ButtonGroup>
-    </>
-  );
-}
 
-/**
- * Grouped App toolbar component, this component will display when a group of apps are selected
- * @returns JSX.Element | null
- */
-const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
-  return null;
-};
-
-export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
+  */

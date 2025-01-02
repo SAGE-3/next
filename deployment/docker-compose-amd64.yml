@@ -1,6 +1,6 @@
 services:
   redis-server:
-    image: "redis/redis-stack-server:7.4.0-v0"
+    image: "redis/redis-stack-server:latest"
     volumes:
       - ./configurations/redis/data:/data
       - ./configurations/redis/conf:/conf
@@ -8,6 +8,26 @@ services:
       - "127.0.0.1:6379:6379"
     entrypoint: redis-server
     command: /conf/redis.conf
+    deploy:
+      restart_policy:
+        condition: on-failure
+  chromadb:
+    image: "chromadb/chroma:0.5.16"
+    ports:
+      - "127.0.0.1:8100:8000"
+    volumes:
+      - ./configurations/chroma/data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - CHROMA_SERVER_AUTHN_PROVIDER=chromadb.auth.basic_authn.BasicAuthenticationServerProvider
+      - CHROMA_SERVER_AUTHN_CREDENTIALS=${CHROMA_SERVER_AUTHN_CREDENTIALS}
+    command: "--workers 1 --proxy-headers --port 8000 --host 0.0.0.0 --timeout-keep-alive 30"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
     deploy:
       restart_policy:
         condition: on-failure
@@ -32,6 +52,10 @@ services:
       timeout: 30s
       retries: 3
       start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
   fluentd-server:
     image: "fluent/fluentd:edge-debian"
     ports:
@@ -42,9 +66,9 @@ services:
     logging:
       driver: "json-file"
       options:
-        max-size: "10m"
-  fastapi:
-    image: "ghcr.io/mahdi-b/sagekernelserver:amd64"
+        max-size: "100m"
+  kernelserver:
+    image: "ghcr.io/sage-3/sagekernelserver:amd64"
     ports:
       - "127.0.0.1:8000:8000"
     environment:
@@ -65,6 +89,29 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+    deploy:
+      restart_policy:
+        condition: on-failure
+  seer:
+    image: "ghcr.io/sage-3/agents:dev_amd64"
+    ports:
+      - "127.0.0.1:9999:9999"
+    environment:
+      - ENVIRONMENT=production
+      - SAGE3_SERVER=${SAGE3_SERVER}
+      - TOKEN=${TOKEN}
+      - CHROMA_SERVER_AUTHN_PROVIDER=chromadb.auth.basic_authn.BasicAuthenticationServerProvider
+      - CHROMA_CLIENT_AUTH_CREDENTIALS=${CHROMA_CLIENT_AUTH_CREDENTIALS}
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9999/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      chromadb:
+        condition: service_healthy
     deploy:
       restart_policy:
         condition: on-failure

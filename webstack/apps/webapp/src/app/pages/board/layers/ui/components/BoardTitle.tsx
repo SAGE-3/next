@@ -6,10 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 import { Box, Text, useColorModeValue } from '@chakra-ui/react';
-import { MdCloudQueue } from 'react-icons/md';
 
 import { Board, OpenConfiguration, Room } from '@sage3/shared/types';
-import { useHexColor } from '@sage3/frontend';
 
 type BoardTitleProps = {
   config: OpenConfiguration;
@@ -17,29 +15,25 @@ type BoardTitleProps = {
   board?: Board;
 };
 
-// The title of the board which includes the servername, room name, and board name
+/**
+ * Component that displays the servername, room name, and board name along with a back button.
+ * The back button allows the user to navigate back to the previous room or the homepage.
+ *
+ * @param {BoardTitleProps} props - The properties for the BoardTitle component.
+ * @param {Object} props.config - Configuration object containing server details.
+ * @param {Object} props.room - Room object containing room details.
+ * @param {Object} props.board - Board object containing board details.
+ *
+ * @returns {JSX.Element} The rendered BoardTitle component.
+ */
 export function BoardTitle(props: BoardTitleProps) {
-  const title = `${props.config?.serverName} / ${
-    (props.room?.data.name ? props.room.data.name : '') + ' / ' + (props.board?.data.name ? props.board.data.name : '')
-  }`;
-
+  const title = `${props.config?.serverName} / ${(props.room?.data.name ? props.room.data.name : '') + ' / ' + (props.board?.data.name ? props.board.data.name : '')
+    }`;
   const textColor = useColorModeValue('gray.800', 'gray.50');
-  const textColorHex = useHexColor(textColor);
-  const backgroundColor = useColorModeValue('#ffffff69', '#22222269');
 
   return (
-    <Box
-      borderRadius="md"
-      backgroundColor={backgroundColor}
-      whiteSpace={'nowrap'}
-      width="100%"
-      display="flex"
-      px={2}
-      justifyContent="left"
-      alignItems={'center'}
-    >
-      <MdCloudQueue fontSize={'22px'} color={textColorHex} />
-      <Text fontSize={'lg'} color={textColor} ml="2" userSelect="none" whiteSpace="nowrap">
+    <Box borderRadius="md" whiteSpace={'nowrap'} width="100%" display="flex" justifyContent="left" alignItems={'center'} ml="1">
+      <Text fontSize={'lg'} color={textColor} userSelect="none" ml="1" whiteSpace="nowrap">
         {title}
       </Text>
     </Box>

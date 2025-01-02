@@ -6,12 +6,23 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// Request Type
+export type AiStatusResponse = {
+  onlineModels: any[];
+};
+// Request Return Types
+export type AiQueryResponse = {
+  success: boolean;
+  output?: string;
+  error_message?: string;
+};
+
 export type AiQueryRequest = {
   input: string;
   model: string;
   max_new_tokens?: number;
   app_id?: string;
+  previousQ?: string;
+  previousA?: string;
 };
 export type AiImageQueryRequest = {
   assetid: string;
@@ -20,18 +31,24 @@ export type AiImageQueryRequest = {
   roomid?: string;
 };
 
-// Request Return Types
-export type AiQueryResponse = {
-  success: boolean;
-  output?: string;
-  error_message?: string;
-};
 export type AiJSONQueryResponse = {
   success: boolean;
   data?: any;
   error_message?: string;
 };
 
-export type AiStatusResponse = {
-  onlineModels: any[];
+export type AgentQueryType = {
+  ctx: { prompt: string; pos: number[]; roomId: string; boardId: string };
+  id: string;
+  user: string;
+  location: string;
+  q: string;
+  model: string;
+};
+
+export type AgentQueryResponse = {
+  id: string;
+  r: string;
+  success: boolean;
+  actions?: any[];
 };

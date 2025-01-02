@@ -13,20 +13,13 @@ import {
   Box,
   Button,
   ButtonGroup,
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuList,
   Textarea,
   Tooltip,
   useColorModeValue,
   useToast,
   useDisclosure,
 } from '@chakra-ui/react';
-import { MdRemove, MdAdd, MdFileDownload, MdFileUpload, MdLock, MdLockOpen, MdMenu, MdStickyNote2 } from 'react-icons/md';
-
-// Debounce updates to the textarea
-// import { debounce } from 'throttle-debounce';
+import { MdRemove, MdAdd, MdFileDownload, MdFileUpload, MdLock, MdLockOpen, MdStickyNote2 } from 'react-icons/md';
 
 // Date manipulation (for filename)
 import { format } from 'date-fns/format';
@@ -378,15 +371,15 @@ function ToolbarComponent(props: App): JSX.Element {
             <MdFileUpload />
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Download as Text'} openDelay={400}>
-          <Button onClick={downloadTxt}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Download as Markdown'} openDelay={400}>
+          <Button onClick={downloadMd}>
             <MdFileDownload />
           </Button>
         </Tooltip>
       </ButtonGroup>
 
       {/* Extra Actions */}
-      <ButtonGroup isAttached size="xs" colorScheme="teal" mr={1}>
+      {/* <ButtonGroup isAttached size="xs" colorScheme="teal" mr={1}>
         <Menu placement="top-start">
           <Tooltip hasArrow={true} label={'Actions'} openDelay={300}>
             <MenuButton as={Button} colorScheme="teal" aria-label="layout">
@@ -399,7 +392,7 @@ function ToolbarComponent(props: App): JSX.Element {
             </MenuItem>
           </MenuList>
         </Menu>
-      </ButtonGroup>
+      </ButtonGroup> */}
 
       {/* Modal for saving stickie in asset manager */}
       <ConfirmValueModal

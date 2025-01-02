@@ -8,10 +8,10 @@
 
 // React
 import { useEffect, useState } from 'react';
-import { Routes, Route, Navigate, RouteProps } from 'react-router-dom';
+import { Routes, Route, Navigate, RouteProps, useParams } from 'react-router-dom';
 
 // Chakra UI
-import { Box, Button, ChakraProvider, Text } from '@chakra-ui/react';
+import { Box, Button, ChakraProvider, CircularProgress, Spinner, Text, useToast } from '@chakra-ui/react';
 
 // SAGE3
 import {
@@ -28,10 +28,12 @@ import {
   apiUrls,
   UserSettingsProvider,
   YjsProvider,
+  APIHttp,
 } from '@sage3/frontend';
-import { OpenConfiguration } from '@sage3/shared/types';
+import { Board, BoardSchema, OpenConfiguration } from '@sage3/shared/types';
 // Pages
-import { LoginPage, HomePage, BoardPage, AccountPage, AdminPage } from './pages';
+import { LoginPage, HomePage, BoardPage, AccountPage, AdminPage, OpenDesktopPage } from './pages';
+import e from 'express';
 
 /**
  * Tries to connect for a length of time, then gives up.
@@ -92,91 +94,107 @@ export function App() {
   }, [status]);
 
   return (
-    <ChakraProvider theme={theme}>
-      <UserSettingsProvider>
-        <AuthProvider>
-          <UserProvider>
-            {status ? (
-              <Routes>
-                <Route path="/" element={<LoginPage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/enter/:roomId/:boardId" element={<CheckUrlForBoardId />} />
+    <Box position="relative" width="100vw" height="100vh">
+      <ChakraProvider theme={theme}>
+        <UserSettingsProvider>
+          <AuthProvider>
+            <UserProvider>
+              {status ? (
+                <Routes>
+                  <Route path="/" element={<LoginPage />} />
+                  <Route path="/login" element={<LoginPage />} />
 
-                <Route
-                  path="/createuser"
-                  element={
-                    <ProtectedAuthRoute>
-                      <AccountPage />
-                    </ProtectedAuthRoute>
-                  }
-                />
-                <Route
-                  path="/home/:roomId"
-                  element={
-                    <ProtectedAuthRoute>
-                      <ProtectedUserRoute>
-                        <HomePage />
-                      </ProtectedUserRoute>
-                    </ProtectedAuthRoute>
-                  }
-                />
-                <Route
-                  path="/home"
-                  element={
-                    <ProtectedAuthRoute>
-                      <ProtectedUserRoute>
-                        <HomePage />
-                      </ProtectedUserRoute>
-                    </ProtectedAuthRoute>
-                  }
-                />
+                  {/* <Route path="/enter/:roomId/:boardId" element={<CheckUrlForBoardId />} /> */}
+                  <Route path="/enter/:roomId/:boardId" element={<OpenDesktopPage />} />
 
-                <Route
-                  path="/admin"
-                  element={
-                    <ProtectedAuthRoute>
-                      <ProtectedAdminRoute>
-                        <AdminPage />
-                      </ProtectedAdminRoute>
-                    </ProtectedAuthRoute>
-                  }
-                />
+                  <Route
+                    path="/createuser"
+                    element={
+                      <ProtectedAuthRoute>
+                        <AccountPage />
+                      </ProtectedAuthRoute>
+                    }
+                  />
+                  <Route
+                    path="/home/room/:roomId"
+                    element={
+                      <ProtectedAuthRoute>
+                        <ProtectedUserRoute>
+                          <HomePage />
+                        </ProtectedUserRoute>
+                      </ProtectedAuthRoute>
+                    }
+                  />
+                  <Route
+                    path="/home/:quickAccess"
+                    element={
+                      <ProtectedAuthRoute>
+                        <ProtectedUserRoute>
+                          <HomePage />
+                        </ProtectedUserRoute>
+                      </ProtectedAuthRoute>
+                    }
+                  />
+                  <Route
+                    path="/home"
+                    element={
+                      <ProtectedAuthRoute>
+                        <ProtectedUserRoute>
+                          <HomePage />
+                        </ProtectedUserRoute>
+                      </ProtectedAuthRoute>
+                    }
+                  />
 
-                <Route
-                  path="/board/:roomId/:boardId"
-                  element={
-                    <ProtectedAuthRoute>
-                      <ProtectedUserRoute>
-                        <CursorBoardPositionProvider>
-                          <YjsProvider>
-                            <BoardPage />
-                          </YjsProvider>
-                        </CursorBoardPositionProvider>
-                      </ProtectedUserRoute>
-                    </ProtectedAuthRoute>
-                  }
-                />
-              </Routes>
-            ) : (
-              <Box display="flex" flexDir="column" alignItems="center" textAlign={'center'} justifyContent="center" height="100%">
-                <Box width="100%" maxWidth="1200px">
-                  <Text fontSize="7xl" pb="0">
-                    SAGE3
-                  </Text>
+                  <Route
+                    path="/admin"
+                    element={
+                      <ProtectedAuthRoute>
+                        <ProtectedAdminRoute>
+                          <AdminPage />
+                        </ProtectedAdminRoute>
+                      </ProtectedAuthRoute>
+                    }
+                  />
 
-                  <Text fontSize="3xl" color={color} mb="5">
-                    Lost connection to server.
-                  </Text>
-                  <Button onClick={() => window.location.reload()} colorScheme="green" size="lg">
-                    Try to reconnect
-                  </Button>
+                  <Route
+                    path="/board/:roomId/:boardId"
+                    element={
+                      <ProtectedAuthRoute>
+                        <ProtectedUserRoute>
+                          <CheckBoardExistsRoute>
+                            <CursorBoardPositionProvider>
+                              <YjsProvider>
+                                <BoardPage />
+                              </YjsProvider>
+                            </CursorBoardPositionProvider>
+                          </CheckBoardExistsRoute>
+                        </ProtectedUserRoute>
+                      </ProtectedAuthRoute>
+                    }
+                  />
+                </Routes>
+              ) : (
+                <Box display="flex" flexDir="column" alignItems="center" textAlign={'center'} justifyContent="center" height="100%">
+                  <Box width="100%" maxWidth="1200px">
+                    <Text fontSize="7xl" pb="0">
+                      SAGE3
+                    </Text>
+
+                    <Text fontSize="3xl" color={color} mb="5">
+                      Lost connection to server.
+                    </Text>
+                    <Button onClick={() => window.location.reload()} colorScheme="green" size="lg">
+                      Try to reconnect
+                    </Button>
+                  </Box>
                 </Box>
-              </Box>
-            )}
-          </UserProvider>
-        </AuthProvider>
-      </UserSettingsProvider>
-    </ChakraProvider>
+              )}
+            </UserProvider>
+          </AuthProvider>
+        </UserSettingsProvider>
+      </ChakraProvider>
+    </Box>
   );
 }
 
@@ -190,7 +208,7 @@ export default App;
 export const ProtectedAuthRoute = (props: RouteProps): JSX.Element => {
   const { auth, loading } = useAuth();
   if (loading) {
-    return <div>Loading...</div>;
+    return LoadingSpinner();
   } else {
     return auth ? <> {props.children}</> : <Navigate to="/" replace />;
   }
@@ -218,16 +236,15 @@ export const ProtectedAdminRoute = (props: RouteProps): JSX.Element => {
   const isSignedInUser = user?.data.userRole === 'user' || user?.data.userRole === 'admin';
 
   if (!user || loading || !data) {
-    return <div>Loading...</div>;
+    return LoadingSpinner();
   } else {
     const config = data as OpenConfiguration;
     // in dev mode, everybody can access the route
     if (!config.production) {
       return <> {props.children}</>;
     } else {
-      // in production, checking that the user is logged with google and in the list
-      return isSignedInUser && config.admins.includes(user?.data.email) ? <> {props.children}</> :
-        <Navigate to="/#/home" replace />;
+      // in production, checking that the user is logged properly...not a guest or spectator. And email is in the admin list.
+      return isSignedInUser && config.admins.includes(user?.data.email) ? <> {props.children}</> : <Navigate to="/#/home" replace />;
     }
   }
 };
@@ -246,7 +263,6 @@ const useConnectStatus = () => {
 
   useEffect(() => {
     function disconnected() {
-      console.log('connection issues');
       setConnection(false);
     }
     if (socket) {
@@ -259,4 +275,52 @@ const useConnectStatus = () => {
     };
   }, [socket]);
   return connected;
+};
+
+// A Route check to confirm a board exists
+export const CheckBoardExistsRoute = (props: RouteProps): JSX.Element => {
+  const { boardId, roomId } = useParams();
+
+  // Status of the check, 'pending' means it is still checking, 'exists' means the board exists, 'not-exists' means the board does not exist
+  const [status, setStatus] = useState<'pending' | 'exists' | 'not-exists'>('pending');
+
+  // Toast for when the board does not exist
+  const toast = useToast();
+
+  // UseEffect to check if the board exists
+  useEffect(() => {
+    async function checkBoard() {
+      const response = await APIHttp.GET<Board>(`/boards/${boardId}`);
+      if (response.success) {
+        setStatus('exists');
+      } else {
+        setStatus('not-exists');
+        toast({
+          title: 'Board does not exist',
+          description: 'The board you are trying to access does not exist.',
+          status: 'error',
+          duration: 9000,
+          isClosable: true,
+        });
+      }
+    }
+    checkBoard();
+  }, []);
+
+  // If status is pending, show modal that it is checking
+  if (status === 'pending') {
+    return LoadingSpinner();
+  } else {
+    return status === 'exists' ? <>{props.children}</> : <Navigate to="/home" replace />;
+  }
+};
+
+// Render a spinning chakra loading icon in the center of the page
+export const LoadingSpinner = () => {
+  const teal = useHexColor('teal');
+  return (
+    <Box width="100vw" height="100vh" display="flex" justifyContent={'center'} alignItems={'center'}>
+      <CircularProgress isIndeterminate size={'xl'} color={teal} />
+    </Box>
+  );
 };

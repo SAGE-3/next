@@ -43,20 +43,30 @@ import {
   Alert,
   AlertIcon,
   AlertDescription,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  MenuDivider,
+  Spacer,
 } from '@chakra-ui/react';
+
 import {
   MdClose,
   MdCopyAll,
   MdInfoOutline,
   MdZoomOutMap,
-  MdLock,
-  MdLockOpen,
   MdTv,
   MdAddCircleOutline,
   MdExpandMore,
   MdExpandLess,
+  MdMenu,
+  MdPushPin,
+  MdOutlinePushPin,
 } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
+import { IoMdExit } from 'react-icons/io';
+import { IoSparklesSharp } from 'react-icons/io5';
 
 import { formatDistance } from 'date-fns';
 
@@ -72,10 +82,15 @@ import {
   usePresenceStore,
   useUserSettings,
   ColorPicker,
+  truncateWithEllipsis,
+  setupApp,
+  useAssetStore,
+  apiUrls,
 } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
-import { Applications } from '@sage3/applications/apps';
+import { AI_ENABLED_APPS, Applications } from '@sage3/applications/apps';
 import { Position, Size } from '@sage3/shared/types';
+import ky from 'ky';
 
 type AppToolbarProps = {
   boardId: string;
@@ -95,11 +110,13 @@ export function AppToolbar(props: AppToolbarProps) {
   // App Store
   const apps = useThrottleApps(250);
   const deleteApp = useAppStore((state) => state.delete);
+  const createApp = useAppStore((state) => state.create);
   const update = useAppStore((state) => state.update);
   const duplicate = useAppStore((state) => state.duplicateApps);
 
   // UI Store
   const selectedApp = useUIStore((state) => state.selectedAppId);
+  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
 
   // Theme
   const background = useColorModeValue('gray.50', 'gray.700');
@@ -109,6 +126,8 @@ export function AppToolbar(props: AppToolbarProps) {
   const commonButtonColors = useColorModeValue('gray.300', 'gray.200');
   const buttonTextColor = useColorModeValue('white', 'black');
   const selectColor = useHexColor('teal');
+  const intelligenceColor = useColorModeValue('purple.500', 'purple.400');
+  const intelligenceBgColor = useColorModeValue('purple.400', 'purple.500');
 
   // Settings
   const { settings } = useUserSettings();
@@ -584,11 +603,6 @@ export function AppToolbar(props: AppToolbarProps) {
       setTagColor(color as SAGEColors);
     };
 
-    const truncateStr = (str: string) => {
-      const maxLen = 10;
-      return str.length > maxLen ? str.substring(0, maxLen) + '...' : str;
-    };
-
     return (
       <HStack spacing={1} ref={tagsContainerRef}>
         {/* Main list of tags */}
@@ -604,10 +618,10 @@ export function AppToolbar(props: AppToolbarProps) {
             colorScheme={tag.split(delimiter)[1]}
             onClick={() => openEditModal(tag)}
           >
-            <Tooltip placement="top" hasArrow={true} openDelay={400} maxWidth={"fit-content"} label={"Edit Tag"}>
-              <TagLabel m={0}>{truncateStr(tag.split(delimiter)[0])}</TagLabel>
+            <Tooltip placement="top" hasArrow={true} openDelay={400} maxWidth={'fit-content'} label={'Edit Tag'}>
+              <TagLabel m={0}>{truncateWithEllipsis(tag.split(delimiter)[0], 10)}</TagLabel>
             </Tooltip>
-            <Tooltip placement="top" hasArrow={true} openDelay={400} maxWidth={"fit-content"} label={"Delete Tag"}>
+            <Tooltip placement="top" hasArrow={true} openDelay={400} maxWidth={'fit-content'} label={'Delete Tag'}>
               <TagCloseButton
                 m={0}
                 onClick={(e) => {
@@ -622,8 +636,8 @@ export function AppToolbar(props: AppToolbarProps) {
         {/* Menu for overflow tags */}
         {overflowTags.length > 0 && (
           <Box>
-            <Tooltip placement="top" hasArrow={true} openDelay={400} label={isOverflowOpen ? 'Hide more tags.' : 'Show more tags.'}>
-              <Button size="xs" cursor="pointer" onClick={() => setIsOverflowOpen(!isOverflowOpen)}>
+            <Tooltip placement="top" hasArrow={true} openDelay={400} label={isOverflowOpen ? 'Hide more tags' : 'Show more tags'}>
+              <Button size="xs" p={0} width="30px" cursor="pointer" onClick={() => setIsOverflowOpen(!isOverflowOpen)}>
                 {isOverflowOpen ? <MdExpandLess size="14px" /> : <MdExpandMore size="14px" />}
               </Button>
             </Tooltip>
@@ -655,7 +669,7 @@ export function AppToolbar(props: AppToolbarProps) {
                       colorScheme={tag.split(delimiter)[1]}
                       onClick={() => openEditModal(tag)}
                     >
-                      <TagLabel m={0}>{truncateStr(tag.split(delimiter)[0])}</TagLabel>
+                      <TagLabel m={0}>{truncateWithEllipsis(tag.split(delimiter)[0], 10)}</TagLabel>
                       <TagCloseButton
                         m={0}
                         onClick={(e) => {
@@ -672,11 +686,13 @@ export function AppToolbar(props: AppToolbarProps) {
           </Box>
         )}
         {/* Button to add tag */}
-        <Tooltip placement="top" hasArrow={true} openDelay={400} label="Add tag">
-          <Button onClick={openAddModal} size="xs" p={0} width="30px">
-            <MdAddCircleOutline size="14px" />
-          </Button>
-        </Tooltip>
+        <Box>
+          <Tooltip placement="top" hasArrow={true} openDelay={400} label="Add tag">
+            <Button onClick={openAddModal} size="xs">
+              <MdAddCircleOutline size="14px" />
+            </Button>
+          </Tooltip>
+        </Box>
         {/* Modal for adding or editing a new tag */}
         <Modal isOpen={isModalOpen} onClose={handleCloseModal} isCentered>
           <ModalOverlay />
@@ -775,13 +791,12 @@ export function AppToolbar(props: AppToolbarProps) {
         >
           <>
             <Component key={app._id} {...app}></Component>
-
             {/* Application Information Popover */}
             <Popover trigger="hover">
               {({ isOpen, onClose }) => (
                 <>
                   <PopoverTrigger>
-                    <Button backgroundColor={commonButtonColors} size="xs" ml="2" mr="0" p={0}>
+                    <Button backgroundColor={commonButtonColors} size="xs" mx="1" p={0}>
                       <MdInfoOutline fontSize={'18px'} color={buttonTextColor} />
                     </Button>
                   </PopoverTrigger>
@@ -810,53 +825,48 @@ export function AppToolbar(props: AppToolbarProps) {
               )}
             </Popover>
 
-            {/* Common Actions */}
-            <Tooltip
-              placement="top"
-              hasArrow={true}
-              openDelay={400}
-              ml="1"
-              label={previousLocation.set && previousLocation.app === app._id ? 'Zoom Back' : 'Zoom to App'}
-            >
-              <Button onClick={() => moveToApp()} backgroundColor={commonButtonColors} size="xs" ml="1" p={0}>
-                <MdZoomOutMap size="14px" color={buttonTextColor} />
-              </Button>
-            </Tooltip>
+            {/* Hamburger */}
+            <Menu placement="top-start">
+              <Tooltip hasArrow={true} label={'Actions'} openDelay={300}>
+                <MenuButton size="xs" as={Button} backgroundColor={commonButtonColors} mr="1" p={0} display="grid" placeItems="center">
+                  <MdMenu size="14px" color={buttonTextColor} />
+                </MenuButton>
+              </Tooltip>
+              <MenuList minWidth="150px" fontSize={'sm'} py="1px" m="0">
+                <MenuItem
+                  icon={app.data.pinned ? <MdPushPin size="18px" /> : <MdOutlinePushPin size="18px" />}
+                  onClick={togglePin}
+                  isDisabled={!canPin}
+                >
+                  {app.data.pinned ? 'Unpin Application' : 'Pin Application'}
+                </MenuItem>
+                <MenuItem
+                  icon={<MdCopyAll size="18px" />}
+                  onClick={() => duplicate([app._id])}
+                  isDisabled={!canDuplicateApp}
+                  py="1px"
+                  m="0"
+                >
+                  Duplicate Application
+                </MenuItem>
+                <MenuDivider />
+                <MenuItem icon={<MdTv size="18px" />} onClick={() => scaleApp()} py="1px" m="0">
+                  {previousSize.app === app._id && previousSize.set ? 'Restore' : 'Present inside Viewport'}
+                </MenuItem>
+                <MenuItem icon={<MdZoomOutMap size="18px" />} onClick={() => moveToApp()} py="1px" m="0">
+                  {previousLocation.set && previousLocation.app === app._id ? 'Zoom Back' : 'Zoom to Application'}
+                </MenuItem>
+                <MenuDivider />
 
-            <Tooltip
-              placement="top"
-              hasArrow={true}
-              label={previousSize.app === app._id && previousSize.set ? 'Restore' : 'Present inside Viewport'}
-              openDelay={400}
-              ml="1"
-            >
-              <Button onClick={() => scaleApp()} backgroundColor={commonButtonColors} size="xs" mx="1" p={0}>
-                <MdTv size="14px" color={buttonTextColor} />
-              </Button>
-            </Tooltip>
+                <MenuItem icon={<IoMdExit size="18px" />} onClick={() => setSelectedApp('')} py="1px" m="0">
+                  Deselect Application
+                </MenuItem>
+              </MenuList>
+            </Menu>
 
-            <Tooltip placement="top" hasArrow={true} label={app.data.pinned ? 'Unpin App' : 'Pin App'} openDelay={400} ml="1">
-              <Button onClick={togglePin} backgroundColor={commonButtonColors} size="xs" mx="1" p={0} isDisabled={!canPin}>
-                {app.data.pinned ? <MdLock size="18px" color={buttonTextColor} /> : <MdLockOpen size="18px" color={buttonTextColor} />}
-              </Button>
-            </Tooltip>
-
-            <Tooltip placement="top" hasArrow={true} label={'Duplicate App'} openDelay={400} ml="1">
-              <Button
-                onClick={() => duplicate([app._id])}
-                backgroundColor={commonButtonColors}
-                size="xs"
-                mr="1"
-                p={0}
-                isDisabled={!canDuplicateApp}
-              >
-                <MdCopyAll size="14px" color={buttonTextColor} />
-              </Button>
-            </Tooltip>
-
-            <Tooltip placement="top" hasArrow={true} label={'Close App'} openDelay={400} ml="1">
-              <Button onClick={onDeleteOpen} backgroundColor={commonButtonColors} size="xs" mr="1" p={0} isDisabled={!canDeleteApp}>
-                <HiOutlineTrash size="18px" color={buttonTextColor} />
+            <Tooltip placement="top" hasArrow={true} label={'Delete Application'} openDelay={400} ml="1">
+              <Button onClick={onDeleteOpen} colorScheme="red" size="xs" mr="1" p={0} isDisabled={!canDeleteApp}>
+                <HiOutlineTrash size="18px" />
               </Button>
             </Tooltip>
 
@@ -864,13 +874,13 @@ export function AppToolbar(props: AppToolbarProps) {
               isOpen={isDeleteOpen}
               onClose={onDeleteClose}
               onConfirm={() => deleteApp(app._id)}
-              title="Delete this Application"
+              title="Delete Application"
               message="Are you sure you want to delete this application?"
               cancelText="Cancel"
               confirmText="Delete"
-              cancelColor="green"
               confirmColor="red"
               size="lg"
+              xOffSet={Math.min(0.75, (position.x + 150) / window.innerWidth)}
             />
           </>
         </ErrorBoundary>
@@ -878,7 +888,7 @@ export function AppToolbar(props: AppToolbarProps) {
     } else {
       // just the delete button
       return (
-        <Tooltip placement="top" hasArrow={true} label={'Close App'} openDelay={400} ml="1">
+        <Tooltip placement="top" hasArrow={true} label={'Close Application'} openDelay={400} ml="1">
           <Button onClick={() => app?._id && deleteApp(app._id)} backgroundColor={commonButtonColors} size="xs" mr="1" p={0}>
             <HiOutlineTrash size="18px" color={buttonTextColor} />
           </Button>
@@ -886,6 +896,72 @@ export function AppToolbar(props: AppToolbarProps) {
       );
     }
   }
+
+  /**
+   * Get the text selected by the user in the app
+   * @param id string application id
+   * @returns string | null
+   */
+  function getTextSelection(id: string): string | null {
+    const elt = document.getElementById(`app_${id}`);
+    if (elt) {
+      const ta = elt.getElementsByTagName('textarea');
+      if (ta) {
+        const start = ta[0].selectionStart;
+        const end = ta[0].selectionEnd;
+        if (start !== end) {
+          return ta[0].value.substring(start, end);
+        } else {
+          return null;
+        }
+      }
+    }
+    // Get the text selected by the user: maybe get the text from other apps
+    // const selObj = window.getSelection();
+    // if (selObj && selObj.anchorNode) {
+    //   return selObj.toString();
+    // }
+    return null;
+  }
+
+  const openChat = async () => {
+    if (app) {
+      const w = 800;
+      const h = 720;
+      const x = app.data.position.x + app.data.size.width + 20;
+      const y = app.data.position.y;
+      let context = '';
+      // Specific cases for each app to build a context for the LLM
+      if (app.data.type === 'Stickie') {
+        const selection = getTextSelection(app._id);
+        context = selection || app.data.state.text;
+      } else if (app.data.type === 'CodeEditor') {
+        const selection = getTextSelection(app._id);
+        const code = selection || app.data.state.content;
+        // Get the source code of the editor
+        context = `Language ${app.data.state.language}:\n\n${code}`;
+      } else if (app.data.type === 'CSVViewer') {
+        // Get information about the asset
+        const asset = useAssetStore.getState().assets.find((a) => a._id === app.data.state.assetid);
+        if (asset) {
+          const dl = apiUrls.assets.getAssetById(asset.data.file);
+          // get the content of the CSV file
+          const csv = await ky.get(dl).text();
+          context = csv;
+        }
+      } else {
+        // Otherwise, serialize the whole app state
+        context = JSON.stringify(app.data.state, null, 2);
+      }
+      if (context) {
+        // Create the chat app with the context
+        const source = app._id;
+        const state = setupApp('', 'Chat', x, y, props.roomId, props.boardId, { w, h }, { context, sources: [source] });
+        createApp(state);
+        useUIStore.getState().setSelectedApp('');
+      }
+    }
+  };
 
   if (showUI && app)
     return (
@@ -904,22 +980,37 @@ export function AppToolbar(props: AppToolbarProps) {
       >
         <Box display="flex" flexDirection="column">
           <Box display="flex" flexDirection="row">
-            <Text
-              textAlign="left"
-              mx={0}
-              p={0}
-              color={textColor}
-              fontSize={14}
-              fontWeight="bold"
-              h={'auto'}
-              userSelect={'none'}
-            // className="handle"
-            >
+            <Text textAlign="left" mx={0} p={0} color={textColor} fontSize={14} fontWeight="bold" h={'auto'} userSelect={'none'}>
               {app?.data.type}
             </Text>
             <Box display={showTags ? 'flex' : 'none'} pl="1">
               {getAppTags()}
             </Box>
+
+            <Spacer />
+
+            {/* Sage Intelligence */}
+            {
+              // Is app AiEnabled
+              AI_ENABLED_APPS.includes(app.data.type) && (
+                <Box>
+                  <Tooltip placement="top" hasArrow={true} openDelay={400} ml="1" label={'Chat with SAGE Intelligence'}>
+                    <Button
+                      onClick={openChat}
+                      backgroundColor={intelligenceColor}
+                      variant="solid"
+                      size="xs"
+                      m={0}
+                      mr={2}
+                      p={0}
+                      _hover={{ cursor: 'pointer', transform: 'scale(1.2)', opacity: 1, backgroundColor: intelligenceBgColor }}
+                    >
+                      <IoSparklesSharp size="16px" color={'white'} />
+                    </Button>
+                  </Tooltip>
+                </Box>
+              )
+            }
           </Box>
 
           <Box alignItems="center" mt="1" p="1" width="100%" display="flex" height="32px" userSelect={'none'}>

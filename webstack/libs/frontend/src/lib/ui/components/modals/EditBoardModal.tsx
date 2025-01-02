@@ -21,6 +21,7 @@ import {
   Box,
   Checkbox,
   useDisclosure,
+  useToast,
 } from '@chakra-ui/react';
 
 import { v5 as uuidv5 } from 'uuid';
@@ -28,7 +29,7 @@ import { MdPerson, MdLock } from 'react-icons/md';
 
 import { Board, BoardSchema } from '@sage3/shared/types';
 import { useBoardStore, useAppStore, useConfigStore, ConfirmModal } from '@sage3/frontend';
-import { SAGEColors } from '@sage3/shared';
+import { isAlphanumericWithSpacesAndForeign, SAGEColors } from '@sage3/shared';
 import { ColorPicker } from '../general';
 
 interface EditBoardModalProps {
@@ -50,6 +51,8 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
   const handleDescriptionChange = (event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value);
   const handleColorChange = (color: string) => setColor(color);
 
+  // Board Store
+  const boards = useBoardStore((state) => state.boards);
   const deleteBoard = useBoardStore((state) => state.delete);
   const updateBoard = useBoardStore((state) => state.update);
 
@@ -65,6 +68,9 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
   // Delete Confirmation  Modal
   const { isOpen: delConfirmIsOpen, onOpen: delConfirmOnOpen, onClose: delConfirmOnClose } = useDisclosure();
 
+  // Toast
+  const toast = useToast();
+
   useEffect(() => {
     setName(props.board.data.name);
     setEmail(props.board.data.description);
@@ -73,12 +79,8 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
     setPassword('');
   }, [props.board]);
 
-  // the input element
   // When the modal panel opens, select the text for quick replacing
   const initialRef = useRef<HTMLInputElement>(null);
-  // useEffect(() => {
-  //   initialRef.current?.select();
-  // }, [initialRef.current]);
 
   const setRef = useCallback((_node: HTMLInputElement) => {
     if (initialRef.current) {
@@ -96,29 +98,82 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
 
   // Update button handler
   const handleSubmit = () => {
+    let updated = false;
     if (name !== props.board.data.name) {
-      updateBoard(props.board._id, { name });
+      const cleanedName = cleanNameCheckDoubles(name, props.board.data.roomId);
+      if (cleanedName) {
+        updateBoard(props.board._id, { name: cleanedName });
+        updated = true;
+      } else {
+        return;
+      }
     }
     if (description !== props.board.data.description) {
       updateBoard(props.board._id, { description });
+      updated = true;
     }
     if (color !== props.board.data.color) {
       updateBoard(props.board._id, { color });
+      updated = true;
     }
     if (isProtected !== props.board.data.isPrivate) {
       updateBoard(props.board._id, { isPrivate: isProtected });
+      updated = true;
     }
     if (isProtected && isPasswordChanged) {
       if (password) {
         // hash the PIN: the namespace comes from the server configuration
         const key = uuidv5(password, config.namespace);
         updateBoard(props.board._id, { privatePin: key });
+        updated = true;
       } else {
         setValid(false);
       }
     }
+    if (updated) {
+      toast({
+        title: 'Board updated',
+        status: 'success',
+        duration: 2 * 1000,
+        isClosable: true,
+      });
+    }
+
     props.onClose();
   };
+
+  function cleanNameCheckDoubles(name: string, roomId: string): string | null {
+    // Remove leading and trailing space, and limit name length to 20
+    const cleanedName = name.trim().substring(0, 20);
+    // Get the names of all boards in the same room, excluding the current board
+    const boardNames = boards.filter((r) => r.data.roomId === roomId && r._id !== props.board._id).map((board) => board.data.name);
+    if (cleanedName.split(' ').join('').length === 0) {
+      toast({
+        title: 'Name must have at least one character',
+        status: 'error',
+        duration: 2 * 1000,
+        isClosable: true,
+      });
+      return null;
+    } else if (boardNames.includes(cleanedName)) {
+      toast({
+        title: 'Board name already exists',
+        status: 'error',
+        duration: 2 * 1000,
+        isClosable: true,
+      });
+      return null;
+    } else if (!isAlphanumericWithSpacesAndForeign(cleanedName)) {
+      toast({
+        title: 'Name must only contain Unicode letters, numbers, and whitespace characters',
+        status: 'error',
+        duration: 3 * 1000,
+        isClosable: true,
+      });
+      return null;
+    }
+    return cleanedName;
+  }
 
   /**
    * Delete the board: delete all the apps and the board itself
@@ -165,6 +220,7 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
               onChange={handleNameChange}
               onKeyDown={onSubmit}
               isRequired={true}
+              maxLength={20}
             />
           </InputGroup>
           <InputGroup my={4}>

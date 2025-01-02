@@ -34,9 +34,18 @@
     "databaseLevel": "partial" // all | partial | none
   },
 
-  // Fastapi python server
-  "fastapi": {
-    "url": "http://fastapi:8000"
+  // Fastapi python server for kernels
+  "kernels": {
+    "url": "http://kernelserver:8000"
+  },
+  // Fastapi python server for agents
+  "agents": {
+    "url": "http://seer:9999"
+  },
+  // Webserver configuration
+  "webserver": {
+    "logLevel": "partial", // all | partial | none,
+    "uploadLimit": "5GB" // file upload size limit in string, optional units: KB, MB, GB, TB
   },
 
   // Feedback URL
@@ -57,13 +66,29 @@
     "openai": {
       // API Key
       "apiKey": "",
-      // Model name: gpt-3.5-turbo, gpt-4, davinci, ...
-      "model": "gpt-3.5-turbo"
+      // Model name: gpt-3.5-turbo, gpt-4, gpt-4o-mini, ...
+      // "model": "gpt-3.5-turbo"
+      "model": "gpt-4o-mini"
+    },
+    "llama": {
+      // "url": "https://arcade.evl.uic.edu/llama",
+      // "model": "llama3",
+      // "max_tokens": 2048,
+      // "apiKey": ""
+      "url": "https://arcade.evl.uic.edu/llama32-11B-vision",
+      "model": "/data/11Bf",
+      "apiKey": "",
+      "max_tokens": 1000
     },
     "codellama": {
-      "url": "https://astrolab.evl.uic.edu:4343",
+      "url": "https://arcade.evl.uic.edu/llama31_8bf",
+      "model": "meta/llama-3.1-8b-instruct",
       "apiKey": "",
-      "max_tokens": 400
+      "max_tokens": 1000
+    },
+    "yolo": {
+      "url": "https://arcade.evl.uic.edu/yolov8",
+      "apiKey": ""
     }
   },
 

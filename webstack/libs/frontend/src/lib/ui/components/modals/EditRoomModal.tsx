@@ -28,8 +28,10 @@ import { MdPerson, MdLock } from 'react-icons/md';
 
 import { Room, RoomSchema } from '@sage3/shared/types';
 import { useRoomStore, useBoardStore, useAppStore, useConfigStore, ConfirmModal } from '@sage3/frontend';
-import { SAGEColors } from '@sage3/shared';
+import { isAlphanumericWithSpacesAndForeign, SAGEColors } from '@sage3/shared';
 import { ColorPicker } from '../general';
+
+import { useRouteNav } from '@sage3/frontend';
 
 interface EditRoomModalProps {
   isOpen: boolean;
@@ -39,6 +41,7 @@ interface EditRoomModalProps {
 }
 
 export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
+  const { toHome } = useRouteNav();
   // Configuration information
   const config = useConfigStore((state) => state.config);
 
@@ -50,6 +53,8 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
   const handleDescriptionChange = (event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value);
   const handleColorChange = (c: string) => setColor(c as SAGEColors);
 
+  // Rooms
+  const rooms = useRoomStore((state) => state.rooms);
   const deleteRoom = useRoomStore((state) => state.delete);
   const updateRoom = useRoomStore((state) => state.update);
 
@@ -82,7 +87,6 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
     setPassword('');
   }, [props.room]);
 
-  // the input element
   // When the modal panel opens, select the text for quick replacing
   const initialRef = React.useRef<HTMLInputElement>(null);
 
@@ -95,31 +99,90 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
   };
 
   const handleSubmit = () => {
-    updateRoom(props.room._id, { name, description, color, isListed });
+    let updated = false;
+    if (name !== props.room.data.name) {
+      const cleanedName = cleanNameCheckDoubles(name);
+      if (cleanedName) {
+        updateRoom(props.room._id, { name: cleanedName, description, color, isListed });
+        updated = true;
+      } else {
+        return;
+      }
+    }
+    if (description !== props.room.data.description) {
+      updateRoom(props.room._id, { description });
+      updated = true;
+    }
+    if (color !== props.room.data.color) {
+      updateRoom(props.room._id, { color });
+      updated = true;
+    }
+    if (isListed !== props.room.data.isListed) {
+      updateRoom(props.room._id, { isListed });
+      updated = true;
+    }
 
     if (passwordChanged) {
       if (!isProtected) {
+        updated = true;
+
         updateRoom(props.room._id, { privatePin: '', isPrivate: false });
       } else {
         if (password === '') {
+          updated = true;
           updateRoom(props.room._id, { privatePin: '', isPrivate: false });
         } else {
+          updated = true;
+
           // hash the PIN: the namespace comes from the server configuration
           const key = uuidv5(password, config.namespace);
           updateRoom(props.room._id, { privatePin: key, isPrivate: true });
         }
       }
+      setPasswordChanged(false);
+    }
+    if (updated) {
       toast({
         title: 'Room Updated',
-        description: 'Room password has been updated',
+        description: 'Room has been updated',
         status: 'success',
         duration: 3000,
       });
-      setPasswordChanged(false);
+      props.onClose();
     }
-
-    props.onClose();
   };
+
+  function cleanNameCheckDoubles(name: string): string | null {
+    // Remove leading and trailing space, and limit name length to 20
+    const cleanedName = name.trim().substring(0, 19);
+    const roomNames = rooms.filter((r) => r._id !== props.room._id).map((room) => room.data.name);
+    if (cleanedName.split(' ').join('').length === 0) {
+      toast({
+        title: 'Name must have at least one character',
+        status: 'error',
+        duration: 2 * 1000,
+        isClosable: true,
+      });
+      return null;
+    } else if (roomNames.includes(cleanedName)) {
+      toast({
+        title: 'Room name already exists',
+        status: 'error',
+        duration: 2 * 1000,
+        isClosable: true,
+      });
+      return null;
+    } else if (!isAlphanumericWithSpacesAndForeign(cleanedName)) {
+      toast({
+        title: 'Name must only contain Unicode letters, numbers, and whitespace characters',
+        status: 'error',
+        duration: 3 * 1000,
+        isClosable: true,
+      });
+      return null;
+    }
+    return cleanedName;
+  }
 
   /**
    * Delete the room and its boards and its apps
@@ -141,6 +204,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
     });
     // delete the room
     deleteRoom(props.room._id);
+    toHome();
   };
 
   // To enable/disable

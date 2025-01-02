@@ -413,6 +413,21 @@ export async function setupAppForFile(
       dragging: false,
       pinned: false,
     };
+  } else {
+    // Create a generic asset link
+    return {
+      title: 'Asset',
+      roomId: roomId,
+      boardId: boardId,
+      position: { x: xDrop - 200, y: yDrop - 200, z: 0 },
+      size: { width: 400, height: 375, depth: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'AssetLink',
+      state: { ...initialValues['AssetLink'], assetid: file.id },
+      raised: true,
+      dragging: false,
+      pinned: false,
+    };
   }
   return null;
 }

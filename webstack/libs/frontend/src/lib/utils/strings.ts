@@ -6,6 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { format } from 'date-fns/format';
+
 /**
  * Same as charAt() but supports unicode and odd characters
  * From:
@@ -76,18 +78,6 @@ export function truncateWithEllipsis(str: string, n: number): string {
  */
 export function zeroPad(num: number, places: number): string {
   return String(num).padStart(places, '0');
-}
-
-/**
- * Return a string for a file size number
- *
- * @param {number} size
- * @returns {string}
- */
-export function humanFileSize(size: number): string {
-  const i = Math.floor(Math.log(size) / Math.log(1024));
-  const val = Number((size / Math.pow(1024, i)).toFixed(1));
-  return val + ' ' + ['B', 'kB', 'MB', 'GB', 'TB'][i];
 }
 
 /**
@@ -260,4 +250,10 @@ function splitUri(uri: string) {
   // eslint-disable-next-line no-useless-escape
   const splitted = uri.match(/(?:([^:\/?#]+):)?(?:\/\/([^\/?#]*))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?/);
   return splitted;
+}
+
+// Uses date-fn to format a UTC timestamp to a human readable string
+// https://date-fns.org/v2.21.1/docs/format
+export function formatDateAndTime(date: number | string): string {
+  return format(date, 'MMM do, yyyy h:mmaaa');
 }

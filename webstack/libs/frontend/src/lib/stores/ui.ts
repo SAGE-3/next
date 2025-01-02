@@ -14,16 +14,15 @@ import { mountStoreDevtool } from 'simple-zustand-devtools';
 import { App } from '@sage3/applications/schema';
 import { SAGEColors } from '@sage3/shared';
 import { Position, Size } from '@sage3/shared/types';
-
 import { useAppStore } from './app';
 
-// Zoom limits, from 30% to 400%
-const MinZoom = 0.1;
-const MaxZoom = 3;
+// Zoom limits, from 2% to 300%
+export const MinZoom = 0.1;
+export const MaxZoom = 6;
 // When using mouse wheel, repeated events
-const WheelStepZoom = 0.008;
+export const WheelStepZoom = 0.008;
 
-type DrawingMode = 'none' | 'pen' | 'eraser';
+// type DrawingMode = 'none' | 'pen' | 'eraser';
 
 interface UIState {
   scale: number;
@@ -62,7 +61,6 @@ interface UIState {
   setSelectedTag: (value: string) => void;
 
   // whiteboard
-  whiteboardMode: DrawingMode;
   clearMarkers: boolean;
   clearAllMarkers: boolean;
   undoLastMarker: boolean;
@@ -70,7 +68,6 @@ interface UIState {
   markerSize: number;
   markerOpacity: number;
   setMarkerColor: (color: SAGEColors) => void;
-  setWhiteboardMode: (mode: DrawingMode) => void;
   setClearMarkers: (clear: boolean) => void;
   setUndoLastMarker: (undo: boolean) => void;
   setClearAllMarkers: (clear: boolean) => void;
@@ -91,6 +88,16 @@ interface UIState {
   setAppToolbarPosition: (pos: { x: number; y: number }) => void;
   contextMenuPosition: { x: number; y: number };
   setContextMenuPosition: (pos: { x: number; y: number }) => void;
+  contextMenuOpen: boolean;
+  setContextMenuOpen: (open: boolean) => void;
+
+  // RndSafety: to fix appWindows from disappearing
+  rndSafeForAction: boolean;
+  setRndSafeForAction: (isSafe: boolean) => void;
+
+  // Position Syncronization Information
+  boardSynced: boolean; // informs when the local position & scale (in Background Layer) is out of sync with useUIStore position & scale (This)
+  setBoardSynced: (synced: boolean) => void;
 
   setBoardPosition: (pos: { x: number; y: number }) => void;
   resetBoardPosition: () => void;
@@ -134,7 +141,6 @@ export const useUIStore = create<UIState>()((set, get) => ({
   lassoColor: 'red',
   clearLassos: false,
   clearAllLassos: false,
-  whiteboardMode: 'none',
   markerColor: 'red',
   markerSize: 8,
   markerOpacity: 0.6,
@@ -143,9 +149,18 @@ export const useUIStore = create<UIState>()((set, get) => ({
   undoLastMarker: false,
   roomlistShowFavorites: true,
   selectedAppId: '',
+
+  rndSafeForAction: true,
+  setRndSafeForAction: (isSafe: boolean) => set((state) => ({ ...state, rndSafeForAction: isSafe })),
+
+  boardSynced: true,
+  setBoardSynced: (synced: boolean) => set((state) => ({ ...state, boardSynced: synced })),
+
   boardPosition: { x: 0, y: 0 },
   appToolbarPanelPosition: { x: 16, y: window.innerHeight - 80 },
   contextMenuPosition: { x: 0, y: 0 },
+  contextMenuOpen: false,
+  setContextMenuOpen: (open: boolean) => set((state) => ({ ...state, contextMenuOpen: open })),
   viewport: { position: { x: 0, y: 0 }, size: { width: 0, height: 0 } },
   setViewport: (position: Omit<Position, 'z'>, size: Omit<Size, 'depth'>) => set((state) => ({ ...state, viewport: { position, size } })),
   boardLocked: false,
@@ -249,7 +264,6 @@ export const useUIStore = create<UIState>()((set, get) => ({
   setSavedSelectedAppsIds: () => set((state) => ({ ...state, savedSelectedAppsIds: get().selectedAppsIds })),
   clearSavedSelectedAppsIds: () => set((state) => ({ ...state, savedSelectedAppsIds: [] })),
 
-  setWhiteboardMode: (mode: DrawingMode) => set((state) => ({ ...state, whiteboardMode: mode })),
   setClearMarkers: (clear: boolean) => set((state) => ({ ...state, clearMarkers: clear })),
   setClearAllMarkers: (clear: boolean) => set((state) => ({ ...state, clearAllMarkers: clear })),
   setMarkerColor: (color: SAGEColors) => set((state) => ({ ...state, markerColor: color })),
@@ -313,7 +327,13 @@ export const useUIStore = create<UIState>()((set, get) => ({
           const pos = zoomOnLocationNewPosition(b, { x: cursor.x, y: cursor.y }, s, zoomInVal);
           return { ...state, boardPosition: pos, scale: zoomInVal };
         } else {
-          return { ...state, scale: zoomInVal };
+          // Zoom towards the center of the screen
+          const b = get().boardPosition;
+          const s = get().scale;
+          const wx = window.innerWidth / 2;
+          const wy = window.innerHeight / 2;
+          const pos = zoomOnLocationNewPosition(b, { x: wx, y: wy }, s, zoomInVal);
+          return { ...state, boardPosition: pos, scale: zoomInVal };
         }
       });
   },
@@ -328,7 +348,12 @@ export const useUIStore = create<UIState>()((set, get) => ({
           const pos = zoomOnLocationNewPosition(b, { x: cursor.x, y: cursor.y }, s, zoomOutVal);
           return { ...state, boardPosition: pos, scale: zoomOutVal };
         } else {
-          return { ...state, scale: zoomOutVal };
+          const b = get().boardPosition;
+          const s = get().scale;
+          const wx = window.innerWidth / 2;
+          const wy = window.innerHeight / 2;
+          const pos = zoomOnLocationNewPosition(b, { x: wx, y: wy }, s, zoomOutVal);
+          return { ...state, boardPosition: pos, scale: zoomOutVal };
         }
       });
   },
