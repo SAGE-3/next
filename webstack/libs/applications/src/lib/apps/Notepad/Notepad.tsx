@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useRef } from 'react';
-import { ButtonGroup, Button, Tooltip, Box, Menu, MenuButton, MenuList, MenuItem } from '@chakra-ui/react';
+import { ButtonGroup, Button, Tooltip, Box, Menu, MenuButton, MenuList, MenuItem, useColorModeValue } from '@chakra-ui/react';
 
 // Yjs Imports
 import { QuillBinding } from 'y-quill';
@@ -100,6 +100,9 @@ function AppComponent(props: App): JSX.Element {
   // Yjs and Quill State
   const { yApps } = useYjs();
 
+  // Background Color mode value
+  const bgColorMode = useColorModeValue('#e5e5e5', 'gray.700');
+
   // Debounce Updates
   const debounceUpdate = debounce(1000, (quillEditor: Quill) => {
     const content = quillEditor.getContents();
@@ -170,9 +173,9 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <Box w="100%" h="100%">
+      <Box w="100%" h="100%" background={bgColorMode}>
         <div ref={toolbarRef} hidden style={{ display: 'none' }}></div>
-        <div ref={quillRef} style={{ width: '100%', height: '100%', backgroundColor: '#e5e5e5' }}></div>
+        <div ref={quillRef} style={{ width: '100%', height: '100%', backgroundColor: '' }}></div>
       </Box>
     </AppWindow>
   );
