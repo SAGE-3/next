@@ -2,6 +2,7 @@
 /keys/*.crt
 /keys/*.key
 /keys/*.pem
+/keys/*.lock
 
 # compiled output
 /dist
@@ -40,6 +41,8 @@ npm-debug.log
 yarn-error.log
 testem.log
 /typings
+
+
 
 # System Files
 .DS_Store
