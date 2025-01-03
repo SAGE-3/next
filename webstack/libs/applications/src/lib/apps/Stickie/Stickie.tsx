@@ -77,29 +77,25 @@ function AppComponent(props: App): JSX.Element {
     setFontSize(s.fontSize);
   }, [s.fontSize]);
 
-  const connectToYjs = async (textArea: any, yRoom: YjsRoomConnection) => {
+  const connectToYjs = async (textArea: HTMLTextAreaElement, yRoom: YjsRoomConnection) => {
     const yText = yRoom.doc.getText(props._id);
     const provider = yRoom.provider;
 
-    if (!textArea.__yjsBound) {
-      new TextAreaBinding(yText, textArea);
-      textArea.__yjsBound = true;
-    }
+    // Ensure we are always operating on the same line endings
+    new TextAreaBinding(yText, textArea);
     const users = provider.awareness.getStates();
     const count = users.size;
 
     // Sync current ydoc with that is saved in the database
     const syncStateWithDatabase = () => {
-      if (yText.toString() !== s.text) {
-        // Clear any existing lines
-        yText.delete(0, yText.length);
-        // Set the lines from the database
-        yText.insert(0, s.text);
-      }
+      // Clear any existing lines
+      yText.delete(0, yText.length);
+      // Set the lines from the database
+      yText.insert(0, s.text);
     };
 
     // If I am the only one here according to Yjs, then sync with database
-    if (count && yText.toString() !== s.text) {
+    if (count == 1) {
       syncStateWithDatabase();
     } else if (count > 1 && props._createdBy === user?._id) {
       // There are other users here and I created this app.
@@ -107,7 +103,8 @@ function AppComponent(props: App): JSX.Element {
       const now = await serverTime();
       const created = props._createdAt;
       // Then we need to sync with database due to Yjs not being able to catch the initial state
-      if (now.epoch - created < 5000 && yText.toString() !== s.text) {
+      if (now.epoch - created < 5000) {
+        // I created this
         syncStateWithDatabase();
       }
     }
