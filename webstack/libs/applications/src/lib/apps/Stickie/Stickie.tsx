@@ -9,16 +9,7 @@
 // Import the React library
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router';
-import {
-  Box,
-  Button,
-  ButtonGroup,
-  Textarea,
-  Tooltip,
-  useColorModeValue,
-  useToast,
-  useDisclosure,
-} from '@chakra-ui/react';
+import { Box, Button, ButtonGroup, Textarea, Tooltip, useColorModeValue, useToast, useDisclosure } from '@chakra-ui/react';
 import { MdRemove, MdAdd, MdFileDownload, MdFileUpload, MdLock, MdLockOpen, MdStickyNote2 } from 'react-icons/md';
 
 // Date manipulation (for filename)

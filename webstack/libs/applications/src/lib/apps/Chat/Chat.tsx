@@ -782,11 +782,14 @@ function AppComponent(props: App): JSX.Element {
     { title: 'Web Summary', action: onContentWeb, prompt: 'Summarize concisely this webpage.' },
     { title: 'Find Links', action: onContentWeb, prompt: 'What are the main links that I should read to expand on the subject matter.' },
     { title: 'Find PDF', action: onContentWeb, prompt: 'Find the PDF in the page.' },
-    { title: 'Generate Keywords', action: onContentWeb, prompt: 'Extract 3-5 keywords that best capture the essence and subject matter of the text.' },
+    {
+      title: 'Generate Keywords',
+      action: onContentWeb,
+      prompt: 'Extract 3-5 keywords that best capture the essence and subject matter of the text.',
+    },
     { title: 'Find Facts', action: onContentWeb, prompt: 'Provide two or three interesting facts from the text.' },
     { title: 'Screenshot', action: onContentWebScreenshot, prompt: 'Take a screenshot' },
   ];
-
 
   // Code section
   const onContentCode = async (prompt: string, method: string) => {
@@ -1175,7 +1178,7 @@ function AppComponent(props: App): JSX.Element {
               width: '12px',
             },
             '&::-webkit-scrollbar-track': {
-              '-webkit-box-shadow': 'inset 0 0 6px rgba(0,0,0,0.00)',
+              WebkitBoxShadow: 'inset 0 0 6px rgba(0,0,0,0.00)',
             },
             '&::-webkit-scrollbar-thumb': {
               backgroundColor: `${scrollColor}`,
@@ -1793,7 +1796,9 @@ function AppComponent(props: App): JSX.Element {
                   width="34%"
                 >
                   <HiCommandLine fontSize={'24px'} />
-                  <Text key={'text' + i} ml={'2'}>{p.title}</Text>
+                  <Text key={'text' + i} ml={'2'}>
+                    {p.title}
+                  </Text>
                 </Button>
               </Tooltip>
             ))}
