@@ -16,7 +16,7 @@ cp .env.template .env
 # Switch fluent to prod mode
 cp configurations/fluentd/conf/fluent-prod.conf configurations/fluentd/conf/fluent.conf
 
-VERSION=1.3-macos-arm64
+VERSION=1.4-macos-arm64
 rm -f SAGE3-${VERSION}.tgz
 
-gtar --exclude ".DS_Store" --exclude ".gitignore" --transform 's/^/SAGE3-1.3\//' -cvzf SAGE3-${VERSION}.tgz README.md configurations GO docker-compose.yml STOP .env
+gtar --exclude ".DS_Store" --exclude ".gitignore" --transform 's/^/SAGE3-1.4\//' -cvzf SAGE3-${VERSION}.tgz README.md configurations GO docker-compose.yml STOP .env
