@@ -2,6 +2,7 @@
   "name": "SAGE3 - Collaborate Smarter",
   "short_name": "SAGE3",
   "start_url": "index.html",
+  "id": "com.sage3.webapp",
   "icons": [
     {
       "src": "android-chrome-192x192.png",
@@ -17,5 +18,21 @@
   "prefer_related_applications": true,
   "theme_color": "#9EA587",
   "background_color": "#ffffff",
-  "display": "standalone"
+  "display": "standalone",
+  "orientation": "landscape",
+  "screenshots": [
+    {
+      "src": "screenshot1.webp",
+      "sizes": "1280x584",
+      "type": "image/webp",
+      "form_factor": "wide",
+      "label": "Home screen showing rooms and boards"
+    },
+    {
+      "src": "screenshot2.webp",
+      "sizes": "590x1280",
+      "type": "image/webp",
+      "label": "Board view"
+    }
+  ]
 }
