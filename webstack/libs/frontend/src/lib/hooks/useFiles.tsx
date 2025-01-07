@@ -33,7 +33,6 @@ import {
   isTiff,
   isSessionFile,
   isCode,
-  isPythonNotebook,
   mimeToCode,
 } from '@sage3/shared';
 import { App, AppName, AppSchema, AppState } from '@sage3/applications/schema';
@@ -42,7 +41,7 @@ import { Asset, ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 
 import { apiUrls } from '../config';
 import { useUser } from '../providers';
-import { useAssetStore, useAppStore, useUIStore, useConfigStore } from '../stores';
+import { useAssetStore, useAppStore, useUIStore } from '../stores';
 
 /**
  * Setup data structure to open an application
@@ -83,10 +82,9 @@ export function setupApp(
 // Functions to export
 type UseFiles = {
   uploadFiles: (input: File[], dx: number, dy: number, roomId: string, boardId: string) => void;
-  openAppForFile: (fileID: string, xDrop: number, yDrop: number, roomId: string, boardId: string,) => Promise<AppSchema | null>;
+  openAppForFile: (fileID: string, xDrop: number, yDrop: number, roomId: string, boardId: string) => Promise<AppSchema | null>;
   uploadInProgress: boolean;
 };
-
 
 /**
  * Open an application for a given asset
@@ -140,22 +138,21 @@ async function openApplication(a: Asset, xDrop: number, yDrop: number, roomId: s
     // Get Language from mimetype
     const lang = mimeToCode(a.data.mimetype);
     // Create a note from the text
-    return setupApp('CodeEditor', 'CodeEditor', xDrop, yDrop, roomId, boardId, { w: 850, h: 400 },
-      { content: text, language: lang, filename: a.data.originalfilename });
-  } else if (isGIF(fileType)) {
-    const extras = a.data.derived as ExtraImageType;
-    const imw = w;
-    const imh = w / (extras.aspectRatio || 1);
     return setupApp(
-      a.data.originalfilename,
-      'ImageViewer',
+      'CodeEditor',
+      'CodeEditor',
       xDrop,
       yDrop,
       roomId,
       boardId,
-      { w: imw, h: imh },
-      { assetid: fileID }
+      { w: 850, h: 400 },
+      { content: text, language: lang, filename: a.data.originalfilename }
     );
+  } else if (isGIF(fileType)) {
+    const extras = a.data.derived as ExtraImageType;
+    const imw = w;
+    const imh = w / (extras.aspectRatio || 1);
+    return setupApp(a.data.originalfilename, 'ImageViewer', xDrop, yDrop, roomId, boardId, { w: imw, h: imh }, { assetid: fileID });
   } else if (isImage(fileType)) {
     // Check if it is a GeoTiff in disguise
     if (isTiff(fileType)) {
@@ -232,41 +229,6 @@ async function openApplication(a: Asset, xDrop: number, yDrop: number, roomId: s
     const text = await response.text();
     // Create a note from the text
     return setupApp('SageCell', 'SageCell', xDrop, yDrop, roomId, boardId, { w: 400, h: 400 }, { code: text });
-  } else if (isPythonNotebook(fileType)) {
-    console.log('Jupyter> drag notebook')
-    // Look for the file in the asset store
-    const localurl = apiUrls.assets.getAssetById(a.data.file);
-    // Get the content of the file
-    const response = await fetch(localurl, {
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-    });
-    const json = await response.json();
-    // Create a notebook file in Jupyter with the content of the file
-    const conf = useConfigStore.getState().config;
-    // const conf = await GetConfiguration();
-    if (conf.token) {
-      // Create a new notebook
-      const base = `http://${window.location.hostname}:8888`;
-      // Talk to the jupyter server API
-      const j_url = base + apiUrls.assets.getNotebookByName(a.data.originalfilename);
-      const payload = { type: 'notebook', path: '/notebooks', format: 'json', content: json };
-      // Create a new notebook
-      const response = await fetch(j_url, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Token ' + conf.token,
-        },
-        body: JSON.stringify(payload),
-      });
-      const res = await response.json();
-      console.log('Jupyter> notebook created', res);
-      // Create a note from the json
-      return setupApp('', 'JupyterLab', xDrop, yDrop, roomId, boardId, { w: 700, h: 700 }, { notebook: a.data.originalfilename });
-    }
   } else if (isJSON(fileType)) {
     const localurl = apiUrls.assets.getAssetById(a.data.file);
     // Get the content of the file
@@ -304,7 +266,7 @@ async function openApplication(a: Asset, xDrop: number, yDrop: number, roomId: s
  *
  * @param a Asset containing the session file
  * @param xDrop X coordinate where to place the session
- * @param yDrop Y coordinate where to place the session  
+ * @param yDrop Y coordinate where to place the session
  * @param roomId Current room ID
  * @param boardId Current board ID
  * @returns Array of app schemas or null
@@ -333,7 +295,7 @@ async function openSession(a: Asset, xDrop: number, yDrop: number, roomId: strin
   const batch: AppSchema[] = [];
   // Rebuild each app from the session
   for (const app of apps) {
-    // Handle apps with associated assets 
+    // Handle apps with associated assets
     if (app.data.state.assetid) {
       // Find the asset in the session
       const asset = newassets.find((a) => a.id === app.data.state.assetid);
@@ -389,7 +351,13 @@ async function openSession(a: Asset, xDrop: number, yDrop: number, roomId: strin
  * @param {string} boardId - The ID of the board
  * @returns {Promise<AppSchema[] | null>} - The schema of the created application(s) or null
  */
-async function createApplicationAfterUpload(assetid: string, xpos: number, ypos: number, roomId: string, boardId: string): Promise<AppSchema[] | null> {
+async function createApplicationAfterUpload(
+  assetid: string,
+  xpos: number,
+  ypos: number,
+  roomId: string,
+  boardId: string
+): Promise<AppSchema[] | null> {
   const assets = useAssetStore.getState().assets;
   for (const a of assets) {
     if (a._id === assetid) {
@@ -398,7 +366,8 @@ async function createApplicationAfterUpload(assetid: string, xpos: number, ypos:
         return sess;
       } else {
         const res = await openApplication(a, xpos, ypos, roomId, boardId);
-        if (res) return [res]; else return null;
+        if (res) return [res];
+        else return null;
       }
     }
   }
@@ -458,7 +427,6 @@ export function useFiles(): UseFiles {
 
     // When uplaod is done, open the apps
     openApps();
-
   }, [uploadSuccess, configDrop]);
 
   /**
@@ -501,7 +469,7 @@ export function useFiles(): UseFiles {
         } else {
           let item;
           // Rename file for called image.png coming from the clipboard
-          if (input[i].name === "image.png") {
+          if (input[i].name === 'image.png') {
             // Create a more meaningful name
             const dt = dateFormat(new Date(), 'yyyy-MM-dd-HH_mm_ss');
             const username = user?.data.name || 'user';
