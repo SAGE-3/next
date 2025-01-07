@@ -18,7 +18,7 @@ hljs.configure({
 // Define extra MIME types
 mime.define(
   {
-    // 'application/x-ipynb+json': ['ipynb'],
+    'application/x-ipynb+json': ['ipynb'],
     'application/dzi': ['dzi'],
     'application/python': ['py'],
     'application/url': ['url'],
@@ -227,6 +227,17 @@ export function isVideo(mimeType: string): boolean {
  */
 export function isAudio(mimeType: string): boolean {
   return mimeType.startsWith('audio/');
+}
+
+/**
+ * Test if a given mime type is a notebook
+ *
+ * @export
+ * @param {string} mimeType
+ * @returns {boolean}
+ */
+export function isPythonNotebook(mimeType: string): boolean {
+  return mimeType === 'application/x-ipynb+json';
 }
 
 /**
