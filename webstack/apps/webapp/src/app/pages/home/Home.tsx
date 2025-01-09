@@ -717,13 +717,17 @@ export function HomePage() {
   // Handle Join room membership
   const handleJoinRoomMembership = (room: Room) => {
     if (canJoin) {
-      joinRoomMembership(room._id);
-      toast({
-        title: `You have successfully joined ${room.data.name}`,
-        status: 'success',
-        duration: 4 * 1000,
-        isClosable: true,
-      });
+      if (room.data.isPrivate) {
+        setPasswordProtectedRoom(room);
+      } else {
+        joinRoomMembership(room._id);
+        toast({
+          title: `You have successfully joined ${room.data.name}`,
+          status: 'success',
+          duration: 4 * 1000,
+          isClosable: true,
+        });
+      }
     } else {
       toast({
         title: 'You do not have permission to join rooms',
@@ -986,7 +990,7 @@ export function HomePage() {
         height="100%"
         display="flex"
         flexDirection="column"
-      // borderRight={`solid ${dividerColor} 1px`}
+        // borderRight={`solid ${dividerColor} 1px`}
       >
         {/* Server selection and main actions */}
         {/* <Box padding="2" borderRadius={cardRadius} background={sidebarBackgroundColor}> */}
@@ -1880,7 +1884,7 @@ export function HomePage() {
 
                             <Text fontSize="xs" color={subTextColor}>
                               {room.data.ownerId === userId ||
-                                members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
+                              members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
                                 room.data.ownerId === userId ? (
                                   <Tag size="sm" width="100px" display="flex" justifyContent="center" colorScheme="green">
                                     Owner
