@@ -42,11 +42,11 @@ import {
   MdSearch,
   MdRemoveRedEye,
   MdHelpOutline,
-  MdSquare,
   MdPerson,
 } from 'react-icons/md';
 import { BiChevronDown, BiChevronUp } from 'react-icons/bi';
 import { IoSparklesSharp } from 'react-icons/io5';
+import { IoMdSquareOutline } from 'react-icons/io';
 
 import {
   useAuth,
@@ -71,7 +71,6 @@ import {
 import { IntelligenceMenu } from './Menus';
 
 import { Board, OpenConfiguration } from '@sage3/shared/types';
-import { IoMdSquareOutline } from 'react-icons/io';
 
 type MainButtonProps = {
   buttonStyle?: 'solid' | 'outline' | 'ghost';
