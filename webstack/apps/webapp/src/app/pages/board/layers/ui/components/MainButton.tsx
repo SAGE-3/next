@@ -277,7 +277,8 @@ export function MainButton(props: MainButtonProps) {
           </MenuButton>
         )}
 
-        <MenuList maxHeight="60vh" overflowY={'auto'} overflowX="clip" width={props.boardInfo ? '100%' : '300px'} p="2px" m="0">
+        <MenuList maxHeight="60vh" overflowY={'auto'} overflowX="clip" width={props.boardInfo ? '100%' : '20%'}
+          minWidth="220px" maxWidth="400px" p="2px" m="0">
           <MenuGroup title="SAGE3" p="0" m="1">
             {props.boardInfo && (
               <MenuItem py="1px" m="0" onClick={handleHelpOpen} icon={<MdHelpOutline size="24px" />} justifyContent="right">
@@ -320,7 +321,7 @@ export function MainButton(props: MainButtonProps) {
                 >
                   Go To Board
                 </MenuButton>
-                <MenuList maxHeight="50vh" overflowY={'auto'} overflowX="clip" width="300px">
+                <MenuList maxHeight="50vh" overflowY={'auto'} overflowX="clip" width="280px">
                   <MenuGroup title={`${props.boardInfo.roomName} Boards`}>
                     {boards.map(
                       (board) =>
