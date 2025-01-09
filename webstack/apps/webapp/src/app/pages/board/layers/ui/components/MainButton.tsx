@@ -42,6 +42,8 @@ import {
   MdSearch,
   MdRemoveRedEye,
   MdHelpOutline,
+  MdSquare,
+  MdPerson,
 } from 'react-icons/md';
 import { BiChevronDown, BiChevronUp } from 'react-icons/bi';
 import { IoSparklesSharp } from 'react-icons/io5';
@@ -69,6 +71,7 @@ import {
 import { IntelligenceMenu } from './Menus';
 
 import { Board, OpenConfiguration } from '@sage3/shared/types';
+import { IoMdSquareOutline } from 'react-icons/io';
 
 type MainButtonProps = {
   buttonStyle?: 'solid' | 'outline' | 'ghost';
@@ -85,7 +88,9 @@ type MainButtonProps = {
  */
 export function MainButton(props: MainButtonProps) {
   const { user } = useUser();
-  const name = user ? truncateWithEllipsis(user.data.name, 25) : '';
+  const longName = user ? truncateWithEllipsis(user.data.name, 20) : '';
+  const shortName = user ? truncateWithEllipsis(user.data.name, 10) : '';
+  const isWall = user?.data.userType === 'wall';
 
   const userColorValue = user?.data.color ? user.data.color : 'teal';
   const userColor = useHexColor(userColorValue);
@@ -229,8 +234,18 @@ export function MainButton(props: MainButtonProps) {
               variant={props.buttonStyle ? props.buttonStyle : 'outline'}
               colorScheme={user?.data.color ? user.data.color : 'white'}
             >
-              <Box textOverflow={'ellipsis'} overflow={'hidden'} fontSize="sm" alignContent={'center'}>
-                {name}
+              <Box
+                textOverflow={'ellipsis'}
+                overflow={'hidden'}
+                fontSize="sm"
+                alignContent={'center'}
+                display="flex"
+                alignItems={'center'}
+                gap="1px"
+              >
+                {isWall ? <IoMdSquareOutline /> : <MdPerson />}
+
+                {shortName}
               </Box>
             </MenuButton>
           </Tooltip>
@@ -249,9 +264,10 @@ export function MainButton(props: MainButtonProps) {
             _hover={{ cursor: 'pointer' }}
           >
             <Box display="flex" justifyContent={'space-between'} alignItems={'center'}>
-              <Box display="flex" pl="4">
+              <Box display="flex" pl="4" gap="1" alignItems={'center'}>
+                {isWall ? <IoMdSquareOutline /> : <MdPerson />}
                 <Text fontSize="md" fontWeight={'bold'} whiteSpace={'nowrap'} textOverflow={'clip'}>
-                  {name}
+                  {longName}
                 </Text>
               </Box>
               <Box pr="3" fontSize="3xl">
