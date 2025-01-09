@@ -46,7 +46,7 @@ import {
 } from 'react-icons/md';
 import { BiChevronDown, BiChevronUp } from 'react-icons/bi';
 import { IoSparklesSharp } from 'react-icons/io5';
-import { IoMdSquareOutline } from 'react-icons/io';
+import { RxGrid } from 'react-icons/rx';
 
 import {
   useAuth,
@@ -240,9 +240,9 @@ export function MainButton(props: MainButtonProps) {
                 alignContent={'center'}
                 display="flex"
                 alignItems={'center'}
-                gap="1px"
+                gap="1"
               >
-                {isWall ? <IoMdSquareOutline /> : <MdPerson />}
+                {isWall ? <RxGrid /> : <MdPerson />}
 
                 {shortName}
               </Box>
@@ -264,7 +264,7 @@ export function MainButton(props: MainButtonProps) {
           >
             <Box display="flex" justifyContent={'space-between'} alignItems={'center'}>
               <Box display="flex" pl="4" gap="1" alignItems={'center'}>
-                {isWall ? <IoMdSquareOutline /> : <MdPerson />}
+                {isWall ? <RxGrid /> : <MdPerson />}
                 <Text fontSize="md" fontWeight={'bold'} whiteSpace={'nowrap'} textOverflow={'clip'}>
                   {longName}
                 </Text>
