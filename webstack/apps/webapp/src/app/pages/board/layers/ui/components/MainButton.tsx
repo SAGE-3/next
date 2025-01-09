@@ -232,6 +232,7 @@ export function MainButton(props: MainButtonProps) {
               maxWidth="150px"
               variant={props.buttonStyle ? props.buttonStyle : 'outline'}
               colorScheme={user?.data.color ? user.data.color : 'white'}
+              p={2}
             >
               <Box
                 textOverflow={'ellipsis'}
