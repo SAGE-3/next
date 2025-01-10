@@ -102,13 +102,13 @@ export function AssetsMenu(props: AssetsMenuProps) {
 
   return (
     <>
-      <Box display="flex" flexDirection="column">
-        <Box alignItems="center" p="1" width={'3xl'} display="flex">
+      <Box display="flex" flexDirection="column" p={0} m={0}>
+        <Box alignItems="center" p="0" width={'2xl'} display="flex">
           <Files files={assetsList} setSelection={newSelection} />
         </Box>
-        <Divider p={0} mt={1} mb={2} />
-        <Flex>
-          <Text fontSize={'xs'}>To add assets, drag-drop files onto the board or click the 'Upload' button to upload a folder</Text>
+        <Divider p={0} mt={1} mb={"4px"} />
+        <Flex p={0} m={0}>
+          <Text fontSize={'xs'}>Drag-drop files onto the board to add new files or click 'Upload' to transfer a folder</Text>
           <Spacer />
 
           <Tooltip
