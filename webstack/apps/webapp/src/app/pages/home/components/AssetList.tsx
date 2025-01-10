@@ -136,7 +136,7 @@ export function AssetList(props: { room: Room }) {
   }, [allAssets, users, props.room]);
 
   return (
-    <Box display="flex" gap="8">
+    <Box display="flex">
       {/* Upload dialog */}
       <UploadModal isOpen={uploadIsOpen} onOpen={uploadOnOpen} onClose={uploadOnClose}></UploadModal>
       {/* Delete modal */}
@@ -183,7 +183,7 @@ export function AssetList(props: { room: Room }) {
         </Box>
 
         <VStack
-          height="calc(100vh - 345px)"
+          height="calc(100svh - 275px)"
           width="100%"
           gap="2"
           overflowY="auto"
@@ -222,7 +222,7 @@ export function AssetList(props: { room: Room }) {
             })}
         </VStack>
       </Box>
-      <Box flex="1">
+      <Box flex="1" ml="4" >
         {selectedAsset && (
           <AssetPreview
             asset={selectedAsset}
@@ -343,7 +343,7 @@ function AssetPreview(props: AssetPreviewProps) {
   }
 
   return (
-    <Box width={'800px'} display="flex" flexDirection="column" height="calc(100vh - 280px)" overflowY="auto" overflowX="hidden">
+    <Box width={'800px'} display="flex" flexDirection="column" height="calc(100svh - 215px)" overflowY="auto" overflowX="hidden">
       {/* First Area: Meta Data */}
       <Box mb={2}>
         <HStack gap="8" mb="4">
