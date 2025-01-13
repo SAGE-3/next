@@ -108,7 +108,7 @@ function AppComponent(props: App): JSX.Element {
             width: '12px',
           },
           '&::-webkit-scrollbar-track': {
-            '-webkit-box-shadow': 'inset 0 0 6px rgba(0,0,0,0.00)',
+            WebkitBoxShadow: 'inset 0 0 6px rgba(0,0,0,0.00)',
           },
           '&::-webkit-scrollbar-thumb': {
             backgroundColor: `${scrollColor}`,

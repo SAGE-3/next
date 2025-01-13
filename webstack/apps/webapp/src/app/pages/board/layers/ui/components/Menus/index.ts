@@ -6,6 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-export * from './ToolbarButton';
 export * from './Menus';
+export * from './ToolbarButton';
 export * from './BoardContextMenu';
+export * from './ContextButton';

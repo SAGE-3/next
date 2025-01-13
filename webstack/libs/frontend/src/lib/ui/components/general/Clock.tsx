@@ -98,7 +98,7 @@ export function Clock(props: ClockProps) {
 
   return (
     <Box
-      sx={{ '-webkit-app-region': 'no-drag' }}
+      sx={{ WebkitAppRegion: 'no-drag' }}
       borderRadius="md"
       backgroundColor={'transparent'}
       whiteSpace={'nowrap'}

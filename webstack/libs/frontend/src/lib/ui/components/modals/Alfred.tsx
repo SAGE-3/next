@@ -563,6 +563,7 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
       initialFocusRef={initialRef}
       blockScrollOnMount={false}
       scrollBehavior={'inside'}
+      isCentered
     >
       <ModalOverlay />
       <ModalContent maxH={'30vh'} top={'4rem'}>

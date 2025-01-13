@@ -450,14 +450,14 @@ export function Files(props: FilesProps): JSX.Element {
 
   return (
     <>
-      <VStack w={'100%'} fontSize={'xs'}>
+      <VStack w={'100%'} fontSize={'xs'} gap={1}>
         {/* Search box */}
-        <InputGroup size={'xs'}>
+        <InputGroup size={'xs'} m={0}>
           <InputLeftAddon children="Search" />
           <Input
             ref={initialRef}
             size={'xs'}
-            mb={2}
+            mb={1}
             focusBorderColor="gray.500"
             placeholder="name, owner, extension..."
             _placeholder={{ opacity: 1, color: 'gray.400' }}
@@ -467,7 +467,7 @@ export function Files(props: FilesProps): JSX.Element {
         </InputGroup>
 
         {/* Headers */}
-        <Flex w="100%" fontFamily="mono" alignItems="center" userSelect={'none'}>
+        <Flex w="100%" fontFamily="mono" alignItems="center" userSelect={'none'} m={0}>
           <Box flex="1" onClick={() => headerClick('file')} pr={4}>
             {headerFile}
           </Box>
@@ -488,12 +488,12 @@ export function Files(props: FilesProps): JSX.Element {
           </Box>
         </Flex>
 
-        <Divider mb={1} />
+        <Divider />
 
         {/* Listing the files in a 'table' */}
         <Virtuoso
           style={{
-            height: '140px',
+            height: '120px',
             width: '100%',
             borderCollapse: 'collapse',
           }}

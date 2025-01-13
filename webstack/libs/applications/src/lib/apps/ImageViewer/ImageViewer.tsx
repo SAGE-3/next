@@ -9,20 +9,11 @@
 import { useEffect, useState } from 'react';
 import { Image, Button, ButtonGroup, Tooltip, Box } from '@chakra-ui/react';
 // Icons
-import { MdFileDownload, MdImage } from 'react-icons/md';
+import { MdBrokenImage, MdFileDownload, MdImage } from 'react-icons/md';
 import { HiPencilAlt } from 'react-icons/hi';
 
 // Utility functions from SAGE3
-import {
-  useThrottleScale,
-  useAssetStore,
-  useAppStore,
-  useMeasure,
-  downloadFile,
-  isUUIDv4,
-  apiUrls,
-  useUIStore,
-} from '@sage3/frontend';
+import { useThrottleScale, useAssetStore, useAppStore, useMeasure, downloadFile, isUUIDv4, apiUrls, useUIStore } from '@sage3/frontend';
 import { Asset, ExtraImageType, ImageInfoType } from '@sage3/shared/types';
 
 import { App } from '../../schema';
@@ -120,7 +111,7 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     // background false to handle alpha channel
-    <AppWindow app={props} lockAspectRatio={aspectRatio} background={false} hideBackgroundIcon={MdImage}>
+    <AppWindow app={props} lockAspectRatio={aspectRatio} background={url == '' ? true : false} hideBackgroundIcon={MdImage}>
       <div
         ref={ref}
         style={{
@@ -130,38 +121,44 @@ function AppComponent(props: App): JSX.Element {
           maxHeight: '100%',
         }}
       >
-        <>
-          <Image
-            width="100%"
-            userSelect={'auto'}
-            draggable={false}
-            alt={file?.data.originalfilename}
-            src={url}
-            borderRadius="0 0 6px 6px"
-          />
+        {url ? (
+          <>
+            <Image
+              width="100%"
+              userSelect={'auto'}
+              draggable={false}
+              alt={file?.data.originalfilename}
+              src={url}
+              borderRadius="0 0 6px 6px"
+            />
 
-          {s.boxes && Array.isArray(s.boxes)
-            ? s.boxes.map((box, idx) => {
-              // TODO Need to handle text overflow for labels
-              return (
-                <Box
-                  key={'label' + idx}
-                  position="absolute"
-                  left={box.xmin * (displaySize.width / origSizes.width) + 'px'}
-                  top={box.ymin * (displaySize.height / origSizes.height) + 'px'}
-                  width={(box.xmax - box.xmin) * (displaySize.width / origSizes.width) + 'px'}
-                  height={(box.ymax - box.ymin) * (displaySize.height / origSizes.height) + 'px'}
-                  border="2px solid red"
-                  style={{ display: s.annotations === true ? 'block' : 'none' }}
-                >
-                  <Box position="relative" top={'-1.5rem'} fontWeight={'bold'} textColor={'black'}>
-                    {box.label || 'Unknown'}
+            {s.boxes && Array.isArray(s.boxes)
+              ? s.boxes.map((box, idx) => {
+                // TODO Need to handle text overflow for labels
+                return (
+                  <Box
+                    key={'label' + idx}
+                    position="absolute"
+                    left={box.xmin * (displaySize.width / origSizes.width) + 'px'}
+                    top={box.ymin * (displaySize.height / origSizes.height) + 'px'}
+                    width={(box.xmax - box.xmin) * (displaySize.width / origSizes.width) + 'px'}
+                    height={(box.ymax - box.ymin) * (displaySize.height / origSizes.height) + 'px'}
+                    border="2px solid red"
+                    style={{ display: s.annotations === true ? 'block' : 'none' }}
+                  >
+                    <Box position="relative" top={'-1.5rem'} fontWeight={'bold'} textColor={'black'}>
+                      {box.label || 'Unknown'}
+                    </Box>
                   </Box>
-                </Box>
-              );
-            })
-            : null}
-        </>
+                );
+              })
+              : null}
+          </>
+        ) : (
+          <Box display="flex" width="100%" height="100%" justifyContent="center" alignItems="center" flexDir="column" gap="0">
+            <MdBrokenImage size="100%" />
+          </Box>
+        )}
       </div>
     </AppWindow>
   );
@@ -258,7 +255,6 @@ const GroupedToolbarComponent = () => {
 };
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
-
 
 /*
 type YoloObject = {

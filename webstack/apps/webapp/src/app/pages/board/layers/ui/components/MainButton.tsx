@@ -42,8 +42,11 @@ import {
   MdSearch,
   MdRemoveRedEye,
   MdHelpOutline,
+  MdPerson,
 } from 'react-icons/md';
 import { BiChevronDown, BiChevronUp } from 'react-icons/bi';
+import { IoSparklesSharp } from 'react-icons/io5';
+import { RxGrid } from 'react-icons/rx';
 
 import {
   useAuth,
@@ -63,7 +66,10 @@ import {
   EditVisibilityModal,
   Alfred,
   truncateWithEllipsis,
+  IntelligenceModal,
 } from '@sage3/frontend';
+import { IntelligenceMenu } from './Menus';
+
 import { Board, OpenConfiguration } from '@sage3/shared/types';
 
 type MainButtonProps = {
@@ -81,7 +87,9 @@ type MainButtonProps = {
  */
 export function MainButton(props: MainButtonProps) {
   const { user } = useUser();
-  const name = user ? truncateWithEllipsis(user.data.name, 25) : '';
+  const longName = user ? truncateWithEllipsis(user.data.name, 20) : '';
+  const shortName = user ? truncateWithEllipsis(user.data.name, 10) : '';
+  const isWall = user?.data.userType === 'wall';
 
   const userColorValue = user?.data.color ? user.data.color : 'teal';
   const userColor = useHexColor(userColorValue);
@@ -101,8 +109,8 @@ export function MainButton(props: MainButtonProps) {
   // Modal panels
   const { isOpen: editIsOpen, onOpen: editOnOpen, onClose: editOnClose } = useDisclosure();
   const { isOpen: aboutIsOpen, onOpen: aboutOnOpen, onClose: aboutOnClose } = useDisclosure();
-
   const { isOpen: userSearchIsOpen, onOpen: userSearchOnOpen, onClose: userSearchOnClose } = useDisclosure();
+  const { isOpen: intelligenceIsOpen, onOpen: intelligenceOnOpen, onClose: intelligenceOnClose } = useDisclosure();
 
   // Alfred Modal
   const { isOpen: alfredIsOpen, onOpen: alfredOnOpen, onClose: alfredOnClose } = useDisclosure();
@@ -224,9 +232,20 @@ export function MainButton(props: MainButtonProps) {
               maxWidth="150px"
               variant={props.buttonStyle ? props.buttonStyle : 'outline'}
               colorScheme={user?.data.color ? user.data.color : 'white'}
+              p={2}
             >
-              <Box textOverflow={'ellipsis'} overflow={'hidden'} fontSize="sm" alignContent={'center'}>
-                {name}
+              <Box
+                textOverflow={'ellipsis'}
+                overflow={'hidden'}
+                fontSize="sm"
+                alignContent={'center'}
+                display="flex"
+                alignItems={'center'}
+                gap="1"
+              >
+                {isWall ? <RxGrid /> : <MdPerson />}
+
+                {shortName}
               </Box>
             </MenuButton>
           </Tooltip>
@@ -245,9 +264,10 @@ export function MainButton(props: MainButtonProps) {
             _hover={{ cursor: 'pointer' }}
           >
             <Box display="flex" justifyContent={'space-between'} alignItems={'center'}>
-              <Box display="flex" pl="4">
+              <Box display="flex" pl="4" gap="1" alignItems={'center'}>
+                {isWall ? <RxGrid /> : <MdPerson />}
                 <Text fontSize="md" fontWeight={'bold'} whiteSpace={'nowrap'} textOverflow={'clip'}>
-                  {name}
+                  {longName}
                 </Text>
               </Box>
               <Box pr="3" fontSize="3xl">
@@ -257,7 +277,8 @@ export function MainButton(props: MainButtonProps) {
           </MenuButton>
         )}
 
-        <MenuList maxHeight="60vh" overflowY={'auto'} overflowX="clip" width={props.boardInfo ? '100%' : '300px'} p="2px" m="0">
+        <MenuList maxHeight="60vh" overflowY={'auto'} overflowX="clip" width={props.boardInfo ? '100%' : '20%'}
+          minWidth="220px" maxWidth="400px" p="2px" m="0">
           <MenuGroup title="SAGE3" p="0" m="1">
             {props.boardInfo && (
               <MenuItem py="1px" m="0" onClick={handleHelpOpen} icon={<MdHelpOutline size="24px" />} justifyContent="right">
@@ -300,7 +321,7 @@ export function MainButton(props: MainButtonProps) {
                 >
                   Go To Board
                 </MenuButton>
-                <MenuList maxHeight="50vh" overflowY={'auto'} overflowX="clip" width="300px">
+                <MenuList maxHeight="50vh" overflowY={'auto'} overflowX="clip" width="280px">
                   <MenuGroup title={`${props.boardInfo.roomName} Boards`}>
                     {boards.map(
                       (board) =>
@@ -374,6 +395,10 @@ export function MainButton(props: MainButtonProps) {
               Account
             </MenuItem>
 
+            <MenuItem onClick={intelligenceOnOpen} icon={<IoSparklesSharp fontSize="24px" />} py="1px" m="0">
+              Intelligence
+            </MenuItem>
+
             <MenuItem onClick={toggleColorMode} icon={<MdInvertColors fontSize="24px" />} py="1px" m="0">
               {colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}
             </MenuItem>
@@ -396,6 +421,9 @@ export function MainButton(props: MainButtonProps) {
 
       <EditUserModal isOpen={editIsOpen} onOpen={editOnOpen} onClose={editOnClose}></EditUserModal>
       <AboutModal isOpen={aboutIsOpen} onClose={aboutOnClose}></AboutModal>
+      <IntelligenceModal isOpen={intelligenceIsOpen} onOpen={intelligenceOnOpen} onClose={intelligenceOnClose}>
+        <IntelligenceMenu notificationCount={0} />
+      </IntelligenceModal>
 
       {
         // The test forces the recreation of the modal when the userSearchIsOpen state changes
