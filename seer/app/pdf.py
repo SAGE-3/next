@@ -9,25 +9,22 @@
 # PDFAgent
 import json, os
 from logging import Logger
-import asyncio
+import base64
 
 # SAGE3 API
 from foresight.Sage3Sugar.pysage3 import PySage3
 
 # AI
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage, BaseMessage
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 
-# from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from langchain_openai import ChatOpenAI
 
 # Typing for RPC
 from libs.localtypes import PDFQuery, PDFAnswer
-from libs.utils import getModelsInfo, getPDFFile, getMDfromPDF
+from libs.utils import getModelsInfo, getPDFFile
 
 # ChromaDB AI vector DB
 import chromadb
@@ -41,10 +38,10 @@ import pymupdf
 from io import BytesIO
 
 from langchain.vectorstores.base import VectorStoreRetriever
-from typing import Dict
+from typing import Dict, List
 
-# from libs.pdf.pdf_utils import generate_answer
 from libs.pdf.pdf_v3 import generate_answer
+from libs.utils import isValidPDFDocument, convertPDFToImages
 
 
 class PDFAgent:
@@ -75,7 +72,6 @@ class PDFAgent:
             self.llm_openai = ChatOpenAI(
                 api_key=openai["apiKey"],
                 model=openai["model"],
-                max_tokens=1000,
                 streaming=False,
             )
         # Create the ChromaDB client
@@ -115,22 +111,84 @@ class PDFAgent:
         # Heartbeat to check the connection
         self.chroma.heartbeat()
 
+    def getMDfromPDFWithImages(self, id, content):
+        """
+        Converts a PDF content to Markdown format and caches the result in a temporary file.
+
+        Args:
+          id (str): A unique identifier for the PDF content.
+          content (bytes): The binary content of the PDF file.
+
+        Returns:
+          str: The Markdown representation of the PDF content.
+
+        If the Markdown file already exists in the temporary directory, it reads and returns the content from the file.
+        Otherwise, it converts the PDF content to Markdown, writes it to a temporary file, and returns the Markdown content.
+        """
+        file_path = f"/tmp/{id}.md"
+        if os.path.exists(file_path):
+            with open(file_path, "r") as file:
+                return file.read()
+        else:
+            document = pymupdf.open(stream=BytesIO(content), filetype="pdf")
+            md = ""
+            if isValidPDFDocument(document):
+                md = pymupdf4llm.to_markdown(
+                    pymupdf.open(stream=BytesIO(content), filetype="pdf"),
+                    write_images=False,
+                    embed_images=False,
+                    # speed up the process by skipping complex pages
+                    graphics_limit=500,
+                    show_progress=True,
+                )
+                with open(file_path, "w") as file:
+                    file.write(md)
+            else:
+                print("\n\n Convert to images \n\n")
+                images = convertPDFToImages(document)
+                print("\n\n Images: ", len(images), "\n\n")
+                pages = []
+
+                for i, image in enumerate(images):
+                    pages.append(self.send_pdf_image_to_openai(image, i))
+
+                pages.sort(key=lambda x: x["index"])
+                md = "\n\n".join(page["content"] for page in pages)
+                with open(file_path, "w") as file:
+                    file.write(md)
+
+            return md
+
+    def send_pdf_image_to_openai(self, page_base64, page_num):
+        messages: List[BaseMessage] = []
+        messages.append(
+            SystemMessage(
+                content="""
+            You are a helpful optical character recognition assistant
+            - Read the page an extract all of the text in Markdown format
+            - Do not wrap it in a code block
+            - Only return the text that you have read
+            - Do not make any information up
+          """
+            )
+        )
+        messages.append(
+            HumanMessage(
+                content=[
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/jpeg;base64,{page_base64}"},
+                    }
+                ]
+            )
+        )
+
+        response = self.llm_openai.invoke(messages)
+        return {"index": page_num, "content": str(response.content)}
+
     async def process(self, qq: PDFQuery):
         self.logger.info("Got PDF> from " + qq.user + ": " + qq.q)
 
-        # Retrieve the PDF content
-        # TODO: make cleaner
-        # Define the loop to run getPDFFile in an executor for each asset
-        # loop = asyncio.get_event_loop()
-
-        # # Use run_in_executor for each asset ID to avoid blocking the event loop
-        # pdfContents = [
-        #     {
-        #         "id": assetid,
-        #         "content": await loop.run_in_executor(None, getPDFFile, self.ps3, assetid)
-        #     }
-        #     for assetid in qq.assetids
-        # ]
         pdfContents = [
             {"id": assetid, "content": getPDFFile(self.ps3, assetid)}
             for assetid in qq.assetids
@@ -167,7 +225,7 @@ class PDFAgent:
 
             # Convert PDFs to markdown
             pdfs_to_md = {
-                pdf["id"]: getMDfromPDF(pdf["id"], pdf["content"])
+                pdf["id"]: self.getMDfromPDFWithImages(pdf["id"], pdf["content"])
                 for pdf in pdfContents
             }
 
