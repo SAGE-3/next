@@ -14,6 +14,8 @@ const schema = z.object({
   roomId: z.string(),
   // Member Id
   members: z.array(z.string()),
+  // Invite Id
+  inviteId: z.string().optional(),
 });
 
 export type RoomMembersSchema = z.infer<typeof schema>;

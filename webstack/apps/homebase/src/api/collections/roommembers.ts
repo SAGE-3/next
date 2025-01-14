@@ -40,6 +40,37 @@ class SAGE3RoomMembersCollection extends SAGE3Collection<RoomMembersSchema> {
       else res.status(500).send({ success: false, message: 'Failed to join room.' });
     });
 
+    router.post('/inviteJoin', async ({ body, user }, res) => {
+      const providedInviteId = body.inviteId;
+      const roomId = body.roomId;
+      const userId = user.id;
+
+      if (!providedInviteId || !roomId || !userId) {
+        res.status(500).send({ success: false, message: 'Did not provide all aruguments.' });
+        return;
+      }
+
+      // Get the current doc if it exists
+      const currentDoc = await this.get(roomId);
+      if (!currentDoc) {
+        res.status(500).send({ success: false, message: 'Room does not exist.' });
+        return;
+      }
+
+      // Check if the inviteId is correct
+      if (currentDoc.data.inviteId !== providedInviteId) {
+        res.status(500).send({ success: false, message: 'Invalid inviteId.' });
+        return;
+      }
+
+      // Update the doc with the new member
+      let members = [...currentDoc.data.members, userId];
+      members = removeDuplicates(members);
+      const doc = await this.update(roomId, userId, { members });
+      if (doc) res.status(200).send({ success: true, data: [doc] });
+      else res.status(500).send({ success: false, message: 'Failed to join room.' });
+    });
+
     router.post('/leave', async ({ body, user }, res) => {
       let doc = null;
       const userId = user.id;

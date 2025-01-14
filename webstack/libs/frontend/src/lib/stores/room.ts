@@ -13,7 +13,7 @@ import { mountStoreDevtool } from 'simple-zustand-devtools';
 
 // Application specific schema
 import { Room, RoomMembers, RoomSchema } from '@sage3/shared/types';
-import { SAGE3Ability } from '@sage3/shared';
+import { genId, SAGE3Ability } from '@sage3/shared';
 
 // The observable websocket and HTTP
 import { APIHttp, SocketAPI } from '../api';
@@ -26,6 +26,8 @@ interface RoomState {
   joinRoomMembership: (roomId: string) => Promise<void>;
   leaveRoomMembership: (roomId: string) => Promise<void>;
   removeUserRoomMembership: (roomId: string, userId: string) => Promise<boolean>;
+  generateInviteId: (roomId: string) => Promise<string | null>;
+  clearInviteId: (roomId: string) => Promise<void>;
   clearError: () => void;
   create: (newRoom: RoomSchema) => Promise<Room | undefined>;
   update: (id: string, updates: Partial<RoomSchema>) => Promise<void>;
@@ -98,6 +100,18 @@ const RoomStore = create<RoomState>()((set, get) => {
     removeUserRoomMembership: async (roomId: string, userId: string) => {
       const response = await APIHttp.POST<any>(`/roommembers/remove`, { roomId, userId });
       return response.success;
+    },
+    generateInviteId: async (roomId: string) => {
+      const newUID = genId();
+      const resposne = await APIHttp.PUT<RoomMembers>(`/roommembers/${roomId}`, { inviteId: newUID });
+      if (resposne.success) {
+        return newUID;
+      } else {
+        return null;
+      }
+    },
+    clearInviteId: async (roomId: string) => {
+      await APIHttp.PUT<RoomMembers>(`/roommembers/${roomId}`, { inviteId: '' });
     },
     clearError: () => {
       set({ error: null });

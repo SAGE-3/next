@@ -57,6 +57,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
   const rooms = useRoomStore((state) => state.rooms);
   const deleteRoom = useRoomStore((state) => state.delete);
   const updateRoom = useRoomStore((state) => state.update);
+  const generateInviteId = useRoomStore((state) => state.generateInviteId);
 
   // Apps
   const fetchBoardApps = useAppStore((state) => state.fetchBoardApps);
@@ -232,6 +233,27 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
     else setValid(true);
   };
 
+  const handleGenerateInviteId = async () => {
+    const newUID = await generateInviteId(props.room._id);
+    if (newUID) {
+      toast({
+        title: 'Invite Link Generated',
+        description: 'Invite Link has been generated and copied to clipboard',
+        status: 'success',
+        duration: 3000,
+      });
+      // Copy the full url to the clipboard
+      navigator.clipboard.writeText(`${window.location.origin}/#/joinroom/${props.room._id}/${newUID}/`);
+    } else {
+      toast({
+        title: 'Failed to Generate Invite Link',
+        description: 'Failed to generate invite link',
+        status: 'error',
+        duration: 3000,
+      });
+    }
+  };
+
   return (
     <Modal isCentered isOpen={props.isOpen} onClose={props.onClose} blockScrollOnMount={false}>
       <ModalOverlay />
@@ -288,6 +310,8 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
               isDisabled={!isProtected}
             />
           </InputGroup>
+
+          <Button onClick={handleGenerateInviteId}>Generate Invite Link</Button>
         </ModalBody>
         <ModalFooter pl="4" pr="8" mb="2">
           <Box display="flex" justifyContent="space-between" width="100%">

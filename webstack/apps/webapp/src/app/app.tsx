@@ -29,11 +29,13 @@ import {
   UserSettingsProvider,
   YjsProvider,
   APIHttp,
+  useRouteNav,
 } from '@sage3/frontend';
 import { Board, BoardSchema, OpenConfiguration } from '@sage3/shared/types';
 // Pages
 import { LoginPage, HomePage, BoardPage, AccountPage, AdminPage, OpenDesktopPage } from './pages';
 import e from 'express';
+import { set } from 'date-fns';
 
 /**
  * Tries to connect for a length of time, then gives up.
@@ -112,6 +114,17 @@ export function App() {
                     element={
                       <ProtectedAuthRoute>
                         <AccountPage />
+                      </ProtectedAuthRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/joinroom/:roomId/:inviteId"
+                    element={
+                      <ProtectedAuthRoute>
+                        <ProtectedUserRoute>
+                          <JoinRomByInviteId />
+                        </ProtectedUserRoute>
                       </ProtectedAuthRoute>
                     }
                   />
@@ -321,6 +334,80 @@ export const LoadingSpinner = () => {
   return (
     <Box width="100vw" height="100vh" display="flex" justifyContent={'center'} alignItems={'center'}>
       <CircularProgress isIndeterminate size={'xl'} color={teal} />
+    </Box>
+  );
+};
+
+const JoinRomByInviteId = () => {
+  const { inviteId, roomId } = useParams();
+
+  const toast = useToast();
+
+  const [pending, setPending] = useState(true);
+  const [success, setSuccess] = useState(false);
+
+  const { toHome } = useRouteNav();
+
+  const handleJoin = async () => {
+    if (!inviteId || !roomId) {
+      toast({
+        title: 'Invalid invite',
+        description: 'The invite is invalid.',
+        status: 'error',
+        duration: 9000,
+        isClosable: true,
+      });
+      setPending(false);
+      setSuccess(false);
+      return;
+    }
+    const response = await APIHttp.POST<any>('/roommembers/inviteJoin', { inviteId, roomId });
+    if (response.success) {
+      toast({
+        title: 'Joined room',
+        description: 'You have successfully joined the room.',
+        status: 'success',
+        duration: 9000,
+        isClosable: true,
+      });
+      setPending(false);
+      setSuccess(true);
+    } else {
+      toast({
+        title: 'Failed to join room',
+        description: 'Failed to join the room.',
+        status: 'error',
+        duration: 9000,
+        isClosable: true,
+      });
+      setPending(false);
+      setSuccess(false);
+    }
+  };
+
+  const handleReturnHome = () => {
+    toHome();
+  };
+
+  const handleReturnToRoom = () => {
+    toHome(roomId);
+  };
+
+  // Box in the middle showing progress
+  return (
+    <Box width="100vw" height="100vh" display="flex" justifyContent={'center'} alignItems={'center'}>
+      {pending ? (
+        <Button onClick={handleJoin} colorScheme="green">
+          Join
+        </Button>
+      ) : (
+        <>
+          {success ? <Text>Successfully joined room</Text> : <Text>Failed to join room</Text>}
+          <Button onClick={success ? handleReturnToRoom : handleReturnHome} colorScheme="green">
+            {success ? 'Go to Room' : 'Return to Home'}
+          </Button>
+        </>
+      )}
     </Box>
   );
 };
