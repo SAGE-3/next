@@ -22,7 +22,9 @@ export function OpenDesktopPage() {
   const mainBackgroundValue = useColorModeValue('gray.100', '#222222');
   const mainBackgroundColor = useHexColor(mainBackgroundValue);
   // SAGE3 Image
-  const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
+  // const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
+  const imageUrl = '/assets/sage3_banner.webp';
+
   const [sage3url, setSage3Url] = useState<string>('');
 
   const { toHome, toBoard } = useRouteNav();
