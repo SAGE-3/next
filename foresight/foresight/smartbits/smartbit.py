@@ -7,8 +7,8 @@
 # -----------------------------------------------------------------------------
 
 from enum import Enum
-from typing import Optional, Literal, List
-from pydantic import BaseModel, Field, UUID4
+from typing import Optional, List
+from pydantic import BaseModel, Field
 from typing import ClassVar
 from abc import abstractmethod
 

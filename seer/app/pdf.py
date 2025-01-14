@@ -9,20 +9,16 @@
 # PDFAgent
 import json, os
 from logging import Logger
-import asyncio
 import base64
 
 # SAGE3 API
 from foresight.Sage3Sugar.pysage3 import PySage3
 
 # AI
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 from langchain_core.messages import HumanMessage, SystemMessage, BaseMessage
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 
-# from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from langchain_openai import ChatOpenAI
 
@@ -44,8 +40,8 @@ from io import BytesIO
 from langchain.vectorstores.base import VectorStoreRetriever
 from typing import Dict, List
 
-# from libs.pdf.pdf_utils import generate_answer
 from libs.pdf.pdf_v3 import generate_answer
+from libs.utils import isValidPDFDocument, convertPDFToImages
 
 
 class PDFAgent:
@@ -76,7 +72,6 @@ class PDFAgent:
             self.llm_openai = ChatOpenAI(
                 api_key=openai["apiKey"],
                 model=openai["model"],
-                max_tokens=1000,
                 streaming=False,
             )
         # Create the ChromaDB client
@@ -115,115 +110,81 @@ class PDFAgent:
         # Using Langchain's Chromadb
         # Heartbeat to check the connection
         self.chroma.heartbeat()
-        
-    def isValidDocument (self, document):
-      """
-      Check if it contains text.
 
-      Args:
-          document (bytes): The binary content of the document.
-      """
-      try: 
-        for page_num in range(document.page_count):
-          page = document[page_num]
-          text = page.get_text()
-          
-          if text.strip():
-            return True
-        return False
-      except Exception as e:
-        print(f"Error: {e}")
-        return False
-      
-    def pdf_to_base64_images(self, doc):
-      """Convert PDF pages to Base64-encoded images."""
-      images = []
+    def getMDfromPDFWithImages(self, id, content):
+        """
+        Converts a PDF content to Markdown format and caches the result in a temporary file.
 
-      for page_num in range(len(doc)):
-          page = doc[page_num]
-          pixmap = page.get_pixmap(dpi=150)  # Adjust DPI for quality
-          image_bytes = pixmap.tobytes("jpeg")  # Save as JPEG
-          image_base64 = base64.b64encode(image_bytes).decode("utf-8")
-          images.append(image_base64)
+        Args:
+          id (str): A unique identifier for the PDF content.
+          content (bytes): The binary content of the PDF file.
 
-      return images
-    
+        Returns:
+          str: The Markdown representation of the PDF content.
+
+        If the Markdown file already exists in the temporary directory, it reads and returns the content from the file.
+        Otherwise, it converts the PDF content to Markdown, writes it to a temporary file, and returns the Markdown content.
+        """
+        file_path = f"/tmp/{id}.md"
+        if os.path.exists(file_path):
+            with open(file_path, "r") as file:
+                return file.read()
+        else:
+            document = pymupdf.open(stream=BytesIO(content), filetype="pdf")
+            md = ""
+            if isValidPDFDocument(document):
+                md = pymupdf4llm.to_markdown(
+                    pymupdf.open(stream=BytesIO(content), filetype="pdf"),
+                    write_images=False,
+                    embed_images=False,
+                    # speed up the process by skipping complex pages
+                    graphics_limit=500,
+                    show_progress=True,
+                )
+                with open(file_path, "w") as file:
+                    file.write(md)
+            else:
+                print("\n\n Convert to images \n\n")
+                images = convertPDFToImages(document)
+                print("\n\n Images: ", len(images), "\n\n")
+                pages = []
+
+                for i, image in enumerate(images):
+                    pages.append(self.send_pdf_image_to_openai(image, i))
+
+                pages.sort(key=lambda x: x["index"])
+                md = "\n\n".join(page["content"] for page in pages)
+                with open(file_path, "w") as file:
+                    file.write(md)
+
+            return md
+
     def send_pdf_image_to_openai(self, page_base64, page_num):
-      messages: List[BaseMessage] = []
-      messages.append(
-        SystemMessage(
-          content="""
+        messages: List[BaseMessage] = []
+        messages.append(
+            SystemMessage(
+                content="""
             You are a helpful optical character recognition assistant
             - Read the page an extract all of the text in Markdown format
             - Do not wrap it in a code block
             - Only return the text that you have read
             - Do not make any information up
           """
-        )
-      )
-      messages.append(
-        HumanMessage(
-          content = [
-            {
-              "type": "image_url",
-              "image_url": {
-                "url": f"data:image/jpeg;base64,{page_base64}"
-              },
-            }
-          ]
-        )
-      )
-      
-      response = self.llm_openai.invoke(messages)
-      return {"index": page_num,  "content": str(response.content)}
-    
-    def getMDfromPDF(self, id, content):
-      """
-      Converts a PDF content to Markdown format and caches the result in a temporary file.
-
-      Args:
-        id (str): A unique identifier for the PDF content.
-        content (bytes): The binary content of the PDF file.
-
-      Returns:
-        str: The Markdown representation of the PDF content.
-
-      If the Markdown file already exists in the temporary directory, it reads and returns the content from the file.
-      Otherwise, it converts the PDF content to Markdown, writes it to a temporary file, and returns the Markdown content.
-      """
-      file_path = f"/tmp/{id}.md"
-      if os.path.exists(file_path):
-          with open(file_path, "r") as file:
-              return file.read()
-      else:
-          document = pymupdf.open(stream=BytesIO(content), filetype="pdf")
-          md = ""
-          if self.isValidDocument(document):
-            md = pymupdf4llm.to_markdown(
-                pymupdf.open(stream=BytesIO(content), filetype="pdf"),
-                write_images=False,
-                embed_images=False,
-                # speed up the process by skipping complex pages
-                graphics_limit=500,
-                show_progress=True,
             )
-            with open(file_path, "w") as file:
-                file.write(md)
-          else:
-            print("\n\n Convert to images \n\n")
-            images = self.pdf_to_base64_images(document)
-            print("\n\n Images: ", len(images), "\n\n")
-            pages = []
+        )
+        messages.append(
+            HumanMessage(
+                content=[
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/jpeg;base64,{page_base64}"},
+                    }
+                ]
+            )
+        )
 
-            for i, image in enumerate(images):
-              pages.append(self.send_pdf_image_to_openai(image, i))
-            
-            pages.sort(key=lambda x: x["index"])
-            md = "\n\n".join(page["content"] for page in pages)
-            with open(file_path, "w") as file:
-                file.write(md)
-            
-          return md
+        response = self.llm_openai.invoke(messages)
+        return {"index": page_num, "content": str(response.content)}
 
     async def process(self, qq: PDFQuery):
         self.logger.info("Got PDF> from " + qq.user + ": " + qq.q)
@@ -264,7 +225,7 @@ class PDFAgent:
 
             # Convert PDFs to markdown
             pdfs_to_md = {
-                pdf["id"]: self.getMDfromPDF(pdf["id"], pdf["content"])
+                pdf["id"]: self.getMDfromPDFWithImages(pdf["id"], pdf["content"])
                 for pdf in pdfContents
             }
 
