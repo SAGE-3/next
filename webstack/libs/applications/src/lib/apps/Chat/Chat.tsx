@@ -1416,13 +1416,15 @@ function AppComponent(props: App): JSX.Element {
                     userSelect={'none'}
                     _hover={{ background: 'purple.300' }}
                     background={'purple.200'}
-                    onDoubleClick={applyAction(action)}
+                    // onDoubleClick={applyAction(action)}
+                    onClick={applyAction(action)}
                     key={'list-' + index}
                   >
                     <Tooltip label="Double click to apply action" aria-label="A tooltip">
                       <ListItem key={index}>
                         <ListIcon as={MdSettings} color="green.500" />
-                        Show result {index + 1} on the board: {action.type} {action.app}
+                        {action.type === "create_app" ? "Show result in a" : action.type + " application"} {action.app}
+                        {/* Show result {index + 1} on the board: {action.type} {action.app} */}
                       </ListItem>
                     </Tooltip>
                   </Box>
