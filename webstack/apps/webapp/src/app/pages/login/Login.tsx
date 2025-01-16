@@ -27,7 +27,8 @@ export function LoginPage() {
   const [shouldDisable, setShouldDisable] = useState(false);
   const [logins, setLogins] = useState<string[]>([]);
   // Logo URL
-  const logoUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
+  // const logoUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
+  const logoUrl = '/assets/sage3_banner.webp';
   // Test for electron
   const thisIsElectron = isElectron();
 
