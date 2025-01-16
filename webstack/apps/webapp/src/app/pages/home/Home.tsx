@@ -979,9 +979,9 @@ export function HomePage() {
       {/* Sidebar Drawer */}
       <Box
         borderRadius={cardRadius}
-        width="20%"
-        minWidth="220px"
-        maxWidth="400px"
+        width="350px"
+        minWidth="350px"
+        maxWidth="350px"
         transition="width 0.5s"
         height="100%"
         display="flex"
@@ -1013,11 +1013,7 @@ export function HomePage() {
                   </Box>
                 </Box>
               </MenuButton>
-              <MenuList
-                width="20%"
-                minWidth="220px"
-                maxWidth="400px"
-              >
+              <MenuList width="20%" minWidth="220px" maxWidth="400px">
                 {hubs.map((hub) => {
                   return (
                     <MenuItem
@@ -1392,7 +1388,8 @@ export function HomePage() {
                         {boardListView == 'grid' && (
                           <Flex
                             gap="4"
-                            pl="2" py="1"
+                            pl="2"
+                            py="1"
                             display="flex"
                             flexWrap="wrap"
                             justifyContent="left"
@@ -1882,7 +1879,7 @@ export function HomePage() {
 
                             <Text fontSize="xs" color={subTextColor}>
                               {room.data.ownerId === userId ||
-                                members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
+                              members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
                                 room.data.ownerId === userId ? (
                                   <Tag size="sm" width="100px" display="flex" justifyContent="center" colorScheme="green">
                                     Owner
