@@ -1420,10 +1420,10 @@ function AppComponent(props: App): JSX.Element {
                     onClick={applyAction(action)}
                     key={'list-' + index}
                   >
-                    <Tooltip label="Double click to apply action" aria-label="A tooltip">
+                    <Tooltip label="Click to show result on the board" aria-label="A tooltip">
                       <ListItem key={index}>
                         <ListIcon as={MdSettings} color="green.500" />
-                        {action.type === "create_app" ? "Show result in a" : action.type + " application"} {action.app}
+                        Show result on the board
                         {/* Show result {index + 1} on the board: {action.type} {action.app} */}
                       </ListItem>
                     </Tooltip>
