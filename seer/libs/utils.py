@@ -9,8 +9,7 @@
 # Image
 from PIL import Image
 from io import BytesIO
-import re
-import time, os
+import re, time, os, base64
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -344,6 +343,40 @@ def getPDFFile(ps3, assetid):
             if r.is_success:
                 return r.content
     return None
+
+
+def isValidPDFDocument(document):
+    """
+    Check if it contains text.
+
+    Args:
+        document (bytes): The binary content of the document.
+    """
+    try:
+        for page_num in range(document.page_count):
+            page = document[page_num]
+            text = page.get_text()
+
+            if text.strip():
+                return True
+        return False
+    except Exception as e:
+        print(f"Error: {e}")
+        return False
+
+
+def convertPDFToImages(doc):
+    """Convert PDF pages to Base64-encoded images."""
+    images = []
+
+    for page_num in range(len(doc)):
+        page = doc[page_num]
+        pixmap = page.get_pixmap(dpi=150)  # Adjust DPI for quality
+        image_bytes = pixmap.tobytes("jpeg")  # Save as JPEG
+        image_base64 = base64.b64encode(image_bytes).decode("utf-8")
+        images.append(image_base64)
+
+    return images
 
 
 def isDataURL(string):
