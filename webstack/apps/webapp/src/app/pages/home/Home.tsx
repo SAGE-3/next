@@ -170,8 +170,6 @@ export function HomePage() {
   const sidebarBackgroundColor = useHexColor(sidebarBackgroundValue);
   const mainBackgroundValue = useColorModeValue('gray.100', '#222222');
   const mainBackgroundColor = useHexColor(mainBackgroundValue);
-  // const dividerValue = useColorModeValue('gray.300', '#666666');
-  // const dividerColor = useHexColor(dividerValue);
   const hightlightGrayValue = useColorModeValue('gray.200', '#444444');
   const hightlightGray = useHexColor(hightlightGrayValue);
   const subTextValue = useColorModeValue('gray.700', 'gray.300');
@@ -180,8 +178,6 @@ export function HomePage() {
   const homeSectionColor = useHexColor(homeSectionValue);
   const availableRoomsBgColorValue = useColorModeValue('#ffffff', `gray.800`);
   const availableRoomsBgColor = useHexColor(availableRoomsBgColorValue);
-  // const availableRoomsBorderColorValue = useColorModeValue('gray.100', `gray.700`);
-  // const availableRoomsBorderColor = useHexColor(availableRoomsBorderColorValue);
   const tabColorValue = useColorModeValue('gray.300', 'gray.600');
   const tabColor = useHexColor(tabColorValue);
   const searchBarColorValue = useColorModeValue('gray.100', '#2c2c2c');
@@ -717,13 +713,17 @@ export function HomePage() {
   // Handle Join room membership
   const handleJoinRoomMembership = (room: Room) => {
     if (canJoin) {
-      joinRoomMembership(room._id);
-      toast({
-        title: `You have successfully joined ${room.data.name}`,
-        status: 'success',
-        duration: 4 * 1000,
-        isClosable: true,
-      });
+      if (room.data.isPrivate) {
+        setPasswordProtectedRoom(room);
+      } else {
+        joinRoomMembership(room._id);
+        toast({
+          title: `You have successfully joined ${room.data.name}`,
+          status: 'success',
+          duration: 4 * 1000,
+          isClosable: true,
+        });
+      }
     } else {
       toast({
         title: 'You do not have permission to join rooms',
@@ -978,18 +978,16 @@ export function HomePage() {
 
       {/* Sidebar Drawer */}
       <Box
-        // backgroundColor={sidebarBackgroundColor}
         borderRadius={cardRadius}
-        width="300px"
-        minWidth="300px"
+        width="20%"
+        minWidth="220px"
+        maxWidth="400px"
         transition="width 0.5s"
         height="100%"
         display="flex"
         flexDirection="column"
-      // borderRight={`solid ${dividerColor} 1px`}
       >
         {/* Server selection and main actions */}
-        {/* <Box padding="2" borderRadius={cardRadius} background={sidebarBackgroundColor}> */}
         {hubs.length > 0 ? (
           <Box ref={hubNameRef}>
             <Menu placement="bottom-end">
@@ -1015,7 +1013,11 @@ export function HomePage() {
                   </Box>
                 </Box>
               </MenuButton>
-              <MenuList width={'300px'}>
+              <MenuList
+                width="20%"
+                minWidth="220px"
+                maxWidth="400px"
+              >
                 {hubs.map((hub) => {
                   return (
                     <MenuItem
@@ -1252,26 +1254,26 @@ export function HomePage() {
           height="100%"
           borderRadius={cardRadius}
           marginLeft="3"
-          // overflow="hidden"
-          pt={4}
+          pt={1}
           pr={4}
           pb={4}
           pl={6}
         >
-          <Box width="100%" minHeight="170px" position="relative" top="-0.5rem">
+          <Box width="100%" position="relative">
             {/* Room Information */}
             <VStack alignItems={'start'} gap="0">
-              <Text fontSize="3xl" fontWeight="bold">
+              <Text fontSize="2xl" fontWeight="bold">
                 {selectedRoom.data.name}
               </Text>
               <Text fontSize="xl" fontWeight={'normal'}>
                 {selectedRoom?.data.description}
               </Text>
 
-              <Text color={subTextColor}>Created by {users.find((u) => u._id === selectedRoom.data.ownerId)?.data.name}</Text>
-
-              <Text color={subTextColor}>Created on {new Date(selectedRoom._createdAt).toLocaleDateString()}</Text>
-              <Box display="flex" my="2" gap="2">
+              <HStack>
+                <Text color={subTextColor}>Created by {users.find((u) => u._id === selectedRoom.data.ownerId)?.data.name || 'sage3'}</Text>
+                <Text color={subTextColor}>- Created on {new Date(selectedRoom._createdAt).toLocaleDateString()}</Text>
+              </HStack>
+              <Box display="flex" mt="1" gap="2">
                 <Tooltip
                   label={
                     selectedRoom.data.ownerId === userId ? `Update the room's settings` : 'Only the owner can update the room settings'
@@ -1319,7 +1321,7 @@ export function HomePage() {
           </Box>
 
           {rooms.filter(roomMemberFilter).find((room) => selectedRoom._id === room._id) ? (
-            <Box width="100%" flexGrow={1}>
+            <Box width="100%" flexGrow={1} p={0} m={0}>
               <Tabs colorScheme="teal">
                 <TabList>
                   <Tab>
@@ -1339,8 +1341,8 @@ export function HomePage() {
                 <TabPanels height="100%">
                   <TabPanel px="0">
                     <Box display="flex" gap="4">
-                      <Flex gap="4" flexDirection="column">
-                        <Flex align="center" gap="2" justify="flex-start" mx="2">
+                      <Flex gap="2" flexDirection="column">
+                        <Flex align="center" gap="2" justify="flex-start" ml="2">
                           <Tooltip label="Create New Board" aria-label="Create Board" placement="top" hasArrow>
                             <IconButton
                               size="md"
@@ -1390,12 +1392,12 @@ export function HomePage() {
                         {boardListView == 'grid' && (
                           <Flex
                             gap="4"
-                            p="2"
+                            pl="2" py="1"
                             display="flex"
                             flexWrap="wrap"
                             justifyContent="left"
                             style={{
-                              maxHeight: 'calc(100vh - 360px)',
+                              maxHeight: 'calc(100svh - 270px)',
                               width: '100%',
                               maxWidth: '2200px',
                             }}
@@ -1406,7 +1408,7 @@ export function HomePage() {
                             css={{
                               '&::-webkit-scrollbar': {
                                 background: 'transparent',
-                                width: '5px',
+                                width: '10px',
                               },
                               '&::-webkit-scrollbar-thumb': {
                                 background: scrollBarColor,
@@ -1437,8 +1439,8 @@ export function HomePage() {
                           <VStack
                             gap="3"
                             alignItems="left"
-                            px="2"
-                            style={{ height: 'calc(100svh - 360px)' }}
+                            pl="2"
+                            style={{ height: 'calc(100svh - 270px)' }}
                             overflowY="scroll"
                             overflowX="hidden"
                             minWidth="420px"

@@ -104,7 +104,7 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
   };
 
   return (
-    <Box maxHeight="60vh" overflowY={'auto'} overflowX="clip" width="200px">
+    <Box maxHeight="60svh" overflowY={'auto'} overflowX="clip" width="200px">
       {screenshares.map((app) => {
         const user = users.find((u) => u._id === app._createdBy);
         if (!user) return null;

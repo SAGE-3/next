@@ -107,7 +107,8 @@ export function ApplicationsMenu(props: ApplicationProps) {
 
   return (
     <VStack
-      maxH={300}
+      height="300px"
+      style={{ maxHeight: 'min(300px, 50svh)' }}
       w={'100%'}
       m={0}
       pr={2}

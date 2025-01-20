@@ -99,6 +99,7 @@ function AppComponent(props: App): JSX.Element {
           width: '100%',
           borderCollapse: 'collapse',
           background: bg,
+          textAlign: 'center',
         }}
         ref={table}
         data={data}
@@ -109,14 +110,13 @@ function AppComponent(props: App): JSX.Element {
             <>
               <tr style={{ background: bg, fontSize: '1.2em' }}>
                 <th style={{ textAlign: 'center' }} colSpan={headers.length + 1}>
-                  {' '}
-                  {file?.data.originalfilename}
+                  CSV &nbsp; - &nbsp; {file?.data.originalfilename}
                 </th>
               </tr>
               <tr style={{ background: bg }}>
-                <th style={{ textAlign: 'center' }}>#</th>
+                <th style={{ textAlign: 'center', verticalAlign: 'bottom' }}>#</th>
                 {headers.map((h) => (
-                  <th key={h} style={{ width: tableWidth + '%', textAlign: 'center' }}>
+                  <th key={h} style={{ width: tableWidth + '%', textAlign: 'center', verticalAlign: 'bottom' }}>
                     {h}
                   </th>
                 ))}
@@ -126,14 +126,11 @@ function AppComponent(props: App): JSX.Element {
         }}
         fixedFooterContent={() => {
           return (
-            <>
-              <tr style={{ background: bg, fontSize: '0.8em' }}>
-                <th style={{ textAlign: 'center' }} colSpan={headers.length + 1}>
-                  {' '}
-                  {data.length} rows - {file?.data.size} bytes
-                </th>
-              </tr>
-            </>
+            <tr style={{ background: bg }}>
+              <th style={{ textAlign: 'center', paddingTop: "1em" }} colSpan={headers.length + 1}>
+                Data: {data.length} rows - {headers.length} columns - {file?.data.size} bytes
+              </th>
+            </tr>
           );
         }}
         // rangeChanged={setVisibleRange}
@@ -206,7 +203,6 @@ async function csvToArray(str: string): Promise<Record<string, string>[]> {
         skip_empty_lines: true,
         rtrim: true,
         trim: true,
-        // delimiter: ",",
       },
       function (err, records) {
         const data = records as Record<string, string>[];
