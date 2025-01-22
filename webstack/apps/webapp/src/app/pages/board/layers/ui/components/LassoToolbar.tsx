@@ -788,10 +788,8 @@ for b in bits:
           onClose={deleteOnClose}
           onConfirm={closeSelectedApps}
           title="Delete Selected Applications"
-          // message={`Are you sure you want to delete the selected ${
-          //   lassoApps.length > 1 ? `${lassoApps.length} applications?` : 'application?'
-          // } `}
-          message={`Are you sure you want to delete the selected applications(s)?`}
+          message={`Are you sure you want to delete the selected ${lassoApps.length > 1 ? `${lassoApps.length} applications?` : 'application?'
+            } `}
           cancelText="Cancel"
           confirmText="Delete"
           confirmColor="red"
