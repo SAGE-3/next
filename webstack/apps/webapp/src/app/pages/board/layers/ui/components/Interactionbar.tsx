@@ -325,7 +325,7 @@ export function Interactionbar(props: {
         </Popover>
       </ButtonGroup>
 
-      {myOnClose &&
+      {myIsOpen &&
         <ConfirmModal
           isOpen={myIsOpen}
           onClose={myOnClose}
@@ -340,7 +340,7 @@ export function Interactionbar(props: {
           xOffSet={props.position ? (props.position.x + 150) / window.innerWidth : undefined}
         />
       }
-      {allOnClose &&
+      {allIsOpen &&
         <ConfirmModal
           isOpen={allIsOpen}
           onClose={allOnClose}
