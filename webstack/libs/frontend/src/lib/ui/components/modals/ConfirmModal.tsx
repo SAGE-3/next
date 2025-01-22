@@ -38,6 +38,8 @@ export function ConfirmModal(props: ConfirmModalProps): JSX.Element {
   const size = props.size || 'md';
   const initialRef = useRef(null);
 
+  console.log('ConfirmModalProps', props.title, props.xOffSet);
+
   return (
     <Modal size={size} isOpen={props.isOpen} onClose={props.onClose}
       isCentered={props.xOffSet == null ? true : false} initialFocusRef={initialRef}>

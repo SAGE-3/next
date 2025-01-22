@@ -325,34 +325,36 @@ export function Interactionbar(props: {
         </Popover>
       </ButtonGroup>
 
-      <ConfirmModal
-        isOpen={myIsOpen}
-        onClose={myOnClose}
-        onConfirm={eraseYourLines}
-        title="Erase Your Annotations"
-        message="Are you sure you want to erase your annotations?"
-        cancelText="Cancel"
-        confirmText="Erase"
-        cancelColor="green"
-        confirmColor="red"
-        size="lg"
-        xOffSet={props.position ? (props.position.x + 150) / window.innerWidth : undefined}
-      />
-
-      <ConfirmModal
-        isOpen={allIsOpen}
-        onClose={allOnClose}
-        onConfirm={eraseAllines}
-        title="Erase All Annotations"
-        message="🧯CAUTION🧯: Are you sure you want to erase ALL annotations?"
-        cancelText="Cancel"
-        confirmText="Erase"
-        cancelColor="green"
-        confirmColor="red"
-        size="lg"
-        xOffSet={props.position ? (props.position.x + 150) / window.innerWidth : undefined}
-      />
-
+      {myOnClose &&
+        <ConfirmModal
+          isOpen={myIsOpen}
+          onClose={myOnClose}
+          onConfirm={eraseYourLines}
+          title="Erase Your Annotations"
+          message="Are you sure you want to erase your annotations?"
+          cancelText="Cancel"
+          confirmText="Erase"
+          cancelColor="green"
+          confirmColor="red"
+          size="lg"
+          xOffSet={props.position ? (props.position.x + 150) / window.innerWidth : undefined}
+        />
+      }
+      {allOnClose &&
+        <ConfirmModal
+          isOpen={allIsOpen}
+          onClose={allOnClose}
+          onConfirm={eraseAllines}
+          title="Erase All Annotations"
+          message="🧯CAUTION🧯: Are you sure you want to erase ALL annotations?"
+          cancelText="Cancel"
+          confirmText="Erase"
+          cancelColor="green"
+          confirmColor="red"
+          size="lg"
+          xOffSet={props.position ? (props.position.x + 150) / window.innerWidth : undefined}
+        />
+      }
     </>
   );
 }

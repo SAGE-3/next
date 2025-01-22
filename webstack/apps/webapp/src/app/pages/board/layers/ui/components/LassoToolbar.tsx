@@ -782,19 +782,22 @@ for b in bits:
         </Box>
       )}
 
-      <ConfirmModal
-        isOpen={deleteIsOpen}
-        onClose={deleteOnClose}
-        onConfirm={closeSelectedApps}
-        title="Delete Selected Applications"
-        message={`Are you sure you want to delete the selected ${
-          lassoApps.length > 1 ? `${lassoApps.length} applications?` : 'application?'
-        } `}
-        cancelText="Cancel"
-        confirmText="Delete"
-        confirmColor="red"
-        size="lg"
-      ></ConfirmModal>
+      {deleteIsOpen &&
+        <ConfirmModal
+          isOpen={deleteIsOpen}
+          onClose={deleteOnClose}
+          onConfirm={closeSelectedApps}
+          title="Delete Selected Applications"
+          // message={`Are you sure you want to delete the selected ${
+          //   lassoApps.length > 1 ? `${lassoApps.length} applications?` : 'application?'
+          // } `}
+          message={`Are you sure you want to delete the selected applications(s)?`}
+          cancelText="Cancel"
+          confirmText="Delete"
+          confirmColor="red"
+          size="lg"
+        />
+      }
     </>
   );
 }
@@ -803,7 +806,7 @@ for b in bits:
  * Packing function
  */
 
-const GrowingPacker = function () {};
+const GrowingPacker = function () { };
 
 GrowingPacker.prototype = {
   fit: function (blocks: any[]) {
