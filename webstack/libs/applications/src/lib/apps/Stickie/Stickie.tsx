@@ -265,7 +265,7 @@ function ToolbarComponent(props: App): JSX.Element {
     const dt = format(new Date(), 'yyyy-MM-dd-HH:mm:ss');
     // Add whitespace at the end of the text to make it a paragraph
     const text = s.text.split('\n').join('  \n');
-    const style = `<style type="text/css" rel="stylesheet">body { background-color: ${s.color}} * {color: black} }</style>`;
+    const style = `<style type="text/css" rel="stylesheet">body { h1: ${s.color}} * {color: black} }</style>`;
     const ownerName = users.find((el) => el._id === props._createdBy)?.data.name;
     const content = `# Stickie\n${dt}\n___\n${text}\n___\nCreated by ${ownerName} with SAGE3\n${style}`;
     // generate a URL containing the text of the note
