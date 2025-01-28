@@ -6,12 +6,12 @@
   "license": "MIT",
   "type": "module",
   "dependencies": {
-    "@faker-js/faker": "^7.6.0",
+    "@faker-js/faker": "^9.4.0",
     "axios": "^1.7.9",
-    "bufferutil": "^4.0.7",
+    "bufferutil": "^4.0.9",
     "commander": "^13.1.0",
-    "utf-8-validate": "^5.0.10",
-    "uuid": "^9.0.0",
-    "ws": "8.17.1"
+    "utf-8-validate": "^6.0.5",
+    "uuid": "^11.0.5",
+    "ws": "^8.18.0"
   }
 }

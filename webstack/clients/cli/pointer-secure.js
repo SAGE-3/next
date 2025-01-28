@@ -64,7 +64,6 @@ console.log('CLI>', params);
 
 const colors = ['green', 'blue', 'gray', 'orange', 'purple', 'yellow', 'red', 'cyan', 'teal', 'pink'];
 
-let myID;
 var FPS = params.rate;
 var updateRate = 1000 / FPS;
 // Default size of the board
