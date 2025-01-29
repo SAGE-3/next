@@ -79,8 +79,14 @@ class CSVAgent:
                 max_tokens=1000,
             )
         # OpenAI model
-        # if openai["apiKey"] and openai["model"]:
-
+        if openai["apiKey"] and openai["model"]:
+            self.llm_openai = ChatOpenAI(
+                api_key=openai["apiKey"],
+                # needs to be gpt-4o-mini or better, for image processing
+                model=openai["model"],
+                # max_tokens=1000,
+                streaming=False,
+            )
         # Create the ChromaDB client
         chromaServer = "127.0.0.1"
         chromaPort = 8100
