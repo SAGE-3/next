@@ -24,6 +24,7 @@ dns.setDefaultResultOrder('ipv4first');
 
 // parsing command-line arguments
 import * as commander from 'commander';
+import { v4 } from 'uuid';
 
 // Get the version from the package file
 const pkg = JSON.parse(await fs.readFile(new URL('./package.json', import.meta.url)));
@@ -80,6 +81,72 @@ async function delay(sec) {
   await new Promise((resolve) => setTimeout(resolve, sec * 1000));
 }
 
+// Define the StateMachine class
+// 1.	State: The current state of the machine (this.state).
+// 2.	Transitions: A configuration object where keys are states, and values are possible events and their resulting states.
+// 3.	Transition Method: A function (transition(event)) to handle state transitions.
+
+class StateMachine {
+  constructor(config) {
+    // Initialize the state machine with the initial state and transitions from the config
+    this.state = config.initialState;
+    this.transitions = config.transitions;
+    this.callbacks = config.callbacks || {};
+  }
+
+  // Method to handle state transitions based on events
+  transition(event) {
+    const currentState = this.state;
+    const stateTransition = this.transitions[currentState]?.[event];
+
+    if (stateTransition) {
+      // console.log(`FSM> Transitioning from "${currentState}" to "${stateTransition}" on event "${event}"`);
+
+      // Call the "onExit" callback for the current state, if defined
+      if (this.callbacks.onExit) {
+        this.callbacks.onExit(currentState, event);
+      }
+
+      // Update the state to the new state
+      this.state = stateTransition;
+
+      // Call the "onEnter" callback for the new state, if defined
+      if (this.callbacks.onEnter) {
+        this.callbacks.onEnter(stateTransition, event);
+      }
+    } else {
+      console.log(`FSM> Invalid transition from "${currentState}" on event "${event}"`);
+    }
+  }
+}
+
+function createStickie(socket, roomId, boardId, title, x, y) {
+  console.log('CLI> create stickie', roomId, boardId, title, x, y);
+  const c = Math.floor(Math.random() * colors.length);
+  const text = faker.lorem.sentence();
+  const body = {
+    boardId: boardId,
+    dragging: false,
+    position: { x: x, y: y, z: 0 },
+    raised: true,
+    roomId: roomId,
+    rotation: { x: 0, y: 0, z: 0 },
+    size: { width: 400, height: 420, depth: 0 },
+    state: { text: text, fontSize: 36, color: colors[c], lock: false },
+    title: title,
+    type: 'Stickie',
+  };
+
+  socket.send(
+    JSON.stringify({
+      id: v4(),
+      route: '/api/apps/',
+      method: 'POST',
+      body: body,
+    })
+  );
+}
+
 class UserBehavior {
   /**
    * Creates an instance of the PointerSecure class.
@@ -98,6 +165,74 @@ class UserBehavior {
     this.roomId = roomId;
     this.cookies = '';
     this.socket = null;
+
+    let movingInterval = null;
+
+    // Define the FSM (Finite State Machine) configuration
+    this.fsm = new StateMachine({
+      initialState: 'off',
+      // Transitions: A configuration object where keys are states, and values are possible events and their resulting states.
+      transitions: {
+        off: { initialize: 'init' },
+        init: { move: 'moving' },
+
+        moving: { pause: 'paused', createApp: 'creating', upload: 'uploading', done: 'dead' },
+        paused: { wakeUp: 'moving', createApp: 'creating', upload: 'uploading', done: 'dead' },
+
+        creating: { finish: 'moving' },
+        uploading: { finish: 'moving' },
+      },
+      callbacks: {
+        // Callback function to be called when entering a new state
+        onEnter: (newState, event) => {
+          // console.log(`FSM> Entered state: "${newState}" on event: "${event}"`);
+
+          if (newState === 'moving') {
+            // Random behavior
+            const delayPause = randomNumber(1, 5);
+            setTimeout(() => {
+              this.fsm.transition('pause');
+            }, delayPause * 1000);
+
+            // Send cursor position on repeat
+            movingInterval = setInterval(() => {
+              this.updatePosition();
+              // Send message to server
+              this.sendPosition();
+            }, updateRate);
+          } else if (newState === 'paused') {
+            const chance = randomNumber(1, 4);
+            console.log('🚀 ~ UserBehavior ~ constructor ~ chance:', chance);
+            if (chance === 2) {
+              console.log('CLI> Waking up');
+              this.fsm.transition('createApp');
+            } else {
+              const delayTime = randomNumber(1, 3);
+              setTimeout(() => {
+                this.fsm.transition('wakeUp');
+              }, delayTime * 1000);
+            }
+          } else if (newState === 'creating') {
+            console.log('CLI> Creating app');
+            this.createApp();
+            this.fsm.transition('finish');
+          } else if (newState === 'dead') {
+            // Leave the board
+            console.log('CLI> Leaving board');
+            boardDisconnect(this.socket, this.boardId);
+          }
+        },
+        // Callback function to be called when exiting a state
+        onExit: (oldState, event) => {
+          // console.log(`FSM> Exiting state: "${oldState}" on event: "${event}"`);
+
+          if (oldState === 'moving') {
+            // Stop sending cursor position
+            clearInterval(movingInterval);
+          }
+        },
+      },
+    });
   }
 
   async init() {
@@ -106,7 +241,7 @@ class UserBehavior {
     console.log('CLI> Logged in');
 
     // Build a user
-    const randomName = faker.name.fullName();
+    const randomName = faker.person.fullName();
     const randomEmail = faker.internet.email();
     const randomAvatar = faker.image.avatar();
     const randomColor = colors[randomNumber(0, colors.length - 1)];
@@ -119,22 +254,24 @@ class UserBehavior {
       userType: 'client',
     };
     const me = await loginCreateUser((params.secure ? 'https://' : 'http://') + params.server, userData);
-    console.log('🚀 ~ UserBehavior ~ init ~ me:', me);
     this.myID = me._id;
 
-    // Get my own info: uid, name, email, color, emailVerified, profilePicture
-    // const userData = await getUserInfo();
+    // Switch to initial state
+    this.fsm.transition('initialize');
   }
 
-  boardConnect(socket) {
-    boardConnect(socket, this.myID, this.roomId, this.boardId);
+  boardConnect() {
+    boardConnect(this.socket, this.myID, this.roomId, this.boardId);
+
+    // Start moving
+    this.fsm.transition('move');
   }
 
   async getInfo() {
     const boardData = await getBoardsInfo();
-    console.log('CLI> boards', boardData);
+    console.log('CLI> boards', boardData.length);
     const roomData = await getRoomsInfo();
-    console.log('CLI> rooms', roomData);
+    console.log('CLI> rooms', roomData.length);
   }
 
   async websocket() {
@@ -143,8 +280,8 @@ class UserBehavior {
     return this.socket;
   }
 
-  sendPosition(socket) {
-    sendCursor(socket, this.myID, this.px, this.py);
+  sendPosition() {
+    sendCursor(this.socket, this.myID, this.px, this.py);
   }
 
   updatePosition() {
@@ -162,6 +299,10 @@ class UserBehavior {
     // update global position
     this.px = clamp(this.px + this.incx * dx, 1500000, 1500000 + totalWidth);
     this.py = clamp(this.py + this.incy * dy, 1500000, 1500000 + totalHeight);
+  }
+
+  createApp() {
+    createStickie(this.socket, this.roomId, this.boardId, faker.person.fullName(), this.px, this.py);
   }
 }
 
@@ -182,26 +323,18 @@ async function start() {
     console.log('socket> connected');
 
     // Connect to a specific board
-    aUser.boardConnect(socket);
+    aUser.boardConnect();
 
     // intial position
-    aUser.sendPosition(socket);
+    aUser.sendPosition();
 
     // Set a limit on runtime
     setTimeout(() => {
       console.log('CLI> finished');
-      // Leave the board
-      boardDisconnect(socket, boardId);
+      aUser.fsm.transition('done');
       // and quit
       process.exit(1);
     }, params.timeout * 1000);
-
-    // Send cursor position on repeat
-    setInterval(() => {
-      aUser.updatePosition();
-      // Send message to server
-      aUser.sendPosition(socket);
-    }, updateRate);
   });
 }
 
