@@ -7,3 +7,4 @@
  */
 
 export * from './ai-api';
+export * from './agents-api';

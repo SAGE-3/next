@@ -7,8 +7,9 @@
  */
 
 import { useCallback, useEffect, useState, createContext, useContext } from 'react';
-import { useUIStore } from '../stores';
 import { throttle } from 'throttle-debounce';
+
+import { useUIStore } from '../stores';
 
 type CursorBoardPositionContextType = {
   boardCursor: { x: number; y: number };
@@ -38,6 +39,8 @@ export function CursorBoardPositionProvider(props: React.PropsWithChildren<Recor
   const [cursor, setCursor] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const boardPosition = useUIStore((state) => state.boardPosition);
   const scale = useUIStore((state) => state.scale);
+  const boardSynced = useUIStore((state) => state.boardSynced);
+  const [, setLastEvent] = useState<MouseEvent | undefined>(undefined);
 
   // Throttle Functions for the cursor mousemove
   const throttleMove = throttle(100, (e: any) => {
@@ -49,16 +52,62 @@ export function CursorBoardPositionProvider(props: React.PropsWithChildren<Recor
   });
   const throttleMoveRef = useCallback(throttleMove, [boardPosition.x, boardPosition.y, scale]);
 
-  // UseEffect to update the cursor position
+  useEffect(() => {
+    setLastEvent((e) => {
+      if (e) {
+        throttleMoveRef(e);
+      }
+      return e;
+    });
+  }, [boardSynced]);
+
+  // Simple hacky way to (try) fix de-synced mouse and appwindow while dragging
   useEffect(() => {
     const updateCursor = (e: MouseEvent) => {
+      setLastEvent(e);
       throttleMoveRef(e);
     };
-    window.addEventListener('mousemove', updateCursor);
+
+    const stopListening = (e: MouseEvent) => {
+      // !useUIStore.getState().appDragging
+      //  || e.button === 1
+      if (e.button === 0) {
+        window.removeEventListener('mousemove', updateCursor);
+      }
+    };
+
+    const startListening = (e: MouseEvent) => {
+      window.addEventListener('mousemove', updateCursor, { passive: true });
+      // setLastEvent(e);
+    };
+
+    window.addEventListener('mousemove', updateCursor, { passive: true });
+    window.addEventListener('mousedown', stopListening);
+    window.addEventListener('mouseup', startListening);
+
     return () => {
+      window.removeEventListener('mousedown', stopListening);
+      window.removeEventListener('mouseup', startListening);
       window.removeEventListener('mousemove', updateCursor);
     };
   }, [throttleMoveRef]);
+
+  // Keep this here to revert if the above causes issues
+  // // UseEffect to update the cursor position
+  // useEffect(() => {
+  //   const updateCursor = (e: MouseEvent) => {
+  //     // Simple hacky way to fix de-synced mouse and appwindow while dragging
+  //     // if (!useUIStore.getState().appDragging) {
+  //     setLastEvent(e);
+  //     if (e.buttons !== 1) {
+  //       throttleMoveRef(e);
+  //     }
+  //   };
+  //   window.addEventListener('mousemove', updateCursor);
+  //   return () => {
+  //     window.removeEventListener('mousemove', updateCursor);
+  //   };
+  // }, [throttleMoveRef]);
 
   const uiToBoard = useCallback(
     (x: number, y: number) => {
@@ -70,4 +119,21 @@ export function CursorBoardPositionProvider(props: React.PropsWithChildren<Recor
   return (
     <CursorBoardPositionContext.Provider value={{ cursor, uiToBoard, boardCursor }}>{props.children}</CursorBoardPositionContext.Provider>
   );
+}
+
+export function useUIToBoard() {
+  const boardPosition = useUIStore((state) => state.boardPosition);
+  const scale = useUIStore((state) => state.scale);
+
+  const uiToBoard = useCallback(
+    (x: number, y: number) => {
+      return {
+        x: Math.floor(x / scale - boardPosition.x),
+        y: Math.floor(y / scale - boardPosition.y),
+      };
+    },
+    [boardPosition.x, boardPosition.y, scale]
+  );
+
+  return uiToBoard;
 }

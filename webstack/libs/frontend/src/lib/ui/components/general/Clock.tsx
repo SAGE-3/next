@@ -7,13 +7,9 @@
  */
 import { CSSProperties, useEffect, useState } from 'react';
 import { Box, Text, useColorModeValue, Tooltip, IconButton, useDisclosure } from '@chakra-ui/react';
-import { MdHelpOutline, MdNetworkCheck } from 'react-icons/md';
-import { PiGaugeBold } from "react-icons/pi";
+import { MdHelpOutline } from 'react-icons/md';
 
-import {
-  useHexColor, useNetworkState, EditVisibilityModal, useUserSettings,
-  usePressureObserver, PressureState
-} from '@sage3/frontend';
+import { useHexColor, EditVisibilityModal, useUserSettings } from '@sage3/frontend';
 
 type ClockProps = {
   style?: CSSProperties;
@@ -39,20 +35,20 @@ export function Clock(props: ClockProps) {
   const teal = useHexColor(tealColorMode);
 
   // Network Status Colors
-  const onlineColor = useHexColor('green.600');
-  const midtierColor = useHexColor('yellow.300');
-  const lowtierColor = useHexColor('orange.400');
-  const offlineColor = useHexColor('red.500');
+  // const onlineColor = useHexColor('green.600');
+  // const midtierColor = useHexColor('yellow.300');
+  // const lowtierColor = useHexColor('orange.400');
+  // const offlineColor = useHexColor('red.500');
 
   // Network Status
-  const networkStatus = useNetworkState();
-  const [netcolor, setNetcolor] = useState(onlineColor);
-  const [netlabel, setNetlabel] = useState('online');
+  // const networkStatus = useNetworkState();
+  // const [netcolor, setNetcolor] = useState(onlineColor);
+  // const [netlabel, setNetlabel] = useState('online');
 
   // Pressure Observer
-  const pressure = usePressureObserver(props.isBoard ?? false);
-  const [cpucolor, setCPUcolor] = useState(onlineColor);
-  const [cpulabel, setCPUlabel] = useState('nominal');
+  // const pressure = usePressureObserver(props.isBoard ?? false);
+  // const [cpucolor, setCPUcolor] = useState(onlineColor);
+  // const [cpulabel, setCPUlabel] = useState('nominal');
 
   // Presence settings modal
   const { isOpen: visibilityIsOpen, onClose: visibilityOnClose } = useDisclosure();
@@ -65,46 +61,44 @@ export function Clock(props: ClockProps) {
     return () => clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    if (networkStatus) {
-      if (networkStatus.online) {
-        setNetcolor(onlineColor);
-        setNetlabel('online');
-        if (networkStatus.effectiveType === '3g') {
-          setNetcolor(midtierColor);
-          setNetlabel('mid-tier mobile');
-        }
-        if (networkStatus.effectiveType === '2g') {
-          setNetcolor(lowtierColor);
-          setNetlabel('low-tier mobile');
-        }
-      } else {
-        setNetcolor(offlineColor);
-        setNetlabel('offline');
-      }
-    }
-  }, [networkStatus, lowtierColor, midtierColor, offlineColor, onlineColor]);
+  // useEffect(() => {
+  //   if (networkStatus) {
+  //     if (networkStatus.online) {
+  //       setNetcolor(onlineColor);
+  //       setNetlabel('online');
+  //       if (networkStatus.effectiveType === '3g') {
+  //         setNetcolor(midtierColor);
+  //         setNetlabel('mid-tier mobile');
+  //       }
+  //       if (networkStatus.effectiveType === '2g') {
+  //         setNetcolor(lowtierColor);
+  //         setNetlabel('low-tier mobile');
+  //       }
+  //     } else {
+  //       setNetcolor(offlineColor);
+  //       setNetlabel('offline');
+  //     }
+  //   }
+  // }, [networkStatus, lowtierColor, midtierColor, offlineColor, onlineColor]);
 
-  useEffect(() => {
-    if (pressure) {
-      if (pressure.state === PressureState.nominal) {
-        setCPUcolor(onlineColor);
-      } else if (pressure.state === PressureState.fair) {
-        setCPUcolor(midtierColor);
-      } else if (pressure.state === PressureState.serious) {
-        setCPUcolor(lowtierColor);
-      } else if (pressure.state === PressureState.critical) {
-        setCPUcolor(offlineColor);
-      }
-      setCPUlabel(pressure.state.toString());
-    }
-  }, [pressure, lowtierColor, midtierColor, offlineColor, onlineColor]);
-
-
+  // useEffect(() => {
+  //   if (pressure) {
+  //     if (pressure.state === PressureState.nominal) {
+  //       setCPUcolor(onlineColor);
+  //     } else if (pressure.state === PressureState.fair) {
+  //       setCPUcolor(midtierColor);
+  //     } else if (pressure.state === PressureState.serious) {
+  //       setCPUcolor(lowtierColor);
+  //     } else if (pressure.state === PressureState.critical) {
+  //       setCPUcolor(offlineColor);
+  //     }
+  //     setCPUlabel(pressure.state.toString());
+  //   }
+  // }, [pressure, lowtierColor, midtierColor, offlineColor, onlineColor]);
 
   return (
     <Box
-      sx={{ '-webkit-app-region': 'no-drag' }}
+      sx={{ WebkitAppRegion: 'no-drag' }}
       borderRadius="md"
       backgroundColor={'transparent'}
       whiteSpace={'nowrap'}
@@ -141,7 +135,7 @@ export function Clock(props: ClockProps) {
         </Tooltip>
       )}
 
-      {isBoard && showUI && (
+      {/* {isBoard && showUI && (
         <Tooltip label={'Network status: ' + netlabel} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
           <IconButton
             borderRadius="md"
@@ -185,11 +179,10 @@ export function Clock(props: ClockProps) {
             _hover={{ color: cpucolor, opacity: 1, transform: 'scale(1.15)' }}
           />
         </Tooltip>
-      )}
+      )} */}
 
       {isBoard && showUI && (
-        <Text fontSize={'lg'} opacity={props.opacity ? props.opacity : 1.0} color={textColor}
-          userSelect="none" whiteSpace="nowrap" mx={1}>
+        <Text fontSize={'lg'} opacity={props.opacity ? props.opacity : 1.0} color={textColor} userSelect="none" whiteSpace="nowrap" mx={1}>
           {time}
         </Text>
       )}

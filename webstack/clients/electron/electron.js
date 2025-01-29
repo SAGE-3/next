@@ -728,6 +728,16 @@ function createWindow() {
     }
   });
 
+  // Detect when the title of the webpage changes to see if the user has ended up on the Gray CANNOT GET page
+  mainWindow.on('page-title-updated', function (event, title) {
+    // If the title is Error, then the page is not found
+    if (title === 'Error') {
+      // The user has ended up on the Gray CANNOT GET page
+      // Redirect them back to the landing page
+      mainWindow.loadFile('./html/landing.html');
+    }
+  });
+
   // New webview going to be added
   mainWindow.webContents.on('will-attach-webview', function (event, webPreferences, params) {
     console.log('will-attach-webview');
@@ -1003,7 +1013,7 @@ if (process.platform === 'win32') {
         mainWindow.loadURL(newurl);
       } else {
         // save the URL for later
-        gotoURL = newurl;
+        // gotoURL = newurl;
       }
     });
   }

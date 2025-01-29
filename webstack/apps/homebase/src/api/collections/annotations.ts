@@ -71,6 +71,12 @@ class SAGE3AnnotationsCollection extends SAGE3Collection<AnnotationSchema> {
       }
     });
   }
+
+  // Delete all annotations on a board
+  public async deleteAnnotationsOnBoard(boardId: string): Promise<boolean> {
+    const success = await this.delete(boardId);
+    return success ? true : false;
+  }
 }
 
 export const AnnotationsCollection = new SAGE3AnnotationsCollection();

@@ -6,12 +6,13 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+
 import { Box } from '@chakra-ui/react';
 import { Rnd } from 'react-rnd';
 
 import { useUIStore, useAbility, WheelStepZoom, MinZoom, MaxZoom, useUserSettings } from '@sage3/frontend';
-import { Background, Apps, Whiteboard, Lasso, PresenceComponent, RndSafety } from './components';
+import { Background, Apps, Whiteboard, Lasso, PresenceComponent, RndSafety, Arrows } from './components';
 
 type BackgroundLayerProps = {
   boardId: string;
@@ -31,6 +32,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
   const selectedApp = useUIStore((state) => state.selectedAppId);
+  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const boardLocked = useUIStore((state) => state.boardLocked);
@@ -44,16 +46,20 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     { x: 0, y: 0 },
     { x: 0, y: 0 },
   ]);
-  const [, setStartedDragOn] = useState<'board' | 'board-actions' | 'app' | 'other'>('other'); // Used to differentiate between board drag and app deselect
+  const [, setCursorPos] = useState({ x: 0, y: 0 });
+
+  // Used to differentiate between board drag and app deselect
+  const [, setStartedDragOn] = useState<'board' | 'board-actions' | 'app' | 'app-resize' | 'other'>('other');
 
   // The fabled isMac const
   const isMac = useMemo(() => /(Mac|iPhone|iPod|iPad)/i.test(navigator.userAgent), []);
 
-  // const movementAltMode = useKeyPress(' ');
   const movementTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const movementZoomSafetyTimeoutRef = useRef<number | null>(null);
 
-  // Bulk of Movement Code Starts Here
+  /////////////////////////////////
+  // UI Store Board Syncronizers //
+  /////////////////////////////////
   // Forward boardPosition to localBoardPosition
   useEffect(() => {
     setLocalBoardPosition({ x: boardPosition.x, y: boardPosition.y, scale: scale });
@@ -85,6 +91,9 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     }, 250);
   }, [localBoardPosition.x, localBoardPosition.y, localBoardPosition.scale]);
 
+  ////////////////////////
+  // Local Calculations //
+  ////////////////////////
   const localZoomInDelta = (d: number, cursor: { x: number; y: number }) => {
     const step = Math.min(Math.abs(d), 10) * WheelStepZoom;
     setLocalBoardPosition((prev) => {
@@ -108,15 +117,22 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     });
   };
 
-  const draggedOnCheck = (event: any) => {
-    const target = event.target as HTMLElement;
+  /////////////////////////////////
+  // User Target Element Checker //
+  /////////////////////////////////
+  const draggedOnCheck = (target: HTMLElement) => {
+    // const target = event.target as HTMLElement;
     // Target.id was done because of the following assumption: using ids is faster than using classList.contains(...)
     if (target.id === 'board') {
       setStartedDragOn('board');
+      setSelectedApp('');
     } else if ([target.id === 'lasso', target.id === 'whiteboard'].some((condition) => condition)) {
       setStartedDragOn('board-actions');
+      setSelectedApp('');
     } else if (target.classList.contains('handle')) {
       setStartedDragOn('app');
+    } else if (target.classList.contains('app-window-resize-handle')) {
+      setStartedDragOn('app-resize');
     } else {
       setStartedDragOn('other');
     }
@@ -137,38 +153,101 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
     if (checkValidClassIfOnlyOneTouch('handle')) {
       setStartedDragOn('app');
+    } else if (checkValidClassIfOnlyOneTouch('app-window-resize-handle')) {
+      setStartedDragOn('app-resize');
     } else if (checkValidIds(['board'])) {
       setStartedDragOn('board');
+      setSelectedApp('');
     } else if (checkValidIds(['lasso', 'whiteboard'])) {
       setStartedDragOn('board-actions');
+      setSelectedApp('');
     } else {
       setStartedDragOn('other');
     }
   };
 
-  // Make sure the initial mouse click is on a valid surface
+  /////////////////////////////////////////////////////////////////////////////////
+  // Code to be Triggered Upon Deslecting App in Grab Mode via Movement Commands //
+  /////////////////////////////////////////////////////////////////////////////////
+  const grabModeDeselection = () => {
+    // // Uncomment me if you want the disable app deselect on input fields
+    // const target = event.target as HTMLElement;
+    // const computedStyle = window.getComputedStyle(target);
+    // const isTextEditable =
+    //   target.tagName === 'INPUT' ||
+    //   target.tagName === 'TEXTAREA' ||
+    //   target.getAttribute('contenteditable') === 'true' ||
+    //   computedStyle.cursor === 'text';
+
+    // if (!isTextEditable) {
+    //   setSelectedApp('');
+    // }
+
+    // Aggressive method to force deselect accidentally selection of text on screen which
+    // will prevent proper dragging behaviour, uncomment code in future if needed
+    if (window.getSelection) {
+      window.getSelection()?.removeAllRanges();
+    }
+
+    // Deselect application when pan moves in grab mode
+    // Caviat, first input will be ignored
+    setSelectedApp('');
+
+    setLocalSynced((prev) => {
+      if (prev) {
+        setCursorPos((cur) => {
+          const element = document.elementFromPoint(cur.x, cur.y);
+          draggedOnCheck(element as HTMLElement);
+          return cur;
+        });
+      }
+      return prev;
+    });
+  };
+
+  ///////////////////////////////////////////
+  // Mouse/TouchPad/TouchScreen Behaviours //
+  ///////////////////////////////////////////
+  // (INITAL CLICKS) Make sure the initial mouse click is on a valid surface
   useEffect(() => {
     const handleMouseStart = (event: MouseEvent) => {
-      draggedOnCheck(event);
+      // Prevent dragging for everyone due to MacOS ctrl + leftclick bringing up context menu
+      if (event.ctrlKey && event.buttons & 1) {
+        setStartedDragOn('other');
+      } else {
+        draggedOnCheck(event.target as HTMLElement);
+      }
     };
 
-    window.addEventListener('mousedown', handleMouseStart, { passive: false });
+    const handleTouchStart = (event: TouchEvent) => {
+      if (event.touches.length >= 1) {
+        draggedOnTouchCheck(event);
+
+        setLastTouch(
+          Array.from(event.touches).map((touch, index) => {
+            return { x: touch.clientX, y: touch.clientY };
+          })
+        );
+      }
+    };
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: false });
+    window.addEventListener('mousedown', handleMouseStart, { capture: true, passive: false });
     return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('mousedown', handleMouseStart);
     };
   }, []);
 
-  // Movement with Page Zoom Inhibitors (For Mouse & Trackpad)
+  // (ON MOVE) Movement
   useEffect(() => {
-    // Mouse & Touchpad
+    // Mouse (Scroll Wheel) & Touchpad (Two Finger Pan)
     const handleMove = (event: WheelEvent) => {
       if (event.ctrlKey) {
-        event.preventDefault();
+        event.preventDefault(); // Page Zoom Inhibitors
       }
+
       if (boardLocked) {
-        return;
-      }
-      if (selectedApp) {
         return;
       }
 
@@ -177,10 +256,17 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       // until the user stops giving input and then the proper behaviour will resume
       setLocalSynced((prev) => {
         if (prev) {
-          draggedOnCheck(event);
+          draggedOnCheck(event.target as HTMLElement);
         }
         return prev;
       });
+
+      if (selectedApp) {
+        // if (primaryActionMode === 'grab') {
+        //   grabModeDeselection();
+        // }
+        return;
+      }
 
       setStartedDragOn((draggedOn) => {
         if (draggedOn === 'other') {
@@ -208,14 +294,19 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       });
     };
 
-    // Mouse
+    // Mouse (Left Click)
     const handleMouseMove = (event: MouseEvent) => {
       if (boardLocked) {
         return;
       }
+
       if (selectedApp) {
+        // if (primaryActionMode === 'grab' && (event.buttons & 1 || event.buttons & 4)) {
+        //   grabModeDeselection();
+        // }
         return;
       }
+
       const move = () => {
         setLocalBoardPosition((prev) => ({
           x: prev.x + (event.movementX * 1) / prev.scale,
@@ -229,7 +320,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
       setStartedDragOn((draggedOn) => {
         // Tranversal/Panning
-        if (primaryActionMode === 'grab' && event.buttons & 1 && draggedOn === 'board') {
+        if (primaryActionMode === 'grab' && event.buttons & 1 && draggedOn !== 'other') {
           move();
         } else if (event.buttons & 4 && (draggedOn === 'app' || draggedOn === 'board' || draggedOn === 'board-actions')) {
           move();
@@ -238,57 +329,31 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       });
     };
 
-    window.addEventListener('mousemove', handleMouseMove, { passive: false });
-    window.addEventListener('wheel', handleMove, { passive: false });
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('wheel', handleMove);
-    };
-  }, [selectedApp, primaryActionMode, boardLocked]);
-
-  // Movement with Page Zoom Inhibitors (For Touch Screen)
-  useEffect(() => {
-    const handleTouchStart = (event: TouchEvent) => {
-      if (event.touches.length >= 1) {
-        draggedOnTouchCheck(event);
-
-        setLastTouch(
-          Array.from(event.touches).map((touch, index) => {
-            return { x: touch.clientX, y: touch.clientY };
-          })
-        );
-      }
-    };
-
-    window.addEventListener('touchstart', handleTouchStart, { passive: false });
-    return () => {
-      window.removeEventListener('touchstart', handleTouchStart);
-    };
-  }, []);
-
-  useEffect(() => {
     // Touch Screen
     const handleTouchMove = (event: TouchEvent) => {
-      event.preventDefault();
+      event.preventDefault(); // Page Zoom Inhibitors
       event.stopPropagation();
 
       if (boardLocked) {
         return;
       }
+
       if (selectedApp) {
+        // if (primaryActionMode === 'grab') {
+        //   grabModeDeselection();
+        // }
         return;
       }
 
       setStartedDragOn((draggedOn) => {
-        if (draggedOn === 'other' || draggedOn === 'app') {
+        if (draggedOn === 'other') {
           return draggedOn;
         }
         if (event.touches.length === 1) {
           // Looking for lasso interaction? Touch lasso are handled in Lasso.tsx
           if (primaryActionMode === 'grab' && draggedOn !== 'board-actions') {
             setLastTouch((prev) => {
-              if (prev.length < 1) {
+              if (prev.length !== 1) {
                 return prev;
               }
 
@@ -306,7 +371,11 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
               return [{ x: event.touches[0].clientX, y: event.touches[0].clientY }];
             });
           }
-        } else if (event.touches.length === 2) {
+        } else if (
+          // If in grab mode, allow 2 finger gesture on all but 'other'; if not in grab, limit to not allow drag on app or app-resize
+          event.touches.length === 2 &&
+          ((primaryActionMode !== 'grab' && draggedOn !== 'app' && draggedOn !== 'app-resize') || primaryActionMode === 'grab')
+        ) {
           setLastTouch((prev) => {
             if (prev.length < 2) {
               return prev;
@@ -359,9 +428,13 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     };
 
     window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('mousemove', handleMouseMove, { passive: false });
+    window.addEventListener('wheel', handleMove, { passive: false });
 
     return () => {
       window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('wheel', handleMove);
     };
   }, [selectedApp, primaryActionMode, boardLocked]);
 
@@ -384,10 +457,15 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       >
         {/* The board's apps */}
         <Apps />
+
+        <Arrows />
+
         {/* Whiteboard */}
-        <Whiteboard boardId={props.boardId} />
+        <WhiteboardMemo roomId={props.roomId} boardId={props.boardId} />
+
+
         {/* Lasso */}
-        {canLasso && primaryActionMode === 'lasso' && <Lasso boardId={props.boardId} />}
+        {canLasso && primaryActionMode === 'lasso' && <LassoMemo roomId={props.roomId} boardId={props.boardId} />}
 
         {/* Presence of the users */}
         <PresenceComponent boardId={props.boardId} />
@@ -396,11 +474,14 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         <Background boardId={props.boardId} roomId={props.roomId} />
 
         {/* Rnd Safety to Mitigate app click dissapear issue when using new movement scheme */}
-        <RndSafety />
+        <RndMemo />
       </Rnd>
     </Box>
   );
 }
+const RndMemo = React.memo(RndSafety);
+const LassoMemo = React.memo(Lasso);
+const WhiteboardMemo = React.memo(Whiteboard);
 
 // This code has been modified from the one present in useUIStore
 function zoomOnLocationNewPosition(

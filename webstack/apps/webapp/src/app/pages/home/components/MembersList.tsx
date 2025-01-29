@@ -55,9 +55,8 @@ export function MembersList(props: { room: Room }) {
       if (!online) return false;
     }
     const roomMembership = members.find((m) => m.data.roomId === props.room._id);
-    const isYourself = u._id === user?._id;
     const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(u._id) : false;
-    return isMember && !isYourself;
+    return isMember;
   };
 
   const membersSearchFilter = (user: User) => {
@@ -90,7 +89,7 @@ export function MembersList(props: { room: Room }) {
         </Box>
 
         <VStack
-          height="calc(100vh - 345px)"
+          height="calc(100svh - 275px)"
           width="100%"
           gap="2"
           overflowY="auto"

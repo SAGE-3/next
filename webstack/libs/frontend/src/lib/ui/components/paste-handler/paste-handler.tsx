@@ -12,9 +12,19 @@ import { useToast, useDisclosure, Popover, Portal, PopoverContent, PopoverHeader
 import { initialValues } from '@sage3/applications/initialValues';
 import { stringContainsCode } from '@sage3/shared';
 import {
-  isValidURL, setupApp, processContentURL, useFiles,
-  useUser, useAuth, useAppStore, useCursorBoardPosition, useUIStore
+  isValidURL,
+  setupApp,
+  processContentURL,
+  useFiles,
+  useUser,
+  useAuth,
+  useAppStore,
+  useCursorBoardPosition,
+  useUIStore,
 } from '@sage3/frontend';
+
+// Development or production
+const development: boolean = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
 
 /**
  * Handling copy/paste events on a board
@@ -114,11 +124,11 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
         } else if (pastedText) {
           // check and validate the URL
           const isValid = isValidURL(pastedText.trim());
-          // If the start of pasted text is http, can assume is a url
-          if (isValid) {
-            setValidURL(isValid);
-            popOnOpen();
-          } else if (pastedText.startsWith('sage3://') || (pastedText.startsWith('https://') && pastedText.includes('/#/enter/'))) {
+          const iscustomURL = pastedText.startsWith('sage3://');
+          const isdevboard = development && pastedText.startsWith('http://') && pastedText.includes('/#/enter/');
+          const isprodboard = pastedText.startsWith('https://') && pastedText.includes('/#/enter/');
+          // If the pasted text is a SAGE3 URL, create a BoardLink app
+          if (iscustomURL || isdevboard || isprodboard) {
             // Create a board link app
             createApp({
               title: 'BoardLink',
@@ -133,6 +143,9 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
               dragging: false,
               pinned: false,
             });
+          } else if (isValid) {
+            setValidURL(isValid);
+            popOnOpen();
           } else {
             // Create a new stickie
             const lang = stringContainsCode(pastedText);
@@ -145,7 +158,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
                 size: { width: 400, height: 400, depth: 0 },
                 rotation: { x: 0, y: 0, z: 0 },
                 type: 'Stickie',
-                state: { ...initialValues['Stickie'], text: pastedText, fontSize: 36, color: user.data.color || 'yellow' },
+                state: { ...initialValues['Stickie'], text: pastedText, fontSize: 24, color: user.data.color || 'yellow' },
                 raised: true,
                 dragging: false,
                 pinned: false,
@@ -177,7 +190,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
       // Remove function during cleanup to prevent multiple additions
       document.removeEventListener('paste', pasteHandlerBoard);
     };
-  }, [cursorPosition.x, cursorPosition.y, props.boardId, props.roomId, user, selectedApp]);
+  }, [cursorPosition.x, cursorPosition.y, props.boardId, props.roomId, user, selectedApp, boardSynced]);
 
   const createWeblink = () => {
     createApp(

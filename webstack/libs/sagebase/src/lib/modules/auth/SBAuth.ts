@@ -163,6 +163,9 @@ export class SBAuth {
       res.status(200).send({ success: true, authentication: true, auth: user, expire: exp.getTime() });
     });
 
+    // At Init delete all temporary accounts
+    await this._database.deleteAllTemporaryAccounts();
+
     return this;
   }
   /**
@@ -228,5 +231,9 @@ export class SBAuth {
     } else {
       done(null, false);
     }
+  }
+
+  public deleteAuthByEmail(email: string): Promise<SBAuthSchema | undefined> {
+    return this._database.deleteAuthByEmail(email);
   }
 }

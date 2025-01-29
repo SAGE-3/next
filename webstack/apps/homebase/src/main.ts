@@ -66,6 +66,8 @@ process.on('unhandledRejection', (reason: Error) => {
  * The SAGE3 Main entry point
  */
 async function startServer() {
+  console.log('Server> Starting SAGE3 Server');
+
   // Load the right configuration file
   const config: ServerConfiguration = await loadConfig();
 
@@ -74,7 +76,7 @@ async function startServer() {
 
   // Create the Express object
   const assetPath = path.join(config.root, config.assets);
-  const app = createApp(assetPath);
+  const app = createApp(assetPath, config);
 
   // HTTP/HTTPS server
   let server: Server;
@@ -327,7 +329,7 @@ async function startServer() {
   // Serve the static react files from webapp folder
   serveApp(app, path.join(__dirname, 'webapp'));
   // Serve the plugins folder
-  app.use('/plugins', express.static(path.join(__dirname, 'plugins')));
+  app.use('/plugins', express.static(path.join(__dirname, 'plugins'), { maxAge: '1d' }));
 
   // Handle termination
   function exitHandler() {

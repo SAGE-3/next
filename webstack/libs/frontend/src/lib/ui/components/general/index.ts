@@ -7,5 +7,4 @@
  */
 
 export * from './ColorPicker';
-export * from './MainButton';
 export * from './Clock';

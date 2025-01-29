@@ -83,7 +83,7 @@ export function EnterBoardByURLModal(props: enterBoardProps) {
     // Clean up the string
     const useUrl = boardUrl.trim();
     // Is it a valid ID: 11 characters long and has a dash in the middle
-    const isID = useUrl.length === 11 && (useUrl.split('-').length === 2);
+    const isID = useUrl.length === 11 && useUrl.split('-').length === 2;
     if (isID) {
       // Fetch board from the server
       const response = await fetch(apiUrls.boards.getBoards());
@@ -99,8 +99,7 @@ export function EnterBoardByURLModal(props: enterBoardProps) {
           setBoard(board);
           setSubmitStatus('pending');
           changeBoardOnOpen();
-        }
-        else {
+        } else {
           invalidURLReset();
           return;
         }
@@ -108,7 +107,7 @@ export function EnterBoardByURLModal(props: enterBoardProps) {
         invalidURLReset();
         return;
       }
-    } else if (!useUrl.startsWith('https://')) {
+    } else if (!useUrl.startsWith('https://') && !useUrl.startsWith('http://')) {
       // Invalid URL: reset local state
       invalidURLReset();
       return;

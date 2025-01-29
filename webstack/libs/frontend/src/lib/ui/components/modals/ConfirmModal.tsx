@@ -22,6 +22,7 @@ interface ConfirmModalProps {
   confirmText?: string;
   cancelColor?: SAGEColors;
   confirmColor?: SAGEColors;
+  xOffSet?: number;
 }
 
 /**
@@ -38,9 +39,14 @@ export function ConfirmModal(props: ConfirmModalProps): JSX.Element {
   const initialRef = useRef(null);
 
   return (
-    <Modal size={size} isOpen={props.isOpen} onClose={props.onClose} isCentered initialFocusRef={initialRef}>
+    <Modal size={size} isOpen={props.isOpen} onClose={props.onClose}
+      isCentered={props.xOffSet == null ? true : false} initialFocusRef={initialRef}>
       <ModalOverlay />
-      <ModalContent>
+      <ModalContent
+        position="absolute"
+        top="42%"
+        left={props.xOffSet == null ? undefined : `${props.xOffSet * 100}%`}
+      >
         <ModalHeader>{props.title}</ModalHeader>
         <ModalCloseButton />
         <ModalBody>{props.message}</ModalBody>

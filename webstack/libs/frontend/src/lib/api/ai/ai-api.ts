@@ -29,7 +29,7 @@ async function chatStatus(): Promise<AiStatusResponse> {
     }
   } catch (error) {
     // Return an error message if the request fails
-    console.log('API CHAT AI STATUS ERROR> ', error);
+    console.log('API Llama AI STATUS ERROR> ', error);
     return { onlineModels: [] };
   }
 }
@@ -53,11 +53,39 @@ async function chatQuery(request: AiQueryRequest): Promise<AiQueryResponse> {
     if (jsonResponse.success) {
       return jsonResponse;
     } else {
-      return { success: false, error_message: `API CHAT AI QUERY ERROR>  Failed to query AI (Status Error${response.status})` };
+      return { success: false, error_message: `API Llama AI QUERY ERROR>  Failed to query AI (Status Error${response.status})` };
     }
   } catch (error) {
     // Return an error message if the request fails
-    console.log('API CHAT AI QUERY ERROR> ', error);
+    console.log('API Llama AI QUERY ERROR> ', error);
+    return { success: false };
+  }
+}
+
+async function ask(request: AiQueryRequest): Promise<AiQueryResponse> {
+  const modelHeaders: Record<string, string> = {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+  };
+  // Try/catch block to handle errors
+  try {
+    // Send the request
+    const response = await fetch(apiUrls.ai.chat.ask, {
+      method: 'POST',
+      headers: modelHeaders,
+      body: JSON.stringify(request),
+    });
+    // Parse the response
+    const jsonResponse = await response.json();
+    // Check if the response is valid
+    if (jsonResponse.success) {
+      return jsonResponse;
+    } else {
+      return { success: false, error_message: `API Llama AI QUERY ERROR>  Failed to query AI (Status Error${response.status})` };
+    }
+  } catch (error) {
+    // Return an error message if the request fails
+    console.log('API Llama AI QUERY ERROR> ', error);
     return { success: false };
   }
 }
@@ -200,6 +228,7 @@ export const AiAPI = {
   chat: {
     status: chatStatus,
     query: chatQuery,
+    ask: ask,
   },
   code: {
     status: codeStatus,

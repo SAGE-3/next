@@ -47,8 +47,9 @@ import {
 import Joyride, { ACTIONS, CallBackProps, EVENTS, STATUS, Step } from 'react-joyride';
 
 // Icons
-import { MdAdd, MdExitToApp, MdHome, MdSearch, MdGridView, MdList, MdLock, MdPeople, MdBorderAll, MdFolder } from 'react-icons/md';
+import { MdAdd, MdHome, MdSearch, MdGridView, MdList, MdLock, MdPeople, MdFolder, MdDashboard } from 'react-icons/md';
 import { HiPuzzle } from 'react-icons/hi';
+import { PiStackPlusFill } from 'react-icons/pi';
 import { LuChevronsUpDown } from 'react-icons/lu';
 
 // SAGE Imports
@@ -72,16 +73,17 @@ import {
   EditBoardModal,
   EnterBoardModal,
   ConfirmModal,
-  MainButton,
   Clock,
   isElectron,
   useUserSettings,
   useAssetStore,
+  isUUIDv4,
 } from '@sage3/frontend';
 
 // Home Page Components
 import { BoardRow, BoardCard, RoomSearchModal, PasswordJoinRoomModal, AssetList, PluginsList, MembersList } from './components';
 import SearchRow from './components/search/SearchRow';
+import { MainButton } from '../board/layers/ui/components';
 
 /**
  * Home page for SAGE3
@@ -168,8 +170,6 @@ export function HomePage() {
   const sidebarBackgroundColor = useHexColor(sidebarBackgroundValue);
   const mainBackgroundValue = useColorModeValue('gray.100', '#222222');
   const mainBackgroundColor = useHexColor(mainBackgroundValue);
-  // const dividerValue = useColorModeValue('gray.300', '#666666');
-  // const dividerColor = useHexColor(dividerValue);
   const hightlightGrayValue = useColorModeValue('gray.200', '#444444');
   const hightlightGray = useHexColor(hightlightGrayValue);
   const subTextValue = useColorModeValue('gray.700', 'gray.300');
@@ -178,8 +178,6 @@ export function HomePage() {
   const homeSectionColor = useHexColor(homeSectionValue);
   const availableRoomsBgColorValue = useColorModeValue('#ffffff', `gray.800`);
   const availableRoomsBgColor = useHexColor(availableRoomsBgColorValue);
-  // const availableRoomsBorderColorValue = useColorModeValue('gray.100', `gray.700`);
-  // const availableRoomsBorderColor = useHexColor(availableRoomsBorderColorValue);
   const tabColorValue = useColorModeValue('gray.300', 'gray.600');
   const tabColor = useHexColor(tabColorValue);
   const searchBarColorValue = useColorModeValue('gray.100', '#2c2c2c');
@@ -270,7 +268,7 @@ export function HomePage() {
 
   // The actual steps for the joyride
   const handleSetJoyrideSteps = () => {
-    setJoyrideSteps([
+    const userJoyrideSteps: Step[] = [
       {
         target: introRef.current!,
         title: 'Welcome to SAGE3',
@@ -300,12 +298,6 @@ export function HomePage() {
         disableBeacon: true,
       },
       {
-        target: enterBoardByURLRef.current!,
-        title: 'Enter a Board by URL',
-        content: 'Other users can share a link to a board with you. You enter the board by clicking this button and pasting the link.',
-        disableBeacon: true,
-      },
-      {
         target: homeBtnRef.current!,
         title: 'Home Button',
         content: 'Clicking this button will take you back to the Home Page.',
@@ -318,8 +310,9 @@ export function HomePage() {
       },
       {
         target: searchInputRef.current!,
-        title: 'Search your Rooms and Boards',
-        content: 'You can search for rooms that you own or join, and for boards from those rooms.',
+        title: 'Search your Rooms, Boards, and Join Boards via URL',
+        content:
+          'You can search for rooms that you own or join, and for boards from those rooms. Other users can share a link to a board with you. You enter the board by clicking this button and pasting the link.',
         disableBeacon: true,
       },
       {
@@ -372,7 +365,95 @@ export function HomePage() {
         disableOverlayClose: true,
         placement: 'center',
       },
-    ]);
+    ];
+
+    const guestJoyrideSteps: Step[] = [
+      {
+        target: introRef.current!,
+        title: 'Welcome to SAGE3',
+        content:
+          'We recently updated our design to make it easier to use. This is a quick tour of the new UI. Please click next to continue.',
+        disableBeacon: true,
+        disableOverlayClose: true,
+        placement: 'center',
+      },
+      {
+        target: homeRef.current!,
+        title: 'Home',
+        content: 'This is the Home Page. From here, you can access recent boards, create rooms, and search for rooms',
+      },
+      {
+        target: mainButtonRef.current!,
+        title: 'Main Menu',
+        content: 'This is the Main Menu Button. From here, you can update your profile, change theme, find users, and logout.',
+        disableBeacon: true,
+      },
+      {
+        target: hubNameRef.current!,
+        title: electron ? 'Hubs' : 'Hub',
+        content: electron
+          ? 'This shows the current SAGE3 Hub. You can change hubs by clicking on the hub name.'
+          : 'This shows the current SAGE3 Hub.',
+        disableBeacon: true,
+      },
+      {
+        target: homeBtnRef.current!,
+        title: 'Home Button',
+        content: 'Clicking this button will take you back to the Home Page.',
+      },
+      {
+        target: searchInputRef.current!,
+        title: 'Search your Rooms, Boards, and Join Boards via URL',
+        content:
+          'You can search for rooms that you own or join, and for boards from those rooms. Other users can share a link to a board with you. You enter the board by clicking this button and pasting the link.',
+        disableBeacon: true,
+      },
+      {
+        target: recentBoardsRef.current!,
+        title: 'Recent Boards',
+        content:
+          'Boards you have recently visited will appear here. You can clear this list by clicking on the "Clear Recent Boards" button. The list is limited to 10 boards.',
+      },
+      {
+        target: activeBoardsRef.current!,
+        title: 'Active Boards',
+        content: 'Boards with active users on them will appear here.',
+        disableBeacon: true,
+      },
+      {
+        target: starredBoardsRef.current!,
+        title: 'Starred Boards',
+        content:
+          'You can star your frequently used boards here for quick access. You can star a board by clicking on the star icon next to the boards name once you enter a room.',
+        disableBeacon: true,
+      },
+      {
+        target: clockRef.current!,
+        title: 'Clock and more',
+        content:
+          'Your local time is displayed here, with the help button. While in a board, it also displays performance and network status, help, search and settings buttons.',
+      },
+      {
+        target: introRef.current!,
+        title: 'End of the Tour',
+        content: (
+          <>
+            <Text py={2}>We hope you enjoy using SAGE3!</Text>
+            <Text>
+              Join us on the SAGE3 Discord server:
+              <Link href="https://discord.gg/hHsKu47buY" color="teal.500" isExternal>
+                https://discord.gg/hHsKu47buY
+              </Link>
+            </Text>
+          </>
+        ),
+        disableBeacon: true,
+        disableOverlayClose: true,
+        placement: 'center',
+      },
+    ];
+
+    setJoyrideSteps(user?.data.userRole === 'guest' || user?.data.userRole === 'spectator' ? guestJoyrideSteps : userJoyrideSteps);
   };
 
   // Handle when the user clicks on the help button to restart Joyride
@@ -387,10 +468,10 @@ export function HomePage() {
     enterBoardModalOnOpen();
   };
 
-  // Load the steps when the component mounts
+  // Load the steps when room changes and component mounts
   useEffect(() => {
     handleSetJoyrideSteps();
-  }, [rooms]);
+  }, [roomId]);
 
   // Filter Functions
   const roomMemberFilter = (room: Room): boolean => {
@@ -405,12 +486,26 @@ export function HomePage() {
   const boardActiveFilter = (board: Board): boolean => {
     const roomMembership = members.find((m) => m.data.roomId === board.data.roomId);
     const userCount = partialPrescences.filter((p) => p.data.boardId === board._id).length;
+
+    // As a guest or spectator, check
+    if (user?.data.userRole === 'guest' || user?.data.userRole === 'spectator') {
+      const recentAndStarred = new Set([...recentBoards, ...savedBoards]);
+      const isRecentOrStarred = recentAndStarred.has(board._id);
+      return isRecentOrStarred && userCount > 0;
+    }
+
     const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(userId) : false;
     return isMember && userCount > 0;
   };
 
   const boardStarredFilter = (board: Board): boolean => {
     const isSaved = savedBoards.includes(board._id);
+
+    // As a guest or spectator, don't need to filter memberships. Just return cached boards.
+    if (user?.data.userRole === 'guest' || user?.data.userRole === 'spectator') {
+      return isSaved;
+    }
+
     const roomMembership = members.find((m) => m.data.roomId === board.data.roomId);
     const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(userId) : false;
     return isSaved && isMember;
@@ -418,6 +513,12 @@ export function HomePage() {
 
   const recentBoardsFilter = (board: Board): boolean => {
     const isRecent = recentBoards.includes(board._id);
+
+    // As a guest or spectator, don't need to filter memberships. Just return cached boards.
+    if (user?.data.userRole === 'guest' || user?.data.userRole === 'spectator') {
+      return isRecent;
+    }
+
     const roomMembership = members.find((m) => m.data.roomId === board.data.roomId);
     const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(userId) : false;
     return isRecent && isMember;
@@ -612,13 +713,17 @@ export function HomePage() {
   // Handle Join room membership
   const handleJoinRoomMembership = (room: Room) => {
     if (canJoin) {
-      joinRoomMembership(room._id);
-      toast({
-        title: `You have successfully joined ${room.data.name}`,
-        status: 'success',
-        duration: 4 * 1000,
-        isClosable: true,
-      });
+      if (room.data.isPrivate) {
+        setPasswordProtectedRoom(room);
+      } else {
+        joinRoomMembership(room._id);
+        toast({
+          title: `You have successfully joined ${room.data.name}`,
+          status: 'success',
+          duration: 4 * 1000,
+          isClosable: true,
+        });
+      }
     } else {
       toast({
         title: 'You do not have permission to join rooms',
@@ -657,6 +762,82 @@ export function HomePage() {
     }
   }
 
+  // Function to check if it's a valid URL
+  function isValidURL() {
+    try {
+      const SAGE_URL = searchSage.trim();
+      const cleanURL = new URL(SAGE_URL.replace('sage3://', 'https://'));
+      const hostname = cleanURL.hostname;
+      const hash = cleanURL.hash;
+
+      if (!hostname || !hash) {
+        return false;
+      }
+
+      if (hostname !== window.location.hostname) {
+        return true;
+      }
+
+      // Extract the boardID
+      const boardId = hash.split('/')[hash.split('/').length - 1];
+      if (!isUUIDv4(boardId)) {
+        // Invalid URL
+        return false;
+      } else {
+        const board = boards.find((board) => board._id === boardId);
+        if (board) {
+          return true;
+        }
+        return false;
+      }
+    } catch {
+      return false;
+    }
+  }
+
+  function extractUrlInfo(): { board: Board | null; isExternal: Boolean; error: Boolean; url: string | null } {
+    const result: { board: Board | null; isExternal: Boolean; error: Boolean; url: string | null } = {
+      board: null,
+      isExternal: false,
+      error: true,
+      url: searchSage,
+    };
+    try {
+      const SAGE_URL = searchSage.trim();
+      const cleanURL = new URL(SAGE_URL.replace('sage3://', 'https://'));
+      const hostname = cleanURL.hostname;
+      const hash = cleanURL.hash;
+
+      if (!hostname || !hash) {
+        return result;
+      }
+
+      if (hostname !== window.location.hostname) {
+        result.isExternal = true;
+        result.error = false;
+        return result;
+      }
+
+      // Extract the boardID
+      const boardId = hash.split('/')[hash.split('/').length - 1];
+      if (!isUUIDv4(boardId)) {
+        // Invalid URL
+        return result;
+      } else {
+        const board = boards.find((board) => board._id === boardId);
+        if (board) {
+          result.board = board;
+          result.error = false;
+          result.isExternal = false;
+          return result;
+        }
+        return result;
+      }
+    } catch {
+      return result;
+    }
+  }
+
   // Function to get the greeting based on the time of the day
   function getTimeBasedGreeting() {
     const hour = new Date().getHours();
@@ -671,14 +852,17 @@ export function HomePage() {
 
   // Handle when the rooms and boards change
   useEffect(() => {
-    // Check to see if the room you are in still exists
-    if (selectedRoom && !rooms.find((r) => r._id === selectedRoom._id)) {
-      setSelectedRoom(undefined);
-      setSelectedBoard(undefined);
-    }
-    // Check to see if the board you are in still exists
-    if (selectedBoard && !boards.find((board) => board._id === selectedBoard._id)) {
-      setSelectedBoard(undefined);
+    // Check URL
+    if (!roomId) {
+      // Check to see if the room you are in still exists
+      if (selectedRoom && !rooms.find((r) => r._id === selectedRoom._id)) {
+        setSelectedRoom(undefined);
+        setSelectedBoard(undefined);
+      }
+      // Check to see if the board you are in still exists
+      if (selectedBoard && !boards.find((board) => board._id === selectedBoard._id)) {
+        setSelectedBoard(undefined);
+      }
     }
   }, [JSON.stringify(rooms), JSON.stringify(boards)]);
 
@@ -794,18 +978,16 @@ export function HomePage() {
 
       {/* Sidebar Drawer */}
       <Box
-        // backgroundColor={sidebarBackgroundColor}
         borderRadius={cardRadius}
-        width="300px"
-        minWidth="300px"
+        width="20%"
+        minWidth="220px"
+        maxWidth="400px"
         transition="width 0.5s"
         height="100%"
         display="flex"
         flexDirection="column"
-        // borderRight={`solid ${dividerColor} 1px`}
       >
         {/* Server selection and main actions */}
-        {/* <Box padding="2" borderRadius={cardRadius} background={sidebarBackgroundColor}> */}
         {hubs.length > 0 ? (
           <Box ref={hubNameRef}>
             <Menu placement="bottom-end">
@@ -831,7 +1013,11 @@ export function HomePage() {
                   </Box>
                 </Box>
               </MenuButton>
-              <MenuList width={'300px'}>
+              <MenuList
+                width="20%"
+                minWidth="220px"
+                maxWidth="400px"
+              >
                 {hubs.map((hub) => {
                   return (
                     <MenuItem
@@ -855,54 +1041,9 @@ export function HomePage() {
           </Box>
         )}
 
-        {/* <Box pt="2" px="2"> */}
-        {/* <Tooltip openDelay={400} hasArrow placement="top" label={'Search for public rooms on this server'}>
-              <Box
-                h="40px"
-                display="flex"
-                justifyContent={'left'}
-                alignItems={'center'}
-                transition="all 0.5s"
-                borderRadius={buttonRadius}
-                _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
-                onClick={handleRoomSearchClick}
-                ref={searchRoomsRef}
-              >
-                <Icon as={MdSearch} fontSize="24px" mx="2" /> <Text fontSize="lg">Search for Rooms</Text>
-              </Box>
-            </Tooltip> */}
-
-        {/* <Tooltip openDelay={400} hasArrow placement="top" label={'Enter a board using an ID or shared URL'}>
-            <Box
-              h="40px"
-              display="flex"
-              justifyContent={'left'}
-              alignItems={'center'}
-              transition="all 0.5s"
-              borderRadius={buttonRadius}
-              _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
-              onClick={enterBoardByURLModalOnOpen}
-              ref={enterBoardByURLRef}
-            >
-              <Icon as={MdExitToApp} fontSize="24px" mx="2" /> <Text fontSize="lg">Join Board</Text>
-            </Box>
-          </Tooltip> */}
-        {/* </Box> */}
-        {/* </Box> */}
-
         {/* Rooms and boards section */}
         <Box backgroundColor={sidebarBackgroundColor} borderRadius={cardRadius} my="3" overflow="hidden" height="100%" pt="3" pb="3">
-          <Box
-            display="flex"
-            flexDirection="column"
-            justifyItems="start"
-            flex="1"
-            height="100%"
-            // overflowY="auto"
-            // overflowX="hidden"
-            px="3"
-            borderRadius={cardRadius}
-          >
+          <Box display="flex" flexDirection="column" justifyItems="start" flex="1" height="100%" px="3" borderRadius={cardRadius}>
             <VStack align="stretch" gap="2px" height="100%">
               <Tooltip openDelay={400} hasArrow placement="top" label={'Navigate to home page.'}>
                 <Box
@@ -916,8 +1057,8 @@ export function HomePage() {
                   borderRadius={buttonRadius}
                   _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
                   onClick={() => {
-                    toHome();
                     handleLeaveRoom();
+                    toHome();
                     setSelectedQuickAccess(undefined);
                   }}
                 >
@@ -927,29 +1068,30 @@ export function HomePage() {
                   </Text>
                 </Box>
               </Tooltip>
-              <Tooltip openDelay={400} hasArrow placement="top" label={'Enter a board using an ID or shared URL'}>
-                <Box
-                  h="40px"
-                  display="flex"
-                  justifyContent={'left'}
-                  alignItems={'center'}
-                  transition="all 0.5s"
-                  pl="3"
-                  borderRadius={buttonRadius}
-                  _hover={{ backgroundColor: hightlightGray, cursor: 'pointer' }}
-                  onClick={enterBoardByURLModalOnOpen}
-                  ref={enterBoardByURLRef}
-                >
-                  <Icon as={MdExitToApp} fontSize="24px" mr="2" />{' '}
-                  <Text fontSize="md" fontWeight="bold">
-                    Join Board
-                  </Text>
-                </Box>
-              </Tooltip>
               <Divider my="2" />
-              <Box pl="4" mb="2" fontSize="md" fontWeight="bold">
-                Your Rooms
-              </Box>
+              <HStack
+                justify="space-between"
+                alignItems="center"
+                mb="2"
+                pr="3"
+                hidden={user?.data.userRole === 'spectator' || user?.data.userRole === 'guest'}
+              >
+                <Box pl="4" fontSize="md" fontWeight="bold">
+                  Your Rooms
+                </Box>
+                <Tooltip hasArrow placement="top" label="Create a new Room" closeDelay={200}>
+                  <IconButton
+                    aria-label="Create Room"
+                    onFocus={(e) => e.preventDefault()}
+                    size="sm"
+                    bg="none"
+                    onClick={handleCreateRoomClick}
+                    ref={createRoomRef}
+                    _hover={{ transform: 'scale(1.1)', bg: 'none' }}
+                    icon={<PiStackPlusFill fontSize="24px" />}
+                  />
+                </Tooltip>
+              </HStack>
               <Box
                 ref={roomsRef}
                 height="100%"
@@ -964,6 +1106,7 @@ export function HomePage() {
                     borderRadius: '48px',
                   },
                 }}
+                hidden={user?.data.userRole === 'spectator' || user?.data.userRole === 'guest'}
               >
                 <Box height="60%" mr="2" ml="1">
                   {rooms
@@ -977,6 +1120,7 @@ export function HomePage() {
                           hasArrow
                           placement="top"
                           label={`Description ${room.data.description}`}
+                          closeOnScroll
                         >
                           <Box
                             borderRadius="6"
@@ -986,6 +1130,8 @@ export function HomePage() {
                             justifyContent="space-between"
                             transition="all 0.5s"
                             pl="3"
+                            ml="2"
+                            pr="2"
                             height="28px"
                             my="1px"
                             backgroundColor={room._id === selectedRoom?._id ? hightlightGrayValue : ''}
@@ -998,7 +1144,7 @@ export function HomePage() {
                               </Text>
                             </Box>
 
-                            <Text fontSize="xs" pr="4" color={subTextColor}>
+                            <Text fontSize="xs" color={subTextColor}>
                               {room.data.ownerId === userId ? 'Owner' : 'Member'}
                             </Text>
                           </Box>
@@ -1098,7 +1244,7 @@ export function HomePage() {
       )} */}
 
       {/* Selected Room */}
-      {selectedRoom && (
+      {selectedRoom && rooms.length > 0 && (
         <Box
           display="flex"
           flex="1"
@@ -1108,26 +1254,26 @@ export function HomePage() {
           height="100%"
           borderRadius={cardRadius}
           marginLeft="3"
-          // overflow="hidden"
-          pt={4}
+          pt={1}
           pr={4}
           pb={4}
           pl={6}
         >
-          <Box width="100%" minHeight="170px" position="relative" top="-0.5rem">
+          <Box width="100%" position="relative">
             {/* Room Information */}
             <VStack alignItems={'start'} gap="0">
-              <Text fontSize="3xl" fontWeight="bold">
+              <Text fontSize="2xl" fontWeight="bold">
                 {selectedRoom.data.name}
               </Text>
               <Text fontSize="xl" fontWeight={'normal'}>
                 {selectedRoom?.data.description}
               </Text>
 
-              <Text color={subTextColor}>Created by {users.find((u) => u._id === selectedRoom.data.ownerId)?.data.name}</Text>
-
-              <Text color={subTextColor}>Created on {new Date(selectedRoom._createdAt).toLocaleDateString()}</Text>
-              <Box display="flex" my="2" gap="2">
+              <HStack>
+                <Text color={subTextColor}>Created by {users.find((u) => u._id === selectedRoom.data.ownerId)?.data.name || 'sage3'}</Text>
+                <Text color={subTextColor}>- Created on {new Date(selectedRoom._createdAt).toLocaleDateString()}</Text>
+              </HStack>
+              <Box display="flex" mt="1" gap="2">
                 <Tooltip
                   label={
                     selectedRoom.data.ownerId === userId ? `Update the room's settings` : 'Only the owner can update the room settings'
@@ -1154,12 +1300,12 @@ export function HomePage() {
                   placement="top"
                 >
                   <Button
-                    colorScheme={rooms.filter(roomMemberFilter).includes(selectedRoom) ? 'red' : 'teal'}
+                    colorScheme={rooms.filter(roomMemberFilter).find((room) => selectedRoom._id === room._id) ? 'red' : 'teal'}
                     variant="outline"
                     size="sm"
                     width="120px"
                     onClick={() => {
-                      if (rooms.filter(roomMemberFilter).includes(selectedRoom)) {
+                      if (rooms.filter(roomMemberFilter).find((room) => selectedRoom._id === room._id)) {
                         leaveRoomModalOnOpen();
                       } else {
                         handleJoinRoomMembership(selectedRoom);
@@ -1167,19 +1313,19 @@ export function HomePage() {
                     }}
                     isDisabled={selectedRoom.data.ownerId === userId}
                   >
-                    {rooms.filter(roomMemberFilter).includes(selectedRoom) ? 'Unjoin' : 'Join'}
+                    {rooms.filter(roomMemberFilter).find((room) => selectedRoom._id === room._id) ? 'Unjoin' : 'Join'}
                   </Button>
                 </Tooltip>
               </Box>
             </VStack>
           </Box>
 
-          {rooms.filter(roomMemberFilter).includes(selectedRoom) ? (
-            <Box width="100%" flexGrow={1}>
+          {rooms.filter(roomMemberFilter).find((room) => selectedRoom._id === room._id) ? (
+            <Box width="100%" flexGrow={1} p={0} m={0}>
               <Tabs colorScheme="teal">
                 <TabList>
                   <Tab>
-                    <Icon as={MdBorderAll} mr="1"></Icon>Boards
+                    <Icon as={MdDashboard} mr="1"></Icon>Boards
                   </Tab>
                   <Tab>
                     <Icon as={MdPeople} mr="1"></Icon>Members
@@ -1195,8 +1341,8 @@ export function HomePage() {
                 <TabPanels height="100%">
                   <TabPanel px="0">
                     <Box display="flex" gap="4">
-                      <Flex gap="4" flexDirection="column">
-                        <Flex align="center" gap="2" justify="flex-start" mx="2">
+                      <Flex gap="2" flexDirection="column">
+                        <Flex align="center" gap="2" justify="flex-start" ml="2">
                           <Tooltip label="Create New Board" aria-label="Create Board" placement="top" hasArrow>
                             <IconButton
                               size="md"
@@ -1204,6 +1350,7 @@ export function HomePage() {
                               colorScheme={'teal'}
                               aria-label="favorite-board"
                               fontSize="xl"
+                              onFocus={(e) => e.preventDefault()}
                               onClick={createBoardModalOnOpen}
                               isDisabled={!canCreateBoards}
                               icon={<MdAdd />}
@@ -1214,7 +1361,13 @@ export function HomePage() {
                             <InputLeftElement pointerEvents="none">
                               <MdSearch />
                             </InputLeftElement>
-                            <Input placeholder="Search Boards" value={boardSearch} onChange={(e) => setBoardSearch(e.target.value)} />
+                            <Input
+                              placeholder="Search Boards"
+                              value={boardSearch}
+                              onChange={(e) => {
+                                setBoardSearch(e.target.value);
+                              }}
+                            />
                           </InputGroup>
                           <ButtonGroup size="md" isAttached variant="outline">
                             <IconButton
@@ -1239,12 +1392,12 @@ export function HomePage() {
                         {boardListView == 'grid' && (
                           <Flex
                             gap="4"
-                            p="2"
+                            pl="2" py="1"
                             display="flex"
                             flexWrap="wrap"
                             justifyContent="left"
                             style={{
-                              maxHeight: 'calc(100vh - 360px)',
+                              maxHeight: 'calc(100svh - 270px)',
                               width: '100%',
                               maxWidth: '2200px',
                             }}
@@ -1255,7 +1408,7 @@ export function HomePage() {
                             css={{
                               '&::-webkit-scrollbar': {
                                 background: 'transparent',
-                                width: '5px',
+                                width: '10px',
                               },
                               '&::-webkit-scrollbar-thumb': {
                                 background: scrollBarColor,
@@ -1286,8 +1439,8 @@ export function HomePage() {
                           <VStack
                             gap="3"
                             alignItems="left"
-                            px="2"
-                            style={{ height: 'calc(100svh - 360px)' }}
+                            pl="2"
+                            style={{ height: 'calc(100svh - 270px)' }}
                             overflowY="scroll"
                             overflowX="hidden"
                             minWidth="420px"
@@ -1358,7 +1511,7 @@ export function HomePage() {
           marginLeft="3"
           width="100%"
           overflow="hidden"
-          py="1"
+          py="2"
           minWidth="600px"
         >
           <Box
@@ -1403,10 +1556,12 @@ export function HomePage() {
                   <MdSearch />
                 </InputLeftElement>
                 <Input
-                  placeholder="Search your rooms and boards"
+                  placeholder="Search your rooms, boards, or join board via URL"
                   _placeholder={{ opacity: 0.7, color: searchPlaceholderColor }}
                   value={searchSage}
-                  onChange={(e) => setSearchSage(e.target.value)}
+                  onChange={(e) => {
+                    setSearchSage(e.target.value);
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === 'Escape') {
                       setSearchSage('');
@@ -1434,9 +1589,6 @@ export function HomePage() {
                 borderColor="inherit"
               >
                 <Box
-                  // hidden={!(searchSage.length > 0) || !isSearchSageFocused}
-                  // ref={searchSageRef}
-                  // position="absolute"
                   p="3"
                   mb="0"
                   h="full"
@@ -1453,23 +1605,33 @@ export function HomePage() {
                     },
                   }}
                 >
-                  {roomAndBoards && roomAndBoards.filter(sageSearchFilter).length > 0
-                    ? roomAndBoards.filter(sageSearchFilter).map((item: Room | (Board & { roomName: string })) => {
-                        // If it's a board, get the room ID
-                        if ((item as Board & { roomName: string }).data.roomId) {
-                          return <SearchRow.Board key={item._id} board={item as Board & { roomName: string }} />;
-                        }
-                        return (
-                          <SearchRow.Room
-                            key={item._id}
-                            room={item as Room}
-                            clickHandler={() => {
-                              handleRoomClick(item as Room);
-                            }}
-                          />
-                        );
-                      })
-                    : 'No items match your search'}
+                  {/* If it starts with https:// or http:// and is a valid URL */}
+                  {(searchSage.startsWith('https://') || searchSage.startsWith('http://')) && isValidURL() && boards.length > 0 && (
+                    <SearchRow.Url urlInfo={extractUrlInfo()} />
+                  )}
+
+                  {/* If it doesn't start with https:// or http:// and filtered roomsAndBoards have more than 1 item */}
+                  {roomAndBoards &&
+                    roomAndBoards.filter(sageSearchFilter).length > 0 &&
+                    (!searchSage.startsWith('https://') || !searchSage.startsWith('http://')) &&
+                    roomAndBoards.filter(sageSearchFilter).map((item: Room | (Board & { roomName: string })) => {
+                      // If it's a board, get the room ID
+                      if ((item as Board & { roomName: string }).data.roomId) {
+                        return <SearchRow.Board key={item._id} board={item as Board & { roomName: string }} />;
+                      }
+                      return (
+                        <SearchRow.Room
+                          key={item._id}
+                          room={item as Room}
+                          clickHandler={() => {
+                            handleRoomClick(item as Room);
+                          }}
+                        />
+                      );
+                    })}
+
+                  {/* If there are no roomAndBoards and it's not a valid URL*/}
+                  {roomAndBoards && roomAndBoards.filter(sageSearchFilter).length === 0 && !isValidURL() && 'No items match your search'}
                 </Box>
               </Box>
             </Box>
@@ -1512,8 +1674,8 @@ export function HomePage() {
                   </Tab>
                 </TabList>
 
-                <TabPanels minH="250px">
-                  <TabPanel px="0" pt="2" id="Recent Boards">
+                <TabPanels height="240px">
+                  <TabPanel px="0" pt="2" id="Recent Boards" height="100%">
                     <Box background={homeSectionColor} borderRadius={cardRadius} px="3" overflow="hidden">
                       {/* TODO: MAKE THIS INTO SEPARATE COMPONENT */}
                       {recentBoards.length > 0 && boards.filter(recentBoardsFilter).length > 0 ? (
@@ -1551,7 +1713,6 @@ export function HomePage() {
                                   board={board}
                                   room={rooms.find((room) => board.data.roomId === room._id) as Room}
                                   onClick={() => handleBoardClick(board)}
-                                  // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
                                   selected={selectedBoard ? selectedBoard._id === board._id : false}
                                   usersPresent={partialPrescences.filter((p) => p.data.boardId === board._id)}
                                 />
@@ -1559,7 +1720,9 @@ export function HomePage() {
                             ))}
                         </HStack>
                       ) : (
-                        <Text p="3">No recent boards.</Text>
+                        <Text p="3" px="6">
+                          No recent boards.
+                        </Text>
                       )}
                     </Box>
                   </TabPanel>
@@ -1601,7 +1764,6 @@ export function HomePage() {
                                   board={board}
                                   room={rooms.find((room) => board.data.roomId === room._id) as Room}
                                   onClick={() => handleBoardClick(board)}
-                                  // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
                                   selected={selectedBoard ? selectedBoard._id === board._id : false}
                                   usersPresent={partialPrescences.filter((p) => p.data.boardId === board._id)}
                                 />
@@ -1647,7 +1809,6 @@ export function HomePage() {
                                   board={board}
                                   room={rooms.find((room) => board.data.roomId === room._id) as Room}
                                   onClick={() => handleBoardClick(board)}
-                                  // onClick={(board) => {handleBoardClick(board); enterBoardModalOnOpen()}}
                                   selected={selectedBoard ? selectedBoard._id === board._id : false}
                                   usersPresent={partialPrescences.filter((p) => p.data.boardId === board._id)}
                                 />
@@ -1664,17 +1825,12 @@ export function HomePage() {
                 </TabPanels>
               </Tabs>
 
-              <Box mt="6" mb="3">
+              <Box mt="6" mb="3" hidden={user?.data.userRole === 'guest' || user?.data.userRole === 'spectator'}>
                 <Box display="flex" justifyContent="space-between" alignItems="baseline" mb="1">
                   <Text fontWeight="bold">Available Rooms</Text>
                 </Box>
                 <Box p="4" bg={homeSectionColor} rounded="xl">
                   <Box display="flex" alignItems="center" gap="2">
-                    <Tooltip label="Create a new room" aria-label="Create Board" placement="top" hasArrow>
-                      <Button onClick={handleCreateRoomClick} ref={createRoomRef} size="sm" rounded="md" bg={tabColor} fontWeight="bold">
-                        <Icon as={MdAdd} fontWeight="bold" fontSize="xl" />
-                      </Button>
-                    </Tooltip>
                     <InputGroup size="sm" width="415px" my="1">
                       <InputLeftElement pointerEvents="none">
                         <MdSearch />
@@ -1726,7 +1882,7 @@ export function HomePage() {
 
                             <Text fontSize="xs" color={subTextColor}>
                               {room.data.ownerId === userId ||
-                              members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
+                                members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
                                 room.data.ownerId === userId ? (
                                   <Tag size="sm" width="100px" display="flex" justifyContent="center" colorScheme="green">
                                     Owner

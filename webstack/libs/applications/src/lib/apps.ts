@@ -1,7 +1,7 @@
 // SAGE3 Generated from apps.json file
 
-import { App } from './schema';
 import { name as AIPaneName } from './apps/AIPane';
+import { name as AssetLinkName } from './apps/AssetLink';
 import { name as BoardLinkName } from './apps/BoardLink';
 import { name as CSVViewerName } from './apps/CSVViewer';
 import { name as CalculatorName } from './apps/Calculator';
@@ -42,7 +42,11 @@ import { name as WebpageLinkName } from './apps/WebpageLink';
 import { name as WebviewName } from './apps/Webview';
 
 
+import React from 'react';
+import { AppGroup } from './schema';
+
 import AIPane from './apps/AIPane/AIPane';
+import AssetLink from './apps/AssetLink/AssetLink';
 import BoardLink from './apps/BoardLink/BoardLink';
 import CSVViewer from './apps/CSVViewer/CSVViewer';
 import Calculator from './apps/Calculator/Calculator';
@@ -81,11 +85,11 @@ import VegaLiteViewer from './apps/VegaLiteViewer/VegaLiteViewer';
 import VideoViewer from './apps/VideoViewer/VideoViewer';
 import WebpageLink from './apps/WebpageLink/WebpageLink';
 import Webview from './apps/Webview/Webview';
-import React from 'react';
 
 
 export const Applications = {
   [AIPaneName]: { AppComponent: React.memo(AIPane.AppComponent), ToolbarComponent: AIPane.ToolbarComponent, GroupedToolbarComponent: AIPane.GroupedToolbarComponent },
+  [AssetLinkName]: { AppComponent: React.memo(AssetLink.AppComponent), ToolbarComponent: AssetLink.ToolbarComponent, GroupedToolbarComponent: AssetLink.GroupedToolbarComponent },
   [BoardLinkName]: { AppComponent: React.memo(BoardLink.AppComponent), ToolbarComponent: BoardLink.ToolbarComponent, GroupedToolbarComponent: BoardLink.GroupedToolbarComponent },
   [CSVViewerName]: { AppComponent: React.memo(CSVViewer.AppComponent), ToolbarComponent: CSVViewer.ToolbarComponent, GroupedToolbarComponent: CSVViewer.GroupedToolbarComponent },
   [CalculatorName]: { AppComponent: React.memo(Calculator.AppComponent), ToolbarComponent: Calculator.ToolbarComponent, GroupedToolbarComponent: Calculator.GroupedToolbarComponent },
@@ -124,6 +128,7 @@ export const Applications = {
   [VideoViewerName]: { AppComponent: React.memo(VideoViewer.AppComponent), ToolbarComponent: VideoViewer.ToolbarComponent, GroupedToolbarComponent: VideoViewer.GroupedToolbarComponent },
   [WebpageLinkName]: { AppComponent: React.memo(WebpageLink.AppComponent), ToolbarComponent: WebpageLink.ToolbarComponent, GroupedToolbarComponent: WebpageLink.GroupedToolbarComponent },
   [WebviewName]: { AppComponent: React.memo(Webview.AppComponent), ToolbarComponent: Webview.ToolbarComponent, GroupedToolbarComponent: Webview.GroupedToolbarComponent },
-} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element, GroupedToolbarComponent: (props: { apps: App[] }) => JSX.Element; }>;
+} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element, GroupedToolbarComponent: (props: { apps: AppGroup }) => JSX.Element; }>;
 
 export * from './components';
+export * from './ai-apps';

@@ -7,6 +7,7 @@
  */
 
 import { useRef, useState, Fragment, useEffect } from 'react';
+import { useParams } from 'react-router';
 import {
   ButtonGroup,
   Button,
@@ -16,7 +17,6 @@ import {
   Text,
   Flex,
   useColorModeValue,
-  Input,
   Tooltip,
   InputGroup,
   InputRightElement,
@@ -24,8 +24,13 @@ import {
   Divider,
   Center,
   AbsoluteCenter,
+  List,
+  ListIcon,
+  ListItem,
+  Textarea,
 } from '@chakra-ui/react';
-import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle, MdFileDownload, MdChat } from 'react-icons/md';
+import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle, MdFileDownload, MdChat, MdSettings } from 'react-icons/md';
+import { HiCommandLine } from 'react-icons/hi2';
 
 // Date management
 import { formatDistance } from 'date-fns';
@@ -33,12 +38,40 @@ import { format } from 'date-fns/format';
 // Markdown
 import Markdown from 'markdown-to-jsx';
 
-import { useAppStore, useHexColor, useUser, serverTime, downloadFile, useUsersStore, AiAPI } from '@sage3/frontend';
-import { genId } from '@sage3/shared';
+import { AppName } from '@sage3/applications/schema';
+import { initialValues } from '@sage3/applications/initialValues';
+import {
+  useAppStore,
+  useHexColor,
+  useUser,
+  serverTime,
+  downloadFile,
+  useUsersStore,
+  AiAPI,
+  useUserSettings,
+  useUIStore,
+} from '@sage3/frontend';
+import { genId, AskRequest, ImageQuery, PDFQuery, CodeRequest, WebQuery, WebScreenshot } from '@sage3/shared';
 
 import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
+
+import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot } from './tRPC';
+
+const OrderedList: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => (
+  <ol style={{ paddingLeft: '24px' }} {...props}>
+    {children}
+  </ol>
+);
+
+const UnorderedList: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => (
+  <ul style={{ paddingLeft: '24px' }} {...props}>
+    {children}
+  </ul>
+);
+
+type OperationMode = 'chat' | 'text' | 'image' | 'web' | 'pdf' | 'code';
 
 // AI model information from the backend
 interface modelInfo {
@@ -47,43 +80,45 @@ interface modelInfo {
   maxTokens: number;
 }
 
-// LLAMA2
-const LLAMA2_SYSTEM_PROMPT = 'You are a helpful and honest assistant that answer questions in a concise fashion in Markdown format. You only return the content relevant to the question.';
-// LLAMA3
-const LLAMA3_SYSTEM_PROMPT = 'You are a helpful assistant, providing informative, conscise and friendly answers to the user in Markdown format. You only return the content relevant to the question.';
-// Prompt to interject or not
-const LLAMA3_INTERJECT = 'You are a helpful AI assistant with many names (sage, sage3, ai, siri, google, bixby, alexa) and able to understand intent in multi-party conversations. You will be given a sample conversation transcript between multiple users plus you, and asked a question.';
-
-
 /* App component for Chat */
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
+  const { roomId, boardId } = useParams();
+
   const { user } = useUser();
+  const [username, setUsername] = useState('');
+  const createApp = useAppStore((state) => state.create);
 
   // Colors for Dark theme and light theme
-  const myColor = useHexColor(user?.data.color || 'blue');
-  const sageColor = useHexColor('purple');
-  const aiTypingColor = useHexColor('orange');
-  const otherUserColor = useHexColor('gray');
-  const bgColor = useColorModeValue('gray.200', 'gray.800');
-  const fgColor = useColorModeValue('gray.800', 'gray.200');
-  const sc = useColorModeValue('gray.400', 'gray.200');
+  // Chat Bubble Colors
+  const myColor = useHexColor(`blue.300`);
+  const sageColor = useHexColor('purple.300');
+  const aiTypingColor = useHexColor('orange.300');
+  const otherUserColor = useHexColor('gray.300');
+  // Background, scrollbar, and Foreground Colors
+  const backgroundColor = useColorModeValue('gray.200', 'gray.600');
+  const backgroundColorHex = useHexColor(backgroundColor);
+  const bgColor = useColorModeValue('gray.100', 'gray.700');
+  const fgColor = useColorModeValue('gray.900', 'gray.200');
+  const sc = useColorModeValue('gray.300', 'gray.500');
   const scrollColor = useHexColor(sc);
-  const textColor = useColorModeValue('gray.700', 'gray.100');
+  const textColor = useColorModeValue('gray.800', 'gray.100');
+
   // App state management
   const updateState = useAppStore((state) => state.updateState);
   // Get presences of users
   const users = useUsersStore((state) => state.users);
-  // Online Models
-  // const [onlineModels, setOnlineModels] = useState<modelInfo[]>([]);
-  const [selectedModel, setSelectedModel] = useState<modelInfo>();
+  // Model Preferences
+  const [onlineModels, setOnlineModels] = useState<modelInfo[]>([]);
+  const { settings } = useUserSettings();
+  const [selectedModel, setSelectedModel] = useState(settings.aiModel);
 
   // Input text for query
   const [input, setInput] = useState<string>('');
   const [streamText, setStreamText] = useState<string>('');
   // Element to set the focus to when opening the dialog
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   // Processing
   const [processing, setProcessing] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -91,8 +126,12 @@ function AppComponent(props: App): JSX.Element {
 
   const [previousQuestion, setPreviousQuestion] = useState<string>(s.previousQ);
   const [previousAnswer, setPreviousAnswer] = useState<string>(s.previousA);
-  const [analysis, setAnalysis] = useState<string>("\u00A0"); // space
+  const [status] = useState<string>('AI can make mistakes. User caution is advised.');
+  const [actions, setActions] = useState<any[]>([]);
+  const [mode, setMode] = useState<OperationMode>('chat');
+  const [location, setLocation] = useState('');
 
+  const isSelected = useUIStore.getState().selectedAppId === props._id;
   const chatBox = useRef<null | HTMLDivElement>(null);
   const ctrlRef = useRef<null | AbortController>(null);
 
@@ -103,7 +142,8 @@ function AppComponent(props: App): JSX.Element {
   const sortedMessages = s.messages ? s.messages.sort((a, b) => a.creationDate - b.creationDate) : [];
 
   // Input text for query
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    // const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setInput(value);
   };
@@ -111,16 +151,60 @@ function AppComponent(props: App): JSX.Element {
   const sendMessage = async () => {
     const text = input.trim();
     setInput('');
-    await newMessage(text);
+    if (mode === 'image') {
+      // Image
+      onContentImage(text);
+    } else if (mode === 'pdf') {
+      // PDF
+      onContentPDF(text);
+    } else if (mode === 'code') {
+      // Code
+      onContentCode(text, '');
+    } else if (mode === 'web') {
+      // Code
+      onContentWeb(text);
+    } else {
+      await newMessage(text);
+    }
   };
 
   const onSubmit = (e: React.KeyboardEvent) => {
     // Keyboard instead of pressing the button
     if (e.key === 'Enter') {
-      e.preventDefault();
-      sendMessage();
+      if (e.shiftKey) {
+        // Shift + Enter
+        e.preventDefault();
+        setInput(input + '\n');
+      } else {
+        e.preventDefault();
+        sendMessage();
+      }
     }
   };
+
+  useEffect(() => {
+    if (inputRef.current && isSelected) {
+      inputRef.current.focus();
+    }
+  }, [inputRef, isSelected]);
+
+  useEffect(() => {
+    if (user) {
+      // User name
+      const u = user.data.name;
+      const firstName = u.split(' ')[0];
+      setUsername(firstName);
+      // Location
+      navigator.geolocation.getCurrentPosition(
+        function (location) {
+          setLocation(location.coords.latitude + ',' + location.coords.longitude);
+        },
+        function (e) {
+          console.log('Location> error', e);
+        }
+      );
+    }
+  }, [user]);
 
   // Update from server
   useEffect(() => {
@@ -129,44 +213,6 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     setPreviousAnswer(s.previousA);
   }, [s.previousA]);
-
-  useEffect(() => {
-    if (s.context) {
-      // Quick summary
-      const ctx = `SAGE, Please carefully read the following document text:
-
-      <document>
-      ${s.context}
-      </document>
-
-      After reading through the document, identify the main topics, themes, and key concepts that are covered.
-
-      Then, extract 3-5 keywords that best capture the essence and subject matter of the document. These keywords should concisely represent the most important and central ideas conveyed by the text.
-
-      Please list the keywords you came up in bold using the Markdown syntax.`;
-
-      // Longer version
-      // const ctx = `@G Your task is to generate a topic analysis on a set of documents that I will provide. Here are the documents:
-
-      // <documents>
-      // ${s.context}
-      // </documents>
-
-      // Please read through the documents carefully. Then, identify the main topics that are covered across the set of documents. For each key topic you identify:
-
-      // - Write a sentence or two describing the essence of the topic
-      // - Extract a few representative excerpts or quotes from the documents that relate to the topic
-      // - Estimate approximately what percentage of the overall content across the documents is about this topic
-
-      // Show your work and reasoning in a <scratchpad> before presenting your final topic analysis.
-
-      // Then, provide your final topic analysis in a bulleted list format, with each bullet corresponding to one of the key topics you identified. For each topic, include the description, relevant excerpts, and estimated percentage of content about that topic.
-
-      // Enclose your final topic analysis in <analysis> tags.`;
-      newMessage(ctx);
-      setInput('');
-    }
-  }, [s.context]);
 
   // Tokens coming from the server as a stream
   useEffect(() => {
@@ -178,12 +224,35 @@ function AppComponent(props: App): JSX.Element {
     goToBottom('auto');
   }, [s.token]);
 
+  useEffect(() => {
+    if (s.firstQuestion) {
+      newMessage('@S ' + s.firstQuestion);
+    }
+  }, [s.firstQuestion]);
+
+  useEffect(() => {
+    if (s.sources && s.sources.length >= 1) {
+      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+      if (apps && apps[0] && apps[0].data.type === 'ImageViewer') {
+        setMode('image');
+      } else if (apps && apps[0] && apps[0].data.type === 'PDFViewer') {
+        setMode('pdf');
+      } else if (apps && apps[0] && apps[0].data.type === 'CodeEditor') {
+        setMode('code');
+      } else if (apps && apps[0] && apps[0].data.type === 'Webview') {
+        setMode('web');
+      } else {
+        setMode('text');
+      }
+    }
+  }, [s.sources]);
+
   const newMessage = async (new_input: string) => {
     if (!user) return;
     // Get server time
     const now = await serverTime();
     // Is it a question to SAGE?
-    const isQuestion = new_input.startsWith('@S');
+    const isQuestion = new_input.toUpperCase().startsWith('@S');
     const name = isQuestion ? 'SAGE' : user?.data.name;
     // Add messages
     const initialAnswer = {
@@ -197,55 +266,42 @@ function AppComponent(props: App): JSX.Element {
     };
     updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
     if (isQuestion) {
-      setAnalysis("Direct question to SAGE.");
       setProcessing(true);
-      // Remove the @G from the question
+      // Remove the @S from the question
       const request = isQuestion ? new_input.slice(2) : new_input;
 
       if (isQuestion) {
-        let complete_request = '';
-        if (previousQuestion && previousAnswer) {
-          if (selectedModel?.model === 'llama2') {
-            // schema for follow up questions:
-            // https://huggingface.co/blog/llama2#how-to-prompt-llama-2
-            // {{ user_msg_1 }} [/INST] {{ model_answer_1 }} </s>
-            // <s>[INST] {{ user_msg_2 }} [/INST]
-            complete_request = `${previousQuestion} [/INST] ${previousAnswer} </s> <s>[INST] ${request} [/INST]`;
-          } else {
-            // https://llama.meta.com/docs/model-cards-and-prompt-formats/meta-llama-3/
-            // LLAMA3 schema for follow up questions:
-            // <|begin_of_text|><|start_header_id|>system<|end_header_id|>
-            // {{ system_prompt }}<|eot_id|><|start_header_id|>user<|end_header_id|>
-            // {{ user_message_1 }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
-            // {{ model_answer_1 }}<|eot_id|><|start_header_id|>user<|end_header_id|>
-            // {{ user_message_2 }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
-            complete_request = `<|begin_of_text|><|start_header_id|>system<|end_header_id|> ${LLAMA3_SYSTEM_PROMPT} <|eot_id|>
-                 <|start_header_id|>user<|end_header_id|>
-                 ${previousQuestion}<|eot_id|>
-                 <|start_header_id|>assistant<|end_header_id|>
-                 ${previousAnswer}<|eot_id|>
-                 <|start_header_id|>user<|end_header_id|>
-                 ${request} <|eot_id|>
-                 <|start_header_id|>assistant<|end_header_id|>`;
-          }
-        } else {
-          if (selectedModel?.model === 'llama2') {
-            complete_request = `<s>[INST] <<SYS>> ${LLAMA2_SYSTEM_PROMPT} <</SYS>> ${request} [/INST]`;
-          } else {
-            // LLAMA3 question
-            // <|begin_of_text|><|start_header_id|>system<|end_header_id|>
-            // {{ system_prompt }}<|eot_id|><|start_header_id|>user<|end_header_id|>
-            // {{ user_message }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
-            complete_request = `<|begin_of_text|><|start_header_id|>system<|end_header_id|> ${LLAMA3_SYSTEM_PROMPT} <|eot_id|>
-                   <|start_header_id|>user<|end_header_id|> ${request} <|eot_id|>
-                   <|start_header_id|>assistant<|end_header_id|>`;
-          }
-        }
+        const ctx = `Please carefully read the following text:
+        <text>
+        ${s.context}
+        </text>
+        ${request}`;
 
-        // Send request to backend
-        const backend = await AiAPI.chat.query({ input: complete_request || request, model: 'chat', max_new_tokens: 400, app_id: props._id });
-        if (backend.success) {
-          const new_text = backend.output || '';
+        const body: AskRequest = {
+          ctx: {
+            previousQ: previousQuestion,
+            previousA: previousAnswer,
+            pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+            roomId: roomId!,
+            boardId: boardId!,
+          },
+          user: username,
+          id: genId(),
+          model: selectedModel || 'llama',
+          location: location,
+          q: s.context ? ctx : request,
+        };
+        const response = await callAsk(body);
+        if ('message' in response) {
+          toast({
+            title: 'Error',
+            description: response.message || 'Error sending query to the agent. Please try again.',
+            status: 'error',
+            duration: 4000,
+            isClosable: true,
+          });
+        } else {
+          const new_text = response.r || '';
           setProcessing(false);
           // Clear the stream text
           setStreamText('');
@@ -272,100 +328,6 @@ function AppComponent(props: App): JSX.Element {
           });
         }
       }
-    } else {
-      // Not a question to SAGE
-      const sample = "The conversation transcript is contained in backtick delimiters below: ```\n" +
-        new_input + "\n```";
-      const question = "Question: you are an AI assistant and should reply only when being addressed by name. Looking at the last message from 'User' in the transcript, should an AI assistant interject this time? Respond in the following JSON format:\n\nreasoning: (give very brief reasoning here)\njudgement: INTERJECT|QUIET (choose one)";
-
-      const test_request = `<|begin_of_text|>
-      <|start_header_id|>system<|end_header_id|> ${LLAMA3_INTERJECT} <|eot_id|>
-      <|start_header_id|>user<|end_header_id|> ${sample} <|eot_id|>
-      <|start_header_id|>user<|end_header_id|> ${question} <|eot_id|>
-      <|start_header_id|>assistant<|end_header_id|>`;
-
-      const interject = await AiAPI.chat.query({ input: test_request, model: 'chat', max_new_tokens: 100 });
-      if (interject && interject.success && interject.output) {
-        try {
-          const text = interject.output.replace(/(\r\n|\n|\r|```)/gm, '').trim();
-          const json = JSON.parse(text);
-          const reasoning = json.reasoning;
-          const judgement = json.judgement;
-
-          // Display the reasoning in the chat
-          setAnalysis(reasoning);
-
-          if (judgement === 'INTERJECT') {
-            // Add messages
-            const initialAnswer = {
-              id: genId(),
-              userId: user._id,
-              creationId: '',
-              creationDate: now.epoch,
-              userName: 'SAGE',
-              query: new_input,
-              response: 'Working on it...',
-            };
-            updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
-
-            let complete_request = '';
-            if (previousQuestion && previousAnswer) {
-              if (selectedModel?.model === 'llama2') {
-                complete_request = `${previousQuestion} [/INST] ${previousAnswer} </s> <s>[INST] ${new_input} [/INST]`;
-              } else {
-                complete_request = `<|begin_of_text|><|start_header_id|>system<|end_header_id|> ${LLAMA3_SYSTEM_PROMPT} <|eot_id|>
-                     <|start_header_id|>user<|end_header_id|>
-                     ${previousQuestion}<|eot_id|>
-                     <|start_header_id|>assistant<|end_header_id|>
-                     ${previousAnswer}<|eot_id|>
-                     <|start_header_id|>user<|end_header_id|>
-                     ${new_input} <|eot_id|>
-                     <|start_header_id|>assistant<|end_header_id|>`;
-              }
-            } else {
-              if (selectedModel?.model === 'llama2') {
-                complete_request = `<s>[INST] <<SYS>> ${LLAMA2_SYSTEM_PROMPT} <</SYS>> ${new_input} [/INST]`;
-              } else {
-                complete_request = `<|begin_of_text|><|start_header_id|>system<|end_header_id|> ${LLAMA3_SYSTEM_PROMPT} <|eot_id|>
-                       <|start_header_id|>user<|end_header_id|> ${new_input} <|eot_id|>
-                       <|start_header_id|>assistant<|end_header_id|>`;
-              }
-            }
-            // Send request to backend
-            const backend = await AiAPI.chat.query({ input: complete_request, model: 'chat', max_new_tokens: 400, app_id: props._id });
-            if (backend.success) {
-              const new_text = backend.output || '';
-              setProcessing(false);
-              // Clear the stream text
-              setStreamText('');
-              ctrlRef.current = null;
-              setPreviousAnswer(new_text);
-              // Add messages
-              updateState(props._id, {
-                ...s,
-                previousQ: new_input,
-                previousA: new_text,
-                messages: [
-                  ...s.messages,
-                  initialAnswer,
-                  {
-                    id: genId(),
-                    userId: user._id,
-                    creationId: '',
-                    creationDate: now.epoch + 1,
-                    userName: 'SAGE',
-                    query: '',
-                    response: new_text,
-                  },
-                ],
-              });
-            }
-          }
-
-        } catch (error) {
-          setAnalysis("Inconclusive answer from SAGE. Please try again.");
-        }
-      }
     }
   };
 
@@ -379,7 +341,6 @@ function AppComponent(props: App): JSX.Element {
 
   const stopSAGE = async () => {
     setProcessing(false);
-    setAnalysis("\u00A0");
     if (ctrlRef.current && user) {
       ctrlRef.current.abort();
       ctrlRef.current = null;
@@ -411,17 +372,723 @@ function AppComponent(props: App): JSX.Element {
   const resetSAGE = () => {
     setPreviousQuestion('');
     setPreviousAnswer('');
-    setAnalysis("\u00A0");
     updateState(props._id, { ...s, previousA: '', previousQ: '', messages: initialState.messages });
+    setProcessing(false);
+    setActions([]);
+  };
+
+  const onSummary = async () => {
+    if (!user) return;
+    // Get the current context
+    let newctx = s.context;
+    if (!newctx && s.sources.length > 0) {
+      // Update the context with the stickies
+      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+      newctx = apps.reduce((accumulate, app) => {
+        if (app.data.type === 'Stickie') accumulate += app.data.state.text + '\n\n';
+        return accumulate;
+      }, '');
+    }
+    if (newctx) {
+      // Summary prompt
+      const ctx = `@S, Please carefully read the following document text:
+        <document>
+        ${newctx}
+        </document>
+        After reading through the document, identify the main topics, themes, and key concepts that are covered.
+        Provide all your answers in a few sentences using the Markdown syntax`;
+      newMessage(ctx);
+      setInput('');
+    }
+  };
+
+  const onImageSummary = async () => {
+    return onContentImage('Describe the image in details');
+  };
+  const onImageCaption = async () => {
+    return onContentImage('Generate a caption for the image, fit for a scientific publication');
+  };
+  const onImageProsCons = async () => {
+    return onContentImage('Describe the good parts and then the bad parts of the image at conveying its message');
+  };
+  const onImageKeywords = async () => {
+    return onContentImage('Read the image and extract 3-5 keywords that best capture the essence and subject matter of the image');
+  };
+  const onImageFacts = async () => {
+    return onContentImage('Read the image and provide two or three interesting facts from the image');
+  };
+
+  const onContentImage = async (prompt: string) => {
+    if (!user) return;
+    if (s.sources.length > 0) {
+      // Update the context with the stickies
+      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+
+      // Check for image
+      if (apps && apps[0].data.type === 'ImageViewer') {
+        if (roomId && boardId) {
+          const now = await serverTime();
+          const initialAnswer = {
+            id: genId(),
+            userId: user._id,
+            creationId: '',
+            creationDate: now.epoch,
+            userName: 'SAGE',
+            query: prompt,
+            response: 'Working on it...',
+          };
+          updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
+
+          const assetid = apps[0].data.state.assetid;
+          // Build the query
+          const q: ImageQuery = {
+            ctx: {
+              previousQ: previousQuestion,
+              previousA: previousAnswer,
+              pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+              roomId,
+              boardId,
+            },
+            q: prompt,
+            user: username,
+            asset: assetid,
+            model: selectedModel || 'llama',
+          };
+          setProcessing(true);
+          setActions([]);
+          // Invoke the agent
+          const response = await callImage(q);
+          setProcessing(false);
+
+          if ('message' in response) {
+            toast({
+              title: 'Error',
+              description: response.message || 'Error sending query to the agent. Please try again.',
+              status: 'error',
+              duration: 4000,
+              isClosable: true,
+            });
+          } else {
+            // Clear the stream text
+            setStreamText('');
+            ctrlRef.current = null;
+            setPreviousAnswer(response.r);
+            // Add messages
+            updateState(props._id, {
+              ...s,
+              previousQ: 'Describe the content',
+              previousA: response.r,
+              messages: [
+                ...s.messages,
+                initialAnswer,
+                {
+                  id: genId(),
+                  userId: user._id,
+                  creationId: '',
+                  creationDate: now.epoch + 1,
+                  userName: 'SAGE',
+                  query: '',
+                  response: response.r,
+                },
+              ],
+            });
+            if (response.actions) {
+              setActions(response.actions);
+            }
+          }
+        }
+      }
+    }
+  };
+
+  const onContentPDF = async (prompt: string) => {
+    if (!user) return;
+    console.log('sources', s.sources);
+
+    const isQuestion = prompt.toUpperCase().startsWith('@S');
+    const name = isQuestion ? 'SAGE' : user?.data.name;
+
+    if (s.sources.length > 0) {
+      // Update the context with the stickies
+      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+
+      // Check for image
+      if (apps && apps[0].data.type === 'PDFViewer') {
+        if (roomId && boardId) {
+          const now = await serverTime();
+          const initialAnswer = {
+            id: genId(),
+            userId: user._id,
+            creationId: '',
+            creationDate: now.epoch,
+            userName: name,
+            query: prompt,
+            response: isQuestion ? 'Working on it...' : '',
+          };
+          updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
+
+          if (isQuestion) {
+            const request = isQuestion ? prompt.slice(2) : prompt;
+            const assetids = apps.map((d) => d.data.state.assetid);
+            // Build the query
+            const q: PDFQuery = {
+              ctx: {
+                previousQ: previousQuestion,
+                previousA: previousAnswer,
+                pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+                roomId,
+                boardId,
+              },
+              q: request,
+              user: username,
+              assetids: assetids,
+            };
+            setProcessing(true);
+            setActions([]);
+            // Invoke the agent
+            const response = await callPDF(q);
+            setProcessing(false);
+
+            if ('message' in response) {
+              const errorMessage = 'There has been an error, please try again or report it through the menu.';
+              setStreamText('');
+              setPreviousAnswer(errorMessage);
+              updateState(props._id, {
+                ...s,
+                previousQ: q.q,
+                previousA: errorMessage,
+                messages: [
+                  ...s.messages,
+                  initialAnswer,
+                  {
+                    id: genId(),
+                    userId: user._id,
+                    creationId: '',
+                    creationDate: now.epoch + 1,
+                    userName: 'SAGE',
+                    query: '',
+                    response: errorMessage,
+                  },
+                ],
+              });
+              toast({
+                title: 'Error',
+                description: response.message || 'Error sending query to the agent. Please try again.',
+                status: 'error',
+                duration: 4000,
+                isClosable: true,
+              });
+            } else {
+              // Clear the stream text
+              setStreamText('');
+              ctrlRef.current = null;
+              setPreviousAnswer(response.r);
+              // Add messages
+              updateState(props._id, {
+                ...s,
+                previousQ: 'Describe the content',
+                previousA: response.r,
+                messages: [
+                  ...s.messages,
+                  initialAnswer,
+                  {
+                    id: genId(),
+                    userId: user._id,
+                    creationId: '',
+                    creationDate: now.epoch + 1,
+                    userName: 'SAGE',
+                    query: '',
+                    response: response.r,
+                  },
+                ],
+              });
+              if (response.actions) {
+                setActions(response.actions);
+              }
+            }
+          }
+        }
+      }
+    }
+  };
+
+  // Generic code to handle the web content
+  const onContentWeb = async (prompt: string) => {
+    if (!user) return;
+    if (s.sources.length > 0) {
+      // Update the context with the stickies
+      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+
+      // Check for image
+      if (apps && apps[0].data.type === 'Webview') {
+        if (roomId && boardId) {
+          const now = await serverTime();
+          const initialAnswer = {
+            id: genId(),
+            userId: user._id,
+            creationId: '',
+            creationDate: now.epoch,
+            userName: 'SAGE',
+            query: prompt,
+            response: 'Working on it...',
+          };
+          updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
+
+          // Build the query
+          const q: WebQuery = {
+            ctx: {
+              previousQ: previousQuestion,
+              previousA: previousAnswer,
+              pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+              roomId,
+              boardId,
+            },
+            q: prompt,
+            url: apps[0].data.state.webviewurl,
+            user: username,
+            model: selectedModel || 'llama',
+            extras: prompt.includes('pdf') ? 'pdfs' : prompt.includes('images') ? 'images' : prompt.includes('links') ? 'links' : 'text',
+          };
+          setProcessing(true);
+          setActions([]);
+          // Invoke the agent
+          const response = await callWeb(q);
+          setProcessing(false);
+
+          if ('message' in response) {
+            toast({
+              title: 'Error',
+              description: response.message || 'Error sending query to the agent. Please try again.',
+              status: 'error',
+              duration: 4000,
+              isClosable: true,
+            });
+          } else {
+            // Clear the stream text
+            setStreamText('');
+            ctrlRef.current = null;
+            setPreviousAnswer(response.r);
+            // Add messages
+            updateState(props._id, {
+              ...s,
+              previousQ: 'Describe the content',
+              previousA: response.r,
+              messages: [
+                ...s.messages,
+                initialAnswer,
+                {
+                  id: genId(),
+                  userId: user._id,
+                  creationId: '',
+                  creationDate: now.epoch + 1,
+                  userName: 'SAGE',
+                  query: '',
+                  response: response.r,
+                },
+              ],
+            });
+            if (response.actions) {
+              setActions(response.actions);
+            }
+          }
+        }
+      }
+    }
+  };
+
+  // Get a screenshot of the web content
+  const onContentWebScreenshot = async () => {
+    if (!user) return;
+    if (s.sources.length > 0) {
+      // Update the context with the stickies
+      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+
+      // Check for image
+      if (apps && apps[0].data.type === 'Webview') {
+        if (roomId && boardId) {
+          const now = await serverTime();
+          const initialAnswer = {
+            id: genId(),
+            userId: user._id,
+            creationId: '',
+            creationDate: now.epoch,
+            userName: 'SAGE',
+            query: prompt,
+            response: 'Working on it...',
+          };
+          updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
+
+          // Build the query
+          const q: WebScreenshot = {
+            ctx: {
+              previousQ: previousQuestion,
+              previousA: previousAnswer,
+              pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+              roomId,
+              boardId,
+            },
+            url: apps[0].data.state.webviewurl,
+            user: username,
+          };
+          setProcessing(true);
+          setActions([]);
+          // Invoke the agent
+          const response = await callWebshot(q);
+          setProcessing(false);
+
+          if ('message' in response) {
+            toast({
+              title: 'Error',
+              description: response.message || 'Error sending query to the agent. Please try again.',
+              status: 'error',
+              duration: 4000,
+              isClosable: true,
+            });
+          } else {
+            // Clear the stream text
+            setStreamText('');
+            ctrlRef.current = null;
+            setPreviousAnswer(response.r);
+            // Add messages
+            updateState(props._id, {
+              ...s,
+              previousQ: 'Describe the content',
+              previousA: response.r,
+              messages: [
+                ...s.messages,
+                initialAnswer,
+                {
+                  id: genId(),
+                  userId: user._id,
+                  creationId: '',
+                  creationDate: now.epoch + 1,
+                  userName: 'SAGE',
+                  query: '',
+                  response: response.r,
+                },
+              ],
+            });
+            if (response.actions) {
+              setActions(response.actions);
+            }
+          }
+        }
+      }
+    }
+  };
+
+  // Array of prompts for Web content
+  const webPrompts = [
+    { title: 'Web Summary', action: onContentWeb, prompt: 'Summarize concisely this webpage.' },
+    { title: 'Find Links', action: onContentWeb, prompt: 'What are the main links that I should read to expand on the subject matter.' },
+    { title: 'Find PDF', action: onContentWeb, prompt: 'Find the PDF in the page.' },
+    {
+      title: 'Generate Keywords',
+      action: onContentWeb,
+      prompt: 'Extract 3-5 keywords that best capture the essence and subject matter of the text.',
+    },
+    { title: 'Find Facts', action: onContentWeb, prompt: 'Provide two or three interesting facts from the text.' },
+    { title: 'Screenshot', action: onContentWebScreenshot, prompt: 'Take a screenshot' },
+  ];
+
+  // Code section
+  const onContentCode = async (prompt: string, method: string) => {
+    if (!user) return;
+    // Get server time
+    const now = await serverTime();
+    // Is it a question to SAGE?
+    const isQuestion = prompt.toUpperCase().startsWith('@S');
+    const name = isQuestion ? 'SAGE' : user?.data.name;
+    // Add messages
+    const initialAnswer = {
+      id: genId(),
+      userId: user._id,
+      creationId: '',
+      creationDate: now.epoch,
+      userName: name,
+      query: prompt,
+      response: isQuestion ? 'Working on it...' : '',
+    };
+    updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
+    if (isQuestion) {
+      setProcessing(true);
+      // Remove the @S from the question
+      const request = isQuestion ? prompt.slice(2) : prompt;
+
+      if (isQuestion) {
+        const body: CodeRequest = {
+          ctx: {
+            previousQ: previousQuestion,
+            previousA: previousAnswer,
+            pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+            roomId: roomId!,
+            boardId: boardId!,
+          },
+          user: username,
+          id: genId(),
+          model: selectedModel || 'llama',
+          location: location,
+          q: request,
+          method: method,
+        };
+        const response = await callCode(body);
+        if ('message' in response) {
+          toast({
+            title: 'Error',
+            description: response.message || 'Error sending query to the agent. Please try again.',
+            status: 'error',
+            duration: 4000,
+            isClosable: true,
+          });
+        } else {
+          const new_text = response.r || '';
+          setProcessing(false);
+          // Clear the stream text
+          setStreamText('');
+          ctrlRef.current = null;
+          setPreviousAnswer(new_text);
+          // Add messages
+          updateState(props._id, {
+            ...s,
+            previousQ: request,
+            previousA: new_text,
+            messages: [
+              ...s.messages,
+              initialAnswer,
+              {
+                id: genId(),
+                userId: user._id,
+                creationId: '',
+                creationDate: now.epoch + 1,
+                userName: 'SAGE',
+                query: '',
+                response: new_text,
+              },
+            ],
+          });
+          if (response.actions) {
+            setActions(response.actions);
+          }
+        }
+      }
+    }
+  };
+
+  const onProsCons = async () => {
+    if (s.context) {
+      // ProsCons prompt
+      const ctx = `@S, Please carefully read the following document text:
+        <document>
+        ${s.context}
+        </document>
+        After reading through the document, identify the pros and cons.
+        Provide all your answers in a few sentences using the Markdown syntax`;
+      newMessage(ctx);
+      setInput('');
+    }
+  };
+  const onKeywords = async () => {
+    if (s.context) {
+      // Keywords prompt
+      const ctx = `@S, Please carefully read the following document text:
+        <document>
+        ${s.context}
+        </document>
+        Extract 3-5 keywords that best capture the essence and subject matter of the document. These keywords should concisely represent the most important and central ideas conveyed by the text.
+        Provide all your answers using a list in Markdown syntax`;
+      newMessage(ctx);
+      setInput('');
+    }
+  };
+  const onOpinion = async () => {
+    if (s.context) {
+      // Opinion prompt
+      const ctx = `@S, Please carefully read the following document text:
+        <document>
+        ${s.context}
+        </document>
+        Provide a short opinion on the document using the Markdown syntax`;
+      newMessage(ctx);
+      setInput('');
+    }
+  };
+  const onFacts = async () => {
+    if (s.context) {
+      // Facts prompt
+      const ctx = `@S, Please carefully read the following document text:
+        <document>
+        ${s.context}
+        </document>
+        Provide two or three interesting facts from the document, using a list in Markdown syntax`;
+      newMessage(ctx);
+      setInput('');
+    }
+  };
+
+  /*
+    Chat with Paper:
+      Explain Abstract of this paper
+      Conclusions from the paper
+      Results of the paper
+      Methods used in this paper
+      Summarise introduction of this paper
+      What are the contributions of this paper
+      Explain the practical implications of this paper
+      Limitations of this paper
+      Literature survey of this paper
+      What data has been used in this paper
+      Future works suggested in this paper
+      Find Related Papers
+ */
+  // Array of prompts for PDFs
+  const pdfPrompts = [
+    {
+      title: 'Generate Summary',
+      action: onContentPDF,
+      prompt:
+        'Provide a summary of the main findings and conclusions of these papers, including the research question, methods used, and key results.',
+    },
+    {
+      title: 'Gaps and Limitations',
+      action: onContentPDF,
+      prompt:
+        'What limitations or gaps does these papers identify in their own studies or in the broader field of research? How do the authors suggest overcoming these issues in future research?.',
+    },
+    {
+      title: 'Literature and References',
+      action: onContentPDF,
+      prompt:
+        'What are the key references and theoretical frameworks that these papers builds upon? Summarize how these studies contributes to existing research in the field.',
+    },
+    {
+      title: 'Methodology Analysis',
+      action: onContentPDF,
+      prompt:
+        'Describe the research methodology used in these papers. What were the sample size, experimental design, data collection methods, and statistical analyses applied used.',
+    },
+    {
+      title: 'Explain implications',
+      action: onContentPDF,
+      prompt:
+        'What are the practical and theoretical implications of these studies findings? How might they influence future research, trends, or real-world applications in the field?.',
+    },
+  ];
+
+  const onCodeComment = async () => {
+    if (!user) return;
+    // Get the current context
+    let newctx = s.context;
+    if (!newctx && s.sources.length > 0) {
+      // Update the context with the stickies
+      let language = 'python';
+      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+      newctx = apps.reduce((accumulate, app) => {
+        if (app.data.type === 'CodeEditor') {
+          accumulate += app.data.state.content + '\n\n';
+          language = app.data.state.language;
+        }
+        return accumulate;
+      }, '');
+      newctx = `Language ${language}:\n\n${newctx}`;
+    }
+    if (newctx) {
+      // Summary prompt
+      const ctx = `@S, Please carefully read the following code:
+        <code>
+        ${newctx}
+        </code>
+        Comment this code extensively to explain clearly what each instruction is supposed to do`;
+      onContentCode(ctx, 'comment');
+      setInput('');
+    }
+  };
+  const onCodeExplain = async () => {
+    if (!user) return;
+    // Get the current context
+    let newctx = s.context;
+    if (!newctx && s.sources.length > 0) {
+      // Update the context with the stickies
+      let language = 'python';
+      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+      newctx = apps.reduce((accumulate, app) => {
+        if (app.data.type === 'CodeEditor') {
+          accumulate += app.data.state.content + '\n\n';
+          language = app.data.state.language;
+        }
+        return accumulate;
+      }, '');
+      newctx = `Language ${language}:\n\n${newctx}`;
+    }
+    if (newctx) {
+      // Summary prompt
+      const ctx = `@S, Please carefully read the following code:
+        <code>
+        ${newctx}
+        </code>
+        Explain this code`;
+      onContentCode(ctx, 'explain');
+      setInput('');
+    }
+  };
+  const onCodeGenerate = async () => {
+    if (!user) return;
+    // Get the current context
+    let newctx = s.context;
+    if (s.sources.length > 0) {
+      // Update the context with the stickies
+      let language = 'python';
+      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+      newctx = apps.reduce((accumulate, app) => {
+        if (app.data.type === 'CodeEditor') {
+          accumulate += app.data.state.content + '\n\n';
+          language = app.data.state.language;
+        }
+        return accumulate;
+      }, '');
+      newctx = `Generate the best solution in ${language} code according to the following prompt: ${newctx}`;
+    }
+    if (newctx) {
+      // Summary prompt
+      const ctx = `@S, Generate the best solution according to the following prompt: ${newctx}`;
+      onContentCode(ctx, 'refactor');
+      setInput('');
+    }
+  };
+
+  const onCodeRefactor = async () => {
+    if (!user) return;
+    // Get the current context
+    let newctx = s.context;
+    if (!newctx && s.sources.length > 0) {
+      // Update the context with the stickies
+      let language = 'python';
+      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+      newctx = apps.reduce((accumulate, app) => {
+        if (app.data.type === 'CodeEditor') {
+          accumulate += app.data.state.content + '\n\n';
+          language = app.data.state.language;
+        }
+        return accumulate;
+      }, '');
+      newctx = `Language ${language}:\n\n${newctx}`;
+    }
+    if (newctx) {
+      // Summary prompt
+      const ctx = `@S, Please carefully read the following code:
+        <code>
+        ${newctx}
+        </code>
+        Can you refactor this code`;
+      onContentCode(ctx, 'refactor');
+      setInput('');
+    }
   };
 
   useEffect(() => {
-
     async function fetchStatus() {
       const response = await AiAPI.chat.status();
       const models = response.onlineModels as modelInfo[];
-      // setOnlineModels(models);
-      if (response.onlineModels.length > 0) setSelectedModel(models[0]);
+      setOnlineModels(models);
     }
     fetchStatus();
 
@@ -444,6 +1111,15 @@ function AppComponent(props: App): JSX.Element {
     });
   }, []);
 
+  useEffect(() => {
+    if (settings.aiModel) {
+      const model = onlineModels.find((m) => m.name === settings.aiModel);
+      if (model) {
+        setSelectedModel(model.name as 'openai' | 'llama');
+      }
+    }
+  }, [settings.aiModel, onlineModels]);
+
   // Wait for new messages to scroll to the bottom
   useEffect(() => {
     if (!processing && !scrolled) {
@@ -453,9 +1129,43 @@ function AppComponent(props: App): JSX.Element {
     if (scrolled) setNewMessages(true);
   }, [s.messages]);
 
+  const applyAction = (action: any) => async () => {
+    // Test JSON data
+    if (action.type === 'create_app') {
+      // Create a new duplicate app
+      const type = action.app as AppName;
+      const size = action.data.size;
+      const pos = action.data.position;
+      const state = action.state;
+      // Create the app
+      createApp({
+        title: type,
+        roomId: roomId!,
+        boardId: boardId!,
+        position: pos,
+        size: size,
+        rotation: { x: 0, y: 0, z: 0 },
+        type: type,
+        state: { ...(initialValues[type] as AppState), ...state },
+        raised: true,
+        dragging: false,
+        pinned: false,
+      });
+      toast({
+        title: 'Info',
+        description: 'Action applied.',
+        status: 'info',
+        duration: 3000,
+        isClosable: true,
+      });
+    } else {
+      console.log('Action> not valid');
+    }
+  };
+
   return (
     <AppWindow app={props} hideBackgroundIcon={MdChat}>
-      <Flex gap={2} p={2} minHeight={'max-content'} direction={'column'} h="100%" w="100%">
+      <Flex gap={2} p={2} minHeight={'max-content'} direction={'column'} h="100%" w="100%" background={backgroundColorHex}>
         {/* Display Messages */}
         <Box
           flex={1}
@@ -468,7 +1178,7 @@ function AppComponent(props: App): JSX.Element {
               width: '12px',
             },
             '&::-webkit-scrollbar-track': {
-              '-webkit-box-shadow': 'inset 0 0 6px rgba(0,0,0,0.00)',
+              WebkitBoxShadow: 'inset 0 0 6px rgba(0,0,0,0.00)',
             },
             '&::-webkit-scrollbar-thumb': {
               backgroundColor: `${scrollColor}`,
@@ -489,7 +1199,7 @@ function AppComponent(props: App): JSX.Element {
             return (
               <Fragment key={index}>
                 {/* Start of User Messages */}
-                {message.query.length ? (
+                {message.query && message.query.length ? (
                   <Box position="relative" my={1}>
                     {isMe ? (
                       <Box top="-15px" right={'15px'} position={'absolute'} textAlign={'right'}>
@@ -514,15 +1224,17 @@ function AppComponent(props: App): JSX.Element {
                         hasArrow={true}
                         label={time}
                         openDelay={400}
+                        closeDelay={2000}
                       >
                         <Box
-                          color="white"
+                          color="black"
                           rounded={'md'}
                           boxShadow="md"
                           fontFamily="arial"
                           textAlign={isMe ? 'right' : 'left'}
                           bg={isMe ? myColor : otherUserColor}
-                          p={1}
+                          px={2}
+                          py={1}
                           m={3}
                           maxWidth="70%"
                           userSelect={'none'}
@@ -557,6 +1269,7 @@ function AppComponent(props: App): JSX.Element {
                                 color: colorMessage,
                                 text: message.query,
                                 fontSize: 24,
+                                sources: [props._id],
                               })
                             );
                           }}
@@ -569,7 +1282,7 @@ function AppComponent(props: App): JSX.Element {
                 ) : null}
 
                 {/* Start of SAGE Messages */}
-                {message.response.length ? (
+                {message.response && message.response.length ? (
                   <Box position="relative" my={1} maxWidth={'70%'}>
                     <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
                       <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
@@ -586,14 +1299,16 @@ function AppComponent(props: App): JSX.Element {
                         hasArrow={true}
                         label={time}
                         openDelay={400}
+                        closeDelay={2000}
                       >
                         <Box
                           boxShadow="md"
-                          color="white"
+                          color="black"
                           rounded={'md'}
                           textAlign={'left'}
                           bg={sageColor}
-                          p={1}
+                          px={2}
+                          py={1}
                           m={3}
                           fontFamily="arial"
                           onDoubleClick={() => {
@@ -612,7 +1327,7 @@ function AppComponent(props: App): JSX.Element {
                           }}
                         >
                           <Box
-                            pl={3}
+                            // pl={3}
                             draggable={true}
                             onDragStart={(e) => {
                               // Store the response into the drag/drop events to create stickies
@@ -622,13 +1337,30 @@ function AppComponent(props: App): JSX.Element {
                                 'app_state',
                                 JSON.stringify({
                                   color: 'purple',
-                                  text: message.response,
+                                  text: message.response.trim(),
                                   fontSize: 24,
+                                  sources: [props._id],
                                 })
                               );
                             }}
                           >
-                            <Markdown style={{ textIndent: '4px', userSelect: 'none' }}>{message.response}</Markdown>
+                            <Box>
+                              <Markdown
+                                options={{
+                                  overrides: {
+                                    ol: {
+                                      component: OrderedList,
+                                    },
+                                    ul: {
+                                      component: UnorderedList,
+                                    },
+                                  },
+                                }}
+                                style={{ userSelect: 'none' }}
+                              >
+                                {message.response}
+                              </Markdown>
+                            </Box>
                           </Box>
                         </Box>
                       </Tooltip>
@@ -651,23 +1383,55 @@ function AppComponent(props: App): JSX.Element {
           })}
 
           {/* In progress SAGE Messages */}
-          {
-            streamText && (
-              <Box position="relative" my={1} maxWidth={'70%'}>
-                <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
-                  <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                    AI is typing...
-                  </Text>
-                </Box>
+          {streamText && (
+            <Box position="relative" my={1} maxWidth={'70%'}>
+              <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
+                <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
+                  AI is typing...
+                </Text>
+              </Box>
 
-                <Box display={'flex'} justifyContent="left" position={'relative'} top={'15px'} mb={'15px'}>
-                  <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={aiTypingColor} p={1} m={3} fontFamily="arial">
-                    {streamText}
-                  </Box>
+              <Box display={'flex'} justifyContent="left" position={'relative'} top={'15px'} mb={'15px'}>
+                <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={aiTypingColor} p={1} m={3} fontFamily="arial">
+                  {streamText}
                 </Box>
               </Box>
-            )
-          }
+            </Box>
+          )}
+
+          <Box display={'flex'} justifyContent={'left'}>
+            {actions && (
+              <List>
+                {actions.map((action, index) => (
+                  <Box
+                    color="black"
+                    rounded={'md'}
+                    boxShadow="md"
+                    fontFamily="arial"
+                    textAlign={'left'}
+                    bg={textColor}
+                    p={1}
+                    m={3}
+                    // maxWidth="80%"
+                    userSelect={'none'}
+                    _hover={{ background: 'purple.300' }}
+                    background={'purple.200'}
+                    // onDoubleClick={applyAction(action)}
+                    onClick={applyAction(action)}
+                    key={'list-' + index}
+                  >
+                    <Tooltip label="Click to show result on the board" aria-label="A tooltip">
+                      <ListItem key={index}>
+                        <ListIcon as={MdSettings} color="green.500" />
+                        Show result on the board
+                        {/* Show result {index + 1} on the board: {action.type} {action.app} */}
+                      </ListItem>
+                    </Tooltip>
+                  </Box>
+                ))}
+              </List>
+            )}
+          </Box>
         </Box>
         <HStack>
           <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={newMessages ? 'New Messages' : 'No New Messages'} openDelay={400}>
@@ -685,7 +1449,7 @@ function AppComponent(props: App): JSX.Element {
               width="33%"
             />
           </Tooltip>
-          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Stop SAGE'} openDelay={400}>
+          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Stop'} openDelay={400}>
             <IconButton
               aria-label="stop"
               size={'xs'}
@@ -712,9 +1476,341 @@ function AppComponent(props: App): JSX.Element {
             />
           </Tooltip>
         </HStack>
-        <InputGroup bg={'blackAlpha.100'}>
-          <Input
-            placeholder={"Chat with friends or ask SAGE with @S" + (selectedModel?.model ? " (" + selectedModel.model + ")" : " ")}
+
+        {mode !== 'chat' && <hr />}
+
+        {/* AI Prompts */}
+        {mode === 'text' && (
+          <HStack>
+            <Tooltip
+              fontSize={'xs'}
+              placement="top"
+              hasArrow={true}
+              label={'Identify the main topics, themes, and key concepts that are covered in the text'}
+              openDelay={400}
+            >
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={'left'}
+                onClick={onSummary}
+                width="34%"
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Generate Summary</Text>
+              </Button>
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Identify the pros and cons of the text'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={'left'}
+                onClick={onProsCons}
+                width="34%"
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Give feedback</Text>
+              </Button>
+            </Tooltip>
+            <Tooltip
+              fontSize={'xs'}
+              placement="top"
+              hasArrow={true}
+              label={'Extract 3-5 keywords that best capture the essence and subject matter of the text'}
+              openDelay={400}
+            >
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={'left'}
+                onClick={onKeywords}
+                width="34%"
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Generate Keywords</Text>
+              </Button>
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Provide a short opinion on the text'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={'left'}
+                onClick={onOpinion}
+                width="34%"
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Provide Opinion</Text>
+              </Button>
+            </Tooltip>
+            <Tooltip
+              fontSize={'xs'}
+              placement="top"
+              hasArrow={true}
+              label={'Provide two or three interesting facts from the text'}
+              openDelay={400}
+            >
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={'left'}
+                onClick={onFacts}
+                width="34%"
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Find Facts</Text>
+              </Button>
+            </Tooltip>
+          </HStack>
+        )}
+
+        {mode === 'code' && (
+          <HStack>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Refactor the code'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={'left'}
+                onClick={onCodeRefactor}
+                width="34%"
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Refactor Code</Text>
+              </Button>
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Explain the code'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={'left'}
+                onClick={onCodeExplain}
+                width="34%"
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Explain Code</Text>
+              </Button>
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Comment the code'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={'left'}
+                onClick={onCodeComment}
+                width="34%"
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Comment Code</Text>
+              </Button>
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Generate some code'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={'left'}
+                onClick={onCodeGenerate}
+                width="34%"
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Generate Code</Text>
+              </Button>
+            </Tooltip>
+          </HStack>
+        )}
+
+        {mode === 'image' && (
+          <HStack>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Describe the image in details'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={'left'}
+                onClick={onImageSummary}
+                width="34%"
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Describe Image</Text>
+              </Button>
+            </Tooltip>
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Generate a caption for the image'} openDelay={400}>
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={'left'}
+                onClick={onImageCaption}
+                width="34%"
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Generate Caption</Text>
+              </Button>
+            </Tooltip>
+            <Tooltip
+              fontSize={'xs'}
+              placement="top"
+              hasArrow={true}
+              label={'Describe the good parts and then the bad parts of the image'}
+              openDelay={400}
+            >
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={'left'}
+                onClick={onImageProsCons}
+                width="34%"
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Give Feedback</Text>
+              </Button>
+            </Tooltip>
+            <Tooltip
+              fontSize={'xs'}
+              placement="top"
+              hasArrow={true}
+              label={'Generate 3-5 keywords that best capture the essence and subject matter of the image'}
+              openDelay={400}
+            >
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={'left'}
+                onClick={onImageKeywords}
+                width="34%"
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Generate Keywords</Text>
+              </Button>
+            </Tooltip>
+            <Tooltip
+              fontSize={'xs'}
+              placement="top"
+              hasArrow={true}
+              label={'Provide two or three interesting facts about the image'}
+              openDelay={400}
+            >
+              <Button
+                aria-label="stop"
+                size={'xs'}
+                p={0}
+                m={0}
+                colorScheme={'blue'}
+                variant="ghost"
+                textAlign={'left'}
+                onClick={onImageFacts}
+                width="34%"
+              >
+                <HiCommandLine fontSize={'24px'} />
+                <Text ml={'2'}>Find Facts</Text>
+              </Button>
+            </Tooltip>
+          </HStack>
+        )}
+        {mode === 'pdf' && (
+          // Generate the prompt and buttons for the PDFs
+          <HStack>
+            {pdfPrompts.map((p, i) => (
+              <Tooltip key={'tip' + i} fontSize={'xs'} placement="top" hasArrow={true} label={p.prompt} openDelay={400}>
+                <Button
+                  key={'button' + i}
+                  aria-label="stop"
+                  size={'xs'}
+                  p={0}
+                  m={0}
+                  colorScheme={'blue'}
+                  variant="ghost"
+                  textAlign={'left'}
+                  onClick={() => p.action('@S ' + p.prompt)}
+                  width="34%"
+                >
+                  <HiCommandLine fontSize={'24px'} />
+                  <Text key={'text' + i} ml={'2'}>
+                    {p.title}
+                  </Text>
+                </Button>
+              </Tooltip>
+            ))}
+          </HStack>
+        )}
+        {mode === 'web' && (
+          // Generate the prompt and buttons for the Webviews
+          <HStack>
+            {webPrompts.map((p, i) => (
+              <Tooltip key={'tip' + i} fontSize={'xs'} placement="top" hasArrow={true} label={p.prompt} openDelay={400}>
+                <Button
+                  key={'button' + i}
+                  aria-label="stop"
+                  size={'xs'}
+                  p={0}
+                  m={0}
+                  colorScheme={'blue'}
+                  variant="ghost"
+                  textAlign={'left'}
+                  onClick={() => p.action('@S ' + p.prompt)}
+                  width="34%"
+                >
+                  <HiCommandLine fontSize={'24px'} />
+                  <Text key={'text' + i} ml={'2'}>
+                    {p.title}
+                  </Text>
+                </Button>
+              </Tooltip>
+            ))}
+          </HStack>
+        )}
+
+        {/* Input Text */}
+        <InputGroup bg={'blackAlpha.100'} maxHeight={'120px'}>
+          <Textarea
+            placeholder={'Chat with friends or ask SAGE with @S' + (selectedModel ? ' (' + selectedModel + ' model)' : '')}
             size="md"
             variant="outline"
             _placeholder={{ color: 'inherit' }}
@@ -722,18 +1818,18 @@ function AppComponent(props: App): JSX.Element {
             onKeyDown={onSubmit}
             value={input}
             ref={inputRef}
+            resize="none"
           />
-          <InputRightElement onClick={sendMessage}>
+          <InputRightElement onClick={sendMessage} mr={3}>
             <MdSend color="green.500" />
           </InputRightElement>
         </InputGroup>
 
         <Box bg={'blackAlpha.100'} rounded={'sm'} p={1} m={0}>
-          <Text width="100%" whiteSpace={'nowrap'} textOverflow="ellipsis" color={fgColor} fontSize="2xs">
-            {analysis}
+          <Text width="100%" align="center" whiteSpace={'nowrap'} textOverflow="ellipsis" color={fgColor} fontSize="xs">
+            {status}
           </Text>
         </Box>
-
       </Flex>
     </AppWindow>
   );

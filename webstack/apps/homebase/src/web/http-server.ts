@@ -21,6 +21,7 @@ import * as cors from 'cors';
 import * as morgan from 'morgan';
 import * as favicon from 'serve-favicon';
 import * as cookieParser from 'cookie-parser';
+import { ServerConfiguration } from '@sage3/shared/types';
 
 /**
  * Create a HTTP server
@@ -29,9 +30,33 @@ import * as cookieParser from 'cookie-parser';
  * @param {string} assetPath
  * @returns {express.Express}
  */
-export function createApp(assetPath: string): express.Express {
+export function createApp(assetPath: string, config: ServerConfiguration): express.Express {
   // Express app
   const app = express();
+
+  // Adding a logger to HTTP requests: 'all' | 'partial' | 'none';
+  let level = 'partial';
+  if (config.webserver) {
+    level = config.webserver.logLevel || 'partial';
+    console.log('Web> Webserver logging enabled', level);
+  }
+  if (level === 'partial') {
+    // Small logging and showing only errors
+    app.use(
+      morgan('tiny', {
+        // Ignore the HTTP 200 good messages
+        skip: function (req: express.Request, res: express.Response) {
+          return res.statusCode === 200 || res.statusCode === 304;
+        },
+      })
+    );
+  } else if (level === 'all') {
+    // Standard Apache common log output.
+    app.use(morgan('common'));
+  } else if (level === 'none') {
+    // No logging
+    console.log('Web> Webserver logging disabled');
+  }
 
   // Set express attributes
   app.use(favicon(path.join(assetPath, 'favicon.ico')));
@@ -58,6 +83,7 @@ export function createApp(assetPath: string): express.Express {
       hsts: true,
       // Cross-Origin-Embedder-Policy: disable to enable map images and zoom images to load
       crossOriginEmbedderPolicy: false,
+      crossOriginResourcePolicy: false,
     })
   );
 
@@ -65,20 +91,6 @@ export function createApp(assetPath: string): express.Express {
   app.use(cors());
   // Compress the traffic
   app.use(compression());
-
-  // Adding a logger to HTTP requests
-  // combined: Standard Apache combined log output
-  // values: combined tiny ...
-  // Send tiny format to stdout
-  // app.use(morgan('combined'));
-  app.use(
-    morgan('tiny', {
-      // Ignore the HTTP 200 good messages
-      skip: function (req: express.Request, res: express.Response) {
-        return res.statusCode === 200 || res.statusCode === 304;
-      },
-    })
-  );
 
   return app;
 }
@@ -109,5 +121,5 @@ export function listenApp(app: express.Express, listenPort: number): Server {
  */
 export function serveApp(app: express.Express, webPath: string): void {
   // Serves the static react files from webapp folder
-  app.use('/', express.static(webPath));
+  app.use('/', express.static(webPath, { maxAge: '1d' }));
 }

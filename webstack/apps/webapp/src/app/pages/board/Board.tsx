@@ -30,6 +30,7 @@ import {
 
 // Board Layers
 import { BackgroundLayer, UILayer } from './layers';
+import { InteractionbarShortcuts } from './layers/ui/components';
 
 // Development or production
 const development: boolean = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
@@ -52,7 +53,6 @@ export function BoardPage() {
   const unsubBoard = useAppStore((state) => state.unsubToBoard);
   const subBoards = useBoardStore((state) => state.subscribeByRoomId);
   const subRooms = useRoomStore((state) => state.subscribeToAllRooms);
-  const members = useRoomStore((state) => state.members);
 
   const subPlugins = usePluginStore((state) => state.subscribeToPlugins);
 
@@ -85,7 +85,8 @@ export function BoardPage() {
 
   function handleDragOver(event: DragEvent) {
     const elt = event.target as HTMLElement;
-    if (elt.id !== 'board') {
+    const ids = ['board', 'whiteboard', 'lasso'];
+    if (!ids.includes(elt.id)) {
       if (event.dataTransfer) {
         event.dataTransfer.dropEffect = 'none';
       }
@@ -107,23 +108,23 @@ export function BoardPage() {
   }
 
   // If you are removed as a member from the room this board belongs to, redict to the homepage
-  useEffect(() => {
-    if (!user) return;
-    const isGuest = user.data.userRole === 'guest';
-    if (isGuest) return;
-    const roomMembership = members.find((m) => m.data.roomId === roomId);
-    const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(user._id) : false;
-    if (!isMember) {
-      toast({
-        title: 'Room Membership Invalid',
-        description: `You are not member of this room.`,
-        status: 'error',
-        duration: 5000,
-        isClosable: false,
-      });
-      toHome();
-    }
-  }, [members, user]);
+  // useEffect(() => {
+  //   if (!user) return;
+  //   const isGuest = user.data.userRole === 'guest';
+  //   if (isGuest) return;
+  //   const members = useRoomStore.getState().members;
+  //   const roomMembership = members.find((m) => m.data.roomId === roomId);
+  //   const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(user._id) : false;
+  //   if (!isMember) {
+  //     toast({
+  //       title: 'Room Membership Invalid',
+  //       description: `You are not member of this room.`,
+  //       status: 'error',
+  //       duration: 5000,
+  //       isClosable: false,
+  //     });
+  //   }
+  // }, [user]);
 
   // Scroll detection
   useEffect(() => {
@@ -208,18 +209,28 @@ export function BoardPage() {
 
       // Show a notification
       toast({
-        title: 'Using a browser is not recommended',
-        status: 'info',
-        duration: 30000, // 30 sec.
+        title: 'Reduced Functionality in Browser Version',
+        status: 'warning',
+        duration: null, // never close automatically
         isClosable: true,
         position: 'bottom',
         description: (
-          <p>
-            Continue in the SAGE3 App ?
-            <Button ml="2" size="xs" colorScheme="green" onClick={openDesktopApp}>
-              OK
-            </Button>
-          </p>
+          <div>
+            <p>
+              Using SAGE3 on a web browser will __not__ support several key features that are only available on the SAGE3 application.
+              Download the SAGE3 application at{' '}
+              <a target="_blank" style={{ textDecoration: 'underline' }} href="https://sage3.sagecommons.org/?page_id=358">
+                sage3.sagecommons.org
+              </a>
+              .
+            </p>
+            <p style={{ marginTop: '8px' }}>
+              Would you like to open this board in the SAGE3 application (if you have it installed)?
+              <Button ml="2" size="xs" colorScheme={'green'} onClick={openDesktopApp}>
+                OK
+              </Button>
+            </p>
+          </div>
         ),
       });
     }
@@ -251,6 +262,9 @@ export function BoardPage() {
 
       {/* Paste data on the board */}
       <PasteHandler boardId={boardId} roomId={roomId} />
+
+      {/* Interaction Shortcuts */}
+      <InteractionbarShortcuts />
 
       {/* Modal if session is expired */}
       <Modal isOpen={isOpen} onClose={onClose} size="xl" initialFocusRef={initialRef} isCentered blockScrollOnMount={false}>

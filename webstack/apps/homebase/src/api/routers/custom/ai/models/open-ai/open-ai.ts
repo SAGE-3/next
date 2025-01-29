@@ -26,6 +26,10 @@ export class OpenAiModel extends AiModel {
     this._openai = new OpenAI({ apiKey: config.services.openai.apiKey });
   }
 
+  public info() {
+    return { name: this.name, model: this._model };
+  }
+
   public async health(): Promise<boolean> {
     // We dont want to ping OpenAI constantly
     // Just check for the API Key
@@ -41,35 +45,6 @@ export class OpenAiModel extends AiModel {
     const response = await this._openai.chat.completions.create({
       messages: [{ role: 'user', content: input }],
       model: this._model,
-    });
-    if (response.choices[0].message.content === null) {
-      return {
-        success: false,
-        error_message: 'Failed to query OpenAI',
-      };
-    } else {
-      return {
-        success: true,
-        output: response.choices[0].message.content,
-      };
-    }
-  }
-
-  public async code(prompt: string, input: string): Promise<AiQueryResponse> {
-    // Query OpenAI with the input
-    const response = await this._openai.chat.completions.create({
-      messages: [
-        {
-          role: 'assistant',
-          content: prompt,
-        },
-        {
-          role: 'user',
-          content: input,
-        },
-      ],
-      model: this._model,
-      stream: false,
     });
     if (response.choices[0].message.content === null) {
       return {

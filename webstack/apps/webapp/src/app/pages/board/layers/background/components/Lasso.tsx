@@ -10,9 +10,11 @@ import { useEffect, useState } from 'react';
 
 // SAGE Imports
 import { Position, Size } from '@sage3/shared/types';
-import { useCursorBoardPosition, useHexColor, useThrottleScale, useThrottleApps, useUIStore, useUserSettings } from '@sage3/frontend';
+import { useHexColor, useThrottleScale, useThrottleApps, useUIStore, useUIToBoard } from '@sage3/frontend';
+import { useDragAndDropBoard } from './DragAndDropBoard';
 
 type LassoProps = {
+  roomId: string;
   boardId: string;
 };
 
@@ -22,12 +24,10 @@ type BoxProps = {
   last_mousex: number;
   last_mousey: number;
   selectedApps: string[];
+  modifier: 'none' | 'removal' | 'inverse';
 };
 
 export function Lasso(props: LassoProps) {
-  // Settings
-  const { settings, setPrimaryActionMode } = useUserSettings();
-
   // Board state
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
@@ -36,11 +36,17 @@ export function Lasso(props: LassoProps) {
   const setLassoMode = useUIStore((state) => state.setLassoMode);
   const selectedApps = useUIStore((state) => state.selectedAppsIds);
   const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
-  const setCachedPrimaryActionMode = useUIStore((state) => state.setCachedPrimaryActionMode);
 
   // Mouse Positions
   const [mousedown, setMouseDown] = useState(false);
-  const { uiToBoard } = useCursorBoardPosition();
+  const [modifierAction, setModifierAction] = useState<'none' | 'removal' | 'inverse'>('none');
+
+  // Temporary Fix to Avoid Rerenders
+  // const boardPosition = useUIStore((state) => state.boardPosition);
+  // const scale = useUIStore((state) => state.scale);
+  // const { uiToBoard } = useMemo(() => useCursorBoardPosition(), [boardPosition.x, boardPosition.y, scale]);
+  const uiToBoard = useUIToBoard();
+
   const [last_mousex, set_last_mousex] = useState(0);
   const [last_mousey, set_last_mousey] = useState(0);
   const [mousex, set_mousex] = useState(0);
@@ -48,6 +54,9 @@ export function Lasso(props: LassoProps) {
 
   // State of cursor
   const [isDragging, setIsDragging] = useState(false);
+
+  // Drag and Drop On Board
+  const { dragProps, renderContent } = useDragAndDropBoard({ roomId: props.roomId, boardId: props.boardId });
 
   // Get initial position
   const lassoStart = (x: number, y: number) => {
@@ -84,8 +93,17 @@ export function Lasso(props: LassoProps) {
   };
 
   // Mouse Behaviours
-  const mouseDown = (ev: any) => {
+  const mouseDown = (ev: React.MouseEvent<SVGElement>) => {
     if (ev.button == 0) {
+      // Prevent lasso for everyone due to MacOS ctrl + leftclick bringing up context menu
+      if (ev.ctrlKey) {
+        return;
+      }
+
+      if (ev.shiftKey === false) {
+        clearSelectedApps();
+      }
+      setModifierAction(ev.shiftKey ? 'inverse' : 'none');
       lassoStart(ev.clientX, ev.clientY);
     }
   };
@@ -94,8 +112,9 @@ export function Lasso(props: LassoProps) {
     lassoEnd();
   };
 
-  const mouseMove = (ev: any) => {
+  const mouseMove = (ev: React.MouseEvent<SVGElement>) => {
     if (ev.button == 0 && mousedown) {
+      setModifierAction(ev.shiftKey ? 'inverse' : 'none');
       lassoMove(ev.clientX, ev.clientY);
     } else if (ev.buttons === 4) {
       setIsDragging(true); // Keep Current Lasso Selection
@@ -123,13 +142,6 @@ export function Lasso(props: LassoProps) {
     }
   };
 
-  // Turn off lasso layer when dragging stuff on board
-  const preventDragDrop = (event: React.DragEvent<any>) => {
-    setCachedPrimaryActionMode(settings.primaryActionMode);
-    setPrimaryActionMode('grab');
-    // event.stopPropagation();
-  };
-
   return (
     <>
       {/* lassoMode */}
@@ -143,23 +155,34 @@ export function Lasso(props: LassoProps) {
             height: boardHeight + 'px',
             left: 0,
             top: 0,
+            // pointerEvents: 'none',
             // To keep in theme with other notable whiteboard applications,
             // the cursor should remain a pointer
             // cursor: 'crosshair',
           }}
+          // Note to future devs, handledeselect behaviour move to BackgroundLayer.tsx
+          // onPointerDown={handleDeselect}
           onMouseDown={mouseDown}
           onMouseUp={mouseUp}
           onMouseMove={mouseMove}
           onTouchStart={touchDown}
           onTouchEnd={touchUp}
           onTouchMove={touchMove}
-          onDragEnter={preventDragDrop}
+          {...dragProps}
         >
           {mousedown ? (
-            <DrawBox mousex={mousex} mousey={mousey} last_mousex={last_mousex} last_mousey={last_mousey} selectedApps={selectedApps} />
+            <DrawBox
+              mousex={mousex}
+              mousey={mousey}
+              last_mousex={last_mousex}
+              last_mousey={last_mousey}
+              selectedApps={selectedApps}
+              modifier={modifierAction}
+            />
           ) : null}
         </svg>
       </div>
+      {renderContent()}
     </>
   );
 }
@@ -262,14 +285,23 @@ const DrawBox = (props: BoxProps) => {
     if (selectedAppId.length) {
       setSelectedApp('');
     }
+
+    if (props.modifier === 'removal') {
+      setSelectedApps([...clickSelectedApps.filter((app) => !rectSelectedApps.includes(app))]);
+    } else if (props.modifier === 'inverse') {
+      setSelectedApps(
+        [...rectSelectedApps, ...clickSelectedApps].filter((app) => !clickSelectedApps.includes(app) !== !rectSelectedApps.includes(app))
+      );
+    } else {
+      setSelectedApps([...rectSelectedApps, ...clickSelectedApps]);
+    }
     // Only update UI store when local state changes
-    setSelectedApps([...rectSelectedApps, ...clickSelectedApps]);
-  }, [rectSelectedApps, clickSelectedApps]);
+  }, [props.modifier, rectSelectedApps, clickSelectedApps]);
 
   return (
     <rect
       style={{
-        strokeWidth: 6 / scale,
+        strokeWidth: 4 / scale,
         strokeDasharray: 10 / scale,
         stroke: strokeColor,
         fill: strokeColor,

@@ -10,7 +10,7 @@ Usage
 -----
 
 ./SAGE3
-   - will connect to the default main SAGE3 server at https://sage3.app
+   - will connect to the default main SAGE3 server at https://chicago.sage3.app
 
 For more control, use the following options:
 
@@ -22,7 +22,7 @@ Options:
   -f, --fullscreen           Fullscreen (boolean) (default: false)
   -m, --monitor <n>          Select a monitor (int) (default: null)
   -n, --no_decoration        Remove window decoration (boolean) (default: false)
-  -s, --server <s>           Server URL (string) (default: "https://sage3.app")
+  -s, --server <s>           Server URL (string) (default: "https://chicago.sage3.app")
   -x, --xorigin <n>          Window position x (int) (default: 0)
   -y, --yorigin <n>          Window position y (int) (default: 0)
   -c, --clear                Clear window preferences (default: false)

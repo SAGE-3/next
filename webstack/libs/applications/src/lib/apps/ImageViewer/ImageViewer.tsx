@@ -7,42 +7,18 @@
  */
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { Image, Button, ButtonGroup, Tooltip, Box, Menu, MenuButton, MenuItem, MenuList, useToast } from '@chakra-ui/react';
+import { Image, Button, ButtonGroup, Tooltip, Box } from '@chakra-ui/react';
 // Icons
-import { MdFileDownload, MdImage, MdOutlineLightbulb } from 'react-icons/md';
+import { MdBrokenImage, MdFileDownload, MdImage } from 'react-icons/md';
 import { HiPencilAlt } from 'react-icons/hi';
 
 // Utility functions from SAGE3
-import {
-  useThrottleScale,
-  useAssetStore,
-  useAppStore,
-  useMeasure,
-  downloadFile,
-  isUUIDv4,
-  apiUrls,
-  useInsightStore,
-  AiAPI,
-  useUIStore,
-} from '@sage3/frontend';
+import { useThrottleScale, useAssetStore, useAppStore, useMeasure, downloadFile, isUUIDv4, apiUrls, useUIStore } from '@sage3/frontend';
 import { Asset, ExtraImageType, ImageInfoType } from '@sage3/shared/types';
-import { AiImageQueryRequest } from '@sage3/shared';
 
-import { initialValues } from '../../initialValues';
-import { AppWindow } from '../../components';
-import { state as AppState } from './index';
 import { App } from '../../schema';
-
-type YoloObject = {
-  class: number;
-  confidence: number;
-  name: string;
-  xmax: number;
-  xmin: number;
-  ymax: number;
-  ymin: number;
-};
+import { state as AppState } from './index';
+import { AppWindow } from '../../components';
 
 /**
  * ImageViewer app
@@ -135,7 +111,7 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     // background false to handle alpha channel
-    <AppWindow app={props} lockAspectRatio={aspectRatio} background={false} hideBackgroundIcon={MdImage}>
+    <AppWindow app={props} lockAspectRatio={aspectRatio} background={url == '' ? true : false} hideBackgroundIcon={MdImage}>
       <div
         ref={ref}
         style={{
@@ -145,18 +121,19 @@ function AppComponent(props: App): JSX.Element {
           maxHeight: '100%',
         }}
       >
-        <>
-          <Image
-            width="100%"
-            userSelect={'auto'}
-            draggable={false}
-            alt={file?.data.originalfilename}
-            src={url}
-            borderRadius="0 0 6px 6px"
-          />
+        {url ? (
+          <>
+            <Image
+              width="100%"
+              userSelect={'auto'}
+              draggable={false}
+              alt={file?.data.originalfilename}
+              src={url}
+              borderRadius="0 0 6px 6px"
+            />
 
-          {s.boxes && Array.isArray(s.boxes)
-            ? s.boxes.map((box, idx) => {
+            {s.boxes && Array.isArray(s.boxes)
+              ? s.boxes.map((box, idx) => {
                 // TODO Need to handle text overflow for labels
                 return (
                   <Box
@@ -175,8 +152,13 @@ function AppComponent(props: App): JSX.Element {
                   </Box>
                 );
               })
-            : null}
-        </>
+              : null}
+          </>
+        ) : (
+          <Box display="flex" width="100%" height="100%" justifyContent="center" alignItems="center" flexDir="column" gap="0">
+            <MdBrokenImage size="100%" />
+          </Box>
+        )}
       </div>
     </AppWindow>
   );
@@ -193,32 +175,6 @@ function ToolbarComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
   const assets = useAssetStore((state) => state.assets);
   const [file, setFile] = useState<Asset>();
-  // display some notifications
-  const toast = useToast();
-  // App Store
-  const createApp = useAppStore((state) => state.create);
-  const { roomId, boardId } = useParams();
-  // Insight Store
-  const insights = useInsightStore((state) => state.insights);
-  const updateInsights = useInsightStore((state) => state.update);
-  // Online Models
-  const [onlineModels, setOnlineModels] = useState<string[]>([]);
-  const [selectedModel, setSelectedModel] = useState<string>('');
-
-  // Check if the AI is online
-  useEffect(() => {
-    async function fetchStatus() {
-      const response = await AiAPI.image.status();
-      setOnlineModels(response.onlineModels);
-      if (response.onlineModels.length > 0) setSelectedModel(response.onlineModels[0]);
-      else setSelectedModel('');
-    }
-    fetchStatus();
-  }, []);
-
-  function handleModelChange(model: string) {
-    setSelectedModel(model);
-  }
 
   // Convert the ID to an asset
   useEffect(() => {
@@ -228,125 +184,6 @@ function ToolbarComponent(props: App): JSX.Element {
       setFile(appasset);
     }
   }, [s.assetid, assets]);
-
-  async function generateImage() {
-    if (!file) return;
-    const queryRequest = {
-      assetid: s.assetid,
-      model: selectedModel,
-      filename: file.data.originalfilename,
-      roomid: roomId,
-    } as AiImageQueryRequest;
-    const result = await AiAPI.image.image(queryRequest);
-    if (result.success && result.data) {
-      // Open the generated image in a new app
-      if (result.success && result.data) {
-        createApp({
-          title: 'YoloV8',
-          roomId: roomId!,
-          boardId: boardId!,
-          position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
-          size: props.data.size,
-          rotation: { x: 0, y: 0, z: 0 },
-          type: 'ImageViewer',
-          state: { ...(initialValues['ImageViewer'] as AppState), assetid: result.data.id },
-          raised: true,
-          pinned: false,
-          dragging: false,
-        });
-        // Show success
-        toast.closeAll();
-        toast({
-          title: (
-            <Box fontSize="sm" fontWeight="bold">
-              AI Model: {selectedModel}
-            </Box>
-          ),
-          duration: 10000,
-          isClosable: true,
-          position: 'bottom-right',
-          icon: <MdOutlineLightbulb size="24px" />,
-          status: 'warning',
-          description: <Box fontSize="sm">Image Generated</Box>,
-        });
-      }
-    }
-  }
-
-  // Generate labels
-  async function generateLabels() {
-    if (!file) return;
-    const queryRequest = {
-      assetid: s.assetid,
-      model: selectedModel,
-    } as AiImageQueryRequest;
-
-    const result = await AiAPI.image.labels(queryRequest);
-    if (result.success && result.data) {
-      // Get the labels from the model
-      const data = result.data.detect_objects as YoloObject[];
-      const temps: string[] = [];
-      const boxes: { label: string; xmin: number; ymin: number; xmax: number; ymax: number }[] = [];
-
-      if (data.length === 0) {
-        // Show result
-        toast.closeAll();
-        toast({
-          title: (
-            <Box fontSize="sm" fontWeight="bold">
-              AI Model: {selectedModel}
-            </Box>
-          ),
-          duration: 10000,
-          isClosable: true,
-          position: 'bottom-right',
-          icon: <MdOutlineLightbulb size="24px" />,
-          status: 'warning',
-          description: <Box fontSize="sm">No labels generated</Box>,
-        });
-        return;
-      }
-
-      for (let idx = 0; idx < data.length; idx++) {
-        const label = data[idx];
-        // array of labels
-        temps.push(label.name);
-        // array of boxes
-        boxes.push({ label: label.name, xmin: label.xmin, ymin: label.ymin, xmax: label.xmax, ymax: label.ymax });
-      }
-      // If we have labels, update the insight
-      if (temps.length > 0) {
-        // Saves the boxes in app state
-        updateState(props._id, { boxes });
-        // Get the existing labels
-        const myinsight = insights.find((a) => a.data.app_id === props._id);
-        if (myinsight) {
-          // Combine the new labels
-          const mylabels = myinsight.data.labels;
-          temps.push(...mylabels);
-        }
-        // Count the labels
-        const counted = wordCount(temps);
-        // Update the insight collection
-        updateInsights(props._id, { labels: counted });
-        // Show success
-        toast.closeAll();
-        toast({
-          title: (
-            <Box fontSize="sm" fontWeight="bold">
-              AI Model: {selectedModel}
-            </Box>
-          ),
-          duration: 10000,
-          isClosable: true,
-          position: 'bottom-right',
-          icon: <MdOutlineLightbulb size="24px" />,
-          status: 'warning',
-          description: <Box fontSize="sm">Labels generated: {counted.join(', ')}</Box>,
-        });
-      }
-    }
-  }
 
   return (
     <>
@@ -382,43 +219,6 @@ function ToolbarComponent(props: App): JSX.Element {
           </Tooltip>
         </div>
       </ButtonGroup>
-
-      {/* AI Model selection */}
-      <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1} isDisabled={onlineModels.length == 0}>
-        <Menu placement="top-start">
-          <Tooltip hasArrow={true} label={'Ai Model Selection'} openDelay={300}>
-            <MenuButton as={Button} colorScheme="orange" width="100px" aria-label="layout">
-              {selectedModel}
-            </MenuButton>
-          </Tooltip>
-          <MenuList minWidth="150px" fontSize={'sm'}>
-            {onlineModels.map((model) => (
-              <MenuItem key={model} onClick={() => handleModelChange(model)}>
-                {model}
-              </MenuItem>
-            ))}
-          </MenuList>
-        </Menu>
-      </ButtonGroup>
-
-      {/* Smart Action */}
-      <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1}>
-        <Menu placement="top-start">
-          <Tooltip hasArrow={true} label={'Remote Actions'} openDelay={300}>
-            <MenuButton as={Button} colorScheme="orange" aria-label="layout">
-              <MdOutlineLightbulb />
-            </MenuButton>
-          </Tooltip>
-          <MenuList minWidth="150px" fontSize={'sm'}>
-            <Tooltip hasArrow={true} label={'Generate labels and store them as tags'} openDelay={300}>
-              <MenuItem onClick={generateLabels}>Generate labels</MenuItem>
-            </Tooltip>
-            <Tooltip hasArrow={true} label={'Create a new image with labels'} openDelay={300}>
-              <MenuItem onClick={generateImage}>Show image with labels</MenuItem>
-            </Tooltip>
-          </MenuList>
-        </Menu>
-      </ButtonGroup>
     </>
   );
 }
@@ -447,10 +247,62 @@ function getImageUrl(src: string, sizes: ImageInfoType[], width: number): string
 }
 
 /**
- * Count occurence of words in an array
- * @param words array of words
- * @returns array of strings with count values separated by a colon if count > 1
+ * Grouped App toolbar component, this component will display when a group of apps are selected
+ * @returns JSX.Element | null
  */
+const GroupedToolbarComponent = () => {
+  return null;
+};
+
+export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
+
+/*
+type YoloObject = {
+  class: number;
+  confidence: number;
+  name: string;
+  xmax: number;
+  xmin: number;
+  ymax: number;
+  ymin: number;
+};
+
+
+      <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1} isDisabled={onlineModels.length == 0}>
+        <Menu placement="top-start">
+          <Tooltip hasArrow={true} label={'Ai Model Selection'} openDelay={300}>
+            <MenuButton as={Button} colorScheme="orange" width="100px" aria-label="layout">
+              {selectedModel}
+            </MenuButton>
+          </Tooltip>
+          <MenuList minWidth="150px" fontSize={'sm'}>
+            {onlineModels.map((model) => (
+              <MenuItem key={model} onClick={() => handleModelChange(model)}>
+                {model}
+              </MenuItem>
+            ))}
+          </MenuList>
+        </Menu>
+      </ButtonGroup>
+
+      <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1}>
+        <Menu placement="top-start">
+          <Tooltip hasArrow={true} label={'Remote Actions'} openDelay={300}>
+            <MenuButton as={Button} colorScheme="orange" aria-label="layout">
+              <MdOutlineLightbulb />
+            </MenuButton>
+          </Tooltip>
+          <MenuList minWidth="150px" fontSize={'sm'}>
+            <Tooltip hasArrow={true} label={'Generate labels and store them as tags'} openDelay={300}>
+              <MenuItem onClick={generateLabels}>Generate labels</MenuItem>
+            </Tooltip>
+            <Tooltip hasArrow={true} label={'Create a new image with labels'} openDelay={300}>
+              <MenuItem onClick={generateImage}>Show image with labels</MenuItem>
+            </Tooltip>
+          </MenuList>
+        </Menu>
+      </ButtonGroup>
+
 function wordCount(words: string[]): string[] {
   // Create an empty object to store word counts
   const wordCounts: Record<string, number> = {};
@@ -473,12 +325,122 @@ function wordCount(words: string[]): string[] {
   return result;
 }
 
-/**
- * Grouped App toolbar component, this component will display when a group of apps are selected
- * @returns JSX.Element | null
- */
-const GroupedToolbarComponent = () => {
-  return null;
-};
+async function generateImage() {
+  if (!file) return;
+  const queryRequest = {
+    assetid: s.assetid,
+    model: selectedModel,
+    filename: file.data.originalfilename,
+    roomid: roomId,
+  } as AiImageQueryRequest;
+  const result = await AiAPI.image.image(queryRequest);
+  if (result.success && result.data) {
+    // Open the generated image in a new app
+    if (result.success && result.data) {
+      createApp({
+        title: 'YoloV8',
+        roomId: roomId!,
+        boardId: boardId!,
+        position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+        size: props.data.size,
+        rotation: { x: 0, y: 0, z: 0 },
+        type: 'ImageViewer',
+        state: { ...(initialValues['ImageViewer'] as AppState), assetid: result.data.id },
+        raised: true,
+        pinned: false,
+        dragging: false,
+      });
+      // Show success
+      toast.closeAll();
+      toast({
+        title: (
+          <Box fontSize="sm" fontWeight="bold">
+            AI Model: {selectedModel}
+          </Box>
+        ),
+        duration: 10000,
+        isClosable: true,
+        position: 'bottom-right',
+        icon: <MdOutlineLightbulb size="24px" />,
+        status: 'warning',
+        description: <Box fontSize="sm">Image Generated</Box>,
+      });
+    }
+  }
+}
 
-export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
+// Generate labels
+async function generateLabels() {
+  if (!file) return;
+  const queryRequest = {
+    assetid: s.assetid,
+    model: selectedModel,
+  } as AiImageQueryRequest;
+
+  const result = await AiAPI.image.labels(queryRequest);
+  if (result.success && result.data) {
+    // Get the labels from the model
+    const data = result.data.detect_objects as YoloObject[];
+    const temps: string[] = [];
+    const boxes: { label: string; xmin: number; ymin: number; xmax: number; ymax: number }[] = [];
+
+    if (data.length === 0) {
+      // Show result
+      toast.closeAll();
+      toast({
+        title: (
+          <Box fontSize="sm" fontWeight="bold">
+            AI Model: {selectedModel}
+          </Box>
+        ),
+        duration: 10000,
+        isClosable: true,
+        position: 'bottom-right',
+        icon: <MdOutlineLightbulb size="24px" />,
+        status: 'warning',
+        description: <Box fontSize="sm">No labels generated</Box>,
+      });
+      return;
+    }
+
+    for (let idx = 0; idx < data.length; idx++) {
+      const label = data[idx];
+      // array of labels
+      temps.push(label.name);
+      // array of boxes
+      boxes.push({ label: label.name, xmin: label.xmin, ymin: label.ymin, xmax: label.xmax, ymax: label.ymax });
+    }
+    // If we have labels, update the insight
+    if (temps.length > 0) {
+      // Saves the boxes in app state
+      updateState(props._id, { boxes });
+      // Get the existing labels
+      const myinsight = insights.find((a) => a.data.app_id === props._id);
+      if (myinsight) {
+        // Combine the new labels
+        const mylabels = myinsight.data.labels;
+        temps.push(...mylabels);
+      }
+      // Count the labels
+      const counted = wordCount(temps);
+      // Update the insight collection
+      updateInsights(props._id, { labels: counted });
+      // Show success
+      toast.closeAll();
+      toast({
+        title: (
+          <Box fontSize="sm" fontWeight="bold">
+            AI Model: {selectedModel}
+          </Box>
+        ),
+        duration: 10000,
+        isClosable: true,
+        position: 'bottom-right',
+        icon: <MdOutlineLightbulb size="24px" />,
+        status: 'warning',
+        description: <Box fontSize="sm">Labels generated: {counted.join(', ')}</Box>,
+      });
+    }
+  }
+}
+  */

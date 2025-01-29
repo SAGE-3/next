@@ -12,7 +12,8 @@ import { WebsocketProvider } from 'y-websocket';
 import { useParams } from 'react-router';
 import { useUser } from './useUser';
 import { User } from '@sage3/shared/types';
-import { Box, CircularProgress } from '@chakra-ui/react';
+import { Box, Button, CircularProgress } from '@chakra-ui/react';
+import { useHexColor, useRouteNav } from '@sage3/frontend';
 
 // Enum Yjs Rooms
 export enum YjsRooms {
@@ -154,9 +155,28 @@ export function YjsProvider(props: React.PropsWithChildren<Record<string, unknow
 }
 
 function LoadingYjsComponent() {
+  const teal = useHexColor('teal');
+
+  const { boardId, roomId } = useParams();
+  const { toHome, toBoard } = useRouteNav();
+
+  const [tries, setTries] = useState(3);
+
+  const retry = () => {
+    if (boardId && roomId && tries > 0) {
+      toBoard(boardId, roomId);
+      setTries(tries - 1);
+    } else {
+      toHome(roomId);
+    }
+  };
+
   return (
     <Box width="100vw" height="100vh" display="flex" justifyContent={'center'} alignItems={'center'}>
-      <CircularProgress isIndeterminate size={'xl'} />
+      <CircularProgress isIndeterminate size={'xl'} color={teal} />
+      <Button onClick={retry} colorScheme="teal" variant="outline" position="absolute" left="2" bottom="2">
+        {tries ? ` Retry ${tries}` : 'Go Home'}
+      </Button>
     </Box>
   );
 }

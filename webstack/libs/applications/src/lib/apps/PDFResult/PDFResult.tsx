@@ -10,7 +10,8 @@ import { useEffect, useState } from 'react';
 import { Box, Text, UnorderedList, ListItem, Link } from '@chakra-ui/react';
 import { useParams } from 'react-router';
 
-import { useAppStore, useUser, humanFileSize } from '@sage3/frontend';
+import { humanFileSize } from '@sage3/shared';
+import { useAppStore, useUser } from '@sage3/frontend';
 
 import { App } from '../../schema';
 import { state as AppState } from './index';

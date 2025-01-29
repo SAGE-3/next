@@ -14,19 +14,19 @@ import { ServerConfiguration } from '@sage3/shared/types';
 import { AiQueryResponse } from '@sage3/shared';
 import { AppsCollection } from '../../../../../collections';
 
-export class ChatModel extends AiModel {
+export class LlamaModel extends AiModel {
   private _url: string;
   private _apiKey: string;
   private _model: string;
   private _maxTokens: number;
-  public name = 'chat';
+  public name = 'llama';
 
   constructor(config: ServerConfiguration) {
     super();
-    this._url = config.services.chat.url;
-    this._apiKey = config.services.chat.apiKey;
-    this._model = config.services.chat.model;
-    this._maxTokens = config.services.chat.max_tokens;
+    this._url = config.services.llama.url;
+    this._apiKey = config.services.llama.apiKey;
+    this._model = config.services.llama.model;
+    this._maxTokens = config.services.llama.max_tokens;
   }
 
   public info() {
@@ -35,7 +35,16 @@ export class ChatModel extends AiModel {
 
   public async health(): Promise<boolean> {
     try {
-      const response = await fetch(`${this._url}/health`, { method: 'GET' });
+      let url: string;
+      console.log('Checking health of llama model', this._model);
+      if (this._model.startsWith('/data')) {
+        // TGI huggingface style API
+        url = `${this._url}/health`;
+      } else {
+        // Nvidia - OpenAI syle API
+        url = `${this._url}/v1/health/ready`;
+      }
+      const response = await fetch(url, { method: 'GET' });
       if (response.status === 200) {
         return true;
       } else {
@@ -53,41 +62,74 @@ export class ChatModel extends AiModel {
     };
   }
 
-  public async ask(input: string, max_new_tokens: number): Promise<AiQueryResponse> {
+  public async ask(input: string, max_new_tokens: number, previousQ?: string, previousA?: string): Promise<AiQueryResponse> {
     try {
       const newTokens = max_new_tokens ? max_new_tokens : this._maxTokens;
-      const modelBody = {
-        inputs: input,
-        parameters: {
+      let modelBody, url;
+      if (this._model === 'llama3') {
+        url = `${this._url}/generate`;
+        modelBody = {
+          inputs: input,
+          parameters: {
+            // maximum number of tokens to generate
+            max_new_tokens: newTokens < this._maxTokens ? newTokens : this._maxTokens,
+            // stop tokens for llama3/3.1
+            stop: this._model === 'llama3' ? ['<|start_header_id|>', '<|end_header_id|>', '<|eot_id|>', '<|reserved_special_token'] : [],
+          },
+        };
+      } else {
+        console.log('OpenAI style API: /v1/chat/completions');
+        url = `${this._url}/v1/chat/completions`;
+        modelBody = {
+          model: 'meta/llama-3.1-8b-instruct',
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You are a helpful assistant, providing informative, conscise and friendly answers to the user in Markdown format. You only return the content relevant to the question.',
+            },
+          ],
+          stream: false,
           // maximum number of tokens to generate
-          max_new_tokens: newTokens < this._maxTokens ? newTokens : this._maxTokens,
-          // stop tokens for llama3/3.1
-          stop: this._model === 'llama3' ? ['<|start_header_id|>', '<|end_header_id|>', '<|eot_id|>', '<|reserved_special_token'] : [],
-          // temperature
-          temperature: 0.3,
-        },
-      };
-      const response = await fetch(`${this._url}/generate`, {
+          max_tokens: newTokens < this._maxTokens ? newTokens : this._maxTokens,
+        };
+        if (previousQ) {
+          modelBody.messages.push({ role: 'user', content: previousQ });
+        }
+        if (previousA) {
+          modelBody.messages.push({ role: 'assistant', content: previousA });
+        }
+        modelBody.messages.push({ role: 'user', content: input });
+      }
+      const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(modelBody),
       });
       if (response.status == 200) {
         const data = await response.json();
-        return {
-          success: true,
-          output: data.generated_text,
-        };
+        if (this._model === 'llama3') {
+          return {
+            success: true,
+            output: data.generated_text,
+          };
+        } else {
+          return {
+            success: true,
+            output: data.choices[0].message.content,
+          };
+        }
       } else {
+        console.log('Failed to query llama model.');
         return {
           success: false,
-          error_message: 'Failed to query chat model.',
+          error_message: 'Failed to query llama model.',
         };
       }
     } catch (error) {
       return {
         success: false,
-        error_message: `Failed to query chat model: ${error.message}`,
+        error_message: `Failed to query llama model: ${error.message}`,
       };
     }
   }
@@ -95,23 +137,44 @@ export class ChatModel extends AiModel {
   public async asking(input: string, max_new_tokens: number, app_id: string, userId: string): Promise<AiQueryResponse> {
     return new Promise((resolve, reject) => {
       try {
-        const newTokens = max_new_tokens ? max_new_tokens : this._maxTokens;
         let progress = '';
         let new_characters = 0;
-        const modelBody = {
-          inputs: input,
-          parameters: {
+        const newTokens = max_new_tokens ? max_new_tokens : this._maxTokens;
+        let modelBody, url;
+        if (this._model === 'llama3') {
+          url = `${this._url}/generate_stream`;
+          modelBody = {
+            inputs: input,
+            parameters: {
+              // maximum number of tokens to generate
+              max_new_tokens: newTokens < this._maxTokens ? newTokens : this._maxTokens,
+              // stop tokens for llama3/3.1
+              stop: this._model === 'llama3' ? ['<|start_header_id|>', '<|end_header_id|>', '<|eot_id|>', '<|reserved_special_token'] : [],
+            },
+          };
+        } else {
+          url = `${this._url}/v1/chat/completions`;
+          modelBody = {
+            model: 'meta/llama-3.1-8b-instruct',
+            messages: [
+              {
+                role: 'assistant',
+                content:
+                  'You are a helpful assistant, providing informative, conscise and friendly answers to the user in Markdown format. You only return the content relevant to the question.',
+              },
+              { role: 'user', content: input },
+            ],
+            stream: true,
             // maximum number of tokens to generate
-            max_new_tokens: newTokens < this._maxTokens ? newTokens : this._maxTokens,
-            // stop tokens for llama3/3.1
-            stop: this._model === 'llama3' ? ['<|start_header_id|>', '<|end_header_id|>', '<|eot_id|>', '<|reserved_special_token'] : [],
-            // temperature
-            temperature: 0.3,
-          },
-        };
+            max_tokens: newTokens < this._maxTokens ? newTokens : this._maxTokens,
+            stream_options: {
+              include_usage: true,
+            },
+          };
+        }
 
         // Create an EventSource to stream the response
-        const eventSource = new EventSource(`${this._url}/generate_stream`, {
+        const eventSource = new EventSource(url, {
           method: 'POST',
           headers: {
             Accept: 'application/json',
@@ -127,22 +190,43 @@ export class ChatModel extends AiModel {
 
         // Message event handler
         eventSource.onmessage = async (event: MessageEvent) => {
-          const message = JSON.parse(event.data);
-          if (message.generated_text) {
-            // That's the end of the response
+          // OpenAI style API response
+          if (event.data === '[DONE]') {
             eventSource.close();
-            resolve({
+            return resolve({
               success: true,
-              output: message.generated_text,
+              output: progress,
             });
+          }
+          const message = JSON.parse(event.data);
+          if (this._model === 'llama3') {
+            if (message.generated_text) {
+              // That's the end of the response
+              eventSource.close();
+              resolve({
+                success: true,
+                output: message.generated_text,
+              });
+            } else {
+              // otherwise we are getting tokens
+              progress += message.token.text;
+              new_characters += message.token.text.length;
+              if (new_characters > 30 && app_id) {
+                new_characters = 0;
+                AppsCollection.update(app_id, userId, { state: { token: progress } });
+              }
+            }
           } else {
-            // otherwise we are getting tokens
-            progress += message.token.text;
-            new_characters += message.token.text.length;
-            if (new_characters > 30 && app_id) {
-              new_characters = 0;
-              // @ts-ignore
-              AppsCollection.update(app_id, userId, { 'state.token': progress });
+            if (message.choices[0] && message.choices[0].finish_reason !== 'stop') {
+              const newpart = message.choices[0].delta.content;
+              if (newpart) {
+                progress += newpart;
+                new_characters += newpart.length;
+                if (new_characters > 30 && app_id) {
+                  new_characters = 0;
+                  AppsCollection.update(app_id, userId, { state: { token: progress } });
+                }
+              }
             }
           }
         };
@@ -152,9 +236,10 @@ export class ChatModel extends AiModel {
           console.error('EventSource> Error occurred:', error);
         };
       } catch (error) {
+        console.log('Failed to query llama model.', error);
         reject({
           success: false,
-          error_message: `Failed to query chat model: ${error.message}`,
+          error_message: `Failed to query llama model: ${error.message}`,
         });
       }
     });

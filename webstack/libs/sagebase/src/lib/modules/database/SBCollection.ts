@@ -270,6 +270,10 @@ export class SBCollectionRef<Type extends SBJSON> {
           type: SchemaFieldTypes.TAG,
           AS: '_updatedBy',
         },
+        '$._createdBy': {
+          type: SchemaFieldTypes.TAG,
+          AS: '_createdBy',
+        },
       } as { [key: string]: any };
       Object.keys(indexFields).forEach((prop) => {
         const type = typeof indexFields[prop];
@@ -301,12 +305,12 @@ export class SBCollectionRef<Type extends SBJSON> {
    * @param {string | number} query  The query. Currently only on a "equals"
    * @returns {Promise<SBDocumentRef<Type>[]>} An array of document refs that satisfy the query.
    */
-  public async query(propertyName: keyof Type, query: string | number): Promise<SBDocument<Type>[]> {
+  public async query(propertyName: keyof Type | keyof SBDocument<Type>, query: string | number): Promise<SBDocument<Type>[]> {
     try {
       // THIS IS A FIX FOR UUIDS. REDIS DOESNT LIKE DASHES
       // ** https://redis.io/docs/stack/search/reference/escaping/
       // ** https://redis.io/docs/stack/search/reference/tags/
-      if (typeof query === 'string') query = `{${query.replace(/[#-]/g, '\\$&')}}`;
+      if (typeof query === 'string') query = `{${query.replace(/[#-.@]/g, '\\$&')}}`;
       if (typeof query === 'number') query = `[${query} ${query}]`;
       const response = await this._redisClient.ft.search(this._indexName, `@${String(propertyName)}:${query}`, {
         LIMIT: { from: 0, size: 1000 },
