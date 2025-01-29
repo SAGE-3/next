@@ -72,8 +72,7 @@ export function PluginsMenu(props: PluginsMenuProps) {
       <PluginUploadModal isOpen={pluginIsOpen} onOpen={pluginOnOpen} onClose={pluginOnClose} roomId={props.roomId} />
 
       <VStack
-        maxH={300}
-        // w={'100%'}
+        style={{ maxHeight: 'min(300px, 50svh)' }}
         m={0}
         spacing={1}
         overflow="auto"

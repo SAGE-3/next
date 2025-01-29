@@ -44,8 +44,8 @@ export function ToolbarButton(props: ToolbarButtonProps) {
   return (
     <Popover
       offset={props.offset ? props.offset : undefined}
-      onOpen={props.stayActive ? () => {} : onOpen}
-      onClose={props.stayActive ? () => {} : onClose}
+      onOpen={props.stayActive ? () => { } : onOpen}
+      onClose={props.stayActive ? () => { } : onClose}
       isOpen={isOpen}
     >
       <Tooltip label={props.tooltip} placement="top" hasArrow={true} openDelay={400} shouldWrapChildren={true}>
@@ -84,7 +84,7 @@ export function ToolbarButton(props: ToolbarButtonProps) {
       <PopoverContent width="100%">
         {props.stayActive && <PopoverCloseButton onClick={handleClick} />}
         <PopoverHeader>{props.title}</PopoverHeader>
-        <PopoverBody>{props.children}</PopoverBody>
+        <PopoverBody p={1} m={1}>{props.children}</PopoverBody>
       </PopoverContent>
     </Popover>
   );

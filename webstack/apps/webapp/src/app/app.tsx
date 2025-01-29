@@ -94,7 +94,7 @@ export function App() {
   }, [status]);
 
   return (
-    <Box position="relative" width="100vw" height="100vh">
+    <Box position="relative" width="100vw" height="100svh">
       <ChakraProvider theme={theme}>
         <UserSettingsProvider>
           <AuthProvider>

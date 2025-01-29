@@ -1292,7 +1292,7 @@ function AppComponent(props: App): JSX.Element {
               width: '12px',
             },
             '&::-webkit-scrollbar-track': {
-              '-webkit-box-shadow': 'inset 0 0 6px rgba(0,0,0,0.00)',
+              WebkitBoxShadow: 'inset 0 0 6px rgba(0,0,0,0.00)',
             },
             '&::-webkit-scrollbar-thumb': {
               backgroundColor: `${scrollColor}`,
@@ -1516,33 +1516,33 @@ function AppComponent(props: App): JSX.Element {
           <Box display={'flex'} justifyContent={'left'}>
             {actions && (
               <List>
-                {actions.map((action, index) => {
-                  return (
-                    <Box
-                      color="black"
-                      rounded={'md'}
-                      boxShadow="md"
-                      fontFamily="arial"
-                      textAlign={'left'}
-                      bg={textColor}
-                      p={1}
-                      m={3}
-                      // maxWidth="80%"
-                      userSelect={'none'}
-                      _hover={{ background: 'purple.300' }}
-                      background={'purple.200'}
-                      onDoubleClick={applyAction(action)}
-                      key={'list-' + index}
-                    >
-                      <Tooltip label="Double click to apply action" aria-label="A tooltip">
-                        <ListItem key={index}>
-                          <ListIcon as={MdSettings} color="green.500" />
-                          Show result {index + 1} on the board: {action.type} {action.app}
-                        </ListItem>
-                      </Tooltip>
-                    </Box>
-                  );
-                })}
+                {actions.map((action, index) => (
+                  <Box
+                    color="black"
+                    rounded={'md'}
+                    boxShadow="md"
+                    fontFamily="arial"
+                    textAlign={'left'}
+                    bg={textColor}
+                    p={1}
+                    m={3}
+                    // maxWidth="80%"
+                    userSelect={'none'}
+                    _hover={{ background: 'purple.300' }}
+                    background={'purple.200'}
+                    // onDoubleClick={applyAction(action)}
+                    onClick={applyAction(action)}
+                    key={'list-' + index}
+                  >
+                    <Tooltip label="Click to show result on the board" aria-label="A tooltip">
+                      <ListItem key={index}>
+                        <ListIcon as={MdSettings} color="green.500" />
+                        Show result on the board
+                        {/* Show result {index + 1} on the board: {action.type} {action.app} */}
+                      </ListItem>
+                    </Tooltip>
+                  </Box>
+                ))}
               </List>
             )}
           </Box>

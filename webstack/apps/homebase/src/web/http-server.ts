@@ -83,6 +83,7 @@ export function createApp(assetPath: string, config: ServerConfiguration): expre
       hsts: true,
       // Cross-Origin-Embedder-Policy: disable to enable map images and zoom images to load
       crossOriginEmbedderPolicy: false,
+      crossOriginResourcePolicy: false,
     })
   );
 

@@ -323,13 +323,14 @@ export function Whiteboard(props: WhiteboardProps) {
     if (primaryActionMode === 'pen') {
       setUndoLastMaker(true);
     }
-  });
+  }, { dependencies: [primaryActionMode] });
+
   // Undo last line Mac
   useHotkeys('cmd+z', () => {
     if (primaryActionMode === 'pen') {
       setUndoLastMaker(true);
     }
-  });
+  }, { dependencies: [primaryActionMode] });
 
   return (
     <div

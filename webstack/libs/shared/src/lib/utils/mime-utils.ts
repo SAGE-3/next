@@ -228,6 +228,7 @@ export function isVideo(mimeType: string): boolean {
 export function isAudio(mimeType: string): boolean {
   return mimeType.startsWith('audio/');
 }
+
 /**
  * Test if a given mime type is a notebook
  *
@@ -238,6 +239,7 @@ export function isAudio(mimeType: string): boolean {
 export function isPythonNotebook(mimeType: string): boolean {
   return mimeType === 'application/x-ipynb+json';
 }
+
 /**
  * Test if a given mime type is a text file
  *
@@ -361,7 +363,6 @@ export function isValid(mimeType: string): boolean {
     isImage(mimeType) ||
     isPDF(mimeType) ||
     isVideo(mimeType) ||
-    isPythonNotebook(mimeType) ||
     isText(mimeType) ||
     isMD(mimeType) ||
     isJSON(mimeType) ||

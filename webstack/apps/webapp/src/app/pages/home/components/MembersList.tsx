@@ -89,7 +89,7 @@ export function MembersList(props: { room: Room }) {
         </Box>
 
         <VStack
-          height="calc(100vh - 345px)"
+          height="calc(100svh - 275px)"
           width="100%"
           gap="2"
           overflowY="auto"

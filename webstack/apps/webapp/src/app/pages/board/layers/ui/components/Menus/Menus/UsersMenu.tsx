@@ -210,7 +210,7 @@ export function UsersMenu(props: UsersMenuProps) {
   return (
     <Box>
       <VStack
-        maxH={300}
+        style={{ maxHeight: 'min(300px, 50svh)' }}
         w={'100%'}
         m={0}
         pr={2}

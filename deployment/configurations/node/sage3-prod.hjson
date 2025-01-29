@@ -78,7 +78,7 @@
       // "max_tokens": 2048,
       // "apiKey": ""
       "url": "https://arcade.evl.uic.edu/llama32-11B-vision",
-      "model": "/data/11Bf",
+      "model": "meta/llama-3.2-11b-vision-instruct",
       "apiKey": "",
       "max_tokens": 1000
     },
@@ -109,8 +109,7 @@
       "Stickie",
       "Screenshare",
       "Webview",
-      "Hawaii Mesonet",
-      "JupyterLab"
+      "Hawaii Mesonet"
     ]
   },
 

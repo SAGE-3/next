@@ -13,6 +13,9 @@ node_modules
 # IDE - VSCode
 .vscode/*
 
+
+deployment/.env
+
 # Mac System Files
 .DS_Store
 Thumbs.db

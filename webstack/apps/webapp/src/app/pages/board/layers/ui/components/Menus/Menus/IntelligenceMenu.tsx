@@ -27,8 +27,6 @@ import { useUserSettings, useConfigStore } from '@sage3/frontend';
 import { ServerConfiguration } from '@sage3/shared/types';
 
 type IntelligenceProps = {
-  roomId: string;
-  boardId: string;
   notificationCount: number;
 };
 
@@ -72,7 +70,7 @@ export function IntelligenceMenu(props: IntelligenceProps) {
   }, [settings.aiModel, openai]);
 
   return (
-    <Box display="flex" flexDirection="column" minWidth={"450px"} maxWidth={"40vw"} height={"250px"}>
+    <Box display="flex" flexDirection="column" minWidth={"450px"} maxWidth={"40vw"} height={"200px"}>
       <Tabs style={{ width: '100%', height: '100%' }}>
 
         <TabList>

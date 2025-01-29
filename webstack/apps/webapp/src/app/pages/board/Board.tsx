@@ -108,24 +108,23 @@ export function BoardPage() {
   }
 
   // If you are removed as a member from the room this board belongs to, redict to the homepage
-  useEffect(() => {
-    if (!user) return;
-    const isGuest = user.data.userRole === 'guest';
-    if (isGuest) return;
-    const members = useRoomStore.getState().members;
-    const roomMembership = members.find((m) => m.data.roomId === roomId);
-    const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(user._id) : false;
-    if (!isMember) {
-      toast({
-        title: 'Room Membership Invalid',
-        description: `You are not member of this room.`,
-        status: 'error',
-        duration: 5000,
-        isClosable: false,
-      });
-      toHome();
-    }
-  }, [user]);
+  // useEffect(() => {
+  //   if (!user) return;
+  //   const isGuest = user.data.userRole === 'guest';
+  //   if (isGuest) return;
+  //   const members = useRoomStore.getState().members;
+  //   const roomMembership = members.find((m) => m.data.roomId === roomId);
+  //   const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(user._id) : false;
+  //   if (!isMember) {
+  //     toast({
+  //       title: 'Room Membership Invalid',
+  //       description: `You are not member of this room.`,
+  //       status: 'error',
+  //       duration: 5000,
+  //       isClosable: false,
+  //     });
+  //   }
+  // }, [user]);
 
   // Scroll detection
   useEffect(() => {

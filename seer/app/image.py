@@ -57,7 +57,7 @@ class ImageAgent:
                 base_url=llama["url"] + "/v1",
                 model=llama["model"],
                 stream=False,
-                max_tokens=1000,
+                max_tokens=1500,
             )
         self.httpx_client = httpx.Client(timeout=None)
         # OpenAI model
