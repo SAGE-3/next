@@ -1,0 +1,14 @@
+!#/bin/sh
+
+# how many clients
+clients=4
+
+# runtime in sec
+length=120
+
+for i in $(seq 1 ${clients}); do
+  python3 web-client.py --id $i --time $length &
+  sleep 0.1
+done
+
+wait
