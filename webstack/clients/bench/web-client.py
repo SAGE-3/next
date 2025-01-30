@@ -9,11 +9,9 @@ width = 1280
 height = 800
 headless = True
 
-board = "http://localhost:4200/#/board/1596b8c1-cb87-4542-be6b-9dbb1ad952a1/bb0507e3-e6a4-40e5-98f9-a4febecc2725"
 
-
-def main(id, runtime):
-    boardScreenshot(id, runtime, board, width, height)
+def main(link, id, runtime):
+    boardScreenshot(id, runtime, link, width, height)
 
 
 def boardScreenshot(id, runtime, board_link, ww, hh):
@@ -135,6 +133,7 @@ def boardScreenshot(id, runtime, board_link, ww, hh):
 
 
 parser = argparse.ArgumentParser(description="SAGE3 Board client using Playwright")
+parser.add_argument("--link", type=str, help="Board link")
 parser.add_argument("--id", type=int, help="Your ID number", default=1)
 parser.add_argument("--time", type=int, help="Runtime in seconds", default=120)
 
@@ -146,5 +145,6 @@ print(args)
 
 id = args.id
 runtime = args.time
+link = args.link
 
-main(id, runtime)
+main(link, id, runtime)

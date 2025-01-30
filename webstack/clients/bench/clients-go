@@ -6,8 +6,12 @@ clients=4
 # runtime in sec
 length=120
 
+board="http://localhost:4200/#/board/1596b8c1-cb87-4542-be6b-9dbb1ad952a1/bb0507e3-e6a4-40e5-98f9-a4febecc2725"
+
 for i in $(seq 1 ${clients}); do
-  python3 web-client.py --id $i --time $length &
+  # start the client
+  python3 web-client.py --link $board --id $i --time $length &
+  # pause a little
   sleep 0.1
 done
 
