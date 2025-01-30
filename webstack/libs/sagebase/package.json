@@ -1,6 +1,6 @@
 {
   "name": "@sage3/sagebase",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "dependencies": {
     "connect-redis": "^7.1.1",
     "express": "^4.21.0",
