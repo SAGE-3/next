@@ -77,11 +77,34 @@ function AppComponent(props: App): JSX.Element {
     setFontSize(s.fontSize);
   }, [s.fontSize]);
 
+  // Update to s.text
+  // Have to detect if this is from python some how
+  const pythonSync = useCallback(
+    (text: string, uid: string) => {
+      if (!yApps) return;
+      const yText = yApps.doc.getText(props._id);
+      const provider = yApps.provider;
+      const users = provider.awareness.getStates();
+      const non_python_users = Array.from(users.values()).map((item) => item.user.uid);
+      if (non_python_users.includes(uid)) return;
+      // Clear any existing lines
+      yText.delete(0, yText.length);
+      // Set the lines from the database
+      yText.insert(0, text);
+    },
+    [yApps]
+  );
+
+  useEffect(() => {
+    if (s.text) {
+      pythonSync(s.text, props._updatedBy);
+    }
+  }, [s.text]);
+
   const connectToYjs = async (textArea: HTMLTextAreaElement, yRoom: YjsRoomConnection) => {
     const yText = yRoom.doc.getText(props._id);
     const provider = yRoom.provider;
 
-    // Ensure we are always operating on the same line endings
     new TextAreaBinding(yText, textArea);
     const users = provider.awareness.getStates();
     const count = users.size;
