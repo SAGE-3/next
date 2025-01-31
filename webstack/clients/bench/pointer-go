@@ -29,6 +29,6 @@ board="37801b44-e873-46b9-9803-bc0668a63748"
 pointers=40
 
 for i in $(seq 1 ${pointers}); do
-  node pointer-secure.js -r 20 -s $server -b $board -m $room -t $length -e 10 &
+  node pointer.js -r 20 -s $server -b $board -m $room -t $length -e 10 &
   sleep 0.1
 done
