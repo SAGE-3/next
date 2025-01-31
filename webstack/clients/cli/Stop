@@ -1,0 +1,4 @@
+#!/bin/bash
+
+kill `ps auxww | grep pointer-secure | awk '{print $2}'`
+

@@ -1,0 +1,12 @@
+{
+  "name": "bench",
+  "version": "1.0.0",
+  "description": "command line client to connect to SAGE3",
+  "main": "pointer.js",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "@faker-js/faker": "^9.4.0",
+    "commander": "^13.1.0"
+  }
+}
