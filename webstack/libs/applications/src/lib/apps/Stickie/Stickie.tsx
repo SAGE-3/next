@@ -77,24 +77,31 @@ function AppComponent(props: App): JSX.Element {
     setFontSize(s.fontSize);
   }, [s.fontSize]);
 
-  // Update to s.text
   // Have to detect if this is from python some how
   const pythonSync = useCallback(
     (text: string, uid: string) => {
-      if (!yApps) return;
-      const yText = yApps.doc.getText(props._id);
+      if (!yApps || !user) return;
       const provider = yApps.provider;
       const users = provider.awareness.getStates();
       const non_python_users = Array.from(users.values()).map((item) => item.user.uid);
+      // Check if this is an update from other users...if so ignore
+      if (non_python_users.includes(uid)) return;
+      const sortedusers = non_python_users.sort();
+      const userToUpdate = sortedusers[0];
+      // Only one connected user will update
+      if (user._id !== userToUpdate) return;
+      // Update the text
+      const yText = yApps.doc.getText(props._id);
       if (non_python_users.includes(uid)) return;
       // Clear any existing lines
       yText.delete(0, yText.length);
       // Set the lines from the database
       yText.insert(0, text);
     },
-    [yApps]
+    [yApps, user]
   );
 
+  // Detect if an update happens to s.text
   useEffect(() => {
     if (s.text) {
       pythonSync(s.text, props._updatedBy);
