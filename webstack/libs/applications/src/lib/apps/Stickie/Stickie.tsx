@@ -92,7 +92,6 @@ function AppComponent(props: App): JSX.Element {
       if (user._id !== userToUpdate) return;
       // Update the text
       const yText = yApps.doc.getText(props._id);
-      if (non_python_users.includes(uid)) return;
       // Clear any existing lines
       yText.delete(0, yText.length);
       // Set the lines from the database
