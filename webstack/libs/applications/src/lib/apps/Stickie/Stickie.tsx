@@ -92,10 +92,13 @@ function AppComponent(props: App): JSX.Element {
       if (user._id !== userToUpdate) return;
       // Update the text
       const yText = yApps.doc.getText(props._id);
-      // Clear any existing lines
-      yText.delete(0, yText.length);
-      // Set the lines from the database
-      yText.insert(0, text);
+      // Update in a transaction to avoid multiple updates
+      yApps.doc.transact(() => {
+        // Clear any existing lines
+        yText.delete(0, yText.length);
+        // Set the lines from the database
+        yText.insert(0, text);
+      });
     },
     [yApps, user]
   );
@@ -117,10 +120,13 @@ function AppComponent(props: App): JSX.Element {
 
     // Sync current ydoc with that is saved in the database
     const syncStateWithDatabase = () => {
-      // Clear any existing lines
-      yText.delete(0, yText.length);
-      // Set the lines from the database
-      yText.insert(0, s.text);
+      // Update in a transaction to avoid multiple updates
+      yRoom.doc.transact(() => {
+        // Clear any existing lines
+        yText.delete(0, yText.length);
+        // Set the lines from the database
+        yText.insert(0, s.text);
+      });
     };
 
     // If I am the only one here according to Yjs, then sync with database
