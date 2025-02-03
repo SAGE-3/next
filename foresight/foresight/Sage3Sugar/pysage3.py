@@ -497,7 +497,7 @@ class PySage3:
         if app_type is None:
             print("Please provide an app type to filter by")
         smartbits = self.get_smartbits(room_id, board_id)
-        return [v for k, v in list(smartbits) if v.data.type == app_type]
+        return [v for k, v in list(smartbits) if v.data.type == "Stickie"]
 
     # def sort_apps_by_creation_date(self, apps: list = None) -> dict:
     #     if apps is None:
