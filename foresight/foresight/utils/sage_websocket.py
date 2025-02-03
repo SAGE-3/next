@@ -33,7 +33,7 @@ class SageWebsocket:
         self.connection_error = None
         
         # Enable websocket debug logging
-        websocket.enableTrace(True)
+        websocket.enableTrace(False)
         
         ws_url = conf[prod_type]["ws_server"] + "/api"
         token = os.getenv("TOKEN")
