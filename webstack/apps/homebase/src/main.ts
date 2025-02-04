@@ -79,18 +79,18 @@ async function startServer() {
   const app = createApp(assetPath, config);
 
   // HTTP/HTTPS server
-  let server: Server;
+  // let server: Server;
 
   // Create the server
-  if (config.production) {
-    // load the HTTPS certificates in production mode
-    const credentials = loadCredentials(config);
-    // Create the server
-    server = listenSecureApp(app, credentials, config.port);
-  } else {
-    // Create and start the HTTP web server
-    server = listenApp(app, config.port);
-  }
+  // if (config.production) {
+  //   // load the HTTPS certificates in production mode
+  //   const credentials = loadCredentials(config);
+  //   // Create the server
+  //   server = listenSecureApp(app, credentials, config.port);
+  // } else {
+  // Create and start the HTTP web server
+  const server = listenApp(app, config.port);
+  // }
 
   // Log Level
   // partial: only core logs are sent to fluentd (all user logs are ignored (Presence, User))

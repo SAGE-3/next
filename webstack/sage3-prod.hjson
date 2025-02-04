@@ -6,7 +6,7 @@
   "serverName": "SAGE3 Main Server",
 
   // HTTP Settings
-  "port": 443,
+  "port": 3000,
   "tlsVersion": "TLSv1.2",
 
   // SSL Certificate file names
