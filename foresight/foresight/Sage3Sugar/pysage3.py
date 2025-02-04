@@ -98,7 +98,7 @@ class PySage3:
             return self.s3_comm.create_app(obj)
         except Exception as e:
             print(f"Error during creation of app {e}")
-            return None
+            return {"success": False, "error": str(e)}
 
     def upload_file(self, room_id, filename, filedata):
         try:
