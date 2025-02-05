@@ -79,7 +79,7 @@ class PDFAgent:
         chromaPort = 8100
         if os.getenv("ENVIRONMENT") == "production":
             chromaServer = "chromadb"
-            chromaPort = 8000
+            # chromaPort = 8000
 
         self.chroma = chromadb.HttpClient(
             # Local ChromaDB server - docker instance
