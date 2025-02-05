@@ -77,21 +77,56 @@ function AppComponent(props: App): JSX.Element {
     setFontSize(s.fontSize);
   }, [s.fontSize]);
 
+  // Have to detect if this is from python some how
+  const pythonSync = useCallback(
+    (text: string, uid: string) => {
+      if (!yApps || !user) return;
+      const provider = yApps.provider;
+      const users = provider.awareness.getStates();
+      const non_python_users = Array.from(users.values()).map((item) => item.user.uid);
+      // Check if this is an update from other users...if so ignore
+      if (non_python_users.includes(uid)) return;
+      const sortedusers = non_python_users.sort();
+      const userToUpdate = sortedusers[0];
+      // Only one connected user will update
+      if (user._id !== userToUpdate) return;
+      // Update the text
+      const yText = yApps.doc.getText(props._id);
+      // Update in a transaction to avoid multiple updates
+      yApps.doc.transact(() => {
+        // Clear any existing lines
+        yText.delete(0, yText.length);
+        // Set the lines from the database
+        yText.insert(0, text);
+      });
+    },
+    [yApps, user]
+  );
+
+  // Detect if an update happens to s.text
+  useEffect(() => {
+    if (s.text) {
+      pythonSync(s.text, props._updatedBy);
+    }
+  }, [s.text]);
+
   const connectToYjs = async (textArea: HTMLTextAreaElement, yRoom: YjsRoomConnection) => {
     const yText = yRoom.doc.getText(props._id);
     const provider = yRoom.provider;
 
-    // Ensure we are always operating on the same line endings
     new TextAreaBinding(yText, textArea);
     const users = provider.awareness.getStates();
     const count = users.size;
 
     // Sync current ydoc with that is saved in the database
     const syncStateWithDatabase = () => {
-      // Clear any existing lines
-      yText.delete(0, yText.length);
-      // Set the lines from the database
-      yText.insert(0, s.text);
+      // Update in a transaction to avoid multiple updates
+      yRoom.doc.transact(() => {
+        // Clear any existing lines
+        yText.delete(0, yText.length);
+        // Set the lines from the database
+        yText.insert(0, s.text);
+      });
     };
 
     // If I am the only one here according to Yjs, then sync with database
