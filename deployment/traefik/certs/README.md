@@ -1,4 +1,4 @@
-# Store 
+# Store
 
 certificate.crt
 private.key
