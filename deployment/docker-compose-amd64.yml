@@ -100,12 +100,12 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${YJS_PORT}"]
-      interval: 30s
-      timeout: 30s
-      retries: 3
-      start_period: 30s
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://localhost:${YJS_PORT}"]
+    #   interval: 30s
+    #   timeout: 30s
+    #   retries: 3
+    #   start_period: 30s
     logging:
       driver: "json-file"
       options:
