@@ -19,7 +19,7 @@
  */
 import * as path from 'path';
 import * as fs from 'fs';
-import { IncomingMessage, Server } from 'http';
+import { IncomingMessage } from 'http';
 import * as dns from 'node:dns';
 
 // Websocket
@@ -27,15 +27,8 @@ import { WebSocket } from 'ws';
 import { SAGEnlp, SAGEPresence, SubscriptionCache } from '@sage3/backend';
 import { setupWsforLogs } from './api/routers/custom';
 
-// YJS
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import * as Y from 'yjs';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const YUtils = require('y-websocket/bin/utils');
-
 // Create the web server with Express
 import { createApp, listenApp, serveApp } from './web';
-import { loadCredentials, listenSecureApp } from './web';
 
 // Check the token on websocket connection
 import * as jwt from 'jsonwebtoken';
@@ -145,7 +138,6 @@ async function startServer() {
 
   // Websocket setup
   const apiWebSocketServer = new WebSocket.Server({ noServer: true });
-  const yjsWebSocketServer = new WebSocket.Server({ noServer: true });
   const rtcWebSocketServer = new WebSocket.Server({ noServer: true });
   const logsServer = new WebSocket.Server({ noServer: true });
 
@@ -183,12 +175,6 @@ async function startServer() {
     socket.on('error', () => {
       console.log('apiWebSocketServer> error');
     });
-  });
-
-  // Websocket API for YJS
-  // It handles disconnects so no need to handle on close
-  yjsWebSocketServer.on('connection', (socket: WebSocket, _request: IncomingMessage, args: any) => {
-    YUtils.setupWSConnection(socket, _request, args);
   });
 
   // Websocket API for WebRTC
@@ -295,10 +281,6 @@ async function startServer() {
                 apiWebSocketServer.handleUpgrade(req, socket, head, (ws: WebSocket) => {
                   apiWebSocketServer.emit('connection', ws, req);
                 });
-              } else if (wsPath === 'yjs') {
-                yjsWebSocketServer.handleUpgrade(req, socket, head, (ws: WebSocket) => {
-                  yjsWebSocketServer.emit('connection', ws, req);
-                });
               }
             }
           }
@@ -317,10 +299,6 @@ async function startServer() {
             req.user = req.session.passport?.user;
             apiWebSocketServer.emit('connection', ws, req);
           });
-        } else if (wsPath === 'yjs') {
-          yjsWebSocketServer.handleUpgrade(req, socket, head, (ws: WebSocket) => {
-            yjsWebSocketServer.emit('connection', ws, req);
-          });
         }
       }
     });
@@ -335,7 +313,6 @@ async function startServer() {
   function exitHandler() {
     console.log('ExitHandler> disconnect sockets');
     apiWebSocketServer.close();
-    yjsWebSocketServer.close();
     rtcWebSocketServer.close();
     logsServer.close();
     process.exit(2);

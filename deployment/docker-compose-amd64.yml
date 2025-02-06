@@ -44,9 +44,7 @@ services:
       restart_policy:
         condition: on-failure
   node-server:
-    image: "ghcr.io/sage-3/next:dev_traefik"
-    # ports:
-    #   - "443:443"
+    image: "ghcr.io/sage-3/next:amd64"
     depends_on:
       - "redis-server"
       - "fluentd-server"
@@ -65,20 +63,55 @@ services:
       - ./configurations/node/assets:/app/dist/apps/homebase/assets
       - ./configurations/node/plugins:/app/dist/apps/homebase/plugins
       - ./configurations/node/sage3-prod.hjson:/app/sage3-prod.hjson
+    environment:
+      - PORT=${WEB_PORT}
     deploy:
       restart_policy:
         condition: on-failure
       replicas: ${WEB_REPLICAS}
-    # healthcheck:
-    #   test: ["CMD", "curl", "-f", "https://localhost:${WEB_PORT}"]
-    #   interval: 30s
-    #   timeout: 30s
-    #   retries: 3
-    #   start_period: 30s
+    healthcheck:
+      test: ["CMD", "curl", "-f", "https://localhost:${WEB_PORT}"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 30s
     logging:
       driver: "json-file"
       options:
         max-size: "100m"
+  yjs-server:
+    image: "ghcr.io/sage-3/next_yjs:dev_amd64"
+    depends_on:
+      - "redis-server"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.node-server.rule=Host(`${SAGE3_SERVER}`) && PathPrefix(`/yjs`)"
+      - "traefik.http.routers.node-server.entrypoints=websecure"
+      - "traefik.http.services.node-server.loadbalancer.server.port=${YJS_PORT}"
+      - "traefik.http.routers.node-server.middlewares=ws-headers"
+      - "traefik.http.middlewares.ws-headers.headers.customrequestheaders.Upgrade=websocket"
+      - "traefik.http.middlewares.ws-headers.headers.customrequestheaders.Connection=Upgrade"
+      - "traefik.http.middlewares.authheader.headers.accesscontrolallowheaders=Authorization,Content-Type"
+      - "traefik.http.routers.node-server.middlewares=authheader"
+    volumes:
+      - ./configurations/node/sage3-prod.hjson:/app/sage3-prod.hjson
+    environment:
+      - PORT=${YJS_PORT}
+    deploy:
+      restart_policy:
+        condition: on-failure
+      replicas: ${WEB_REPLICAS}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "https://localhost:${YJS_PORT}"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+
   fluentd-server:
     image: "fluent/fluentd:edge-debian"
     ports:

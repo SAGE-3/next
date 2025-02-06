@@ -1,22 +1,15 @@
 services:
   traefik:
-      image: traefik:v3.3
-      container_name: traefik
-      restart: always
-      command:
-        - "--api.insecure=false"
-        - "--providers.docker=true"
-        - "--entrypoints.websecure.address=:443"
-        - "--entrypoints.websecure.http.tls.certificates.certFile=/certs/localhost-server.crt"
-        - "--entrypoints.websecure.http.tls.certificates.keyFile=/certs/localhost-server.key"
-      ports:
-        - "443:443"
-        - "8080:8080" # Traefik dashboard
-      volumes:
-        - "/var/run/docker.sock:/var/run/docker.sock:ro"
-        - "./configurations/node/keys:/certs:ro"  # Mount the certificate directory
-      networks:
-        - web
+    image: traefik:v2
+    container_name: traefik
+    restart: always
+    ports:
+      - "80:80"  # HTTP for Let's Encrypt challenge
+      - "443:443"  # HTTPS for secure traffic
+      - "8080:8080"  # Traefik dashboard (can be removed if unnecessary)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  # Allow Traefik to access Docker API
+      - ./configurations/traefik:/etc/traefik
 
   redis-server:
     image: "redis/redis-stack-server:latest"
@@ -52,22 +45,19 @@ services:
         condition: on-failure
   node-server:
     image: "ghcr.io/sage-3/next:arm64"
-    # ports:
-    #   - "443:443"
     depends_on:
       - "redis-server"
       - "fluentd-server"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.webapp.rule=Host(`${SAGE3_SERVER}`)"
-      - "traefik.http.routers.webapp.entrypoints=websecure"
-      - "traefik.http.services.webapp.loadbalancer.server.port=${WEB_PORT}"
-      - "traefik.http.routers.webapp.middlewares=websocket-headers"
-      # Middleware to allow WebSockets
-      - "traefik.http.middlewares.websocket-headers.headers.customrequestheaders.Upgrade=websocket"
-      - "traefik.http.middlewares.websocket-headers.headers.customrequestheaders.Connection=Upgrade"
-    networks:
-      - web
+      - "traefik.http.routers.node-server.rule=Host(`${SAGE3_SERVER}`)"
+      - "traefik.http.routers.node-server.entrypoints=websecure"
+      - "traefik.http.services.node-server.loadbalancer.server.port=${WEB_PORT}"
+      - "traefik.http.routers.node-server.middlewares=ws-headers"
+      - "traefik.http.middlewares.ws-headers.headers.customrequestheaders.Upgrade=websocket"
+      - "traefik.http.middlewares.ws-headers.headers.customrequestheaders.Connection=Upgrade"
+      - "traefik.http.middlewares.authheader.headers.accesscontrolallowheaders=Authorization,Content-Type"
+      - "traefik.http.routers.node-server.middlewares=authheader"
     volumes:
       - ./configurations/node/keys:/app/keys
       - ./configurations/node/assets:/app/dist/apps/homebase/assets
@@ -78,7 +68,7 @@ services:
         condition: on-failure
       replicas: ${WEB_REPLICAS}
     healthcheck:
-      test: ["CMD", "curl", "-f", "https://${SAGE3_SERVER}"]
+      test: ["CMD", "curl", "-f", "https://localhost:${WEB_PORT}"]
       interval: 30s
       timeout: 30s
       retries: 3
