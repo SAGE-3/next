@@ -1,0 +1,30 @@
+api:
+  dashboard: true
+  insecure: true
+
+log:
+  level: DEBUG
+
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+    http:
+      tls: {}
+
+providers:
+  docker: {}
+  file:
+    filename: "/etc/traefik/dynamic.yml"
+    watch: true
+
+
+tls:
+  stores:
+    default:
+      defaultCertificate:
+        certFile: "/etc/traefik/certs/pele.manoa.hawaii.edu.crt"
+        keyFile: "/etc/traefik/certs/pele.manoa.hawaii.edu.key"
+
+
