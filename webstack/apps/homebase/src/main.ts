@@ -82,7 +82,8 @@ async function startServer() {
   //   server = listenSecureApp(app, credentials, config.port);
   // } else {
   // Create and start the HTTP web server
-  const server = listenApp(app, config.port);
+  const port = config.production ? 3000 : config.port;
+  const server = listenApp(app, port);
   // }
 
   // Log Level

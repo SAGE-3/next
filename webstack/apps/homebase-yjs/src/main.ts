@@ -45,9 +45,9 @@ async function startServer() {
   const server = createServer(app);
 
   // Start listening
-  const wsPort = config.port + 1;
-  server.listen(wsPort, () => {
-    console.log(`SAGE3 YJS Server> Listening on port ${wsPort}`);
+  const port = config.production ? 3001 : config.port + 1;
+  server.listen(port, () => {
+    console.log(`SAGE3 YJS Server> Listening on port ${port}`);
   });
 
   // Create WebSocket Server
