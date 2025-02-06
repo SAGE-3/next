@@ -5,7 +5,7 @@
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
-import { useRef, useCallback, useState, useEffect } from 'react';
+import { useRef, useCallback, useState, useEffect, memo } from 'react';
 import { useParams } from 'react-router';
 import {
   ButtonGroup,
@@ -52,147 +52,155 @@ export const useStore = create<SockStore>()((set) => ({
 
 /* App component for WebpageLink */
 
-function AppComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
-  // UI Stuff
-  const dividerColor = useColorModeValue('gray.300', 'gray.600');
-  const backgroundColor = useColorModeValue('red.400', 'red.400');
-  // App store
-  const update = useAppStore((state) => state.update);
+const AppComponent = memo(
+  (props: App) => {
+    const s = props.data.state as AppState;
+    // UI Stuff
+    const dividerColor = useColorModeValue('gray.300', 'gray.600');
+    const backgroundColor = useColorModeValue('red.400', 'red.400');
+    // App store
+    const update = useAppStore((state) => state.update);
 
-  const linearBGColor = useColorModeValue(
-    `linear-gradient(178deg, #ffffff, #fbfbfb, #f3f3f3)`,
-    `linear-gradient(178deg, #303030, #252525, #262626)`
-  );
+    const linearBGColor = useColorModeValue(
+      `linear-gradient(178deg, #ffffff, #fbfbfb, #f3f3f3)`,
+      `linear-gradient(178deg, #303030, #252525, #262626)`
+    );
 
-  const [streaming, setStreaming] = useState(s.streaming);
-  const [connected, setConnected] = useState(false);
-  // Websocket to communicate with the server
-  const rtcSock = useRef<WebSocket>();
-  const setSocket = useStore((state) => state.setSocket);
+    const [streaming, setStreaming] = useState(s.streaming);
+    const [connected, setConnected] = useState(false);
+    // Websocket to communicate with the server
+    const rtcSock = useRef<WebSocket>();
+    const setSocket = useStore((state) => state.setSocket);
 
-  const url = s.url;
-  const title = s.meta.title ? s.meta.title : url;
-  const description = s.meta.description ? s.meta.description : 'No Description';
-  const imageUrl = s.meta.image;
+    const url = s.url;
+    const title = s.meta.title ? s.meta.title : url;
+    const description = s.meta.description ? s.meta.description : 'No Description';
+    const imageUrl = s.meta.image;
 
-  const aspect = 1200 / 630;
-  const imageHeight = 250;
-  const imageWidth = imageHeight * aspect;
+    const aspect = 1200 / 630;
+    const imageHeight = 250;
+    const imageWidth = imageHeight * aspect;
 
-  // Update the titlebar of the app
-  useEffect(() => {
-    if (s.meta && s.meta.title) {
-      update(props._id, { title: s.meta.title });
+    // Update the titlebar of the app
+    useEffect(() => {
+      console.log(s.meta);
+      if (s.meta && s.meta.title) {
+        update(props._id, { title: s.meta.title });
+      }
+    }, [s.meta]);
+
+    useEffect(() => {
+      setStreaming(s.streaming);
+    }, [s.streaming]);
+
+    function handleStop() {
+      if (rtcSock.current && rtcSock.current.readyState === WebSocket.OPEN) {
+        rtcSock.current.close();
+        setConnected(false);
+      }
     }
-  }, [s.meta]);
 
-  useEffect(() => {
-    setStreaming(s.streaming);
-  }, [s.streaming]);
-
-  function handleStop() {
-    if (rtcSock.current && rtcSock.current.readyState === WebSocket.OPEN) {
-      rtcSock.current.close();
-      setConnected(false);
-    }
-  }
-
-  useEffect(() => {
-    if (streaming) {
-      // Open websocket connection to the server
-      const socketType = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const socketUrl = `${socketType}//${window.location.host}/rtc/`;
-      // Connection to the server
-      rtcSock.current = new WebSocket(socketUrl);
-      rtcSock.current.addEventListener('open', () => {
-        setConnected(true);
-        if (rtcSock.current) {
-          const processRTCMessage = (ev: MessageEvent<any>) => {
-            const msg = JSON.parse(ev.data);
-            if (msg.type === 'data' && msg.params.room === props._id) {
-              const imgid = 'image' + props._id;
-              const img = document.getElementById(imgid) as HTMLImageElement;
-              if (img) {
-                img.src = 'data:image/jpeg;charset=utf-8;base64,' + msg.params.pixels;
+    useEffect(() => {
+      if (streaming) {
+        // Open websocket connection to the server
+        const socketType = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const socketUrl = `${socketType}//${window.location.host}/rtc/`;
+        // Connection to the server
+        rtcSock.current = new WebSocket(socketUrl);
+        rtcSock.current.addEventListener('open', () => {
+          setConnected(true);
+          if (rtcSock.current) {
+            const processRTCMessage = (ev: MessageEvent<any>) => {
+              const msg = JSON.parse(ev.data);
+              if (msg.type === 'data' && msg.params.room === props._id) {
+                const imgid = 'image' + props._id;
+                const img = document.getElementById(imgid) as HTMLImageElement;
+                if (img) {
+                  img.src = 'data:image/jpeg;charset=utf-8;base64,' + msg.params.pixels;
+                }
               }
-            }
-          };
+            };
 
-          rtcSock.current.addEventListener('message', processRTCMessage);
-          rtcSock.current.addEventListener('close', () => {
-            if (rtcSock.current) rtcSock.current.removeEventListener('message', processRTCMessage);
-          });
+            rtcSock.current.addEventListener('message', processRTCMessage);
+            rtcSock.current.addEventListener('close', () => {
+              if (rtcSock.current) rtcSock.current.removeEventListener('message', processRTCMessage);
+            });
 
-          // waitForOpenSocket(rtcSock.current).then(() => {
-          // if (rtcSock.current) {
-          setSocket(props._id, rtcSock.current);
-          rtcSock.current.send(JSON.stringify({ type: 'join', params: { room: props._id } }));
-          // }
-          // });
-        }
-      });
-    }
-    return () => {
-      if (streaming) handleStop();
-    };
-  }, [streaming]);
+            // waitForOpenSocket(rtcSock.current).then(() => {
+            // if (rtcSock.current) {
+            setSocket(props._id, rtcSock.current);
+            rtcSock.current.send(JSON.stringify({ type: 'join', params: { room: props._id } }));
+            // }
+            // });
+          }
+        });
+      }
+      return () => {
+        if (streaming) handleStop();
+      };
+    }, [streaming]);
 
-  return (
-    <AppWindow app={props} disableResize={!streaming} hideBackgroundIcon={MdLink}>
-      {!streaming ? (
-        <Tooltip label={url} placement="top" openDelay={1000}>
-          <Box width="100%" height="100%" display="flex" flexDir="column" justifyContent={'center'} alignItems={'center'}>
-            {/* Preview Image */}
-            <Box
-              width={imageWidth}
-              height={imageHeight}
-              backgroundSize="contain"
-              backgroundColor={backgroundColor}
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-              textAlign={'center'}
-              flexDir={'column'}
-              color="white"
-            >
-              {imageUrl ? <Image src={imageUrl} /> : <MdWeb size={256} />}
-            </Box>
+    return (
+      <AppWindow app={props} disableResize={!streaming} hideBackgroundIcon={MdLink}>
+        {!streaming ? (
+          <Tooltip label={url} placement="top" openDelay={1000}>
+            <Box width="100%" height="100%" display="flex" flexDir="column" justifyContent={'center'} alignItems={'center'}>
+              {/* Preview Image */}
+              <Box
+                width={imageWidth}
+                height={imageHeight}
+                backgroundSize="contain"
+                backgroundColor={backgroundColor}
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                textAlign={'center'}
+                flexDir={'column'}
+                color="white"
+              >
+                {imageUrl ? <Image src={imageUrl} /> : <MdWeb size={256} />}
+              </Box>
 
-            {/* Info Sections */}
-            <Box
-              display="flex"
-              flexDir={'column'}
-              justifyContent={'space-between'}
-              height={400 - imageHeight}
-              width="100%"
-              p="3"
-              pt="1"
-              borderTop="solid 4px"
-              borderColor={dividerColor}
-              background={linearBGColor}
-            >
-              <Box display="flex" flexDir={'column'} height="150px" overflow={'hidden'} textOverflow="ellipsis">
-                <Box>
-                  <Heading size="lg" textOverflow="ellipsis" overflow="hidden">
-                    {title}
-                  </Heading>
-                </Box>
-                <Box>
-                  <Text overflow="hidden" textOverflow={'ellipsis'}>
-                    {description}
-                  </Text>
+              {/* Info Sections */}
+              <Box
+                display="flex"
+                flexDir={'column'}
+                justifyContent={'space-between'}
+                height={400 - imageHeight}
+                width="100%"
+                p="3"
+                pt="1"
+                borderTop="solid 4px"
+                borderColor={dividerColor}
+                background={linearBGColor}
+              >
+                <Box display="flex" flexDir={'column'} height="150px" overflow={'hidden'} textOverflow="ellipsis">
+                  <Box>
+                    <Heading size="lg" textOverflow="ellipsis" overflow="hidden">
+                      {title}
+                    </Heading>
+                  </Box>
+                  <Box>
+                    <Text overflow="hidden" textOverflow={'ellipsis'}>
+                      {description}
+                    </Text>
+                  </Box>
                 </Box>
               </Box>
             </Box>
-          </Box>
-        </Tooltip>
-      ) : (
-        <Image id={'image' + props._id} w={'100%'} h={'auto'} alt={'webview streaming'} background={'white'} />
-      )}
-    </AppWindow>
-  );
-}
+          </Tooltip>
+        ) : (
+          <Image id={'image' + props._id} w={'100%'} h={'auto'} alt={'webview streaming'} background={'white'} />
+        )}
+      </AppWindow>
+    );
+  },
+  (prevProps, nextProps) => {
+    const { _updatedAt: prev, ...prevRest } = prevProps;
+    const { _updatedAt: next, ...nextRest } = nextProps;
+    return JSON.stringify(prevRest) === JSON.stringify(nextRest);
+  }
+);
 
 /* App toolbar component for the app BoardLink */
 
