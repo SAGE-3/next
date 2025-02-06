@@ -12,7 +12,7 @@
   "description": "Directory containing an NX setup, for the 'homebase' web server and the React web applications such as 'CollaborationSpace' (the main collaboration canvas) but might contain also other web apps during development (admin, monitoring, login, ...). Could also contain other API services if needed.",
   "scripts": {
     "nx": "nx",
-    "start": "nx serve --inspect=false",
+    "start": "npm-run-all --parallel homebase homebase-yjs",
     "build": "nx build",
     "buildall": "nx run-many --target=build --configuration=development --parallel=4 --verbose",
     "buildallprod": "nx run-many --target=build --configuration=production --parallel=4 --verbose",
@@ -209,6 +209,7 @@
     "ignore-loader": "^0.1.2",
     "jsonc-eslint-parser": "^2.3.0",
     "node-loader": "^1.0.2",
+    "npm-run-all": "^4.1.5",
     "nx": "14.8.8",
     "prettier": "2.8.8",
     "react-refresh": "^0.14.0",
