@@ -80,7 +80,7 @@ services:
       options:
         max-size: "100m"
   yjs-server:
-    image: "ghcr.io/sage-3/next_yjs:dev_amd64"
+    image: "ghcr.io/sage-3/next_yjs:amd64"
     depends_on:
       - "redis-server"
     labels:
