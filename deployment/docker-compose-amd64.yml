@@ -100,7 +100,6 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
-      replicas: ${WEB_REPLICAS}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:${YJS_PORT}"]
       interval: 30s
