@@ -4,7 +4,7 @@ FROM node:20-bookworm-slim
 WORKDIR /app
 
 # Debian package
-RUN apt-get update && apt-get install -y curl exiftool build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev libheif1 libheif-dev && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 # Project files
 COPY webstack/package.json package.json
@@ -21,6 +21,6 @@ COPY webstack/libs libs
 # Increase RAM for node to build the app
 ENV NODE_OPTIONS=--max-old-space-size=8192
 # Build the app
-RUN yarn install && yarn prod && yarn cache clean
+RUN yarn install && yarn prod-yjs && yarn cache clean
 
 CMD ["node", "dist/apps/homebase-yjs/main.js"]

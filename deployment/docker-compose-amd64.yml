@@ -70,7 +70,7 @@ services:
         condition: on-failure
       replicas: ${WEB_REPLICAS}
     healthcheck:
-      test: ["CMD", "curl", "-f", "https://localhost:${WEB_PORT}"]
+      test: ["CMD", "curl", "-f", "http://localhost:${WEB_PORT}"]
       interval: 30s
       timeout: 30s
       retries: 3
@@ -102,7 +102,7 @@ services:
         condition: on-failure
       replicas: ${WEB_REPLICAS}
     healthcheck:
-      test: ["CMD", "curl", "-f", "https://localhost:${YJS_PORT}"]
+      test: ["CMD", "curl", "-f", "http://localhost:${YJS_PORT}"]
       interval: 30s
       timeout: 30s
       retries: 3
