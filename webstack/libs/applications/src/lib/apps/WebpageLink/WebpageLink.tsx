@@ -52,7 +52,7 @@ export const useStore = create<SockStore>()((set) => ({
 
 /* App component for WebpageLink */
 
-const AppComponent = (props: App) => {
+function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   // UI Stuff
   const dividerColor = useColorModeValue('gray.300', 'gray.600');
@@ -192,7 +192,7 @@ const AppComponent = (props: App) => {
       )}
     </AppWindow>
   );
-};
+}
 
 /* App toolbar component for the app BoardLink */
 
