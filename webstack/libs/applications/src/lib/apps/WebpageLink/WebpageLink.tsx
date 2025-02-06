@@ -82,10 +82,10 @@ function AppComponent(props: App): JSX.Element {
 
   // Update the titlebar of the app
   useEffect(() => {
-    if (s.meta && s.meta.title) {
+    if (s.meta.title) {
       update(props._id, { title: s.meta.title });
     }
-  }, [s.meta]);
+  }, [s.meta?.title]);
 
   useEffect(() => {
     setStreaming(s.streaming);
