@@ -83,7 +83,6 @@ const AppComponent = memo(
 
     // Update the titlebar of the app
     useEffect(() => {
-      console.log(s.meta);
       if (s.meta && s.meta.title) {
         update(props._id, { title: s.meta.title });
       }
