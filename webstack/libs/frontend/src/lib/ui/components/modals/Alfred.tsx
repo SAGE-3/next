@@ -575,7 +575,7 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
             </InputLeftAddon>
             <Input
               ref={initialRef}
-              placeholder="Asset, Command, or ask SAGE Intellingence"
+              placeholder="Asset, Command, or ask SAGE Intelligence"
               _placeholder={{ opacity: 1, color: 'gray.600' }}
               p={2}
               m={'8px 0px 8px 0px'}
