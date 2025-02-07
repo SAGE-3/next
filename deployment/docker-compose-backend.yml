@@ -10,7 +10,7 @@ services:
     entrypoint: redis-server
     command: /conf/redis.conf
 
-yjs-server:
+  yjs-server:
     image: "ghcr.io/sage-3/next_yjs:arm64"
     depends_on:
       - "redis-server"
@@ -25,10 +25,6 @@ yjs-server:
       timeout: 30s
       retries: 3
       start_period: 30s
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "100m"
 
   chromadb:
     image: "chromadb/chroma:0.5.16"
