@@ -30,7 +30,7 @@ import {
   YjsProvider,
   APIHttp,
 } from '@sage3/frontend';
-import { Board, BoardSchema, OpenConfiguration } from '@sage3/shared/types';
+import { Board, OpenConfiguration } from '@sage3/shared/types';
 // Pages
 import { LoginPage, HomePage, BoardPage, AccountPage, AdminPage, OpenDesktopPage } from './pages';
 import e from 'express';
@@ -104,7 +104,6 @@ export function App() {
                   <Route path="/" element={<LoginPage />} />
                   <Route path="/login" element={<LoginPage />} />
 
-                  {/* <Route path="/enter/:roomId/:boardId" element={<CheckUrlForBoardId />} /> */}
                   <Route path="/enter/:roomId/:boardId" element={<OpenDesktopPage />} />
 
                   <Route
