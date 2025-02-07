@@ -49,6 +49,10 @@ import { SBAuthDB, JWTPayload } from '@sage3/sagebase';
 import { SAGETwilio } from '@sage3/backend';
 import * as express from 'express';
 
+// ENV Import
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 // Port of the server.
 // 3333 is the default dev environment port.
 // Can be changed by setting the PORT environment variable or passing arg PORT
