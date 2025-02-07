@@ -49,15 +49,6 @@ import { SBAuthDB, JWTPayload } from '@sage3/sagebase';
 import { SAGETwilio } from '@sage3/backend';
 import * as express from 'express';
 
-// ENV Import
-import * as dotenv from 'dotenv';
-dotenv.config();
-
-// Port of the server.
-// 3333 is the default dev environment port.
-// Can be changed by setting the PORT environment variable or passing arg PORT
-const PORT = process.env.PORT || 3333;
-
 // Exception handling
 process.on('unhandledRejection', (reason: Error) => {
   console.error('Server> Error', reason);
@@ -79,6 +70,9 @@ async function startServer() {
   // Create the Express object
   const assetPath = path.join(config.root, config.assets);
   const app = createApp(assetPath, config);
+
+  // Port to serve app
+  const PORT = config.port;
 
   // Create the server
   const server = listenApp(app, PORT);

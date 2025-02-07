@@ -2,6 +2,10 @@
   // We are in production mode
   "production": true,
 
+  // Port to run the server on
+  "port": 3000,
+  "port_yjs": 3001,
+
   // Name of the server to show in the UI
   "serverName": "SAGE3 Main Server",
 

@@ -49,7 +49,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.node-server.rule=Host(`${SAGE3_SERVER}`)"
       - "traefik.http.routers.node-server.entrypoints=websecure"
-      - "traefik.http.services.node-server.loadbalancer.server.port=${NODE_SERVER_PORT}"
+      - "traefik.http.services.node-server.loadbalancer.server.port=3000"
       - "traefik.http.routers.node-server.middlewares=ws-headers"
       - "traefik.http.middlewares.ws-headers.headers.customrequestheaders.Upgrade=websocket"
       - "traefik.http.middlewares.ws-headers.headers.customrequestheaders.Connection=Upgrade"
@@ -64,10 +64,8 @@ services:
       restart_policy:
         condition: on-failure
       replicas: ${WEB_REPLICAS}
-    environment:
-      - PORT=${NODE_SERVER_PORT}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${NODE_SERVER_PORT}"]
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
       interval: 30s
       timeout: 30s
       retries: 3
@@ -84,7 +82,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.yjs-server.rule=Host(`${SAGE3_SERVER}`) && PathPrefix(`/yjs`)"
       - "traefik.http.routers.yjs-server.entrypoints=websecure"
-      - "traefik.http.services.yjs-server.loadbalancer.server.port=${NODE_YJS_PORT}"
+      - "traefik.http.services.yjs-server.loadbalancer.server.port=3001"
       - "traefik.http.routers.yjs-server.middlewares=ws-headers"
       - "traefik.http.middlewares.ws-headers.headers.customrequestheaders.Upgrade=websocket"
       - "traefik.http.middlewares.ws-headers.headers.customrequestheaders.Connection=Upgrade"
@@ -95,10 +93,8 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
-    environment:
-      - PORT=${NODE_YJS_PORT}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${NODE_YJS_PORT}"]
+      test: ["CMD", "curl", "-f", "http://localhost:3001"]
       interval: 30s
       timeout: 30s
       retries: 3

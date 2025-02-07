@@ -2,6 +2,10 @@
   // We are not in production mode
   "production": false,
 
+  // Port to run the server on
+  "port": 3333,
+  "port-yjs": 3334,
+
   // Name of the server to show in the UI
   "serverName": "Localhost",
 
