@@ -75,6 +75,19 @@ export type ImageAnswer = {
   actions?: any[];
 };
 
+// Image request
+export type MesonetRequest = {
+  ctx: { previousQ: string; previousA: string; pos: number[]; roomId: string; boardId: string };
+  user: string;
+  q: string;
+  url: string;
+};
+export type MesonetResponse = {
+  r: string;
+  success: boolean;
+  actions?: any[];
+};
+
 // PDF request
 export type PDFQuery = {
   ctx: { previousQ: string; previousA: string; pos: number[]; roomId: string; boardId: string };
@@ -115,4 +128,5 @@ export const AgentRoutes = {
   image: '/image',
   pdf: '/pdf',
   code: '/code',
+  mesonet: '/mesonet',
 } as const;

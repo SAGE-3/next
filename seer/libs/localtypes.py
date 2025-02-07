@@ -9,7 +9,7 @@
 # Models
 from typing import List, NamedTuple, Optional
 from pydantic import BaseModel, Json
-
+import io
 # Pydantic models: Question, Answer, Context
 
 
@@ -61,6 +61,35 @@ class ImageQuery(BaseModel):
     model: str  # AI model: llama, openai
     q: str  # question
 
+
+class MesonetQuery(BaseModel):
+    ctx: Context  # context
+    user: str  # user name
+    q: str  # question
+    url: str
+
+
+class MesonetAnswer(BaseModel):
+    img: str  # Store the buffer as a Base64-encoded string
+    content: str
+    success: bool = True  # success flag
+    actions: List[Json]  # actions to be performed
+
+    @staticmethod
+    def buffer_to_base64(buffer: io.BytesIO) -> str:
+        buffer.seek(0)  # Ensure the cursor is at the start
+        return base64.b64encode(buffer.read()).decode('utf-8')
+
+    @staticmethod
+    def base64_to_buffer(data: str) -> io.BytesIO:
+        return io.BytesIO(base64.b64decode(data))
+
+    @classmethod
+    def from_buffer(cls, buffer: io.BytesIO, **kwargs):
+        return cls(img=cls.buffer_to_base64(buffer), **kwargs)
+
+    def to_buffer(self) -> io.BytesIO:
+        return self.base64_to_buffer(self.img)
 
 class ImageAnswer(BaseModel):
     r: str  # answer

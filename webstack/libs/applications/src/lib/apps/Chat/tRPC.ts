@@ -24,6 +24,8 @@ import {
   PDFAnswer,
   WebScreenshot,
   WebScreenshotAnswer,
+  MesonetRequest,
+  MesonetResponse,
 } from '@sage3/shared';
 
 /**
@@ -92,4 +94,8 @@ export const callPDF = async (data: PDFQuery) => {
 };
 export const callCode = async (data: AskRequest) => {
   return makeRpcPost(AgentRoutes.code, data) as Promise<AskResponse | SError>;
+};
+
+export const callMesonet = async (data: MesonetRequest) => {
+  return makeRpcPost(AgentRoutes.mesonet, data) as Promise<MesonetResponse | SError>;
 };

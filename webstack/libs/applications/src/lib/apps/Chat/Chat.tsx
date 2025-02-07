@@ -57,7 +57,7 @@ import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
 
-import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot } from './tRPC';
+import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot, callMesonet } from './tRPC';
 
 const OrderedList: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => (
   <ol style={{ paddingLeft: '24px' }} {...props}>
@@ -71,7 +71,7 @@ const UnorderedList: React.FC<{ children: React.ReactNode }> = ({ children, ...p
   </ul>
 );
 
-type OperationMode = 'chat' | 'text' | 'image' | 'web' | 'pdf' | 'code';
+type OperationMode = 'chat' | 'text' | 'image' | 'web' | 'pdf' | 'code' | 'Hawaii Mesonet';
 
 // AI model information from the backend
 interface modelInfo {
@@ -163,11 +163,13 @@ function AppComponent(props: App): JSX.Element {
     } else if (mode === 'web') {
       // Code
       onContentWeb(text);
+    } else if (mode === 'Hawaii Mesonet') {
+      // Code
+      onContentMesonet(text);
     } else {
       await newMessage(text);
     }
   };
-
   const onSubmit = (e: React.KeyboardEvent) => {
     // Keyboard instead of pressing the button
     if (e.key === 'Enter') {
@@ -241,6 +243,8 @@ function AppComponent(props: App): JSX.Element {
         setMode('code');
       } else if (apps && apps[0] && apps[0].data.type === 'Webview') {
         setMode('web');
+      } else if (apps && apps[0] && apps[0].data.type === 'Hawaii Mesonet') {
+        setMode('Hawaii Mesonet');
       } else {
         setMode('text');
       }
@@ -500,6 +504,105 @@ function AppComponent(props: App): JSX.Element {
       }
     }
   };
+
+  const onMesonetSummary = async () => {
+    return onContentMesonet('Summarize the key weather patterns from the Mesonet dataset.');
+  };
+  const onMesonetTrends = async () => {
+    return onContentMesonet('Identify key trends in the Mesonet weather data.');
+  };
+  const onMesonetComparison = async () => {
+    return onContentMesonet('Compare weather conditions between different Mesonet stations.');
+  };
+  const onMesonetForecast = async () => {
+    return onContentMesonet('Provide insights based on past data to predict future weather trends.');
+  };
+  const onMesonetExtremes = async () => {
+    return onContentMesonet('Find the extreme values (highest and lowest) recorded in the dataset.');
+  };
+
+  const onContentMesonet = async (prompt: string) => {
+    if (!user) return;
+    if (s.sources.length > 0) {
+      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+      if (apps && apps[0].data.type === 'Hawaii Mesonet') {
+        const url = apps[0].data.state.url;
+        if (roomId && boardId) {
+          const now = await serverTime();
+          const initialAnswer = {
+            id: genId(),
+            userId: user._id,
+            creationId: '',
+            creationDate: now.epoch,
+            userName: 'SAGE',
+            query: prompt,
+            response: 'Working on it...',
+          };
+          updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
+          console.log('I AM GETTING CALLED FROM ONCONTENT MESONET');
+          const q = {
+            ctx: {
+              previousQ: previousQuestion,
+              previousA: previousAnswer,
+              pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+              roomId,
+              boardId,
+            },
+            q: prompt,
+            url: url,
+            user: username,
+          };
+          setProcessing(true);
+          setActions([]);
+          const response = await callMesonet(q);
+          setProcessing(false);
+
+          if ('message' in response) {
+            toast({
+              title: 'Error',
+              description: response.message || 'Error sending query to the agent. Please try again.',
+              status: 'error',
+              duration: 4000,
+              isClosable: true,
+            });
+          } else {
+            setStreamText('');
+            ctrlRef.current = null;
+            setPreviousAnswer(response.r);
+            updateState(props._id, {
+              ...s,
+              previousQ: 'Describe the content',
+              previousA: response.r,
+              messages: [
+                ...s.messages,
+                initialAnswer,
+                {
+                  id: genId(),
+                  userId: user._id,
+                  creationId: '',
+                  creationDate: now.epoch + 1,
+                  userName: 'SAGE',
+                  query: '',
+                  response: response.r,
+                },
+              ],
+            });
+            if (response.actions) {
+              setActions(response.actions);
+            }
+          }
+        }
+      }
+    }
+  };
+
+  const mesonetPrompts = [
+    { title: 'Summarize Mesonet Data', action: onMesonetSummary, prompt: 'Summarize key weather patterns from the Mesonet dataset.' },
+    { title: 'Find Trends', action: onMesonetTrends, prompt: 'Identify key trends in the Mesonet weather data.' },
+    { title: 'Compare Locations', action: onMesonetComparison, prompt: 'Compare weather conditions between different Mesonet stations.' },
+    { title: 'Generate Forecast Insights', action: onMesonetForecast, prompt: 'Provide insights based on past data to predict trends.' },
+    { title: 'Find Extremes', action: onMesonetExtremes, prompt: 'Find the extreme values (highest and lowest) recorded in the dataset.' },
+  ];
 
   const onContentPDF = async (prompt: string) => {
     if (!user) return;
@@ -875,6 +978,8 @@ function AppComponent(props: App): JSX.Element {
   };
 
   const onProsCons = async () => {
+    const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+    console.log(apps);
     if (s.context) {
       // ProsCons prompt
       const ctx = `@S, Please carefully read the following document text:
@@ -1478,6 +1583,32 @@ function AppComponent(props: App): JSX.Element {
         </HStack>
 
         {mode !== 'chat' && <hr />}
+
+        {mode === 'Hawaii Mesonet' && (
+          <HStack>
+            {mesonetPrompts.map((p, i) => (
+              <Tooltip key={'tip' + i} fontSize={'xs'} placement="top" hasArrow={true} label={p.prompt} openDelay={400}>
+                <Button
+                  key={'button' + i}
+                  aria-label="stop"
+                  size={'xs'}
+                  p={0}
+                  m={0}
+                  colorScheme={'blue'}
+                  variant="ghost"
+                  textAlign={'left'}
+                  onClick={() => p.action()}
+                  width="34%"
+                >
+                  <HiCommandLine fontSize={'24px'} />
+                  <Text key={'text' + i} ml={'2'}>
+                    {p.title}
+                  </Text>
+                </Button>
+              </Tooltip>
+            ))}
+          </HStack>
+        )}
 
         {/* AI Prompts */}
         {mode === 'text' && (

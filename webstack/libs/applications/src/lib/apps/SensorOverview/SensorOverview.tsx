@@ -219,7 +219,7 @@ function AppComponent(props: App): JSX.Element {
 
     updateState(props._id, { availableVariableNames: availableVariableNames });
     setStationMetadata(tmpStationMetadata);
-
+    updateState(props._id, { url: url });
     setIsLoaded(true);
   };
 
