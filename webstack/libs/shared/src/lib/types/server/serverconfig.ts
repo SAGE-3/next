@@ -22,10 +22,6 @@ export interface ServerConfiguration {
   // version from the package.json file
   version: string;
 
-  // HTTP settings
-  port: number;
-  tlsVersion: string;
-
   // Folders
   root: string;
   public: string;
@@ -75,19 +71,13 @@ export interface ServerConfiguration {
 
   // ID management API keys
   auth: AuthConfiguration;
-  // SSL/HTTPS certificates
-  ssl: {
-    certificateFile: string;
-    certificateKeyFile: string;
-    certificateChainFile: string;
-  };
 
   // Namespace for signing uuid v5 keys
   namespace: string;
 }
 
 // Public to everyone response from server to the configuration request, for security reasons
-export type PublicInformation = Pick<ServerConfiguration, 'serverName' | 'port' | 'version' | 'production'> & {
+export type PublicInformation = Pick<ServerConfiguration, 'serverName' | 'version' | 'production'> & {
   isSage3: boolean;
   logins: ServerConfiguration['auth']['strategies'];
   onlineUsers: number;
@@ -96,7 +86,7 @@ export type PublicInformation = Pick<ServerConfiguration, 'serverName' | 'port' 
 // Public to authenticated users from server to the configuration request, for security reasons
 export type OpenConfiguration = Pick<
   ServerConfiguration,
-  'serverName' | 'port' | 'version' | 'production' | 'namespace' | 'features' | 'feedback'
+  'serverName' | 'version' | 'production' | 'namespace' | 'features' | 'feedback'
 > & {
   token: string;
   admins: ServerConfiguration['auth']['admins'];

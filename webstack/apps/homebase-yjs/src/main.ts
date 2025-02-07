@@ -21,6 +21,9 @@ import { ServerConfiguration } from '@sage3/shared/types';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const YUtils = require('y-websocket/bin/utils');
 
+// Port of the server. 3334 is the default dev environment port. Can be changed by setting the PORT environment variable or passing arg.
+const PORT = process.env.PORT || 3334;
+
 /**
  * The SAGE3 YJS Main entry point
  */
@@ -55,9 +58,8 @@ async function startServer() {
   const server = createServer(app);
 
   // Start listening
-  const port = config.production ? 3001 : config.port + 1;
-  server.listen(port, () => {
-    console.log(`SAGE3 YJS Server> Listening on port ${port}`);
+  server.listen(PORT, () => {
+    console.log(`SAGE3 YJS Server> Listening on port ${PORT}`);
   });
 
   // Create WebSocket Server

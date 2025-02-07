@@ -49,6 +49,11 @@ import { SBAuthDB, JWTPayload } from '@sage3/sagebase';
 import { SAGETwilio } from '@sage3/backend';
 import * as express from 'express';
 
+// Port of the server.
+// 3333 is the default dev environment port.
+// Can be changed by setting the PORT environment variable or passing arg PORT
+const PORT = process.env.PORT || 3333;
+
 // Exception handling
 process.on('unhandledRejection', (reason: Error) => {
   console.error('Server> Error', reason);
@@ -71,20 +76,8 @@ async function startServer() {
   const assetPath = path.join(config.root, config.assets);
   const app = createApp(assetPath, config);
 
-  // HTTP/HTTPS server
-  // let server: Server;
-
   // Create the server
-  // if (config.production) {
-  //   // load the HTTPS certificates in production mode
-  //   const credentials = loadCredentials(config);
-  //   // Create the server
-  //   server = listenSecureApp(app, credentials, config.port);
-  // } else {
-  // Create and start the HTTP web server
-  const port = config.production ? 3000 : config.port;
-  const server = listenApp(app, port);
-  // }
+  const server = listenApp(app, PORT);
 
   // Log Level
   // partial: only core logs are sent to fluentd (all user logs are ignored (Presence, User))

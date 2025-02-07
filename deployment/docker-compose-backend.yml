@@ -14,13 +14,17 @@ services:
     image: "ghcr.io/sage-3/next_yjs:arm64"
     depends_on:
       - "redis-server"
+    port:
+      - "127.0.0.1:3334:3334"
     volumes:
       - ./configurations/node/sage3-prod.hjson:/app/sage3-prod.hjson
     deploy:
       restart_policy:
         condition: on-failure
+    environment:
+      - PORT=3334
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3001"]
+      test: ["CMD", "curl", "-f", "http://localhost:3334"]
       interval: 30s
       timeout: 30s
       retries: 3
