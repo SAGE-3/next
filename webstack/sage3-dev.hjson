@@ -4,7 +4,7 @@
 
   // Port to run the server on
   "port": 3333,
-  "port-yjs": 3334,
+  "port_yjs": 3334,
 
   // Name of the server to show in the UI
   "serverName": "Localhost",
