@@ -21,7 +21,9 @@ import { ServerConfiguration } from '@sage3/shared/types';
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const YUtils = require('y-websocket/bin/utils');
 
-// Port of the server. 3334 is the default dev environment port. Can be changed by setting the PORT environment variable or passing arg.
+// Port of the server.
+// 3334 is the default dev environment port.
+// Can be changed by setting the PORT environment variable or passing arg.
 const PORT = process.env.PORT || 3334;
 
 /**

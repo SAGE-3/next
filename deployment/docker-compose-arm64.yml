@@ -8,7 +8,6 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock  # Allow Traefik to access Docker API
       - ./configurations/traefik:/etc/traefik
-
   redis-server:
     image: "redis/redis-stack-server:latest"
     volumes:
