@@ -1,10 +1,11 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2025. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
+
 // Node Imports
 import { IncomingMessage, createServer } from 'http';
 import { WebSocket, WebSocketServer } from 'ws';
@@ -40,6 +41,15 @@ async function startServer() {
     },
   };
   await SAGEBase.init(sbConfig, app);
+
+  // Health check route
+  app.get('/', (req, res) => {
+    // Optionally, you can add checks for Redis or other services here
+    // Example: Check if Redis is accessible, or check some service health
+
+    // Respond with status 200 if everything is okay
+    res.status(200).json({ status: 'healthy' });
+  });
 
   // Create HTTP server
   const server = createServer(app);
