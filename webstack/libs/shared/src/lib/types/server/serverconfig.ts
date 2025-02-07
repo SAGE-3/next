@@ -17,8 +17,8 @@ export interface ServerConfiguration {
   production: boolean;
 
   // Port to run the server on
-  port: 3333;
-  port_yjs: 3334;
+  port: number;
+  port_yjs: number;
 
   // Pretty name of the server to show in the UI
   serverName?: string;
