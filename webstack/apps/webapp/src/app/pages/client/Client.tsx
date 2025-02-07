@@ -46,7 +46,17 @@ export function OpenDesktopPage() {
   async function JoinBoard(roomId: string, boardId: string) {
     const room = await fetchRoom(roomId);
     const board = await fetchBoard(boardId);
-    if (!room || !board) toHome();
+    if (!room || !board) {
+      // Toast user and go toHome
+      toast({
+        title: 'Error',
+        description: 'Room or Board not found',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+      toHome();
+    }
     // Auto Join Room
     joinRoomMembership(roomId);
     toast({
