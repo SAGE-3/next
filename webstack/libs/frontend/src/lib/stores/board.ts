@@ -22,6 +22,7 @@ interface BoardState {
   boards: Board[];
   error: string | null;
   fetched: boolean;
+  fetchBoard: (boardId: string) => Promise<Board | undefined>;
   clearError: () => void;
   create: (newBoard: BoardSchema) => Promise<Board | undefined>;
   update: (id: string, updates: Partial<BoardSchema>) => void;
@@ -39,6 +40,15 @@ const BoardStore = create<BoardState>()((set, get) => {
     boards: [],
     error: null,
     fetched: false,
+    fetchBoard: async (boardId: string) => {
+      const board = await APIHttp.GET<Board>(`/boards/${boardId}`);
+      if (board.success && board.data) {
+        return board.data[0];
+      } else {
+        set({ error: board.message });
+        return undefined;
+      }
+    },
     clearError: () => {
       set({ error: null });
     },
