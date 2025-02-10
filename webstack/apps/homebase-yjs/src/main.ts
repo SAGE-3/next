@@ -55,7 +55,7 @@ async function startServer() {
   const server = createServer(app);
 
   // Port to serve app
-  const PORT = config.port;
+  const PORT = config.port_yjs;
 
   // Start listening
   server.listen(PORT, () => {
