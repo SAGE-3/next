@@ -41,7 +41,8 @@ import { Component, useEffect, useRef, useState } from 'react';
 import { userInfo } from 'os';
 import { useAppStore, useUser, useUIStore } from '@sage3/frontend';
 import { VncScreen, RFB } from '@sage3/frontend';
-import { FaFirefoxBrowser } from 'react-icons/fa';
+import { FaFirefoxBrowser, FaClipboard } from 'react-icons/fa';
+import { MdVolumeOff } from 'react-icons/md'; // MdVolumeUp
 import { TbMouse, TbMouseOff } from 'react-icons/tb';
 import { PiTabs } from 'react-icons/pi';
 
@@ -140,6 +141,7 @@ function AppComponent(props: App): JSX.Element {
 
   // keyboard grabbing on refresh on vnc load & on app selection
   useEffect(() => {
+    console.log('test', isSelected);
     if (isSelected) {
       vncScreenRef.current?.focus();
       vncScreenRef.current?.rfb?._keyboard.grab();
@@ -213,16 +215,22 @@ function AppComponent(props: App): JSX.Element {
   // Paste Interception
   // Hacky way to get paste to work, but user must be aware the mouse must hover the app
   // It should be feasible to create a fullscreen (absolute, w:100%, h:100%, index: 99) div to capture the mouse
-  const handleMouseEnter = async () => {
-    try {
-      const clipboardData = await navigator.clipboard.readText();
-      if (clipboardData) {
-        vncScreenRef.current?.clipboardPaste(clipboardData);
-      }
-    } catch (error) {
-      // console.error('Failed to read clipboard:', error);
+  // const handleMouseEnter = async () => {
+  //   try {
+  //     const clipboardData = await navigator.clipboard.readText();
+  //     if (clipboardData) {
+  //       vncScreenRef.current?.clipboardPaste(clipboardData);
+  //     }
+  //   } catch (error) {
+  //     // console.error('Failed to read clipboard:', error);
+  //   }gi
+  // };
+  // Less privacy invasive solution to paste grabbing
+  useEffect(() => {
+    if (s.clipboard) {
+      vncScreenRef.current?.clipboardPaste(s.clipboard);
     }
-  };
+  }, [s.clipboard]);
 
   return (
     <AppWindow app={props} hideBackgroundColor={'orange'} hideBordercolor={'orange'} hideBackgroundIcon={FaFirefoxBrowser}>
@@ -270,7 +278,7 @@ function AppComponent(props: App): JSX.Element {
               width: '100%',
               height: '100%',
             }}
-            onMouseEnter={handleMouseEnter}
+            // onMouseEnter={handleMouseEnter}
             // onMouseLeave={handleMouseLeave}
           >
             <VncScreen
@@ -345,7 +353,7 @@ function ToolbarComponent(props: App): JSX.Element {
         <>
           {/* <ButtonGroup isAttached size="xs" colorScheme="teal" mr="1"> */}
           <Tooltip
-            label={s.nonOwnerViewOnly ? 'Current Not Sharing Controls' : 'Controls are Shared Currently'}
+            label={s.nonOwnerViewOnly ? 'Controls are not being shared' : 'Controls are being shared'}
             openDelay={400}
             hasArrow
             placement="top"
@@ -393,6 +401,30 @@ function ToolbarComponent(props: App): JSX.Element {
           </>
         )}
       </Popover>
+      <Tooltip label="Click to paste" openDelay={400} hasArrow placement="top">
+        <Button
+          size="xs"
+          ml="1"
+          colorScheme="teal"
+          onClick={async () => {
+            try {
+              const clipboardData = await navigator.clipboard.readText();
+              if (clipboardData) {
+                updateState(props._id, { clipboard: clipboardData });
+              }
+            } catch (error) {
+              // console.error('Failed to read clipboard:', error);
+            }
+          }}
+        >
+          <FaClipboard />
+        </Button>
+      </Tooltip>
+      <Tooltip label="Audio is currently not supported" openDelay={400} hasArrow placement="top">
+        <Button size="xs" ml="1" colorScheme="gray" onClick={() => {}}>
+          <MdVolumeOff />
+        </Button>
+      </Tooltip>
     </>
   );
 }
