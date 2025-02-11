@@ -30,6 +30,8 @@ import {
   useToast,
   InputLeftAddon,
   useColorModeValue,
+  Tooltip,
+  useDisclosure,
 } from '@chakra-ui/react';
 
 // Icons for file types
@@ -41,6 +43,7 @@ import {
   MdOndemandVideo,
   MdOutlineStickyNote2,
   MdInfoOutline,
+  MdSettings,
 } from 'react-icons/md';
 import { v5 as uuidv5 } from 'uuid';
 
@@ -59,6 +62,8 @@ import {
   downloadFile,
   apiUrls,
   useUserSettings,
+  IntelligenceModal,
+  IntelligenceMenu,
 } from '@sage3/frontend';
 
 import { AppName, AppState } from '@sage3/applications/schema';
@@ -392,6 +397,7 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
   const [buttonList, setButtonList] = useState<JSX.Element[]>([]);
   // colors
   const intelligenceColor = useColorModeValue('purple.500', 'purple.400');
+  const { isOpen: intelligenceIsOpen, onOpen: intelligenceOnOpen, onClose: intelligenceOnClose } = useDisclosure();
 
   // Select the file when clicked
   const handleChange = (event: React.FormEvent<HTMLInputElement>) => {
@@ -556,101 +562,116 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
   }, [filteredList]);
 
   return (
-    <Modal
-      isOpen={props.isOpen}
-      onClose={props.onClose}
-      size="xl"
-      initialFocusRef={initialRef}
-      blockScrollOnMount={false}
-      scrollBehavior={'inside'}
-      isCentered
-    >
-      <ModalOverlay />
-      <ModalContent maxH={'30vh'} top={'4rem'}>
-        <HStack>
-          {/* Search box */}
-          <InputGroup>
-            <InputLeftAddon p={2} m={'8px 0px 8px 8px'} backgroundColor={intelligenceColor}>
-              <IoSparklesSharp size="22px" color={'white'} />{' '}
-            </InputLeftAddon>
-            <Input
-              ref={initialRef}
-              placeholder="Asset, Command, or ask SAGE Intelligence"
-              _placeholder={{ opacity: 1, color: 'gray.600' }}
-              p={2}
-              m={'8px 0px 8px 0px'}
-              focusBorderColor="gray.500"
-              _focusVisible={{ borderColor: 'gray.500' }}
-              boxSizing="border-box"
-              fontSize="xl"
-              onChange={handleChange}
-              onKeyDown={onSubmit}
-            />
-          </InputGroup>
+    <>
+      <Modal
+        isOpen={props.isOpen}
+        onClose={props.onClose}
+        size="xl"
+        initialFocusRef={initialRef}
+        blockScrollOnMount={false}
+        scrollBehavior={'inside'}
+        isCentered
+      >
+        <ModalOverlay />
+        <ModalContent maxH={'30vh'} top={'4rem'}>
+          <HStack>
+            {/* Search box */}
+            <InputGroup>
+              <InputLeftAddon p={2} m={'8px 0px 8px 8px'} backgroundColor={intelligenceColor}>
+                <IoSparklesSharp size="22px" color={'white'} />{' '}
+              </InputLeftAddon>
+              <Input
+                ref={initialRef}
+                placeholder="Asset, Command, or ask SAGE Intelligence"
+                _placeholder={{ opacity: 1, color: 'gray.600' }}
+                p={2}
+                m={'8px 0px 8px 0px'}
+                focusBorderColor="gray.500"
+                _focusVisible={{ borderColor: 'gray.500' }}
+                boxSizing="border-box"
+                fontSize="xl"
+                onChange={handleChange}
+                onKeyDown={onSubmit}
+              />
+            </InputGroup>
 
-          {/* Help box */}
-          <Popover trigger="hover">
-            <PopoverTrigger>
-              <Button p={0} m={'8px 8px 8px 0px'}>
-                <MdInfoOutline fontSize={'18px'} />
+
+            {/* Help box */}
+            <Popover trigger="hover">
+              <PopoverTrigger>
+                <Button p={0} m={'8px 0px 8px 0px'}>
+                  <MdInfoOutline fontSize={'24px'} />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent fontSize={'sm'} width={'300px'}>
+                <PopoverArrow />
+                <PopoverCloseButton />
+                <PopoverHeader>Quick Actions</PopoverHeader>
+                <PopoverBody>
+                  <UnorderedList>
+                    <ListItem>Select an asset to open it (click/enter)</ListItem>
+                    <ListItem>
+                      <b>app</b> [name]: Create an application
+                    </ListItem>
+                    <ListItem>
+                      <b>w</b> [url]: Open URL in a webview
+                    </ListItem>
+                    <ListItem>
+                      <b>g</b> [term]: Google search
+                    </ListItem>
+                    <ListItem>
+                      <b>s</b> [text]: Stickie with text
+                    </ListItem>
+                    <ListItem>
+                      <b>c</b> : Create a SageCell
+                    </ListItem>
+                    <ListItem>
+                      <b>showui</b> : Show the panels
+                    </ListItem>
+                    <ListItem>
+                      <b>hideui</b> : Hide the panels
+                    </ListItem>
+                    <ListItem>
+                      <b>light</b> : Switch to light mode
+                    </ListItem>
+                    <ListItem>
+                      <b>calc</b> : Open the calculator app
+                    </ListItem>
+                    <ListItem>
+                      <b>dark</b> : Switch to dark mode
+                    </ListItem>
+                    <ListItem>
+                      <b>tag</b> : Search applications with tags
+                    </ListItem>
+                    <ListItem>
+                      <b>save</b> [filename]: Save the board to a file
+                    </ListItem>
+                    <ListItem>
+                      <b>clear</b> : Close all applications
+                    </ListItem>
+                  </UnorderedList>
+                </PopoverBody>
+              </PopoverContent>
+            </Popover>
+
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Settings'} openDelay={400}>
+              <Button p={0} m={'8px 8px 8px 0px'} onClick={intelligenceOnOpen}>
+                <MdSettings size="24px" />
               </Button>
-            </PopoverTrigger>
-            <PopoverContent fontSize={'sm'} width={'300px'}>
-              <PopoverArrow />
-              <PopoverCloseButton />
-              <PopoverHeader>Quick Actions</PopoverHeader>
-              <PopoverBody>
-                <UnorderedList>
-                  <ListItem>Select an asset to open it (click/enter)</ListItem>
-                  <ListItem>
-                    <b>app</b> [name]: Create an application
-                  </ListItem>
-                  <ListItem>
-                    <b>w</b> [url]: Open URL in a webview
-                  </ListItem>
-                  <ListItem>
-                    <b>g</b> [term]: Google search
-                  </ListItem>
-                  <ListItem>
-                    <b>s</b> [text]: Stickie with text
-                  </ListItem>
-                  <ListItem>
-                    <b>c</b> : Create a SageCell
-                  </ListItem>
-                  <ListItem>
-                    <b>showui</b> : Show the panels
-                  </ListItem>
-                  <ListItem>
-                    <b>hideui</b> : Hide the panels
-                  </ListItem>
-                  <ListItem>
-                    <b>light</b> : Switch to light mode
-                  </ListItem>
-                  <ListItem>
-                    <b>calc</b> : Open the calculator app
-                  </ListItem>
-                  <ListItem>
-                    <b>dark</b> : Switch to dark mode
-                  </ListItem>
-                  <ListItem>
-                    <b>tag</b> : Search applications with tags
-                  </ListItem>
-                  <ListItem>
-                    <b>save</b> [filename]: Save the board to a file
-                  </ListItem>
-                  <ListItem>
-                    <b>clear</b> : Close all applications
-                  </ListItem>
-                </UnorderedList>
-              </PopoverBody>
-            </PopoverContent>
-          </Popover>
-        </HStack>
-        <VStack m={'0px 4px 4px 6px'} p={0} overflowY={'auto'} overflowX={'clip'} ref={listRef} spacing={1}>
-          {buttonList}
-        </VStack>
-      </ModalContent>
-    </Modal>
+            </Tooltip>
+
+          </HStack>
+          <VStack m={'0px 4px 4px 6px'} p={0} overflowY={'auto'} overflowX={'clip'} ref={listRef} spacing={1}>
+            {buttonList}
+          </VStack>
+        </ModalContent>
+      </Modal>
+
+      {/* Intelligence settings */}
+      <IntelligenceModal isOpen={intelligenceIsOpen} onOpen={intelligenceOnOpen} onClose={intelligenceOnClose}>
+        <IntelligenceMenu notificationCount={0} />
+      </IntelligenceModal>
+    </>
   );
 }
 

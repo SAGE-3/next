@@ -28,6 +28,7 @@ import {
   ListIcon,
   ListItem,
   Textarea,
+  useDisclosure,
 } from '@chakra-ui/react';
 import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle, MdFileDownload, MdChat, MdSettings } from 'react-icons/md';
 import { HiCommandLine } from 'react-icons/hi2';
@@ -56,6 +57,8 @@ import { genId, AskRequest, ImageQuery, PDFQuery, CodeRequest, WebQuery, WebScre
 import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
+import { IntelligenceModal, IntelligenceMenu } from '@sage3/frontend';
+
 
 import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot } from './tRPC';
 
@@ -104,6 +107,8 @@ function AppComponent(props: App): JSX.Element {
   const sc = useColorModeValue('gray.300', 'gray.500');
   const scrollColor = useHexColor(sc);
   const textColor = useColorModeValue('gray.800', 'gray.100');
+
+  const { isOpen: intelligenceIsOpen, onOpen: intelligenceOnOpen, onClose: intelligenceOnClose } = useDisclosure();
 
   // App state management
   const updateState = useAppStore((state) => state.updateState);
@@ -1475,6 +1480,19 @@ function AppComponent(props: App): JSX.Element {
               width="33%"
             />
           </Tooltip>
+          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Settings'} openDelay={400}>
+            <IconButton
+              aria-label="reset"
+              size={'xs'}
+              p={0}
+              m={0}
+              colorScheme={'blue'}
+              variant="ghost"
+              icon={<MdSettings size="24px" />}
+              onClick={intelligenceOnOpen}
+              width="33%"
+            />
+          </Tooltip>
         </HStack>
 
         {mode !== 'chat' && <hr />}
@@ -1830,6 +1848,12 @@ function AppComponent(props: App): JSX.Element {
             {status}
           </Text>
         </Box>
+
+        {/* Intelligence settings */}
+        <IntelligenceModal isOpen={intelligenceIsOpen} onOpen={intelligenceOnOpen} onClose={intelligenceOnClose}>
+          <IntelligenceMenu notificationCount={0} />
+        </IntelligenceModal>
+
       </Flex>
     </AppWindow>
   );
@@ -1901,3 +1925,17 @@ const GroupedToolbarComponent = () => {
 };
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
+
+
+/*
+
+<MenuItem onClick={intelligenceOnOpen} icon={<IoSparklesSharp fontSize="24px" />} py="1px" m="0">
+  Intelligence
+</MenuItem>
+
+
+
+
+
+
+*/
