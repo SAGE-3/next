@@ -12490,7 +12490,7 @@ class RFB extends EventTargetMixin {
         if (this._rfbConnectionState === "connecting" ||
             this._rfbConnectionState === "connected") {
             if (viewOnly) {
-                this._keyboard.ungrab();
+                // this._keyboard.ungrab();
             } else {
                 // this._keyboard.grab();
             }
@@ -15718,7 +15718,7 @@ const VncScreen = (props, ref) => {
         const rfb = getRfb();
         if (!rfb)
             return;
-        // rfb.focus();
+        rfb.focus();
     };
     const handleMouseEnter = () => {
         if (document.activeElement && document.activeElement instanceof HTMLElement) {
