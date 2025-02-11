@@ -17,9 +17,11 @@
     "buildall": "nx run-many --target=build --configuration=development --parallel=4 --verbose",
     "buildallprod": "nx run-many --target=build --configuration=production --parallel=4 --verbose",
     "homebase": "nx serve homebase",
+    "homebase-yjs": "nx serve homebase-yjs",
     "webapp": "nx serve webapp --host=0.0.0.0",
     "stage": "rimraf dist && yarn buildall && mkdir -p dist/apps/homebase/webapp && cp -r dist/apps/webapp/* dist/apps/homebase/webapp",
     "prod": "rimraf dist && yarn buildallprod && mkdir -p dist/apps/homebase/webapp && cp -r dist/apps/webapp/* dist/apps/homebase/webapp",
+    "prod-yjs": "rimraf dist && yarn build homebase-yjs --target=build --configuration=production --verbose",
     "newapp": "nx workspace-generator --interactive newapp",
     "regen": "nx workspace-generator regen"
   },

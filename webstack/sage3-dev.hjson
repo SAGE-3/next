@@ -2,19 +2,12 @@
   // We are not in production mode
   "production": false,
 
+  // Port to run the server on
+  "port": 3333,
+  "port_yjs": 3334,
+
   // Name of the server to show in the UI
   "serverName": "Localhost",
-
-  // HTTP Settings
-  "port": 3333,
-  "tlsVersion": "TLSv1.2",
-
-  // SSL Certificate file names
-  "ssl": {
-    // Located in the `/configurations/node/keys' folder
-    "certificateFile": "localhost-server.crt",
-    "certificateKeyFile": "localhost-server.key"
-  },
 
   // These can be left alone, they are used to find the assets
   "root": ".",

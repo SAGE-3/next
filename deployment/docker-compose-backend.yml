@@ -9,6 +9,25 @@ services:
       - "127.0.0.1:6379:6379"
     entrypoint: redis-server
     command: /conf/redis.conf
+
+  yjs-server:
+    image: "ghcr.io/sage-3/next_yjs:dev_arm64"
+    depends_on:
+      - "redis-server"
+    port:
+      - "127.0.0.1:3334:3334"
+    volumes:
+      - ../webstack/sage3-dev.hjson:/app/sage3-dev.hjson
+    deploy:
+      restart_policy:
+        condition: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3334"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 30s
+
   chromadb:
     image: "chromadb/chroma:0.5.16"
     ports:

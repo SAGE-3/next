@@ -9,12 +9,14 @@ if [[ $OSTYPE == 'darwin'* ]]; then
 
   if [[ `uname -m` == 'arm64' ]]; then
     docker buildx build --push -f node_server/Dockerfile --platform linux/arm64 --tag ghcr.io/sage-3/next:dev_arm64 ..
+    docker buildx build --push -f node_yjs/Dockerfile   --platform linux/arm64 --tag ghcr.io/sage-3/next_yjs:dev_arm64 ..
     docker buildx build --push -f foresight/Dockerfile   --platform linux/arm64 --tag ghcr.io/sage-3/foresight:dev_arm64 ..
   fi
 
   # Intel
   if [[ `uname -m` == 'x86_64' ]]; then
     docker buildx build --push -f node_server/Dockerfile --platform linux/amd64 --tag ghcr.io/sage-3/next:dev_amd64 ..
+    docker buildx build --push -f node_yjs/Dockerfile   --platform linux/amd64 --tag ghcr.io/sage-3/next_yjs:dev_amd64 ..
     docker buildx build --push -f foresight/Dockerfile   --platform linux/amd64 --tag ghcr.io/sage-3/foresight:dev_amd64 ..
   fi
 
@@ -23,6 +25,7 @@ fi
 # linux
 if [[ $OSTYPE == 'linux'* ]]; then
   docker buildx build --push -f node_server/Dockerfile --platform linux/amd64 --tag ghcr.io/sage-3/next:dev_amd64 ..
+  docker buildx build --push -f node_yjs/Dockerfile   --platform linux/amd64 --tag ghcr.io/sage-3/next_yjs:dev_amd64 ..
   docker buildx build --push -f foresight/Dockerfile   --platform linux/amd64 --tag ghcr.io/sage-3/foresight:dev_amd64 ..
 fi
 
