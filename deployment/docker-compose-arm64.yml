@@ -63,7 +63,7 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
-      replicas: ${WEB_REPLICAS}
+      replicas: ${NODE_SERVER_REPLICAS}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000"]
       interval: 30s
