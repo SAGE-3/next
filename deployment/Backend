@@ -22,7 +22,14 @@ fi
 # trap ctrl-c and call cleanup()
 trap cleanup SIGINT
 
-modules="-f docker-compose-backend.yml"
+# Default to amd64
+modules="-f docker-compose-backend-amd64.yml"
+# If macOS and arm64, use the arm64 version
+if [[ $OSTYPE == 'darwin'* ]]; then
+  if [[ `uname -m` == 'arm64' ]]; then
+		modules="-f docker-compose-backend-arm64.yml"
+	fi
+fi
 
 function cleanup() {
 	echo "-- Trapped CTRL-C --"

@@ -103,9 +103,10 @@ export function createApp(assetPath: string, config: ServerConfiguration): expre
  * @param {number} listenPort
  * @returns {Server}
  */
-export function listenApp(app: express.Express, listenPort: number): Server {
+export function listenApp(app: express.Express, listenPort: number | string): Server {
+  const PORT = parseInt(listenPort as string, 10);
   // HTTP server
-  const server = app.listen(listenPort, '0.0.0.0', () => {
+  const server = app.listen(PORT, '0.0.0.0', () => {
     const { port } = server.address() as AddressInfo;
     console.log('HTTP> listening on port', port);
   });

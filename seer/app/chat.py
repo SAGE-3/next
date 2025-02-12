@@ -126,6 +126,10 @@ class ChatAgent:
         else:
             raise HTTPException(status_code=500, detail="Langchain> Model unknown")
 
+        # Annotate the answer
+        response = response.strip() + "\n\n---\n"
+        response += "Text generated using an AI model [" + qq.model + "]\n"
+
         # Propose the answer to the user
         action1 = json.dumps(
             {

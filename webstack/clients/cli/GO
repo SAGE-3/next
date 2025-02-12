@@ -11,21 +11,24 @@
 # -e, --sensitivity <n>  sensitivity (number) (default: 5)
 # -h, --help         display help for command
 
+# https://minim1.evl.uic.edu/#/enter/ea45732f-36ce-4cc8-8e07-f6536c4e8779/37801b44-e873-46b9-9803-bc0668a63748
+
 # URL
 #server="traoumad.evl.uic.edu"
-server="127.0.0.1:3333"
+#server="127.0.0.1:3333"
+server=minim1.evl.uic.edu
 
 # runtime in sec
 length=120
 
 # which board
-room="c809cd21-32fe-4b94-a487-5582b69ab364"
-board="29577580-b326-4aff-836c-d2f65250ee97"
+room="ea45732f-36ce-4cc8-8e07-f6536c4e8779"
+board="37801b44-e873-46b9-9803-bc0668a63748"
 
 # how many pointers
-pointers=20
+pointers=40
 
 for i in $(seq 1 ${pointers}); do
-  node pointer.js -r 20 -s $server -b $board -m $room -t $length -e 10 &
+  node pointer-secure.js -r 20 -s $server -b $board -m $room -t $length -e 10 &
   sleep 0.1
 done
