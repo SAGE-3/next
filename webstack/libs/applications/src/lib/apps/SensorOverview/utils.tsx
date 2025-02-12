@@ -127,3 +127,103 @@ export function getFormattedDateTime1YearBefore() {
 
   return `${year}${month}${day}${hours}${minutes}`;
 }
+
+type VariableInfo = {
+  available_variable_names: string[];
+  available_variable_ids: string[];
+};
+
+type DataAttributes = {
+  attributes: string[];
+  transformations: string[];
+  chartType: string[];
+  available_attribute_info: VariableInfo;
+  dates: { startDate: string; endDate: string };
+};
+
+type StationInformationProps = {
+  [key: string]: DataAttributes;
+};
+
+type RawData = {
+  [attribute: string]: {
+    [date: string]: any;
+  };
+};
+
+const formatData = (rawData: RawData) => {
+  const attributes = Object.keys(rawData);
+  const dates = Object.keys(rawData[attributes[0]]);
+  const data = [['Date', ...attributes]];
+
+  dates.forEach((date) => {
+    const dateString = new Date(date).toDateString();
+    const dataRow = [dateString, ...attributes.map((attr) => rawData[attr][date])];
+    data.push(dataRow);
+  });
+
+  return data;
+};
+
+const fetchData = async (stationName: string, attributes: string[]) => {
+  //TODO change to Batchfetch to get all of the data, then select attributes that are relevant
+  if (!data) return {};
+
+  const subsetData: any = {};
+  attributes.forEach((attribute) => {
+    if (data.hasOwnProperty(attribute)) {
+      subsetData[attribute] = data[attribute];
+    }
+  });
+
+  return subsetData;
+};
+
+const filterDataByDate = (formattedData: string[][], dates: { startDate: string; endDate: string }) => {
+  const { startDate, endDate } = dates;
+  if (startDate && endDate) {
+    const start = new Date(startDate).getTime();
+    const end = new Date(endDate).getTime();
+
+    return formattedData.filter((row, index) => index === 0 || (new Date(row[0]).getTime() >= start && new Date(row[0]).getTime() <= end));
+  } else {
+    return formattedData;
+  }
+};
+
+export const processStations = async (
+  station_information: StationInformationProps,
+  colorMode: string,
+  appSize: { width: number; height: number; depth: number }
+) => {
+  const tmpChartOptions: EChartsCoreOption[] = [];
+  const stations = Object.keys(station_information);
+  const { dates, attributes: rawAttributes, chartType, transformations } = station_information[stations[0]];
+  const attributes = rawAttributes.filter((attr) => attr !== 'Date');
+  if (attributes.length === 0) {
+    console.log('Not enough attributes found other than date');
+    return [];
+  }
+  const tmpData = [];
+  for (const stationID of stations) {
+    const data = await fetchData(stationID, attributes); //TODO change this to fetch all the stations at once.
+    if (Object.keys(data).length !== 0) {
+      const stationName = stationData.find((station) => station.stationID === stationID)?.stationName || '';
+      const formattedData = formatData(data);
+      const filteredDataByDate = filterDataByDate(formattedData, dates);
+      tmpData.push({ data: filteredDataByDate, stationName });
+    }
+  }
+
+  if (tmpData.length == 0) return [];
+  const chartOptions = generateOption({
+    chartName: chartType[0],
+    data: tmpData,
+    attributes,
+    transformations,
+    colorMode,
+    appSize,
+  });
+
+  return chartOptions;
+};
