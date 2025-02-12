@@ -12,5 +12,4 @@ export * from './KernelsMenu';
 export * from './PluginsMenu';
 export * from './UsersMenu';
 export * from './Asset/AssetsPanel';
-export * from './IntelligenceMenu';
 export * from './ScreenshareMenu';
