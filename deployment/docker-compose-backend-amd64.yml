@@ -1,0 +1,106 @@
+
+services:
+  redis-server:
+    image: "redis/redis-stack-server:latest"
+    volumes:
+      - ./configurations/redis/data:/data
+      - ./configurations/redis/conf:/conf
+    ports:
+      - "127.0.0.1:6379:6379"
+    entrypoint: redis-server
+    command: /conf/redis.conf
+
+  yjs-server:
+    image: "ghcr.io/sage-3/next_yjs:dev_amd64"
+    depends_on:
+      - "redis-server"
+    ports:
+      - "127.0.0.1:3001:3001"
+    volumes:
+      - ../webstack/keys:/app/keys
+      - ../webstack/sage3-prod.hjson:/app/sage3-prod.hjson
+    deploy:
+      restart_policy:
+        condition: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 30s
+
+  chromadb:
+    image: "chromadb/chroma:0.5.16"
+    ports:
+      - "127.0.0.1:8100:8000"
+    volumes:
+      - ./configurations/chroma/data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - CHROMA_SERVER_AUTHN_CREDENTIALS=${CHROMA_SERVER_AUTHN_CREDENTIALS}
+      - CHROMA_SERVER_AUTHN_PROVIDER=chromadb.auth.basic_authn.BasicAuthenticationServerProvider
+    command: "--workers 1 --proxy-headers --port 8000 --host 0.0.0.0 --timeout-keep-alive 30"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      restart_policy:
+        condition: on-failure
+  fluentd-server:
+    image: "fluent/fluentd:edge-debian"
+    ports:
+      - "127.0.0.1:24224:24224"
+    volumes:
+      - ./configurations/fluentd/log:/fluentd/log
+      - ./configurations/fluentd/conf:/fluentd/etc
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+  kernelserver:
+    image: "ghcr.io/sage-3/sagekernelserver:amd64"
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - SAGE3_SERVER=${SAGE3_SERVER}
+      - TOKEN=${TOKEN}
+    restart: always
+    working_dir: /app
+    command: python src/main.py --url http://jupyter:8888
+    depends_on:
+      jupyter:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/heartbeat"]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    deploy:
+      restart_policy:
+        condition: on-failure
+  jupyter:
+    image: "quay.io/jupyter/datascience-notebook:2024-05-27"
+    volumes:
+      - ./configurations/jupyter/conf:/conf
+      - ./configurations/jupyter/notebooks:/home/jovyan/notebooks
+      - ./redis-client:/home/jovyan/work
+    ports:
+      - "8888:8888"
+    environment:
+      - ENVIRONMENT=development
+      - SAGE3_SERVER=${SAGE3_SERVER}
+      - TOKEN=${TOKEN}
+    depends_on:
+      - "redis-server"
+    command: /conf/start.sh
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 30s
