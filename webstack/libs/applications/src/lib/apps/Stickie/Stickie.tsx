@@ -218,7 +218,7 @@ function AppComponent(props: App): JSX.Element {
           fontFamily="Arial"
           focusBorderColor={backgroundColor}
           fontSize={fontSize + 'px'}
-          lineHeight="1em"
+          lineHeight="1.2em"
           onInput={handleTextChange}
           onKeyDown={handleKeyDown}
           readOnly={s.lock}
