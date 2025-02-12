@@ -1,5 +1,6 @@
 // SAGE3 Generated from apps.json file
 
+import { App } from './schema';
 import { name as AIPaneName } from './apps/AIPane';
 import { name as AssetLinkName } from './apps/AssetLink';
 import { name as BoardLinkName } from './apps/BoardLink';
@@ -28,6 +29,7 @@ import { name as PluginAppName } from './apps/PluginApp';
 import { name as PollName } from './apps/Poll';
 import { name as RTCChatName } from './apps/RTCChat';
 import { name as SageCellName } from './apps/SageCell';
+import { name as SageIntelligenceName } from './apps/SageIntelligence';
 import { name as SeerName } from './apps/Seer';
 import { name as SensorOverviewName } from './apps/SensorOverview';
 import { name as StickieName } from './apps/Stickie';
@@ -40,9 +42,6 @@ import { name as VideoViewerName } from './apps/VideoViewer';
 import { name as WebpageLinkName } from './apps/WebpageLink';
 import { name as WebviewName } from './apps/Webview';
 
-
-import React from 'react';
-import { AppGroup } from './schema';
 
 import AIPane from './apps/AIPane/AIPane';
 import AssetLink from './apps/AssetLink/AssetLink';
@@ -72,6 +71,7 @@ import PluginApp from './apps/PluginApp/PluginApp';
 import Poll from './apps/Poll/Poll';
 import RTCChat from './apps/RTCChat/RTCChat';
 import SageCell from './apps/SageCell/SageCell';
+import SageIntelligence from './apps/SageIntelligence/SageIntelligence';
 import Seer from './apps/Seer/Seer';
 import SensorOverview from './apps/SensorOverview/SensorOverview';
 import Stickie from './apps/Stickie/Stickie';
@@ -83,6 +83,7 @@ import VegaLiteViewer from './apps/VegaLiteViewer/VegaLiteViewer';
 import VideoViewer from './apps/VideoViewer/VideoViewer';
 import WebpageLink from './apps/WebpageLink/WebpageLink';
 import Webview from './apps/Webview/Webview';
+import React from 'react';
 
 
 export const Applications = {
@@ -114,6 +115,7 @@ export const Applications = {
   [PollName]: { AppComponent: React.memo(Poll.AppComponent), ToolbarComponent: Poll.ToolbarComponent, GroupedToolbarComponent: Poll.GroupedToolbarComponent },
   [RTCChatName]: { AppComponent: React.memo(RTCChat.AppComponent), ToolbarComponent: RTCChat.ToolbarComponent, GroupedToolbarComponent: RTCChat.GroupedToolbarComponent },
   [SageCellName]: { AppComponent: React.memo(SageCell.AppComponent), ToolbarComponent: SageCell.ToolbarComponent, GroupedToolbarComponent: SageCell.GroupedToolbarComponent },
+  [SageIntelligenceName]: { AppComponent: React.memo(SageIntelligence.AppComponent), ToolbarComponent: SageIntelligence.ToolbarComponent, GroupedToolbarComponent: SageIntelligence.GroupedToolbarComponent },
   [SeerName]: { AppComponent: React.memo(Seer.AppComponent), ToolbarComponent: Seer.ToolbarComponent, GroupedToolbarComponent: Seer.GroupedToolbarComponent },
   [SensorOverviewName]: { AppComponent: React.memo(SensorOverview.AppComponent), ToolbarComponent: SensorOverview.ToolbarComponent, GroupedToolbarComponent: SensorOverview.GroupedToolbarComponent },
   [StickieName]: { AppComponent: React.memo(Stickie.AppComponent), ToolbarComponent: Stickie.ToolbarComponent, GroupedToolbarComponent: Stickie.GroupedToolbarComponent },
@@ -125,7 +127,6 @@ export const Applications = {
   [VideoViewerName]: { AppComponent: React.memo(VideoViewer.AppComponent), ToolbarComponent: VideoViewer.ToolbarComponent, GroupedToolbarComponent: VideoViewer.GroupedToolbarComponent },
   [WebpageLinkName]: { AppComponent: React.memo(WebpageLink.AppComponent), ToolbarComponent: WebpageLink.ToolbarComponent, GroupedToolbarComponent: WebpageLink.GroupedToolbarComponent },
   [WebviewName]: { AppComponent: React.memo(Webview.AppComponent), ToolbarComponent: Webview.ToolbarComponent, GroupedToolbarComponent: Webview.GroupedToolbarComponent },
-} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element, GroupedToolbarComponent: (props: { apps: AppGroup }) => JSX.Element; }>;
+} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element, GroupedToolbarComponent: (props: { apps: App[] }) => JSX.Element; }>;
 
 export * from './components';
-export * from './ai-apps';

@@ -28,6 +28,7 @@ import { name as PluginAppName, init as defaultPluginApp } from './apps/PluginAp
 import { name as PollName, init as defaultPoll } from './apps/Poll';
 import { name as RTCChatName, init as defaultRTCChat } from './apps/RTCChat';
 import { name as SageCellName, init as defaultSageCell } from './apps/SageCell';
+import { name as SageIntelligenceName, init as defaultSageIntelligence } from './apps/SageIntelligence';
 import { name as SeerName, init as defaultSeer } from './apps/Seer';
 import { name as SensorOverviewName, init as defaultSensorOverview } from './apps/SensorOverview';
 import { name as StickieName, init as defaultStickie } from './apps/Stickie';
@@ -69,6 +70,7 @@ export const initialValues = {
   [PollName]: defaultPoll,
   [RTCChatName]: defaultRTCChat,
   [SageCellName]: defaultSageCell,
+  [SageIntelligenceName]: defaultSageIntelligence,
   [SeerName]: defaultSeer,
   [SensorOverviewName]: defaultSensorOverview,
   [StickieName]: defaultStickie,
