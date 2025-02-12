@@ -115,8 +115,8 @@
       "guest",
       "jwt",
       "google",
-      "spectator",
-      "cilogon"
+      // "spectator",
+      // "cilogon"
     ],
     // A List of emails to enable those users to be admins.
     "admins": [],
@@ -131,11 +131,11 @@
       "routeEndpoint": "/auth/spectator"
     },
     // Google configuration
-    "googleConfig": {
+   "googleConfig": {
       // Client ID from the Google Developer Console
-      "clientID": "",
+      "clientID": "773749598438-sgbn6mj326jj6ggsa8n3avrc3jue0ikv.apps.googleusercontent.com",
       // Client Secret from the Google Developer Console
-      "clientSecret": "",
+      "clientSecret": "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",
       // Endpoint for the google login
       "routeEndpoint": "/auth/google",
       // Callback URL for the google login

@@ -111,4 +111,10 @@ async function startServer() {
   }
 }
 
+// Configure the server in production mode
+function configureProd() {}
+
+// Configure the server in development mode
+function configureDev() {}
+
 startServer();

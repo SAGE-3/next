@@ -90,6 +90,7 @@ services:
       - "traefik.http.middlewares.authheader.headers.accesscontrolallowheaders=Authorization,Content-Type"
       - "traefik.http.routers.yjs-server.middlewares=authheader"
     volumes:
+      - ./configurations/node/keys:/app/keys
       - ./configurations/node/sage3-prod.hjson:/app/sage3-prod.hjson
     deploy:
       restart_policy:

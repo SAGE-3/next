@@ -3,8 +3,8 @@
   "production": false,
 
   // Port to run the server on
-  "port": 3333,
-  "port_yjs": 3334,
+  "port": 3000,
+  "port_yjs": 3001,
 
   // Name of the server to show in the UI
   "serverName": "Localhost",
@@ -106,7 +106,7 @@
   // Auth Configuration
   "auth": {
     // Secret HASH for the sessions. Change this to something unique.
-    "sessionSecret": "SUPERSECRETaa!!$$",
+    "sessionSecret": "SUPERSECRET!!$$",
     // Max age for a session per user. In milliseconds. 8 days
     "sessionMaxAge": 691200000,
     // Which login strategies to enable for the server. Available: guest, jwt, google, cilogon
@@ -115,7 +115,8 @@
       "guest",
       "jwt",
       "google",
-      "spectator" // "cilogon"
+      // "spectator" 
+      // "cilogon"
     ],
     // A List of emails to enable those users to be admins.
     "admins": [],
