@@ -554,6 +554,7 @@ function AppComponent(props: App): JSX.Element {
           };
           setProcessing(true);
           setActions([]);
+          console.log(q);
           const response = await callMesonet(q);
           setProcessing(false);
 

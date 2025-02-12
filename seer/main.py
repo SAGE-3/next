@@ -161,20 +161,20 @@ async def image(qq: ImageQuery):
 async def mesonet(qq: MesonetQuery):
     print(qq)
     print("Received mesonet ")
-    # try:
-    #     # do the work
-    #     # val = await imageAG.process(qq)
-    #     val = await asyncio.wait_for(processAG.process(qq), timeout=30)
-    #     return val
-    # except asyncio.TimeoutError as e:
-    #     print("Timeout error")
-    #     # Get the error message
-    #     text = str(e)
-    #     raise HTTPException(status_code=408, detail=text)
-    # except HTTPException as e:
-    #     # Get the error message
-    #     text = e.detail
-    #     raise HTTPException(status_code=500, detail=text)
+    try:
+        # do the work
+        val = await mesonetAG.process(qq)
+        # val = await asyncio.wait_for(processAG.process(qq), timeout=30)
+        return val
+    except asyncio.TimeoutError as e:
+        print("Timeout error")
+        # Get the error message
+        text = str(e)
+        raise HTTPException(status_code=408, detail=text)
+    except HTTPException as e:
+        # Get the error message
+        text = e.detail
+        raise HTTPException(status_code=500, detail=text)
 
 
 @app.post("/pdf")
