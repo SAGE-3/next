@@ -130,3 +130,4 @@ export const Applications = {
 } as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element, GroupedToolbarComponent: (props: { apps: App[] }) => JSX.Element; }>;
 
 export * from './components';
+export * from './ai-apps'
