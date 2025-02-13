@@ -405,7 +405,7 @@ export function AppWindow(props: WindowProps) {
         scale={scale}
         borderWidth={borderWidth}
         borderColor={borderColor}
-        selectColor={selectColor}
+        selectColor={props.app.data.state?.msgId ? "#F69637" : selectColor} // Orange for SageCell when running
         borderRadius={outerBorderRadius}
         pinned={isPinned}
         background={background}

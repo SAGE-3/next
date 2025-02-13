@@ -26,6 +26,7 @@ export const schema = z.object({
   fontSize: z.number(),
   kernel: z.string(),
   session: z.string(),
+  rank: z.number(),
   executeInfo: executeInfoSchema,
 });
 
@@ -41,6 +42,7 @@ export const init: Partial<state> = {
   fontSize: 16,
   kernel: '',
   session: '',
+  rank: 0,
   executeInfo: { executeFunc: '', params: {} } as executeInfoType,
 };
 
