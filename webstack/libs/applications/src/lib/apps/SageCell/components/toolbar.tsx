@@ -10,7 +10,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 
 import { Button, ButtonGroup, HStack, Select, Tooltip, useDisclosure, useToast } from '@chakra-ui/react';
-import { MdAdd, MdArrowDropDown, MdFileDownload, MdFileUpload, MdHelp, MdWeb, MdRemove, MdPlayArrow, MdStop } from 'react-icons/md';
+import {
+  MdAdd, MdArrowDropDown, MdFileDownload,
+  MdFileUpload, MdHelp, MdWeb, MdRemove, MdPlayArrow,
+  MdStop, MdOutlineKeyboardDoubleArrowRight
+} from 'react-icons/md';
 // Date manipulation (for filename)
 import { format } from 'date-fns/format';
 
@@ -407,16 +411,114 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
     updateStateBatch(ps);
   };
 
+  // Execute the app without any checks, used for sequential execution
+  async function executeAppNoChecks(appid: string, userid: string) {
+    // Get the code from the store
+    const code = useAppStore.getState().apps.find((app) => app._id === appid)?.data.state.code;
+    // Get the kernel from the store, since function executed from monoaco editor
+    const kernel = useStore.getState().kernel[appid];
+    if (kernel && code) {
+      const response = await useKernelStore.getState().executeCode(code, kernel, userid);
+      if (response.ok) {
+        const msgId = response.msg_id;
+        useAppStore.getState().updateState(appid, { msgId: msgId, session: userid });
+        return true;
+      } else {
+        useAppStore.getState().updateState(appid, { streaming: false, msgId: '', });
+        return false;
+      }
+    }
+    return false;
+  }
+
+  // Execute all selected cells
   const setExecuteAll = () => {
     props.apps.forEach((app) => {
       setExecute(app._id, true);
     });
   };
+
+  // Wait for x seconds
+  async function waitSeconds(x: number): Promise<void> {
+    await new Promise(resolve => setTimeout(resolve, x * 1000));
+  }
+
+  // Evaluate the sagecells in order
+  const setExecuteinOrder = async () => {
+    // Sort the apps based on their rank
+    const sortedApps = props.apps.sort((a, b) => a.data.state.rank - b.data.state.rank);
+    // Execute the apps in order
+    for (const app of sortedApps) {
+      const res = await executeAppNoChecks(app._id, app.data.state.session);
+      // if error, break the loop
+      if (!res) break;
+      // Give illusion of sequential execution
+      await waitSeconds(0.1);
+    }
+
+  };
+
+  // Stop all selected cells
   const setStopAll = () => {
     props.apps.forEach((app) => {
       setInterrupt(app._id, true);
     });
   };
+
+  // This function efficiently calculates the enclosing bounding box for a given set of rectangles.
+  function getBoundingBox(rectangles: Array<{ id: string, x: number; y: number; width: number; height: number }>) {
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+
+    rectangles.forEach(({ x, y, width, height }) => {
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x + width);
+      maxY = Math.max(maxY, y + height);
+    });
+    const width = maxX - minX;
+    const height = maxY - minY;
+    const boundingBox = {
+      x: minX,
+      y: minY,
+      width: width,
+      height: height,
+      orientation: height > 1.3 * width ? "column" : width > 1.3 * height ? "row" : "squarish",
+    };
+
+    return boundingBox;
+  }
+
+  // Calculate evaluation order
+  const setEvaluationOrder = () => {
+    // Get the sizes of the selected apps
+    const boxes = props.apps.map((app) => ({
+      id: app._id,
+      x: app.data.position.x,
+      y: app.data.position.y,
+      width: app.data.size.width,
+      height: app.data.size.height
+    }))
+    // Get the bounding box of the group and orientation
+    const box = getBoundingBox(boxes);
+
+    // Sort rectangles based on orientation
+    const sorted = [...boxes].sort((a, b) =>
+      box.orientation === "column" ? a.y - b.y :
+        box.orientation === "row" ? a.x - b.x :
+          0
+    );
+
+    if (box.orientation !== "squarish") {
+      // Array of update to batch at once
+      const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+      sorted.forEach((app, index) => {
+        ps.push({ id: app.id, updates: { rank: index + 1 } });
+      });
+      // Update all the apps at once
+      updateStateBatch(ps);
+    }
+  };
+
 
   /**
    * This is called when the user selects a kernel from the dropdown
@@ -436,6 +538,20 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
     // Update all the apps at once
     updateStateBatch(ps);
   }
+
+  useEffect(() => {
+    // When group is selected, set the evaluation order
+    setEvaluationOrder();
+    return () => {
+      // When group is unselected, reset the rank
+      const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+      props.apps.forEach((app) => {
+        ps.push({ id: app._id, updates: { rank: 0 } });
+      });
+      // Update all the apps at once
+      updateStateBatch(ps);
+    };
+  }, [props.apps.length]);
 
   return (
     <HStack>
@@ -482,6 +598,12 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
         <Tooltip placement="top-start" hasArrow={true} label={'Execute All Selected Cells'} openDelay={400}>
           <Button onClick={setExecuteAll} isDisabled={!canExecuteCode} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal">
             <MdPlayArrow />
+          </Button>
+        </Tooltip>
+
+        <Tooltip placement="top-start" hasArrow={true} label={'Execute Cells in Order'} openDelay={400}>
+          <Button onClick={setExecuteinOrder} isDisabled={!canExecuteCode} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal">
+            <MdOutlineKeyboardDoubleArrowRight />
           </Button>
         </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'Stop All Selected Cells'} openDelay={400}>
