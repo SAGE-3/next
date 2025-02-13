@@ -38,8 +38,8 @@ config = {
         "jupyter_server": "http://jupyter:8888",
         "jupyter_ws": "ws://jupyter:8888",
         "redis_server": "redis-server",
-        "web_server": f"http://{server}:3333",
-        "ws_server": f"ws://{server}:3333",
+        "web_server": f"http://{server}:3000",
+        "ws_server": f"ws://{server}:3000",
     },
     "development": {
         "seer_server": "http://127.0.0.1:5002",
@@ -53,8 +53,8 @@ config = {
         "seer_server": "http://127.0.0.1:5002",
         "jupyter_server": "http://localhost:8888",
         "redis_server": "localhost",
-        "web_server": f"http://{server}:3333",
-        "ws_server": f"ws://{server}:3333",
+        "web_server": f"http://{server}:3000",
+        "ws_server": f"ws://{server}:3000",
     },
 }
 
