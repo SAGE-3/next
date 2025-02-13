@@ -22,7 +22,8 @@
     "webapp": "nx serve webapp --host=0.0.0.0",
     "stage": "rimraf dist && yarn buildall && mkdir -p dist/apps/homebase/webapp && cp -r dist/apps/webapp/* dist/apps/homebase/webapp",
     "prod": "rimraf dist && yarn buildallprod && mkdir -p dist/apps/homebase/webapp && cp -r dist/apps/webapp/* dist/apps/homebase/webapp",
-    "prod-files": "rimraf dist && yarn build homebase-files --target=build --configuration=production --verbose",
+    "prod-homebase": "rimraf dist && nx run-many --target=build --projects=homebase,webapp --configuration=production --verbose",
+    "prod-files": "rimraf dist && nx run-many --target=build --projects=homebase-files,workers --configuration=production --verbose",
     "prod-yjs": "rimraf dist && yarn build homebase-yjs --target=build --configuration=production --verbose",
     "newapp": "nx workspace-generator --interactive newapp",
     "regen": "nx workspace-generator regen"

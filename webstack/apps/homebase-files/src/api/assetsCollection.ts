@@ -87,8 +87,8 @@ class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
       for (const asset of all) {
         const exists = fs.existsSync(asset.data.path);
         if (!exists) {
-          console.log('Assets> not present, deleting from DB', asset._id, asset.data.originalfilename);
-          await AssetsCollection.delete(asset._id);
+          console.log('Assets> not present', asset._id, asset.data.originalfilename);
+          // await AssetsCollection.delete(asset._id);
         }
       }
     }

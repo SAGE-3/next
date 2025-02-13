@@ -6,11 +6,9 @@ import expressAPIRouter from './api/router';
 import * as express from 'express';
 import * as dns from 'node:dns';
 import { loadConfig } from './config';
-import * as path from 'path';
 import helmet from 'helmet';
 import * as compression from 'compression';
 import * as cors from 'cors';
-import * as favicon from 'serve-favicon';
 import * as cookieParser from 'cookie-parser';
 import { Server } from 'http';
 import { SAGEBaseConfig, SAGEBase } from '@sage3/sagebase';
@@ -22,12 +20,9 @@ import { AddressInfo } from 'net';
  * @param {string} assetPath
  * @returns {express.Express}
  */
-export function createApp(assetPath: string): express.Express {
+export function createApp(): express.Express {
   // Express app
   const app = express();
-
-  // Set express attributes
-  app.use(favicon(path.join(assetPath, 'favicon.ico')));
 
   // Enable reverse proxy support in Express. This causes the
   // the "X-Forwarded-Proto" header field to be trusted so its
@@ -94,8 +89,7 @@ async function startServer() {
   dns.setDefaultResultOrder('ipv4first');
 
   // Create the Express object
-  const assetPath = path.join(config.root, config.assets);
-  const app = createApp(assetPath);
+  const app = createApp();
 
   // Port to serve app
   const PORT = config.port_files;

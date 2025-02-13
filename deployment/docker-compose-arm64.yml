@@ -104,6 +104,34 @@ services:
       driver: "json-file"
       options:
         max-size: "100m"
+  files-server:
+    image: "ghcr.io/sage-3/next_files:arm64"
+    depends_on:
+      - "redis-server"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.files-server.rule=Host(`${SAGE3_SERVER}`) && (PathPrefix(`/api/assets/upload`) || PathPrefix(`/api/assets/static`) || PathPrefix(`/api/files`))"
+      - "traefik.http.routers.files-server.entrypoints=websecure"
+      - "traefik.http.services.files-server.loadbalancer.server.port=3002"
+      - "traefik.http.middlewares.authheader.headers.accesscontrolallowheaders=Authorization,Content-Type"
+      - "traefik.http.routers.files-server.middlewares=authheader"
+    volumes:
+      - ./configurations/node/keys:/app/keys
+      - ./configurations/node/assets:/app/dist/apps/homebase/assets
+      - ./configurations/node/sage3-prod.hjson:/app/sage3-prod.hjson
+    deploy:
+      restart_policy:
+        condition: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
   fluentd-server:
     image: "fluent/fluentd:edge-debian"
     ports:
