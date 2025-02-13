@@ -10,7 +10,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router';
 
 import { Button, ButtonGroup, HStack, Select, Tooltip, useDisclosure, useToast } from '@chakra-ui/react';
-import { MdAdd, MdArrowDropDown, MdFileDownload, MdFileUpload, MdHelp, MdWeb, MdRemove, MdPlayArrow, MdStop, MdPlaylistPlay } from 'react-icons/md';
+import {
+  MdAdd, MdArrowDropDown, MdFileDownload,
+  MdFileUpload, MdHelp, MdWeb, MdRemove, MdPlayArrow,
+  MdStop, MdOutlineKeyboardDoubleArrowRight
+} from 'react-icons/md';
 // Date manipulation (for filename)
 import { format } from 'date-fns/format';
 
@@ -407,6 +411,25 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
     updateStateBatch(ps);
   };
 
+  // Execute the app without any checks, used for sequential execution
+  async function executeAppNoChecks(appid: string, userid: string) {
+    // Get the code from the store
+    const code = useAppStore.getState().apps.find((app) => app._id === appid)?.data.state.code;
+    // Get the kernel from the store, since function executed from monoaco editor
+    const kernel = useStore.getState().kernel[appid];
+    if (kernel && code) {
+      const response = await useKernelStore.getState().executeCode(code, kernel, userid);
+      if (response.ok) {
+        const msgId = response.msg_id;
+        useAppStore.getState().updateState(appid, { msgId: msgId, session: userid });
+        return true;
+      } else {
+        useAppStore.getState().updateState(appid, { streaming: false, msgId: '', });
+        return false;
+      }
+    }
+    return false;
+  }
 
   // Execute all selected cells
   const setExecuteAll = () => {
@@ -414,6 +437,27 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
       setExecute(app._id, true);
     });
   };
+
+  // Wait for x seconds
+  async function waitSeconds(x: number): Promise<void> {
+    await new Promise(resolve => setTimeout(resolve, x * 1000));
+  }
+
+  // Evaluate the sagecells in order
+  const setExecuteinOrder = async () => {
+    // Sort the apps based on their rank
+    const sortedApps = props.apps.sort((a, b) => a.data.state.rank - b.data.state.rank);
+    // Execute the apps in order
+    for (const app of sortedApps) {
+      const res = await executeAppNoChecks(app._id, app.data.state.session);
+      // if error, break the loop
+      if (!res) break;
+      // Give illusion of sequential execution
+      await waitSeconds(0.1);
+    }
+
+  };
+
   // Stop all selected cells
   const setStopAll = () => {
     props.apps.forEach((app) => {
@@ -464,9 +508,6 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
           0
     );
 
-    console.log('Bounding Box:', box);
-    console.log('Sorted:', sorted);
-
     if (box.orientation !== "squarish") {
       // Array of update to batch at once
       const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
@@ -499,10 +540,10 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
   }
 
   useEffect(() => {
-    console.log('Mounted');
+    // When group is selected, set the evaluation order
+    setEvaluationOrder();
     return () => {
-      console.log('Cleanup', props.apps.length);
-      // Array of update to batch at once
+      // When group is unselected, reset the rank
       const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
       props.apps.forEach((app) => {
         ps.push({ id: app._id, updates: { rank: 0 } });
@@ -559,9 +600,10 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
             <MdPlayArrow />
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Calulate Evaluation Order'} openDelay={400}>
-          <Button onClick={setEvaluationOrder} isDisabled={!canExecuteCode} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal">
-            <MdPlaylistPlay />
+
+        <Tooltip placement="top-start" hasArrow={true} label={'Execute Cells in Order'} openDelay={400}>
+          <Button onClick={setExecuteinOrder} isDisabled={!canExecuteCode} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal">
+            <MdOutlineKeyboardDoubleArrowRight />
           </Button>
         </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'Stop All Selected Cells'} openDelay={400}>

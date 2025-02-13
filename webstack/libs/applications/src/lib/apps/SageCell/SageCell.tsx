@@ -354,6 +354,7 @@ function AppComponent(props: App): JSX.Element {
       setExecute(props._id, false);
     }
   }, [execute]);
+
   // Track the interrupt flag from the store in the toolbar
   useEffect(() => {
     if (interrupt) {
