@@ -189,10 +189,9 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     if (domReady === false || attached === false) return;
-    // Start page muted if you are not a wall
-    const isWall = user?.data.userType === 'wall' ? true : false;
-    webviewNode.current.setAudioMuted(!isWall);
-    setMute(props._id, isWall);
+    // Start page muted
+    webviewNode.current.setAudioMuted(false);
+    setMute(props._id, false);
   }, [domReady, attached]);
 
   // First Load
