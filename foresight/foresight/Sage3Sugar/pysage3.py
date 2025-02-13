@@ -98,7 +98,7 @@ class PySage3:
             return self.s3_comm.create_app(obj)
         except Exception as e:
             print(f"Error during creation of app {e}")
-            return None
+            return {"success": False, "error": str(e)}
 
     def upload_file(self, room_id, filename, filedata):
         try:
@@ -357,6 +357,7 @@ class PySage3:
             return self.get_public_url(asset_id)
         else:
             return None
+        
 
     def update_state_attrs(self, app, **kwargs):
         """Updates the state attributes of the given app.
@@ -497,7 +498,7 @@ class PySage3:
         if app_type is None:
             print("Please provide an app type to filter by")
         smartbits = self.get_smartbits(room_id, board_id)
-        return [v for k, v in list(smartbits) if v.data.type == app_type]
+        return [v for k, v in list(smartbits) if v.data.type == "Stickie"]
 
     # def sort_apps_by_creation_date(self, apps: list = None) -> dict:
     #     if apps is None:

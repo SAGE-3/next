@@ -35,6 +35,7 @@ class SageCommunication(Borg):
 
         self.conf = conf
         self.prod_type = prod_type
+        print(f"""prod_type: {self.conf[self.prod_type]["web_server"]}""")
         if conf is None:
             raise Exception("confifuration not found")
         self.__headers = {"Authorization": f"Bearer {os.getenv('TOKEN')}"}
@@ -56,6 +57,8 @@ class SageCommunication(Borg):
             "upload_file": "/api/assets/upload",
             "get_time": "/api/time",
             "get_configuration": "/api/configuration",
+            "get_users": "/api/users",
+            "get_presence": "/api/presence",
         }
         self.web_config = self.get_configuration()
 
@@ -67,7 +70,8 @@ class SageCommunication(Borg):
         """
         # print(logging.getLogger().handlers)
         logger.debug(f"sending following update: {data}")
-        r = self.httpx_client.put(
+
+        r = self.httpx_client.put(            
             self.conf[self.prod_type]["web_server"]
             + self.routes["send_update"].format(app_id),
             headers=self.__headers,
@@ -180,7 +184,12 @@ class SageCommunication(Borg):
             self.conf[self.prod_type]["web_server"] + self.routes["get_configuration"],
             headers=self.__headers,
         )
-        json_data = r.json()
+        try:
+            json_data = r.json()
+        except ValueError as e:
+            print(f"Error decoding JSON: {e}")
+            print(f"Response content: {r.text}")
+            return None
         return json_data
 
     def format_public_url(self, asset_id):
@@ -218,6 +227,25 @@ class SageCommunication(Borg):
             if board_id is not None:
                 data = [app for app in data if app["data"]["boardId"] == board_id]
         return data
+
+
+    def get_users(self):
+        # TODO: handle this in try catch block to avoid breaking the app
+        url = self.conf[self.prod_type]["web_server"] + self.routes["get_users"]
+        r = self.httpx_client.get(url, headers=self.__headers)
+        return {x["_id"]:(x["data"]['name'], x["data"]['email']) for x in r.json()['data']}
+    
+
+    def get_presence(self):
+        # TODO: handle this in try catch block to avoid breaking the app
+        url = self.conf[self.prod_type]["web_server"] + self.routes["get_presence"]
+        r = self.httpx_client.get(url, headers=self.__headers)
+        r = r.json()
+        return {"userId": r["data"][0]["data"]["userId"],
+                "position": r["data"][0]["data"]['viewport']["position"],
+                "size": r["data"][0]["data"]['viewport']["size"]}
+
+
 
     def get_app(self, app_id=None, room_id=None, board_id=None):
         apps = self.get_apps(room_id, board_id, app_id)
@@ -288,4 +316,3 @@ class SageCommunication(Borg):
                 data = [app for app in data if app["data"]["roomId"] == room_id]
 
         return data
-

@@ -46,8 +46,8 @@ config = {
         "jupyter_server": "http://localhost:8888",
         "jupyter_ws": "ws://localhost:8888",
         "redis_server": "localhost",
-        "web_server": f"http://{server}:3333",
-        "ws_server": f"ws://{server}:3333",
+        "web_server": f"http://localhost:3000",
+        "ws_server": f"ws://localhost:3000",
     },
     "local": {
         "seer_server": "http://127.0.0.1:5002",

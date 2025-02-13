@@ -246,6 +246,7 @@ function AppComponent(props: App): JSX.Element {
   const resetSAGE = () => {
     updateState(props._id, { ...s, messages: initialState.messages });
     setUploaded(new Set());
+    setInput('');
   };
 
   const checkOverlap = (app1: App, app2: App) => {
@@ -377,7 +378,126 @@ function AppComponent(props: App): JSX.Element {
     return false;
   };
 
+  // const Collapsable = () => {
+  //   return (
+  //     <Collapse in={isPanelOpen} animateOpacity>
+  //       <Box
+  //         bg={bgColor}
+  //         p={4}
+  //         position="absolute"
+  //         left="100%"
+  //         top={0}
+  //         w="450px"
+  //         h="100%"
+  //         shadow="lg"
+  //         border={"4px"}
+  //         borderColor="#8d8b8f"
+  //         zIndex={2}
+  //         overflow=""
+  //         overflowY="auto"
+  //         css={{
+  //           '&::-webkit-scrollbar': {
+  //             width: '8px', // Adjust the width of the scroll bar
+  //           },
+  //           '&::-webkit-scrollbar-track': {
+  //             background: '#f1f1f1', // Track background color
+  //           },
+  //           '&::-webkit-scrollbar-thumb': {
+  //             background: '#888', // Scroll bar thumb color
+  //             borderRadius: '4px', // Rounded edges for the thumb
+  //           },
+  //           '&::-webkit-scrollbar-thumb:hover': {
+  //             background: '#555', // Thumb color on hover
+  //           },
+  //         }}
+  //       >
+  //         <Text fontSize="lg" fontWeight="bold" mb={1}>
+  //           Apps uploaded in Chat
+  //           ({uploaded.size})
+  //         </Text>
+  //         <Text fontSize="sm" mb={4}>
+  //           Drag and drop an app on the Chat window to upload.
+  //         </Text>
+  //         <Box borderBottom="1px solid" borderColor="gray.300" mb={4} />
+  //         {/* Ordered list of overlapped apps */}
+  //         <Box ml={3}>
+  //           <ol>
+  //             {[...uploaded]
+  //               .map((key) => {
+  //                 const app = apps.find((app) => app._id === key); // Find app by key
+
+  //                 if (!app) {
+  //                   setUploaded((prevSet) => {
+  //                     const newSet = new Set(prevSet);
+  //                     newSet.delete(key); // Remove invalid key
+  //                     return newSet;
+  //                   });
+  //                   return null; // Skip rendering this entry
+  //                 }
+
+  //                 const getIcon = (type: string) => {
+  //                   switch (type) {
+  //                     case 'Chat':
+  //                       return MdChat;
+  //                     case 'Stickie':
+  //                       return MdStickyNote2;
+  //                     case 'ImageViewer':
+  //                       return MdImage;
+  //                     case 'PDFViewer':
+  //                       return MdPictureAsPdf;
+  //                     default:
+  //                       return MdQuestionMark; // Default icon
+  //                   }
+  //                 };
+
+  //                 return (
+  //                   <li key={key}>
+  //                     <Text fontWeight="bold">
+  //                       <Icon as={getIcon(app.data.type)} />
+  //                       {app.data.title}
+  //                       {checkDB(app.data.title) && <Icon as={MdCheckCircle} color="green.500" boxSize={4} />}
+  //                     </Text>
+
+  //                     <Box ml={4} pl={2} borderLeft="1px solid gray">
+  //                       <Text>
+  //                         <strong>Type:</strong> {app.data.type}
+  //                       </Text>
+  //                       <Text>
+  //                         <strong>ID:</strong> {app._id}
+  //                       </Text>
+  //                       <Box mt={2}>
+  //                         <Button
+  //                           colorScheme="red"
+  //                           size="sm"
+  //                           name={app._id}
+  //                           onClick={(e) => {
+  //                             handleDelete(e);
+  //                           }}
+  //                         >
+  //                           Delete
+  //                         </Button>
+  //                       </Box>
+  //                     </Box>
+  //                     <Box mb={8} />
+  //                   </li>
+  //                 );
+  //               })}
+  //           </ol>
+  //         </Box>
+  //       </Box>
+  //     </Collapse>
+  //   );
+  // }
+
   const Collapsable = () => {
+    const handleItemClick = (appId: string) => {
+      // Append the ID to the existing input with a space separator
+      setInput((prevInput) => {
+        const trimmedPrevInput = prevInput.trim();
+        return trimmedPrevInput ? `${trimmedPrevInput} ${appId.split('-')[0]}... ` : `${appId.split('-')[0]}... `;
+      });
+    };
+  
     return (
       <Collapse in={isPanelOpen} animateOpacity>
         <Box
@@ -396,17 +516,17 @@ function AppComponent(props: App): JSX.Element {
           overflowY="auto"
           css={{
             '&::-webkit-scrollbar': {
-              width: '8px', // Adjust the width of the scroll bar
+              width: '8px',
             },
             '&::-webkit-scrollbar-track': {
-              background: '#f1f1f1', // Track background color
+              background: '#f1f1f1',
             },
             '&::-webkit-scrollbar-thumb': {
-              background: '#888', // Scroll bar thumb color
-              borderRadius: '4px', // Rounded edges for the thumb
+              background: '#888',
+              borderRadius: '4px',
             },
             '&::-webkit-scrollbar-thumb:hover': {
-              background: '#555', // Thumb color on hover
+              background: '#555',
             },
           }}
         >
@@ -416,24 +536,24 @@ function AppComponent(props: App): JSX.Element {
           </Text>
           <Text fontSize="sm" mb={4}>
             Drag and drop an app on the Chat window to upload.
+            Click on any item to add its ID to the chat input.
           </Text>
           <Box borderBottom="1px solid" borderColor="gray.300" mb={4} />
-          {/* Ordered list of overlapped apps */}
           <Box ml={3}>
             <ol>
               {[...uploaded]
                 .map((key) => {
-                  const app = apps.find((app) => app._id === key); // Find app by key
-
+                  const app = apps.find((app) => app._id === key);
+  
                   if (!app) {
                     setUploaded((prevSet) => {
                       const newSet = new Set(prevSet);
-                      newSet.delete(key); // Remove invalid key
+                      newSet.delete(key);
                       return newSet;
                     });
-                    return null; // Skip rendering this entry
+                    return null;
                   }
-
+  
                   const getIcon = (type: string) => {
                     switch (type) {
                       case 'Chat':
@@ -445,39 +565,48 @@ function AppComponent(props: App): JSX.Element {
                       case 'PDFViewer':
                         return MdPictureAsPdf;
                       default:
-                        return MdQuestionMark; // Default icon
+                        return MdQuestionMark;
                     }
                   };
-
+  
                   return (
                     <li key={key}>
-                      <Text fontWeight="bold">
-                        <Icon as={getIcon(app.data.type)} />
-                        {app.data.title}
-                        {checkDB(app.data.title) && <Icon as={MdCheckCircle} color="green.500" boxSize={4} />}
-                      </Text>
-
-                      <Box ml={4} pl={2} borderLeft="1px solid gray">
-                        <Text>
-                          <strong>Type:</strong> {app.data.type}
+                      <Box 
+                        cursor="pointer" 
+                        onClick={() => handleItemClick(app._id)}
+                        _hover={{ bg: 'gray.100' }}
+                        p={2}
+                        borderRadius="md"
+                      >
+                        <Text fontWeight="bold">
+                          <Icon as={getIcon(app.data.type)} />
+                          {app.data.title}
+                          {checkDB(app.data.title) && <Icon as={MdCheckCircle} color="green.500" boxSize={4} />}
                         </Text>
-                        <Text>
-                          <strong>ID:</strong> {app._id}
-                        </Text>
-                        <Box mt={2}>
-                          <Button
-                            colorScheme="red"
-                            size="sm"
-                            name={app._id}
-                            onClick={(e) => {
-                              handleDelete(e);
-                            }}
-                          >
-                            Delete
-                          </Button>
+  
+                        <Box ml={4} pl={2} borderLeft="1px solid gray">
+                          <Text>
+                            <strong>Type:</strong> {app.data.type}
+                          </Text>
+                          <Text>
+                            <strong>ID:</strong> {app._id}
+                          </Text>
+                          <Box mt={2}>
+                            <Button
+                              colorScheme="red"
+                              size="sm"
+                              name={app._id}
+                              onClick={(e) => {
+                                e.stopPropagation(); // Prevent triggering the parent click
+                                handleDelete(e);
+                              }}
+                            >
+                              Delete
+                            </Button>
+                          </Box>
                         </Box>
+                        <Box mb={8} />
                       </Box>
-                      <Box mb={8} />
                     </li>
                   );
                 })}
@@ -486,7 +615,7 @@ function AppComponent(props: App): JSX.Element {
         </Box>
       </Collapse>
     );
-  }
+  };
 
   // Event handlers
   const dragEventHandler = (text: string, color: string) => {
