@@ -62,35 +62,91 @@ async function startServer() {
     console.log(`SAGE3 YJS Server> Listening on port ${PORT}`);
   });
 
-  // Create WebSocket Server
-  const wss = new WebSocketServer({ noServer: true });
+  // Create WebSocket Server for YJS
+  const yjsSocketServer = new WebSocketServer({ noServer: true });
 
   // WebSocket API for YJS
-  wss.on('connection', (socket: WebSocket, _request: IncomingMessage, args: any) => {
+  yjsSocketServer.on('connection', (socket: WebSocket, _request: IncomingMessage, args: any) => {
     YUtils.setupWSConnection(socket, _request, args);
+  });
+
+  // Websocket API for WebRTC
+  const rtcSocketServer = new WebSocket.Server({ noServer: true });
+  const clients: Map<string, WebSocket[]> = new Map();
+  // Broadcast to all clients in the room
+  function emitRTC(room: string, type: string, params: any) {
+    const msg = JSON.stringify({ type, params });
+    clients.get(room)?.forEach((ws) => ws.send(msg));
+  }
+
+  rtcSocketServer.on('connection', (socket: WebSocket, _request: IncomingMessage) => {
+    // new message
+    socket.on('message', (data) => {
+      const datastr = data.toString();
+      const msg = JSON.parse(datastr);
+      switch (msg.type) {
+        case 'join':
+          if (!clients.has(msg.params.room)) {
+            clients.set(msg.params.room, []);
+          }
+          clients.get(msg.params.room)?.push(socket);
+          break;
+        case 'pixels':
+          // broadcast to all clients in the room
+          emitRTC(msg.params.room, 'data', msg.params);
+          break;
+        case 'leave':
+          clients.get(msg.params.room)?.splice(clients.get(msg.params.room)?.indexOf(socket) || 0, 1);
+          break;
+      }
+    });
+    // close handler
+    socket.on('close', () => {
+      clients.forEach((sockets) => {
+        sockets.splice(sockets.indexOf(socket) || 0, 1);
+      });
+    });
+    // error handler
+    socket.on('error', (msg) => {
+      console.log('WebRTC> error', msg);
+      clients.forEach((sockets) => {
+        sockets.splice(sockets.indexOf(socket) || 0, 1);
+      });
+    });
   });
 
   server.on('upgrade', (request, socket, head) => {
     // get url path
     const pathname = request.url;
     if (!pathname) return;
-    // Ensure it is a YJS path
-    const wsPath = pathname.split('/')[1];
-    if (wsPath !== 'yjs') return;
 
-    SAGEBase.Auth.sessionParser(request, {}, () => {
-      const session = (request as any).session;
-      if (!session?.passport?.user) {
-        console.log('Authorization> WebSocket upgrade failed: Unauthorized');
-        socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
-        socket.destroy();
-        return;
-      }
-      // E
-      wss.handleUpgrade(request, socket, head, (ws: WebSocket) => {
-        wss.emit('connection', ws, request);
+    // Get Pathname
+    const wsPath = pathname.split('/')[1];
+
+    // YJS Stuff
+    if (wsPath == 'yjs') {
+      SAGEBase.Auth.sessionParser(request, {}, () => {
+        const session = (request as any).session;
+        if (!session?.passport?.user) {
+          console.log('Authorization> WebSocket upgrade failed: Unauthorized');
+          socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+          socket.destroy();
+          return;
+        }
+        // E
+        yjsSocketServer.handleUpgrade(request, socket, head, (ws: WebSocket) => {
+          yjsSocketServer.emit('connection', ws, request);
+        });
       });
-    });
+    }
+
+    // WebRTC socket - noauth for now
+    if (wsPath === 'rtc') {
+      rtcSocketServer.handleUpgrade(request, socket, head, (ws: WebSocket) => {
+        rtcSocketServer.emit('connection', ws, request);
+      });
+      return;
+    }
   });
 
   // Handle termination
@@ -110,11 +166,5 @@ async function startServer() {
     process.on('warning', (e) => console.warn('Warning>', e.stack));
   }
 }
-
-// Configure the server in production mode
-function configureProd() {}
-
-// Configure the server in development mode
-function configureDev() {}
 
 startServer();
