@@ -10,10 +10,10 @@ import { URLMetadata } from '@sage3/backend';
 import { generateReadableID } from '@sage3/shared';
 import {
   AppsCollection,
+  AssetsCollection,
   BoardsCollection,
   RoomsCollection,
   UsersCollection,
-  AssetsCollection,
   PresenceCollection,
   MessageCollection,
   PluginsCollection,

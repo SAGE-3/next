@@ -1,4 +1,16 @@
 {
+  "/api/assets/upload": {
+    "target": "http://127.0.0.1:3002",
+    "secure": false
+  },
+  "/api/assets/static": {
+    "target": "http://127.0.0.1:3002",
+    "secure": false
+  },
+  "/api/files": {
+    "target": "http://127.0.0.1:3002",
+    "secure": false
+  },
   "/api": {
     "target": "http://127.0.0.1:3000",
     "secure": false,
