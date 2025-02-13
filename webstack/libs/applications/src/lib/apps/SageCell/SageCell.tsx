@@ -1117,7 +1117,7 @@ function AppComponent(props: App): JSX.Element {
         </Drawer>
 
         <Box className="sc" h={'calc(100% - 1px)'} w={'100%'} display="flex" flexDirection="column" backgroundColor={bgColor}>
-          <StatusBar kernelName={selectedKernelName} access={access} online={apiStatus} />
+          <StatusBar kernelName={selectedKernelName} access={access} online={apiStatus} rank={props.data.state.rank} />
           <Box
             w={'100%'}
             h={'100%'}

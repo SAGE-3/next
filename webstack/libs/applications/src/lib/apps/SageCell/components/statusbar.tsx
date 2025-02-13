@@ -6,13 +6,14 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { Badge, Stack, Spacer, Box } from '@chakra-ui/react';
+import { Badge, Grid, Box, Text, Tooltip } from '@chakra-ui/react';
 import { useHexColor } from '@sage3/frontend';
 
 interface StatusBarProps {
   kernelName: string;
   access: boolean;
   online: boolean;
+  rank: number;
 }
 
 export const StatusBar = (props: StatusBarProps) => {
@@ -23,27 +24,37 @@ export const StatusBar = (props: StatusBarProps) => {
   const accessAllowColor = useHexColor('green');
 
   return (
-    <Box w={'100%'} borderBottom={`5px solid ${props.access ? accessAllowColor : accessDeniedColor}`}>
-      <Stack direction="row" p={1}>
+    <Box w={'100%'} borderBottom={`5px solid ${props.access ? accessAllowColor : accessDeniedColor}`} userSelect={'none'}>
+      <Grid templateColumns='repeat(3, 1fr)' gap={4}>
+
         {!props.online ? (
           <></>
         ) : (
-          <Badge variant="ghost" color={props.kernelName ? green : yellow} textOverflow={'ellipsis'} width="200px">
-            {props.kernelName ? `Kernel: ${props.kernelName}` : 'No Kernel Selected'}
+          <Badge alignContent={"center"} variant="ghost" color={props.kernelName ? green : yellow} textOverflow={'ellipsis'} fontSize={'lg'}>
+            <Tooltip label={'Current evaluation kernel'} placement="top" hasArrow={true} openDelay={400} maxWidth={'fit-content'} >
+              {props.kernelName ? `Kernel: ${props.kernelName}` : 'No Kernel Selected'}
+            </Tooltip>
           </Badge>
         )}
 
-        <Spacer />
+        <Tooltip label={'Rank in evaluation'} placement="top" hasArrow={true} openDelay={400} maxWidth={'fit-content'}>
+          <Text align={"center"} color="teal.500" fontSize={'lg'} fontWeight={'bold'}># {props.rank == 0 ? '' : props.rank}</Text>
+        </Tooltip>
+
         {props.online ? ( // no kernel selected and no access
-          <Badge variant="ghost" color={green}>
-            Online
+          <Badge alignContent={"center"} variant="ghost" color={green} textAlign={"right"} fontSize={'lg'}>
+            <Tooltip label={'Kernel state'} placement="top" hasArrow={true} openDelay={400} maxWidth={'fit-content'}>
+              Online
+            </Tooltip>
           </Badge>
         ) : (
-          <Badge variant="ghost" color={red}>
-            Offline
+          <Badge alignContent={"center"} variant="ghost" color={red} textAlign={"right"} fontSize={'lg'}>
+            <Tooltip label={'Kernel state'} placement="top" hasArrow={true} openDelay={400} maxWidth={'fit-content'}>
+              Offline
+            </Tooltip>
           </Badge>
         )}
-      </Stack>
+      </Grid>
     </Box>
   );
 };
