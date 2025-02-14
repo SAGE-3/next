@@ -231,7 +231,7 @@ function AppComponent(props: App): JSX.Element {
           const stream = await navigator.mediaDevices.getDisplayMedia({
             video: {
               width: { ideal: 1920, max: 1920 }, // Cap resolution
-              height: { ideal: 1080, max: 1080 }, // Ensure it's not too large
+              height: { ideal: 1920, max: 1920 }, // Ensure it's not too large
               frameRate: { ideal: 20, max: 20 }, // Limit Framerate
             },
           });
@@ -362,7 +362,7 @@ function AppComponent(props: App): JSX.Element {
             chromeMediaSource: 'desktop',
             chromeMediaSourceId: selectedSource.id,
             maxWidth: 1920, // Prevents huge resolutions
-            maxHeight: 1080,
+            maxHeight: 1920,
             maxFrameRate: 20,
           },
         },
