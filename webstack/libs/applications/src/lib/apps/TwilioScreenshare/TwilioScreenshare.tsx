@@ -43,7 +43,6 @@ import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { MdScreenShare } from 'react-icons/md';
-import { set } from 'date-fns';
 
 type ElectronSource = {
   appIcon: null | string;
