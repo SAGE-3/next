@@ -75,7 +75,6 @@ interface MessagePropstxt {
 /* App component for Chat */
 
 function AppComponent(props: App): JSX.Element {
-  console.log(window.location);
   const s = props.data.state as AppState;
   const { roomId, boardId } = useParams();
 
