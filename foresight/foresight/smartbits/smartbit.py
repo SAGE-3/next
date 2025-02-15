@@ -7,8 +7,8 @@
 # -----------------------------------------------------------------------------
 
 from enum import Enum
-from typing import Optional, List
-from pydantic import BaseModel, Field
+from typing import Optional, Literal, List
+from pydantic import BaseModel, Field, UUID4
 from typing import ClassVar
 from abc import abstractmethod
 
@@ -219,7 +219,7 @@ class Data(TrackedBaseModel):
 
 
 class SmartBit(TrackedBaseModel):
-    app_id: str = Field(alias="_id", description="A valid UUID4 of this asset.")
+    app_id: UUID4 = Field(alias="_id", description="A valid UUID4 of this asset.")
     data: Data = Field(description="Generic app data like position, width and height")
     tags: List[str] = Field(description="List of tag assigned to this app", default=[])
     _createdAt: int

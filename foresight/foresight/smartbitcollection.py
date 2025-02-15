@@ -5,7 +5,7 @@
 #  Distributed under the terms of the SAGE3 License.  The full license is in
 #  the file LICENSE, distributed as part of this software.
 #-----------------------------------------------------------------------------
-
+import uuid
 class SmartBitsCollection():
     # TODO refactor this into properties
     def __init__(self):
@@ -22,7 +22,7 @@ class SmartBitsCollection():
         self.smartbits_collection[sb_id] = sb
 
     def __delitem__(self, sb_id):
-        del self.smartbits_collection[sb_id]
+        del self.smartbits_collection[uuid.UUID(sb_id)]
 
     def __iter__(self):
         yield from self.smartbits_collection.items()

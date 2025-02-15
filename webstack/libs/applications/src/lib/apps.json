@@ -26,6 +26,7 @@
     "PluginApp",
     "Poll",
     "RTCChat",
+    "SageAiChat",
     "SageCell",
     "SageIntelligence",
     "Seer",

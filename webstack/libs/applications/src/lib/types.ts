@@ -27,6 +27,7 @@ import { state as PDFViewerState, name as PDFViewerName } from './apps/PDFViewer
 import { state as PluginAppState, name as PluginAppName } from './apps/PluginApp';
 import { state as PollState, name as PollName } from './apps/Poll';
 import { state as RTCChatState, name as RTCChatName } from './apps/RTCChat';
+import { state as SageAiChatState, name as SageAiChatName } from './apps/SageAiChat';
 import { state as SageCellState, name as SageCellName } from './apps/SageCell';
 import { state as SageIntelligenceState, name as SageIntelligenceName } from './apps/SageIntelligence';
 import { state as SeerState, name as SeerName } from './apps/Seer';
@@ -71,6 +72,7 @@ export type AppState =
   | PluginAppState
   | PollState
   | RTCChatState
+  | SageAiChatState
   | SageCellState
   | SageIntelligenceState
   | SeerState

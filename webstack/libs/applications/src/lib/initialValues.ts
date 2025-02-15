@@ -27,6 +27,7 @@ import { name as PDFViewerName, init as defaultPDFViewer } from './apps/PDFViewe
 import { name as PluginAppName, init as defaultPluginApp } from './apps/PluginApp';
 import { name as PollName, init as defaultPoll } from './apps/Poll';
 import { name as RTCChatName, init as defaultRTCChat } from './apps/RTCChat';
+import { name as SageAiChatName, init as defaultSageAiChat } from './apps/SageAiChat';
 import { name as SageCellName, init as defaultSageCell } from './apps/SageCell';
 import { name as SageIntelligenceName, init as defaultSageIntelligence } from './apps/SageIntelligence';
 import { name as SeerName, init as defaultSeer } from './apps/Seer';
@@ -69,6 +70,7 @@ export const initialValues = {
   [PluginAppName]: defaultPluginApp,
   [PollName]: defaultPoll,
   [RTCChatName]: defaultRTCChat,
+  [SageAiChatName]: defaultSageAiChat,
   [SageCellName]: defaultSageCell,
   [SageIntelligenceName]: defaultSageIntelligence,
   [SeerName]: defaultSeer,

@@ -28,6 +28,7 @@ import { name as PDFViewerName } from './apps/PDFViewer';
 import { name as PluginAppName } from './apps/PluginApp';
 import { name as PollName } from './apps/Poll';
 import { name as RTCChatName } from './apps/RTCChat';
+import { name as SageAiChatName } from './apps/SageAiChat';
 import { name as SageCellName } from './apps/SageCell';
 import { name as SageIntelligenceName } from './apps/SageIntelligence';
 import { name as SeerName } from './apps/Seer';
@@ -70,6 +71,7 @@ import PDFViewer from './apps/PDFViewer/PDFViewer';
 import PluginApp from './apps/PluginApp/PluginApp';
 import Poll from './apps/Poll/Poll';
 import RTCChat from './apps/RTCChat/RTCChat';
+import SageAiChat from './apps/SageAiChat/SageAiChat';
 import SageCell from './apps/SageCell/SageCell';
 import SageIntelligence from './apps/SageIntelligence/SageIntelligence';
 import Seer from './apps/Seer/Seer';
@@ -114,6 +116,7 @@ export const Applications = {
   [PluginAppName]: { AppComponent: React.memo(PluginApp.AppComponent), ToolbarComponent: PluginApp.ToolbarComponent, GroupedToolbarComponent: PluginApp.GroupedToolbarComponent },
   [PollName]: { AppComponent: React.memo(Poll.AppComponent), ToolbarComponent: Poll.ToolbarComponent, GroupedToolbarComponent: Poll.GroupedToolbarComponent },
   [RTCChatName]: { AppComponent: React.memo(RTCChat.AppComponent), ToolbarComponent: RTCChat.ToolbarComponent, GroupedToolbarComponent: RTCChat.GroupedToolbarComponent },
+  [SageAiChatName]: { AppComponent: React.memo(SageAiChat.AppComponent), ToolbarComponent: SageAiChat.ToolbarComponent, GroupedToolbarComponent: SageAiChat.GroupedToolbarComponent },
   [SageCellName]: { AppComponent: React.memo(SageCell.AppComponent), ToolbarComponent: SageCell.ToolbarComponent, GroupedToolbarComponent: SageCell.GroupedToolbarComponent },
   [SageIntelligenceName]: { AppComponent: React.memo(SageIntelligence.AppComponent), ToolbarComponent: SageIntelligence.ToolbarComponent, GroupedToolbarComponent: SageIntelligence.GroupedToolbarComponent },
   [SeerName]: { AppComponent: React.memo(Seer.AppComponent), ToolbarComponent: Seer.ToolbarComponent, GroupedToolbarComponent: Seer.GroupedToolbarComponent },
