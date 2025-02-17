@@ -61,7 +61,7 @@ function AppComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
   const createApp = useAppStore((state) => state.create);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
-  const backgroundColor = useHexColor(s.color + '.300');
+  const backgroundColor = useHexColor(`${s.color}${s.color === 'purple' ? '.200' : '.300'}`);
   const scrollbarColor = useHexColor(s.color + '.400');
 
   // Keep a reference to the input element
@@ -77,21 +77,56 @@ function AppComponent(props: App): JSX.Element {
     setFontSize(s.fontSize);
   }, [s.fontSize]);
 
+  // Have to detect if this is from python some how
+  const pythonSync = useCallback(
+    (text: string, uid: string) => {
+      if (!yApps || !user) return;
+      const provider = yApps.provider;
+      const users = provider.awareness.getStates();
+      const non_python_users = Array.from(users.values()).map((item) => item.user.uid);
+      // Check if this is an update from other users...if so ignore
+      if (non_python_users.includes(uid)) return;
+      const sortedusers = non_python_users.sort();
+      const userToUpdate = sortedusers[0];
+      // Only one connected user will update
+      if (user._id !== userToUpdate) return;
+      // Update the text
+      const yText = yApps.doc.getText(props._id);
+      // Update in a transaction to avoid multiple updates
+      yApps.doc.transact(() => {
+        // Clear any existing lines
+        yText.delete(0, yText.length);
+        // Set the lines from the database
+        yText.insert(0, text);
+      });
+    },
+    [yApps, user]
+  );
+
+  // Detect if an update happens to s.text
+  useEffect(() => {
+    if (s.text) {
+      pythonSync(s.text, props._updatedBy);
+    }
+  }, [s.text]);
+
   const connectToYjs = async (textArea: HTMLTextAreaElement, yRoom: YjsRoomConnection) => {
     const yText = yRoom.doc.getText(props._id);
     const provider = yRoom.provider;
 
-    // Ensure we are always operating on the same line endings
     new TextAreaBinding(yText, textArea);
     const users = provider.awareness.getStates();
     const count = users.size;
 
     // Sync current ydoc with that is saved in the database
     const syncStateWithDatabase = () => {
-      // Clear any existing lines
-      yText.delete(0, yText.length);
-      // Set the lines from the database
-      yText.insert(0, s.text);
+      // Update in a transaction to avoid multiple updates
+      yRoom.doc.transact(() => {
+        // Clear any existing lines
+        yText.delete(0, yText.length);
+        // Set the lines from the database
+        yText.insert(0, s.text);
+      });
     };
 
     // If I am the only one here according to Yjs, then sync with database
@@ -183,7 +218,7 @@ function AppComponent(props: App): JSX.Element {
           fontFamily="Arial"
           focusBorderColor={backgroundColor}
           fontSize={fontSize + 'px'}
-          lineHeight="1em"
+          lineHeight="1.2em"
           onInput={handleTextChange}
           onKeyDown={handleKeyDown}
           readOnly={s.lock}
@@ -265,7 +300,7 @@ function ToolbarComponent(props: App): JSX.Element {
     const dt = format(new Date(), 'yyyy-MM-dd-HH:mm:ss');
     // Add whitespace at the end of the text to make it a paragraph
     const text = s.text.split('\n').join('  \n');
-    const style = `<style type="text/css" rel="stylesheet">body { background-color: ${s.color}} * {color: black} }</style>`;
+    const style = `<style type="text/css" rel="stylesheet">body { h1: ${s.color}} * {color: black} }</style>`;
     const ownerName = users.find((el) => el._id === props._createdBy)?.data.name;
     const content = `# Stickie\n${dt}\n___\n${text}\n___\nCreated by ${ownerName} with SAGE3\n${style}`;
     // generate a URL containing the text of the note

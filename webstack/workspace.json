@@ -100,6 +100,65 @@
       },
       "tags": []
     },
+    "homebase-yjs": {
+      "root": "apps/homebase-yjs",
+      "sourceRoot": "apps/homebase-yjs/src",
+      "projectType": "application",
+      "architect": {
+        "build": {
+          "builder": "@nrwl/webpack:webpack",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "target": "node",
+            "compiler": "tsc",
+            "outputPath": "dist/apps/homebase-yjs",
+            "main": "apps/homebase-yjs/src/main.ts",
+            "tsConfig": "apps/homebase-yjs/tsconfig.app.json",
+            "assets": ["apps/homebase-yjs/src/assets"]
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": [
+                {
+                  "replace": "apps/homebase-yjs/src/environments/environment.ts",
+                  "with": "apps/homebase-yjs/src/environments/environment.prod.ts"
+                }
+              ]
+            }
+          }
+        },
+        "serve": {
+          "builder": "@nrwl/js:node",
+          "options": {
+            "buildTarget": "homebase-yjs:build"
+          },
+          "configurations": {
+            "production": {
+              "buildTarget": "homebase-yjs:build:production"
+            }
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["apps/homebase-yjs/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/homebase-yjs"],
+          "options": {
+            "jestConfig": "apps/homebase-yjs/jest.config.ts",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
     "sagebase": {
       "root": "libs/sagebase",
       "sourceRoot": "libs/sagebase/src",

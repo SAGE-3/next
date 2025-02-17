@@ -56,28 +56,28 @@ asyncio.ensure_future(webAG.init())
 
 
 # Function to be run periodically
-async def my_periodic_task():
-    while True:
-        print("Task is running: number of assets ->", len(ps3.assets))
-        await asyncio.sleep(3)
+# async def my_periodic_task():
+#     while True:
+#         print("Task is running: number of assets ->", len(ps3.assets))
+#         await asyncio.sleep(3)
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Start the periodic task
-    task = asyncio.create_task(my_periodic_task())
-    yield  # Application runs here
-    # Cleanup on shutdown
-    task.cancel()
-    try:
-        await task
-    except asyncio.CancelledError:
-        print("Periodic task cancelled")
+# @asynccontextmanager
+# async def lifespan(app: FastAPI):
+#     # Start the periodic task
+#     task = asyncio.create_task(my_periodic_task())
+#     yield  # Application runs here
+#     # Cleanup on shutdown
+#     task.cancel()
+#     try:
+#         await task
+#     except asyncio.CancelledError:
+#         print("Periodic task cancelled")
 
 
 # Web server
 app = FastAPI(
-    lifespan=lifespan,
+    # lifespan=lifespan,
     title="Seer",
     description="A LangChain proxy for SAGE3.",
     version="0.1.0",
