@@ -20,7 +20,14 @@ export type HealthResponse = {
 
 // Ask request
 export type AskRequest = {
-  ctx: { previousQ: string; previousA: string; pos: number[]; roomId: string; boardId: string };
+  ctx: {
+    context: { query: string; response: string }[];
+    previousQ: string;
+    previousA: string;
+    pos: number[];
+    roomId: string;
+    boardId: string;
+  };
   id: string;
   user: string;
   location: string;
@@ -36,7 +43,14 @@ export type AskResponse = {
 
 // Web request
 export type WebQuery = {
-  ctx: { previousQ: string; previousA: string; pos: number[]; roomId: string; boardId: string };
+  ctx: {
+    context: { query: string; response: string }[];
+    previousQ: string;
+    previousA: string;
+    pos: number[];
+    roomId: string;
+    boardId: string;
+  };
   url: string;
   user: string;
   model: string;
@@ -63,7 +77,14 @@ export type WebScreenshotAnswer = {
 
 // Image request
 export type ImageQuery = {
-  ctx: { previousQ: string; previousA: string; pos: number[]; roomId: string; boardId: string };
+  ctx: {
+    context: { query: string; response: string }[];
+    previousQ: string;
+    previousA: string;
+    pos: number[];
+    roomId: string;
+    boardId: string;
+  };
   asset: string;
   user: string;
   model: string;
@@ -77,7 +98,14 @@ export type ImageAnswer = {
 
 // PDF request
 export type PDFQuery = {
-  ctx: { previousQ: string; previousA: string; pos: number[]; roomId: string; boardId: string };
+  ctx: {
+    context: { query: string; response: string }[];
+    previousQ: string;
+    previousA: string;
+    pos: number[];
+    roomId: string;
+    boardId: string;
+  };
   assetids: string[];
   user: string;
   q: string;
@@ -88,9 +116,37 @@ export type PDFAnswer = {
   actions?: any[];
 };
 
+// PDF request
+export type CSVQuery = {
+  ctx: {
+    context: { query: string; response: string }[];
+    previousQ: string;
+    previousA: string;
+    pos: number[];
+    roomId: string;
+    boardId: string;
+  };
+  assetids: string[];
+  user: string;
+  q: string;
+};
+export type CSVAnswer = {
+  img: string;
+  content: string;
+  success: boolean;
+  actions?: any[];
+};
+
 // Code request
 export type CodeRequest = {
-  ctx: { previousQ: string; previousA: string; pos: number[]; roomId: string; boardId: string };
+  ctx: {
+    context: { query: string; response: string }[];
+    previousQ: string;
+    previousA: string;
+    pos: number[];
+    roomId: string;
+    boardId: string;
+  };
   id: string;
   user: string;
   location: string;
@@ -114,5 +170,6 @@ export const AgentRoutes = {
   webshot: '/webshot',
   image: '/image',
   pdf: '/pdf',
+  csv: '/csv',
   code: '/code',
 } as const;

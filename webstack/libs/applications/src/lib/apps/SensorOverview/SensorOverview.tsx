@@ -32,13 +32,15 @@ import {
   Checkbox,
   Portal,
   Switch,
+  useToast,
 } from '@chakra-ui/react';
+import { initialValues } from '@sage3/applications/initialValues';
 
 import { MdArrowDropDown, MdArrowDropUp, MdDoubleArrow, MdSensors } from 'react-icons/md';
 import { RangeDatepicker } from 'chakra-dayzed-datepicker';
 
 // Sage Imports
-import { useAppStore } from '@sage3/frontend';
+import { apiUrls, useAppStore } from '@sage3/frontend';
 import { App } from '../../schema';
 import { AppWindow } from '../../components';
 import { state as AppState } from './index';
@@ -482,9 +484,11 @@ function ToolbarComponent(props: App): JSX.Element {
     convertFormattedTimeToDateTime(s.widget.endDate),
   ]);
 
-  const [stationMetadata, setStationMetadata] = useState([]);
+  const [stationData, setStationData] = useState<any>([]);
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
   const [isSortedOn, setIsSortedOn] = useState<{ name: string; direction: string }>({ name: 'NAME', direction: 'ascending' });
+  const createApp = useAppStore((state) => state.create);
+  const toast = useToast();
 
   // For color theme
   const textColor = useColorModeValue('gray.800', 'gray.50');
@@ -504,12 +508,83 @@ function ToolbarComponent(props: App): JSX.Element {
     }
   }, [selectedDates]);
 
+  const uploadCSVFromJSON = async (jsonData: Record<string, any[]>) => {
+    if (jsonData && Object.keys(jsonData).length > 0) {
+      const csvData = jsonToCSV(jsonData); // Convert JSON to CSV format
+      const blob = new Blob([csvData], { type: 'text/csv' });
+      const file = new File([blob], `file_${Date.now()}.csv`, { type: 'text/csv' });
+
+      const fd = new FormData();
+      fd.append('files', file);
+
+      // Add other form fields
+      fd.append('room', props.data.roomId!);
+
+      // Upload with a POST request
+      const response = await fetch(apiUrls.assets.upload, {
+        method: 'POST',
+        body: fd,
+      }).catch((error: Error) => {
+        console.log('Upload> Error: ', error);
+      });
+      if (response) {
+        const response_upload = await response.json();
+
+        createApp({
+          title: 'Station Data',
+          roomId: props.data.roomId!,
+          boardId: props.data.boardId!,
+          position: {
+            x: props.data.position.x + props.data.size.width,
+            y: props.data.position.y,
+            z: 0,
+          },
+          size: { width: 1000, height: 500, depth: 0 },
+          rotation: { x: 0, y: 0, z: 0 },
+          type: 'CSVViewer',
+          state: { assetid: response_upload[0] },
+          raised: true,
+          dragging: false,
+          pinned: false,
+        });
+        toast({
+          title: 'Info',
+          description: 'Action applied.',
+          status: 'info',
+          duration: 3000,
+          isClosable: true,
+        });
+      }
+    }
+  };
+
+  // Helper function to convert structured JSON to CSV
+  function jsonToCSV(jsonData: Record<string, any[]>): string {
+    const keys = Object.keys(jsonData); // Extract keys as headers
+    const numRows = Math.max(...keys.map((key) => jsonData[key].length)); // Find the max array length
+
+    const rows = [];
+    // Add headers row
+    rows.push(keys.join(','));
+
+    // Add data rows
+    for (let i = 0; i < numRows; i++) {
+      const row = keys.map((key) => {
+        const value = jsonData[key][i];
+        return value !== undefined ? `"${value}"` : '""'; // Ensure undefined values are empty
+      });
+      rows.push(row.join(','));
+    }
+
+    return rows.join('\n');
+  }
+
   useEffect(() => {
     const fetchStationData = async () => {
       setIsLoaded(false);
       let tmpStationMetadata: any = [];
       let url = '';
-      const stationNames = stationData.map((station) => station.name);
+      const stationNames = stationData.map((station: any) => station.name);
       if (s.widget.liveData || s.widget.startDate === s.widget.endDate) {
         url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(
           s.stationNames
@@ -527,7 +602,7 @@ function ToolbarComponent(props: App): JSX.Element {
         const sensorData = sensor['STATION'];
         tmpStationMetadata = sensorData;
       }
-      setStationMetadata(tmpStationMetadata);
+      setStationData(tmpStationMetadata[0].OBSERVATIONS);
       setIsLoaded(true);
     };
 
@@ -774,7 +849,7 @@ function ToolbarComponent(props: App): JSX.Element {
           <Select
             mx="1rem"
             size="xs"
-            w="10rem"
+            w="7rem"
             placeholder={'Select time period'}
             value={s.widget.timePeriod}
             onChange={handleSelectDateChange}
@@ -809,7 +884,7 @@ function ToolbarComponent(props: App): JSX.Element {
       </Tooltip> */}
       <Divider border={'1px'} size={'2xl'} orientation="vertical" mx="1rem" />
       <Tooltip label={'Select a variable that you would like to visualize'} aria-label="A tooltip">
-        <Select size="xs" w="10rem" placeholder={'Select Variable'} value={s.widget.yAxisNames[0]} onChange={handleChangeVariable}>
+        <Select size="xs" w="7rem" placeholder={'Select Variable'} value={s.widget.yAxisNames[0]} onChange={handleChangeVariable}>
           {s.availableVariableNames.map((name: string, index: number) => {
             return (
               <option key={index} value={name}>
@@ -823,7 +898,7 @@ function ToolbarComponent(props: App): JSX.Element {
       <Tooltip label={'Select a visualization that you would like to see'} aria-label="A tooltip">
         <Select
           size="xs"
-          w="10rem"
+          w="7rem"
           placeholder={'Select Visualization Type'}
           value={s.widget.visualizationType}
           onChange={handleVisualizationTypeChange}
@@ -836,6 +911,13 @@ function ToolbarComponent(props: App): JSX.Element {
             );
           })}
         </Select>
+      </Tooltip>
+
+      <Divider border={'1px'} size={'2xl'} orientation="vertical" mx="1rem" />
+      <Tooltip label={'Generate CSV from station data'} aria-label="A tooltip">
+        <Button size="xs" onClick={() => uploadCSVFromJSON(stationData)}>
+          CSV
+        </Button>
       </Tooltip>
 
       {s.widget.visualizationType === 'variableCard' ? (
