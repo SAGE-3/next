@@ -72,6 +72,7 @@ function AppComponent(props: App): JSX.Element {
   // App State
   const s = props.data.state as AppState;
   const update = useAppStore((state) => state.update);
+  const updateState = useAppStore((state) => state.updateState);
 
   // Local State
   const webviewNode = useRef<WebviewTag>();
@@ -189,10 +190,9 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     if (domReady === false || attached === false) return;
-    // Start page muted if you are not a wall
-    const isWall = user?.data.userType === 'wall' ? true : false;
-    webviewNode.current.setAudioMuted(!isWall);
-    setMute(props._id, isWall);
+    // Start page muted
+    webviewNode.current.setAudioMuted(false);
+    setMute(props._id, false);
   }, [domReady, attached]);
 
   // First Load
@@ -278,6 +278,8 @@ function AppComponent(props: App): JSX.Element {
       if (event.url != 'about:blank' && event.isMainFrame && !event.url.includes('.pdf')) {
         setUrl(event.url);
         setLocalURL(props._id, event.url);
+        // update the backend
+        updateState(props._id, { webviewurl: event.url });
       }
     };
 
@@ -383,12 +385,15 @@ function ToolbarComponent(props: App): JSX.Element {
   const toast = useToast();
 
   // from the UI to the react state
-  const handleUrlChange = (event: any) => setLocalURL(props._id, event.target.value);
+  const handleUrlChange = (event: any) => {
+    // setLocalURL(props._id, event.target.value);
+    setViewURL(event.target.value);
+  }
 
   // Used by electron to change the url, usually be in-page navigation.
   const changeUrl = (evt: any) => {
     evt.preventDefault();
-    let url = localURL.trim();
+    let url = viewURL.trim();
     // Check for spaces. If they exist the this isn't a url. Create a google search
     if (url.indexOf(' ') !== -1) {
       url = 'https://www.google.com/search?q=' + url.replace(' ', '+');

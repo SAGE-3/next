@@ -2,19 +2,12 @@
   // We are in production mode
   "production": true,
 
+  // Port to run the server on
+  "port": 3000,
+  "port_yjs": 3001,
+
   // Name of the server to show in the UI
   "serverName": "SAGE3 Main Server",
-
-  // HTTP Settings
-  "port": 443,
-  "tlsVersion": "TLSv1.2",
-
-  // SSL Certificate file names
-  "ssl": {
-    // Located in the `/configurations/node/keys' folder
-    "certificateFile": "localhost-server.crt",
-    "certificateKeyFile": "localhost-server.key"
-  },
 
   // These can be left alone, they are used to find the assets
   "root": ".",
@@ -122,8 +115,8 @@
       "guest",
       "jwt",
       "google",
-      "spectator",
-      "cilogon"
+      // "spectator",
+      // "cilogon"
     ],
     // A List of emails to enable those users to be admins.
     "admins": [],
@@ -138,11 +131,11 @@
       "routeEndpoint": "/auth/spectator"
     },
     // Google configuration
-    "googleConfig": {
+   "googleConfig": {
       // Client ID from the Google Developer Console
-      "clientID": "",
+      "clientID": "773749598438-sgbn6mj326jj6ggsa8n3avrc3jue0ikv.apps.googleusercontent.com",
       // Client Secret from the Google Developer Console
-      "clientSecret": "",
+      "clientSecret": "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",
       // Endpoint for the google login
       "routeEndpoint": "/auth/google",
       // Callback URL for the google login

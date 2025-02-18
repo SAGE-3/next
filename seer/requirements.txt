@@ -14,7 +14,7 @@ numpy>=1.22.2 # not directly required, pinned by Snyk to avoid a vulnerability
 urllib3>=2.2.2 # not directly required, pinned by Snyk to avoid a vulnerability
 
 # SAGE3
-git+https://github.com/SAGE-3/next.git@main#subdirectory=foresight
+git+https://github.com/SAGE-3/next.git@dev#subdirectory=foresight
 python-dotenv
 
 # Web API

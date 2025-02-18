@@ -1,4 +1,13 @@
 services:
+  traefik:
+    image: traefik:v2
+    container_name: traefik
+    restart: always
+    ports:
+      - "443:443"  # HTTPS for secure traffic
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock  # Allow Traefik to access Docker API
+      - ./configurations/traefik:/etc/traefik
   redis-server:
     image: "redis/redis-stack-server:latest"
     volumes:
@@ -33,11 +42,19 @@ services:
         condition: on-failure
   node-server:
     image: "ghcr.io/sage-3/next:arm64"
-    ports:
-      - "443:443"
     depends_on:
       - "redis-server"
       - "fluentd-server"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.node-server.rule=Host(`${SAGE3_SERVER}`)"
+      - "traefik.http.routers.node-server.entrypoints=websecure"
+      - "traefik.http.services.node-server.loadbalancer.server.port=3000"
+      - "traefik.http.routers.node-server.middlewares=ws-headers"
+      - "traefik.http.middlewares.ws-headers.headers.customrequestheaders.Upgrade=websocket"
+      - "traefik.http.middlewares.ws-headers.headers.customrequestheaders.Connection=Upgrade"
+      - "traefik.http.middlewares.authheader.headers.accesscontrolallowheaders=Authorization,Content-Type"
+      - "traefik.http.routers.node-server.middlewares=authheader"
     volumes:
       - ./configurations/node/keys:/app/keys
       - ./configurations/node/assets:/app/dist/apps/homebase/assets
@@ -46,8 +63,39 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
+      replicas: ${NODE_SERVER_REPLICAS}
     healthcheck:
-      test: ["CMD", "curl", "-f", "https://${SAGE3_SERVER}"]
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+  yjs-server:
+    image: "ghcr.io/sage-3/next_yjs:arm64"
+    depends_on:
+      - "redis-server"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.yjs-server.rule=Host(`${SAGE3_SERVER}`) && (PathPrefix(`/yjs`) || PathPrefix(`/rtc`))"
+      - "traefik.http.routers.yjs-server.entrypoints=websecure"
+      - "traefik.http.services.yjs-server.loadbalancer.server.port=3001"
+      - "traefik.http.routers.yjs-server.middlewares=ws-headers"
+      - "traefik.http.middlewares.ws-headers.headers.customrequestheaders.Upgrade=websocket"
+      - "traefik.http.middlewares.ws-headers.headers.customrequestheaders.Connection=Upgrade"
+      - "traefik.http.middlewares.authheader.headers.accesscontrolallowheaders=Authorization,Content-Type"
+      - "traefik.http.routers.yjs-server.middlewares=authheader"
+    volumes:
+      - ./configurations/node/keys:/app/keys
+      - ./configurations/node/sage3-prod.hjson:/app/sage3-prod.hjson
+    deploy:
+      restart_policy:
+        condition: on-failure
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001"]
       interval: 30s
       timeout: 30s
       retries: 3

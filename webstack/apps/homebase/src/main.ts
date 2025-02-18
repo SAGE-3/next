@@ -19,7 +19,7 @@
  */
 import * as path from 'path';
 import * as fs from 'fs';
-import { IncomingMessage, Server } from 'http';
+import { IncomingMessage } from 'http';
 import * as dns from 'node:dns';
 
 // Websocket
@@ -27,15 +27,8 @@ import { WebSocket } from 'ws';
 import { SAGEnlp, SAGEPresence, SubscriptionCache } from '@sage3/backend';
 import { setupWsforLogs } from './api/routers/custom';
 
-// YJS
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import * as Y from 'yjs';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const YUtils = require('y-websocket/bin/utils');
-
 // Create the web server with Express
 import { createApp, listenApp, serveApp } from './web';
-import { loadCredentials, listenSecureApp } from './web';
 
 // Check the token on websocket connection
 import * as jwt from 'jsonwebtoken';
@@ -78,19 +71,11 @@ async function startServer() {
   const assetPath = path.join(config.root, config.assets);
   const app = createApp(assetPath, config);
 
-  // HTTP/HTTPS server
-  let server: Server;
+  // Port to serve app
+  const PORT = config.port;
 
   // Create the server
-  if (config.production) {
-    // load the HTTPS certificates in production mode
-    const credentials = loadCredentials(config);
-    // Create the server
-    server = listenSecureApp(app, credentials, config.port);
-  } else {
-    // Create and start the HTTP web server
-    server = listenApp(app, config.port);
-  }
+  const server = listenApp(app, PORT);
 
   // Log Level
   // partial: only core logs are sent to fluentd (all user logs are ignored (Presence, User))
@@ -145,8 +130,7 @@ async function startServer() {
 
   // Websocket setup
   const apiWebSocketServer = new WebSocket.Server({ noServer: true });
-  const yjsWebSocketServer = new WebSocket.Server({ noServer: true });
-  const rtcWebSocketServer = new WebSocket.Server({ noServer: true });
+
   const logsServer = new WebSocket.Server({ noServer: true });
 
   logsServer.on('connection', (socket: WebSocket) => {
@@ -185,57 +169,6 @@ async function startServer() {
     });
   });
 
-  // Websocket API for YJS
-  // It handles disconnects so no need to handle on close
-  yjsWebSocketServer.on('connection', (socket: WebSocket, _request: IncomingMessage, args: any) => {
-    YUtils.setupWSConnection(socket, _request, args);
-  });
-
-  // Websocket API for WebRTC
-  const clients: Map<string, WebSocket[]> = new Map();
-
-  // Broadcast to all clients in the room
-  function emitRTC(room: string, type: string, params: any) {
-    const msg = JSON.stringify({ type, params });
-    clients.get(room)?.forEach((ws) => ws.send(msg));
-  }
-
-  rtcWebSocketServer.on('connection', (socket: WebSocket, _request: IncomingMessage) => {
-    // new message
-    socket.on('message', (data) => {
-      const datastr = data.toString();
-      const msg = JSON.parse(datastr);
-      switch (msg.type) {
-        case 'join':
-          if (!clients.has(msg.params.room)) {
-            clients.set(msg.params.room, []);
-          }
-          clients.get(msg.params.room)?.push(socket);
-          break;
-        case 'pixels':
-          // broadcast to all clients in the room
-          emitRTC(msg.params.room, 'data', msg.params);
-          break;
-        case 'leave':
-          clients.get(msg.params.room)?.splice(clients.get(msg.params.room)?.indexOf(socket) || 0, 1);
-          break;
-      }
-    });
-    // close handler
-    socket.on('close', () => {
-      clients.forEach((sockets) => {
-        sockets.splice(sockets.indexOf(socket) || 0, 1);
-      });
-    });
-    // error handler
-    socket.on('error', (msg) => {
-      console.log('WebRTC> error', msg);
-      clients.forEach((sockets) => {
-        sockets.splice(sockets.indexOf(socket) || 0, 1);
-      });
-    });
-  });
-
   // Upgrade an HTTP request to a WebSocket connection
   server.on('upgrade', (request, socket, head) => {
     // TODO: Declarations file was being funny again
@@ -246,13 +179,6 @@ async function startServer() {
     // get the first word of the url
     const wsPath = pathname.split('/')[1];
 
-    // WebRTC socket - noauth for now
-    if (wsPath === 'rtc') {
-      rtcWebSocketServer.handleUpgrade(req, socket, head, (ws: WebSocket) => {
-        rtcWebSocketServer.emit('connection', ws, req);
-      });
-      return;
-    }
     // Logs socket - noauth for now
     if (wsPath === 'logs') {
       logsServer.handleUpgrade(req, socket, head, (ws: WebSocket) => {
@@ -295,10 +221,6 @@ async function startServer() {
                 apiWebSocketServer.handleUpgrade(req, socket, head, (ws: WebSocket) => {
                   apiWebSocketServer.emit('connection', ws, req);
                 });
-              } else if (wsPath === 'yjs') {
-                yjsWebSocketServer.handleUpgrade(req, socket, head, (ws: WebSocket) => {
-                  yjsWebSocketServer.emit('connection', ws, req);
-                });
               }
             }
           }
@@ -317,10 +239,6 @@ async function startServer() {
             req.user = req.session.passport?.user;
             apiWebSocketServer.emit('connection', ws, req);
           });
-        } else if (wsPath === 'yjs') {
-          yjsWebSocketServer.handleUpgrade(req, socket, head, (ws: WebSocket) => {
-            yjsWebSocketServer.emit('connection', ws, req);
-          });
         }
       }
     });
@@ -335,8 +253,6 @@ async function startServer() {
   function exitHandler() {
     console.log('ExitHandler> disconnect sockets');
     apiWebSocketServer.close();
-    yjsWebSocketServer.close();
-    rtcWebSocketServer.close();
     logsServer.close();
     process.exit(2);
   }

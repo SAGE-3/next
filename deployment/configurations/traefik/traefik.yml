@@ -1,0 +1,11 @@
+entryPoints:
+  websecure:
+    address: ":443"
+    http:
+      tls: {}
+
+providers:
+  docker: {}
+  file:
+    filename: "/etc/traefik/dynamic.yml"
+    watch: true

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2025. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -7,13 +7,13 @@
  */
 
 // React
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Button, useColorModeValue, Image, Text, VStack, Spacer, Box, Link, Flex, Icon } from '@chakra-ui/react';
+import { Button, useColorModeValue, Image, Text, VStack, Spacer, Box, Link, Flex, Icon, useToast } from '@chakra-ui/react';
 import { FiExternalLink } from 'react-icons/fi';
 
 // SAGE3
-import { isElectron, useHexColor, useRouteNav } from '@sage3/frontend';
+import { isElectron, useBoardStore, useHexColor, useRoomStore, useRouteNav } from '@sage3/frontend';
 
 export function OpenDesktopPage() {
   // Navigation and routing
@@ -29,13 +29,50 @@ export function OpenDesktopPage() {
 
   const { toHome, toBoard } = useRouteNav();
 
+  const joinRoomMembership = useRoomStore((state) => state.joinRoomMembership);
+  const fetchRoom = useRoomStore((state) => state.fetchRoom);
+  const fetchBoard = useBoardStore((state) => state.fetchBoard);
+
+  const toast = useToast();
+
   const openDesktopApp = () => {
     if (!boardId || !roomId) return;
     // Get the board link
-    const link = `sage3://${window.location.host}/#/board/${roomId}/${boardId}`;
+    const link = `sage3://${window.location.host}/#/enter/${roomId}/${boardId}`;
     // Open the link in the sage3 app
     window.open(link, '_self');
   };
+
+  async function JoinBoard(roomId: string, boardId: string) {
+    const room = await fetchRoom(roomId);
+    const board = await fetchBoard(boardId);
+    if (!room || !board) {
+      // Toast user and go toHome
+      toast({
+        title: 'Error',
+        description: 'Room or Board not found',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+      toHome();
+    }
+    // Auto Join Room
+    joinRoomMembership(roomId);
+    toast({
+      title: 'Joining Board and Room',
+      description: (
+        <>
+          <p>Entering Board: {board?.data.name}</p>
+          <p>Joining Room Membership: {room?.data.name}</p>
+        </>
+      ),
+      status: 'info',
+      duration: 5000,
+      isClosable: true,
+    });
+    toBoard(roomId, boardId);
+  }
 
   useEffect(() => {
     if (!boardId || !roomId) return;
@@ -46,7 +83,7 @@ export function OpenDesktopPage() {
     // Stop this page from openeing in the Electron Client
     if (isElectron()) {
       if (boardId && roomId) {
-        toBoard(roomId, boardId);
+        JoinBoard(roomId, boardId);
       } else {
         toHome();
       }

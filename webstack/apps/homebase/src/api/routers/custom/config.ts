@@ -41,7 +41,6 @@ export function ConfigRouter(): express.Router {
     // Configuration public values
     const configuration = {
       serverName: config.serverName,
-      port: config.port,
       production: config.production,
       version: config.version,
       features: config.features,
@@ -74,7 +73,6 @@ export function InfoRouter(): express.Router {
     // Configuration public values
     const configuration = {
       serverName: config.serverName,
-      port: config.port,
       production: config.production,
       version: config.version,
       logins: config.auth.strategies,
