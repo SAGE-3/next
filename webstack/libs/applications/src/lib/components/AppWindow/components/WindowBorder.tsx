@@ -50,10 +50,8 @@ export function WindowBorder(props: WindowBorderProps) {
       width={size.width + borderWidth * 2}
       height={size.height + borderWidth * 2}
       borderRadius={borderRadius}
-      // opacity={isGrouped || dragging ? 0.6 : 1}
       opacity={0.8}
       zIndex={isGrouped || dragging ? 1000000 : -1} // Behind everything
-      // background={selected || isGrouped || highight ? selectColor : borderColor}
       background={selected || highight ? selectColor : isGrouped ? 'none' : borderColor}
       pointerEvents={'none'}
       // outline used in multi-select
