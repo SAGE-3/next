@@ -5,6 +5,7 @@
   // Port to run the server on
   "port": 3000,
   "port_yjs": 3001,
+  "port_files": 3002,
 
    // Name of the server to show in the UI
   "serverName": "My Local Server",

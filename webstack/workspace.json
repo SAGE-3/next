@@ -100,6 +100,65 @@
       },
       "tags": []
     },
+    "homebase-files": {
+      "root": "apps/homebase-files",
+      "sourceRoot": "apps/homebase-files/src",
+      "projectType": "application",
+      "architect": {
+        "build": {
+          "builder": "@nrwl/webpack:webpack",
+          "outputs": ["{options.outputPath}"],
+          "options": {
+            "target": "node",
+            "compiler": "tsc",
+            "outputPath": "dist/apps/homebase-files",
+            "main": "apps/homebase-files/src/main.ts",
+            "tsConfig": "apps/homebase-files/tsconfig.app.json",
+            "assets": ["apps/homebase-files/src/assets"]
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "extractLicenses": true,
+              "inspect": false,
+              "fileReplacements": [
+                {
+                  "replace": "apps/homebase-files/src/environments/environment.ts",
+                  "with": "apps/homebase-files/src/environments/environment.prod.ts"
+                }
+              ]
+            }
+          }
+        },
+        "serve": {
+          "builder": "@nrwl/js:node",
+          "options": {
+            "buildTarget": "homebase-files:build"
+          },
+          "configurations": {
+            "production": {
+              "buildTarget": "homebase-files:build:production"
+            }
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "outputs": ["{options.outputFile}"],
+          "options": {
+            "lintFilePatterns": ["apps/homebase-files/**/*.ts"]
+          }
+        },
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/apps/homebase-files"],
+          "options": {
+            "jestConfig": "apps/homebase-files/jest.config.ts",
+            "passWithNoTests": true
+          }
+        }
+      },
+      "tags": []
+    },
     "homebase-yjs": {
       "root": "apps/homebase-yjs",
       "sourceRoot": "apps/homebase-yjs/src",

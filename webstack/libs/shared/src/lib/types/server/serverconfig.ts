@@ -19,6 +19,7 @@ export interface ServerConfiguration {
   // Port to run the server on
   port: number;
   port_yjs: number;
+  port_files: number;
 
   // Pretty name of the server to show in the UI
   serverName?: string;
