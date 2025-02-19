@@ -79,8 +79,10 @@ export function Apps() {
     'ctrl+d,cmd+d',
     (evt) => {
       if (lassoApps.length > 0) {
+        // filter out the pinned apps
+        const tobedeleted = apps.filter((el) => lassoApps.includes(el._id)).filter((el) => !el.data.pinned).map((el) => el._id);
         // If there are selected apps, delete them
-        deleteApp(lassoApps);
+        deleteApp(tobedeleted);
         setSelectedApps([]);
       } else if (boardCursor && apps.length > 0) {
         // or find the one under the cursor
@@ -91,6 +93,7 @@ export function Apps() {
         apps
           .slice()
           .sort((a, b) => b._updatedAt - a._updatedAt)
+          .filter((el) => !el.data.pinned)
           .forEach((el) => {
             if (found) return;
             const x1 = el.data.position.x;
