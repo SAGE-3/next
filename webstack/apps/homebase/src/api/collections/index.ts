@@ -44,7 +44,7 @@ export async function loadCollections(): Promise<void> {
   await UsersCollection.initialize();
   await AssetsCollection.initialize();
   await MessageCollection.initialize(true, 60); // clear, and TTL 1min
-  await PresenceCollection.initialize(true);
+  await PresenceCollection.initialize();
   await PluginsCollection.initialize();
   await InsightCollection.initialize();
   await RoomMembersCollection.initialize();
