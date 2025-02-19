@@ -25,7 +25,8 @@ class RedisPresence {
     await this._redisClient.connect();
 
     // Set interval to check all users
-    setInterval(() => this.AllUserCheck(), 30);
+    const THIRTY_SECS = 30 * 1000;
+    setInterval(() => this.AllUserCheck(), THIRTY_SECS);
   }
 
   // Go over all presence collection and find everyone that is online.
@@ -113,9 +114,10 @@ export class SAGEPresence {
     redisPresence.addSocket(this._socketId, this._userId);
 
     // Refresh Key every 15 seconds
+    const FIFTEEN_SECS = 15 * 1000;
     setInterval(() => {
       redisPresence.refreshSocket(this._socketId, this._userId);
-    }, 15 * 1000);
+    }, FIFTEEN_SECS);
 
     this._socket.on('close', () => {
       console.log(`Presence> ${this._userId} disconnected.`);
