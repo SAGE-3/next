@@ -81,7 +81,7 @@ class SAGEPresence {
   private async checkAndUpdate(uid: string) {
     const online = await this.checkUser(uid);
     if (!online) {
-      await this._collection.update(uid, uid, { status: 'offline' });
+      await this._collection.update(uid, uid, { status: 'offline', boardId: '', roomId: '' });
     }
   }
 
