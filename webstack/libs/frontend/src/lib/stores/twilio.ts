@@ -65,11 +65,6 @@ export const useTwilioStore = create<TwilioState>()((set, get) => ({
       // Connect to the room with the token
       const room = await connect(token, {
         audio: false,
-        video: {
-          width: { ideal: 1920, max: 1920 },
-          height: { ideal: 1920, max: 1920 },
-          frameRate: 20,
-        },
         preferredVideoCodecs: [{ codec: 'VP8', simulcast: true }],
       } as ConnectOptions);
       set((state) => ({ ...state, room }));
