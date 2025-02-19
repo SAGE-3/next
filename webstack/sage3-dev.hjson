@@ -51,11 +51,11 @@
   "services": {
     "twilio": {
       // Your Account SID from www.twilio.com/console
-      "accountSid": "ACa5fdb1b5f5d49948191e9fe2f07ba199",
+      "accountSid": "",
       // API Key
-      "apiKey": "SK817e92031bc01b3c5ed505fce93537a8",
+      "apiKey": "",
       // API Secret
-      "apiSecret": "xGxkgbqvLY0WFDXVgeYmggMBIHuInsc1"
+      "apiSecret": ""
     },
     "openai": {
       // API Key
