@@ -74,8 +74,6 @@ class RedisPresence {
   public async removeSocket(socketId: string, uid: string) {
     // Remove the socket from the redis path
     this._redisClient.del(`${this._path}:${socketId}:${uid}`);
-    // Check if the user is still connected
-    this.checkAndUpdate(uid);
   }
 
   // Check if the user is online. If not, set them offline
