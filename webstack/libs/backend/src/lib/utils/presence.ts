@@ -13,7 +13,7 @@ import { createClient, RedisClientType } from 'redis';
 import { genId } from '@sage3/shared';
 
 // REDIS class to sync presence across multiple node-server replicas
-class RedisPresence {
+class SAGEPresence {
   private _redisClient!: RedisClientType;
   private _path!: string;
   private _collection!: SAGE3Collection<PresenceSchema>;
@@ -93,12 +93,12 @@ class RedisPresence {
   }
 }
 
-export const redisPresence = new RedisPresence();
+export const SAGE_PRESENCE = new SAGEPresence();
 
 /**
  * Class to help with the management of presence of users connected to the server.
  */
-export class SAGEPresence {
+export class SocketPresence {
   private _userId: string;
   private _socketId: string;
   private _socket: WebSocket;
@@ -111,22 +111,22 @@ export class SAGEPresence {
 
     this._socketId = genId();
 
-    redisPresence.addSocket(this._socketId, this._userId);
+    SAGE_PRESENCE.addSocket(this._socketId, this._userId);
 
     // Refresh Key every 15 seconds
     const FIFTEEN_SECS = 15 * 1000;
     setInterval(() => {
-      redisPresence.refreshSocket(this._socketId, this._userId);
+      SAGE_PRESENCE.refreshSocket(this._socketId, this._userId);
     }, FIFTEEN_SECS);
 
     this._socket.on('close', () => {
       console.log(`Presence> ${this._userId} disconnected.`);
-      redisPresence.removeSocket(this._socketId, this._userId);
+      SAGE_PRESENCE.removeSocket(this._socketId, this._userId);
     });
 
     this._socket.on('error', () => {
       console.log(`Presence> ${this._userId} disconnected.`);
-      redisPresence.removeSocket(this._socketId, this._userId);
+      SAGE_PRESENCE.removeSocket(this._socketId, this._userId);
     });
   }
 }

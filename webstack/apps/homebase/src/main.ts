@@ -24,7 +24,7 @@ import * as dns from 'node:dns';
 
 // Websocket
 import { WebSocket } from 'ws';
-import { SAGEnlp, SAGEPresence, redisPresence, SubscriptionCache } from '@sage3/backend';
+import { SAGEnlp, SAGE_PRESENCE, SocketPresence, SubscriptionCache } from '@sage3/backend';
 import { setupWsforLogs } from './api/routers/custom';
 
 // Create the web server with Express
@@ -138,7 +138,7 @@ async function startServer() {
   });
 
   // Load Redis Presnce
-  redisPresence.init(config.redis.url, 'SAGE3', PresenceCollection);
+  SAGE_PRESENCE.init(config.redis.url, 'SAGE3', PresenceCollection);
 
   // Websocket API for sagebase
   apiWebSocketServer.on('connection', (socket: WebSocket, req: IncomingMessage) => {
@@ -150,7 +150,7 @@ async function startServer() {
     const subCache = new SubscriptionCache(socket);
 
     // A helper class to track the presence of users.
-    new SAGEPresence(user.id, socket);
+    new SocketPresence(user.id, socket);
 
     socket.on('message', (msg) => {
       try {
