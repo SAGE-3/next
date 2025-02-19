@@ -77,7 +77,6 @@ const PresenceStore = create<PresenceState>()((set, get) => {
       }
     },
     subscribe: async () => {
-      console.log('hello');
       if (!SAGE3Ability.canCurrentUser('read', 'presence')) return;
       set({ presences: [], partialPrescences: [] });
       const reponse = await APIHttp.GET<Presence>('/presence');
