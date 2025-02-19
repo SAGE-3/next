@@ -595,15 +595,15 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
 
       {/* Execute all selected cells */}
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Execute All Selected Cells'} openDelay={400}>
+        {/* <Tooltip placement="top-start" hasArrow={true} label={'Execute All Selected Cells'} openDelay={400}>
           <Button onClick={setExecuteAll} isDisabled={!canExecuteCode} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal">
             <MdPlayArrow />
           </Button>
-        </Tooltip>
+        </Tooltip> */}
 
-        <Tooltip placement="top-start" hasArrow={true} label={'Execute Cells in Order'} openDelay={400}>
+        <Tooltip placement="top-start" hasArrow={true} label={'Execute Selected Cells in Order'} openDelay={400}>
           <Button onClick={setExecuteinOrder} isDisabled={!canExecuteCode} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal">
-            <MdOutlineKeyboardDoubleArrowRight />
+            <MdPlayArrow />
           </Button>
         </Tooltip>
         <Tooltip placement="top-start" hasArrow={true} label={'Stop All Selected Cells'} openDelay={400}>
