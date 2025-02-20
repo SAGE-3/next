@@ -48,13 +48,13 @@ export function AssetsMenu(props: AssetsMenuProps) {
   // List of selected assets: receive from the Files component
   const [ids, setIds] = useState<string[]>([]);
 
-  // subscribe to the asset store
-  useEffect(() => {
-    subscribe();
-    return () => {
-      unsubscribe();
-    };
-  }, []);
+  // // subscribe to the asset store
+  // useEffect(() => {
+  //   subscribe(props.roomId);
+  //   return () => {
+  //     unsubscribe();
+  //   };
+  // }, []);
 
   useEffect(() => {
     // Get the room name
@@ -106,7 +106,7 @@ export function AssetsMenu(props: AssetsMenuProps) {
         <Box alignItems="center" p="0" width={'2xl'} display="flex">
           <Files files={assetsList} setSelection={newSelection} />
         </Box>
-        <Divider p={0} mt={1} mb={"4px"} />
+        <Divider p={0} mt={1} mb={'4px'} />
         <Flex p={0} m={0}>
           <Text fontSize={'xs'}>Drag-drop files onto the board to add new files or click 'Upload' to transfer a folder</Text>
           <Spacer />
