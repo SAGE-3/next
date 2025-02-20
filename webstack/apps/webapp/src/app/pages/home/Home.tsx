@@ -607,12 +607,15 @@ export function HomePage() {
   useEffect(() => {
     // Update the document title
     document.title = 'SAGE3 - Home';
+
     subcribeToAssets();
     subscribeToPresence();
     subscribeToUsers();
     subscribeToRooms();
     subscribeToBoards();
     subPlugins();
+
+    if (user) updatePresence(user?._id, { boardId: '', roomId: '' });
 
     // return to room from a board
     if (roomId && roomsFetched && user) {
@@ -1013,11 +1016,7 @@ export function HomePage() {
                   </Box>
                 </Box>
               </MenuButton>
-              <MenuList
-                width="20%"
-                minWidth="220px"
-                maxWidth="400px"
-              >
+              <MenuList width="20%" minWidth="220px" maxWidth="400px">
                 {hubs.map((hub) => {
                   return (
                     <MenuItem
@@ -1392,7 +1391,8 @@ export function HomePage() {
                         {boardListView == 'grid' && (
                           <Flex
                             gap="4"
-                            pl="2" py="1"
+                            pl="2"
+                            py="1"
                             display="flex"
                             flexWrap="wrap"
                             justifyContent="left"
@@ -1882,7 +1882,7 @@ export function HomePage() {
 
                             <Text fontSize="xs" color={subTextColor}>
                               {room.data.ownerId === userId ||
-                                members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
+                              members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
                                 room.data.ownerId === userId ? (
                                   <Tag size="sm" width="100px" display="flex" justifyContent="center" colorScheme="green">
                                     Owner

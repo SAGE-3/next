@@ -81,8 +81,10 @@ const PresenceStore = create<PresenceState>()((set, get) => {
       set({ presences: [], partialPrescences: [] });
       const reponse = await APIHttp.GET<Presence>('/presence');
       if (reponse.success) {
-        set({ presences: reponse.data });
-        get().setPartialPresence(reponse.data as Presence[]);
+        // Filter out only online users
+        const onlineUsers = reponse.data?.filter((p) => p.data.status === 'online');
+        set({ presences: onlineUsers });
+        get().setPartialPresence(onlineUsers as Presence[]);
       } else {
         set({ error: reponse.message });
         return;
@@ -96,9 +98,11 @@ const PresenceStore = create<PresenceState>()((set, get) => {
       // Socket Subscribe Message
       const route = `/subscription/presence`;
       presenceSub = await SocketAPI.subscribe<Presence>(route, (message) => {
-        const presences = message.doc as Presence[];
-        set({ presences });
-        get().setPartialPresence(presences);
+        const docs = message.doc as Presence[];
+        // Filter out only online users
+        const onlineUsers = docs.filter((p) => p.data.status === 'online');
+        set({ presences: onlineUsers });
+        get().setPartialPresence(onlineUsers);
       });
     },
   };

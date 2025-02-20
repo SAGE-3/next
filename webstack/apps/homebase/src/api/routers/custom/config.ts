@@ -67,7 +67,7 @@ export function InfoRouter(): express.Router {
   // Get server configuration data structure
   router.get('/', async (req, res) => {
     // Ask presence collection for total users
-    const presenceDocs = await PresenceCollection.getAll();
+    const presenceDocs = await PresenceCollection.query('status', 'online');
     const onlineUsers = presenceDocs ? presenceDocs.length : 0;
 
     // Configuration public values
