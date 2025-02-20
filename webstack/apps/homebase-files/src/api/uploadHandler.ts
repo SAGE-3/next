@@ -22,9 +22,10 @@ import { v4 as getUUID } from 'uuid';
 import { SBAuthSchema } from '@sage3/sagebase';
 import { getFileType } from '@sage3/shared';
 // Local storage
-import { UploadConnector } from '../../../connectors/upload-connector';
+import { UploadConnector } from '../connectors/upload-connector';
 // Asset model
-import { AssetsCollection, MessageCollection } from '../../collections';
+import { AssetsCollection } from './assetsCollection';
+import { MessageCollection } from './messageCollection';
 import { AssetSchema } from '@sage3/shared/types';
 
 // Google storage and AWS S3 storage

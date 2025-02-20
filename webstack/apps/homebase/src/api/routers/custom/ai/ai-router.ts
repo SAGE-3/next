@@ -256,39 +256,39 @@ export function AiRouter(): express.Router {
             size: filedata.length,
             id: '',
           };
-          // Pass the file to the metadata and process functions
-          const mdata = await AssetsCollection.metadataFile(getUUID(), elt.filename, elt.mimetype).catch((e) => {
-            console.log('AssetsCollection> Error metadataFile', e);
-            return;
-          });
-          // Process image and pdf
-          const pdata = await AssetsCollection.processFile(getUUID(), elt.filename, elt.mimetype).catch((e) => {
-            console.log('AssetsCollection> Error processFile', e);
-            return;
-          });
-          if (mdata) {
-            // Add the new file to the collection
-            const newAsset = await AssetsCollection.add(
-              {
-                file: elt.filename,
-                owner: user.id || '-',
-                room: roomid || '-',
-                originalfilename: elt.originalname,
-                path: elt.path,
-                destination: elt.destination,
-                size: elt.size,
-                mimetype: elt.mimetype,
-                dateAdded: now,
-                derived: pdata || {},
-                ...mdata,
-              },
-              user.id
-            );
-            if (newAsset) {
-              // save the id of the asset in the file object, sent back to the client
-              elt.id = newAsset._id;
-            }
-          }
+          // // Pass the file to the metadata and process functions
+          // const mdata = await AssetsCollection.metadataFile(getUUID(), elt.filename, elt.mimetype).catch((e) => {
+          //   console.log('AssetsCollection> Error metadataFile', e);
+          //   return;
+          // });
+          // // Process image and pdf
+          // const pdata = await AssetsCollection.processFile(getUUID(), elt.filename, elt.mimetype).catch((e) => {
+          //   console.log('AssetsCollection> Error processFile', e);
+          //   return;
+          // });
+          // if (mdata) {
+          //   // Add the new file to the collection
+          //   const newAsset = await AssetsCollection.add(
+          //     {
+          //       file: elt.filename,
+          //       owner: user.id || '-',
+          //       room: roomid || '-',
+          //       originalfilename: elt.originalname,
+          //       path: elt.path,
+          //       destination: elt.destination,
+          //       size: elt.size,
+          //       mimetype: elt.mimetype,
+          //       dateAdded: now,
+          //       derived: pdata || {},
+          //       ...mdata,
+          //     },
+          //     user.id
+          //   );
+          //   if (newAsset) {
+          //     // save the id of the asset in the file object, sent back to the client
+          //     elt.id = newAsset._id;
+          //   }
+          // }
 
           // Return the response
           const responseMessage = { success: true, data: elt } as JSONResponseType;

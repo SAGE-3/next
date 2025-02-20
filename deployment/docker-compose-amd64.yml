@@ -8,7 +8,6 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock  # Allow Traefik to access Docker API
       - ./configurations/traefik:/etc/traefik
-
   redis-server:
     image: "redis/redis-stack-server:latest"
     volumes:
@@ -49,6 +48,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.node-server.rule=Host(`${SAGE3_SERVER}`)"
+      - "traefik.http.routers.node-server.priority=100"
       - "traefik.http.routers.node-server.entrypoints=websecure"
       - "traefik.http.services.node-server.loadbalancer.server.port=3000"
       - "traefik.http.routers.node-server.middlewares=ws-headers"
@@ -82,6 +82,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.yjs-server.rule=Host(`${SAGE3_SERVER}`) && (PathPrefix(`/yjs`) || PathPrefix(`/rtc`))"
+      - "traefik.http.routers.yjs-server.priority=200"
       - "traefik.http.routers.yjs-server.entrypoints=websecure"
       - "traefik.http.services.yjs-server.loadbalancer.server.port=3001"
       - "traefik.http.routers.yjs-server.middlewares=ws-headers"
@@ -105,7 +106,36 @@ services:
       driver: "json-file"
       options:
         max-size: "100m"
-
+  files-server:
+    image: "ghcr.io/sage-3/next_files:amd64"
+    depends_on:
+      - "redis-server"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.files-server.rule=Host(`${SAGE3_SERVER}`) && (PathPrefix(`/api/assets/upload`) || PathPrefix(`/api/assets/static`) || PathPrefix(`/api/files`))"
+      - "traefik.http.routers.files-server.priority=300"
+      - "traefik.http.routers.files-server.entrypoints=websecure"
+      - "traefik.http.services.files-server.loadbalancer.server.port=3002"
+      - "traefik.http.middlewares.authheader.headers.accesscontrolallowheaders=Authorization,Content-Type"
+      - "traefik.http.routers.files-server.middlewares=authheader"
+    volumes:
+      - ./configurations/node/keys:/app/keys
+      - ./configurations/node/assets:/app/dist/apps/homebase/assets
+      - ./configurations/node/sage3-prod.hjson:/app/sage3-prod.hjson
+    deploy:
+      restart_policy:
+        condition: on-failure
+      replicas: ${NODE_FILE_SERVER_REPLICAS}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3002"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
   fluentd-server:
     image: "fluent/fluentd:edge-debian"
     ports:
