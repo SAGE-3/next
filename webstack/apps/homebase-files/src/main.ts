@@ -111,6 +111,11 @@ async function startServer() {
   // Load the API Routes
   app.use('/api', router);
 
+  // Health check
+  app.get('/', (req, res) => {
+    res.status(200).send('OK');
+  });
+
   // Handle termination
   function exitHandler() {
     console.log('ExitHandler> disconnect sockets');
