@@ -48,6 +48,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.node-server.rule=Host(`${SAGE3_SERVER}`)"
+      - "traefik.http.routers.files-server.priority=100"
       - "traefik.http.routers.node-server.entrypoints=websecure"
       - "traefik.http.services.node-server.loadbalancer.server.port=3000"
       - "traefik.http.routers.node-server.middlewares=ws-headers"
@@ -81,6 +82,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.yjs-server.rule=Host(`${SAGE3_SERVER}`) && (PathPrefix(`/yjs`) || PathPrefix(`/rtc`))"
+      - "traefik.http.routers.files-server.priority=200"
       - "traefik.http.routers.yjs-server.entrypoints=websecure"
       - "traefik.http.services.yjs-server.loadbalancer.server.port=3001"
       - "traefik.http.routers.yjs-server.middlewares=ws-headers"
@@ -111,6 +113,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.files-server.rule=Host(`${SAGE3_SERVER}`) && (PathPrefix(`/api/assets/upload`) || PathPrefix(`/api/assets/static`) || PathPrefix(`/api/files`))"
+      - "traefik.http.routers.files-server.priority=300"
       - "traefik.http.routers.files-server.entrypoints=websecure"
       - "traefik.http.services.files-server.loadbalancer.server.port=3002"
       - "traefik.http.middlewares.authheader.headers.accesscontrolallowheaders=Authorization,Content-Type"
