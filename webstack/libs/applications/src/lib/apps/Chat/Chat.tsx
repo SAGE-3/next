@@ -51,14 +51,13 @@ import {
   AiAPI,
   useUserSettings,
   useUIStore,
+  EditUserSettingsModal,
 } from '@sage3/frontend';
 import { genId, AskRequest, ImageQuery, PDFQuery, CodeRequest, WebQuery, WebScreenshot } from '@sage3/shared';
 
 import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
-import { IntelligenceModal, IntelligenceMenu } from '@sage3/frontend';
-
 
 import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot } from './tRPC';
 
@@ -108,7 +107,7 @@ function AppComponent(props: App): JSX.Element {
   const scrollColor = useHexColor(sc);
   const textColor = useColorModeValue('gray.800', 'gray.100');
 
-  const { isOpen: intelligenceIsOpen, onOpen: intelligenceOnOpen, onClose: intelligenceOnClose } = useDisclosure();
+  const { isOpen: editSettingsIsOpen, onOpen: editSettingsOnOpen, onClose: editSettingsOnClose } = useDisclosure();
 
   // App state management
   const updateState = useAppStore((state) => state.updateState);
@@ -1228,7 +1227,7 @@ function AppComponent(props: App): JSX.Element {
                         placement="top"
                         hasArrow={true}
                         // label={time}
-                        label={"Drag to board - Double-click to clipboard"}
+                        label={'Drag to board - Double-click to clipboard'}
                         openDelay={400}
                         closeDelay={2000}
                       >
@@ -1303,7 +1302,7 @@ function AppComponent(props: App): JSX.Element {
                         fontSize={'xs'}
                         placement="top"
                         hasArrow={true}
-                        label={"Drag to board - Double-click to clipboard"}
+                        label={'Drag to board - Double-click to clipboard'}
                         openDelay={400}
                         closeDelay={2000}
                       >
@@ -1490,7 +1489,7 @@ function AppComponent(props: App): JSX.Element {
               colorScheme={'blue'}
               variant="ghost"
               icon={<MdSettings size="24px" />}
-              onClick={intelligenceOnOpen}
+              onClick={editSettingsOnOpen}
               width="33%"
             />
           </Tooltip>
@@ -1851,10 +1850,7 @@ function AppComponent(props: App): JSX.Element {
         </Box>
 
         {/* Intelligence settings */}
-        <IntelligenceModal isOpen={intelligenceIsOpen} onOpen={intelligenceOnOpen} onClose={intelligenceOnClose}>
-          <IntelligenceMenu notificationCount={0} />
-        </IntelligenceModal>
-
+        <EditUserSettingsModal isOpen={editSettingsIsOpen} onClose={editSettingsOnClose} tab={'intelligence'} />
       </Flex>
     </AppWindow>
   );

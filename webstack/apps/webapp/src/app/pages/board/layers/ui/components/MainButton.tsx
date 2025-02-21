@@ -43,6 +43,7 @@ import {
   MdRemoveRedEye,
   MdHelpOutline,
   MdPerson,
+  MdSettings,
 } from 'react-icons/md';
 import { BiChevronDown, BiChevronUp } from 'react-icons/bi';
 import { IoSparklesSharp } from 'react-icons/io5';
@@ -63,9 +64,9 @@ import {
   FeedbackModal,
   useConfigStore,
   HelpModal,
-  EditVisibilityModal,
   Alfred,
   truncateWithEllipsis,
+  EditUserSettingsModal,
 } from '@sage3/frontend';
 
 import { Board, OpenConfiguration } from '@sage3/shared/types';
@@ -114,7 +115,7 @@ export function MainButton(props: MainButtonProps) {
   // Help modal
   const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
   // Presence settings modal
-  const { isOpen: visibilityIsOpen, onOpen: visibilityOnOpen, onClose: visibilityOnClose } = useDisclosure();
+  const { isOpen: editSettingsIsOpen, onOpen: editSettingsOnOpen, onClose: editSettingsOnClose } = useDisclosure();
 
   const handleHelpOpen = () => {
     helpOnOpen();
@@ -122,8 +123,8 @@ export function MainButton(props: MainButtonProps) {
   const handleAlfredOpen = () => {
     alfredOnOpen();
   };
-  const handlePresenceSettingsOpen = () => {
-    visibilityOnOpen();
+  const handleEditSettingsOnOpen = () => {
+    editSettingsOnOpen();
   };
 
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
@@ -210,7 +211,7 @@ export function MainButton(props: MainButtonProps) {
       <HelpModal onClose={helpOnClose} isOpen={helpIsOpen}></HelpModal>
 
       {/* Presence settings modal dialog */}
-      <EditVisibilityModal isOpen={visibilityIsOpen} onClose={visibilityOnClose} />
+      <EditUserSettingsModal isOpen={editSettingsIsOpen} onClose={editSettingsOnClose} />
 
       {/* Alfred modal dialog */}
       {props.boardInfo && (
@@ -274,9 +275,17 @@ export function MainButton(props: MainButtonProps) {
           </MenuButton>
         )}
 
-        <MenuList maxHeight="60vh" overflowY={'auto'} overflowX="clip" width={props.boardInfo ? '100%' : '20%'}
-          minWidth="220px" maxWidth="400px" p="2px" m="0">
-          <MenuGroup title="SAGE3" p="0" m="1">
+        <MenuList
+          maxHeight="60vh"
+          overflowY={'auto'}
+          overflowX="clip"
+          width={props.boardInfo ? '100%' : '20%'}
+          minWidth="220px"
+          maxWidth="400px"
+          p="2px"
+          m="0"
+        >
+          <MenuGroup title="Support" p="0" m="1">
             {props.boardInfo && (
               <MenuItem py="1px" m="0" onClick={handleHelpOpen} icon={<MdHelpOutline size="24px" />} justifyContent="right">
                 {' '}
@@ -287,15 +296,14 @@ export function MainButton(props: MainButtonProps) {
               {' '}
               About{' '}
             </MenuItem>
-            {props.boardInfo && (
-              <MenuItem py="1px" m="0" justifyContent="right" onClick={handleAlfredOpen} icon={<MdSearch fontSize="24px" />}>
-                {' '}
-                Search{' '}
-              </MenuItem>
-            )}
             {feedbackUrl && (
               <MenuItem onClick={feedbackOnOpen} icon={<MdBugReport fontSize="24px" />} py="1px" m="0">
                 Feedback
+              </MenuItem>
+            )}
+            {(isAdmin || !isProduction) && (
+              <MenuItem onClick={openAdmin} icon={<MdOutlineVpnKey fontSize="24px" />} py="1px" m="0">
+                Admin
               </MenuItem>
             )}
           </MenuGroup>
@@ -303,7 +311,7 @@ export function MainButton(props: MainButtonProps) {
           <MenuDivider />
 
           {props.boardInfo && (
-            <MenuGroup title="Navigation" m="1">
+            <MenuGroup title="Board" m="1">
               <MenuItem onClick={(e) => handleCopyLink(e)} icon={<MdLink fontSize="24px" />} py="1px" m="0">
                 Copy Board Link
               </MenuItem>
@@ -387,23 +395,17 @@ export function MainButton(props: MainButtonProps) {
             </>
           )}
 
-          <MenuGroup title="Settings" m="1">
+          <MenuGroup title="User" m="1">
             <MenuItem onClick={editOnOpen} isDisabled={!canUpdateAccount} icon={<MdManageAccounts fontSize="24px" />} py="1px" m="0">
               Account
+            </MenuItem>
+            <MenuItem onClick={handleEditSettingsOnOpen} icon={<MdSettings fontSize="24px" />} justifyContent="right" py="1px" m="0">
+              Settings
             </MenuItem>
 
             <MenuItem onClick={toggleColorMode} icon={<MdInvertColors fontSize="24px" />} py="1px" m="0">
               {colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}
             </MenuItem>
-            <MenuItem onClick={handlePresenceSettingsOpen} icon={<MdRemoveRedEye fontSize="24px" />} justifyContent="right" py="1px" m="0">
-              Visibility
-            </MenuItem>
-
-            {(isAdmin || !isProduction) && (
-              <MenuItem onClick={openAdmin} icon={<MdOutlineVpnKey fontSize="24px" />} py="1px" m="0">
-                Admin Page
-              </MenuItem>
-            )}
 
             <MenuItem onClick={logout} icon={<MdOutlineLogout fontSize="24px" />} py="1px" m="0">
               Logout

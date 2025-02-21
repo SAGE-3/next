@@ -837,10 +837,6 @@ function createWindow() {
     // disableGeolocation(webContents.session);
   });
 
-  // Block the zoom limits
-  // i.e. pinch-to-zoom events now scale the board like a scroll event
-  mainWindow.webContents.setVisualZoomLevelLimits(1, 1);
-
   // Request from the renderer process
   ipcMain.on('asynchronous-message', (event, arg) => {
     if (arg === 'version') event.reply('version', version);
@@ -858,6 +854,14 @@ function createWindow() {
     if (mainWindow) {
       mainWindow.loadURL(location);
     }
+  });
+
+  // Block the zoom limits
+  // i.e. pinch-to-zoom events now scale the board like a scroll event
+  mainWindow.webContents.setVisualZoomLevelLimits(1, 1);
+
+  ipcMain.on('set-scale-level', (event, arg) => {
+    mainWindow.webContents.setZoomLevel(arg);
   });
 
   // Retrieve media sources for desktop sharing
