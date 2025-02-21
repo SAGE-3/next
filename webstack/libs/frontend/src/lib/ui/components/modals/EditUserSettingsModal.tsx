@@ -40,6 +40,7 @@ import { MdInfo } from 'react-icons/md';
 import { useUserSettings } from '../../../providers';
 import { useConfigStore } from '../../../stores';
 import { ServerConfiguration } from '@sage3/shared/types';
+import { isElectron } from '../../../utils';
 
 interface EditUserSettingsModalProps {
   isOpen: boolean;
@@ -72,7 +73,6 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
     toggleShowUI,
     toggleProvenance,
     toggleShowTags,
-    restoreDefaultSettings,
     setAIModel,
     setUIScale,
   } = useUserSettings();
@@ -138,31 +138,33 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
             <TabPanels>
               <TabPanel>
                 {/* Dropdown for selecting UI Scale */}
-                <FormControl display="flex" my="2" alignItems="center" justifyContent="space-between">
-                  <FormLabel htmlFor="ui-scale" mb="0">
-                    Scale
-                    <InfoTooltip label={'Adjust the size of the user interface.'} />
-                  </FormLabel>
-                  <Select
-                    id="ui-scale"
-                    colorScheme="teal"
-                    size="sm"
-                    isDisabled={!showUI}
-                    width="120px"
-                    textAlign={'right'}
-                    value={uiScale}
-                    onChange={(e) => setUIScale(e.target.value as 'xs' | 's' | 'md' | 'lg' | 'xl')}
-                  >
-                    <option value="xs">Extra Small</option>
-                    <option value="s">Small</option>
-                    <option value="md">Medium</option>
-                    <option value="lg">Large</option>
-                    <option value="xl">Extra Large</option>
-                  </Select>
-                </FormControl>
+                {isElectron() && (
+                  <FormControl display="flex" my="2" alignItems="center" justifyContent="space-between">
+                    <FormLabel htmlFor="ui-scale" mb="0">
+                      Scale
+                      <InfoTooltip label={'Adjust the size of the user interface.'} />
+                    </FormLabel>
+                    <Select
+                      id="ui-scale"
+                      colorScheme="teal"
+                      size="sm"
+                      isDisabled={!showUI}
+                      width="120px"
+                      textAlign={'right'}
+                      value={uiScale}
+                      onChange={(e) => setUIScale(e.target.value as 'xs' | 's' | 'md' | 'lg' | 'xl')}
+                    >
+                      <option value="xs">Extra Small</option>
+                      <option value="s">Small</option>
+                      <option value="md">Medium</option>
+                      <option value="lg">Large</option>
+                      <option value="xl">Extra Large</option>
+                    </Select>
+                  </FormControl>
+                )}
                 <FormControl display="flex" mt="2" alignItems="center" justifyContent="space-between">
                   <FormLabel htmlFor="hide-interface" mb="0">
-                    Show
+                    Show/Hide Interface
                     <InfoTooltip label={'Show/Hide SAGE3 menus and buttons.'} />
                   </FormLabel>
                   <Switch id="other-viewports" colorScheme="teal" isChecked={showUI} onChange={toggleShowUI} />

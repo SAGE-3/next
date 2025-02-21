@@ -6,6 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { isElectron } from 'libs/applications/src/lib/apps/Cobrowse/util';
 import { useCallback, createContext, useContext, useState, useEffect } from 'react';
 
 /**
@@ -34,6 +35,14 @@ type UserSettings = {
   primaryActionMode: 'lasso' | 'grab' | 'pen' | 'eraser';
   aiModel: 'llama' | 'openai';
   uiScale: 'xs' | 's' | 'md' | 'lg' | 'xl';
+};
+
+const uiScaleDict = {
+  xs: -1.0,
+  s: -0.5,
+  md: 0,
+  lg: 0.5,
+  xl: 1.0,
 };
 
 const defaultSettings: UserSettings = {
@@ -236,6 +245,9 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
         const newSettings = { ...prev };
         newSettings.uiScale = value;
         setUserSettings(newSettings);
+        if (isElectron()) {
+          window.electron.send('set-scale-level', uiScaleDict[value] / window.devicePixelRatio);
+        }
         return newSettings;
       });
     },

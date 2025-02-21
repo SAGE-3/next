@@ -31,6 +31,7 @@ const validChannels = [
   'open-webview',
   'get-servers-request',
   'get-servers-response',
+  'set-scale-level',
 ];
 
 contextBridge.exposeInMainWorld('electron', {
