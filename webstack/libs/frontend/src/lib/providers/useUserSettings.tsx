@@ -8,7 +8,6 @@
 
 import { useCallback, createContext, useContext, useState, useEffect } from 'react';
 
-
 /**
  * Represents the user preferences for the application.
  *
@@ -34,6 +33,7 @@ type UserSettings = {
   selectedBoardListView: 'grid' | 'list';
   primaryActionMode: 'lasso' | 'grab' | 'pen' | 'eraser';
   aiModel: 'llama' | 'openai';
+  uiScale: 'xs' | 's' | 'md' | 'lg' | 'xl';
 };
 
 const defaultSettings: UserSettings = {
@@ -46,6 +46,7 @@ const defaultSettings: UserSettings = {
   selectedBoardListView: 'grid',
   primaryActionMode: 'lasso',
   aiModel: 'llama',
+  uiScale: 'xs',
 };
 
 const USER_SETTINGS_KEY = 's3_user_settings';
@@ -63,21 +64,23 @@ type UserSettingsContextType = {
   setDefaultPrimaryActionMode: () => void;
   restoreDefaultSettings: () => void;
   setAIModel: (value: UserSettings['aiModel']) => void;
+  setUIScale: (value: UserSettings['uiScale']) => void;
 };
 
 const UserSettingsContext = createContext<UserSettingsContextType>({
   settings: defaultSettings,
-  toggleShowCursors: () => { },
-  toggleShowViewports: () => { },
-  toggleShowAppTitles: () => { },
-  toggleProvenance: (value: UserSettings['showProvenance']) => { },
-  toggleShowUI: () => { },
-  toggleShowTags: () => { },
-  setBoardListView: (value: UserSettings['selectedBoardListView']) => { },
-  setPrimaryActionMode: (value: UserSettings['primaryActionMode']) => { },
-  setDefaultPrimaryActionMode: () => { },
-  restoreDefaultSettings: () => { },
-  setAIModel: (value: UserSettings['aiModel']) => { },
+  toggleShowCursors: () => {},
+  toggleShowViewports: () => {},
+  toggleShowAppTitles: () => {},
+  toggleProvenance: (value: UserSettings['showProvenance']) => {},
+  toggleShowUI: () => {},
+  toggleShowTags: () => {},
+  setBoardListView: (value: UserSettings['selectedBoardListView']) => {},
+  setPrimaryActionMode: (value: UserSettings['primaryActionMode']) => {},
+  setDefaultPrimaryActionMode: () => {},
+  restoreDefaultSettings: () => {},
+  setAIModel: (value: UserSettings['aiModel']) => {},
+  setUIScale: (value: UserSettings['uiScale']) => {},
 });
 
 /**
@@ -156,15 +159,17 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
     });
   }, [setSettings]);
 
-  const toggleProvenance = useCallback((value: UserSettings['showProvenance']) => {
-    setSettings((prev) => {
-      const newSettings = { ...prev };
-      newSettings.showProvenance = value;
-      setUserSettings(newSettings);
-      return newSettings;
-    });
-  }, [setSettings]);
-
+  const toggleProvenance = useCallback(
+    (value: UserSettings['showProvenance']) => {
+      setSettings((prev) => {
+        const newSettings = { ...prev };
+        newSettings.showProvenance = value;
+        setUserSettings(newSettings);
+        return newSettings;
+      });
+    },
+    [setSettings]
+  );
 
   const toggleShowTags = useCallback(() => {
     setSettings((prev) => {
@@ -225,6 +230,18 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
     setUserSettings(defaultSettings);
   }, [setSettings]);
 
+  const setUIScale = useCallback(
+    (value: UserSettings['uiScale']) => {
+      setSettings((prev) => {
+        const newSettings = { ...prev };
+        newSettings.uiScale = value;
+        setUserSettings(newSettings);
+        return newSettings;
+      });
+    },
+    [setSettings]
+  );
+
   return (
     <UserSettingsContext.Provider
       value={{
@@ -240,6 +257,7 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
         setDefaultPrimaryActionMode,
         restoreDefaultSettings,
         setAIModel,
+        setUIScale,
       }}
     >
       {props.children}

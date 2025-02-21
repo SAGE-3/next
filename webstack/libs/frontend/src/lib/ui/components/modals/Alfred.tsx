@@ -62,8 +62,7 @@ import {
   downloadFile,
   apiUrls,
   useUserSettings,
-  IntelligenceModal,
-  IntelligenceMenu,
+  EditUserSettingsModal,
 } from '@sage3/frontend';
 
 import { AppName, AppState } from '@sage3/applications/schema';
@@ -102,7 +101,7 @@ export function Alfred(props: props) {
   // User
   const { user, accessId } = useUser();
   const { boardCursor } = useCursorBoardPosition();
-  const [username, setUsername] = useState('');
+  const [, setUsername] = useState('');
 
   useEffect(() => {
     if (user) {
@@ -397,7 +396,7 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
   const [buttonList, setButtonList] = useState<JSX.Element[]>([]);
   // colors
   const intelligenceColor = useColorModeValue('purple.500', 'purple.400');
-  const { isOpen: intelligenceIsOpen, onOpen: intelligenceOnOpen, onClose: intelligenceOnClose } = useDisclosure();
+  const { isOpen: editSettingsIsOpen, onOpen: editSettingsOnOpen, onClose: editSettingsOnClose } = useDisclosure();
 
   // Select the file when clicked
   const handleChange = (event: React.FormEvent<HTMLInputElement>) => {
@@ -595,7 +594,6 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
               />
             </InputGroup>
 
-
             {/* Help box */}
             <Popover trigger="hover">
               <PopoverTrigger>
@@ -655,11 +653,10 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
             </Popover>
 
             <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Settings'} openDelay={400}>
-              <Button p={0} m={'8px 8px 8px 0px'} onClick={intelligenceOnOpen}>
+              <Button p={0} m={'8px 8px 8px 0px'} onClick={editSettingsOnOpen}>
                 <MdSettings size="24px" />
               </Button>
             </Tooltip>
-
           </HStack>
           <VStack m={'0px 4px 4px 6px'} p={0} overflowY={'auto'} overflowX={'clip'} ref={listRef} spacing={1}>
             {buttonList}
@@ -668,9 +665,7 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
       </Modal>
 
       {/* Intelligence settings */}
-      <IntelligenceModal isOpen={intelligenceIsOpen} onOpen={intelligenceOnOpen} onClose={intelligenceOnClose}>
-        <IntelligenceMenu notificationCount={0} />
-      </IntelligenceModal>
+      <EditUserSettingsModal isOpen={editSettingsIsOpen} onClose={editSettingsOnClose} tab={'intelligence'} />
     </>
   );
 }
