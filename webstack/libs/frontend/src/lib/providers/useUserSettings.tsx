@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2025. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -244,6 +244,7 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
   const restoreDefaultSettings = useCallback(() => {
     setSettings(defaultSettings);
     setUserSettings(defaultSettings);
+    setElectronUIScale(defaultSettings.uiScale);
   }, [setSettings]);
 
   const setUIScale = useCallback(
@@ -252,9 +253,7 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
         const newSettings = { ...prev };
         newSettings.uiScale = value;
         setUserSettings(newSettings);
-        if (isElectron()) {
-          setElectronUIScale(value);
-        }
+        setElectronUIScale(value);
         return newSettings;
       });
     },
