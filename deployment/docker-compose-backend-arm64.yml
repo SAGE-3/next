@@ -37,8 +37,8 @@ services:
       - "127.0.0.1:3002:3002"
     volumes:
       - ../webstack/keys:/app/keys
-      - ../webstack/dist/apps/homebase/assets:/app/dist/apps/homebase/assets
       - ../webstack/sage3-prod.hjson:/app/sage3-prod.hjson
+      - ../webstack/assets:/app/assets
     deploy:
       restart_policy:
         condition: on-failure
