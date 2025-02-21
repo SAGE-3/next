@@ -75,6 +75,7 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
     toggleShowTags,
     setAIModel,
     setUIScale,
+    restoreDefaultSettings,
   } = useUserSettings();
 
   const showCursors = userSettings.showCursors;
@@ -141,7 +142,7 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
                 {isElectron() && (
                   <FormControl display="flex" my="2" alignItems="center" justifyContent="space-between">
                     <FormLabel htmlFor="ui-scale" mb="0">
-                      Scale
+                      Interface Scale
                       <InfoTooltip label={'Adjust the size of the user interface.'} />
                     </FormLabel>
                     <Select
@@ -164,7 +165,7 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
                 )}
                 <FormControl display="flex" mt="2" alignItems="center" justifyContent="space-between">
                   <FormLabel htmlFor="hide-interface" mb="0">
-                    Show/Hide Interface
+                    Show User Interface
                     <InfoTooltip label={'Show/Hide SAGE3 menus and buttons.'} />
                   </FormLabel>
                   <Switch id="other-viewports" colorScheme="teal" isChecked={showUI} onChange={toggleShowUI} />
@@ -247,11 +248,11 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
             </TabPanels>
           </Tabs>
         </ModalBody>
-        {/* <ModalFooter display="flex" justifyContent={'left'}>
+        <ModalFooter display="flex" justifyContent={'left'}>
           <Button colorScheme="teal" size="sm" width="100%" onClick={restoreDefaultSettings} ref={initialRef}>
             Restore Default Settings
           </Button>
-        </ModalFooter> */}
+        </ModalFooter>
       </ModalContent>
     </Modal>
   );

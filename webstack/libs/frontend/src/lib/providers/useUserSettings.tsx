@@ -55,7 +55,7 @@ const defaultSettings: UserSettings = {
   selectedBoardListView: 'grid',
   primaryActionMode: 'lasso',
   aiModel: 'llama',
-  uiScale: 'xs',
+  uiScale: 'md',
 };
 
 const USER_SETTINGS_KEY = 's3_user_settings';
