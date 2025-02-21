@@ -21,6 +21,7 @@ export const schema = z.object({
     uploadDate: z.number(),
     uploadedBy: z.string()
   }).array(),
+  
   messages: z
     .object({
       id: z.string(),
