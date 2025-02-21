@@ -463,6 +463,11 @@ export function HomePage() {
     localStorage.setItem('s3_intro_done', 'false');
   };
 
+  const handleBoardDoubleClick = (board: Board) => {
+    setSelectedBoard(board);
+    enterBoardModalOnOpen();
+  };
+
   // Load the steps when room changes and component mounts
   useEffect(() => {
     handleSetJoyrideSteps();
@@ -602,6 +607,8 @@ export function HomePage() {
   useEffect(() => {
     // Update the document title
     document.title = 'SAGE3 - Home';
+
+    subcribeToAssets();
     subscribeToPresence();
     subscribeToUsers();
     subscribeToRooms();
@@ -614,7 +621,6 @@ export function HomePage() {
     if (roomId && roomsFetched && user) {
       const room = rooms.find((r) => r._id === roomId);
       if (room) {
-        subcribeToAssets(room._id);
         setSelectedRoom(room);
         setSelectedQuickAccess(undefined);
         setSelectedBoard(undefined);
@@ -631,9 +637,6 @@ export function HomePage() {
     if (user) {
       const roomId = selectedRoom ? selectedRoom._id : '';
       updatePresence(userId, { roomId });
-      if (selectedRoom) {
-        subcribeToAssets(selectedRoom._id);
-      }
     }
     setBoardSearch('');
   }, [selectedRoom]);
