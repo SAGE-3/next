@@ -58,10 +58,8 @@ class SageCommunication(Borg):
             "get_time": "/api/time",
             "get_configuration": "/api/configuration",
             "get_users": "/api/users",
-<<<<<<< HEAD
             "get_presence": "/api/presence",
-=======
->>>>>>> 122d40bd43b49d378b3929c5bb53e00ad34553e6
+
         }
         self.web_config = self.get_configuration()
 
@@ -231,10 +229,7 @@ class SageCommunication(Borg):
                 data = [app for app in data if app["data"]["boardId"] == board_id]
         return data
 
-<<<<<<< HEAD
 
-=======
->>>>>>> 122d40bd43b49d378b3929c5bb53e00ad34553e6
     def get_users(self):
         # TODO: handle this in try catch block to avoid breaking the app
         url = self.conf[self.prod_type]["web_server"] + self.routes["get_users"]
