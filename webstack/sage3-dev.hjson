@@ -12,7 +12,7 @@
 
   // These can be left alone, they are used to find the assets
   "root": ".",
-  "public": "dist/apps/homebase/assets",
+  "public": "assets",
   "assets": "dist/apps/webapp/assets/",
 
   // Redis Database Config
@@ -115,8 +115,7 @@
     "strategies": [
       "guest",
       "jwt",
-      "google",
-      // "spectator" 
+      "google" // "spectator" 
       // "cilogon"
     ],
     // A List of emails to enable those users to be admins.
