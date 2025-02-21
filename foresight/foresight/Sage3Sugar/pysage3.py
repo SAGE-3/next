@@ -31,9 +31,12 @@ from foresight.alignment_strategies import *
 from pydantic import BaseModel, Field
 
 
+
+
 class PySage3:
     def __init__(self, conf, prod_type):
         print("Configuring ps3 client ... ")
+        
 
         self.done_init = False
         self.conf = conf
@@ -250,7 +253,10 @@ class PySage3:
                 all_updates = msg["event"]["updates"]
                 msg_updates = {}
                 # find the updates for this specific app
-                for u in all_updates:
+                # TODO:  why is all_updates a dict somttimes with {'raised': False}
+                if type(all_updates) == dict:
+                    continue
+                for u in all_updates:                
                     if u["id"] == app_id:
                         msg_updates = u["updates"]
                         break
