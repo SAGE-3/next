@@ -82,6 +82,7 @@ class SageCommunication(Borg):
         #  will need to replace the print with a better solution
         return r
 
+
     def send_app_batch_update(self, data):
         """
         :param app_id:

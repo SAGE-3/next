@@ -17,7 +17,7 @@
 import uuid
 import json
 import copy
-from typing import List
+from typing import List, Optional
 from foresight.board import Board
 from foresight.room import Room
 from foresight.smartbitfactory import SmartBitFactory
@@ -28,9 +28,7 @@ from foresight.json_templates.templates import create_app_template
 
 # TODO import functions explicitly below
 from foresight.alignment_strategies import *
-from pydantic import BaseModel, Field
-
-
+from pydantic import BaseModel, Field, ValidationError
 
 
 class PySage3:
@@ -405,6 +403,23 @@ class PySage3:
 
     def get_app(self, app_id: str = None) -> dict:
         return self.s3_comm.get_app(app_id)
+    
+    def upload_to_chat(self, app_id: str = None, item=None):
+        try:
+            current_state = self.get_app(app_id)
+            if current_state is None:
+                return {"success": False, "error": "App not found"}
+
+            if any(uploaded_item["id"] == item["id"] for uploaded_item in current_state['data']['state']['uploaded']):
+                return {"success": False, "error": "Item already uploaded"}
+            
+            current_state['data']['state']['uploaded'].append(item)
+            self.s3_comm.send_app_update(app_id, current_state['data'])
+            return {"success": True, "error": None}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+
 
     def get_apps(
         self,

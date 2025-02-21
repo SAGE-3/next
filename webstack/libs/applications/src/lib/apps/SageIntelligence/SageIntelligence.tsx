@@ -73,6 +73,14 @@ interface MessagePropstxt {
   };
 }
 
+interface UploadedItem {
+  id: string;
+  title: string;
+  type: string;
+  uploadDate: number;
+  uploadedBy: string;
+}
+
 /* App component for Chat */
 
 function AppComponent(props: App): JSX.Element {
@@ -109,7 +117,7 @@ function AppComponent(props: App): JSX.Element {
   const [status] = useState<string>('AI can make mistakes. Check important information.');
   // const [location, setLocation] = useState('');
 
-  const [uploaded, setUploaded] = useState<Set<string>>(new Set());
+  const [uploaded, setUploaded] = useState<UploadedItem[]>([]);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   // const [sortedMessages, setSortedMessages] = useState([]);
 
@@ -144,6 +152,20 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [serverResponse]);
 
+  // useEffect(() =>{
+  //   updateState(props._id, {
+  //     ...s,
+  //     uploaded: [...new Set([...s.uploaded, ...uploaded])], 
+  //   }); 
+  // }, [uploaded.length]);
+
+  useEffect(() => {
+    // Update local state when s.uploaded changes externally
+    if (s.uploaded) {
+      setUploaded(s.uploaded);
+    }
+  }, [s.uploaded]);
+
 
 //   useEffect(() => {
 //     console.log('State:', s.uploaded);
@@ -177,11 +199,22 @@ function AppComponent(props: App): JSX.Element {
 
 
 
-  // Input text for query
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
     setInput(value);
   };
+
+
+  // const addUploadedItem = (newItem: UploadedItem) => {
+  //   setUploaded((prev) => {
+  //     // Check for uniqueness by title
+  //     if (prev.some(item => item.title === newItem.title)) {
+  //       return prev;
+  //     }
+  //     return [...prev, newItem];
+  //   });
+  // };
+
 
   const showToast = (title: string, description: string, status: 'info' | 'warning' | 'error' | 'success') => {
     toast({
@@ -278,7 +311,7 @@ function AppComponent(props: App): JSX.Element {
   // Reset the chat: clear previous question and answer, and all the messages
   const resetSAGE = () => {
     updateState(props._id, { ...s, uploaded: [], messages: initialState.messages });
-    setUploaded(new Set());
+    setUploaded([]);
     setInput('');
   };
 
@@ -317,45 +350,59 @@ function AppComponent(props: App): JSX.Element {
     
     
   };
-  
-  useEffect(() => {
-    // Store the initial positions of all apps
-    apps.forEach((app, index) => {
-      previousPositionsRef.current.set(app, index);
-    });
-  }, []);
 
+  const handleAddUploaded = (newItem: UploadedItem) => {
+    // Only add if there isn’t already an item with the same id
+    if (uploaded.some((item) => item.id === newItem.id)) {
+      return;
+    }
+    const updatedList = [...uploaded, newItem];
+    setUploaded(updatedList);
+    updateState(props._id, { ...s, uploaded: updatedList }); // Sync with external state
+  };
 
   useEffect(() => {
     const myApp = apps.find((app) => app._id === props._id);
-    // If there is no myApp, changes in other apps should not be considered
     if (!myApp) return;
-    // If myApp is a part of a selection, changes should not be considered
     if (selectedAppsList.includes(props._id)) return;
-
-    // Check for overlap with other apps
+  
     apps.forEach((otherApp) => {
-      // check If apps pther than myApp overlap with myApp 
-      if ((otherApp._id !== myApp._id) && checkOverlap(myApp, otherApp)) {
-
-        // If one app in a list of selected apps overlap, 
-        // upload all of them to myApp
-        if (selectedAppsList.includes(otherApp._id)){
-          setUploaded((prev) =>{
-            const newSet = new Set([...prev, ...selectedAppsList]);
-            return newSet;
+      if (otherApp._id !== myApp._id && checkOverlap(myApp, otherApp)) {
+        // Build an uploaded item for the overlapping app
+        const newItem = {
+          id: otherApp._id,
+          title: otherApp.data.title,
+          type: otherApp.data.type,
+          uploadDate: Date.now(), // or use a serverTime call if needed
+          // uploadedBy: otherApp.data.userName || 'unknown',
+          uploadedBy: 'unknown',
+        };
+  
+        // If the overlapping app is also in the selected apps list, add each one
+        if (selectedAppsList.includes(otherApp._id)) {
+          // For each app ID in the selected list, find its corresponding app data
+          selectedAppsList.forEach((id) => {
+            const selectedApp = apps.find((app) => app._id === id);
+            if (selectedApp) {
+              const selectedItem = {
+                id: selectedApp._id,
+                title: selectedApp.data.title,
+                type: selectedApp.data.type,
+                uploadDate: Date.now(),
+                // uploadedBy: selectedApp.data.uploadedBy || 'unknown',
+                uploadedBy: 'unknown',
+              };
+              handleAddUploaded(selectedItem);
+            }
           });
-        } else{
-          // Otherwise just upload the single app
-          setUploaded((prev) => {
-            const newSet = new Set(prev);
-            newSet.add(otherApp._id);
-            return newSet;
-          });
+        } else {
+          // Otherwise, add just the single new item
+          handleAddUploaded(newItem);
         }
       }
     });
   }, [apps]);
+  
 
   // Wait for new messages to scroll to the bottom
   // This will scroll to the bottom of the chat box when new messages are added
@@ -408,7 +455,12 @@ function AppComponent(props: App): JSX.Element {
   };
 
   const checkDB = (filename: string): boolean => {
-    return false;
+    return true;
+  };
+  const handleDelete = (itemId: string) => {
+    const updatedList = uploaded.filter((u) => u.id !== itemId);
+    setUploaded(updatedList);
+    updateState(props._id, { ...s, uploaded: updatedList }); // Sync with external state
   };
   
   const Collapsable = () => {
@@ -454,7 +506,7 @@ function AppComponent(props: App): JSX.Element {
         >
           <Text fontSize="lg" fontWeight="bold" mb={1}>
             Apps uploaded in Chat
-            ({uploaded.size})
+            ({uploaded.length})
           </Text>
           <Text fontSize="sm" mb={4}>
             Drag and drop an app on the Chat window to upload.
@@ -463,44 +515,38 @@ function AppComponent(props: App): JSX.Element {
           <Box borderBottom="1px solid" borderColor="gray.300" mb={4} />
           <Box ml={3}>
             <ol>
-              {[...uploaded]
-                .map((key) => {
-                  return (
-                    <li key={key}>
-                      <Box
-                        cursor="pointer"
-                        onClick={() => handleItemClick(key)}
-                        _hover={{ bg: 'gray.100' }}
-                        p={2}
-                        borderRadius="md"
-                        marginBottom={3}
+              {uploaded.map((item) => {
+              return (
+                <li key={item.id}>
+                  <Box
+                    cursor="pointer"
+                    _hover={{ bg: 'gray.100' }}
+                    p={2}
+                    borderRadius="md"
+                    marginBottom={3}
+                  >
+                    <Text fontWeight="bold">
+                      {checkDB(item.id) && <Icon as={MdCheckCircle} color="green.500" boxSize={4} mr={2} />}
+                      <Box as="span" mr={2}
+                      onClick={() => handleItemClick(item.id)}
                       >
-                        <Text fontWeight="bold">
-                        <strong>{`${key.substring(0,25)}...`}</strong>
-                        <Button
-                        position={'absolute'}
+                        <strong>{`${item.id.substring(0, 25)}...`}</strong>
+                      </Box>
+                      <Button
+                        position="absolute"
                         right={5}
                         colorScheme="red"
                         size="md"
-                        name={key}
-                        onClick={(e) => {
-                          e.stopPropagation(); // Prevent triggering the parent click
-                          setUploaded((prevSet) => {
-                            const newSet = new Set(prevSet);
-                            newSet.delete(key);
-                            return newSet;
-                          });
-                        }}
+                        name={item.title}
+                        onClick={(e) => handleDelete(item.id)}
                       >
                         Delete
                       </Button>
-                        </Text>
-                      </Box>
-                    </li>
-                  )
-                }
-              )}
-
+                    </Text>
+                  </Box>
+                </li>
+              );
+            })}
 
               {/* {[...uploaded]
                 .map((key) => {
@@ -600,11 +646,11 @@ function AppComponent(props: App): JSX.Element {
     };
   };
 
-  const handleDelete = (event: React.MouseEvent<HTMLButtonElement>) => {
-    const appId = event.currentTarget.name;
-    uploaded.delete(appId);
+  // const handleDelete = (event: React.MouseEvent<HTMLButtonElement>) => {
+  //   const appId = event.currentTarget.name;
+  //   uploaded.delete(appId);
     
-  };
+  // };
   
   const handleCopy = (message: MessagePropstxt['message']) => {
     if (navigator.clipboard) {

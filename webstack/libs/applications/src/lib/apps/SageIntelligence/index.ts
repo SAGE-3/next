@@ -15,12 +15,15 @@ import { z } from 'zod';
  */
 
 export const schema = z.object({
-  uploaded: z.object({
-    title: z.string(),
-    type: z.string(),
-    uploadDate: z.number(),
-    uploadedBy: z.string()
-  }).array(),
+  uploaded: z.array(
+    z.object({
+      id: z.string(),
+      title: z.string(),
+      type: z.string(),
+      uploadDate: z.number(),
+      uploadedBy: z.string()
+  })
+),
   
   messages: z
     .object({
