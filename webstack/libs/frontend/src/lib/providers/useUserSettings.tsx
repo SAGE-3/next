@@ -114,6 +114,12 @@ export function getUserSettings() {
   }
 }
 
+function setElectronUIScale(value: UserSettings['uiScale']) {
+  if (isElectron()) {
+    window.electron.send('set-scale-level', uiScaleDict[value] / window.devicePixelRatio);
+  }
+}
+
 /**
  * Set the user's settings in local storage
  * @param settings
@@ -128,6 +134,7 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
     const settings = getUserSettings();
     const newSettings = { ...defaultSettings, ...settings };
     setUserSettings(newSettings);
+    setElectronUIScale(newSettings.uiScale);
   }, []);
 
   const [settings, setSettings] = useState<UserSettings>(getUserSettings());
@@ -246,7 +253,7 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
         newSettings.uiScale = value;
         setUserSettings(newSettings);
         if (isElectron()) {
-          window.electron.send('set-scale-level', uiScaleDict[value] / window.devicePixelRatio);
+          setElectronUIScale(value);
         }
         return newSettings;
       });
