@@ -58,7 +58,7 @@ services:
       - "traefik.http.routers.node-server.middlewares=authheader"
     volumes:
       - ./configurations/node/keys:/app/keys
-      - ./configurations/node/assets:/app/dist/apps/homebase/assets
+      - ./configurations/node/assets:/app/assets
       - ./configurations/node/plugins:/app/dist/apps/homebase/plugins
       - ./configurations/node/sage3-prod.hjson:/app/sage3-prod.hjson
     deploy:
@@ -120,7 +120,7 @@ services:
       - "traefik.http.routers.files-server.middlewares=authheader"
     volumes:
       - ./configurations/node/keys:/app/keys
-      - ./configurations/node/assets:/app/dist/apps/homebase/assets
+      - ./configurations/node/assets:/app/assets
       - ./configurations/node/sage3-prod.hjson:/app/sage3-prod.hjson
     deploy:
       restart_policy:
