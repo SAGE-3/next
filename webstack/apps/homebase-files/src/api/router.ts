@@ -11,6 +11,9 @@ import { FilesRouter } from './files';
 // NPM imports
 import * as express from 'express';
 import { MessageCollection } from './messageCollection';
+// SAGEBase Imports
+import { SAGEBase } from '@sage3/sagebase';
+
 /**
  * API Loader function
  * @export
@@ -24,17 +27,12 @@ export async function expressAPIRouter(): Promise<express.Router> {
   await AssetsCollection.initialize();
   await MessageCollection.initialize();
 
-  router.use('/files/process', (req, res) => {
-    res.send('Processing');
-  });
-
-  router.use(`/files/metadata`, (req, res) => {
-    res.send('Metadata');
-  });
-
   // Download the file from an Asset using a public route with a UUIDv5 token
   // route: /api/files/:id/:token
   router.use('/files', FilesRouter());
+
+  // Authenticate all API Routes
+  router.use(SAGEBase.Auth.authenticate);
 
   // /api/assets/upload
   // /api/assets/static/:filename
