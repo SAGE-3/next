@@ -405,6 +405,36 @@ class PySage3:
         return self.s3_comm.get_app(app_id)
     
     def upload_to_chat(self, app_id: str = None, item=None):
+        """
+        Upload an item to the chat application's uploaded state.
+
+        Retrieves the current state of the application using the given `app_id`. 
+        Checks if the item has already been uploaded by comparing its `id` with 
+        existing uploaded items. If the item is not present, it adds the item 
+        to the uploaded list and updates the state using the S3 communication 
+        service.
+
+        Args:
+            app_id (str): The unique identifier of the app where the item 
+                will be uploaded.
+            item (dict): A dictionary containing the item's details. Must 
+                include:
+                    - id (str): Unique identifier for the uploaded item.
+                    - title (str): Title of the uploaded item.
+                    - type (str): Type of the item (e.g., 'PDF', 'Image').
+                    - uploadDate (int): Timestamp representing the upload date.
+                    - uploadedBy (str): Name or ID of the user who uploaded 
+                    the item.
+
+        Returns:
+            dict: A dictionary containing:
+                - success (bool): Indicates if the upload was successful.
+                - error (str or None): An error message if the upload failed, 
+                otherwise `None`.
+
+        Raises:
+            Exception: If an unexpected error occurs during the upload process.
+        """
         try:
             current_state = self.get_app(app_id)
             if current_state is None:
