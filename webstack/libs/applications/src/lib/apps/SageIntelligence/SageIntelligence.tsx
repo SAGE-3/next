@@ -37,6 +37,8 @@ import {
   MdQuestionMark,
   MdContentCopy,
   MdCheckCircle,
+  MdOutlineRefresh,
+  MdDelete,
 } from 'react-icons/md';
 
 import { format } from 'date-fns/format';
@@ -56,7 +58,6 @@ import { genId } from '@sage3/shared';
 import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
-import { writeFile } from 'fs';
 
 // Interfaces
 interface MessagePropstxt {
@@ -123,11 +124,12 @@ function AppComponent(props: App): JSX.Element {
   const [serverResponse, setServerResponse] = useState<MessagePropstxt['message'] | null>(null);
   
   // const [database, setDatabase] = useState<{ files: string[] }>({ files: [] });
-
+  // const isInitialRender = useRef(true);
+  // const isStateSync = useRef(false);
+  // const isSetSync = useRef(false);
 
   const selectedAppsList = useUIStore.getState().selectedAppsIds;
   const previousPositionsRef = useRef(new Map()); 
-
   // // Sort messages by creation date to display in order
   useEffect(() => {
     setSortedMessages(s.messages ? [...s.messages].sort((a, b) => a.creationDate - b.creationDate) : []);
@@ -142,7 +144,39 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [serverResponse]);
 
- 
+
+//   useEffect(() => {
+//     console.log('State:', s.uploaded);
+//     console.log('Local:', uploaded);
+//     // Skip initial render or when update is from state sync
+//     if (isInitialRender.current || isStateSync.current) {
+//         isInitialRender.current = false;
+//         return;
+//     }
+    
+//     updateState(props._id, {
+//         ...s,
+//         uploaded: [...new Set([...Array.from(uploaded)])],
+//     });
+// }, [uploaded.size]);
+
+// useEffect(() => {
+//   console.log('State:', s.uploaded);
+//   console.log('Local:', uploaded);
+//     // Skip initial render or when update is from Set sync
+//     if (isInitialRender.current || isSetSync.current) {
+//         isInitialRender.current = false;
+//         return;
+//     }
+
+//     const titles = s.uploaded
+//         ?.filter(item => item?.title)
+//         .map(item => item.title) || [];
+//     setUploaded(new Set(titles));
+// }, [s.uploaded.length]);
+
+
+
   // Input text for query
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value;
@@ -243,7 +277,7 @@ function AppComponent(props: App): JSX.Element {
 
   // Reset the chat: clear previous question and answer, and all the messages
   const resetSAGE = () => {
-    updateState(props._id, { ...s, messages: initialState.messages });
+    updateState(props._id, { ...s, uploaded: [], messages: initialState.messages });
     setUploaded(new Set());
     setInput('');
   };
@@ -376,118 +410,7 @@ function AppComponent(props: App): JSX.Element {
   const checkDB = (filename: string): boolean => {
     return false;
   };
-
-  // const Collapsable = () => {
-  //   return (
-  //     <Collapse in={isPanelOpen} animateOpacity>
-  //       <Box
-  //         bg={bgColor}
-  //         p={4}
-  //         position="absolute"
-  //         left="100%"
-  //         top={0}
-  //         w="450px"
-  //         h="100%"
-  //         shadow="lg"
-  //         border={"4px"}
-  //         borderColor="#8d8b8f"
-  //         zIndex={2}
-  //         overflow=""
-  //         overflowY="auto"
-  //         css={{
-  //           '&::-webkit-scrollbar': {
-  //             width: '8px', // Adjust the width of the scroll bar
-  //           },
-  //           '&::-webkit-scrollbar-track': {
-  //             background: '#f1f1f1', // Track background color
-  //           },
-  //           '&::-webkit-scrollbar-thumb': {
-  //             background: '#888', // Scroll bar thumb color
-  //             borderRadius: '4px', // Rounded edges for the thumb
-  //           },
-  //           '&::-webkit-scrollbar-thumb:hover': {
-  //             background: '#555', // Thumb color on hover
-  //           },
-  //         }}
-  //       >
-  //         <Text fontSize="lg" fontWeight="bold" mb={1}>
-  //           Apps uploaded in Chat
-  //           ({uploaded.size})
-  //         </Text>
-  //         <Text fontSize="sm" mb={4}>
-  //           Drag and drop an app on the Chat window to upload.
-  //         </Text>
-  //         <Box borderBottom="1px solid" borderColor="gray.300" mb={4} />
-  //         {/* Ordered list of overlapped apps */}
-  //         <Box ml={3}>
-  //           <ol>
-  //             {[...uploaded]
-  //               .map((key) => {
-  //                 const app = apps.find((app) => app._id === key); // Find app by key
-
-  //                 if (!app) {
-  //                   setUploaded((prevSet) => {
-  //                     const newSet = new Set(prevSet);
-  //                     newSet.delete(key); // Remove invalid key
-  //                     return newSet;
-  //                   });
-  //                   return null; // Skip rendering this entry
-  //                 }
-
-  //                 const getIcon = (type: string) => {
-  //                   switch (type) {
-  //                     case 'Chat':
-  //                       return MdChat;
-  //                     case 'Stickie':
-  //                       return MdStickyNote2;
-  //                     case 'ImageViewer':
-  //                       return MdImage;
-  //                     case 'PDFViewer':
-  //                       return MdPictureAsPdf;
-  //                     default:
-  //                       return MdQuestionMark; // Default icon
-  //                   }
-  //                 };
-
-  //                 return (
-  //                   <li key={key}>
-  //                     <Text fontWeight="bold">
-  //                       <Icon as={getIcon(app.data.type)} />
-  //                       {app.data.title}
-  //                       {checkDB(app.data.title) && <Icon as={MdCheckCircle} color="green.500" boxSize={4} />}
-  //                     </Text>
-
-  //                     <Box ml={4} pl={2} borderLeft="1px solid gray">
-  //                       <Text>
-  //                         <strong>Type:</strong> {app.data.type}
-  //                       </Text>
-  //                       <Text>
-  //                         <strong>ID:</strong> {app._id}
-  //                       </Text>
-  //                       <Box mt={2}>
-  //                         <Button
-  //                           colorScheme="red"
-  //                           size="sm"
-  //                           name={app._id}
-  //                           onClick={(e) => {
-  //                             handleDelete(e);
-  //                           }}
-  //                         >
-  //                           Delete
-  //                         </Button>
-  //                       </Box>
-  //                     </Box>
-  //                     <Box mb={8} />
-  //                   </li>
-  //                 );
-  //               })}
-  //           </ol>
-  //         </Box>
-  //       </Box>
-  //     </Collapse>
-  //   );
-  // }
-
+  
   const Collapsable = () => {
     const handleItemClick = (appId: string) => {
       // Append the ID to the existing input with a space separator
@@ -541,6 +464,45 @@ function AppComponent(props: App): JSX.Element {
           <Box ml={3}>
             <ol>
               {[...uploaded]
+                .map((key) => {
+                  return (
+                    <li key={key}>
+                      <Box
+                        cursor="pointer"
+                        onClick={() => handleItemClick(key)}
+                        _hover={{ bg: 'gray.100' }}
+                        p={2}
+                        borderRadius="md"
+                        marginBottom={3}
+                      >
+                        <Text fontWeight="bold">
+                        <strong>{`${key.substring(0,25)}...`}</strong>
+                        <Button
+                        position={'absolute'}
+                        right={5}
+                        colorScheme="red"
+                        size="md"
+                        name={key}
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent triggering the parent click
+                          setUploaded((prevSet) => {
+                            const newSet = new Set(prevSet);
+                            newSet.delete(key);
+                            return newSet;
+                          });
+                        }}
+                      >
+                        Delete
+                      </Button>
+                        </Text>
+                      </Box>
+                    </li>
+                  )
+                }
+              )}
+
+
+              {/* {[...uploaded]
                 .map((key) => {
                   const app = apps.find((app) => app._id === key);
   
@@ -608,7 +570,7 @@ function AppComponent(props: App): JSX.Element {
                       </Box>
                     </li>
                   );
-                })}
+                })} */}
             </ol>
           </Box>
         </Box>

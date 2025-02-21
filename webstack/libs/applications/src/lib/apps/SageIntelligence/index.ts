@@ -15,6 +15,12 @@ import { z } from 'zod';
  */
 
 export const schema = z.object({
+  uploaded: z.object({
+    title: z.string(),
+    type: z.string(),
+    uploadDate: z.number(),
+    uploadedBy: z.string()
+  }).array(),
   messages: z
     .object({
       id: z.string(),
@@ -30,6 +36,8 @@ export const schema = z.object({
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
+  uploaded: [
+  ],
     messages: [
     {
       id: 'starting',
