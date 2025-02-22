@@ -55,6 +55,16 @@ jobs:
           tags: ${{ env.REGISTRY }}/sage-3/next_yjs:amd64
           labels: ${{ steps.meta.outputs.labels }}
 
+      - name: Build and push Docker image for node_files
+        uses: docker/build-push-action@v6
+        with:
+          file: deployment/node_files/Dockerfile
+          context: "{{defaultContext}}:."
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.REGISTRY }}/sage-3/next_files:amd64
+          labels: ${{ steps.meta.outputs.labels }}
+
       - name: Build and push Docker image for seer
         uses: docker/build-push-action@v6
         with:
@@ -110,6 +120,16 @@ jobs:
           platforms: linux/arm64
           push: true
           tags: ${{ env.REGISTRY }}/sage-3/next_yjs:arm64
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Build and push Docker image for node_files
+        uses: docker/build-push-action@v6
+        with:
+          file: deployment/node_files/Dockerfile
+          context: "{{defaultContext}}:."
+          platforms: linux/arm64
+          push: true
+          tags: ${{ env.REGISTRY }}/sage-3/next_files:arm64
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Build and push Docker image for seer
