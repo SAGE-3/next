@@ -332,7 +332,7 @@ def getPDFFile(ps3, assetid):
             asset = f["data"]
             # Build the URL
             url = (
-                ps3.s3_comm.conf[ps3.s3_comm.prod_type]["web_server"]
+                ps3.s3_comm.conf[ps3.s3_comm.prod_type]["files_server"]
                 + ps3.s3_comm.routes["get_static_content"]
                 + asset["file"]
             )
@@ -435,7 +435,7 @@ def getImageFile(ps3, assetid):
         if f["_id"] == assetid:
             asset = f["data"]
             url = (
-                ps3.s3_comm.conf[ps3.s3_comm.prod_type]["web_server"]
+                ps3.s3_comm.conf[ps3.s3_comm.prod_type]["files_server"]
                 + ps3.s3_comm.routes["get_static_content"]
                 + asset["file"]
             )

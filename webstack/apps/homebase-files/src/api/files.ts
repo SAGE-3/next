@@ -20,9 +20,9 @@ import * as path from 'path';
 import { v5 as uuidv5 } from 'uuid';
 
 // Get server configuration
-import { config } from '../../../config';
+import { config } from '../config';
 // Asset model
-import { AssetsCollection } from '../../collections';
+import { AssetsCollection } from './assetsCollection';
 
 /**
  * App route/api express middleware.
