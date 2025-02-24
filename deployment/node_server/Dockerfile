@@ -23,7 +23,7 @@ COPY webstack/libs libs
 # Increase RAM for node to build the app
 ENV NODE_OPTIONS=--max-old-space-size=8192
 # Build the app
-RUN yarn prod
+RUN yarn prod && yarn cache clean
 
 # Stage 2: Production Image
 FROM node:20-bookworm-slim
