@@ -16,14 +16,14 @@ import { Asset } from '@sage3/shared/types';
 import { SAGE3Ability } from '@sage3/shared';
 
 // The observable websocket
-import { APIHttp, SocketAPI } from '../api';
+import { AssetHTTPService, SocketAPI } from '../api';
 
 interface AssetState {
   assets: Asset[];
   error: string | null;
-  update: (roomId: string) => void;
+  update: () => void;
   clearError: () => void;
-  subscribe: (roomId: string) => Promise<void>;
+  subscribe: () => Promise<void>;
   unsubscribe: () => void;
 }
 
@@ -46,21 +46,21 @@ const AssetStore = create<AssetState>()((set, get) => {
         assetSub = null;
       }
     },
-    update: async (roomId: string) => {
+    update: async () => {
       if (!SAGE3Ability.canCurrentUser('read', 'assets')) return;
       // Refresh the collection from the server with websockets
-      const res = await APIHttp.QUERY<Asset>('/assets', { room: roomId });
+      const res = await SocketAPI.sendRESTMessage('/assets', 'GET');
       if (res.success) {
         set({ assets: res.data });
       } else {
         set({ error: res.message });
       }
     },
-    subscribe: async (roomId: string) => {
+    subscribe: async () => {
       if (!SAGE3Ability.canCurrentUser('read', 'assets')) return;
-      const res = await APIHttp.QUERY<Asset>('/assets', { room: roomId });
-      if (res.success) {
-        set({ assets: res.data });
+      const files = await AssetHTTPService.readAll();
+      if (files) {
+        set({ assets: files });
       } else {
         set({ error: 'Error reading assets' });
         return;
@@ -73,11 +73,12 @@ const AssetStore = create<AssetState>()((set, get) => {
       }
 
       // Socket Subscribe Message
-      const route = '/assets?room=' + roomId;
+      const route = '/assets';
       // Socket Listenting to updates from server about the current assets
       assetSub = await SocketAPI.subscribe<Asset>(route, (message) => {
         switch (message.type) {
           case 'CREATE': {
+            console.log('AssetStore> CREATE new #', message.doc.length);
             const docs = message.doc as Asset[];
             set({ assets: [...get().assets, ...docs] });
             break;
@@ -103,7 +104,6 @@ const AssetStore = create<AssetState>()((set, get) => {
           }
         }
       });
-      return Promise.resolve();
     },
   };
 });

@@ -6,21 +6,9 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import {
-  Button,
-  useToast,
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
-  useDisclosure,
-  Box,
-  CircularProgress,
-} from '@chakra-ui/react';
+import { Button, useToast, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, ModalOverlay, useDisclosure } from '@chakra-ui/react';
 
 import {
   useAppStore,
@@ -38,14 +26,11 @@ import {
   isElectron,
   getSAGE3BoardUrl,
   useInsightStore,
-  useAssetStore,
-  useHexColor,
 } from '@sage3/frontend';
 
 // Board Layers
 import { BackgroundLayer, UILayer } from './layers';
 import { InteractionbarShortcuts } from './layers/ui/components';
-import { set, sub } from 'date-fns';
 
 // Development or production
 const development: boolean = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
@@ -68,11 +53,8 @@ export function BoardPage() {
   const unsubBoard = useAppStore((state) => state.unsubToBoard);
   const subBoards = useBoardStore((state) => state.subscribeByRoomId);
   const subRooms = useRoomStore((state) => state.subscribeToAllRooms);
-  const subAssets = useAssetStore((state) => state.subscribe);
-  const subPlugins = usePluginStore((state) => state.subscribeToPlugins);
 
-  // Initial Load state
-  const [initialLoad, setInitialLoad] = useState(false);
+  const subPlugins = usePluginStore((state) => state.subscribeToPlugins);
 
   // User information
   const { expire, logout } = useAuth();
@@ -171,27 +153,19 @@ export function BoardPage() {
     // Update the document title
     document.title = 'SAGE3 - Board';
 
-    async function handleJoinBoard(rId: string, bId: string) {
-      // assets
-      await subAssets(rId);
-      // This is if someone is joining a board by a link
-      subRooms();
-      // Sub to boards belonging to this room
-      subBoards(rId);
-      // Subscribe to the app on the board that was selected
-      subApps(bId);
-      // Sub to users and presence
-      subscribeToPresence();
-      subscribeToUsers();
-      // Sub to insights
-      subToInsight(bId);
-      // plugins
-      subPlugins();
-      setInitialLoad(true);
-    }
-
-    handleJoinBoard(roomId, boardId);
-
+    // This is if someone is joining a board by a link
+    subRooms();
+    // Sub to boards belonging to this room
+    subBoards(roomId);
+    // Subscribe to the app on the board that was selected
+    subApps(boardId);
+    // Sub to users and presence
+    subscribeToPresence();
+    subscribeToUsers();
+    // Sub to insights
+    subToInsight(boardId);
+    // plugins
+    subPlugins();
     // Update the user's presence information
     if (user) updatePresence(user._id, { boardId, roomId, following: '' });
     // Add the board to the user's recent boards
@@ -280,9 +254,8 @@ export function BoardPage() {
 
   return (
     <>
-      {/* The apps live here but show loading icon while we wait*/}
-
-      {initialLoad ? <BackgroundLayer boardId={boardId} roomId={roomId}></BackgroundLayer> : LoadingSpinner()}
+      {/* The apps live here */}
+      <BackgroundLayer boardId={boardId} roomId={roomId}></BackgroundLayer>
 
       {/* Upper layer for local UI stuff */}
       <UILayer boardId={boardId} roomId={roomId}></UILayer>
@@ -309,13 +282,3 @@ export function BoardPage() {
     </>
   );
 }
-
-// Render a spinning chakra loading icon in the center of the page
-export const LoadingSpinner = () => {
-  const teal = useHexColor('teal');
-  return (
-    <Box width="100vw" height="100vh" display="flex" justifyContent={'center'} alignItems={'center'}>
-      <CircularProgress isIndeterminate size={'xl'} color={teal} />
-    </Box>
-  );
-};

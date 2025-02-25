@@ -379,6 +379,10 @@ async function createApplicationAfterUpload(
   return null;
 }
 
+/**
+ * Hook to oberve window resize event
+ * @returns (width, height) of the window
+ */
 export function useFiles(): UseFiles {
   // display some notifications
   const toast = useToast();
@@ -541,7 +545,7 @@ export function useFiles(): UseFiles {
         // Get the new asset IDs
         const newids = response.data as string[];
         // Refresh the asset store
-        await useAssetStore.getState().update(roomId);
+        await useAssetStore.getState().update();
         // Show a success message
         // if (toastIdRef.current) {
         //   toast.update(toastIdRef.current, {

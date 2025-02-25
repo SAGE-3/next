@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2025. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -85,8 +85,8 @@ function sortAsset(a: Asset, b: Asset) {
 
 // List of Assets
 export function AssetList(props: { room: Room }) {
-  const assets = useAssetStore((state) => state.assets);
-  const subAssets = useAssetStore((state) => state.subscribe);
+  const allAssets = useAssetStore((state) => state.assets);
+  const [assets, setAssets] = useState<Asset[]>([]);
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   const [selectedAssetAuthor, setSelectedAssetAuthor] = useState<string>('Unknown');
   const [assetSearch, setAssetSearch] = useState('');
@@ -105,12 +105,6 @@ export function AssetList(props: { room: Room }) {
   const { user } = useUser();
   const isRoomOwner = user?._id == props.room._createdBy;
   const canDeleteSelectedAsset = selectedAsset?.data.owner === user?._id || isRoomOwner;
-
-  useEffect(() => {
-    if (props.room) {
-      subAssets(props.room._id);
-    }
-  }, [props.room]);
 
   const filterAssets = (asset: Asset) => {
     const filterYours = showOnlyYours ? asset.data.owner === user?._id : true;
@@ -135,6 +129,11 @@ export function AssetList(props: { room: Room }) {
     const author = users.find((u) => u._id === asset.data.owner);
     setSelectedAssetAuthor(author?.data.name || 'Unknown');
   };
+
+  useEffect(() => {
+    const assets = allAssets.filter((asset) => asset.data.room === props.room._id);
+    setAssets(assets);
+  }, [allAssets, users, props.room]);
 
   return (
     <Box display="flex">
@@ -223,7 +222,7 @@ export function AssetList(props: { room: Room }) {
             })}
         </VStack>
       </Box>
-      <Box flex="1" ml="4">
+      <Box flex="1" ml="4" >
         {selectedAsset && (
           <AssetPreview
             asset={selectedAsset}
