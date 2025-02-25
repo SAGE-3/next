@@ -51,14 +51,13 @@ import {
   AiAPI,
   useUserSettings,
   useUIStore,
+  EditUserSettingsModal,
 } from '@sage3/frontend';
 import { genId, AskRequest, ImageQuery, PDFQuery, CodeRequest, WebQuery, WebScreenshot } from '@sage3/shared';
 
 import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
-import { IntelligenceModal, IntelligenceMenu } from '@sage3/frontend';
-
 
 import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot } from './tRPC';
 
@@ -96,7 +95,7 @@ function AppComponent(props: App): JSX.Element {
   // Colors for Dark theme and light theme
   // Chat Bubble Colors
   const myColor = useHexColor(`blue.300`);
-  const sageColor = useHexColor('purple.300');
+  const sageColor = useHexColor('purple.200');
   const aiTypingColor = useHexColor('orange.300');
   const otherUserColor = useHexColor('gray.300');
   // Background, scrollbar, and Foreground Colors
@@ -108,7 +107,7 @@ function AppComponent(props: App): JSX.Element {
   const scrollColor = useHexColor(sc);
   const textColor = useColorModeValue('gray.800', 'gray.100');
 
-  const { isOpen: intelligenceIsOpen, onOpen: intelligenceOnOpen, onClose: intelligenceOnClose } = useDisclosure();
+  const { isOpen: editSettingsIsOpen, onOpen: editSettingsOnOpen, onClose: editSettingsOnClose } = useDisclosure();
 
   // App state management
   const updateState = useAppStore((state) => state.updateState);
@@ -1209,13 +1208,13 @@ function AppComponent(props: App): JSX.Element {
                     {isMe ? (
                       <Box top="-15px" right={'15px'} position={'absolute'} textAlign={'right'}>
                         <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                          Me
+                          Me - {time}
                         </Text>
                       </Box>
                     ) : (
                       <Box top="-15px" left={'15px'} position={'absolute'} textAlign={'right'}>
                         <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                          {message.userName}
+                          {message.userName} - {time}
                         </Text>
                       </Box>
                     )}
@@ -1227,7 +1226,8 @@ function AppComponent(props: App): JSX.Element {
                         fontSize={'xs'}
                         placement="top"
                         hasArrow={true}
-                        label={time}
+                        // label={time}
+                        label={'Drag to board - Double-click to clipboard'}
                         openDelay={400}
                         closeDelay={2000}
                       >
@@ -1235,7 +1235,7 @@ function AppComponent(props: App): JSX.Element {
                           color="black"
                           rounded={'md'}
                           boxShadow="md"
-                          fontFamily="arial"
+                          fontFamily="Arial"
                           textAlign={isMe ? 'right' : 'left'}
                           bg={isMe ? myColor : otherUserColor}
                           px={2}
@@ -1291,7 +1291,7 @@ function AppComponent(props: App): JSX.Element {
                   <Box position="relative" my={1} maxWidth={'70%'}>
                     <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
                       <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                        {message.userName}
+                        {message.userName} - {time}
                       </Text>
                     </Box>
 
@@ -1302,7 +1302,7 @@ function AppComponent(props: App): JSX.Element {
                         fontSize={'xs'}
                         placement="top"
                         hasArrow={true}
-                        label={time}
+                        label={'Drag to board - Double-click to clipboard'}
                         openDelay={400}
                         closeDelay={2000}
                       >
@@ -1315,7 +1315,7 @@ function AppComponent(props: App): JSX.Element {
                           px={2}
                           py={1}
                           m={3}
-                          fontFamily="arial"
+                          fontFamily="Arial"
                           onDoubleClick={() => {
                             if (navigator.clipboard) {
                               // Copy into clipboard
@@ -1397,7 +1397,7 @@ function AppComponent(props: App): JSX.Element {
               </Box>
 
               <Box display={'flex'} justifyContent="left" position={'relative'} top={'15px'} mb={'15px'}>
-                <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={aiTypingColor} p={1} m={3} fontFamily="arial">
+                <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={aiTypingColor} p={1} m={3} fontFamily="Arial">
                   {streamText}
                 </Box>
               </Box>
@@ -1412,7 +1412,7 @@ function AppComponent(props: App): JSX.Element {
                     color="black"
                     rounded={'md'}
                     boxShadow="md"
-                    fontFamily="arial"
+                    fontFamily="Arial"
                     textAlign={'left'}
                     bg={textColor}
                     p={1}
@@ -1489,7 +1489,7 @@ function AppComponent(props: App): JSX.Element {
               colorScheme={'blue'}
               variant="ghost"
               icon={<MdSettings size="24px" />}
-              onClick={intelligenceOnOpen}
+              onClick={editSettingsOnOpen}
               width="33%"
             />
           </Tooltip>
@@ -1850,10 +1850,7 @@ function AppComponent(props: App): JSX.Element {
         </Box>
 
         {/* Intelligence settings */}
-        <IntelligenceModal isOpen={intelligenceIsOpen} onOpen={intelligenceOnOpen} onClose={intelligenceOnClose}>
-          <IntelligenceMenu notificationCount={0} />
-        </IntelligenceModal>
-
+        <EditUserSettingsModal isOpen={editSettingsIsOpen} onClose={editSettingsOnClose} tab={'intelligence'} />
       </Flex>
     </AppWindow>
   );
@@ -1911,9 +1908,10 @@ function ToolbarComponent(props: App): JSX.Element {
 }
 
 function getDateString(epoch: number): string {
-  const date = new Date(epoch).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
+  // const date = new Date(epoch).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
   const time = new Date(epoch).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  return `${date} - ${time}`;
+  // return `${date} - ${time}`;
+  return `${time}`;
 }
 
 /**
@@ -1925,17 +1923,3 @@ const GroupedToolbarComponent = () => {
 };
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
-
-
-/*
-
-<MenuItem onClick={intelligenceOnOpen} icon={<IoSparklesSharp fontSize="24px" />} py="1px" m="0">
-  Intelligence
-</MenuItem>
-
-
-
-
-
-
-*/

@@ -227,7 +227,13 @@ function AppComponent(props: App): JSX.Element {
         }
       } else {
         try {
-          const stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 } });
+          const stream = await navigator.mediaDevices.getDisplayMedia({
+            video: {
+              width: { ideal: 1920, max: 1920 }, // Cap resolution
+              height: { ideal: 1920, max: 1920 }, // Ensure it's not too large
+              frameRate: { ideal: 20, max: 20 }, // Limit Framerate
+            },
+          });
 
           videoRef.current.srcObject = stream;
           videoRef.current.play();
@@ -354,6 +360,9 @@ function AppComponent(props: App): JSX.Element {
           mandatory: {
             chromeMediaSource: 'desktop',
             chromeMediaSourceId: selectedSource.id,
+            maxWidth: 1920, // Prevents huge resolutions
+            maxHeight: 1920,
+            maxFrameRate: 20,
           },
         },
       });
