@@ -608,7 +608,7 @@ export function HomePage() {
     // Update the document title
     document.title = 'SAGE3 - Home';
 
-    subcribeToAssets();
+    selectedRoom && subcribeToAssets(selectedRoom._id);
     subscribeToPresence();
     subscribeToUsers();
     subscribeToRooms();
@@ -637,6 +637,7 @@ export function HomePage() {
     if (user) {
       const roomId = selectedRoom ? selectedRoom._id : '';
       updatePresence(userId, { roomId });
+      if (selectedRoom) subcribeToAssets(selectedRoom?._id);
     }
     setBoardSearch('');
   }, [selectedRoom]);
