@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2025. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -76,7 +76,6 @@ import {
   Clock,
   isElectron,
   useUserSettings,
-  useAssetStore,
   isUUIDv4,
 } from '@sage3/frontend';
 
@@ -101,9 +100,6 @@ export function HomePage() {
   // Electron
   const electron = isElectron();
   const [hubs, setHubs] = useState<{ name: string; id: string; url: string }[]>([]);
-
-  // SAGE3 Image
-  // const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
 
   // User Information
   const { user, clearRecentBoards } = useUser();
@@ -130,9 +126,6 @@ export function HomePage() {
   // User and Presence Store
   const users = useUsersStore((state) => state.users);
   const subscribeToUsers = useUsersStore((state) => state.subscribeToUsers);
-
-  // Assets Store
-  const subcribeToAssets = useAssetStore((state) => state.subscribe);
 
   // Presence
   const partialPrescences = usePresenceStore((state) => state.partialPrescences);
@@ -608,7 +601,6 @@ export function HomePage() {
     // Update the document title
     document.title = 'SAGE3 - Home';
 
-    selectedRoom && subcribeToAssets(selectedRoom._id);
     subscribeToPresence();
     subscribeToUsers();
     subscribeToRooms();
@@ -637,7 +629,6 @@ export function HomePage() {
     if (user) {
       const roomId = selectedRoom ? selectedRoom._id : '';
       updatePresence(userId, { roomId });
-      if (selectedRoom) subcribeToAssets(selectedRoom?._id);
     }
     setBoardSearch('');
   }, [selectedRoom]);
