@@ -142,7 +142,7 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
                 {isElectron() && (
                   <FormControl display="flex" my="2" alignItems="center" justifyContent="space-between">
                     <FormLabel htmlFor="ui-scale" mb="0">
-                      Interface Scale
+                      User Interface Size
                       <InfoTooltip label={'Adjust the size of the user interface.'} />
                     </FormLabel>
                     <Select
@@ -157,7 +157,7 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
                     >
                       <option value="xs">Extra Small</option>
                       <option value="s">Small</option>
-                      <option value="md">Medium</option>
+                      <option value="md">Default</option>
                       <option value="lg">Large</option>
                       <option value="xl">Extra Large</option>
                     </Select>
