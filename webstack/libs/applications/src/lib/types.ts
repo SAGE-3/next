@@ -35,6 +35,7 @@ import { state as StickieState, name as StickieName } from './apps/Stickie';
 import { state as TLDrawState, name as TLDrawName } from './apps/TLDraw';
 import { state as TimerState, name as TimerName } from './apps/Timer';
 import { state as TwilioScreenshareState, name as TwilioScreenshareName } from './apps/TwilioScreenshare';
+import { state as VNCState, name as VNCName } from './apps/VNC';
 import { state as VegaLiteState, name as VegaLiteName } from './apps/VegaLite';
 import { state as VegaLiteViewerState, name as VegaLiteViewerName } from './apps/VegaLiteViewer';
 import { state as VideoViewerState, name as VideoViewerName } from './apps/VideoViewer';
@@ -79,10 +80,12 @@ export type AppState =
   | TLDrawState
   | TimerState
   | TwilioScreenshareState
+  | VNCState
   | VegaLiteState
   | VegaLiteViewerState
   | VideoViewerState
   | WebpageLinkState
   | WebviewState;
 
-export type AppName = typeof AIPaneName | typeof AssetLinkName | typeof BoardLinkName | typeof CSVViewerName | typeof CalculatorName | typeof ChartGeneratorName | typeof ChatName | typeof ClockName | typeof CobrowseName | typeof CodeEditorName | typeof CounterName | typeof CollabBrowserName | typeof DeepZoomImageName | typeof EChartsViewerName | typeof GLTFViewerName | typeof HCDPName | typeof IFrameName | typeof ImageViewerName | typeof JupyterLabName | typeof LeafLetName | typeof LinkerName | typeof MapGLName | typeof NotepadName | typeof PDFResultName | typeof PDFViewerName | typeof PluginAppName | typeof PollName | typeof RTCChatName | typeof SageCellName | typeof SeerName | typeof SensorOverviewName | typeof StickieName | typeof TLDrawName | typeof TimerName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebpageLinkName | typeof WebviewName;
+
+export type AppName = typeof AIPaneName | typeof AssetLinkName | typeof BoardLinkName | typeof CSVViewerName | typeof CalculatorName | typeof ChartGeneratorName | typeof ChatName | typeof ClockName | typeof CobrowseName | typeof CodeEditorName | typeof CollabBrowserName | typeof CounterName | typeof DeepZoomImageName | typeof EChartsViewerName | typeof GLTFViewerName | typeof HCDPName | typeof IFrameName | typeof ImageViewerName | typeof JupyterLabName | typeof LeafLetName | typeof LinkerName | typeof MapGLName | typeof NotepadName | typeof PDFResultName | typeof PDFViewerName | typeof PluginAppName | typeof PollName | typeof RTCChatName | typeof SageCellName | typeof SeerName | typeof SensorOverviewName | typeof StickieName | typeof TLDrawName | typeof TimerName | typeof TwilioScreenshareName | typeof VNCName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebpageLinkName | typeof WebviewName;

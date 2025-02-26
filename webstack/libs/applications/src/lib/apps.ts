@@ -1,5 +1,6 @@
 // SAGE3 Generated from apps.json file
 
+import { App } from './schema';
 import { name as AIPaneName } from './apps/AIPane';
 import { name as AssetLinkName } from './apps/AssetLink';
 import { name as BoardLinkName } from './apps/BoardLink';
@@ -35,15 +36,13 @@ import { name as StickieName } from './apps/Stickie';
 import { name as TLDrawName } from './apps/TLDraw';
 import { name as TimerName } from './apps/Timer';
 import { name as TwilioScreenshareName } from './apps/TwilioScreenshare';
+import { name as VNCName } from './apps/VNC';
 import { name as VegaLiteName } from './apps/VegaLite';
 import { name as VegaLiteViewerName } from './apps/VegaLiteViewer';
 import { name as VideoViewerName } from './apps/VideoViewer';
 import { name as WebpageLinkName } from './apps/WebpageLink';
 import { name as WebviewName } from './apps/Webview';
 
-
-import React from 'react';
-import { AppGroup } from './schema';
 
 import AIPane from './apps/AIPane/AIPane';
 import AssetLink from './apps/AssetLink/AssetLink';
@@ -80,11 +79,13 @@ import Stickie from './apps/Stickie/Stickie';
 import TLDraw from './apps/TLDraw/TLDraw';
 import Timer from './apps/Timer/Timer';
 import TwilioScreenshare from './apps/TwilioScreenshare/TwilioScreenshare';
+import VNC from './apps/VNC/VNC';
 import VegaLite from './apps/VegaLite/VegaLite';
 import VegaLiteViewer from './apps/VegaLiteViewer/VegaLiteViewer';
 import VideoViewer from './apps/VideoViewer/VideoViewer';
 import WebpageLink from './apps/WebpageLink/WebpageLink';
 import Webview from './apps/Webview/Webview';
+import React from 'react';
 
 
 export const Applications = {
@@ -123,12 +124,13 @@ export const Applications = {
   [TLDrawName]: { AppComponent: React.memo(TLDraw.AppComponent), ToolbarComponent: TLDraw.ToolbarComponent, GroupedToolbarComponent: TLDraw.GroupedToolbarComponent },
   [TimerName]: { AppComponent: React.memo(Timer.AppComponent), ToolbarComponent: Timer.ToolbarComponent, GroupedToolbarComponent: Timer.GroupedToolbarComponent },
   [TwilioScreenshareName]: { AppComponent: React.memo(TwilioScreenshare.AppComponent), ToolbarComponent: TwilioScreenshare.ToolbarComponent, GroupedToolbarComponent: TwilioScreenshare.GroupedToolbarComponent },
+  [VNCName]: { AppComponent: React.memo(VNC.AppComponent), ToolbarComponent: VNC.ToolbarComponent, GroupedToolbarComponent: VNC.GroupedToolbarComponent },
   [VegaLiteName]: { AppComponent: React.memo(VegaLite.AppComponent), ToolbarComponent: VegaLite.ToolbarComponent, GroupedToolbarComponent: VegaLite.GroupedToolbarComponent },
   [VegaLiteViewerName]: { AppComponent: React.memo(VegaLiteViewer.AppComponent), ToolbarComponent: VegaLiteViewer.ToolbarComponent, GroupedToolbarComponent: VegaLiteViewer.GroupedToolbarComponent },
   [VideoViewerName]: { AppComponent: React.memo(VideoViewer.AppComponent), ToolbarComponent: VideoViewer.ToolbarComponent, GroupedToolbarComponent: VideoViewer.GroupedToolbarComponent },
   [WebpageLinkName]: { AppComponent: React.memo(WebpageLink.AppComponent), ToolbarComponent: WebpageLink.ToolbarComponent, GroupedToolbarComponent: WebpageLink.GroupedToolbarComponent },
   [WebviewName]: { AppComponent: React.memo(Webview.AppComponent), ToolbarComponent: Webview.ToolbarComponent, GroupedToolbarComponent: Webview.GroupedToolbarComponent },
-} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element, GroupedToolbarComponent: (props: { apps: AppGroup }) => JSX.Element; }>;
+} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element, GroupedToolbarComponent: (props: { apps: App[] }) => JSX.Element; }>;
 
 export * from './components';
 export * from './ai-apps';

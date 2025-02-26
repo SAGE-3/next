@@ -35,6 +35,7 @@ import { name as StickieName, init as defaultStickie } from './apps/Stickie';
 import { name as TLDrawName, init as defaultTLDraw } from './apps/TLDraw';
 import { name as TimerName, init as defaultTimer } from './apps/Timer';
 import { name as TwilioScreenshareName, init as defaultTwilioScreenshare } from './apps/TwilioScreenshare';
+import { name as VNCName, init as defaultVNC } from './apps/VNC';
 import { name as VegaLiteName, init as defaultVegaLite } from './apps/VegaLite';
 import { name as VegaLiteViewerName, init as defaultVegaLiteViewer } from './apps/VegaLiteViewer';
 import { name as VideoViewerName, init as defaultVideoViewer } from './apps/VideoViewer';
@@ -77,6 +78,7 @@ export const initialValues = {
   [TLDrawName]: defaultTLDraw,
   [TimerName]: defaultTimer,
   [TwilioScreenshareName]: defaultTwilioScreenshare,
+  [VNCName]: defaultVNC,
   [VegaLiteName]: defaultVegaLite,
   [VegaLiteViewerName]: defaultVegaLiteViewer,
   [VideoViewerName]: defaultVideoViewer,
