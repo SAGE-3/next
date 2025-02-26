@@ -31,7 +31,7 @@ import {
 import { BiPencil } from 'react-icons/bi';
 import { MdGraphicEq } from 'react-icons/md';
 import { BsEraserFill } from 'react-icons/bs';
-import { FaUndo, FaEraser, FaTrash } from 'react-icons/fa';
+import { FaUndo, FaEraser, FaTrash, FaLink } from 'react-icons/fa';
 import { LiaMousePointerSolid, LiaHandPaperSolid } from 'react-icons/lia';
 
 import { SAGEColors } from '@sage3/shared';
@@ -39,8 +39,8 @@ import { useUserSettings, useUser, useUIStore, useHexColor, ColorPicker, Confirm
 
 export function Interactionbar(props: {
   isContextMenuOpen?: boolean;
-  tooltipPlacement?: 'top' | 'bottom' | 'left' | 'right',
-  position?: { x: number; y: number }
+  tooltipPlacement?: 'top' | 'bottom' | 'left' | 'right';
+  position?: { x: number; y: number };
 }) {
   // Settings
   const { settings, setPrimaryActionMode } = useUserSettings();
@@ -272,7 +272,7 @@ export function Interactionbar(props: {
           <Tooltip label={'Eraser — [4]'} placement={tooltipPlacement} hasArrow={true} openDelay={400} shouldWrapChildren={true}>
             <PopoverTrigger>
               <IconButton
-                borderRadius={'0 0.5rem 0.5rem 0'}
+                borderRadius={'0 0 0 0'}
                 size="sm"
                 colorScheme={primaryActionMode === 'eraser' ? user?.data.color || 'teal' : 'gray'}
                 sx={{
@@ -323,9 +323,30 @@ export function Interactionbar(props: {
             </PopoverBody>
           </PopoverContent>
         </Popover>
+
+        <Tooltip label={'Link — [5]'} placement={tooltipPlacement} hasArrow={true} openDelay={400}>
+          <IconButton
+            borderRadius={'0 0.5rem 0.5rem 0'}
+            size="sm"
+            colorScheme={primaryActionMode === 'linker' ? user?.data.color || 'teal' : 'gray'}
+            sx={{
+              _dark: {
+                bg: primaryActionMode === 'linker' ? `${user?.data.color}.200` : 'gray.600',
+              },
+            }}
+            icon={<FaLink />}
+            fontSize="md"
+            aria-label={'input-type'}
+            onClick={() => {
+              eraserOnClose();
+              annotationsOnClose();
+              setPrimaryActionMode('linker');
+            }}
+          ></IconButton>
+        </Tooltip>
       </ButtonGroup>
 
-      {myIsOpen &&
+      {myIsOpen && (
         <ConfirmModal
           isOpen={myIsOpen}
           onClose={myOnClose}
@@ -339,8 +360,8 @@ export function Interactionbar(props: {
           size="lg"
           xOffSet={props.position ? (props.position.x + 150) / window.innerWidth : undefined}
         />
-      }
-      {allIsOpen &&
+      )}
+      {allIsOpen && (
         <ConfirmModal
           isOpen={allIsOpen}
           onClose={allOnClose}
@@ -354,7 +375,7 @@ export function Interactionbar(props: {
           size="lg"
           xOffSet={props.position ? (props.position.x + 150) / window.innerWidth : undefined}
         />
-      }
+      )}
     </>
   );
 }

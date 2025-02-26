@@ -122,6 +122,11 @@ interface UIState {
     [appId: string]: { x: number; y: number };
   };
   setDeltaLocalMove: (delta: { x: number; y: number }, appIds: string[]) => void;
+
+  // Linker interaction to link two apps
+  linkedAppIds:  string[];
+  addToLinkAppIds: (appId: string) => string[];
+  clearLinkAppIds: () => void;
 }
 
 /**
@@ -368,6 +373,23 @@ export const useUIStore = create<UIState>()((set, get) => ({
     });
     set((state) => ({ ...state, deltaLocalMove: newLocalMove }));
   },
+
+  // Linker interaction to link two apps
+  linkedAppIds: [],
+  addToLinkAppIds: (appId: string) => {
+    set((state) => {
+      if (state.linkedAppIds.includes(appId)) {
+        return state;
+      }
+      return {
+        ...state,
+        linkedAppIds: [...state.linkedAppIds, appId]
+      };
+    });
+    
+    return get().linkedAppIds;
+  },
+  clearLinkAppIds: () => set((state) => ({ ...state, linkedAppIds: [] })),
 }));
 
 /**
