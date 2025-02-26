@@ -313,7 +313,7 @@ export class SBCollectionRef<Type extends SBJSON> {
       if (typeof query === 'string') query = `{${query.replace(/[#-.@]/g, '\\$&')}}`;
       if (typeof query === 'number') query = `[${query} ${query}]`;
       const response = await this._redisClient.ft.search(this._indexName, `@${String(propertyName)}:${query}`, {
-        LIMIT: { from: 0, size: 1000 },
+        LIMIT: { from: 0, size: 5000 },
       });
       const docRefPromises = response.documents.map((el) =>
         new SBDocumentRef<Type>(el.value['_id'] as string, this._name, el.id, this._redisClient).read()
