@@ -17,6 +17,7 @@ export const schema = z.object({
   nonOwnerViewOnly: z.boolean(),
   clipboard: z.string(),
   lastImage: z.string(),
+  init: z.boolean(),
   initialWebPage: z.string(),
   urls: z.array(z.string()),
   refreshSeed: z.number(),
@@ -28,6 +29,7 @@ export const init: Partial<state> = {
   clipboard: "",
   lastImage: undefined,
   // This is only used for the paste-handler to open in vnc-firefox
+  init: false,
   initialWebPage: undefined,
   urls: [],
   refreshSeed: 0,
