@@ -8,10 +8,10 @@
 
 import { useColorModeValue } from '@chakra-ui/react';
 // Arrow library
-import { getBoxToBoxArrow } from "perfect-arrows";
+import { getBoxToBoxArrow } from 'perfect-arrows';
 
 // SAGE Imports
-import { useThrottleApps, useUIStore, useUserSettings, useHexColor, } from '@sage3/frontend';
+import { useThrottleApps, useUIStore, useUserSettings, useHexColor } from '@sage3/frontend';
 import { App } from '@sage3/applications/schema';
 
 /**
@@ -38,8 +38,8 @@ export function Arrows() {
   // Chakra Color Mode for grid color
   const gray = useColorModeValue('gray.200', 'gray.600');
   const strokeColor = useHexColor(gray);
-  const dotColor = useHexColor("red.400");
-  const tipColor = useHexColor("green.400");
+  const dotColor = useHexColor('red.400');
+  const tipColor = useHexColor('green.400');
   const arrows: JSX.Element[] = [];
 
   if (showUI && showProvenance === 'all') {
@@ -62,6 +62,9 @@ export function Arrows() {
           {apps.map((app) => {
             if (app.data.state.sources && app.data.state.sources.length > 0) {
               const sources = app.data.state.sources;
+              console.log(app._id, sources);
+              console.log(app._id, app.data);
+
               for (let i = 0; i < sources.length; i++) {
                 const src = sources[i];
                 const srcApp = apps.find((a) => a._id === src);
@@ -102,6 +105,7 @@ export function Arrows() {
             return apps.map((app) => {
               if (app.data.state.sources && app.data.state.sources.length > 0) {
                 const sources = app.data.state.sources;
+                console.log(app._id, sources);
 
                 if (sources.includes(ac._id)) {
                   const srcApp = apps.find((a) => a._id === ac._id);
@@ -111,14 +115,16 @@ export function Arrows() {
                   }
                 }
               }
-            })
+            });
           })}
 
           {/* Arrows to sources */}
           {apps.map((app) => {
-            if ((selectedAppId !== app._id) && !selectedApps.includes(app._id)) return null;
+            if (selectedAppId !== app._id && !selectedApps.includes(app._id)) return null;
             if (app.data.state.sources && app.data.state.sources.length > 0) {
               const sources = app.data.state.sources;
+              console.log(app._id, sources);
+
               const arrows = [];
               for (let i = 0; i < sources.length; i++) {
                 const src = sources[i];
@@ -146,7 +152,6 @@ export function Arrows() {
     return null;
   }
 }
-
 
 /**
  * Builds an SVG arrow between two applications based on their positions and sizes.
@@ -181,7 +186,7 @@ function buildArrow(app1: App, app2: App, strokeColor: string, tipColor: string,
 
   const arrow = getBoxToBoxArrow(p0x, p0y, s0w, s0h, p1x, p1y, s1w, s1h, {
     padStart: 0, // leave at 0 - otherwise bug in lib
-    padEnd: 0,   // leave at 0 - otherwise bug in lib
+    padEnd: 0, // leave at 0 - otherwise bug in lib
     bow: 0.25,
     straights: true,
     stretch: 0.5,
@@ -193,15 +198,16 @@ function buildArrow(app1: App, app2: App, strokeColor: string, tipColor: string,
   const [sx, sy, cx, cy, ex, ey, ae, as, ec] = arrow;
   const endAngleAsDegrees = ae * (180 / Math.PI);
 
-  return (<g key={`array-${id1}-${id2}`}>
-    <path d={`M${sx},${sy} Q${cx},${cy} ${ex},${ey}`} fill="none" stroke={strokeColor}
-      strokeWidth={10} />
-    <polygon
-      points="-18,-6 -6,0, -18,6" // offset since no padding
-      transform={`translate(${ex},${ey}) rotate(${endAngleAsDegrees})`}
-      stroke={tipColor}
-      strokeWidth={8}
-    />
-    <circle cx={sx} cy={sy} r={8} fill={dotColor} />
-  </g>);
+  return (
+    <g key={`array-${id1}-${id2}`}>
+      <path d={`M${sx},${sy} Q${cx},${cy} ${ex},${ey}`} fill="none" stroke={strokeColor} strokeWidth={10} />
+      <polygon
+        points="-18,-6 -6,0, -18,6" // offset since no padding
+        transform={`translate(${ex},${ey}) rotate(${endAngleAsDegrees})`}
+        stroke={tipColor}
+        strokeWidth={8}
+      />
+      <circle cx={sx} cy={sy} r={8} fill={dotColor} />
+    </g>
+  );
 }

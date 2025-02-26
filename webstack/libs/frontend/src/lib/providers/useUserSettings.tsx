@@ -21,7 +21,7 @@ import { useCallback, createContext, useContext, useState, useEffect } from 'rea
  * @property {boolean} showUI - Indicates whether the user interface should be displayed.
  * @property {boolean} showTags - Indicates whether tags should be displayed.
  * @property {'grid' | 'list'} selectedBoardListView - The view mode for the board list, either 'grid' or 'list'.
- * @property {'lasso' | 'grab' | 'pen' | 'eraser'} primaryActionMode - The primary action mode, which can be 'lasso', 'grab', 'pen', or 'eraser'.
+ * @property {'lasso' | 'grab' | 'pen' | 'eraser' | 'linker'} primaryActionMode - The primary action mode, which can be 'lasso', 'grab', 'pen', or 'eraser'.
  * @property {'llama' | 'openai'} aiModel - The AI model to be used, either 'llama' or 'openai'.
  */
 type UserSettings = {
@@ -32,7 +32,7 @@ type UserSettings = {
   showUI: boolean;
   showTags: boolean;
   selectedBoardListView: 'grid' | 'list';
-  primaryActionMode: 'lasso' | 'grab' | 'pen' | 'eraser';
+  primaryActionMode: 'lasso' | 'grab' | 'pen' | 'eraser' | 'linker';
   aiModel: 'llama' | 'openai';
   uiScale: 'xs' | 's' | 'md' | 'lg' | 'xl';
 };

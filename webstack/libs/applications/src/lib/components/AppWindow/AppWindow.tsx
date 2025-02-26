@@ -80,6 +80,12 @@ export function AppWindow(props: WindowProps) {
   const selected = selectedApp === props.app._id;
   const selectedApps = useUIStore((state) => state.selectedAppsIds);
 
+  // Linker
+  const linkedAppIds = useUIStore((state) => state.linkedAppIds);
+  const addToLinkAppIds = useUIStore((state) => state.addToLinkAppIds);
+  const clearLinkAppIds = useUIStore((state) => state.clearLinkAppIds);
+  const updateState = useAppStore((state) => state.updateState);
+
   // Tag Highlight
   // Insight Store
   const insights = useInsightStore((state) => state.insights);
@@ -263,6 +269,25 @@ export function AppWindow(props: WindowProps) {
       return;
     }
 
+    if (primaryActionMode === 'linker') {
+      console.log('LINK START');
+      const linkedApps = addToLinkAppIds(props.app._id);
+      console.log(linkedApps);
+
+      if (linkedApps.length === 2) {
+        const filteredApps = linkedApps.filter((id) => id !== props.app._id);
+        console.log(filteredApps);
+        // updateState(props.app._id, (prevState: any) => ({
+        //   ...prevState,
+        //   sources: [...(prevState.sources || []), filteredApps[0]],
+        // }));
+        updateState(props.app._id, { sources: filteredApps });
+        clearLinkAppIds();
+      }
+
+      return;
+    }
+
     // Set the selected app in the UI store
     if (appWasDragged) setAppWasDragged(false);
     else {
@@ -281,6 +306,13 @@ export function AppWindow(props: WindowProps) {
 
     // Uncomment me to block selection behaviour on AppWindows
     if (primaryActionMode === 'grab') {
+      return;
+    }
+
+    if (primaryActionMode === 'linker') {
+      // console.log('LINK START');
+      // addToLinkAppIds(props.app._id);
+
       return;
     }
 
@@ -357,7 +389,9 @@ export function AppWindow(props: WindowProps) {
       // enableResizing={enableResize && canResize && !isPinned}
       enableResizing={enableResize && canResize && !isPinned && primaryActionMode === 'lasso'} // Temporary solution to fix resize while drag -> && (selectedApp !== "")
       // boardSync && rndSafeForAction is a temporary solution to prevent the most common type of bug which is zooming followed by a click
-      disableDragging={!canMove || isPinned || !(boardSynced && rndSafeForAction) || primaryActionMode === 'grab'}
+      disableDragging={
+        !canMove || isPinned || !(boardSynced && rndSafeForAction) || primaryActionMode === 'grab' || primaryActionMode === 'linker'
+      }
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{
         zIndex: props.lockToBackground ? 0 : myZ,
@@ -405,7 +439,7 @@ export function AppWindow(props: WindowProps) {
         scale={scale}
         borderWidth={borderWidth}
         borderColor={borderColor}
-        selectColor={props.app.data.state?.msgId ? "#F69637" : selectColor} // Orange for SageCell when running
+        selectColor={props.app.data.state?.msgId ? '#F69637' : selectColor} // Orange for SageCell when running
         borderRadius={outerBorderRadius}
         pinned={isPinned}
         background={background}
@@ -440,15 +474,27 @@ export function AppWindow(props: WindowProps) {
           sx={
             primaryActionMode === 'grab'
               ? {
-                '&:active': {
-                  cursor: 'grabbing',
-                },
-              }
+                  '&:active': {
+                    cursor: 'grabbing',
+                  },
+                }
+              : primaryActionMode === 'linker' && linkedAppIds.length == 0
+              ? {
+                  '&': {
+                    cursor: 'alias',
+                  },
+                }
+              : primaryActionMode === 'linker' && linkedAppIds.length > 0
+              ? {
+                  '&': {
+                    cursor: 'copy',
+                  },
+                }
               : {}
           }
           userSelect={'none'}
           zIndex={3}
-        // borderRadius={innerBorderRadius}
+          // borderRadius={innerBorderRadius}
         ></Box>
       )}
 
