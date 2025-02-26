@@ -34,6 +34,7 @@ export function Arrows() {
   const { settings } = useUserSettings();
   const showUI = settings.showUI;
   const showProvenance = settings.showProvenance;
+  const primaryActionMode = settings.primaryActionMode;
 
   // Chakra Color Mode for grid color
   const gray = useColorModeValue('gray.200', 'gray.600');
@@ -42,7 +43,7 @@ export function Arrows() {
   const tipColor = useHexColor('green.400');
   const arrows: JSX.Element[] = [];
 
-  if (showUI && showProvenance === 'all') {
+  if (showUI && (showProvenance === 'all' || primaryActionMode === 'linker')) {
     return (
       <div className="arrows-container" style={{ pointerEvents: 'none', touchAction: 'auto' }}>
         <svg
@@ -62,8 +63,6 @@ export function Arrows() {
           {apps.map((app) => {
             if (app.data.state.sources && app.data.state.sources.length > 0) {
               const sources = app.data.state.sources;
-              console.log(app._id, sources);
-              console.log(app._id, app.data);
 
               for (let i = 0; i < sources.length; i++) {
                 const src = sources[i];
@@ -105,7 +104,6 @@ export function Arrows() {
             return apps.map((app) => {
               if (app.data.state.sources && app.data.state.sources.length > 0) {
                 const sources = app.data.state.sources;
-                console.log(app._id, sources);
 
                 if (sources.includes(ac._id)) {
                   const srcApp = apps.find((a) => a._id === ac._id);
@@ -123,9 +121,8 @@ export function Arrows() {
             if (selectedAppId !== app._id && !selectedApps.includes(app._id)) return null;
             if (app.data.state.sources && app.data.state.sources.length > 0) {
               const sources = app.data.state.sources;
-              console.log(app._id, sources);
-
               const arrows = [];
+
               for (let i = 0; i < sources.length; i++) {
                 const src = sources[i];
                 const srcApp = apps.find((a) => a._id === src);
