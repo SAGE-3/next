@@ -18,6 +18,8 @@ export const schema = z.object({
   clipboard: z.string(),
   lastImage: z.string(),
   refreshSeed: z.number(),
+  // init: z.boolean(),
+
   // initalizerUserId: z.string(),
   ip: z.string(),
   port: z.string(),
@@ -30,6 +32,7 @@ export const init: Partial<state> = {
   clipboard: "",
   lastImage: undefined,
   refreshSeed: 0,
+  // init: false,
   // initalizerUserId: undefined, // the person who hits connect is this user
   ip: "",
   port: "",

@@ -141,7 +141,6 @@ function AppComponent(props: App): JSX.Element {
 
   // keyboard grabbing on refresh on vnc load & on app selection
   useEffect(() => {
-    // console.log('test', isSelected);
     if (isSelected) {
       vncScreenRef.current?.focus();
       vncScreenRef.current?.rfb?._keyboard.grab();
@@ -177,7 +176,6 @@ function AppComponent(props: App): JSX.Element {
       if ((startVmOnLoad && appIsMountingRef.current) || !appIsMountingRef.current) {
         fetchWS(vmId, theme, s.urls, props._id).then((jsonData) => {
           if ('url' in jsonData) {
-            console.log('LL');
             setWsUrl(jsonData['url']);
           }
         });
@@ -186,7 +184,6 @@ function AppComponent(props: App): JSX.Element {
       else if (appIsMountingRef.current) {
         fetchWSIfExists(vmId).then((jsonData) => {
           if ('url' in jsonData) {
-            console.log('LL2');
             setWsUrl(jsonData['url']);
           }
         });
@@ -309,7 +306,7 @@ function AppComponent(props: App): JSX.Element {
               // selected={isSelected}
               // loadingUI={(<>LOADING</>)}
               onConnect={(rfb: RFB) => {
-                console.log(rfb);
+                // console.log(rfb);
                 setVncConnected(true);
                 updateScreenshot(200);
               }}
