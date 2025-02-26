@@ -322,6 +322,8 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         // Tranversal/Panning
         if (primaryActionMode === 'grab' && event.buttons & 1 && draggedOn !== 'other') {
           move();
+        } else if (primaryActionMode === 'linker' && event.buttons & 1 && draggedOn !== 'other' && draggedOn !== 'app') {
+          move();
         } else if (event.buttons & 4 && (draggedOn === 'app' || draggedOn === 'board' || draggedOn === 'board-actions')) {
           move();
         }
@@ -351,7 +353,10 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         }
         if (event.touches.length === 1) {
           // Looking for lasso interaction? Touch lasso are handled in Lasso.tsx
-          if (primaryActionMode === 'grab' && draggedOn !== 'board-actions') {
+          if (
+            (primaryActionMode === 'grab' && draggedOn !== 'board-actions') ||
+            (primaryActionMode === 'linker' && draggedOn !== 'board-actions' && draggedOn !== 'app')
+          ) {
             setLastTouch((prev) => {
               if (prev.length !== 1) {
                 return prev;

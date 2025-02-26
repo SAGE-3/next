@@ -9,6 +9,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useUserSettings, useHotkeys, useUIStore, useKeyPress } from '@sage3/frontend';
 
+// keywords: interaction hotkeys
+
 export function InteractionbarShortcuts() {
   // Settings
   const { settings, setPrimaryActionMode } = useUserSettings();
@@ -83,6 +85,17 @@ export function InteractionbarShortcuts() {
     (event: KeyboardEvent): void | boolean => {
       event.stopPropagation();
       setPrimaryActionMode('eraser');
+      setSelectedApp('');
+      setSelectedAppsIds([]);
+    },
+    { dependencies: [] }
+  );
+
+  useHotkeys(
+    '5',
+    (event: KeyboardEvent): void | boolean => {
+      event.stopPropagation();
+      setPrimaryActionMode('linker');
       setSelectedApp('');
       setSelectedAppsIds([]);
     },
