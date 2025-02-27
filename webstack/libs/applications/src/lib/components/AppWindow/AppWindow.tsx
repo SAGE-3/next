@@ -93,6 +93,7 @@ export function AppWindow(props: WindowProps) {
   const addToLinkAppIds = useUIStore((state) => state.addToLinkAppIds);
   const clearLinkAppIds = useUIStore((state) => state.clearLinkAppIds);
   const updateState = useAppStore((state) => state.updateState);
+  const fetchBoardApps = useAppStore((state) => state.fetchBoardApps);
 
   // Tag Highlight
   // Insight Store
@@ -139,13 +140,13 @@ export function AppWindow(props: WindowProps) {
   const toastID = 'error-toast';
 
   // Linker Provenance Interaction
-  const { canLink, behaviour, allowCyclic } = useMemo(() => {
+  const { canLink, linkBehaviour, linkAllowCyclic } = useMemo(() => {
     const matchedConstraint = LINKER_CONSTRAINTS.find((constraint) => constraint.name === props.app.data.type);
 
     return {
       canLink: !!matchedConstraint,
-      behaviour: matchedConstraint?.behaviour || 'one-to-one', // default value
-      allowCyclic: matchedConstraint?.allowCylic || false, // default value
+      linkBehaviour: matchedConstraint?.behaviour || 'one-to-one', // default value
+      linkAllowCyclic: matchedConstraint?.allowCylic || false, // default value
     };
   }, [props.app.data.type]);
 
@@ -291,7 +292,7 @@ export function AppWindow(props: WindowProps) {
     }
   }
 
-  function handleAppClick(e: MouseEvent) {
+  async function handleAppClick(e: MouseEvent) {
     e.stopPropagation();
 
     // Uncomment me to block selection behaviour on AppWindows
@@ -305,13 +306,37 @@ export function AppWindow(props: WindowProps) {
       console.log(linkedApps);
 
       if (linkedApps.length === 2) {
+        let allBoardApps: App[] | undefined = await fetchBoardApps(props.app.data.boardId);
+        const currentSources = allBoardApps?.find((app: App) => app._id === props.app._id)?.data.state.sources || [];
         const filteredApps = linkedApps.filter((id) => id !== props.app._id);
         console.log(filteredApps);
         // updateState(props.app._id, (prevState: any) => ({
         //   ...prevState,
         //   sources: [...(prevState.sources || []), filteredApps[0]],
         // }));
-        updateState(props.app._id, { sources: filteredApps });
+        // Behaviour
+        // TODO: Implement one to one constrain, one to many, etc...
+
+        // Cylic Detection
+        if (!linkAllowCyclic) {
+          const tmpApp = allBoardApps?.find((app: App) => app._id === props.app._id);
+          if (tmpApp && allBoardApps) {
+            tmpApp.data.state.sources = Array.from(new Set([...currentSources, ...filteredApps]));
+            allBoardApps = [...allBoardApps]; // Trigger a re-render if using state
+          }
+
+          // Clear tmp if cylic
+          if (hasSourceCycles(props.app, allBoardApps)) {
+            clearLinkAppIds();
+            return;
+          }
+        }
+
+        updateState(props.app._id, { sources: Array.from(new Set([...currentSources, ...filteredApps])) });
+        // updateState(props.app._id, (prevState: any) => ({
+        //   sources: [...(prevState?.sources || []), filteredApps], // Append `newSource` to existing sources
+        // }));
+
         clearLinkAppIds();
       }
       return;
@@ -575,3 +600,54 @@ export function AppWindow(props: WindowProps) {
     </Rnd>
   );
 }
+
+// AI GENERATED CODE, DID NOT FULLY VET YET -- START
+function hasSourceCycles(rootApp: App, allBoardApps: App[] | undefined) {
+  // If we couldn't fetch the apps, we can't determine cycles
+  if (!allBoardApps) {
+    console.error('Failed to fetch board apps');
+    return false;
+  }
+
+  // Create a map of app IDs to apps for easy lookup
+  const appMap = new Map();
+  allBoardApps.forEach((app) => {
+    appMap.set(app._id, app);
+  });
+
+  // Define a helper function to check for cycles
+  function checkCycle(appId: string, visited = new Set(), recursionStack = new Set()) {
+    // Mark current node as visited and add to recursion stack
+    visited.add(appId);
+    recursionStack.add(appId);
+
+    // Get the current app
+    const currentApp = appMap.get(appId);
+
+    // If the app exists and has sources
+    if (currentApp && currentApp.data && currentApp.data.state.sources) {
+      // Check all adjacent vertices
+      for (const sourceAppId of currentApp.data.state.sources) {
+        // If not visited, check if there's a cycle starting from this vertex
+        if (!visited.has(sourceAppId)) {
+          if (checkCycle(sourceAppId, visited, recursionStack)) {
+            return true;
+          }
+        }
+        // If the app is already in the recursion stack, we found a cycle
+        else if (recursionStack.has(sourceAppId)) {
+          return true;
+        }
+      }
+    }
+
+    console.log(recursionStack);
+    // Remove the vertex from recursion stack
+    recursionStack.delete(appId);
+    return false;
+  }
+
+  // Start checking from our root app
+  return checkCycle(rootApp._id);
+}
+// AI GENERATED CODE, DID NOT FULLY VET YET -- END
