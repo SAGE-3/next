@@ -14,7 +14,7 @@ FROM python:3.9-slim
 WORKDIR /code
 
 # Debian package
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y curl git && rm -rf /var/lib/apt/lists/*
 
 # Copy only necessary files from the builder
 COPY --from=builder /install /usr/local
