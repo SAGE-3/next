@@ -26,6 +26,14 @@ const APP_MIN_HEIGHT = 100;
 const APP_MAX_WIDTH = 8 * 1024;
 const APP_MAX_HEIGHT = 8 * 1024;
 
+const LINKER_CONSTRAINTS = [
+  {
+    name: 'SageCell',
+    behaviour: 'one-to-one', // 'one-to-many', 'many-to-one'
+    allowCylic: false,
+  },
+];
+
 type WindowProps = {
   app: App;
   children: JSX.Element;
@@ -129,6 +137,17 @@ export function AppWindow(props: WindowProps) {
   // Display messages
   const toast = useToast();
   const toastID = 'error-toast';
+
+  // Linker Provenance Interaction
+  const { canLink, behaviour, allowCyclic } = useMemo(() => {
+    const matchedConstraint = LINKER_CONSTRAINTS.find((constraint) => constraint.name === props.app.data.type);
+
+    return {
+      canLink: !!matchedConstraint,
+      behaviour: matchedConstraint?.behaviour || 'one-to-one', // default value
+      allowCyclic: matchedConstraint?.allowCylic || false, // default value
+    };
+  }, [props.app.data.type]);
 
   // Track the app store errors
   useEffect(() => {
@@ -261,6 +280,17 @@ export function AppWindow(props: WindowProps) {
     }
   }, [props.app.data.raised]);
 
+  function handleAppRightClick(e: MouseEvent) {
+    e.stopPropagation();
+    e.preventDefault();
+    if (primaryActionMode === 'linker' && canLink) {
+      console.log('???');
+      updateState(props.app._id, { sources: [] });
+      clearLinkAppIds();
+      return;
+    }
+  }
+
   function handleAppClick(e: MouseEvent) {
     e.stopPropagation();
 
@@ -269,7 +299,7 @@ export function AppWindow(props: WindowProps) {
       return;
     }
 
-    if (primaryActionMode === 'linker') {
+    if (primaryActionMode === 'linker' && canLink) {
       console.log('LINK START');
       const linkedApps = addToLinkAppIds(props.app._id);
       console.log(linkedApps);
@@ -284,7 +314,10 @@ export function AppWindow(props: WindowProps) {
         updateState(props.app._id, { sources: filteredApps });
         clearLinkAppIds();
       }
+      return;
+    }
 
+    if (primaryActionMode === 'linker' && !canLink) {
       return;
     }
 
@@ -309,10 +342,14 @@ export function AppWindow(props: WindowProps) {
       return;
     }
 
-    if (primaryActionMode === 'linker') {
+    if (primaryActionMode === 'linker' && canLink) {
       // console.log('LINK START');
       // addToLinkAppIds(props.app._id);
 
+      return;
+    }
+
+    if (primaryActionMode === 'linker' && !canLink) {
       return;
     }
 
@@ -383,6 +420,7 @@ export function AppWindow(props: WindowProps) {
       onResize={handleResize}
       onResizeStop={handleResizeStop}
       onClick={handleAppClick}
+      onContextMenu={handleAppRightClick}
       // select an app on touch
       onPointerDown={handleAppTouchStart}
       onPointerMove={handleAppTouchMove}
@@ -478,16 +516,22 @@ export function AppWindow(props: WindowProps) {
                     cursor: 'grabbing',
                   },
                 }
-              : primaryActionMode === 'linker' && linkedAppIds.length == 0
+              : primaryActionMode === 'linker' && canLink && linkedAppIds.length == 0
               ? {
                   '&': {
                     cursor: 'alias',
                   },
                 }
-              : primaryActionMode === 'linker' && linkedAppIds.length > 0
+              : primaryActionMode === 'linker' && canLink && linkedAppIds.length > 0
               ? {
                   '&': {
                     cursor: 'copy',
+                  },
+                }
+              : primaryActionMode === 'linker' && !canLink
+              ? {
+                  '&': {
+                    cursor: 'no-drop',
                   },
                 }
               : {}
