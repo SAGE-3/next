@@ -41,6 +41,7 @@ import {
 
 // Icons
 import { MdError, MdDelete, MdPlayArrow, MdStop } from 'react-icons/md';
+import { VscRunAll } from 'react-icons/vsc';
 import { FaPython } from 'react-icons/fa';
 
 // Event Source import
@@ -1226,7 +1227,7 @@ function AppComponent(props: App): JSX.Element {
                     <IconButton
                       onClick={handleExecuteChain}
                       aria-label={''}
-                      icon={s.msgId ? <Spinner size="sm" color="teal.500" /> : <MdPlayArrow size={'1.5em'} color="#008080" />}
+                      icon={s.msgId ? <Spinner size="sm" color="teal.500" /> : <VscRunAll size={'1em'} color="#008080" />}
                       isDisabled={!s.kernel || !canExecuteCode}
                     />
                   </Tooltip>
