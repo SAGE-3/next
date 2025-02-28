@@ -111,6 +111,8 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const createApp = useAppStore((state) => state.create);
+  const fetchBoardApps = useAppStore((state) => state.fetchBoardApps);
+
   // Apps selection
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
 
@@ -344,6 +346,67 @@ function AppComponent(props: App): JSX.Element {
           msgId: '',
         });
       }
+    }
+  };
+
+  // Evaluate the sagecells in provenance (source) order
+  // waitSeconds and executeAppNoChecks directly pulled from the toolbar.tsx, should consider some refactor strategy to resolve duplicated code
+  async function waitSeconds(x: number): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve, x * 1000));
+  }
+
+  const handleExecuteChain = async () => {
+    async function executeAppNoChecks(appid: string, userid: string) {
+      // Get the code from the store
+      const code = useAppStore.getState().apps.find((app) => app._id === appid)?.data.state.code;
+      console.log();
+      // Get the kernel from the store, since function executed from monoaco editor
+      const kernel = useStore.getState().kernel[appid];
+      if (kernel && code) {
+        const response = await useKernelStore.getState().executeCode(code, kernel, userid);
+        if (response.ok) {
+          const msgId = response.msg_id;
+          useAppStore.getState().updateState(appid, { msgId: msgId, session: userid });
+          return true;
+        } else {
+          useAppStore.getState().updateState(appid, { streaming: false, msgId: '' });
+          return false;
+        }
+      }
+      return false;
+    }
+
+    if (props.data.state.sources) {
+      const allBoardApps = useAppStore.getState().apps;
+      let source = props.data.state.sources[0];
+      let appStack = [];
+
+      // Push apps onto stack by following the first source of the provenance chain
+      appStack.push(props);
+      while (source) {
+        const sourceApp = allBoardApps?.find((app) => app._id === source);
+        if (!sourceApp) break;
+
+        appStack.push(sourceApp);
+
+        if (!sourceApp?.data?.state?.sources || sourceApp.data.state.sources.length === 0) {
+          break;
+        }
+
+        source = sourceApp.data.state.sources[0];
+      }
+
+      // reverse through the stack (can also pop if you want) and execute the code as we go
+      for (let i = appStack.length - 1; i >= 0; i--) {
+        const app = appStack[i];
+        const res = await executeAppNoChecks(app._id, app.data.state.session);
+        // if error, break the loop
+        if (!res) break;
+        // Give illusion of sequential execution
+        await waitSeconds(0.1);
+      }
+    } else {
+      handleExecute();
     }
   };
 
@@ -1154,6 +1217,14 @@ function AppComponent(props: App): JSX.Element {
                   <Tooltip hasArrow label="Execute" placement="right-start">
                     <IconButton
                       onClick={handleExecute}
+                      aria-label={''}
+                      icon={s.msgId ? <Spinner size="sm" color="teal.500" /> : <MdPlayArrow size={'1.5em'} color="#008080" />}
+                      isDisabled={!s.kernel || !canExecuteCode}
+                    />
+                  </Tooltip>
+                  <Tooltip hasArrow label="Execute all prior sage cells in this chain" placement="right-start">
+                    <IconButton
+                      onClick={handleExecuteChain}
                       aria-label={''}
                       icon={s.msgId ? <Spinner size="sm" color="teal.500" /> : <MdPlayArrow size={'1.5em'} color="#008080" />}
                       isDisabled={!s.kernel || !canExecuteCode}

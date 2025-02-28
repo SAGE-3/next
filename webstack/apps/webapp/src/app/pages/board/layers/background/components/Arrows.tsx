@@ -14,7 +14,7 @@ import { getBoxToBoxArrow } from 'perfect-arrows';
 import { useThrottleApps, useUIStore, useUserSettings, useHexColor, useCursorBoardPosition } from '@sage3/frontend';
 import { App } from '@sage3/applications/schema';
 
-// export function ArrowToCursor({ cursorPosition }: { cursorPosition: { x: number; y: number } }) {
+// Keep seperate to avoid unnecessary rerenders caused by cursor movement
 export function ArrowToCursor() {
   const linkedAppId = useUIStore((state) => state.linkedAppId);
   const apps = useThrottleApps(200);
@@ -23,6 +23,7 @@ export function ArrowToCursor() {
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
 
+  // User Cursor
   const { boardCursor: cursorPosition } = useCursorBoardPosition();
 
   // Chakra Color Mode for grid color
@@ -52,7 +53,6 @@ export function ArrowToCursor() {
               height: boardHeight + 'px',
               left: 0,
               top: 0,
-              // cursor: 'crosshair',
               zIndex: 0,
             }}
           >
@@ -199,6 +199,75 @@ export function Arrows() {
   }
 }
 
+type Box = {
+  pos: { x: number; y: number };
+  size: { width: number; height: number };
+};
+
+/**
+ * Builds an SVG arrow between two boxes based on their positions and sizes.
+ *
+ * @param {Box} box1 - The first box object containing position and size data.
+ * @param {Box} box2 - The second box object containing position and size data.
+ * @param {string} strokeColor - The color of the arrow's stroke.
+ * @param {string} tipColor - The color of the arrow's tip.
+ * @param {string} dotColor - The color of the starting dot.
+ * @returns {JSX.Element} An SVG group element containing the arrow path, tip, and starting dot.
+ *
+ * The function calculates the arrow path using the `getBoxToBoxArrow` function. If an error occurs during
+ * the calculation, it falls back to using the `getArrow` function for a corner-to-corner arrow.
+ *
+ * @throws Will log an error message if arrow calculation fails and falls back to corner-to-corner arrow.
+ */
+function createArrow(box1: Box, box2: Box, key: string, strokeColor: string, tipColor: string, dotColor: string) {
+  const p0x = Math.round(box1.pos.x);
+  const p0y = Math.round(box1.pos.y);
+  const p1x = Math.round(box2.pos.x);
+  const p1y = Math.round(box2.pos.y);
+  const s0w = Math.round(box1.size.width);
+  const s0h = Math.round(box1.size.height);
+  const s1w = Math.round(box2.size.width);
+  const s1h = Math.round(box2.size.height);
+
+  const arrow = getBoxToBoxArrow(p0x, p0y, s0w, s0h, p1x, p1y, s1w, s1h, {
+    padStart: 0, // leave at 0 - otherwise bug in lib
+    padEnd: 0, // leave at 0 - otherwise bug in lib
+    bow: 0.25,
+    straights: true,
+    stretch: 0.5,
+    stretchMin: 0,
+    stretchMax: 360,
+    flip: false,
+  });
+
+  const [sx, sy, cx, cy, ex, ey, ae, as, ec] = arrow;
+  const endAngleAsDegrees = ae * (180 / Math.PI);
+
+  return (
+    <g key={`array-${key}`}>
+      <path d={`M${sx},${sy} Q${cx},${cy} ${ex},${ey}`} fill="none" stroke={strokeColor} strokeWidth={10} />
+      <polygon
+        points="-18,-6 -6,0, -18,6" // offset since no padding
+        transform={`translate(${ex},${ey}) rotate(${endAngleAsDegrees})`}
+        stroke={tipColor}
+        strokeWidth={8}
+      />
+      <circle cx={sx} cy={sy} r={8} fill={dotColor} />
+    </g>
+  );
+}
+
+function buildArrowToCursor(app1: App, posX: number, posY: number, strokeColor: string, tipColor: string, dotColor: string) {
+  return createArrow(
+    { pos: app1.data.position, size: app1.data.size },
+    { pos: { x: posX, y: posY }, size: { width: 1, height: 1 } },
+    `${app1._id}-cursor`,
+    strokeColor,
+    tipColor,
+    dotColor
+  );
+}
+
 /**
  * Builds an SVG arrow between two applications based on their positions and sizes.
  *
@@ -215,86 +284,12 @@ export function Arrows() {
  * @throws Will log an error message if arrow calculation fails and falls back to corner-to-corner arrow.
  */
 function buildArrow(app1: App, app2: App, strokeColor: string, tipColor: string, dotColor: string) {
-  const id1 = app1._id;
-  const id2 = app2._id;
-  const pos0 = app1.data.position;
-  const size0 = app1.data.size;
-  const pos1 = app2.data.position;
-  const size1 = app2.data.size;
-  const p0x = Math.round(pos0.x);
-  const p0y = Math.round(pos0.y);
-  const p1x = Math.round(pos1.x);
-  const p1y = Math.round(pos1.y);
-  const s0w = Math.round(size0.width);
-  const s0h = Math.round(size0.height);
-  const s1w = Math.round(size1.width);
-  const s1h = Math.round(size1.height);
-
-  const arrow = getBoxToBoxArrow(p0x, p0y, s0w, s0h, p1x, p1y, s1w, s1h, {
-    padStart: 0, // leave at 0 - otherwise bug in lib
-    padEnd: 0, // leave at 0 - otherwise bug in lib
-    bow: 0.25,
-    straights: true,
-    stretch: 0.5,
-    stretchMin: 0,
-    stretchMax: 360,
-    flip: false,
-  });
-
-  const [sx, sy, cx, cy, ex, ey, ae, as, ec] = arrow;
-  const endAngleAsDegrees = ae * (180 / Math.PI);
-
-  return (
-    <g key={`array-${id1}-${id2}`}>
-      <path d={`M${sx},${sy} Q${cx},${cy} ${ex},${ey}`} fill="none" stroke={strokeColor} strokeWidth={10} />
-      <polygon
-        points="-18,-6 -6,0, -18,6" // offset since no padding
-        transform={`translate(${ex},${ey}) rotate(${endAngleAsDegrees})`}
-        stroke={tipColor}
-        strokeWidth={8}
-      />
-      <circle cx={sx} cy={sy} r={8} fill={dotColor} />
-    </g>
-  );
-}
-
-function buildArrowToCursor(app1: App, posX: number, posY: number, strokeColor: string, tipColor: string, dotColor: string) {
-  const id1 = app1._id;
-  const pos0 = app1.data.position;
-  const size0 = app1.data.size;
-  const p0x = Math.round(pos0.x);
-  const p0y = Math.round(pos0.y);
-  const p1x = Math.round(posX);
-  const p1y = Math.round(posY);
-  const s0w = Math.round(size0.width);
-  const s0h = Math.round(size0.height);
-  const s1w = Math.round(1);
-  const s1h = Math.round(1);
-
-  const arrow = getBoxToBoxArrow(p0x, p0y, s0w, s0h, p1x, p1y, s1w, s1h, {
-    padStart: 0, // leave at 0 - otherwise bug in lib
-    padEnd: 0, // leave at 0 - otherwise bug in lib
-    bow: 0.25,
-    straights: true,
-    stretch: 0.5,
-    stretchMin: 0,
-    stretchMax: 360,
-    flip: false,
-  });
-
-  const [sx, sy, cx, cy, ex, ey, ae, as, ec] = arrow;
-  const endAngleAsDegrees = ae * (180 / Math.PI);
-
-  return (
-    <g key={`array-${id1}-cursor`}>
-      <path d={`M${sx},${sy} Q${cx},${cy} ${ex},${ey}`} fill="none" stroke={strokeColor} strokeWidth={10} />
-      <polygon
-        points="-18,-6 -6,0, -18,6" // offset since no padding
-        transform={`translate(${ex},${ey}) rotate(${endAngleAsDegrees})`}
-        stroke={tipColor}
-        strokeWidth={8}
-      />
-      <circle cx={sx} cy={sy} r={8} fill={dotColor} />
-    </g>
+  return createArrow(
+    { pos: app1.data.position, size: app1.data.size },
+    { pos: app2.data.position, size: app2.data.size },
+    `${app1._id}-${app2._id}`,
+    strokeColor,
+    tipColor,
+    dotColor
   );
 }
