@@ -353,6 +353,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         }
         if (event.touches.length === 1) {
           // Looking for lasso interaction? Touch lasso are handled in Lasso.tsx
+          // Looking for linker interaction? linker are handled in AppWindow.tsx
           if (
             (primaryActionMode === 'grab' && draggedOn !== 'board-actions') ||
             (primaryActionMode === 'linker' && draggedOn !== 'board-actions' && draggedOn !== 'app')
