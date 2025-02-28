@@ -11,7 +11,7 @@ import { useColorModeValue } from '@chakra-ui/react';
 import { getBoxToBoxArrow } from 'perfect-arrows';
 
 // SAGE Imports
-import { useThrottleApps, useUIStore, useUserSettings, useHexColor, useCursorBoardPosition } from '@sage3/frontend';
+import { useThrottleApps, useUIStore, useUserSettings, useHexColor, useCursorBoardPosition, useAppStore } from '@sage3/frontend';
 import { App } from '@sage3/applications/schema';
 
 // Keep seperate to avoid unnecessary rerenders caused by cursor movement
@@ -92,6 +92,15 @@ export function Arrows() {
   const tipColor = useHexColor('green.400');
   const arrows: JSX.Element[] = [];
 
+  // Linker Interaction Mode
+  const linkedAppId = useUIStore((state) => state.linkedAppId);
+  const updateState = useAppStore((state) => state.updateState);
+
+  function deleteLink(app1: App, app2: App) {
+    const newSources = app2.data.state.sources.filter((source: string) => source !== app1._id);
+    updateState(app2._id, { sources: newSources });
+  }
+
   if (showUI && (showProvenance === 'all' || primaryActionMode === 'linker')) {
     return (
       <div className="arrows-container" style={{ pointerEvents: 'none', touchAction: 'auto' }}>
@@ -104,7 +113,6 @@ export function Arrows() {
             height: boardHeight + 'px',
             left: 0,
             top: 0,
-            cursor: 'crosshair',
             zIndex: 0,
           }}
         >
@@ -117,7 +125,19 @@ export function Arrows() {
                 const src = sources[i];
                 const srcApp = apps.find((a) => a._id === src);
                 if (srcApp) {
-                  const arrow = buildArrow(srcApp, app, strokeColor, tipColor, dotColor);
+                  const arrow = buildArrow(
+                    srcApp,
+                    app,
+                    strokeColor,
+                    tipColor,
+                    dotColor,
+                    linkedAppId === '' && primaryActionMode === 'linker',
+                    linkedAppId === '' && primaryActionMode === 'linker'
+                      ? () => {
+                          deleteLink(srcApp, app);
+                        }
+                      : undefined
+                  );
                   arrows.push(arrow);
                 }
               }
@@ -219,7 +239,16 @@ type Box = {
  *
  * @throws Will log an error message if arrow calculation fails and falls back to corner-to-corner arrow.
  */
-function createArrow(box1: Box, box2: Box, key: string, strokeColor: string, tipColor: string, dotColor: string) {
+function createArrow(
+  box1: Box,
+  box2: Box,
+  key: string,
+  strokeColor: string,
+  tipColor: string,
+  dotColor: string,
+  interactable: boolean = false,
+  onClick?: () => any
+) {
   const p0x = Math.round(box1.pos.x);
   const p0y = Math.round(box1.pos.y);
   const p1x = Math.round(box2.pos.x);
@@ -245,7 +274,24 @@ function createArrow(box1: Box, box2: Box, key: string, strokeColor: string, tip
 
   return (
     <g key={`array-${key}`}>
-      <path d={`M${sx},${sy} Q${cx},${cy} ${ex},${ey}`} fill="none" stroke={strokeColor} strokeWidth={10} />
+      <path
+        d={`M${sx},${sy} Q${cx},${cy} ${ex},${ey}`}
+        fill="none"
+        stroke={strokeColor}
+        strokeWidth={10}
+        style={interactable ? { pointerEvents: 'auto', touchAction: 'auto' } : { pointerEvents: 'none', touchAction: 'none' }}
+        onClick={onClick}
+        onMouseEnter={(e) => {
+          if (!interactable) return;
+
+          (e.target as SVGPathElement).setAttribute('stroke', 'red');
+        }}
+        onMouseLeave={(e) => {
+          if (!interactable) return;
+
+          (e.target as SVGPathElement).setAttribute('stroke', strokeColor);
+        }}
+      />
       <polygon
         points="-18,-6 -6,0, -18,6" // offset since no padding
         transform={`translate(${ex},${ey}) rotate(${endAngleAsDegrees})`}
@@ -264,7 +310,8 @@ function buildArrowToCursor(app1: App, posX: number, posY: number, strokeColor: 
     `${app1._id}-cursor`,
     strokeColor,
     tipColor,
-    dotColor
+    dotColor,
+    false
   );
 }
 
@@ -283,13 +330,23 @@ function buildArrowToCursor(app1: App, posX: number, posY: number, strokeColor: 
  *
  * @throws Will log an error message if arrow calculation fails and falls back to corner-to-corner arrow.
  */
-function buildArrow(app1: App, app2: App, strokeColor: string, tipColor: string, dotColor: string) {
+function buildArrow(
+  app1: App,
+  app2: App,
+  strokeColor: string,
+  tipColor: string,
+  dotColor: string,
+  interactable: boolean = false,
+  onClick?: () => any
+) {
   return createArrow(
     { pos: app1.data.position, size: app1.data.size },
     { pos: app2.data.position, size: app2.data.size },
     `${app1._id}-${app2._id}`,
     strokeColor,
     tipColor,
-    dotColor
+    dotColor,
+    interactable,
+    onClick
   );
 }

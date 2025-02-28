@@ -641,7 +641,6 @@ function hasSourceCycles(rootApp: App, allBoardApps: App[]) {
       }
     }
 
-    console.log(recursionStack);
     // Remove the vertex from recursion stack
     recursionStack.delete(appId);
     return false;
