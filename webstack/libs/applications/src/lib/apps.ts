@@ -129,3 +129,4 @@ export const Applications = {
 
 export * from './components';
 export * from './ai-apps';
+export * from './provenance-apps';

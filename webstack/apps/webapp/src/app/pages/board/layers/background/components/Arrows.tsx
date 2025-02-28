@@ -11,9 +11,58 @@ import { useColorModeValue } from '@chakra-ui/react';
 import { getBoxToBoxArrow } from 'perfect-arrows';
 
 // SAGE Imports
-import { useThrottleApps, useUIStore, useUserSettings, useHexColor } from '@sage3/frontend';
+import { useThrottleApps, useUIStore, useUserSettings, useHexColor, useCursorBoardPosition } from '@sage3/frontend';
 import { App } from '@sage3/applications/schema';
 
+// export function ArrowToCursor({ cursorPosition }: { cursorPosition: { x: number; y: number } }) {
+export function ArrowToCursor() {
+  const linkedAppId = useUIStore((state) => state.linkedAppId);
+  const apps = useThrottleApps(200);
+
+  // UI Store
+  const boardWidth = useUIStore((state) => state.boardWidth);
+  const boardHeight = useUIStore((state) => state.boardHeight);
+
+  const { boardCursor: cursorPosition } = useCursorBoardPosition();
+
+  // Chakra Color Mode for grid color
+  const gray = useColorModeValue('gray.200', 'gray.600');
+  const strokeColor = useHexColor(gray);
+  const dotColor = useHexColor('red.400');
+  const tipColor = useHexColor('green.400');
+
+  function buildArrow(src: string) {
+    const srcApp = apps.find((a) => a._id === src);
+
+    if (srcApp) {
+      return buildArrowToCursor(srcApp, cursorPosition.x, cursorPosition.y, strokeColor, tipColor, dotColor);
+    }
+    return null;
+  }
+  return (
+    <>
+      {linkedAppId && (
+        <div className="arrows-container" style={{ pointerEvents: 'none', touchAction: 'auto' }}>
+          <svg
+            id="arrows-to-cursor"
+            className="canvas-layer"
+            style={{
+              position: 'absolute',
+              width: boardWidth + 'px',
+              height: boardHeight + 'px',
+              left: 0,
+              top: 0,
+              // cursor: 'crosshair',
+              zIndex: 0,
+            }}
+          >
+            {buildArrow(linkedAppId)}
+          </svg>
+        </div>
+      )}
+    </>
+  );
+}
 /**
  * The Arrows component, showing arrows between apps.
  *
@@ -197,6 +246,47 @@ function buildArrow(app1: App, app2: App, strokeColor: string, tipColor: string,
 
   return (
     <g key={`array-${id1}-${id2}`}>
+      <path d={`M${sx},${sy} Q${cx},${cy} ${ex},${ey}`} fill="none" stroke={strokeColor} strokeWidth={10} />
+      <polygon
+        points="-18,-6 -6,0, -18,6" // offset since no padding
+        transform={`translate(${ex},${ey}) rotate(${endAngleAsDegrees})`}
+        stroke={tipColor}
+        strokeWidth={8}
+      />
+      <circle cx={sx} cy={sy} r={8} fill={dotColor} />
+    </g>
+  );
+}
+
+function buildArrowToCursor(app1: App, posX: number, posY: number, strokeColor: string, tipColor: string, dotColor: string) {
+  const id1 = app1._id;
+  const pos0 = app1.data.position;
+  const size0 = app1.data.size;
+  const p0x = Math.round(pos0.x);
+  const p0y = Math.round(pos0.y);
+  const p1x = Math.round(posX);
+  const p1y = Math.round(posY);
+  const s0w = Math.round(size0.width);
+  const s0h = Math.round(size0.height);
+  const s1w = Math.round(1);
+  const s1h = Math.round(1);
+
+  const arrow = getBoxToBoxArrow(p0x, p0y, s0w, s0h, p1x, p1y, s1w, s1h, {
+    padStart: 0, // leave at 0 - otherwise bug in lib
+    padEnd: 0, // leave at 0 - otherwise bug in lib
+    bow: 0.25,
+    straights: true,
+    stretch: 0.5,
+    stretchMin: 0,
+    stretchMax: 360,
+    flip: false,
+  });
+
+  const [sx, sy, cx, cy, ex, ey, ae, as, ec] = arrow;
+  const endAngleAsDegrees = ae * (180 / Math.PI);
+
+  return (
+    <g key={`array-${id1}-cursor`}>
       <path d={`M${sx},${sy} Q${cx},${cy} ${ex},${ey}`} fill="none" stroke={strokeColor} strokeWidth={10} />
       <polygon
         points="-18,-6 -6,0, -18,6" // offset since no padding

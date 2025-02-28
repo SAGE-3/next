@@ -124,8 +124,8 @@ interface UIState {
   setDeltaLocalMove: (delta: { x: number; y: number }, appIds: string[]) => void;
 
   // Linker interaction to link two apps
-  linkedAppIds:  string[];
-  addToLinkAppIds: (appId: string) => string[];
+  linkedAppId:  string;
+  cacheLinkedAppId: (appId: string) => string;
   clearLinkAppIds: () => void;
 }
 
@@ -375,21 +375,30 @@ export const useUIStore = create<UIState>()((set, get) => ({
   },
 
   // Linker interaction to link two apps
-  linkedAppIds: [],
-  addToLinkAppIds: (appId: string) => {
+  linkedAppId: "",
+  cacheLinkedAppId: (appId: string) => {
+    const cachedLinkAppid = get().linkedAppId;
     set((state) => {
-      if (state.linkedAppIds.includes(appId)) {
+      if (state.linkedAppId === appId) {
         return state;
       }
-      return {
-        ...state,
-        linkedAppIds: [...state.linkedAppIds, appId]
-      };
+      if (cachedLinkAppid) {
+        return {
+          ...state,
+          linkedAppId: ""
+        };
+      }
+      else {
+        return {
+          ...state,
+          linkedAppId: appId
+        };
+      }
     });
     
-    return get().linkedAppIds;
+    return cachedLinkAppid;
   },
-  clearLinkAppIds: () => set((state) => ({ ...state, linkedAppIds: [] })),
+  clearLinkAppIds: () => set((state) => ({ ...state, linkedAppId: "" })),
 }));
 
 /**
