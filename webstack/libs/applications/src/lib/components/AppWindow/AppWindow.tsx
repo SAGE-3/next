@@ -294,12 +294,16 @@ export function AppWindow(props: WindowProps) {
       return;
     }
 
+    //////////////////////////////////
+    // Linker Interaction Behaviour //
+    //////////////////////////////////
     // Keyword: Linker Interaction Mode / Provenance Interaction Mode
     if (primaryActionMode === 'linker' && canLink) {
       const priorLinkedApp = cacheLinkedAppId(props.app._id);
 
       if (priorLinkedApp) {
-        let allBoardApps: App[] | undefined = await fetchBoardApps(props.app.data.boardId);
+        // let allBoardApps: App[] | undefined = await fetchBoardApps(props.app.data.boardId);
+        let allBoardApps: App[] = JSON.parse(JSON.stringify(useAppStore.getState().apps)); // deep copy
         const currentSources = allBoardApps?.find((app: App) => app._id === props.app._id)?.data.state.sources || [];
         const newSources = Array.from(new Set([...currentSources, priorLinkedApp]));
 
@@ -376,14 +380,7 @@ export function AppWindow(props: WindowProps) {
       return;
     }
 
-    if (primaryActionMode === 'linker' && canLink) {
-      // console.log('LINK START');
-      // addToLinkAppIds(props.app._id);
-
-      return;
-    }
-
-    if (primaryActionMode === 'linker' && !canLink) {
+    if (primaryActionMode === 'linker') {
       return;
     }
 
@@ -610,14 +607,8 @@ export function AppWindow(props: WindowProps) {
   );
 }
 
-// AI GENERATED CODE, DID NOT FULLY VET YET -- START
-function hasSourceCycles(rootApp: App, allBoardApps: App[] | undefined) {
-  // If we couldn't fetch the apps, we can't determine cycles
-  if (!allBoardApps) {
-    console.error('Failed to fetch board apps');
-    return false;
-  }
-
+// AI GENERATED FUNCTION
+function hasSourceCycles(rootApp: App, allBoardApps: App[]) {
   // Create a map of app IDs to apps for easy lookup
   const appMap = new Map();
   allBoardApps.forEach((app) => {
@@ -659,4 +650,3 @@ function hasSourceCycles(rootApp: App, allBoardApps: App[] | undefined) {
   // Start checking from our root app
   return checkCycle(rootApp._id);
 }
-// AI GENERATED CODE, DID NOT FULLY VET YET -- END
