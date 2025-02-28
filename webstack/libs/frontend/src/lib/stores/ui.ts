@@ -126,7 +126,7 @@ interface UIState {
   // Linker interaction to link two apps
   linkedAppId:  string;
   cacheLinkedAppId: (appId: string) => string;
-  clearLinkAppIds: () => void;
+  clearLinkAppId: () => void;
 }
 
 /**
@@ -398,7 +398,7 @@ export const useUIStore = create<UIState>()((set, get) => ({
     
     return cachedLinkAppid;
   },
-  clearLinkAppIds: () => set((state) => ({ ...state, linkedAppId: "" })),
+  clearLinkAppId: () => set((state) => ({ ...state, linkedAppId: "" })),
 }));
 
 /**

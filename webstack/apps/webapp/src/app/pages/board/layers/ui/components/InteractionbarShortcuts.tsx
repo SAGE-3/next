@@ -18,6 +18,7 @@ export function InteractionbarShortcuts() {
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
+  const clearLinkAppId = useUIStore((state) => state.clearLinkAppId);
 
   const [cachedPrimaryActionMode, setCachedPrimaryActionMode] = useState<'lasso' | 'grab' | 'pen' | 'eraser' | 'linker' | undefined>(
     undefined
@@ -55,6 +56,7 @@ export function InteractionbarShortcuts() {
     (event: KeyboardEvent): void | boolean => {
       event.stopPropagation();
       setPrimaryActionMode('lasso');
+      clearLinkAppId();
     },
     { dependencies: [] }
   );
@@ -65,6 +67,7 @@ export function InteractionbarShortcuts() {
       event.stopPropagation();
       setPrimaryActionMode('grab');
       setSelectedApp('');
+      clearLinkAppId();
     },
     { dependencies: [] }
   );
@@ -76,6 +79,7 @@ export function InteractionbarShortcuts() {
       setPrimaryActionMode('pen');
       setSelectedApp('');
       setSelectedAppsIds([]);
+      clearLinkAppId();
     },
     { dependencies: [] }
   );
@@ -87,6 +91,7 @@ export function InteractionbarShortcuts() {
       setPrimaryActionMode('eraser');
       setSelectedApp('');
       setSelectedAppsIds([]);
+      clearLinkAppId();
     },
     { dependencies: [] }
   );
@@ -98,6 +103,7 @@ export function InteractionbarShortcuts() {
       setPrimaryActionMode('linker');
       setSelectedApp('');
       setSelectedAppsIds([]);
+      clearLinkAppId();
     },
     { dependencies: [] }
   );

@@ -88,7 +88,7 @@ export function AppWindow(props: WindowProps) {
   // Linker
   const linkedAppId = useUIStore((state) => state.linkedAppId);
   const cacheLinkedAppId = useUIStore((state) => state.cacheLinkedAppId);
-  const clearLinkAppIds = useUIStore((state) => state.clearLinkAppIds);
+  const clearLinkAppId = useUIStore((state) => state.clearLinkAppId);
 
   // Tag Highlight
   // Insight Store
@@ -282,7 +282,7 @@ export function AppWindow(props: WindowProps) {
     e.preventDefault();
     if (primaryActionMode === 'linker' && canLink) {
       updateState(props.app._id, { sources: [] });
-      clearLinkAppIds();
+      clearLinkAppId();
       return;
     }
   }
