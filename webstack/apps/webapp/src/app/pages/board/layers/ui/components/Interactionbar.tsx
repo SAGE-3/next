@@ -151,6 +151,7 @@ export function Interactionbar(props: {
               eraserOnClose();
               annotationsOnClose();
               setPrimaryActionMode('lasso');
+              clearLinkAppId();
             }}
           ></IconButton>
         </Tooltip>
