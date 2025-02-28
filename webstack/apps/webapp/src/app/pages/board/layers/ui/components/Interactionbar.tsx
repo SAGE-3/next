@@ -53,6 +53,7 @@ export function Interactionbar(props: {
   // UiStore
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
+  const clearLinkAppId = useUIStore((state) => state.clearLinkAppId);
 
   // Tooltip Placment
   const tooltipPlacement = props.tooltipPlacement ? props.tooltipPlacement : 'top';
@@ -173,6 +174,7 @@ export function Interactionbar(props: {
               setPrimaryActionMode('grab');
               setSelectedAppsIds([]);
               setSelectedApp('');
+              clearLinkAppId();
             }}
           ></IconButton>
         </Tooltip>
@@ -203,6 +205,7 @@ export function Interactionbar(props: {
                   setPrimaryActionMode('pen');
                   setSelectedApp('');
                   setSelectedAppsIds([]);
+                  clearLinkAppId();
                 }}
               ></IconButton>
             </PopoverTrigger>
@@ -294,6 +297,7 @@ export function Interactionbar(props: {
                   setPrimaryActionMode('eraser');
                   setSelectedApp('');
                   setSelectedAppsIds([]);
+                  clearLinkAppId();
                 }}
               ></IconButton>
             </PopoverTrigger>
@@ -340,6 +344,7 @@ export function Interactionbar(props: {
             onClick={() => {
               eraserOnClose();
               annotationsOnClose();
+              clearLinkAppId();
               setPrimaryActionMode('linker');
             }}
           ></IconButton>
