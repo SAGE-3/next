@@ -19,20 +19,13 @@ import { useAppStore, useUIStore, useHexColor, useThrottleScale, useAbility, use
 // Window Components
 import { App } from '../../schema';
 import { ProcessingBox, BlockInteraction, WindowTitle, WindowBorder } from './components';
+import { PROVENANCE_CONSTRAINTS } from '@sage3/applications/apps';
 
 // Consraints on the app window size
 const APP_MIN_WIDTH = 200;
 const APP_MIN_HEIGHT = 100;
 const APP_MAX_WIDTH = 8 * 1024;
 const APP_MAX_HEIGHT = 8 * 1024;
-
-const LINKER_CONSTRAINTS = [
-  {
-    name: 'SageCell',
-    behaviour: 'one-to-one', // 'one-to-many', 'many-to-one'
-    allowCylic: false,
-  },
-];
 
 type WindowProps = {
   app: App;
@@ -88,12 +81,14 @@ export function AppWindow(props: WindowProps) {
   const selected = selectedApp === props.app._id;
   const selectedApps = useUIStore((state) => state.selectedAppsIds);
 
-  // Linker
-  const linkedAppIds = useUIStore((state) => state.linkedAppIds);
-  const addToLinkAppIds = useUIStore((state) => state.addToLinkAppIds);
-  const clearLinkAppIds = useUIStore((state) => state.clearLinkAppIds);
   const updateState = useAppStore((state) => state.updateState);
+  const updateStateBatch = useAppStore((state) => state.updateStateBatch);
   const fetchBoardApps = useAppStore((state) => state.fetchBoardApps);
+
+  // Linker
+  const linkedAppId = useUIStore((state) => state.linkedAppId);
+  const cacheLinkedAppId = useUIStore((state) => state.cacheLinkedAppId);
+  const clearLinkAppIds = useUIStore((state) => state.clearLinkAppIds);
 
   // Tag Highlight
   // Insight Store
@@ -140,12 +135,12 @@ export function AppWindow(props: WindowProps) {
   const toastID = 'error-toast';
 
   // Linker Provenance Interaction
-  const { canLink, linkBehaviour, linkAllowCyclic } = useMemo(() => {
-    const matchedConstraint = LINKER_CONSTRAINTS.find((constraint) => constraint.name === props.app.data.type);
+  const { canLink, linkRelationship, linkAllowCyclic } = useMemo(() => {
+    const matchedConstraint = PROVENANCE_CONSTRAINTS.find((constraint) => constraint.name === props.app.data.type);
 
     return {
       canLink: !!matchedConstraint,
-      linkBehaviour: matchedConstraint?.behaviour || 'one-to-one', // default value
+      linkRelationship: matchedConstraint?.relationship || 'one-to-me', // default value
       linkAllowCyclic: matchedConstraint?.allowCylic || false, // default value
     };
   }, [props.app.data.type]);
@@ -281,11 +276,11 @@ export function AppWindow(props: WindowProps) {
     }
   }, [props.app.data.raised]);
 
+  // Delete all arrows going to this app
   function handleAppRightClick(e: MouseEvent) {
     e.stopPropagation();
     e.preventDefault();
     if (primaryActionMode === 'linker' && canLink) {
-      console.log('???');
       updateState(props.app._id, { sources: [] });
       clearLinkAppIds();
       return;
@@ -295,49 +290,63 @@ export function AppWindow(props: WindowProps) {
   async function handleAppClick(e: MouseEvent) {
     e.stopPropagation();
 
-    // Uncomment me to block selection behaviour on AppWindows
     if (primaryActionMode === 'grab') {
       return;
     }
 
+    // Keyword: Linker Interaction Mode / Provenance Interaction Mode
     if (primaryActionMode === 'linker' && canLink) {
-      console.log('LINK START');
-      const linkedApps = addToLinkAppIds(props.app._id);
-      console.log(linkedApps);
+      const priorLinkedApp = cacheLinkedAppId(props.app._id);
 
-      if (linkedApps.length === 2) {
+      if (priorLinkedApp) {
         let allBoardApps: App[] | undefined = await fetchBoardApps(props.app.data.boardId);
         const currentSources = allBoardApps?.find((app: App) => app._id === props.app._id)?.data.state.sources || [];
-        const filteredApps = linkedApps.filter((id) => id !== props.app._id);
-        console.log(filteredApps);
-        // updateState(props.app._id, (prevState: any) => ({
-        //   ...prevState,
-        //   sources: [...(prevState.sources || []), filteredApps[0]],
-        // }));
-        // Behaviour
-        // TODO: Implement one to one constrain, one to many, etc...
+        const newSources = Array.from(new Set([...currentSources, priorLinkedApp]));
 
         // Cylic Detection
         if (!linkAllowCyclic) {
           const tmpApp = allBoardApps?.find((app: App) => app._id === props.app._id);
           if (tmpApp && allBoardApps) {
-            tmpApp.data.state.sources = Array.from(new Set([...currentSources, ...filteredApps]));
+            tmpApp.data.state.sources = newSources;
             allBoardApps = [...allBoardApps]; // Trigger a re-render if using state
           }
 
           // Clear tmp if cylic
           if (hasSourceCycles(props.app, allBoardApps)) {
-            clearLinkAppIds();
             return;
           }
         }
 
-        updateState(props.app._id, { sources: Array.from(new Set([...currentSources, ...filteredApps])) });
-        // updateState(props.app._id, (prevState: any) => ({
-        //   sources: [...(prevState?.sources || []), filteredApps], // Append `newSource` to existing sources
-        // }));
-
-        clearLinkAppIds();
+        // Enforce Relationship
+        if (linkRelationship === 'one->app->one') {
+          const updates = [];
+          allBoardApps?.forEach((app: App) => {
+            if (app.data.state.sources?.includes(priorLinkedApp)) {
+              updates.push({
+                id: app._id,
+                updates: { sources: app.data.state.sources.filter((source: string) => source !== priorLinkedApp) },
+              });
+            }
+          });
+          updates.push({ id: props.app._id, updates: { sources: [priorLinkedApp] } });
+          updateStateBatch(updates);
+        } else if (linkRelationship === 'one->app->many') {
+          updateState(props.app._id, { sources: [priorLinkedApp] });
+        } else if (linkRelationship === 'many->app->one') {
+          const updates = [];
+          allBoardApps?.forEach((app: App) => {
+            if (app.data.state.sources?.includes(priorLinkedApp)) {
+              updates.push({
+                id: app._id,
+                updates: { sources: app.data.state.sources.filter((source: string) => source !== priorLinkedApp) },
+              });
+            }
+          });
+          updates.push({ id: props.app._id, updates: { sources: newSources } });
+          updateStateBatch(updates);
+        } else {
+          updateState(props.app._id, { sources: newSources });
+        }
       }
       return;
     }
@@ -541,13 +550,13 @@ export function AppWindow(props: WindowProps) {
                     cursor: 'grabbing',
                   },
                 }
-              : primaryActionMode === 'linker' && canLink && linkedAppIds.length == 0
+              : primaryActionMode === 'linker' && canLink && !linkedAppId
               ? {
                   '&': {
                     cursor: 'alias',
                   },
                 }
-              : primaryActionMode === 'linker' && canLink && linkedAppIds.length > 0
+              : primaryActionMode === 'linker' && canLink && linkedAppId
               ? {
                   '&': {
                     cursor: 'copy',

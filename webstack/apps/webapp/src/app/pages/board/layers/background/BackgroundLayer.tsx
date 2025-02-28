@@ -12,7 +12,7 @@ import { Box } from '@chakra-ui/react';
 import { Rnd } from 'react-rnd';
 
 import { useUIStore, useAbility, WheelStepZoom, MinZoom, MaxZoom, useUserSettings } from '@sage3/frontend';
-import { Background, Apps, Whiteboard, Lasso, PresenceComponent, RndSafety, Arrows } from './components';
+import { Background, Apps, Whiteboard, Lasso, PresenceComponent, RndSafety, Arrows, ArrowToCursor } from './components';
 
 type BackgroundLayerProps = {
   boardId: string;
@@ -464,6 +464,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         <Apps />
 
         <Arrows />
+        <ArrowToCursor />
 
         {/* Whiteboard */}
         <WhiteboardMemo roomId={props.roomId} boardId={props.boardId} />
