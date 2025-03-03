@@ -68,6 +68,7 @@ export function CursorBoardPositionProvider(props: React.PropsWithChildren<Recor
   }, [boardSynced]);
 
   // Simple hacky way to (try) fix de-synced mouse and appwindow while dragging
+  // Also provides performance benefits when dragging the board
   useEffect(() => {
     const updateCursor = (e: MouseEvent) => {
       setLastEvent(e);
@@ -75,9 +76,6 @@ export function CursorBoardPositionProvider(props: React.PropsWithChildren<Recor
     };
 
     const stopListening = (e: MouseEvent) => {
-      // !useUIStore.getState().appDragging
-      //  || e.button === 1
-      // Why was e.button === 1 disabled...?
       if (e.button === 0 || e.button === 1) {
         setIsMouseDown(true);
         window.removeEventListener('mousemove', updateCursor);
