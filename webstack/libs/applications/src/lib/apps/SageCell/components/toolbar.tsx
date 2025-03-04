@@ -493,30 +493,41 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
     // Get the sizes of the selected apps
     const boxes = props.apps.map((app) => ({
       id: app._id,
+      // Top left corner
       x: app.data.position.x,
       y: app.data.position.y,
+      // Dimensions
       width: app.data.size.width,
-      height: app.data.size.height
+      height: app.data.size.height,
+      cx: app.data.position.x + app.data.size.width / 2,
+      cy: app.data.position.y + app.data.size.height / 2,
     }))
+
     // Get the bounding box of the group and orientation
-    const box = getBoundingBox(boxes);
+    // const box = getBoundingBox(boxes);
 
     // Sort rectangles based on orientation
+    // const sorted = [...boxes].sort((a, b) =>
+    //   box.orientation === "column" ? a.cy - b.cy :
+    //     box.orientation === "row" ? a.cx - b.cx :
+    //       0
+    // );
     const sorted = [...boxes].sort((a, b) =>
-      box.orientation === "column" ? a.y - b.y :
-        box.orientation === "row" ? a.x - b.x :
-          0
+      // If box `a` and `b` overlap in y, sort by x
+      // Otherwise, sort by y
+      (Math.max(a.y, b.y) < Math.min(a.y + a.height, b.y + b.height))
+        ? a.x - b.x : a.y - b.y
     );
 
-    if (box.orientation !== "squarish") {
-      // Array of update to batch at once
-      const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
-      sorted.forEach((app, index) => {
-        ps.push({ id: app.id, updates: { rank: index + 1 } });
-      });
-      // Update all the apps at once
-      updateStateBatch(ps);
-    }
+    // if (box.orientation !== "squarish") {
+    // Array of update to batch at once
+    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    sorted.forEach((app, index) => {
+      ps.push({ id: app.id, updates: { rank: index + 1 } });
+    });
+    // Update all the apps at once
+    updateStateBatch(ps);
+    // }
   };
 
 
