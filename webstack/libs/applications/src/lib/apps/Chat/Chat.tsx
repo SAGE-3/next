@@ -572,13 +572,14 @@ function AppComponent(props: App): JSX.Element {
           } else {
             setStreamText('');
             ctrlRef.current = null;
-            setPreviousAnswer(response.stations.join(', '));
+            setPreviousAnswer(response.summary);
             // Update the Mesonet app's state with the selected stations
             if (response.stations && response.stations.length > 0) {
               const mesonetApp = apps[0];
               updateState(mesonetApp._id, {
                 ...mesonetApp.data.state,
                 stationNames: response.stations,
+                
                 widget: {
                   ...mesonetApp.data.state.widget,
                   yAxisNames: response.attributes
@@ -589,7 +590,7 @@ function AppComponent(props: App): JSX.Element {
             updateState(props._id, {
               ...s,
               previousQ: 'Describe the content',
-              previousA: response.stations.join(', '),
+              previousA: response.summary,
               messages: [
                 ...s.messages,
                 initialAnswer,
@@ -600,7 +601,7 @@ function AppComponent(props: App): JSX.Element {
                   creationDate: now.epoch + 1,
                   userName: 'SAGE',
                   query: '',
-                  response: response.stations.join(', '),
+                  response: response.summary,
                 },
               ],
             });

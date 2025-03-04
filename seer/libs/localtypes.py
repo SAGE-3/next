@@ -73,6 +73,7 @@ class MesonetAnswer(BaseModel):
     attributes: List[str]
     stations: List[str]
     chart_type: List[str]
+    summary: str
     success: bool = True  # success flag
     actions: List[Json]  # actions to be performed
 

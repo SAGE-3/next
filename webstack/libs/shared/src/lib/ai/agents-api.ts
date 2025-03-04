@@ -86,6 +86,7 @@ export type MesonetResponse = {
   attributes: string[];
   stations: string[];
   chart_type: string[];
+  summary: string;
   success: boolean;
   actions?: any[];
 };

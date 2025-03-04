@@ -459,32 +459,27 @@ Take a deep breath, think it through, assume you are the user and imagine their 
         return self.__base_prompt_with_self_reflection__(user_prompt, system,
             messages=self.__message_builder__(system, user_prompt), filter_method=self.__results_filter_dates__)
         
-    def prompt_summarize_reasoning(self, user_prompt, chart_type_reasoning, attribute_reasoning, date_reasoning, station_reasoning, transformation_reasoning):
+    def prompt_summarize_reasoning(self, user_prompt, attribute_reasoning, station_reasoning, station_data):
         system = f""" You are an expert summarizer.
         You have just created chart(s) for the user based on a prompt.
         Here is the user's prompt: {user_prompt}
         
         Here is some information on the decisions that you have made when creating this chart.
         
-        Choosing the chart type:
-        {chart_type_reasoning}
-        
         Choosing the attributes:
         {attribute_reasoning}
        
-        Choosing the dates
-        {date_reasoning}
-        
         Choosing the stations:
         {station_reasoning}
-        
-        Choosing the transformations
-        {transformation_reasoning}
+
+        Here is the data that you used to create the chart:
+        {station_data}
         
         You now need to respond back to the user. 
-        Say a sentence or two that you think will help the user.
+        Say two or three senteces that you think will help the user.
         
         Do not write more information than is necessary.
         
         """
+        print(system)
         return self.__base_prompt__(user_prompt, system)

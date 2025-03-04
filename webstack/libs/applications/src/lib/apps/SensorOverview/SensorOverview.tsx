@@ -190,7 +190,11 @@ function AppComponent(props: App): JSX.Element {
       }
 
       const data: StationDataType[] = await stationResponse.json();
+      // Get center Lat and Lon of stations
+      const centerLat = data.reduce((acc, station) => acc + station.lat, 0) / data.length;
+      const centerLon = data.reduce((acc, station) => acc + station.lng, 0) / data.length;
       setStationData(data);
+      updateState(props._id, { location: [centerLon, centerLat] });
       // Then fetch measurements for each station
       const stationByMeasurements: any = {};
       for (const station of data) {
