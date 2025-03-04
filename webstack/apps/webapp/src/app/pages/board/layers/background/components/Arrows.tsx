@@ -13,18 +13,27 @@ import { getBoxToBoxArrow } from 'perfect-arrows';
 // SAGE Imports
 import { useThrottleApps, useUIStore, useUserSettings, useHexColor, useCursorBoardPosition, useAppStore } from '@sage3/frontend';
 import { App } from '@sage3/applications/schema';
+import { useEffect, useState } from 'react';
 
 // Keep seperate to avoid unnecessary rerenders caused by cursor movement
 export function ArrowToCursor() {
   const linkedAppId = useUIStore((state) => state.linkedAppId);
+  return <>{linkedAppId && <ArrowToCursorMain linkedAppId={linkedAppId} />}</>;
+}
+
+export function ArrowToCursorMain({ linkedAppId }: { linkedAppId: string }) {
+  // const linkedAppId = useUIStore((state) => state.linkedAppId);
   const apps = useThrottleApps(200);
 
   // UI Store
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
+  const boardSynced = useUIStore((state) => state.boardSynced);
 
   // User Cursor
-  const { boardCursor: cursorPosition } = useCursorBoardPosition();
+  // const { boardCursor: cursorPosition } = useCursorBoardPosition();
+  const { uiToBoard } = useCursorBoardPosition();
+  const [cursorPos, setCursorPos] = useState<{ x: number; y: number }>({ x: -1, y: -1 });
 
   // Chakra Color Mode for grid color
   const gray = useColorModeValue('gray.200', 'gray.600');
@@ -32,11 +41,25 @@ export function ArrowToCursor() {
   const dotColor = useHexColor('red.400');
   const tipColor = useHexColor('green.400');
 
+  useEffect(() => {
+    const updateCursor = (e: MouseEvent) => {
+      if (boardSynced) {
+        setCursorPos(uiToBoard(e.clientX, e.clientY));
+      }
+    };
+
+    window.addEventListener('mousemove', updateCursor, { passive: true });
+
+    return () => {
+      window.removeEventListener('mousemove', updateCursor);
+    };
+  }, [uiToBoard, boardSynced]);
+
   function buildArrow(src: string) {
     const srcApp = apps.find((a) => a._id === src);
 
-    if (srcApp) {
-      return buildArrowToCursor(srcApp, cursorPosition.x, cursorPosition.y, strokeColor, tipColor, dotColor);
+    if (srcApp && cursorPos.x !== -1 && cursorPos.y !== -1) {
+      return buildArrowToCursor(srcApp, cursorPos.x, cursorPos.y, strokeColor, tipColor, dotColor);
     }
     return null;
   }
