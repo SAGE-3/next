@@ -356,6 +356,7 @@ export function AppWindow(props: WindowProps) {
     }
 
     if (primaryActionMode === 'linker' && !canLink) {
+      clearLinkAppId();
       return;
     }
 
