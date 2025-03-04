@@ -1,13 +1,13 @@
 /**
- * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2025. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
 
+import { isElectron } from 'libs/applications/src/lib/apps/Cobrowse/util';
 import { useCallback, createContext, useContext, useState, useEffect } from 'react';
-
 
 /**
  * Represents the user preferences for the application.
@@ -34,6 +34,15 @@ type UserSettings = {
   selectedBoardListView: 'grid' | 'list';
   primaryActionMode: 'lasso' | 'grab' | 'pen' | 'eraser';
   aiModel: 'llama' | 'openai';
+  uiScale: 'xs' | 's' | 'md' | 'lg' | 'xl';
+};
+
+const uiScaleDict = {
+  xs: -1.0,
+  s: -0.5,
+  md: 0,
+  lg: 0.5,
+  xl: 1.0,
 };
 
 const defaultSettings: UserSettings = {
@@ -46,6 +55,7 @@ const defaultSettings: UserSettings = {
   selectedBoardListView: 'grid',
   primaryActionMode: 'lasso',
   aiModel: 'llama',
+  uiScale: 'md',
 };
 
 const USER_SETTINGS_KEY = 's3_user_settings';
@@ -63,6 +73,7 @@ type UserSettingsContextType = {
   setDefaultPrimaryActionMode: () => void;
   restoreDefaultSettings: () => void;
   setAIModel: (value: UserSettings['aiModel']) => void;
+  setUIScale: (value: UserSettings['uiScale']) => void;
 };
 
 const UserSettingsContext = createContext<UserSettingsContextType>({
@@ -78,6 +89,7 @@ const UserSettingsContext = createContext<UserSettingsContextType>({
   setDefaultPrimaryActionMode: () => { },
   restoreDefaultSettings: () => { },
   setAIModel: (value: UserSettings['aiModel']) => { },
+  setUIScale: (value: UserSettings['uiScale']) => { },
 });
 
 /**
@@ -102,6 +114,12 @@ export function getUserSettings() {
   }
 }
 
+function setElectronUIScale(value: UserSettings['uiScale']) {
+  if (isElectron()) {
+    window.electron.send('set-scale-level', uiScaleDict[value] * window.devicePixelRatio);
+  }
+}
+
 /**
  * Set the user's settings in local storage
  * @param settings
@@ -116,6 +134,7 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
     const settings = getUserSettings();
     const newSettings = { ...defaultSettings, ...settings };
     setUserSettings(newSettings);
+    setElectronUIScale(newSettings.uiScale);
   }, []);
 
   const [settings, setSettings] = useState<UserSettings>(getUserSettings());
@@ -156,15 +175,17 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
     });
   }, [setSettings]);
 
-  const toggleProvenance = useCallback((value: UserSettings['showProvenance']) => {
-    setSettings((prev) => {
-      const newSettings = { ...prev };
-      newSettings.showProvenance = value;
-      setUserSettings(newSettings);
-      return newSettings;
-    });
-  }, [setSettings]);
-
+  const toggleProvenance = useCallback(
+    (value: UserSettings['showProvenance']) => {
+      setSettings((prev) => {
+        const newSettings = { ...prev };
+        newSettings.showProvenance = value;
+        setUserSettings(newSettings);
+        return newSettings;
+      });
+    },
+    [setSettings]
+  );
 
   const toggleShowTags = useCallback(() => {
     setSettings((prev) => {
@@ -223,7 +244,21 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
   const restoreDefaultSettings = useCallback(() => {
     setSettings(defaultSettings);
     setUserSettings(defaultSettings);
+    setElectronUIScale(defaultSettings.uiScale);
   }, [setSettings]);
+
+  const setUIScale = useCallback(
+    (value: UserSettings['uiScale']) => {
+      setSettings((prev) => {
+        const newSettings = { ...prev };
+        newSettings.uiScale = value;
+        setUserSettings(newSettings);
+        setElectronUIScale(value);
+        return newSettings;
+      });
+    },
+    [setSettings]
+  );
 
   return (
     <UserSettingsContext.Provider
@@ -240,6 +275,7 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
         setDefaultPrimaryActionMode,
         restoreDefaultSettings,
         setAIModel,
+        setUIScale,
       }}
     >
       {props.children}

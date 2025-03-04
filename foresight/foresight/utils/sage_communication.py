@@ -111,7 +111,7 @@ class SageCommunication(Borg):
         :return:
         """
         r = self.httpx_client.post(
-            self.conf[self.prod_type]["web_server"] + self.routes["upload_file"],
+            self.conf[self.prod_type]["files_server"] + self.routes["upload_file"],
             headers=self.__headers,
             files=files,
             data=payload,
@@ -122,11 +122,11 @@ class SageCommunication(Borg):
         all_tags = self.get_alltags()
         all_apps = self.get_apps()
         for app in all_apps:
-            if app['app_id'] in all_tags:
-                app['tags'] = all_tags[app['app_id']]['labels']
+            if app["app_id"] in all_tags:
+                app["tags"] = all_tags[app["app_id"]]["labels"]
             else:
-                app['tags'] = []
-        all_apps = {x['app_id']: x for x in all_apps}
+                app["tags"] = []
+        all_apps = {x["app_id"]: x for x in all_apps}
         return all_apps
 
     def get_alltags(self):
@@ -184,26 +184,27 @@ class SageCommunication(Borg):
         return json_data
 
     def format_public_url(self, asset_id):
-        web_server = self.conf[self.prod_type]["web_server"]
+        web_server = self.conf[self.prod_type]["files_server"]
         sage3_namespace = uuid.UUID(self.web_config["namespace"])
         token = uuid.uuid5(sage3_namespace, asset_id)
         public_url = f"{web_server}/api/files/{asset_id}/{token}"
         return public_url
 
-    def get_pdf_text(self, asset_url, pages: List =None):
-
+    def get_pdf_text(self, asset_url, pages: List = None):
         """Get one page for now"""
         file_name = asset_url.split("/")[-1].split(".")[0] + "-text.json"
-        url = self.conf[self.prod_type]["web_server"] + self.routes['get_static_content']
+        url = (
+            self.conf[self.prod_type]["files_server"]
+            + self.routes["get_static_content"]
+        )
         file_url = url + file_name
         res = self.httpx_client.get(file_url, headers=self.__headers)
         if res.is_success:
             if pages is None:
-                return res.json()['pages']
+                return res.json()["pages"]
             else:
-                return [res.json()['pages'][p] for p in pages]
+                return [res.json()["pages"][p] for p in pages]
         return None
-
 
     def get_assets(self, room_id=None, board_id=None, asset_id=None):
         url = self.conf[self.prod_type]["web_server"] + self.routes["get_assets"]
@@ -288,4 +289,3 @@ class SageCommunication(Borg):
                 data = [app for app in data if app["data"]["roomId"] == room_id]
 
         return data
-

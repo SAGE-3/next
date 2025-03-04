@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2025. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -76,7 +76,6 @@ import {
   Clock,
   isElectron,
   useUserSettings,
-  useAssetStore,
   isUUIDv4,
 } from '@sage3/frontend';
 
@@ -101,9 +100,6 @@ export function HomePage() {
   // Electron
   const electron = isElectron();
   const [hubs, setHubs] = useState<{ name: string; id: string; url: string }[]>([]);
-
-  // SAGE3 Image
-  // const imageUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
 
   // User Information
   const { user, clearRecentBoards } = useUser();
@@ -130,9 +126,6 @@ export function HomePage() {
   // User and Presence Store
   const users = useUsersStore((state) => state.users);
   const subscribeToUsers = useUsersStore((state) => state.subscribeToUsers);
-
-  // Assets Store
-  const subcribeToAssets = useAssetStore((state) => state.subscribe);
 
   // Presence
   const partialPrescences = usePresenceStore((state) => state.partialPrescences);
@@ -607,12 +600,14 @@ export function HomePage() {
   useEffect(() => {
     // Update the document title
     document.title = 'SAGE3 - Home';
-    subcribeToAssets();
+
     subscribeToPresence();
     subscribeToUsers();
     subscribeToRooms();
     subscribeToBoards();
     subPlugins();
+
+    if (user) updatePresence(user?._id, { boardId: '', roomId: '' });
 
     // return to room from a board
     if (roomId && roomsFetched && user) {
@@ -1013,11 +1008,7 @@ export function HomePage() {
                   </Box>
                 </Box>
               </MenuButton>
-              <MenuList
-                width="20%"
-                minWidth="220px"
-                maxWidth="400px"
-              >
+              <MenuList width="20%" minWidth="220px" maxWidth="400px">
                 {hubs.map((hub) => {
                   return (
                     <MenuItem
@@ -1392,7 +1383,8 @@ export function HomePage() {
                         {boardListView == 'grid' && (
                           <Flex
                             gap="4"
-                            pl="2" py="1"
+                            pl="2"
+                            py="1"
                             display="flex"
                             flexWrap="wrap"
                             justifyContent="left"
@@ -1882,7 +1874,7 @@ export function HomePage() {
 
                             <Text fontSize="xs" color={subTextColor}>
                               {room.data.ownerId === userId ||
-                                members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
+                              members.find((roomMember) => roomMember.data.roomId === room._id)?.data.members.includes(userId) ? (
                                 room.data.ownerId === userId ? (
                                   <Tag size="sm" width="100px" display="flex" justifyContent="center" colorScheme="green">
                                     Owner

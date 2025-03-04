@@ -10,6 +10,8 @@ foresight/build
 
 node_modules
 
+webstack/assets/*
+
 # IDE - VSCode
 .vscode/*
 

@@ -93,6 +93,7 @@ async function updateApps(root: string) {
 
   output += `\n`;
   output += `export * from './components';\n`;
+  output += `export * from './ai-apps';\n`;
 
   // Export all the applications and save
   await fs.writeFile(indexPath, output);

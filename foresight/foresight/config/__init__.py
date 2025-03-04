@@ -31,6 +31,7 @@ config = {
         "jupyter_ws": f"ws://{server}:8888",
         "redis_server": "redis-server",
         "web_server": f"https://{server}",
+        "files_server": f"http://files-server:3002",
         "ws_server": f"wss://{server}",
     },
     "backend": {
@@ -39,6 +40,7 @@ config = {
         "jupyter_ws": "ws://jupyter:8888",
         "redis_server": "redis-server",
         "web_server": f"http://{server}:3000",
+        "files_server": f"http://{server}:3002",
         "ws_server": f"ws://{server}:3000",
     },
     "development": {
@@ -47,6 +49,7 @@ config = {
         "jupyter_ws": "ws://localhost:8888",
         "redis_server": "localhost",
         "web_server": f"http://{server}:3000",
+        "files_server": f"http://{server}:3002",
         "ws_server": f"ws://{server}:3000",
     },
     "local": {
@@ -54,6 +57,7 @@ config = {
         "jupyter_server": "http://localhost:8888",
         "redis_server": "localhost",
         "web_server": f"http://{server}:3000",
+        "files_server": f"http://{server}:3002",
         "ws_server": f"ws://{server}:3000",
     },
 }

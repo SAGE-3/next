@@ -1,4 +1,16 @@
 {
+  "/api/assets/upload": {
+    "target": "http://localhost:3002",
+    "secure": false
+  },
+  "/api/assets/static": {
+    "target": "http://localhost:3002",
+    "secure": false
+  },
+  "/api/files": {
+    "target": "http://localhost:3002",
+    "secure": false
+  },
   "/api": {
     "target": "http://127.0.0.1:3000",
     "secure": false,

@@ -47,9 +47,9 @@ import {
   HotkeysEvent,
   useUserSettings,
   useHexColor,
-  EditVisibilityModal,
   useUser,
   useThrottleScale,
+  EditUserSettingsModal,
 } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 
@@ -139,15 +139,12 @@ export function UILayer(props: UILayerProps) {
 
   // Alfred Modal
   const { isOpen: alfredIsOpen, onOpen: alfredOnOpen, onClose: alfredOnClose } = useDisclosure();
-  // Presence settings modal
-  const { isOpen: visibilityIsOpen, onOpen: visibilityOnOpen, onClose: visibilityOnClose } = useDisclosure();
 
   // Connect to Twilio only if there are Screenshares or Webcam apps
   const twilioConnect = apps.filter((el) => el.data.type === 'Screenshare').length > 0;
 
-  const handlePresenceSettingsOpen = () => {
-    visibilityOnOpen();
-  };
+  // Unhide UI
+  const { toggleShowUI } = useUserSettings();
 
   /**
    * Clear the board confirmed
@@ -294,13 +291,10 @@ export function UILayer(props: UILayerProps) {
 
   return (
     <>
-      {/* Presence settings modal dialog */}
-      <EditVisibilityModal isOpen={visibilityIsOpen} onClose={visibilityOnClose} />
-
       {/* The bottom right corner showing the visibility icon when the user decides to hide the UI */}
       <HStack position="absolute" bottom="2" right="2" opacity={1} userSelect={'none'}>
         {!showUI && (
-          <Tooltip label={'Visibility'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
+          <Tooltip label={'Show Interface'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
             <IconButton
               borderRadius="md"
               h="auto"
@@ -314,19 +308,12 @@ export function UILayer(props: UILayerProps) {
               transition={'all 0.2s'}
               opacity={0.5}
               variant="ghost"
-              onClick={handlePresenceSettingsOpen}
+              onClick={toggleShowUI}
               isDisabled={false}
               _hover={{ color: teal, opacity: 1, transform: 'scale(1.15)' }}
             />
           </Tooltip>
         )}
-
-        {/* The Corner SAGE3 Image Bottom Right */}
-        {/* {showUI && (
-          <Box opacity={0.7} userSelect={'none'}>
-            <img src={logoUrl} width="75px" alt="sage3 collaborate smarter" draggable={false} />
-          </Box>
-        )} */}
       </HStack>
 
       {/* Map Buttons Bottom Right */}
