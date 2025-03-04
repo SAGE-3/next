@@ -7,6 +7,7 @@
  */
 
 import { apiUrls } from '@sage3/frontend';
+import { EChartsCoreOption } from 'echarts';
 
 type NLPRequestResponse = {
   success: boolean;
@@ -37,14 +38,12 @@ export const checkAvailableVisualizations = (variable: string) => {
       break;
 
     default:
-      availableVisualizations.push({ value: 'variableCard', name: 'Current Value (Large variable name)' });
-      availableVisualizations.push({ value: 'friendlyVariableCard', name: 'Current Value (Large station name)' });
-      availableVisualizations.push({ value: 'statisticCard', name: 'Current Value (With Statistics)' });
-      // availableVisualizations.push({value: 'allVariables', name: 'Current Conditions'});
-      availableVisualizations.push({ value: 'line', name: 'Line Chart' });
-      availableVisualizations.push({ value: 'bar', name: 'Bar Chart' });
-      availableVisualizations.push({ value: 'map', name: 'Map (Current Value)' });
-      // availableVisualizations.push({ value: 'scatter', name: 'Scatter Chart' });
+      availableVisualizations.push({value: 'map', name: 'Map'})
+      availableVisualizations.push({ value: 'Line Chart', name: 'Line Chart' });
+      // availableVisualizations.push({ value: 'Column Histogram', name: 'Column Histogram' });
+      // availableVisualizations.push({ value: 'Pie Chart', name: 'Pie Chart' });
+      // availableVisualizations.push({ value: 'Boxplot', name: 'Boxplot' });
+      // availableVisualizations.push({ value: 'Scatter Chart', name: 'Scatter Chart' });
       break;
   }
   return availableVisualizations;
@@ -167,16 +166,17 @@ const formatData = (rawData: RawData) => {
 
 const fetchData = async (stationName: string, attributes: string[]) => {
   //TODO change to Batchfetch to get all of the data, then select attributes that are relevant
-  if (!data) return {};
+  // if (!data) return {};
 
-  const subsetData: any = {};
-  attributes.forEach((attribute) => {
-    if (data.hasOwnProperty(attribute)) {
-      subsetData[attribute] = data[attribute];
-    }
-  });
+  // const subsetData: any = {};
+  // attributes.forEach((attribute) => {
+  //   if (data.hasOwnProperty(attribute)) {
+  //     subsetData[attribute] = data[attribute];
+  //   }
+  // });
 
-  return subsetData;
+  // return subsetData;
+  return;
 };
 
 const filterDataByDate = (formattedData: string[][], dates: { startDate: string; endDate: string }) => {
@@ -196,34 +196,35 @@ export const processStations = async (
   colorMode: string,
   appSize: { width: number; height: number; depth: number }
 ) => {
-  const tmpChartOptions: EChartsCoreOption[] = [];
-  const stations = Object.keys(station_information);
-  const { dates, attributes: rawAttributes, chartType, transformations } = station_information[stations[0]];
-  const attributes = rawAttributes.filter((attr) => attr !== 'Date');
-  if (attributes.length === 0) {
-    console.log('Not enough attributes found other than date');
-    return [];
-  }
-  const tmpData = [];
-  for (const stationID of stations) {
-    const data = await fetchData(stationID, attributes); //TODO change this to fetch all the stations at once.
-    if (Object.keys(data).length !== 0) {
-      const stationName = stationData.find((station) => station.stationID === stationID)?.stationName || '';
-      const formattedData = formatData(data);
-      const filteredDataByDate = filterDataByDate(formattedData, dates);
-      tmpData.push({ data: filteredDataByDate, stationName });
-    }
-  }
+  // const stations = Object.keys(station_information);
+  // const { dates, attributes: rawAttributes, chartType, transformations } = station_information[stations[0]];
+  // const attributes = rawAttributes.filter((attr) => attr !== 'Date');
+  // if (attributes.length === 0) {
+  //   console.log('Not enough attributes found other than date');
+  //   return [];
+  // }
+  // const tmpData = [];
+  // for (const stationID of stations) {
+  //   const data: any = await fetchData(stationID, attributes); //TODO change this to fetch all the stations at once.
+  //   if (Object.keys(data).length !== 0) {
+  //     const stationName = stationData.find((station) => station.stationID === stationID)?.stationName || '';
+  //     const formattedData = formatData(data);
+  //     const filteredDataByDate = filterDataByDate(formattedData, dates);
+  //     tmpData.push({ data: filteredDataByDate, stationName });
+  //   }
+  // }
 
-  if (tmpData.length == 0) return [];
-  const chartOptions = generateOption({
-    chartName: chartType[0],
-    data: tmpData,
-    attributes,
-    transformations,
-    colorMode,
-    appSize,
-  });
+  // if (tmpData.length == 0) return [];
+  // const chartOptions = generateOption({
+  //   chartName: chartType[0],
+  //   data: tmpData,
+  //   attributes,
+  //   transformations,
+  //   colorMode,
+  //   appSize,
+  // });
 
-  return chartOptions;
+  // return chartOptions;
+
+  return;
 };

@@ -29,6 +29,7 @@ import { state as AppState } from '../index';
 
 // Styling
 import './maplibre-gl.css';
+import { StationDataType } from '../SensorOverview';
 
 // Get a URL for an asset
 export function getStaticAssetUrl(filename: string): string {
@@ -53,7 +54,7 @@ const baselayers = {
   OpenStreetMap: `https://api.maptiler.com/maps/streets/style.json?key=${mapTilerAPI}`,
 };
 
-const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boolean; stationMetadata?: any }): JSX.Element => {
+const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boolean; stationData: StationDataType[]; stationMetadata: any }): JSX.Element => {
   const s = props.data.state as AppState;
   // const [map, setMap] = useState<maplibregl.Map>();
   const updateState = useAppStore((state) => state.updateState);
@@ -269,28 +270,21 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
   }, [props.data.size.width, props.data.size.height, map]);
 
   useEffect(() => {
-    if (map && props.isLoaded && !props.isSelectingStations) {
+    if (map && !props.isSelectingStations) {
       const widget = props.data.state.widget;
-      // const observations = props.stationMetadata[0].OBSERVATIONS;
       const variableName = widget.yAxisNames[0];
-      // console.log(props.stationMetadata)
       map.resize();
       for (let i = 0; i < markers.length; i++) {
         markers[i].remove();
       }
-      // map.on('load', () => {
-      for (let i = 0; i < props.stationMetadata.length; i++) {
-        // console.log(props.stationMetadata[i].OBSERVATIONS[variableName]);
-        if (props.stationMetadata[i].OBSERVATIONS[variableName]) {
-          const latestValue =
-            props.stationMetadata[i].OBSERVATIONS[variableName][props.stationMetadata[i].OBSERVATIONS[variableName].length - 1];
-          const station: StationDataType | undefined = stationData.find(
-            (station: StationDataType) => station.name == props.stationMetadata[i].STID
-          );
+      // Loop through each station's metadata
+      Object.entries(props.stationMetadata).forEach(([stationId, measurements]) => {
+          const station = props.stationData.find((s) => s.station_id === stationId);
           if (station) {
             const el = document.createElement('div');
-            if (latestValue) {
-              el.innerHTML = `<div style="position: relative;">
+            if (measurements && Array.isArray(measurements) && measurements.length > 0) {
+              const latestMeasurement = measurements[0].value; // Most recent measurement
+              el.innerHTML = `<div style="position: relative; z-index: 1000;">
               <div style="
                 border-radius: 50%; 
                 position: absolute; 
@@ -305,47 +299,56 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
                 display: flex; 
                 flex-direction: column; 
                 justify-content: center; 
-                align-items: center;">
+                align-items: center;
+                pointer-events: auto;
+                z-index: 1000;">
                 <p style="
-                  font-size: ${latestValue.toString().length > 4 ? '5px' : '7px'}; 
+                  font-size: ${latestMeasurement.length > 4 ? '5px' : '7px'}; 
                   font-weight: bold; 
                   text-align: center; 
                   white-space: nowrap; 
                   word-wrap: break-word;
                   line-height: 1;
                   margin: 0;">
-                  ${Number(latestValue).toFixed(1)}
+                  ${Number(latestMeasurement).toFixed(1)}
                 </p>
               </div>
             </div>`;
             } else {
-              el.innerHTML = `<div style="position: relative; ">
-              <div style=" border-radius: 50%; position: absolute; left: 50%; top: 50%;  transform: scale(${Math.min(
-                Math.max(s.stationScale / scale - 3.5, 2),
-                5.5
-              )}); background-color: rgb(200,200,200); width: 20px; height: 20px; color: black; border: 1px solid black; display: flex; flex-direction: column; justify-content: center; ">
-              <p  style="font-size:7px; font-weight: bold; text-align: center">
-              -</p>
-              </div>
+              el.innerHTML = `<div style="position: relative; z-index: 1;">
+                <div style="
+                  border-radius: 50%; 
+                  position: absolute; 
+                  left: 50%; 
+                  top: 50%;  
+                  transform: scale(${Math.min(Math.max(s.stationScale / scale - 3.5, 1), 5.5)}); 
+                  background-color: rgb(200,200,200); 
+                  width: 20px; 
+                  height: 20px; 
+                  z-index: 1;
+                  pointer-events: none;
+                  color: black; 
+                  border: 1px solid black; 
+                  display: flex; 
+                  flex-direction: column; 
+                  justify-content: center;">
+                  <p style="font-size:7px; font-weight: bold; text-align: center">-</p>
+                </div>
               </div>`;
             }
-
             if (el && el !== null) {
               const marker = new maplibregl.Marker({
                 color: '#000000',
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                // @ts-ignore
-                element: el.firstChild,
+                element: el.firstChild as HTMLElement,
               })
-                .setLngLat([station.lon, station.lat])
+                .setLngLat([station.lng, station.lat])
                 .addTo(map);
               marker.togglePopup();
               setMarkers((prev) => [...prev, marker]);
             }
           }
-        }
-      }
-      // });
+        
+      });
     }
   }, [map, props.isLoaded, JSON.stringify(props.stationMetadata), JSON.stringify(s.stationNames), JSON.stringify(s.stationScale), scale]);
 
@@ -408,205 +411,205 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
 
 export default MapViewer;
 
-type StationDataType = { lat: number; lon: number; name: string; selected: boolean };
-// For now, this is hard-coded. Will change when HCDP is ready.
-export const stationData: { lat: number; lon: number; name: string; selected: boolean }[] = [
-  {
-    lat: 20.8415,
-    lon: -156.2948,
-    name: '017HI',
-    selected: false,
-  },
-  {
-    lat: 20.7067,
-    lon: -156.3554,
-    name: '016HI',
-    selected: false,
-  },
-  {
-    lat: 20.7579,
-    lon: -156.32,
-    name: '001HI',
-    selected: false,
-  },
-  {
-    lat: 20.7598,
-    lon: -156.2482,
-    name: '002HI',
-    selected: false,
-  },
-  {
-    lat: 20.64422,
-    lon: -156.342056,
-    name: '028HI',
-    selected: false,
-  },
-  {
-    lat: 20.7382,
-    lon: -156.2458,
-    name: '013HI',
-    selected: false,
-  },
-  {
-    lat: 20.7104,
-    lon: -156.2567,
-    name: '003HI',
-    selected: false,
-  },
-  {
-    lat: 19.6974,
-    lon: -155.0954,
-    name: '005HI',
-    selected: false,
-  },
-  {
-    lat: 19.964,
-    lon: -155.25,
-    name: '006HI',
-    selected: false,
-  },
-  {
-    lat: 19.932,
-    lon: -155.291,
-    name: '007HI',
-    selected: false,
-  },
-  {
-    lat: 19.748,
-    lon: -155.996,
-    name: '008HI',
-    selected: false,
-  },
-  {
-    lat: 19.803,
-    lon: -155.851,
-    name: '009HI',
-    selected: false,
-  },
-  {
-    lat: 19.73,
-    lon: -155.87,
-    name: '010HI',
-    selected: false,
-  },
-  {
-    lat: 21.333,
-    lon: -157.8025,
-    name: '011HI',
-    selected: false,
-  },
-  {
-    lat: 21.3391,
-    lon: -157.8369,
-    name: '012HI',
-    selected: false,
-  },
-  {
-    lat: 22.2026,
-    lon: -159.5188,
-    name: '014HI',
-    selected: false,
-  },
-  {
-    lat: 22.1975,
-    lon: -159.421,
-    name: '015HI',
-    selected: false,
-  },
-  {
-    lat: 20.63395,
-    lon: -156.27389,
-    name: '019HI',
-    selected: false,
-  },
-  {
-    lat: 20.644215,
-    lon: -156.284703,
-    name: '032HI',
-    selected: false,
-  },
-  {
-    lat: 20.7736,
-    lon: -156.2223,
-    name: '020HI',
-    selected: false,
-  },
-  {
-    lat: 20.7195,
-    lon: -156.00236,
-    name: '023HI',
-    selected: false,
-  },
-  {
-    lat: 19.6061748,
-    lon: -155.051523,
-    name: '033HI',
-    selected: false,
-  },
-  {
-    lat: 19.845036,
-    lon: -155.362586,
-    name: '022HI',
-    selected: false,
-  },
-  {
-    lat: 19.8343,
-    lon: -155.1224,
-    name: '021HI',
-    selected: false,
-  },
-  {
-    lat: 19.8343,
-    lon: -155.1224,
-    name: '021HI',
-    selected: false,
-  },
-  {
-    lat: 19.6687,
-    lon: -155.9575, //missing a negative here in tom's website
-    name: '029HI',
-    selected: false,
-  },
-  {
-    lat: 19.1689,
-    lon: -155.5704,
-    name: '018HI',
-    selected: false,
-  },
-  {
-    lat: 20.12283,
-    lon: -155.749328,
-    name: '025HI',
-    selected: false,
-  },
-  {
-    lat: 20.019528,
-    lon: -155.677085,
-    name: '027HI',
-    selected: false,
-  },
-  {
-    lat: 21.145283,
-    lon: -156.729459,
-    name: '030HI',
-    selected: false,
-  },
-  {
-    lat: 21.131411,
-    lon: -156.758628,
-    name: '031HI',
-    selected: false,
-  },
-  {
-    lat: 21.506875,
-    lon: -158.145114,
-    name: '026HI',
-    selected: false,
-  },
-  {
-    lat: 22.2198,
-    lon: -159.57525,
-    name: '024HI',
-    selected: false,
-  },
-];
+// type StationDataType = { lat: number; lon: number; name: string; selected: boolean };
+// // For now, this is hard-coded. Will change when HCDP is ready.
+// export const stationData: { lat: number; lon: number; name: string; selected: boolean }[] = [
+//   {
+//     lat: 20.8415,
+//     lon: -156.2948,
+//     name: '017HI',
+//     selected: false,
+//   },
+//   {
+//     lat: 20.7067,
+//     lon: -156.3554,
+//     name: '016HI',
+//     selected: false,
+//   },
+//   {
+//     lat: 20.7579,
+//     lon: -156.32,
+//     name: '001HI',
+//     selected: false,
+//   },
+//   {
+//     lat: 20.7598,
+//     lon: -156.2482,
+//     name: '002HI',
+//     selected: false,
+//   },
+//   {
+//     lat: 20.64422,
+//     lon: -156.342056,
+//     name: '028HI',
+//     selected: false,
+//   },
+//   {
+//     lat: 20.7382,
+//     lon: -156.2458,
+//     name: '013HI',
+//     selected: false,
+//   },
+//   {
+//     lat: 20.7104,
+//     lon: -156.2567,
+//     name: '003HI',
+//     selected: false,
+//   },
+//   {
+//     lat: 19.6974,
+//     lon: -155.0954,
+//     name: '005HI',
+//     selected: false,
+//   },
+//   {
+//     lat: 19.964,
+//     lon: -155.25,
+//     name: '006HI',
+//     selected: false,
+//   },
+//   {
+//     lat: 19.932,
+//     lon: -155.291,
+//     name: '007HI',
+//     selected: false,
+//   },
+//   {
+//     lat: 19.748,
+//     lon: -155.996,
+//     name: '008HI',
+//     selected: false,
+//   },
+//   {
+//     lat: 19.803,
+//     lon: -155.851,
+//     name: '009HI',
+//     selected: false,
+//   },
+//   {
+//     lat: 19.73,
+//     lon: -155.87,
+//     name: '010HI',
+//     selected: false,
+//   },
+//   {
+//     lat: 21.333,
+//     lon: -157.8025,
+//     name: '011HI',
+//     selected: false,
+//   },
+//   {
+//     lat: 21.3391,
+//     lon: -157.8369,
+//     name: '012HI',
+//     selected: false,
+//   },
+//   {
+//     lat: 22.2026,
+//     lon: -159.5188,
+//     name: '014HI',
+//     selected: false,
+//   },
+//   {
+//     lat: 22.1975,
+//     lon: -159.421,
+//     name: '015HI',
+//     selected: false,
+//   },
+//   {
+//     lat: 20.63395,
+//     lon: -156.27389,
+//     name: '019HI',
+//     selected: false,
+//   },
+//   {
+//     lat: 20.644215,
+//     lon: -156.284703,
+//     name: '032HI',
+//     selected: false,
+//   },
+//   {
+//     lat: 20.7736,
+//     lon: -156.2223,
+//     name: '020HI',
+//     selected: false,
+//   },
+//   {
+//     lat: 20.7195,
+//     lon: -156.00236,
+//     name: '023HI',
+//     selected: false,
+//   },
+//   {
+//     lat: 19.6061748,
+//     lon: -155.051523,
+//     name: '033HI',
+//     selected: false,
+//   },
+//   {
+//     lat: 19.845036,
+//     lon: -155.362586,
+//     name: '022HI',
+//     selected: false,
+//   },
+//   {
+//     lat: 19.8343,
+//     lon: -155.1224,
+//     name: '021HI',
+//     selected: false,
+//   },
+//   {
+//     lat: 19.8343,
+//     lon: -155.1224,
+//     name: '021HI',
+//     selected: false,
+//   },
+//   {
+//     lat: 19.6687,
+//     lon: -155.9575, //missing a negative here in tom's website
+//     name: '029HI',
+//     selected: false,
+//   },
+//   {
+//     lat: 19.1689,
+//     lon: -155.5704,
+//     name: '018HI',
+//     selected: false,
+//   },
+//   {
+//     lat: 20.12283,
+//     lon: -155.749328,
+//     name: '025HI',
+//     selected: false,
+//   },
+//   {
+//     lat: 20.019528,
+//     lon: -155.677085,
+//     name: '027HI',
+//     selected: false,
+//   },
+//   {
+//     lat: 21.145283,
+//     lon: -156.729459,
+//     name: '030HI',
+//     selected: false,
+//   },
+//   {
+//     lat: 21.131411,
+//     lon: -156.758628,
+//     name: '031HI',
+//     selected: false,
+//   },
+//   {
+//     lat: 21.506875,
+//     lon: -158.145114,
+//     name: '026HI',
+//     selected: false,
+//   },
+//   {
+//     lat: 22.2198,
+//     lon: -159.57525,
+//     name: '024HI',
+//     selected: false,
+//   },
+// ];

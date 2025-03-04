@@ -544,7 +544,7 @@ function AppComponent(props: App): JSX.Element {
             response: 'Working on it...',
           };
           updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
-          console.log('I AM GETTING CALLED FROM ONCONTENT MESONET');
+
           const q = {
             ctx: {
               previousQ: previousQuestion,
@@ -559,7 +559,6 @@ function AppComponent(props: App): JSX.Element {
           };
           setProcessing(true);
           setActions([]);
-          console.log(q);
           const response = await callMesonet(q);
           setProcessing(false);
 
@@ -574,11 +573,24 @@ function AppComponent(props: App): JSX.Element {
           } else {
             setStreamText('');
             ctrlRef.current = null;
-            setPreviousAnswer(response.r);
+            setPreviousAnswer(response.stations.join(', '));
+            // Update the Mesonet app's state with the selected stations
+            if (response.stations && response.stations.length > 0) {
+              const mesonetApp = apps[0];
+              updateState(mesonetApp._id, {
+                ...mesonetApp.data.state,
+                stationNames: response.stations,
+                widget: {
+                  ...mesonetApp.data.state.widget,
+                  yAxisNames: response.attributes
+                }
+              });
+            }
+
             updateState(props._id, {
               ...s,
               previousQ: 'Describe the content',
-              previousA: response.r,
+              previousA: response.stations.join(', '),
               messages: [
                 ...s.messages,
                 initialAnswer,
@@ -589,7 +601,7 @@ function AppComponent(props: App): JSX.Element {
                   creationDate: now.epoch + 1,
                   userName: 'SAGE',
                   query: '',
-                  response: response.r,
+                  response: response.stations.join(', '),
                 },
               ],
             });
@@ -985,7 +997,6 @@ function AppComponent(props: App): JSX.Element {
 
   const onProsCons = async () => {
     const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
-    console.log(apps);
     if (s.context) {
       // ProsCons prompt
       const ctx = `@S, Please carefully read the following document text:

@@ -34,11 +34,14 @@ from langchain_core.documents import Document
 # from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from langchain_openai import ChatOpenAI, OpenAI
-
+import sys
 # Typing for RPC
 from libs.localtypes import MesonetQuery, MesonetAnswer
 # from libs.utils import getModelsInfo, getCSVFile, scaleImage
 from libs.utils import getModelsInfo, scaleImage
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+# Now import the csv_llm module
+from libs.mesonet.csv_llm.csv_llm import LLM
 
 # ChromaDB AI vector DB
 import chromadb
@@ -52,10 +55,39 @@ import pymupdf
 from io import BytesIO
 
 from langchain.vectorstores.base import VectorStoreRetriever
-from typing import Dict
+from typing import Dict, List
 
-# from libs.pdf.pdf_utils import generate_answer
-from libs.mesonet.mesonet import generate_answer
+# LangGraph
+from langgraph.graph import StateGraph
+from langgraph.graph import END
+from typing import TypedDict, Annotated, Sequence
+import operator
+import openai
+
+client = openai.OpenAI(
+    base_url = "https://api.openai.com/v1",
+    api_key  = ""
+)
+
+# Define the State for LangGraph
+class GraphState(TypedDict):
+    """
+    Represents the state of the graph.
+    """
+    request: MesonetQuery
+    data_statistics: str
+    llm_re: LLM
+    llm_base: LLM
+    llm_transform: LLM
+    llm_station: LLM
+    llm: LLM
+    user_prompt_modified: str
+    user_prompt_reasoning: str
+    station_chart_info: Dict
+    stations: str
+    attributes_extracted: List[str]
+    stations_extracted: List[str]
+    chart_type_extracted: str
 
 class MesonetAgent:
     def __init__(
@@ -134,153 +166,168 @@ class MesonetAgent:
         description = "No description available."
         print(qq.url)
         token = "71c5efcd8cfe303f2795e51f01d19c6"
-        res = requests.get(qq.url, headers={"Authorization": f"Bearer {token}"})
         
+        
+        print(qq)
 
-        print(res.text)
-        ans = {img: "", content: "", success: True, actions: []}
-        return res
-        # # Retrieve the PDF content
-        # # TODO: make cleaner
-        # # Define the loop to run getPDFFile in an executor for each asset
-        # # loop = asyncio.get_event_loop()
+        # Initialize LangGraph
+        workflow = StateGraph(GraphState)
 
-        # # # Use run_in_executor for each asset ID to avoid blocking the event loop
-        # # pdfContents = [
-        # #     {
-        # #         "id": assetid,
-        # #         "content": await loop.run_in_executor(None, getPDFFile, self.ps3, assetid)
-        # #     }
-        # #     for assetid in qq.assetids
-        # # ]
-        # csvContents = [
-        #     {
-        #         "id": assetid,
-        #         "content": getCSVFile(self.ps3, assetid).decode("utf-8")  # Decode bytes to string
+
+        def initialize_llms(state: GraphState):
+            return {
+                "llm_re": LLM(client, {"model": "gpt-4o-2024-05-13", "temperature": 1}),
+                "llm_base": LLM(client, {"model": "gpt-4o-2024-05-13","temperature": 0}),
+                "llm_transform": LLM(client, {"model": "gpt-4o-2024-05-13", "temperature": 0}),
+                "llm_station": LLM(client, {"model": "gpt-4o-2024-05-13", "temperature": 0}),
+                "llm": LLM(client, {"model": "gpt-4o-2024-05-13", "temperature": 0})
+            }
+        
+        def get_all_stations(state: GraphState):
+            res = requests.get("https://api.hcdp.ikewai.org/mesonet/db/stations", headers={"Authorization": f"Bearer {token}"})
+            return {"stations": res.text}
+    
+        def extract_stations(state: GraphState):
+            user_prompt = state["request"].q
+            stations_extracted, station_reasoning = state["llm_re"].prompt_select_stations(user_prompt, state["stations"]) #TODO add data_statistics to the prompt
+            print(stations_extracted)
+            return {"stations_extracted": stations_extracted}
+        
+        def get_station_attributes(state: GraphState):
+            # Get attributes for each station in stations_extracted
+            all_attributes = set()
+            
+            for station in state["stations_extracted"]:
+                # Query the API for a single data point to get all variables
+                res = requests.get(
+                    f"https://api.hcdp.ikewai.org/mesonet/db/measurements",
+                    params={
+                        "station_ids": station,
+                        "limit": 100,
+                        "row_mode": "json",
+                        "join_metadata": "true"
+                    },
+                    headers={"Authorization": f"Bearer {token}"}
+                )
+                
+                if res.status_code == 200:
+                    data = res.json()
+                    if data and len(data) > 0:
+                        # Extract just the variable name from each measurement
+                        variables = [item.get('variable', '') for item in data]
+                        # Add unique variables to the set
+
+
+                        all_attributes.update(variables)
+            
+            return {"attributes_extracted": list(all_attributes)}
+
+        def extract_attributes(state: GraphState):
+            user_prompt = state["request"].q
+            attributes_extracted, attribute_reasoning = state["llm_re"].prompt_select_attributes(user_prompt, state["attributes_extracted"])
+            print(attributes_extracted)
+            return {"attributes_extracted": attributes_extracted}
+
+        def extract_chart_type(state: GraphState):
+            user_prompt = state["request"].q
+            chart_type_extracted, chart_type_reasoning = state["llm_re"].prompt_charts_via_chart_info(user_prompt, state["attributes_extracted"])
+            print(chart_type_extracted)
+            return {"chart_type_extracted": chart_type_extracted}
+
+        # # Define nodes
+        # def load_data(state: GraphState):
+        #     # TODO: Fetch the data and compute statistics
+        #     res = requests.get(qq.url, headers={"Authorization": f"Bearer {token}"})
+        #     data_statistics = "Sample statistics"  # Replace with actual data processing
+        #     return {"data_statistics": data_statistics}
+
+
+        # def process_prompt(state: GraphState):
+        #     user_prompt = state["request"].q
+        #     user_prompt_modified, user_prompt_reasoning = state["llm_re"].prompt_reiterate(user_prompt)
+        #     print(user_prompt_modified)
+        #     return {
+        #         "user_prompt_modified": user_prompt_modified,
+        #         "user_prompt_reasoning": user_prompt_reasoning
         #     }
-        #     for assetid in qq.assetids
-        # ]
-        # csv_item = csvContents[0]
-        # # for csv_item in csvContents:
 
-        # # Parse csvContents
-        # asset_id = csv_item["id"]
-        # csv_data = csv_item["content"]  # Extract the CSV string
-        # csv_buffer = StringIO(csv_data)  # Wrap string in StringIO
-        # df = pd.read_csv(csv_buffer)  # Automatically infer columns from the first row
+        # Add nodes to the graph
+        workflow.add_node("initialize_llms", initialize_llms)
+        workflow.add_node("get_all_stations", get_all_stations)
+        workflow.add_node("extract_stations", extract_stations)
+        workflow.add_node("get_station_attributes", get_station_attributes)
+        workflow.add_node("extract_attributes", extract_attributes)
+        workflow.add_node("extract_chart_type", extract_chart_type)
+        # workflow.add_node("load_data", load_data)
+        # workflow.add_node("process_prompt", process_prompt)
 
-        # # Display the DataFrame
+        # Define edges
+        workflow.add_edge("initialize_llms", "get_all_stations")
+        workflow.add_edge("get_all_stations", "extract_stations")
+        workflow.add_edge("extract_stations", "get_station_attributes")
+        workflow.add_edge("get_station_attributes", "extract_attributes")
+        workflow.add_edge("extract_attributes", "extract_chart_type")
+        workflow.add_edge("extract_chart_type", END)
+        # workflow.add_edge("load_data", "process_prompt")
+        # workflow.add_edge("process_prompt", END)
 
-        # # self.logger.info(f"pdfs: {len(df)}")
-        # # self.logger.info(f"csv: {df[0]}, {len(df[0])}")
+        # Set the entry point
+        workflow.set_entry_point("initialize_llms")
 
-        # # self.logger.info(f"\n\nqq, {qq}\n\n")
+        # Compile the graph
+        app = workflow.compile()
 
-        # # # Used to filter documents in the vector DB
-        # # sage_asset_ids = qq.assetids # array to accomodate for more than 1 pdf in the future
+        # Execute the graph
+        initial_state = GraphState(request=qq)
+        final_state = app.invoke(initial_state)
 
-        # # # Create retrievers for each document
-        # # retrievers: Dict[str, VectorStoreRetriever] = {
-        # #     sage_asset_id: self.vector_store.as_retriever(
-        # #         search_type="similarity_score_threshold",
-        # #         search_kwargs={
-        # #             "filter": {"sage_asset_id": sage_asset_id},
-        # #             "score_threshold": 0.7
-        # #         },
-        # #     )
-        # #     for sage_asset_id in sage_asset_ids
-        # # }
+        # Process final state and return response
+        chartInformation = {
+            "userPrompt": qq.q
+        }
 
-        # if len(csvContents) > 0:
+                # Propose the answer to the user
+        action1 = json.dumps(
+            {
+                "type": "create_app",
+                "app": "Hawaii Mesonet",
+                "state": {
+                    "sensorData": {},
+                    "stationNames": final_state.get("stations_extracted", []),
+                    "listOfStationNames": '016HI',
+                    "location": [-157.816, 20.9],   
+                    "zoom": 6,
+                    "baseLayer": "OpenStreetMap",
+                    "bearing": 0,
+                    "pitch": 0,
+                    "overlay": True,
+                    "availableVariableNames": [],
+                    "stationScale": 5,
+                    "url": '',
+                    "widget": {
+                        "visualizationType": final_state.get("chart_type_extracted", ["line"])[0],  # Default to "line" chart
+                        "yAxisNames": final_state.get("attributes_extracted", ["temperature"]),  # Default to temperature
+                        "xAxisNames": ["date_time"],
+                        "color": "#5AB2D3",
+                        "startDate": "202401181356",
+                        "endDate": "202401191356",
+                        "timePeriod": "24 hours",
+                        "liveData": True,
+                        "layout": {"x": 0, "y": 0, "w": 11, "h": 130},
+                    }
+                },
+                "data": {
+                    "title": "Answer",
+                    "position": {"x": qq.ctx.pos[0], "y": qq.ctx.pos[1], "z": 0},
+                    "size": {"width": 2000, "height": 1000, "depth": 0},
+                },
+            }
+        )
 
-        #     answer = await generate_answer(
-        #       qq=qq,
-        #       llm=self.llm_openai,
-        #       df=df
-        #     )
-
-        # # text = answer
-
-
-        # code = answer['code'].replace("plt.show()", "")
-        # exec_globals = {'plt': plt, 'sns': sns, 'pd': pd}
-        # exec_locals = {'df': df}
-
-        # # Execute the code to generate the plot
-        # exec(code, exec_globals, exec_locals)
-
-        # # Save the generated plot to the original buffer
-        # buf = io.BytesIO()
-        # plt.savefig(buf, format='png')
-        # plt.close()  # Close the plot to prevent reusing it
-        # buf.seek(0)  # Reset buffer to the beginning
-
-        # # # Resize the image (creates a new buffer, does not modify the original)
-        # # img = Image.open(buf)
-        # #     # Convert the image to RGB format
-        # # # img = img.convert("RGB")
-        # # buf_resized = io.BytesIO()
-        # # img.save(buf_resized, format='PNG')
-        # # buf_resized.seek(0)
-
-        # # # Encode the resized image to Base64 for API
-        # # image_base64 = base64.b64encode(buf_resized.getvalue()).decode('utf-8')
-        # # data = {
-        # #             "messages": [
-        # #                 {
-        # #                     "role": "assistant",
-        # #                     "content": "You are a helpful assistant, providing detailed  answers to the user, using the Markdown format.",
-        # #                 },
-        # #                 {
-        # #                     "role": "user",
-        # #                     "content": [
-        # #                         {"type": "text", "text": qq.q},
-        # #                         {
-        # #                             "type": "image_url",
-        # #                             "image_url": {
-        # #                                 "url": f"data:image/jpeg;base64,{image_base64}"
-        # #                             },
-        # #                             "detail": "high",
-        # #                         },
-        # #                     ],
-        # #                 },
-        # #             ],
-        # #         }
-        # # url = self.server + "/v1/chat/completions"
-        # # llm_response = self.httpx_client.post(url, json=data)
-        # # print(llm_response)
-        # # if llm_response.status_code == 200:
-        # #     description = llm_response.json()["choices"][0]["message"]["content"]
-        # #     print(description)
-
-        # # Use original buffer for CSVAnswer
-        # action1 = json.dumps(
-        #     {
-        #         "type": "create_app",
-        #         "app": "ImageViewer",
-        #         "state": {"assetid": ""},
-        #         "data": {
-        #             "title": "Answer",
-        #             "position": {"x": qq.ctx.pos[0], "y": qq.ctx.pos[1], "z": 0},
-        #             "size": {"width": 500, "height": 500, "depth": 0},
-        #         },
-        #     }
-        # )
-
-        # action2 = json.dumps(
-        #     {
-        #         "type": "create_app",
-        #         "app": "CodeEditor",
-        #         "state": {"content": answer['code'], "language": 'python'},
-        #         "data": {
-        #             "title": "Answer",
-        #             "position": {"x": qq.ctx.pos[0], "y": qq.ctx.pos[1], "z": 0},
-        #             "size": {"width": 500, "height": 500, "depth": 0},
-        #         },
-        #     }
-        # )
-        # # Pass the original buffer to CSVAnswer
-        # # buf.seek(0)  # Ensure the buffer is reset before use
-        # val = CSVAnswer.from_buffer(buf, success=True, actions=[action1, action2], content=answer['content'])
-
-        # return val
+        return  MesonetAnswer(
+            attributes=final_state.get("attributes_extracted", []),  # Get extracted attributes from final state
+            stations=final_state.get("stations_extracted", []),  # Get extracted stations from final state
+            chart_type=final_state.get("chart_type_extracted", []),  # Get extracted chart type from final state
+            success=True,
+            actions=[action1]
+        )
