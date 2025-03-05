@@ -6,10 +6,20 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useRef, useState, useCallback, useEffect } from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { useParams } from 'react-router';
 
-import { Button, ButtonGroup, Tooltip, Input, InputGroup, HStack, useToast, useDisclosure } from '@chakra-ui/react';
+import {
+  Button, ButtonGroup, Tooltip, Input, InputGroup, HStack, useToast, useDisclosure,
+  Drawer,
+  DrawerContent,
+  DrawerCloseButton,
+  DrawerHeader,
+  DrawerBody,
+  Flex,
+  Text,
+} from '@chakra-ui/react';
+
 import {
   MdArrowBack,
   MdArrowForward,
@@ -23,6 +33,8 @@ import {
   MdCopyAll,
   MdFileUpload,
   MdWeb,
+  MdViewSidebar,
+  MdHome,
 } from 'react-icons/md';
 import { FaEyeSlash } from 'react-icons/fa';
 
@@ -50,6 +62,9 @@ interface WebviewStore {
 
   localURL: { [key: string]: string };
   setLocalURL: (id: string, url: string) => void;
+
+  sidebar: { [key: string]: boolean };
+  setSidebar: (id: string, sidebar: boolean) => void;
 }
 
 export const useStore = create<WebviewStore>()((set) => ({
@@ -64,6 +79,10 @@ export const useStore = create<WebviewStore>()((set) => ({
 
   localURL: {},
   setLocalURL: (id: string, url: string) => set((state) => ({ localURL: { ...state.localURL, ...{ [id]: url } } })),
+
+  sidebar: {},
+  setSidebar: (id: string, sidebar: boolean) => set((state) => ({ sidebar: { ...state.sidebar, ...{ [id]: sidebar } } })),
+
 }));
 
 /* App component for Webview */
@@ -82,6 +101,12 @@ function AppComponent(props: App): JSX.Element {
   const mute = useStore((state) => state.mute[props._id]);
   const setMute = useStore((state) => state.setMute);
   const createApp = useAppStore((state) => state.create);
+
+  // Sidebar
+  const { isOpen: sidebarIsOpen, onOpen: sidebarOnOpen, onClose: sidebarOnClose } = useDisclosure();
+  const sidebar = useStore((state) => state.sidebar[props._id]);
+  const setSidebar = useStore((state) => state.setSidebar);
+  const [title, setTitle] = useState('Webview');
 
   // UI
   const boardDragging = useUIStore((state) => state.boardDragging);
@@ -305,11 +330,37 @@ function AppComponent(props: App): JSX.Element {
     };
   }, [props.data.position, domReady]);
 
-  // Open the url in the default browser or a new tab
-  const handleOpen = () => {
-    if (isElectron()) {
-      window.electron.send('open-external-url', { url: s.webviewurl });
-    }
+  useEffect(() => {
+    if (sidebar) openSidebar();
+  }, [sidebar]);
+
+  const sidebarGoHome = () => {
+    window.electron.send('web-contents-view-url', { url: "https://www.google.com" });
+
+  };
+  const sidebarReload = () => {
+    window.electron.send('web-contents-view-reload', {});
+  };
+  const sidebarGoForward = () => {
+    window.electron.send('web-contents-view-forward', {});
+  };
+  const sidebarGoBack = () => {
+    window.electron.send('web-contents-view-back', {});
+  };
+
+  const openSidebar = () => {
+    sidebarOnOpen();
+    // Ask Electron to create a new WebContentsView
+    window.electron.send('web-contents-view', { url: processContentURL(s.webviewurl) });
+    // Listen for the title updates
+    window.electron.on('web-contents-view-title', (args: string) => {
+      if (args) setTitle(args);
+    });
+  };
+  const closeSidebar = () => {
+    window.electron.send('web-contents-view-close', {});
+    setSidebar(props._id, false);
+    sidebarOnClose();
   };
 
   const webviewStyle: React.CSSProperties = {
@@ -322,36 +373,69 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props} hideBackgroundIcon={MdWeb}>
-      {isElectron() ? (
-        <div>
-          {/* button */}
-          {/* <Tooltip placement="top" hasArrow={true} label={'Open in Desktop'} openDelay={400}>
-            <Button colorScheme="teal" variant="ghost" top={0} right={0} position={'absolute'} size={'lg'} onClick={handleOpen}>
-              <MdOpenInNew />
-            </Button>
-          </Tooltip> */}
-          {/* Webview */}
+      <>
+        <Drawer placement="left" variant="code" size="xl" isOpen={sidebarIsOpen}
+          onClose={closeSidebar} closeOnOverlayClick={false} closeOnEsc={false}>
+          <DrawerContent p={0} m={0} maxW={"50%"}>
+            <DrawerCloseButton />
+            <DrawerHeader fontSize={"sm"} p={1} m={1}>
+              <Flex p={0} m={0}>
+                <Tooltip hasArrow label="Back">
+                  <Button size={'sm'} p={2} m={'0 10px 0 1px'} onClick={sidebarGoBack}>
+                    <MdArrowBack />
+                  </Button>
+                </Tooltip>
+                <Tooltip hasArrow label="Forward">
+                  <Button size={'sm'} p={2} m={'0 10px 0 1px'} onClick={sidebarGoForward}>
+                    <MdArrowForward />
+                  </Button>
+                </Tooltip>
+                <Tooltip hasArrow label="Reload">
+                  <Button size={'sm'} p={2} m={'0 10px 0 1px'} onClick={sidebarReload}>
+                    <MdRefresh />
+                  </Button>
+                </Tooltip>
+                <Tooltip hasArrow label="Home">
+                  <Button size={'sm'} p={2} m={'0 40px 0 1px'} onClick={sidebarGoHome}>
+                    <MdHome />
+                  </Button>
+                </Tooltip>
+                <Text flex={1} mr={'10px'} fontSize={'md'} pt={1} whiteSpace={'nowrap'} textOverflow={'ellipsis'}
+                  maxW={'70%'} overflow={'hidden'} >
+                  {title}
+                </Text>
+              </Flex>
+            </DrawerHeader>
+            <DrawerBody p={0} m={"2px"} borderRadius={"md"}>
+              {/* empty drawer - Electron will put a WebContentsView there */}
+            </DrawerBody>
+          </DrawerContent>
+        </Drawer>
 
-          {/* Warning Icon to show your view might not match others */}
-          {!urlMatchesState && (
-            <Tooltip placement="top" hasArrow={true} label={'Your view might not match everyone elses.'}>
-              <div
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  bottom: 0,
-                }}
-              >
-                <FaEyeSlash size={64} color={matchIconColor}></FaEyeSlash>
-              </div>
-            </Tooltip>
-          )}
 
-          <webview ref={setWebviewRef} style={webviewStyle} allowpopups={'true' as any}></webview>
-        </div>
-      ) : (
-        <ElectronRequired appName={props.data.type} link={s.webviewurl} title={props.data.title} />
-      )}
+        {isElectron() ? (
+          <div>
+            {/* Warning Icon to show your view might not match others */}
+            {!urlMatchesState && (
+              <Tooltip placement="top" hasArrow={true} label={'Your view might not match everyone elses.'}>
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    bottom: 0,
+                  }}
+                >
+                  <FaEyeSlash size={64} color={matchIconColor}></FaEyeSlash>
+                </div>
+              </Tooltip>
+            )}
+
+            <webview ref={setWebviewRef} style={webviewStyle} allowpopups={'true' as any}></webview>
+          </div>
+        ) : (
+          <ElectronRequired appName={props.data.type} link={s.webviewurl} title={props.data.title} />
+        )}
+      </>
     </AppWindow>
   );
 }
@@ -371,6 +455,8 @@ function ToolbarComponent(props: App): JSX.Element {
   const [viewURL, setViewURL] = useState(localURL);
   // Save Confirmation  Modal
   const { isOpen: saveIsOpen, onOpen: saveOnOpen, onClose: saveOnClose } = useDisclosure();
+  const setSidebar = useStore((state) => state.setSidebar);
+
   // Room and board
   const { roomId } = useParams();
 
@@ -512,110 +598,107 @@ function ToolbarComponent(props: App): JSX.Element {
     [viewURL, roomId]
   );
 
+
+  const openSidebar = () => {
+    setSidebar(props._id, true);
+  };
+
   return (
     <HStack>
-      {clientIsElectron ? (
-        <>
-          <ButtonGroup isAttached size="xs" colorScheme="teal">
-            <Tooltip placement="top-start" hasArrow={true} label={'Go Back'} openDelay={400}>
-              <Button onClick={goBack}>
-                <MdArrowBack />
-              </Button>
-            </Tooltip>
 
-            <Tooltip placement="top-start" hasArrow={true} label={'Go Forward'} openDelay={400}>
-              <Button onClick={goForward}>
-                <MdArrowForward />
-              </Button>
-            </Tooltip>
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
+        <Tooltip placement="top-start" hasArrow={true} label={'Go Back'} openDelay={400}>
+          <Button onClick={goBack}>
+            <MdArrowBack />
+          </Button>
+        </Tooltip>
 
-            <Tooltip placement="top-start" hasArrow={true} label={'Reload Page'} openDelay={400}>
-              <Button onClick={() => view.reload()}>
-                <MdRefresh />
-              </Button>
-            </Tooltip>
-          </ButtonGroup>
+        <Tooltip placement="top-start" hasArrow={true} label={'Go Forward'} openDelay={400}>
+          <Button onClick={goForward}>
+            <MdArrowForward />
+          </Button>
+        </Tooltip>
 
-          <form onSubmit={changeUrl}>
-            <InputGroup size="xs" minWidth="200px">
-              <Input
-                placeholder="Web Address"
-                value={viewURL}
-                onChange={handleUrlChange}
-                onPaste={(event) => {
-                  event.stopPropagation();
-                }}
-                backgroundColor="whiteAlpha.300"
-              />
-            </InputGroup>
-          </form>
+        <Tooltip placement="top-start" hasArrow={true} label={'Reload Page'} openDelay={400}>
+          <Button onClick={() => view.reload()}>
+            <MdRefresh />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
 
-          <Tooltip placement="top-start" hasArrow={true} label={'Go to Web Address'} openDelay={400}>
-            <Button onClick={changeUrl} size="xs" variant="solid" colorScheme="teal">
-              <MdOutlineSubdirectoryArrowLeft />
-            </Button>
-          </Tooltip>
-
-          <ButtonGroup isAttached size="xs" colorScheme="teal">
-            <Tooltip placement="top-start" hasArrow={true} label={'Zoom In'} openDelay={400}>
-              <Button onClick={() => handleZoom('zoom-in')}>
-                <MdAdd />
-              </Button>
-            </Tooltip>
-
-            <Tooltip placement="top-start" hasArrow={true} label={'Zoom Out'} openDelay={400}>
-              <Button onClick={() => handleZoom('zoom-out')}>
-                <MdRemove />
-              </Button>
-            </Tooltip>
-
-            <Tooltip placement="top-start" hasArrow={true} label={'Mute Webpage'} openDelay={400}>
-              <Button onClick={() => setMute(props._id, !mute)}>{mute ? <MdVolumeOff /> : <MdVolumeUp />}</Button>
-            </Tooltip>
-
-            <Tooltip placement="top-start" hasArrow={true} label={'Save URL in Asset Manager'} openDelay={400}>
-              <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }}>
-                <MdFileUpload />
-              </Button>
-            </Tooltip>
-
-            <Tooltip placement="top-start" hasArrow={true} label={'Copy URL'} openDelay={400}>
-              <Button onClick={handleCopy}>{<MdCopyAll />}</Button>
-            </Tooltip>
-
-            <Tooltip placement="top-start" hasArrow={true} label={'Open in Desktop'} openDelay={400}>
-              <Button onClick={handleOpen}>
-                <MdOpenInNew />
-              </Button>
-            </Tooltip>
-          </ButtonGroup>
-
-          <ConfirmValueModal
-            isOpen={saveIsOpen}
-            onClose={saveOnClose}
-            onConfirm={saveInAssetManager}
-            title="Save URL in Asset Manager"
-            message="Select a file name:"
-            initiaValue={props.data.title.split(' ').slice(0, 2).join('-') + '.url'}
-            cancelText="Cancel"
-            confirmText="Save"
-            confirmColor="green"
+      <form onSubmit={changeUrl}>
+        <InputGroup size="xs" minWidth="200px">
+          <Input
+            placeholder="Web Address"
+            value={viewURL}
+            onChange={handleUrlChange}
+            onPaste={(event) => {
+              event.stopPropagation();
+            }}
+            backgroundColor="whiteAlpha.300"
           />
-        </>
-      ) : (
-        <>
-          <Tooltip placement="top-start" hasArrow={true} label={'Open page in new tab.'} openDelay={400}>
-            <Button onClick={handleOpen} size="xs" variant="solid" colorScheme="teal">
-              Open
-            </Button>
-          </Tooltip>
-          <Tooltip placement="top-start" hasArrow={true} label={'Copy URL'} openDelay={400}>
-            <Button onClick={handleCopy} size="xs" variant="solid" colorScheme="teal">
-              Copy
-            </Button>
-          </Tooltip>
-        </>
-      )}
+        </InputGroup>
+      </form>
+
+      <Tooltip placement="top-start" hasArrow={true} label={'Go to Web Address'} openDelay={400}>
+        <Button onClick={changeUrl} size="xs" variant="solid" colorScheme="teal">
+          <MdOutlineSubdirectoryArrowLeft />
+        </Button>
+      </Tooltip>
+
+      <ButtonGroup isAttached size="xs" colorScheme="teal">
+
+        <Tooltip placement="top-start" hasArrow={true} label={'Open on the side'} openDelay={400}>
+          <Button onClick={openSidebar}>
+            <MdViewSidebar />
+          </Button>
+        </Tooltip>
+
+        <Tooltip placement="top-start" hasArrow={true} label={'Zoom In'} openDelay={400}>
+          <Button onClick={() => handleZoom('zoom-in')}>
+            <MdAdd />
+          </Button>
+        </Tooltip>
+
+        <Tooltip placement="top-start" hasArrow={true} label={'Zoom Out'} openDelay={400}>
+          <Button onClick={() => handleZoom('zoom-out')}>
+            <MdRemove />
+          </Button>
+        </Tooltip>
+
+        <Tooltip placement="top-start" hasArrow={true} label={'Mute Webpage'} openDelay={400}>
+          <Button onClick={() => setMute(props._id, !mute)}>{mute ? <MdVolumeOff /> : <MdVolumeUp />}</Button>
+        </Tooltip>
+
+        <Tooltip placement="top-start" hasArrow={true} label={'Save URL in Asset Manager'} openDelay={400}>
+          <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }}>
+            <MdFileUpload />
+          </Button>
+        </Tooltip>
+
+        <Tooltip placement="top-start" hasArrow={true} label={'Copy URL'} openDelay={400}>
+          <Button onClick={handleCopy}>{<MdCopyAll />}</Button>
+        </Tooltip>
+
+        <Tooltip placement="top-start" hasArrow={true} label={'Open in Desktop'} openDelay={400}>
+          <Button onClick={handleOpen}>
+            <MdOpenInNew />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+
+      <ConfirmValueModal
+        isOpen={saveIsOpen}
+        onClose={saveOnClose}
+        onConfirm={saveInAssetManager}
+        title="Save URL in Asset Manager"
+        message="Select a file name:"
+        initiaValue={props.data.title.split(' ').slice(0, 2).join('-') + '.url'}
+        cancelText="Cancel"
+        confirmText="Save"
+        confirmColor="green"
+      />
+
     </HStack>
   );
 }
