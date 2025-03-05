@@ -55,6 +55,9 @@ export interface ServerConfiguration {
     logLevel: 'all' | 'partial' | 'none';
     uploadLimit: string; // in bytes with optional units (KB, MB, GB, TB)
   };
+  // Fastapi python server for co-sage-container-manager backend 
+  vms: { managerUrl: string, streamUrl: string };
+
 
   // Feedback server
   feedback: { url: string };

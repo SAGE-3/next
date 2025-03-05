@@ -46,64 +46,66 @@ import { MdVolumeOff } from 'react-icons/md'; // MdVolumeUp
 import { TbMouse, TbMouseOff } from 'react-icons/tb';
 import { PiTabs } from 'react-icons/pi';
 
-const fetchWS = async (vmId: string = 'allocate', theme: number = 0, urls: string[], id: string): Promise<any> => {
-  const getUrl = () => {
-    const protocol = window.location.protocol;
-    const hostname = window.location.hostname;
-    const port = window.location.port;
+import { VmsAPI } from '@sage3/frontend';
 
-    // let fullUrl = `${protocol}//${hostname}`;
-    let fullUrl = `${protocol}//host.docker.internal`;
+// const fetchWS = async (vmId: string = 'allocate', theme: number = 0, urls: string[], id: string): Promise<any> => {
+//   const getUrl = () => {
+//     const protocol = window.location.protocol;
+//     const hostname = window.location.hostname;
+//     const port = window.location.port;
 
-    if (port) {
-      fullUrl += `:${port}`;
-    }
+//     // let fullUrl = `${protocol}//${hostname}`;
+//     let fullUrl = `${protocol}//host.docker.internal`;
 
-    return fullUrl;
-  };
+//     if (port) {
+//       fullUrl += `:${port}`;
+//     }
 
-  return fetch(`/vm/any/${vmId}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      vm: 'vnc-x11-firefox',
-      env: {
-        FIREFOX_URLS: urls,
-        FIREFOX_THEME: theme,
-        // CALLBACK_URL_BASE: `${getUrl()}`,
-        CALLBACK_ID: `${id}`,
-      },
-    }),
-  })
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error('Request failed');
-      }
-      return response.json();
-    })
-    .catch((error) => {
-      console.log(error);
-      throw error;
-    });
-};
+//     return fullUrl;
+//   };
 
-const fetchWSIfExists = (vmId: string = 'allocate'): Promise<any> => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const response = await fetch(`/vm/ws/${vmId}`);
-      if (!response.ok) {
-        throw new Error('Request failed');
-      }
-      const jsonData = await response.json();
-      resolve(jsonData);
-    } catch (error) {
-      console.log(error);
-      reject(error);
-    }
-  });
-};
+//   return fetch(`/vm/any/${vmId}`, {
+//     method: 'POST',
+//     headers: {
+//       'Content-Type': 'application/json',
+//     },
+//     body: JSON.stringify({
+//       vm: 'vnc-x11-firefox',
+//       env: {
+//         FIREFOX_URLS: urls,
+//         FIREFOX_THEME: theme,
+//         // CALLBACK_URL_BASE: `${getUrl()}`,
+//         CALLBACK_ID: `${id}`,
+//       },
+//     }),
+//   })
+//     .then((response) => {
+//       if (!response.ok) {
+//         throw new Error('Request failed');
+//       }
+//       return response.json();
+//     })
+//     .catch((error) => {
+//       console.log(error);
+//       throw error;
+//     });
+// };
+
+// const fetchWSIfExists = (vmId: string = 'allocate'): Promise<any> => {
+//   return new Promise(async (resolve, reject) => {
+//     try {
+//       const response = await fetch(`/vm/ws/${vmId}`);
+//       if (!response.ok) {
+//         throw new Error('Request failed');
+//       }
+//       const jsonData = await response.json();
+//       resolve(jsonData);
+//     } catch (error) {
+//       console.log(error);
+//       reject(error);
+//     }
+//   });
+// };
 
 /* App component for CollabBrowser */
 
@@ -159,13 +161,15 @@ function AppComponent(props: App): JSX.Element {
     // Start Container on user selecting app; this is the alternative to autostarting the container
     if (isSelected && vmId && !vncScreenRef.current) {
       setRejoinSpinner(true);
-      fetchWS(vmId, theme, s.urls, props._id).then((jsonData) => {
-        if ('url' in jsonData) {
-          setWsUrl(jsonData['url']);
-          setRejoinSpinner(false);
-          updateState(props._id, { refreshSeed: Math.random() });
+      VmsAPI.initalize(vmId, 'vnc-x11-firefox', { FIREFOX_URLS: s.urls, FIREFOX_THEME: theme, CALLBACK_ID: `${props._id}` }).then(
+        (jsonData) => {
+          if ('url' in jsonData) {
+            setWsUrl(jsonData['url']);
+            setRejoinSpinner(false);
+            updateState(props._id, { refreshSeed: Math.random() });
+          }
         }
-      });
+      );
     }
   }, [isSelected]);
 
@@ -174,15 +178,17 @@ function AppComponent(props: App): JSX.Element {
     if (s.init) {
       // Send request to start container or recieve websocket if running
       if ((startVmOnLoad && appIsMountingRef.current) || !appIsMountingRef.current) {
-        fetchWS(vmId, theme, s.urls, props._id).then((jsonData) => {
-          if ('url' in jsonData) {
-            setWsUrl(jsonData['url']);
+        VmsAPI.initalize(vmId, 'vnc-x11-firefox', { FIREFOX_URLS: s.urls, FIREFOX_THEME: theme, CALLBACK_ID: `${props._id}` }).then(
+          (jsonData) => {
+            if ('url' in jsonData) {
+              setWsUrl(jsonData['url']);
+            }
           }
-        });
+        );
       }
       // Send request to check if container is running or not, do not issue start command on first load
       else if (appIsMountingRef.current) {
-        fetchWSIfExists(vmId).then((jsonData) => {
+        VmsAPI.getVmIfExists(vmId).then((jsonData) => {
           if ('url' in jsonData) {
             setWsUrl(jsonData['url']);
           }
@@ -205,9 +211,11 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     appIsMountingRef.current = false;
     if (!s.init && props._createdBy === user?._id) {
-      fetchWS(vmId, theme, s.urls, props._id).then((jsonData) => {
-        updateState(props._id, { refreshSeed: Math.random(), init: true, urls: ['about:page'] });
-      });
+      VmsAPI.initalize(vmId, 'vnc-x11-firefox', { FIREFOX_URLS: s.urls, FIREFOX_THEME: theme, CALLBACK_ID: `${props._id}` }).then(
+        (jsonData) => {
+          updateState(props._id, { refreshSeed: Math.random(), init: true, urls: ['about:page'] });
+        }
+      );
     }
   }, []);
 

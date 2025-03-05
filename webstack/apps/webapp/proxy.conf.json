@@ -50,10 +50,5 @@
     "target": "http://127.0.0.1:4033",
     "secure": false,
     "ws": true
-  },
-  "/vm": {
-    "target": "http://127.0.0.1:4024/api",
-    "secure": false,
-    "ws": true
   }
 }
