@@ -32,6 +32,13 @@ const validChannels = [
   'get-servers-request',
   'get-servers-response',
   'set-scale-level',
+  'web-contents-view',
+  'web-contents-view-url',
+  'web-contents-view-close',
+  'web-contents-view-back',
+  'web-contents-view-forward',
+  'web-contents-view-reload',
+  'web-contents-view-title',
 ];
 
 contextBridge.exposeInMainWorld('electron', {

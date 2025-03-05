@@ -75,6 +75,7 @@ if (handleSquirrelEvent()) {
 const app = electron.app;
 // Module to create native browser window.
 const BrowserWindow = electron.BrowserWindow;
+const WebContentsView = electron.WebContentsView;
 // with Electron version >= 17, sources available in the main process
 const desktopCapturer = electron.desktopCapturer;
 const shell = electron.shell;
@@ -862,6 +863,60 @@ function createWindow() {
 
   ipcMain.on('set-scale-level', (event, arg) => {
     mainWindow.webContents.setZoomLevel(arg);
+  });
+
+  function resizeView() {
+    const [width, height] = win.getContentBounds().size;
+    view.setBounds({ x: 0, y: 0, width, height });
+  }
+
+  let view1;
+  ipcMain.on('web-contents-view', (event, arg) => {
+    view1 = new WebContentsView({
+      webPreferences: {
+        partition: 'persist:sidebar',
+        transparent: false,
+        nodeIntegration: false,
+        contextIsolation: true,
+        webSecurity: true,
+      },
+    });
+    mainWindow.contentView.addChildView(view1);
+    const { url } = arg;
+    view1.webContents.loadURL(url);
+    view1.webContents.setWindowOpenHandler((details) => {
+      // do the navigation in the view
+      view1.webContents.loadURL(details.url);
+      // deny the navigation in the main window
+      return { action: 'deny' };
+    });
+    view1.webContents.on('page-title-updated', (event, title) => {
+      // Send back to the renderer process the title of the view
+      mainWindow.webContents.send('web-contents-view-title', title);
+    });
+
+    mainWindow.on('resize', () => {
+      const [w, h] = mainWindow.getSize();
+      view1.setBounds({ x: 0, y: 50, width: w / 2, height: h });
+    });
+    const [w, h] = mainWindow.getSize();
+    view1.setBounds({ x: 0, y: 50, width: w / 2, height: h });
+  });
+
+  ipcMain.on('web-contents-view-url', (event, arg) => {
+    if (view1) view1.webContents.loadURL(arg.url);
+  });
+  ipcMain.on('web-contents-view-close', (event, arg) => {
+    if (view1) view1.webContents.close();
+  });
+  ipcMain.on('web-contents-view-reload', (event, arg) => {
+    if (view1) view1.webContents.reload();
+  });
+  ipcMain.on('web-contents-view-back', (event, arg) => {
+    if (view1) view1.webContents.navigationHistory.goBack();
+  });
+  ipcMain.on('web-contents-view-forward', (event, arg) => {
+    if (view1) view1.webContents.navigationHistory.goForward();
   });
 
   // Retrieve media sources for desktop sharing
