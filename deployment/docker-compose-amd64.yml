@@ -4,9 +4,9 @@ services:
     container_name: traefik
     restart: always
     ports:
-      - "443:443"  # HTTPS for secure traffic
+      - "443:443" # HTTPS for secure traffic
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock  # Allow Traefik to access Docker API
+      - /var/run/docker.sock:/var/run/docker.sock # Allow Traefik to access Docker API
       - ./configurations/traefik:/etc/traefik
   redis-server:
     image: "redis/redis-stack-server:latest"
@@ -219,3 +219,49 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
+
+  cosagecontainermanager:
+    image: "ghcr.io/sage-3/cosage-containermanager:amd64"
+    container_name: cosagecontainermanager
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+
+      # HTTP API route
+      - "traefik.http.routers.vm-management.rule=Host(`${SAGE3_SERVER}`) && PathPrefix(`/api/vm`)"
+      - "traefik.http.routers.vm-management.entrypoints=websecure"
+      - "traefik.http.services.vm-management.loadbalancer.server.port=4024"
+      # - "traefik.http.routers.vm-management.tls=true"
+      # - "traefik.http.routers.vm-management.tls.certresolver=myresolver"
+      # - "traefik.http.routers.vm-management.service=vm-management-service"
+      # - "traefik.http.services.vm-management-service.loadbalancer.server.port=4024"
+
+      # WebSocket route
+      - "traefik.http.routers.vm-stream.rule=Path(`/api/vmstream`)"
+      - "traefik.http.routers.vm-stream.entrypoints=websecure"
+      - "traefik.http.services.vm-stream.loadbalancer.server.port=4033"
+      # - "traefik.http.routers.vm-stream.tls=true"
+      # - "traefik.http.routers.vm-stream.tls.certresolver=myresolver"
+      # - "traefik.http.routers.vm-stream.service=ws-service"
+      # - "traefik.http.services.vm-stream-service.loadbalancer.server.port=4033"
+
+      # Middleware to transform /api/vmstream to /stream
+      - traefik.http.middlewares.vm-stream-ws-path-strip.replacepathregex.regex=^/api/vmstream(.*)
+      - traefik.http.middlewares.vm-stream-ws-path-strip.replacepathregex.replacement=/stream$$1
+    environment:
+      - SAGE3_SERVER=${SAGE3_SERVER}
+      - TOKEN=${TOKEN}
+      - ENVIRONMENT=production
+      - PYTHONUNBUFFERED=1
+      - PORT_RANGE_START=11000
+      - PORT_RANGE_END=12000
+      - CONTAINER_BASE_NAME=collab-vm-
+      - CONTAINER_NO_CLIENT_TIMEOUT=15
+    ports:
+      - 4024:4024
+      - 4033:4033
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    network_mode: host
