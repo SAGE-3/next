@@ -11,6 +11,14 @@
     "target": "http://localhost:3002",
     "secure": false
   },
+  "/api/vmstream": {
+    "target": "http://127.0.0.1:4033",
+    "secure": false,
+    "ws": true,
+    "pathRewrite": {
+      "^/api/vmstream": "/stream"
+    }
+  },
   "/api": {
     "target": "http://127.0.0.1:3000",
     "secure": false,
@@ -43,11 +51,6 @@
   },
   "/plugins": {
     "target": "http://127.0.0.1:3000",
-    "secure": false,
-    "ws": true
-  },
-  "/stream": {
-    "target": "http://127.0.0.1:4033",
     "secure": false,
     "ws": true
   }
