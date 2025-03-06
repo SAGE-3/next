@@ -242,13 +242,16 @@ services:
       - "traefik.http.routers.vm-stream.rule=Host(`${SAGE3_SERVER}`) && PathPrefix(`/api/vmstream`)"
       - "traefik.http.routers.vm-stream.entrypoints=websecure"
       - "traefik.http.services.vm-stream.loadbalancer.server.port=4033"
-      - "traefik.http.routers.vm-stream.middlewares=vm-stream-headers"
+      # 4033 Middlewares
       - "traefik.http.middlewares.vm-stream-headers.headers.customrequestheaders.Upgrade=websocket"
       - "traefik.http.middlewares.vm-stream-headers.headers.customrequestheaders.Connection=Upgrade"
-      # Middleware to transform /api/vmstream to /stream
-      - "traefik.http.routers.vm-stream.middlewares=vm-stream-ws-path-strip"
-      - traefik.http.middlewares.vm-stream-ws-path-strip.replacepathregex.regex=^/api/vmstream(.*)
-      - traefik.http.middlewares.vm-stream-ws-path-strip.replacepathregex.replacement=/stream$$1
+      - traefik.http.middlewares.vm-stream-path-strip.replacepathregex.regex=^/api/vmstream(.*)
+      - traefik.http.middlewares.vm-stream-path-strip.replacepathregex.replacement=/stream$$1
+
+      # - "traefik.http.routers.vm-stream.middlewares=vm-stream-path-strip"
+      # - "traefik.http.routers.vm-stream.middlewares=vm-stream-headers"
+
+      - "traefik.http.routers.vm-stream.middlewares=vm-stream-path-strip,vm-stream-headers"
 
       # - "traefik.http.routers.vm-stream.tls=true"
       # - "traefik.http.routers.vm-stream.tls.certresolver=myresolver"
