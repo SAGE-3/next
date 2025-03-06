@@ -237,7 +237,7 @@ services:
       # - "traefik.http.services.vm-management-service.loadbalancer.server.port=4024"
 
       # WebSocket route
-      - "traefik.http.routers.vm-stream.rule=Path(`/api/vmstream`)"
+      - "traefik.http.routers.vm-stream.rule=Host(`${SAGE3_SERVER}`) && PathPrefix(`/api/vmstream`)"
       - "traefik.http.routers.vm-stream.entrypoints=websecure"
       - "traefik.http.services.vm-stream.loadbalancer.server.port=4033"
       # - "traefik.http.routers.vm-stream.tls=true"
