@@ -2,7 +2,7 @@ FROM python:3.9-slim AS builder
 
 WORKDIR /code
 
-RUN apt-get update && apt-get install -y build-essential && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y build-essential git && rm -rf /var/lib/apt/lists/*
 
 COPY ./seer/requirements.txt /code/requirements.txt
 
