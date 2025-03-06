@@ -7,14 +7,14 @@
  */
 
 import { useEffect } from 'react';
-import { Box, Flex, IconButton, Tooltip, useColorMode, useColorModeValue, useDisclosure } from '@chakra-ui/react';
+import { Box, Flex, IconButton, Tooltip } from '@chakra-ui/react';
 
 import { HiChip, HiPuzzle } from 'react-icons/hi';
 import { IoSparklesSharp } from 'react-icons/io5';
 import { MdApps, MdArrowBack, MdFolder, MdMap, MdPeople, MdScreenShare } from 'react-icons/md';
 
 import { SAGEColors } from '@sage3/shared';
-import { useUser, useUIStore, useHexColor } from '@sage3/frontend';
+import { useUser, useUIStore } from '@sage3/frontend';
 
 import { ContextButton } from './ContextButton';
 import { ScreenshareMenu } from './Menus/ScreenshareMenu';
