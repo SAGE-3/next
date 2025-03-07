@@ -49,7 +49,6 @@ import {
   useHexColor,
   useUser,
   useThrottleScale,
-  EditUserSettingsModal,
 } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 
@@ -316,8 +315,57 @@ export function UILayer(props: UILayerProps) {
         )}
       </HStack>
 
-      {/* Map Buttons Bottom Right */}
-      <Box position="absolute" right="2" bottom="2" zIndex={101} display={showUI ? 'flex' : 'none'} borderRadius="md">
+      {/* Tool bar at the bottom of the page in the middle */}
+      <Box
+        position="absolute"
+        left="50%"
+        bottom="2"
+        transform="translateX(-50%)"
+        zIndex={101}
+        display={showUI ? 'flex' : 'none'}
+        borderRadius="md"
+      >
+        <Box display="flex" gap="1">
+          <Tooltip label={'Back to Home'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
+            <Button onClick={handleHomeClick} aria-label={''} size="sm" p="0" colorScheme={usersColor} fontSize="lg">
+              <MdArrowBack />
+            </Button>
+          </Tooltip>
+          <Divider orientation="vertical" mx="1" />
+          <MainButton
+            buttonStyle="solid"
+            backToRoom={() => toHome(props.roomId)}
+            boardInfo={{
+              boardId: props.boardId,
+              roomId: props.roomId,
+              boardName: board ? board?.data.name : '',
+              roomName: room ? room?.data.name : '',
+            }}
+            config={config}
+          />
+          <Divider orientation="vertical" mx="1" />
+          <Interactionbar isContextMenuOpen={isContextMenuOpen} />
+          <Divider orientation="vertical" mx="1" />
+          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdPeople />} tooltip={'Users'} title={'Users'}>
+            <UsersMenu boardId={props.boardId} />
+          </ToolbarButton>
+          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdScreenShare />} tooltip={'Screenshares'} title={'Screenshares'}>
+            <ScreenshareMenu boardId={props.boardId} roomId={props.roomId} />
+          </ToolbarButton>
+          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdApps />} tooltip={'Applications'} title={'Applications'}>
+            {room && board && <ApplicationsMenu roomId={room?._id} boardId={board?._id} />}
+          </ToolbarButton>
+          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<HiPuzzle />} tooltip={'Plugins'} title={'Plugins'}>
+            {room && board && <PluginsMenu roomId={room?._id} boardId={board?._id} />}
+          </ToolbarButton>
+          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdFolder />} tooltip={'Assets'} title={'Assets'} offset={[8, 8]}>
+            {room && board && <AssetsMenu roomId={room?._id} boardId={board?._id} downloadRoomAssets={downloadRoomAssets} />}
+          </ToolbarButton>
+          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<HiChip />} tooltip={'Kernels'} title={'Kernels'}>
+            {room && board && <KernelsMenu roomId={room?._id} boardId={board?._id} />}
+          </ToolbarButton>
+        </Box>
+        <Divider orientation="vertical" mx="2" />
         <ButtonGroup isAttached size="xs" gap="0" mr="1">
           <Tooltip label={'Zoom In'}>
             <IconButton
@@ -367,62 +415,17 @@ export function UILayer(props: UILayerProps) {
         <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdMap />} tooltip={'Map'} title={'Map'} offset={[-97, 6]} stayActive>
           <NavigationMenu />
         </ToolbarButton>
-      </Box>
-
-      {/* Main Button Bottom Left */}
-      <Box position="absolute" left="2" bottom="2" zIndex={101} display={showUI ? 'flex' : 'none'} borderRadius="md">
-        <Box display="flex" gap="1">
-          <Tooltip label={'Back to Home'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
-            <Button onClick={handleHomeClick} aria-label={''} size="sm" p="0" colorScheme={usersColor} fontSize="lg">
-              <MdArrowBack />
-            </Button>
-          </Tooltip>
-          <Divider orientation="vertical" mx="1" />
-          <MainButton
-            buttonStyle="solid"
-            backToRoom={() => toHome(props.roomId)}
-            boardInfo={{
-              boardId: props.boardId,
-              roomId: props.roomId,
-              boardName: board ? board?.data.name : '',
-              roomName: room ? room?.data.name : '',
-            }}
-            config={config}
+        <Divider orientation="vertical" mx="2" />
+        <Tooltip label={'SAGE Intelligence'} placement={'top'} hasArrow={true} openDelay={400} shouldWrapChildren={true}>
+          <IconButton
+            colorScheme={'purple'}
+            size="sm"
+            icon={<IoSparklesSharp />}
+            fontSize="lg"
+            aria-label={`Open Alfred Menu`}
+            onClick={alfredOnOpen}
           />
-          <Divider orientation="vertical" mx="1" />
-          <Interactionbar isContextMenuOpen={isContextMenuOpen} />
-          <Divider orientation="vertical" mx="1" />
-          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdPeople />} tooltip={'Users'} title={'Users'}>
-            <UsersMenu boardId={props.boardId} />
-          </ToolbarButton>
-          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdScreenShare />} tooltip={'Screenshares'} title={'Screenshares'}>
-            <ScreenshareMenu boardId={props.boardId} roomId={props.roomId} />
-          </ToolbarButton>
-          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdApps />} tooltip={'Applications'} title={'Applications'}>
-            {room && board && <ApplicationsMenu roomId={room?._id} boardId={board?._id} />}
-          </ToolbarButton>
-          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<HiPuzzle />} tooltip={'Plugins'} title={'Plugins'}>
-            {room && board && <PluginsMenu roomId={room?._id} boardId={board?._id} />}
-          </ToolbarButton>
-          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdFolder />} tooltip={'Assets'} title={'Assets'} offset={[8, 8]}>
-            {room && board && <AssetsMenu roomId={room?._id} boardId={board?._id} downloadRoomAssets={downloadRoomAssets} />}
-          </ToolbarButton>
-          <ToolbarButton bgColor={usersColor as SAGEColors} icon={<HiChip />} tooltip={'Kernels'} title={'Kernels'}>
-            {room && board && <KernelsMenu roomId={room?._id} boardId={board?._id} />}
-          </ToolbarButton>
-          <Divider orientation="vertical" mx="1" />
-
-          <Tooltip label={'SAGE Intelligence'} placement={'top'} hasArrow={true} openDelay={400} shouldWrapChildren={true}>
-            <IconButton
-              colorScheme={'purple'}
-              size="sm"
-              icon={<IoSparklesSharp />}
-              fontSize="lg"
-              aria-label={`Open Alfred Menu`}
-              onClick={alfredOnOpen}
-            />
-          </Tooltip>
-        </Box>
+        </Tooltip>
       </Box>
 
       {/* Hub-Room-Board Name Top Left */}
