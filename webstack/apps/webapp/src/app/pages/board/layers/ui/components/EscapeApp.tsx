@@ -59,7 +59,7 @@ export function EscapeApp(props: EscapeAppProps) {
 
   return (
   <>
-    {selectedAppId && viewportInApp && 
+    {viewportInApp && 
     <>
       <Divider orientation="vertical" mx="1" />
       <Tooltip label={'Deselect App'} placement={'top'} hasArrow={true} openDelay={400}>
