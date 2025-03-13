@@ -16,6 +16,7 @@ import {
 import { IoMdExit } from 'react-icons/io';
 
 type EscapeAppProps = {};
+const APP_SPACE_BUFFER = 150;            
 
 export function EscapeApp(props: EscapeAppProps) {
   const apps = useThrottleApps(1000);
@@ -43,11 +44,10 @@ export function EscapeApp(props: EscapeAppProps) {
       const vy = viewport.position.y;
       const vw = viewport.size.width;
       const vh = viewport.size.height;
-      const buffer = 150;            
-      const isInside = vx >= x - buffer &&
-                      vx + vw <= x + w + buffer &&
-                      vy >= y - buffer &&
-                      vy + vh <= y + h + buffer;
+      const isInside = vx >= x - APP_SPACE_BUFFER &&
+                      vx + vw <= x + w + APP_SPACE_BUFFER &&
+                      vy >= y - APP_SPACE_BUFFER &&
+                      vy + vh <= y + h + APP_SPACE_BUFFER;
       
       if (isInside) {
         vpInApp = true;
