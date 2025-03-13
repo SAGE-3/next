@@ -217,7 +217,7 @@ export function AppToolbar(props: AppToolbarProps) {
       }
 
       // Default Toolbar Poistion. Middle of screen at bottom
-      const defaultPosition = screenLimit({ x: ww / 2 - twhalf, y: wh - toolbarHeight });
+      const defaultPosition = screenLimit({ x: ww / 2 - twhalf, y: wh - toolbarHeight - 50 });
 
       // App Bottom Position
       const appBottomPosition = screenLimit({ x: appXWin + aw / 2 - twhalf, y: appBYWin });
