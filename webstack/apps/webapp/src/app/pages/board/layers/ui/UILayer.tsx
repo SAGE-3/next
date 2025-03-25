@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2025. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -23,7 +23,19 @@ import {
 
 import { HiChip, HiPuzzle } from 'react-icons/hi';
 import { IoSparklesSharp } from 'react-icons/io5';
-import { MdAdd, MdApps, MdArrowBack, MdFolder, MdMap, MdPeople, MdRemove, MdRemoveRedEye, MdScreenShare } from 'react-icons/md';
+import {
+  MdAdd,
+  MdApps,
+  MdArrowBack,
+  MdArrowForward,
+  MdFolder,
+  MdHome,
+  MdMap,
+  MdPeople,
+  MdRemove,
+  MdRemoveRedEye,
+  MdScreenShare,
+} from 'react-icons/md';
 
 import { format as formatDate } from 'date-fns';
 import JSZip from 'jszip';
@@ -128,7 +140,7 @@ export function UILayer(props: UILayerProps) {
   const deleteApp = useAppStore((state) => state.delete);
 
   // Navigation
-  const { toHome, back } = useRouteNav();
+  const { toHome, back, forward, canGoBack, canGoForward } = useRouteNav();
 
   // Toast
   const toast = useToast();
@@ -280,8 +292,18 @@ export function UILayer(props: UILayerProps) {
       // Back to the homepage with the room id
       toHome(room._id);
     } else {
-      back();
+      toHome();
     }
+  }
+
+  // Redirect to your previous board
+  function handleBackClick() {
+    back();
+  }
+
+  // Redirect to your next board
+  function handleForwardClick() {
+    forward();
   }
 
   const handleOpenAlfred = () => {
@@ -326,11 +348,52 @@ export function UILayer(props: UILayerProps) {
         borderRadius="md"
       >
         <Box display="flex" gap="1">
-          <Tooltip label={'Back to Home'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
-            <Button onClick={handleHomeClick} aria-label={''} size="sm" p="0" colorScheme={usersColor} fontSize="lg">
-              <MdArrowBack />
-            </Button>
-          </Tooltip>
+          <ButtonGroup isAttached size="xs" gap="0" mr="1">
+            <Tooltip label={'Back'}>
+              <IconButton
+                size="sm"
+                icon={<MdArrowBack />}
+                fontSize="lg"
+                aria-label={'input-type'}
+                onClick={handleBackClick}
+                isDisabled={!canGoBack}
+                sx={{
+                  _dark: {
+                    bg: 'gray.600', // 'inherit' didnt seem to work
+                  },
+                }}
+              ></IconButton>
+            </Tooltip>
+            <Tooltip label={'Home'}>
+              <IconButton
+                size="sm"
+                icon={<MdHome />}
+                fontSize="lg"
+                aria-label={'input-type'}
+                onClick={handleHomeClick}
+                sx={{
+                  _dark: {
+                    bg: 'gray.600', // 'inherit' didnt seem to work
+                  },
+                }}
+              ></IconButton>
+            </Tooltip>
+            <Tooltip label={'Forward'}>
+              <IconButton
+                size="sm"
+                icon={<MdArrowForward />}
+                fontSize="lg"
+                aria-label={'input-type'}
+                onClick={handleForwardClick}
+                isDisabled={!canGoForward}
+                sx={{
+                  _dark: {
+                    bg: 'gray.600', // 'inherit' didnt seem to work
+                  },
+                }}
+              ></IconButton>
+            </Tooltip>
+          </ButtonGroup>
           <Divider orientation="vertical" mx="1" />
           <MainButton
             buttonStyle="solid"
