@@ -7,6 +7,8 @@ from .utils import Utils
 from .chart_info import *
 from collections import Counter
 import datetime
+import dateutil.parser
+
 
 class LLM:
     def __init__(self, client, llm_profile, samples_path=None, context_path=None, iterations=1, iter_self_reflection=0):
@@ -313,11 +315,11 @@ Take a deep breath, think it through, assume you are the user and imagine their 
 
         system = """# Task
 Given user prompt extract all plausible attributes.  Attributes are more than likely associated with the column names on tabular data.  
-Pick a single attribute that is most relevant to the user's prompt.
+Pick as many attributes as necessary to answer the user's question
 
 # Action
 Take a deep breath, think it through, assume you are the user and imagine their intent, write your reasoning.
-Then provide your answer at the end in this format ["Answer 1"]."""
+Then provide your answer at the end in this format ["Answer 1", "Answer 2", "Answer 3"]."""
 
         return self.__base_prompt_with_self_reflection__(user_prompt, system,
             messages=self.__message_builder__(system, user_prompt, csv_headers=attributes),
@@ -410,14 +412,15 @@ Take a deep breath, think it through, assume you are the user and imagine their 
     #        Station 0605, PowerlineTrail is located on latitude: 22.113562 and longitude -159.438786
 
     def prompt_select_stations(self, user_prompt, station_list):
+        #         The maximum number of stations that you are able to select is 5.
+        # DO NOT select more than 5 stations at a time.
         system = f""" You are tasked to select station IDs that fit the user's criteria.
         These stations will be used to answer the user's query on visualizing Hawaii's climate data.
         
         Here are a list of stations:
         {station_list}
         
-        The maximum number of stations that you are able to select is 5.
-        DO NOT select more than 5 stations at a time.
+
         Be very consice with your answers. 
         Do not pick more stations than is necessary. 
         If the user picks a certain island, only choose stations on that island. 
@@ -429,33 +432,25 @@ Take a deep breath, think it through, assume you are the user and imagine their 
         """
         return self.__base_prompt_with_self_reflection__(user_prompt, system,
             messages=self.__message_builder__(system, user_prompt),  filter_method=self.__results_filter__)
+
+    
         
-    def prompt_select_dates(self, user_prompt):
+    def prompt_select_dates(self, user_prompt, current_time):
+        dt = dateutil.parser.parse(current_time)
+
+        # Format it in a readable way
+        readable_format = dt.strftime("%B %d, %Y")
+        print(readable_format)
         system = """ You are a date expert selector.
         You will be given a query from a user and you will select the appropriate dates to filter the data by. 
-        The dataset only has data since 2024-01-01T00:00:00.000000Z, so picking dates past this will not work.
-        
-        Here are some examples of what a user might say and how you will respond. 
-        
-        Query: Can you show me rainfall for the prior week?
-        Answer: {"startDate": "2024-03-25T00:00:00.000000Z", "endDate": "2024-04-01T00:00:00.000000Z"}
-        
-        Query: what is the temperature for January?
-        Answer: {"startDate": "2024-01-01T00:00:00.000000Z", "endDate": "2024-02-01T00:00:00.000000Z"}
-        
-        Query: Does rainfall and soil temperature have a correlation?
-        Answer: {"startDate": "2024-01-01T00:00:00.000000Z", "endDate": "2024-06-01T00:00:00.000000Z"}
-        
-        If the user does not explicitly say which stations to choose from, you may select all of the stations
-        (EX: ["0502", "0501", "0521"])
+        Todays date is currently {readable_format}
+        Use the same date format that I've provided to you "Month Day, Year".
 
         Take a deep breath. Think it through. Imagine you are the user and imagine their intent. 
-        You are only strictly to answer in the format {"startDate": "2024-01-01T00:00:00.000000Z", "endDate": "2024-07-01T00:00:00.000000Z"}
-        If you are unsure, just pick the entire dataset. EX: {"startDate": "2024-01-01T00:00:00.000000Z", "endDate": "today's date"}
+        You are only strictly to answer in the format {"start_date": str, "end_date": str}
         
 
         """
-        system += f"        For extra context, todays date is {datetime.datetime.now()}"
         return self.__base_prompt_with_self_reflection__(user_prompt, system,
             messages=self.__message_builder__(system, user_prompt), filter_method=self.__results_filter_dates__)
         

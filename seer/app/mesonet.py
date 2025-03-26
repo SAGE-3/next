@@ -26,7 +26,7 @@ import json
 
 # AI
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate, MessagesPlaceholder
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
@@ -62,12 +62,11 @@ from langgraph.graph import StateGraph
 from langgraph.graph import END
 from typing import TypedDict, Annotated, Sequence
 import operator
-import openai
+import openai as openai_client
 
-client = openai.OpenAI(
-    base_url = "https://api.openai.com/v1",
-    api_key  = ""
-)
+from datetime import datetime
+import asyncio
+
 
 # Define the State for LangGraph
 class GraphState(TypedDict):
@@ -88,6 +87,35 @@ class GraphState(TypedDict):
     attributes_extracted: List[str]
     stations_extracted: List[str]
     chart_type_extracted: str
+    attribute_reasoning: str
+    station_reasoning: str
+    station_data: str
+    summary: str
+    measurements: str
+    date_extracted: str
+    date_reasoning: str
+    start_date = str
+    end_date = str
+
+def convert_to_iso(date_dict):
+    """
+    Convert start_date and end_date to ISO 8601 format.
+    
+    Args:
+        date_dict (dict): Dictionary containing 'start_date' and 'end_date' as strings in YYYY-MM-DD format.
+
+    Returns:
+        dict: Dictionary with ISO 8601 formatted dates.
+    """
+    iso_dates = {}
+    
+    for key, date_str in date_dict.items():
+        try:
+            iso_dates[key] = datetime.strptime(date_str, "%Y-%m-%d").isoformat() + "Z"
+        except ValueError:
+            iso_dates[key] = None  # Handle invalid dates gracefully
+
+    return iso_dates
 
 class MesonetAgent:
     def __init__(
@@ -123,6 +151,33 @@ class MesonetAgent:
                 # max_tokens=1000,
                 streaming=False,
             )
+        
+        # Templates
+        sys_template_str = """Today is {date}. 
+        You are a helpful and succinct assistant, providing informative answers to {username} (whose location is {location}). 
+        You are a date expert selector.
+        You are tasked to select a start date and end date according to the user's query. 
+        Take a deep breath. Think it through. Imagine you are the user and imagine their intent. 
+        You are only strictly to answer in the format {{"start_date": str, "end_date": str}}"""
+        human_template_str = "Answer: {question}"
+        
+        # For OpenAI / Message API compatible models
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", sys_template_str),
+                MessagesPlaceholder("history"),
+                ("user", human_template_str),
+            ]
+        )
+        
+        # OutputParser that parses LLMResult into the top likely string.
+        # Create a new model by parsing and validating input data from keyword arguments.
+        # Raises ValidationError if the input data cannot be parsed to form a valid model.
+        output_parser = StrOutputParser()
+        
+        if self.llm_llama:
+            self.session_llama = prompt | self.llm_llama | output_parser
+
         # Create the ChromaDB client
         chromaServer = "127.0.0.1"
         chromaPort = 8100
@@ -176,11 +231,11 @@ class MesonetAgent:
 
         def initialize_llms(state: GraphState):
             return {
-                "llm_re": LLM(client, {"model": "gpt-4o-2024-05-13", "temperature": 1}),
-                "llm_base": LLM(client, {"model": "gpt-4o-2024-05-13","temperature": 0}),
-                "llm_transform": LLM(client, {"model": "gpt-4o-2024-05-13", "temperature": 0}),
-                "llm_station": LLM(client, {"model": "gpt-4o-2024-05-13", "temperature": 0}),
-                "llm": LLM(client, {"model": "gpt-4o-2024-05-13", "temperature": 0})
+                "llm_re": LLM(self.client, {"model": "gpt-4o", "temperature": 1}),
+                "llm_base": LLM(self.client, {"model": "gpt-4o","temperature": 0}),
+                "llm_transform": LLM(self.client, {"model": "gpt-4o", "temperature": 0}),
+                "llm_station": LLM(self.client, {"model": "gpt-4o", "temperature": 0}),
+                "llm": LLM(self.client, {"model": "gpt-4o", "temperature": 0})
             }
         
         def get_all_stations(state: GraphState):
@@ -191,7 +246,7 @@ class MesonetAgent:
             user_prompt = state["request"].q
             stations_extracted, station_reasoning = state["llm_re"].prompt_select_stations(user_prompt, state["stations"]) #TODO add data_statistics to the prompt
             print(stations_extracted)
-            return {"stations_extracted": stations_extracted}
+            return {"stations_extracted": stations_extracted, "station_reasoning": station_reasoning}
         
         def get_station_attributes(state: GraphState):
             # Get attributes for each station in stations_extracted
@@ -226,13 +281,23 @@ class MesonetAgent:
             user_prompt = state["request"].q
             attributes_extracted, attribute_reasoning = state["llm_re"].prompt_select_attributes(user_prompt, state["attributes_extracted"])
             print(attributes_extracted)
-            return {"attributes_extracted": attributes_extracted}
+            return {"attributes_extracted": attributes_extracted, "attribute_reasoning": attribute_reasoning}
 
         def extract_chart_type(state: GraphState):
             user_prompt = state["request"].q
             chart_type_extracted, chart_type_reasoning = state["llm_re"].prompt_charts_via_chart_info(user_prompt, state["attributes_extracted"])
             print(chart_type_extracted)
-            return {"chart_type_extracted": chart_type_extracted}
+            return {"chart_type_extracted": chart_type_extracted, "chart_type_reasoning": chart_type_reasoning}
+
+
+        def get_answer_with_reasoning(state: GraphState):
+            url = f"https://api.hcdp.ikewai.org/mesonet/db/measurements?station_ids={','.join(state['stations_extracted'])}&var_ids={','.join(state['attributes_extracted'])}&limit=100"
+            print(url)
+            res = requests.get(url, headers={"Authorization": f"Bearer {token}"})
+            summary, summary_reasoning = state["llm_re"].prompt_summarize_reasoning(state["request"].q, state["attribute_reasoning"], state["station_reasoning"], res.text)
+            print(summary)
+            return {"measurements": res.text, "summary": summary}
+
 
         # # Define nodes
         # def load_data(state: GraphState):
@@ -258,6 +323,8 @@ class MesonetAgent:
         workflow.add_node("get_station_attributes", get_station_attributes)
         workflow.add_node("extract_attributes", extract_attributes)
         workflow.add_node("extract_chart_type", extract_chart_type)
+        # workflow.add_node("extract_date", extract_date)
+        workflow.add_node("get_answer_with_reasoning", get_answer_with_reasoning)
         # workflow.add_node("load_data", load_data)
         # workflow.add_node("process_prompt", process_prompt)
 
@@ -267,7 +334,9 @@ class MesonetAgent:
         workflow.add_edge("extract_stations", "get_station_attributes")
         workflow.add_edge("get_station_attributes", "extract_attributes")
         workflow.add_edge("extract_attributes", "extract_chart_type")
-        workflow.add_edge("extract_chart_type", END)
+        workflow.add_edge("extract_chart_type", "get_answer_with_reasoning")
+        # workflow.add_edge("extract_date", "get_answer_with_reasoning")
+        workflow.add_edge("get_answer_with_reasoning", END)
         # workflow.add_edge("load_data", "process_prompt")
         # workflow.add_edge("process_prompt", END)
 
@@ -276,9 +345,22 @@ class MesonetAgent:
 
         # Compile the graph
         app = workflow.compile()
-
+        print(qq)
+        
+        response = await self.session_llama.ainvoke(  # Make sure self.session_llama is available in state
+                    {
+                        "history": [("human", ""), ("ai", "")],
+                        "question": qq.q,
+                        "username": "RJ",
+                        "location": "Honolulu",
+                        "date": qq.currentTime,
+                    }
+                )
+        response = json.loads(response)
+        print(response,"---------")
         # Execute the graph
-        initial_state = GraphState(request=qq)
+        initial_state = GraphState(request=qq, start_date=response['start_date'], end_date=response['end_date'])
+        print(initial_state,"*****")
         final_state = app.invoke(initial_state)
 
         # Process final state and return response
@@ -328,6 +410,7 @@ class MesonetAgent:
             attributes=final_state.get("attributes_extracted", []),  # Get extracted attributes from final state
             stations=final_state.get("stations_extracted", []),  # Get extracted stations from final state
             chart_type=final_state.get("chart_type_extracted", []),  # Get extracted chart type from final state
+            summary=final_state.get("summary", ""),
             success=True,
             actions=[action1]
         )

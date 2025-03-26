@@ -81,6 +81,7 @@ export type MesonetRequest = {
   user: string;
   q: string;
   url: string;
+  currentTime: string;
 };
 export type MesonetResponse = {
   attributes: string[];

@@ -10,6 +10,7 @@ import type { EChartsOption } from 'echarts';
 
 import variableUnits from '../SensorOverview/data/variableUnits';
 import { useColorModeValue } from '@chakra-ui/react';
+import { variable_dict } from '../SensorOverview/data/variableConversion';
 
 //Types
 type filterType = {
@@ -71,7 +72,8 @@ export const ChartManager = (
   startDate: string,
   stationMetadata: StationData,
   timePeriod: string,
-  size: { width: number; height: number; depth: number }
+  size: { width: number; height: number; depth: number },
+  variable_dict: {standard_name: string, units: string | null, units_short: string | null, display_name: string}[]
 ): EChartsOption => {
   let options: EChartsOption = {};
   const stationReadableNames = ["TODO"," FIXME"];
@@ -179,18 +181,21 @@ const createXAxis = (
 };
 
 const createYAxis = (options: EChartsOption, yAxisAttributes: string[]) => {
-  let units = '';
-  let variableName = yAxisAttributes[0].split('_')[0]; // Clean up variable name
-  
-  for (let i = 0; i < variableUnits.length; i++) {
-    if (variableName.includes(variableUnits[i].variable)) {
-      units = variableUnits[i].unit;
+  let units: string | null = '';
+  let variableName: string | null = '';
+  console.log(variable_dict, yAxisAttributes)
+  for(let i = 0; i < variable_dict.length; i++) {
+    if(variable_dict[i].standard_name == yAxisAttributes[0]) {
+      variableName = variable_dict[i].display_name
+      units = variable_dict[i].units
+      console.log(variable_dict[i])
       break;
     }
   }
 
+
   options.yAxis = {
-    name: `${variableName} (${units})`,
+    name: `${variableName} ${units === null ? "" : `(${units})`}`,
     nameTextStyle: {
       fontSize: 40,
       fontWeight: 'bold',
@@ -353,8 +358,12 @@ function createTitle(
   for (const [stationId, measurements] of Object.entries(data)) {
     if (Array.isArray(measurements) && measurements.length > 0) {
       // Clean up variable name (remove _Min, _Max, _Avg suffix)
-      variableName = measurements[0].variable.split('_')[0];
       break;
+    }
+  }
+  for(let i = 0; i < variable_dict.length; i++) {
+    if(variable_dict[i].standard_name == yAxisAttributes[0]) {
+      variableName = variable_dict[i].display_name
     }
   }
 

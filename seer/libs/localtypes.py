@@ -67,7 +67,7 @@ class MesonetQuery(BaseModel):
     user: str  # user name
     q: str  # question
     url: str
-
+    currentTime: str
 
 class MesonetAnswer(BaseModel):
     attributes: List[str]

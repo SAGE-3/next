@@ -533,6 +533,8 @@ function AppComponent(props: App): JSX.Element {
         const url = apps[0].data.state.url;
         if (roomId && boardId) {
           const now = await serverTime();
+          const isoNow = new Date();
+          const isoString = isoNow.toISOString();
           const initialAnswer = {
             id: genId(),
             userId: user._id,
@@ -555,6 +557,7 @@ function AppComponent(props: App): JSX.Element {
             q: prompt,
             url: url,
             user: username,
+            currentTime: isoString
           };
           setProcessing(true);
           setActions([]);

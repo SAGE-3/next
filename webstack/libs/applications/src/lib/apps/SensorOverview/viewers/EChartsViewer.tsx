@@ -13,6 +13,7 @@ import { Box, Spinner, useColorMode, Text } from '@chakra-ui/react';
 import * as echarts from 'echarts';
 
 import { ChartManager } from '../../EChartsViewer/ChartManager';
+import {variable_dict} from '../data/variableConversion'
 
 import '../styling.css';
 
@@ -82,7 +83,8 @@ const EChartsViewer = (props: {
         props.startDate,
         props.stationMetadata,
         props.widget.timePeriod,
-        props.size
+        props.size,
+        variable_dict
       );
       console.log(options)
       setChartOptions(options);
