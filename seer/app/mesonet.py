@@ -67,7 +67,6 @@ import openai as openai_client
 from datetime import datetime
 import asyncio
 
-
 # Define the State for LangGraph
 class GraphState(TypedDict):
     """

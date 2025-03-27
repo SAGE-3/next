@@ -163,6 +163,8 @@ async def mesonet(qq: MesonetQuery):
     print("Received mesonet ")
     try:
         # do the work
+        # BDD Main function that processes queries
+        # qq - data structure that is passed
         val = await mesonetAG.process(qq)
         # val = await asyncio.wait_for(processAG.process(qq), timeout=30)
         return val
