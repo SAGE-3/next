@@ -7,7 +7,7 @@
  */
 
 import { useEffect } from 'react';
-import { Box, Flex, IconButton, Tooltip, useDisclosure } from '@chakra-ui/react';
+import { Box, Flex, IconButton, Tooltip } from '@chakra-ui/react';
 
 import { HiChip, HiPuzzle } from 'react-icons/hi';
 import { IoSparklesSharp } from 'react-icons/io5';
@@ -111,7 +111,13 @@ export function BoardContextMenu(props: BoardContextProps) {
                 variant="solid"
                 colorScheme={'gray'}
                 size="xs"
+                fontSize="md"
                 icon={<MdArrowBack />}
+                sx={{
+                  _dark: {
+                    bg: 'gray.600', // 'inherit' didnt seem to work
+                  },
+                }}
                 onClick={() => props.backHomeClick()}
               />
             </Tooltip>

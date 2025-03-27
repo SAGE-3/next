@@ -60,15 +60,15 @@ export function OpenDesktopPage() {
     // Auto Join Room
     joinRoomMembership(roomId);
     toast({
-      title: 'Joining Board and Room',
+      title: 'Joining Room and Board',
       description: (
         <>
-          <p>Entering Board: {board?.data.name}</p>
-          <p>Joining Room Membership: {room?.data.name}</p>
+          <p>Entering Room: {board?.data.name}</p>
+          <p>Entering Board: {room?.data.name}</p>
         </>
       ),
       status: 'info',
-      duration: 5000,
+      duration: null,
       isClosable: true,
     });
     toBoard(roomId, boardId);

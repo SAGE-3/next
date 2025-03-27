@@ -92,6 +92,8 @@ import { AI_ENABLED_APPS, Applications } from '@sage3/applications/apps';
 import { Position, Size } from '@sage3/shared/types';
 import ky from 'ky';
 
+const UI_BAR_OFFSET = 50
+
 type AppToolbarProps = {
   boardId: string;
   roomId: string;
@@ -217,7 +219,7 @@ export function AppToolbar(props: AppToolbarProps) {
       }
 
       // Default Toolbar Poistion. Middle of screen at bottom
-      const defaultPosition = screenLimit({ x: ww / 2 - twhalf, y: wh - toolbarHeight });
+      const defaultPosition = screenLimit({ x: ww / 2 - twhalf, y: wh - toolbarHeight - UI_BAR_OFFSET });
 
       // App Bottom Position
       const appBottomPosition = screenLimit({ x: appXWin + aw / 2 - twhalf, y: appBYWin });
@@ -236,7 +238,7 @@ export function AppToolbar(props: AppToolbarProps) {
         setAppToolbarPosition(defaultPosition);
       }
       // App is close to bottom of the screen
-      else if (appBYWin + toolbarHeight > wh) {
+      else if (appBYWin + toolbarHeight + UI_BAR_OFFSET > wh) {
         setPosition(appTopPosition);
         setAppToolbarPosition(appTopPosition);
       } else {
