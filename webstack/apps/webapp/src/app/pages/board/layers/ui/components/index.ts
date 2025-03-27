@@ -16,5 +16,3 @@ export * from './TagsDisplay';
 export * from './Interactionbar';
 export * from './InteractionbarShortcuts';
 export * from './Menus';
-export * from './MainButton';
-export * from './EscapeApp';

@@ -25,6 +25,7 @@ import {
   Tooltip,
   MenuGroup,
   Text,
+  Flex,
 } from '@chakra-ui/react';
 
 import {
@@ -39,14 +40,11 @@ import {
   MdLock,
   MdLockOpen,
   MdBugReport,
-  MdSearch,
-  MdRemoveRedEye,
   MdHelpOutline,
   MdPerson,
   MdSettings,
 } from 'react-icons/md';
 import { BiChevronDown, BiChevronUp } from 'react-icons/bi';
-import { IoSparklesSharp } from 'react-icons/io5';
 import { RxGrid } from 'react-icons/rx';
 
 import {
@@ -67,6 +65,7 @@ import {
   Alfred,
   truncateWithEllipsis,
   EditUserSettingsModal,
+  PartyIcon,
 } from '@sage3/frontend';
 
 import { Board, OpenConfiguration } from '@sage3/shared/types';
@@ -223,56 +222,62 @@ export function MainButton(props: MainButtonProps) {
 
       <Menu preventOverflow={false} placement="top-start" onOpen={() => setMenuOpen(true)} onClose={() => setMenuOpen(false)}>
         {props.boardInfo ? (
-          <Tooltip label="Main Menu" aria-label="menu" placement="top" hasArrow={true} openDelay={400}>
-            <MenuButton
-              as={Button}
-              size="sm"
-              maxWidth="150px"
-              variant={props.buttonStyle ? props.buttonStyle : 'outline'}
-              colorScheme={user?.data.color ? user.data.color : 'white'}
-              p={2}
-            >
-              <Box
-                textOverflow={'ellipsis'}
-                overflow={'hidden'}
-                fontSize="sm"
-                alignContent={'center'}
-                display="flex"
-                alignItems={'center'}
-                gap="1"
+          <Flex gap="2">
+            <Tooltip label="Main Menu" aria-label="menu" placement="top" hasArrow={true} openDelay={400}>
+              <MenuButton
+                as={Button}
+                size="sm"
+                maxWidth="150px"
+                variant={props.buttonStyle ? props.buttonStyle : 'outline'}
+                colorScheme={user?.data.color ? user.data.color : 'white'}
+                p={2}
               >
-                {isWall ? <RxGrid /> : <MdPerson />}
+                <Box
+                  textOverflow={'ellipsis'}
+                  overflow={'hidden'}
+                  fontSize="sm"
+                  alignContent={'center'}
+                  display="flex"
+                  alignItems={'center'}
+                  gap="1"
+                >
+                  {isWall ? <RxGrid /> : <MdPerson />}
 
-                {shortName}
+                  {shortName}
+                </Box>
+              </MenuButton>
+            </Tooltip>
+            <PartyIcon iconSize="sm" colorScheme={user!.data.color} />
+          </Flex>
+        ) : (
+          <Flex gap="2">
+            <MenuButton
+              marginTop="auto"
+              display="flex"
+              as={Box}
+              backgroundColor={userColor}
+              height="40px"
+              alignItems={'center'}
+              justifyContent={'left'}
+              borderRadius="10"
+              width="100%"
+              transition={'all 0.5s'}
+              _hover={{ cursor: 'pointer' }}
+            >
+              <Box display="flex" justifyContent={'space-between'} alignItems={'center'}>
+                <Box display="flex" pl="4" gap="1" alignItems={'center'}>
+                  {isWall ? <RxGrid /> : <MdPerson />}
+                  <Text fontSize="md" fontWeight={'bold'} whiteSpace={'nowrap'} textOverflow={'clip'}>
+                    {longName}
+                  </Text>
+                </Box>
+                <Box pr="3" fontSize="3xl">
+                  {menuOpen ? <BiChevronUp /> : <BiChevronDown />}
+                </Box>
               </Box>
             </MenuButton>
-          </Tooltip>
-        ) : (
-          <MenuButton
-            marginTop="auto"
-            display="flex"
-            as={Box}
-            backgroundColor={userColor}
-            height="40px"
-            alignItems={'center'}
-            justifyContent={'left'}
-            borderRadius="10"
-            width="100%"
-            transition={'all 0.5s'}
-            _hover={{ cursor: 'pointer' }}
-          >
-            <Box display="flex" justifyContent={'space-between'} alignItems={'center'}>
-              <Box display="flex" pl="4" gap="1" alignItems={'center'}>
-                {isWall ? <RxGrid /> : <MdPerson />}
-                <Text fontSize="md" fontWeight={'bold'} whiteSpace={'nowrap'} textOverflow={'clip'}>
-                  {longName}
-                </Text>
-              </Box>
-              <Box pr="3" fontSize="3xl">
-                {menuOpen ? <BiChevronUp /> : <BiChevronDown />}
-              </Box>
-            </Box>
-          </MenuButton>
+            <PartyIcon colorScheme={user!.data.color} />
+          </Flex>
         )}
 
         <MenuList

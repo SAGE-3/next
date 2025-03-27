@@ -61,6 +61,7 @@ import {
   useHexColor,
   useUser,
   useThrottleScale,
+  MainButton,
 } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 
@@ -82,8 +83,6 @@ import {
   PluginsMenu,
   UsersMenu,
   AssetsMenu,
-  MainButton,
-  EscapeApp,
 } from './components';
 
 type UILayerProps = {
