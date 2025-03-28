@@ -27,4 +27,4 @@ COPY ./seer/app /code/app
 COPY ./seer/libs/ /code/libs
 COPY ./seer/main.py /code
 
-CMD ["fastapi", "run", "main.py", "--proxy-headers", "--port", "9999", "--workers", "4"]
+CMD ["uvicorn", "main:app", "--proxy-headers", "--port", "9999", "--workers", "4"]
