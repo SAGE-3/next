@@ -247,7 +247,7 @@ export function MainButton(props: MainButtonProps) {
                 </Box>
               </MenuButton>
             </Tooltip>
-            <PartyIcon iconSize="sm" colorScheme={user!.data.color} />
+            <PartyIcon iconSize="sm" />
           </Flex>
         ) : (
           <Flex gap="2">
@@ -276,7 +276,7 @@ export function MainButton(props: MainButtonProps) {
                 </Box>
               </Box>
             </MenuButton>
-            <PartyIcon colorScheme={user!.data.color} />
+            <PartyIcon />
           </Flex>
         )}
 
