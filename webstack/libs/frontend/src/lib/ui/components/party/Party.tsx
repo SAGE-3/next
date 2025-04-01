@@ -23,28 +23,106 @@ import { WebsocketProvider } from 'y-websocket';
 import { create } from 'zustand';
 import { useUser, useUsersStore } from '@sage3/frontend';
 import { Awareness } from 'y-protocols/awareness';
-import { MdGroup } from 'react-icons/md';
+import { MdExitToApp, MdGroup } from 'react-icons/md';
+import { genId } from '@sage3/shared';
+import { User } from '@sage3/shared/types';
 
 // Party type definition
 type Party = {
   ownerId: string;
-  name: string;
+};
+
+type PartyMember = {
+  userId: string;
+  party: string | null;
 };
 
 type PartyStore = {
   parties: Party[];
   currentParty: Party | null;
+  partyMembers: PartyMember[];
+  yDoc: Y.Doc | null;
+  provider: WebsocketProvider | null;
+  awareness: Awareness | null;
+  initAwareness: (user: User) => void;
   setParties: (parties: Party[]) => void;
   setCurrentParty: (party: Party | null) => void;
+  joinParty: (party: Party) => void;
+  leaveParty: () => void;
+  createParty: () => void;
 };
 
-// Zustand store for managing party state with type annotations
-const usePartyStore = create<PartyStore>((set) => ({
-  parties: [],
-  currentParty: null,
-  setParties: (parties: Party[]) => set({ parties }),
-  setCurrentParty: (party: Party | null) => set({ currentParty: party }),
-}));
+let USER: User | null = null;
+
+const usePartyStore = create<PartyStore>((set, get) => {
+  function initAwareness(user: User) {
+    const { provider } = get();
+    if (provider) {
+      // If the provider is already initialized we need to do nothing
+    }
+    USER = user;
+    const yDoc = new Y.Doc();
+    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const url = `${protocol}://${window.location.host}/yjs`;
+    const p = new WebsocketProvider(url, 'partyHub', yDoc);
+    const awareness = p.awareness;
+
+    p.on('sync', () => {
+      set({ parties: Array.from(yDoc.getMap<Party>('parties').values()) });
+      yDoc.getMap<Party>('parties').observe(() => {
+        set({ parties: Array.from(yDoc.getMap<Party>('parties').values()) });
+      });
+      set({ provider: p, yDoc, awareness });
+    });
+
+    awareness.on('change', () => {
+      const userData = Array.from(awareness.getStates().values());
+      const usersMaped = userData.map((el) => {
+        const user = el as PartyMember;
+        return user;
+      });
+      set({ partyMembers: usersMaped });
+    });
+
+    awareness.setLocalState({ userId: user._id, party: null });
+  }
+
+  return {
+    parties: [],
+    currentParty: null,
+    partyMembers: [],
+    yDoc: null,
+    provider: null,
+    awareness: null,
+    initAwareness,
+    setParties: (parties) => set({ parties }),
+    setCurrentParty: (party) => {
+      if (party) {
+        const { awareness } = get();
+        if (!awareness) return;
+        awareness.setLocalState({ userId: USER!._id, party: party.ownerId });
+        console.log('Updated local state:', awareness.getLocalState());
+      }
+      set({ currentParty: party });
+    },
+
+    joinParty: (party) => get().setCurrentParty(party),
+    leaveParty: () => {
+      const { awareness } = get();
+      if (!awareness) return;
+      awareness.setLocalState({ userId: USER!._id, party: null });
+      set({ currentParty: null });
+    },
+    createParty: () => {
+      const { provider, setCurrentParty } = get();
+      const party: Party = { ownerId: USER!._id };
+      provider?.doc.getMap('parties').set(party.ownerId, party);
+      setCurrentParty(party);
+    },
+  };
+});
+
+export default usePartyStore;
 
 interface PartyIconProps {
   iconSize?: 'xs' | 'sm' | 'md';
@@ -52,18 +130,20 @@ interface PartyIconProps {
 
 export function PartyIcon(props: PartyIconProps): JSX.Element {
   const iconSize = props.iconSize || 'md';
+  const { currentParty, partyMembers } = usePartyStore();
+  const count = partyMembers.filter((member) => member.party === currentParty?.ownerId).length;
   return (
     <Popover>
       <PopoverTrigger>
         <Button size={iconSize} colorScheme={'teal'} leftIcon={<MdGroup />}>
-          Party
+          Party - {count}
         </Button>
       </PopoverTrigger>
       <PopoverContent width="500px" height="500px">
         <PopoverArrow />
         <PopoverCloseButton />
         <PopoverHeader>Party</PopoverHeader>
-        <PopoverBody>
+        <PopoverBody height="100%">
           <Party />
         </PopoverBody>
       </PopoverContent>
@@ -71,171 +151,121 @@ export function PartyIcon(props: PartyIconProps): JSX.Element {
   );
 }
 
-// Party Component
-export function Party() {
-  const [yDoc] = useState(new Y.Doc());
-  const [provider, setProvider] = useState<WebsocketProvider | null>(null);
+export function Party(): JSX.Element {
   const { currentParty } = usePartyStore();
-
-  useEffect(() => {
-    // Check if the protocol is https or http
-    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    // Create the url to connect to the Yjs server
-    const url = `${protocol}://${window.location.host}/yjs`;
-    const newProvider = new WebsocketProvider(url, 'partyHub', yDoc);
-    setProvider(newProvider);
-    return () => newProvider.destroy();
-  }, [yDoc]);
-
-  if (!currentParty) {
-    return <PartyHub provider={provider} />;
-  }
-  return <PartyInstance provider={provider} />;
-}
-
-// PartyHub Component
-export function PartyHub({ provider }: { provider: WebsocketProvider | null }) {
-  const { parties, setParties, setCurrentParty } = usePartyStore();
-  const [searchTerm, setSearchTerm] = useState('');
   const { user } = useUser();
 
+  const { initAwareness } = usePartyStore();
+  useEffect(() => {
+    if (user) {
+      initAwareness(user);
+    }
+  }, [user, initAwareness]);
+
+  if (!currentParty) {
+    return <PartyHub />;
+  }
+  return <PartyInstance />;
+}
+
+export function PartyHub(): JSX.Element {
+  const { parties, partyMembers, setCurrentParty, createParty } = usePartyStore();
   const { users } = useUsersStore();
 
-  useEffect(() => {
-    if (provider) {
-      const awareness = new Awareness(provider.doc);
-      const partiesMap = provider.doc.getMap<Party>('parties');
-
-      awareness.setLocalState({ userId: user!._id, party: null });
-
-      partiesMap.observe(() => {
-        setParties(Array.from(partiesMap.values()));
-      });
-    }
-  }, [provider, setParties, user!._id]);
-
-  const createParty = () => {
-    const partyName = prompt('Enter party name:');
-    if (partyName) {
-      const party: Party = { name: partyName, ownerId: user!._id };
-      provider?.doc.getMap('parties').set(user!._id, party);
-      setCurrentParty(party);
-    }
-  };
-
-  const joinParty = (party: Party) => {
-    setCurrentParty(party);
-  };
-
-  // Filter the parties and sort by name
-  const filteredParties = parties.filter((party) => party.name.includes(searchTerm)).sort((a, b) => a.name.localeCompare(b.name));
+  // List of all current parties
+  const partyList = partyMembers
+    .map((member) => {
+      return member.party ? member.party : null;
+    })
+    .filter((party) => party !== null);
+  const uniqueParties = Array.from(new Set(partyList));
+  const availableParties = parties.filter((party) => {
+    return uniqueParties.includes(party.ownerId);
+  });
 
   return (
-    <Flex direction="column" height="100%" overflow="hidden">
-      {/* VStack for filtered parties */}
-      <VStack
-        spacing={4}
-        align="stretch"
-        flex="1"
-        overflowY="auto" // Enable scrolling
-      >
-        {filteredParties.map((party) => {
-          const owner = users.find((el) => el._id === party.ownerId);
-          const ownerName = owner ? owner.data.name : 'Unknown';
-          const email = owner ? owner.data.email : 'Unknown';
-          return (
-            <HStack key={party.name} justify="space-between">
-              <VStack align="start" gap="0">
-                <Text fontSize="sm" fontWeight="bold">
-                  {ownerName}
-                </Text>
-                <Text fontSize="xs">{email}</Text>
-              </VStack>
-              <Button size="sm" onClick={() => joinParty(party)} colorScheme="teal">
-                Join
-              </Button>
-            </HStack>
-          );
-        })}
-      </VStack>
-
-      {/* HStack for the input and button fixed to the bottom */}
-      <Box position="absolute" bottom="0" mb={2} width="100%">
-        <Divider />
+    <Flex direction="column" height="90%">
+      <Text fontSize="lg" mb="4">
+        Available Parties
+      </Text>
+      <Flex direction="column" gap={4} align="stretch" flex={1} overflowY="auto">
+        <Flex direction={'column'} gap={4} align="stretch" flex={1} overflowY="scroll" pr="2">
+          {availableParties.map((party) => {
+            const owner = users.find((el) => el._id === party.ownerId);
+            const ownerName = owner ? owner.data.name : 'Unknown';
+            const email = owner ? owner.data.email : 'Unknown';
+            const count = partyMembers.filter((member) => member.party === party?.ownerId).length;
+            return (
+              <HStack key={party.ownerId} justify="space-between">
+                <HStack>
+                  <Text fontSize="xl"> {count}</Text>
+                  <VStack align="start" gap="0">
+                    <Text fontSize="sm" fontWeight="bold">
+                      {ownerName}
+                    </Text>
+                    <Text fontSize="xs">{email}</Text>
+                  </VStack>
+                </HStack>
+                <Button size="sm" onClick={() => setCurrentParty(party)} colorScheme="teal">
+                  Join
+                </Button>
+              </HStack>
+            );
+          })}
+        </Flex>
+      </Flex>
+      <Flex flexDir="column" mt="auto" width="100%">
+        <Divider my="2" />
         <HStack>
           <Tooltip label="Create a new party" placement="top">
             <Button size="sm" onClick={createParty} colorScheme="teal" fontSize="lg">
               +
             </Button>
           </Tooltip>
-          <Input size="sm" placeholder="Search for a party..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
         </HStack>
-      </Box>
+      </Flex>
     </Flex>
   );
 }
 
-// PartyInstance Component
-export function PartyInstance({ provider }: { provider: WebsocketProvider | null }) {
-  const { currentParty, setCurrentParty } = usePartyStore();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [members, setMembers] = useState<string[]>([]);
-  const { user } = useUser();
+export function PartyInstance(): JSX.Element {
+  const { leaveParty, partyMembers, currentParty } = usePartyStore();
+  const { users } = useUsersStore();
 
-  useEffect(() => {
-    if (provider && currentParty) {
-      // Set up awareness to track user presence and state
-      const awareness = new Awareness(provider.doc);
-
-      // Listen for updates to the awareness state
-      awareness.on('change', () => {
-        const userData = awareness.getStates();
-        const currentMembers = Array.from(userData.values())
-          .filter((state) => state.party === currentParty.ownerId)
-          .map((state) => state.userId);
-        console.log('Current members:', currentMembers);
-        setMembers(currentMembers);
-      });
-
-      // When a user connects, add them to the awareness state
-      awareness.setLocalState({
-        userId: user!._id,
-        party: currentParty.ownerId,
-      });
-    }
-  }, [provider, currentParty, user]);
-
-  if (!currentParty) return <Text>No party selected</Text>;
-
-  const leaveParty = () => {
-    if (!provider) return;
-    if (members.length === 1) {
-      provider?.doc.getMap('parties').delete(currentParty.ownerId);
-    }
-    // Set up awareness to track user presence and state
-    const awareness = new Awareness(provider?.doc);
-    // Remove the user from the awareness state
-    // When a user connects, add them to the awareness state
-    awareness.setLocalState({
-      userId: user!._id,
-      party: null,
-    });
-    // Remove the user from the members list
-    setCurrentParty(null);
-  };
+  if (!currentParty) {
+    return <Text>Loading...</Text>;
+  }
+  const members = partyMembers.filter((member) => member.party === currentParty.ownerId).map((member) => member.userId);
 
   return (
-    <VStack spacing={4} align="stretch">
-      <Text>{currentParty.name}</Text>
-      {members.map((member) => (
-        <Text key={member}>{member}</Text>
-      ))}
-      <HStack>
-        <Button size="xs" onClick={leaveParty}>
-          Leave Party
-        </Button>
-        <Input placeholder="Search members..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-      </HStack>
-    </VStack>
+    <Flex direction="column" height="100%">
+      <Flex direction="column" gap={4} align="stretch" flex={1} overflowY="auto">
+        <Text fontSize="lg"> Party Members</Text>
+        {members.map((member) => {
+          const u = users.find((el) => el._id === member);
+          const name = u ? u.data.name : 'Unknown';
+          const email = u ? u.data.email : 'Unknown';
+          const color = u ? u.data.color : 'gray.500';
+          return (
+            <VStack align="start" gap="0" key={member}>
+              <Text fontSize="sm" fontWeight="bold">
+                {name}
+              </Text>
+              <Text fontSize="xs">{email}</Text>
+            </VStack>
+          );
+        })}
+      </Flex>
+      <Flex flexDir="column" mt="auto" width="100%">
+        <Divider my="2" />
+        <HStack>
+          <Tooltip label="Leave Party" placement="top">
+            <Button size="sm" fontSize="xl" onClick={leaveParty} colorScheme="red">
+              <MdExitToApp />
+            </Button>
+          </Tooltip>
+        </HStack>
+      </Flex>
+    </Flex>
   );
 }
