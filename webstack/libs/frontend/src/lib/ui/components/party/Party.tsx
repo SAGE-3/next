@@ -28,13 +28,15 @@ import {
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
 import { create } from 'zustand';
-import { serverTime, useHexColor, useUser, useUsersStore } from '@sage3/frontend';
+import { serverTime, useHexColor, useRouteNav, useUser, useUsersStore } from '@sage3/frontend';
 import { Awareness } from 'y-protocols/awareness';
 import { MdControlPoint, MdExitToApp, MdFollowTheSigns, MdGroup, MdWallet } from 'react-icons/md';
 import { genId } from '@sage3/shared';
 import { User } from '@sage3/shared/types';
 import { useParams } from 'react-router';
 import { FaCrown } from 'react-icons/fa';
+import { clear } from 'console';
+import { set } from 'date-fns';
 
 type Chat = {
   id: string;
@@ -46,6 +48,7 @@ type Chat = {
 // Party type definition
 type Party = {
   ownerId: string;
+  board?: { boardId: string; roomId: string };
 };
 
 type PartyMember = {
@@ -67,6 +70,7 @@ type PartyStore = {
   initAwareness: (user: User) => void;
   setParties: (parties: Party[]) => void;
   setCurrentParty: (party: Party | null) => void;
+  setPartyBoard: (boardId?: string, roomId?: string) => void;
   joinParty: (party: Party) => void;
   leaveParty: () => void;
   createParty: () => void;
@@ -115,6 +119,8 @@ const usePartyStore = create<PartyStore>((set, get) => {
           if (!party) {
             set({ currentParty: null });
             awareness.setLocalState({ userId: user._id, party: null });
+          } else {
+            set({ currentParty: party });
           }
         }
       });
@@ -182,6 +188,22 @@ const usePartyStore = create<PartyStore>((set, get) => {
         awareness.setLocalState({ userId: USER!._id, party: party.ownerId });
         set({ currentParty: party });
         setChats(party);
+      }
+    },
+    setPartyBoard: (boardId?: string, roomId?: string) => {
+      const { currentParty } = get();
+      if (!currentParty) return;
+      const { yDoc } = get();
+      if (!yDoc) return;
+      const party = yDoc.getMap<Party>('parties').get(currentParty.ownerId);
+      if (party) {
+        if (!boardId || !roomId) {
+          party.board = undefined;
+          yDoc.getMap<Party>('parties').set(currentParty.ownerId, party);
+        } else {
+          party.board = { boardId, roomId };
+          yDoc.getMap<Party>('parties').set(currentParty.ownerId, party);
+        }
       }
     },
     joinParty: (party) => get().setCurrentParty(party),
@@ -340,9 +362,11 @@ export function PartyHub(): JSX.Element {
 }
 
 export function PartyInstance(): JSX.Element {
-  const { leaveParty, partyMembers, currentParty, disbandParty, chats, addChat } = usePartyStore();
+  const { leaveParty, partyMembers, currentParty, disbandParty, chats, addChat, clearChat, setPartyBoard } = usePartyStore();
   const { users } = useUsersStore();
   const { user } = useUser();
+
+  const { toBoard } = useRouteNav();
 
   const { boardId, roomId } = useParams();
 
@@ -389,14 +413,29 @@ export function PartyInstance(): JSX.Element {
     members.unshift(currentParty.ownerId);
   }
 
-  const setPartyBoard = () => {
-    console.log('Set party board');
-    console.log('boardId', boardId);
-    console.log('roomId', roomId);
+  const handleSetBoard = () => {
+    if (currentParty?.board) {
+      setPartyBoard();
+      return;
+    }
+    if (boardId && roomId) {
+      setPartyBoard(boardId, roomId);
+    }
   };
 
   const present = () => {
     console.log('Present');
+  };
+
+  const handleClearChat = () => {
+    console.log('Clear chat');
+    clearChat(currentParty);
+  };
+
+  const handleGoToBoard = () => {
+    if (currentParty?.board) {
+      toBoard(currentParty.board.roomId, currentParty.board.boardId);
+    }
   };
 
   return (
@@ -539,12 +578,21 @@ export function PartyInstance(): JSX.Element {
             <Button size="sm" onClick={present}>
               Present
             </Button>
-            <Button size="sm" onClick={setPartyBoard}>
-              Set Board
-            </Button>
-            <Button size="sm" onClick={setPartyBoard}>
-              Clear Chat
-            </Button>
+            {isOwner && (
+              <Button size="sm" onClick={handleSetBoard}>
+                {currentParty?.board ? 'Unset Board' : 'Set Board'}
+              </Button>
+            )}
+            {!isOwner && (
+              <Button size="sm" onClick={handleGoToBoard} isDisabled={!currentParty?.board}>
+                Go To Board
+              </Button>
+            )}
+            {isOwner && (
+              <Button size="sm" onClick={handleClearChat}>
+                Clear Chat
+              </Button>
+            )}
           </HStack>
           <HStack>
             {isOwner ? (
