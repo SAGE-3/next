@@ -46,7 +46,6 @@ type Chat = {
 // Party type definition
 type Party = {
   ownerId: string;
-  chats: Chat[];
 };
 
 type PartyMember = {
@@ -59,8 +58,12 @@ type PartyStore = {
   currentParty: Party | null;
   partyMembers: PartyMember[];
   yDoc: Y.Doc | null;
+  chats: Chat[];
   provider: WebsocketProvider | null;
   awareness: Awareness | null;
+  setChats: (party: Party) => void;
+  addChat: (message: string) => Promise<void>;
+  clearChat: (party: Party) => void;
   initAwareness: (user: User) => void;
   setParties: (parties: Party[]) => void;
   setCurrentParty: (party: Party | null) => void;
@@ -95,8 +98,7 @@ const usePartyStore = create<PartyStore>((set, get) => {
       // If you have a party already created, set it as the current party
       const partyAlreadyCreated = currentParties.find((party) => party.ownerId === user._id);
       if (partyAlreadyCreated) {
-        set({ currentParty: partyAlreadyCreated });
-        awareness.setLocalState({ userId: user._id, party: partyAlreadyCreated.ownerId });
+        get().setCurrentParty(partyAlreadyCreated);
       } else {
         set({ currentParty: null });
       }
@@ -134,16 +136,52 @@ const usePartyStore = create<PartyStore>((set, get) => {
     currentParty: null,
     partyMembers: [],
     yDoc: null,
+    chats: [],
     provider: null,
     awareness: null,
     initAwareness,
     setParties: (parties) => set({ parties }),
+    setChats: (party: Party) => {
+      const { yDoc } = get();
+      if (!yDoc) return;
+      const chats = yDoc.getArray<Chat>(party.ownerId).toArray();
+      set({ chats });
+      yDoc.getArray<Chat>(party.ownerId).observe((event) => {
+        const chats = yDoc.getArray<Chat>(party.ownerId).toArray();
+        // Sort in descending order
+        chats.sort((a, b) => a.timestamp - b.timestamp);
+        // Set the chats in the store
+        set({ chats });
+      });
+    },
+    async addChat(message: string) {
+      const { currentParty } = get();
+      if (!currentParty) return;
+      const { yDoc } = get();
+      if (!yDoc) return;
+      const chats = yDoc.getArray<Chat>(currentParty.ownerId);
+      const timestamp = await serverTime();
+      const chat: Chat = {
+        id: genId(),
+        text: message,
+        senderId: USER!._id,
+        timestamp: timestamp.epoch,
+      };
+      chats.push([chat]);
+    },
+    clearChat: (party: Party) => {
+      const { yDoc } = get();
+      if (!yDoc) return;
+      const chats = yDoc.getArray<Chat>(party.ownerId);
+      chats.delete(0, chats.length);
+    },
     setCurrentParty: (party) => {
       if (party) {
-        const { awareness } = get();
+        const { awareness, setChats } = get();
         if (!awareness) return;
         awareness.setLocalState({ userId: USER!._id, party: party.ownerId });
         set({ currentParty: party });
+        setChats(party);
       }
     },
     joinParty: (party) => get().setCurrentParty(party),
@@ -151,11 +189,11 @@ const usePartyStore = create<PartyStore>((set, get) => {
       const { awareness } = get();
       if (!awareness) return;
       awareness.setLocalState({ userId: USER!._id, party: null });
-      set({ currentParty: null });
+      set({ currentParty: null, chats: [] });
     },
     createParty: () => {
       const { provider, setCurrentParty } = get();
-      const party: Party = { ownerId: USER!._id, chats: [] };
+      const party: Party = { ownerId: USER!._id };
       provider?.doc.getMap('parties').set(USER!._id, party);
       setCurrentParty(party);
     },
@@ -164,6 +202,7 @@ const usePartyStore = create<PartyStore>((set, get) => {
       const { provider, leaveParty } = get();
       provider?.doc.getMap('parties').delete(USER._id);
       set({ currentParty: null });
+      get().clearChat({ ownerId: USER._id });
       leaveParty();
     },
   };
@@ -299,10 +338,9 @@ export function PartyHub(): JSX.Element {
     </Flex>
   );
 }
-const chats: Chat[] = [];
 
 export function PartyInstance(): JSX.Element {
-  const { leaveParty, partyMembers, currentParty, disbandParty } = usePartyStore();
+  const { leaveParty, partyMembers, currentParty, disbandParty, chats, addChat } = usePartyStore();
   const { users } = useUsersStore();
   const { user } = useUser();
 
@@ -315,26 +353,26 @@ export function PartyInstance(): JSX.Element {
   const yellowHex = useHexColor('yellow.400');
 
   const [newMessage, setNewMessage] = useState('');
-  const scrollRef = useRef();
+  const scrollRef = useRef<HTMLDivElement | null>(null);
   const scrollToBottom = () => {
     if (!scrollRef.current) return;
-    // scrollRef.current?.scrollTo(0, scrollRef.current.scrollHeight);
+    scrollRef.current?.scrollTo(0, scrollRef.current.scrollHeight);
   };
   useEffect(() => {
     scrollToBottom();
-  }, [currentParty?.chats]);
+  }, [chats, scrollRef]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault(); // Prevents new line in the input field
+      handleSendMessage();
+    }
+  };
 
   async function handleSendMessage() {
-    const serverTimeStamp = await serverTime();
     // You can add the new message to the array of chats if needed.
     if (newMessage.trim()) {
-      const message = {
-        id: genId(),
-        text: newMessage,
-        senderId: user!._id,
-        timestamp: serverTimeStamp.epoch,
-      } as Chat;
-      chats.push(message);
+      addChat(newMessage);
       setNewMessage('');
       scrollToBottom();
     }
@@ -372,6 +410,7 @@ export function PartyInstance(): JSX.Element {
         <TabPanels>
           <TabPanel>
             <Flex
+              height="300px"
               direction="column"
               gap={4}
               align="stretch"
@@ -411,23 +450,68 @@ export function PartyInstance(): JSX.Element {
               })}
             </Flex>
           </TabPanel>
-          <TabPanel>
+          <TabPanel height="100%">
             {/* Chat History */}
-            <VStack flex={1} spacing={3} align="stretch" overflowY="auto">
-              {chats.map((chat) => (
-                <Flex key={chat.id} direction={chat.senderId === user!._id ? 'row-reverse' : 'row'}>
-                  <Box
-                    padding="5px"
-                    borderRadius="md"
-                    maxWidth="80%"
-                    backgroundColor={chat.senderId === user!._id ? 'blue.500' : 'gray.200'}
-                    color={chat.senderId === user!._id ? 'white' : 'black'}
-                    boxShadow="md"
-                  >
-                    <Text>{chat.text}</Text>
-                  </Box>
-                </Flex>
-              ))}
+            <VStack
+              height="275px"
+              flex={1}
+              spacing={3}
+              align="stretch"
+              overflowY="scroll"
+              pr="2"
+              mb="2"
+              css={{
+                '&::-webkit-scrollbar': {
+                  width: '6px',
+                },
+                '&::-webkit-scrollbar-track': {
+                  width: '6px',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  background: gripColor,
+                  borderRadius: 'md',
+                },
+              }}
+              ref={scrollRef}
+            >
+              {chats.map((chat) => {
+                const u = users.find((el) => el._id === chat.senderId);
+                const name = u ? u.data.name : 'Unknown';
+                const time = new Date(chat.timestamp);
+                // Formatted time showing date and time. Only show date if the message is older than today
+                const today = new Date();
+                const isToday = time.toDateString() !== today.toDateString();
+                const formattedTime = isToday
+                  ? time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                  : time.toLocaleDateString([], {
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    });
+
+                return (
+                  <Flex key={chat.id} direction={chat.senderId === user!._id ? 'row-reverse' : 'row'}>
+                    <Box
+                      padding="5px"
+                      borderRadius="md"
+                      maxWidth="80%"
+                      backgroundColor={chat.senderId === user!._id ? 'blue.500' : 'gray.200'}
+                      color={chat.senderId === user!._id ? 'white' : 'black'}
+                      boxShadow="md"
+                      display={'flex'}
+                      flexDir={'column'}
+                    >
+                      <Text fontSize="xs">
+                        {name} - {formattedTime}
+                      </Text>
+
+                      <Text fontWeight="bold">{chat.text}</Text>
+                    </Box>
+                  </Flex>
+                );
+              })}
             </VStack>
 
             {/* Message Input */}
@@ -436,6 +520,7 @@ export function PartyInstance(): JSX.Element {
                 placeholder="Type a message..."
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
+                onKeyDown={handleKeyDown}
                 size="sm"
                 flex="1"
               />
@@ -455,7 +540,10 @@ export function PartyInstance(): JSX.Element {
               Present
             </Button>
             <Button size="sm" onClick={setPartyBoard}>
-              Set Party Board
+              Set Board
+            </Button>
+            <Button size="sm" onClick={setPartyBoard}>
+              Clear Chat
             </Button>
           </HStack>
           <HStack>
