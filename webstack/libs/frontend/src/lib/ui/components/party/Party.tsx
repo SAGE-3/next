@@ -9,7 +9,6 @@
 // React and Chakra Imports
 import { useEffect } from 'react';
 import {
-  Button,
   Text,
   Popover,
   PopoverArrow,
@@ -18,17 +17,20 @@ import {
   PopoverContent,
   PopoverHeader,
   PopoverTrigger,
+  IconButton,
+  Flex,
 } from '@chakra-ui/react';
-import { MdGroup } from 'react-icons/md';
+import { MdGroups } from 'react-icons/md';
 
 // SAGE3 Imports
-import { useUser, useUsersStore } from '@sage3/frontend';
+import { useHexColor, useUser, useUsersStore } from '@sage3/frontend';
 
 // Pary Imports
 import { PartyHub, PartyInstance, usePartyStore } from './components';
 
 interface PartyIconProps {
   iconSize?: 'xs' | 'sm' | 'md';
+  isBoard?: boolean;
 }
 
 // The Partybutton Component.
@@ -37,6 +39,7 @@ export function PartyButton(props: PartyIconProps): JSX.Element {
   // Stores
   const { currentParty, partyMembers } = usePartyStore();
   const { users } = useUsersStore();
+  const { user } = useUser();
 
   // Values
   const partySize = partyMembers.filter((member) => member.party === currentParty?.ownerId).length;
@@ -44,21 +47,42 @@ export function PartyButton(props: PartyIconProps): JSX.Element {
 
   // Theme
   const iconSize = props.iconSize || 'md';
+  const userColorValue = user?.data.color ? user.data.color : 'teal';
+  const userColor = useHexColor(userColorValue);
 
   // Popover Header. If you are in a party show the party owner's name. If not, show "Party Hub"
-  const header = ownerUserAccount ? `${ownerUserAccount.data.name}'s Party` : 'Party Hub';
+  const header = ownerUserAccount ? (
+    `${ownerUserAccount.data.name}'s Party`
+  ) : (
+    <Flex alignItems="center" gap={2}>
+      <Text fontSize="2xl" fontWeight="bold">
+        <MdGroups />
+      </Text>
+      <Text>Party Hub</Text>
+    </Flex>
+  );
+  const fontSize = iconSize === 'xs' ? 'sm' : iconSize === 'sm' ? 'md' : iconSize === 'md' ? 'lg' : 'xl';
 
   return (
     <Popover>
       <PopoverTrigger>
-        <Button
-          width="100px"
-          size={iconSize}
-          colorScheme={currentParty ? 'teal' : 'gray'}
-          leftIcon={currentParty ? <Text>{partySize}</Text> : <MdGroup />}
-        >
-          Party
-        </Button>
+        {props.isBoard ? (
+          <IconButton
+            size={iconSize}
+            fontSize={fontSize}
+            colorScheme={userColorValue}
+            icon={currentParty ? <Text>{partySize}</Text> : <MdGroups />}
+            aria-label="Party"
+          />
+        ) : (
+          <IconButton
+            size={iconSize}
+            fontSize={fontSize}
+            backgroundColor={userColor}
+            icon={currentParty ? <Text>{partySize}</Text> : <MdGroups />}
+            aria-label="Party"
+          />
+        )}
       </PopoverTrigger>
       <PopoverContent width="500px" height="500px">
         <PopoverArrow />
