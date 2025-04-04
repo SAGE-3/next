@@ -65,7 +65,7 @@ import {
   Alfred,
   truncateWithEllipsis,
   EditUserSettingsModal,
-  PartyIcon,
+  PartyButton,
 } from '@sage3/frontend';
 
 import { Board, OpenConfiguration } from '@sage3/shared/types';
@@ -247,7 +247,7 @@ export function MainButton(props: MainButtonProps) {
                 </Box>
               </MenuButton>
             </Tooltip>
-            <PartyIcon iconSize="sm" />
+            <PartyButton iconSize="sm" />
           </Flex>
         ) : (
           <Flex gap="2">
@@ -276,7 +276,7 @@ export function MainButton(props: MainButtonProps) {
                 </Box>
               </Box>
             </MenuButton>
-            <PartyIcon />
+            <PartyButton />
           </Flex>
         )}
 
