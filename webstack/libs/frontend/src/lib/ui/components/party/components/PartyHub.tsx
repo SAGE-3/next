@@ -6,30 +6,38 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { Button, VStack, HStack, Text, Flex, Divider, useColorModeValue } from '@chakra-ui/react';
+import { Button, VStack, HStack, Text, Flex, Divider, useColorModeValue, IconButton, Tooltip } from '@chakra-ui/react';
 
 // SAGE3 Imports
 import { useUsersStore } from '@sage3/frontend';
 
 // Party Imports
 import { usePartyStore } from '././PartyStore';
+import { MdAdd } from 'react-icons/md';
 
 export function PartyHub(): JSX.Element {
+  // Store imports
   const { parties, partyMembers, setCurrentParty, createParty } = usePartyStore();
+
+  // Users imports
   const { users } = useUsersStore();
 
+  // Theme
+  const scrollBarGripColor = useColorModeValue('#c1c1c1', '#2b2b2b');
+
   // List of all current parties
+  // This is a list of all the parties that are currently active. Has a user connected to it.
   const partyList = partyMembers
     .map((member) => {
       return member.party ? member.party : null;
     })
     .filter((party) => party !== null);
+  // Remove duplicates from the partyList
   const uniqueParties = Array.from(new Set(partyList));
+  // Does the party really exist?
   const availableParties = parties.filter((party) => {
     return uniqueParties.includes(party.ownerId);
   });
-  // Theme
-  const gripColor = useColorModeValue('#c1c1c1', '#2b2b2b');
 
   return (
     <Flex direction="column" height="100%">
@@ -49,12 +57,12 @@ export function PartyHub(): JSX.Element {
               width: '6px',
             },
             '&::-webkit-scrollbar-thumb': {
-              background: gripColor,
+              background: scrollBarGripColor,
               borderRadius: 'md',
             },
           }}
         >
-          {availableParties.length === 0 && <Text>Looks like there aren't any parties right now.</Text>}
+          {availableParties.length === 0 && <Text>No Parties currently available. Please create one below.</Text>}
           {availableParties.map((party) => {
             const owner = users.find((el) => el._id === party.ownerId);
             const ownerName = owner ? owner.data.name : 'Unknown';
@@ -82,9 +90,9 @@ export function PartyHub(): JSX.Element {
       <Flex flexDir="column" mt="auto" width="100%">
         <Divider my="2" />
         <HStack>
-          <Button size="sm" onClick={createParty}>
-            Create Party
-          </Button>
+          <Tooltip label="Create a new party" placement="top" hasArrow>
+            <IconButton size="sm" icon={<MdAdd />} aria-label="Create Party" onClick={createParty} colorScheme="teal" />
+          </Tooltip>
         </HStack>
       </Flex>
     </Flex>

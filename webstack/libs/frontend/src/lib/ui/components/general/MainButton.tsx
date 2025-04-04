@@ -247,7 +247,7 @@ export function MainButton(props: MainButtonProps) {
                 </Box>
               </MenuButton>
             </Tooltip>
-            <PartyButton iconSize="sm" />
+            <PartyButton iconSize="sm" isBoard />
           </Flex>
         ) : (
           <Flex gap="2">
@@ -260,9 +260,10 @@ export function MainButton(props: MainButtonProps) {
               alignItems={'center'}
               justifyContent={'left'}
               borderRadius="10"
-              width="100%"
+              width="calc(100% - 40px)"
               transition={'all 0.5s'}
               _hover={{ cursor: 'pointer' }}
+              overflow={'hidden'}
             >
               <Box display="flex" justifyContent={'space-between'} alignItems={'center'}>
                 <Box display="flex" pl="4" gap="1" alignItems={'center'}>
