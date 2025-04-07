@@ -291,15 +291,15 @@ export function AppWindow(props: WindowProps) {
   function getEndToEndRelationship(
     startAppName: string,
     endAppName: string
-  ): 'one->app:app->one' | 'many->app:app->one' | 'one->app:app->many' | 'many->app:app->many' | undefined {
+  ): ['one->app:app->one' | 'many->app:app->one' | 'one->app:app->many' | 'many->app:app->many' | undefined, boolean] {
     const outbound = PROVENANCE_CONSTRAINTS.find((constraint) => constraint.name === startAppName)?.outboundRelationship || undefined;
     const inbound =
       PROVENANCE_CONSTRAINTS.find((constraint) => constraint.name === endAppName)?.inboundRelationships[startAppName] || undefined;
 
     if (outbound && inbound) {
-      return `${inbound}:${outbound}`;
+      return [`${inbound.relationship}:${outbound}`, inbound.cyclic];
     }
-    return undefined;
+    return [undefined, true];
   }
 
   async function handleAppClick(e: MouseEvent) {
@@ -323,26 +323,12 @@ export function AppWindow(props: WindowProps) {
         const currentSources = allBoardApps?.find((app: App) => app._id === props.app._id)?.data.state.sources || [];
         const manySources = Array.from(new Set([...currentSources, priorLinkedApp])); // must be unique
 
-        //     // Cylic Detection
-        //     if (!linkAllowCyclic) {
-        //       const tmpApp = allBoardApps?.find((app: App) => app._id === props.app._id);
-        //       if (tmpApp && allBoardApps) {
-        //         tmpApp.data.state.sources = newSources;
-        //         allBoardApps = [...allBoardApps]; // Trigger a re-render if using state
-        //       }
-
-        //       // Clear tmp if cylic
-        //       if (hasSourceCycles(props.app, allBoardApps)) {
-        //         return;
-        //       }
-        //     }
-
         // Start App: priorLinkedApp
         // End App: this
 
         const startAppName = allBoardApps?.find((app: App) => app._id === priorLinkedApp)?.data.type || '';
         const endAppName = allBoardApps?.find((app: App) => app._id === props.app._id)?.data.type || '';
-        const endToEndRelationship = getEndToEndRelationship(startAppName, endAppName);
+        const [endToEndRelationship, allowCylic] = getEndToEndRelationship(startAppName, endAppName);
 
         // console.log(endToEndRelationship);
 
@@ -352,6 +338,20 @@ export function AppWindow(props: WindowProps) {
         const filteredSourceAppIds = Array.from(
           new Set(sourceApps?.filter((app: App) => app.data.type !== (startAppName as AppName)).map((app: App) => app._id)) // make unique, just in case
         );
+
+        // Cylic Detection
+        if (!allowCylic) {
+          const tmpApp = allBoardApps?.find((app: App) => app._id === props.app._id);
+          if (tmpApp && allBoardApps) {
+            tmpApp.data.state.sources = manySources;
+            allBoardApps = [...allBoardApps]; // Trigger a re-render if using state
+          }
+
+          // Clear tmp if cylic
+          if (hasSourceCycles(props.app, allBoardApps)) {
+            return;
+          }
+        }
 
         // This accounts for the four relationship types per app type, hence the multiple filtering needed.
         // Confusing yes; dont think too hard about it, just use test cases to confirm behaviour
