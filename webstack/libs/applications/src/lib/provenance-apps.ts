@@ -12,7 +12,10 @@ import { AppName } from './types';
 
 // Provenance Constraints
 interface InboundRelationships {
-  [key: string]: 'one->app' | 'many->app';
+  [key: string]: {
+    relationship: 'one->app' | 'many->app';
+    cyclic: boolean
+  };
 }
 
 export type PROVENANCE_CONSTRAINTS_TYPE = {
@@ -27,8 +30,14 @@ export const PROVENANCE_CONSTRAINTS: PROVENANCE_CONSTRAINTS_TYPE[] = [
     name: 'SageCell' as AppName,
     outboundRelationship: 'app->many',
     inboundRelationships: {
-      ['SageCell' as AppName]: 'one->app',
-      ['Stickie' as AppName]: 'many->app',
+      ['SageCell' as AppName]: {
+        relationship: 'one->app',
+        cyclic: false,
+      },
+      ['Stickie' as AppName]: {
+        relationship: 'many->app',
+        cyclic: true,
+      },
     },
     // relationship: 'one->app->many',
     // // relationshipInboundRule: 'one->app',
@@ -39,8 +48,14 @@ export const PROVENANCE_CONSTRAINTS: PROVENANCE_CONSTRAINTS_TYPE[] = [
     name: 'Stickie' as AppName,
     outboundRelationship: 'app->many',
     inboundRelationships: {
-      // ['SageCell' as AppName]: 'one->app',
-      ['Stickie' as AppName]: 'many->app',
+      ['SageCell' as AppName]: {
+        relationship: 'one->app',
+        cyclic: true,
+      },
+      ['Stickie' as AppName]: {
+        relationship: 'one->app',
+        cyclic: true,
+      },
     },
   },
 ];
