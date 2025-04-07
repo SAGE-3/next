@@ -19,7 +19,7 @@ import { useAppStore, useUIStore, useHexColor, useThrottleScale, useAbility, use
 // Window Components
 import { App, AppName } from '../../schema';
 import { ProcessingBox, BlockInteraction, WindowTitle, WindowBorder } from './components';
-import { PROVENANCE_CONSTRAINTS, PROVENANCE_CONSTRAINTS_V2 } from '@sage3/applications/apps';
+import { PROVENANCE_CONSTRAINTS } from '@sage3/applications/apps';
 
 // Consraints on the app window size
 const APP_MIN_WIDTH = 200;
@@ -136,7 +136,7 @@ export function AppWindow(props: WindowProps) {
 
   // Linker Provenance Interaction
   const { canLink } = useMemo(() => {
-    const matchedConstraint = PROVENANCE_CONSTRAINTS_V2.find((constraint) => constraint.name === props.app.data.type);
+    const matchedConstraint = PROVENANCE_CONSTRAINTS.find((constraint) => constraint.name === props.app.data.type);
 
     return {
       canLink: !!matchedConstraint,
@@ -145,18 +145,6 @@ export function AppWindow(props: WindowProps) {
     };
   }, [props.app.data.type]);
   const [linkerInteractionCursors, setLinkerInteractionCursors] = useState({});
-
-  // Old Ver
-  // const { canLink, linkRelationship, linkAllowCyclic } = useMemo(() => {
-  //   const matchedConstraint = PROVENANCE_CONSTRAINTS.find((constraint) => constraint.name === props.app.data.type);
-
-  //   return {
-  //     canLink: !!matchedConstraint,
-  //     linkRelationship: matchedConstraint?.relationship || 'one-to-me', // default value
-  //     linkAllowCyclic: matchedConstraint?.allowCylic || false, // default value
-  //   };
-  // }, [props.app.data.type]);
-  // const [linkerInteractionCursors, setLinkerInteractionCursors] = useState({});
 
   // Track the app store errors
   useEffect(() => {
@@ -304,9 +292,9 @@ export function AppWindow(props: WindowProps) {
     startAppName: string,
     endAppName: string
   ): 'one->app:app->one' | 'many->app:app->one' | 'one->app:app->many' | 'many->app:app->many' | undefined {
-    const outbound = PROVENANCE_CONSTRAINTS_V2.find((constraint) => constraint.name === startAppName)?.outboundRelationship || undefined;
+    const outbound = PROVENANCE_CONSTRAINTS.find((constraint) => constraint.name === startAppName)?.outboundRelationship || undefined;
     const inbound =
-      PROVENANCE_CONSTRAINTS_V2.find((constraint) => constraint.name === endAppName)?.inboundRelationships[startAppName] || undefined;
+      PROVENANCE_CONSTRAINTS.find((constraint) => constraint.name === endAppName)?.inboundRelationships[startAppName] || undefined;
 
     if (outbound && inbound) {
       return `${inbound}:${outbound}`;
@@ -335,6 +323,20 @@ export function AppWindow(props: WindowProps) {
         const currentSources = allBoardApps?.find((app: App) => app._id === props.app._id)?.data.state.sources || [];
         const manySources = Array.from(new Set([...currentSources, priorLinkedApp])); // must be unique
 
+        //     // Cylic Detection
+        //     if (!linkAllowCyclic) {
+        //       const tmpApp = allBoardApps?.find((app: App) => app._id === props.app._id);
+        //       if (tmpApp && allBoardApps) {
+        //         tmpApp.data.state.sources = newSources;
+        //         allBoardApps = [...allBoardApps]; // Trigger a re-render if using state
+        //       }
+
+        //       // Clear tmp if cylic
+        //       if (hasSourceCycles(props.app, allBoardApps)) {
+        //         return;
+        //       }
+        //     }
+
         // Start App: priorLinkedApp
         // End App: this
 
@@ -352,7 +354,7 @@ export function AppWindow(props: WindowProps) {
         );
 
         // This accounts for the four relationship types per app type, hence the multiple filtering needed.
-        // Confusing? yes; dont think too hard about it, just use test cases to confirm behaviour
+        // Confusing yes; dont think too hard about it, just use test cases to confirm behaviour
         if (endToEndRelationship === 'one->app:app->one') {
           const updates = [];
           allBoardApps?.forEach((app: App) => {
@@ -385,64 +387,6 @@ export function AppWindow(props: WindowProps) {
       }
       return;
     }
-
-    // Old Ver
-    // if (primaryActionMode === 'linker' && canLink) {
-    //   const priorLinkedApp = cacheLinkedAppId(props.app._id);
-
-    //   if (priorLinkedApp) {
-    //     // let allBoardApps: App[] | undefined = await fetchBoardApps(props.app.data.boardId);
-    //     let allBoardApps: App[] = JSON.parse(JSON.stringify(useAppStore.getState().apps)); // deep copy
-    //     const currentSources = allBoardApps?.find((app: App) => app._id === props.app._id)?.data.state.sources || [];
-    //     const newSources = Array.from(new Set([...currentSources, priorLinkedApp]));
-
-    //     // Cylic Detection
-    //     if (!linkAllowCyclic) {
-    //       const tmpApp = allBoardApps?.find((app: App) => app._id === props.app._id);
-    //       if (tmpApp && allBoardApps) {
-    //         tmpApp.data.state.sources = newSources;
-    //         allBoardApps = [...allBoardApps]; // Trigger a re-render if using state
-    //       }
-
-    //       // Clear tmp if cylic
-    //       if (hasSourceCycles(props.app, allBoardApps)) {
-    //         return;
-    //       }
-    //     }
-
-    //     // Enforce Relationship
-    //     if (linkRelationship === 'one->app->one') {
-    //       const updates = [];
-    //       allBoardApps?.forEach((app: App) => {
-    //         if (app.data.state.sources?.includes(priorLinkedApp)) {
-    //           updates.push({
-    //             id: app._id,
-    //             updates: { sources: app.data.state.sources.filter((source: string) => source !== priorLinkedApp) },
-    //           });
-    //         }
-    //       });
-    //       updates.push({ id: props.app._id, updates: { sources: [priorLinkedApp] } });
-    //       updateStateBatch(updates);
-    //     } else if (linkRelationship === 'one->app->many') {
-    //       updateState(props.app._id, { sources: [priorLinkedApp] });
-    //     } else if (linkRelationship === 'many->app->one') {
-    //       const updates = [];
-    //       allBoardApps?.forEach((app: App) => {
-    //         if (app.data.state.sources?.includes(priorLinkedApp)) {
-    //           updates.push({
-    //             id: app._id,
-    //             updates: { sources: app.data.state.sources.filter((source: string) => source !== priorLinkedApp) },
-    //           });
-    //         }
-    //       });
-    //       updates.push({ id: props.app._id, updates: { sources: newSources } });
-    //       updateStateBatch(updates);
-    //     } else {
-    //       updateState(props.app._id, { sources: newSources });
-    //     }
-    //   }
-    //   return;
-    // }
 
     if (primaryActionMode === 'linker' && !canLink) {
       clearLinkAppId();
