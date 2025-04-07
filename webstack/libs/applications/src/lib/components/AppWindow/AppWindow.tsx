@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Box, useToast, useColorModeValue, Icon } from '@chakra-ui/react';
 
 import { DraggableData, ResizableDelta, Position, Rnd, RndDragEvent } from 'react-rnd';
@@ -17,9 +17,9 @@ import { IconType } from 'react-icons/lib';
 import { useAppStore, useUIStore, useHexColor, useThrottleScale, useAbility, useInsightStore, useUserSettings } from '@sage3/frontend';
 
 // Window Components
-import { App } from '../../schema';
+import { App, AppName } from '../../schema';
 import { ProcessingBox, BlockInteraction, WindowTitle, WindowBorder } from './components';
-import { PROVENANCE_CONSTRAINTS } from '@sage3/applications/apps';
+import { PROVENANCE_CONSTRAINTS, PROVENANCE_CONSTRAINTS_V2 } from '@sage3/applications/apps';
 
 // Consraints on the app window size
 const APP_MIN_WIDTH = 200;
@@ -135,15 +135,28 @@ export function AppWindow(props: WindowProps) {
   const toastID = 'error-toast';
 
   // Linker Provenance Interaction
-  const { canLink, linkRelationship, linkAllowCyclic } = useMemo(() => {
-    const matchedConstraint = PROVENANCE_CONSTRAINTS.find((constraint) => constraint.name === props.app.data.type);
+  const { canLink } = useMemo(() => {
+    const matchedConstraint = PROVENANCE_CONSTRAINTS_V2.find((constraint) => constraint.name === props.app.data.type);
 
     return {
       canLink: !!matchedConstraint,
-      linkRelationship: matchedConstraint?.relationship || 'one-to-me', // default value
-      linkAllowCyclic: matchedConstraint?.allowCylic || false, // default value
+      // outboundLinkRelationship: matchedConstraint?.outboundRelationship, // default value
+      // linkAllowCyclic: matchedConstraint?.allowCylic || false, // default value
     };
   }, [props.app.data.type]);
+  const [linkerInteractionCursors, setLinkerInteractionCursors] = useState({});
+
+  // Old Ver
+  // const { canLink, linkRelationship, linkAllowCyclic } = useMemo(() => {
+  //   const matchedConstraint = PROVENANCE_CONSTRAINTS.find((constraint) => constraint.name === props.app.data.type);
+
+  //   return {
+  //     canLink: !!matchedConstraint,
+  //     linkRelationship: matchedConstraint?.relationship || 'one-to-me', // default value
+  //     linkAllowCyclic: matchedConstraint?.allowCylic || false, // default value
+  //   };
+  // }, [props.app.data.type]);
+  // const [linkerInteractionCursors, setLinkerInteractionCursors] = useState({});
 
   // Track the app store errors
   useEffect(() => {
@@ -287,6 +300,20 @@ export function AppWindow(props: WindowProps) {
     }
   }
 
+  function getEndToEndRelationship(
+    startAppName: string,
+    endAppName: string
+  ): 'one->app:app->one' | 'many->app:app->one' | 'one->app:app->many' | 'many->app:app->many' | undefined {
+    const outbound = PROVENANCE_CONSTRAINTS_V2.find((constraint) => constraint.name === startAppName)?.outboundRelationship || undefined;
+    const inbound =
+      PROVENANCE_CONSTRAINTS_V2.find((constraint) => constraint.name === endAppName)?.inboundRelationships[startAppName] || undefined;
+
+    if (outbound && inbound) {
+      return `${inbound}:${outbound}`;
+    }
+    return undefined;
+  }
+
   async function handleAppClick(e: MouseEvent) {
     e.stopPropagation();
 
@@ -303,26 +330,30 @@ export function AppWindow(props: WindowProps) {
 
       if (priorLinkedApp) {
         // let allBoardApps: App[] | undefined = await fetchBoardApps(props.app.data.boardId);
+        // many->app
         let allBoardApps: App[] = JSON.parse(JSON.stringify(useAppStore.getState().apps)); // deep copy
         const currentSources = allBoardApps?.find((app: App) => app._id === props.app._id)?.data.state.sources || [];
-        const newSources = Array.from(new Set([...currentSources, priorLinkedApp]));
+        const manySources = Array.from(new Set([...currentSources, priorLinkedApp])); // must be unique
 
-        // Cylic Detection
-        if (!linkAllowCyclic) {
-          const tmpApp = allBoardApps?.find((app: App) => app._id === props.app._id);
-          if (tmpApp && allBoardApps) {
-            tmpApp.data.state.sources = newSources;
-            allBoardApps = [...allBoardApps]; // Trigger a re-render if using state
-          }
+        // Start App: priorLinkedApp
+        // End App: this
 
-          // Clear tmp if cylic
-          if (hasSourceCycles(props.app, allBoardApps)) {
-            return;
-          }
-        }
+        const startAppName = allBoardApps?.find((app: App) => app._id === priorLinkedApp)?.data.type || '';
+        const endAppName = allBoardApps?.find((app: App) => app._id === props.app._id)?.data.type || '';
+        const endToEndRelationship = getEndToEndRelationship(startAppName, endAppName);
 
-        // Enforce Relationship
-        if (linkRelationship === 'one->app->one') {
+        // console.log(endToEndRelationship);
+
+        // This separates the startAppName from the rest of the sources and returns the rest of the sources
+        // one -> app
+        const sourceApps = allBoardApps?.filter((app: App) => currentSources.includes(app._id));
+        const filteredSourceAppIds = Array.from(
+          new Set(sourceApps?.filter((app: App) => app.data.type !== (startAppName as AppName)).map((app: App) => app._id)) // make unique, just in case
+        );
+
+        // This accounts for the four relationship types per app type, hence the multiple filtering needed.
+        // Confusing? yes; dont think too hard about it, just use test cases to confirm behaviour
+        if (endToEndRelationship === 'one->app:app->one') {
           const updates = [];
           allBoardApps?.forEach((app: App) => {
             if (app.data.state.sources?.includes(priorLinkedApp)) {
@@ -332,11 +363,11 @@ export function AppWindow(props: WindowProps) {
               });
             }
           });
-          updates.push({ id: props.app._id, updates: { sources: [priorLinkedApp] } });
+          updates.push({ id: props.app._id, updates: { sources: [...filteredSourceAppIds, priorLinkedApp] } });
           updateStateBatch(updates);
-        } else if (linkRelationship === 'one->app->many') {
-          updateState(props.app._id, { sources: [priorLinkedApp] });
-        } else if (linkRelationship === 'many->app->one') {
+        } else if (endToEndRelationship === 'one->app:app->many') {
+          updateState(props.app._id, { sources: [...filteredSourceAppIds, priorLinkedApp] });
+        } else if (endToEndRelationship === 'many->app:app->one') {
           const updates = [];
           allBoardApps?.forEach((app: App) => {
             if (app.data.state.sources?.includes(priorLinkedApp)) {
@@ -346,14 +377,72 @@ export function AppWindow(props: WindowProps) {
               });
             }
           });
-          updates.push({ id: props.app._id, updates: { sources: newSources } });
+          updates.push({ id: props.app._id, updates: { sources: manySources } });
           updateStateBatch(updates);
-        } else {
-          updateState(props.app._id, { sources: newSources });
+        } else if (endToEndRelationship === 'many->app:app->many') {
+          updateState(props.app._id, { sources: manySources });
         }
       }
       return;
     }
+
+    // Old Ver
+    // if (primaryActionMode === 'linker' && canLink) {
+    //   const priorLinkedApp = cacheLinkedAppId(props.app._id);
+
+    //   if (priorLinkedApp) {
+    //     // let allBoardApps: App[] | undefined = await fetchBoardApps(props.app.data.boardId);
+    //     let allBoardApps: App[] = JSON.parse(JSON.stringify(useAppStore.getState().apps)); // deep copy
+    //     const currentSources = allBoardApps?.find((app: App) => app._id === props.app._id)?.data.state.sources || [];
+    //     const newSources = Array.from(new Set([...currentSources, priorLinkedApp]));
+
+    //     // Cylic Detection
+    //     if (!linkAllowCyclic) {
+    //       const tmpApp = allBoardApps?.find((app: App) => app._id === props.app._id);
+    //       if (tmpApp && allBoardApps) {
+    //         tmpApp.data.state.sources = newSources;
+    //         allBoardApps = [...allBoardApps]; // Trigger a re-render if using state
+    //       }
+
+    //       // Clear tmp if cylic
+    //       if (hasSourceCycles(props.app, allBoardApps)) {
+    //         return;
+    //       }
+    //     }
+
+    //     // Enforce Relationship
+    //     if (linkRelationship === 'one->app->one') {
+    //       const updates = [];
+    //       allBoardApps?.forEach((app: App) => {
+    //         if (app.data.state.sources?.includes(priorLinkedApp)) {
+    //           updates.push({
+    //             id: app._id,
+    //             updates: { sources: app.data.state.sources.filter((source: string) => source !== priorLinkedApp) },
+    //           });
+    //         }
+    //       });
+    //       updates.push({ id: props.app._id, updates: { sources: [priorLinkedApp] } });
+    //       updateStateBatch(updates);
+    //     } else if (linkRelationship === 'one->app->many') {
+    //       updateState(props.app._id, { sources: [priorLinkedApp] });
+    //     } else if (linkRelationship === 'many->app->one') {
+    //       const updates = [];
+    //       allBoardApps?.forEach((app: App) => {
+    //         if (app.data.state.sources?.includes(priorLinkedApp)) {
+    //           updates.push({
+    //             id: app._id,
+    //             updates: { sources: app.data.state.sources.filter((source: string) => source !== priorLinkedApp) },
+    //           });
+    //         }
+    //       });
+    //       updates.push({ id: props.app._id, updates: { sources: newSources } });
+    //       updateStateBatch(updates);
+    //     } else {
+    //       updateState(props.app._id, { sources: newSources });
+    //     }
+    //   }
+    //   return;
+    // }
 
     if (primaryActionMode === 'linker' && !canLink) {
       clearLinkAppId();
@@ -420,6 +509,31 @@ export function AppWindow(props: WindowProps) {
       }
     };
   }, [selectedApp]);
+
+  // Set cursor icon here, or it will get quite messy in the html
+  useEffect(() => {
+    if (primaryActionMode === 'linker' && canLink && !linkedAppId) {
+      setLinkerInteractionCursors({
+        '&': {
+          cursor: 'alias',
+        },
+      });
+    } else if (primaryActionMode === 'linker' && canLink && linkedAppId) {
+      setLinkerInteractionCursors({
+        '&': {
+          cursor: 'copy',
+        },
+      });
+    } else if (primaryActionMode === 'linker' && !canLink) {
+      setLinkerInteractionCursors({
+        '&': {
+          cursor: 'no-drop',
+        },
+      });
+    } else {
+      setLinkerInteractionCursors({});
+    }
+  }, [primaryActionMode, canLink, linkedAppId]);
 
   // Caclulate if the app is within the user's Viewport
   const outsideView = useMemo(() => {
@@ -548,25 +662,28 @@ export function AppWindow(props: WindowProps) {
                     cursor: 'grabbing',
                   },
                 }
-              : primaryActionMode === 'linker' && canLink && !linkedAppId
-              ? {
-                  '&': {
-                    cursor: 'alias',
-                  },
-                }
-              : primaryActionMode === 'linker' && canLink && linkedAppId
-              ? {
-                  '&': {
-                    cursor: 'copy',
-                  },
-                }
-              : primaryActionMode === 'linker' && !canLink
-              ? {
-                  '&': {
-                    cursor: 'no-drop',
-                  },
-                }
+              : primaryActionMode === 'linker'
+              ? linkerInteractionCursors
               : {}
+            // : primaryActionMode === 'linker' && canLink && !linkedAppId
+            // ? {
+            //     '&': {
+            //       cursor: 'alias',
+            //     },
+            //   }
+            // : primaryActionMode === 'linker' && canLink && linkedAppId
+            // ? {
+            //     '&': {
+            //       cursor: 'copy',
+            //     },
+            //   }
+            // : primaryActionMode === 'linker' && !canLink
+            // ? {
+            //     '&': {
+            //       cursor: 'no-drop',
+            //     },
+            //   }
+            // : {}
           }
           userSelect={'none'}
           zIndex={3}

@@ -464,8 +464,8 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         {/* The board's apps */}
         <Apps />
 
-        <Arrows />
-        <ArrowToCursor />
+        <ArrowMemo />
+        <ArrowToCursorMemo />
 
         {/* Whiteboard */}
         <WhiteboardMemo roomId={props.roomId} boardId={props.boardId} />
@@ -485,6 +485,8 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     </Box>
   );
 }
+const ArrowMemo = React.memo(Arrows);
+const ArrowToCursorMemo = React.memo(ArrowToCursor);
 const RndMemo = React.memo(RndSafety);
 const LassoMemo = React.memo(Lasso);
 const WhiteboardMemo = React.memo(Whiteboard);

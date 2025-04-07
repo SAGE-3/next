@@ -27,4 +27,54 @@ export const PROVENANCE_CONSTRAINTS: PROVENANCE_CONSTRAINTS_TYPE[] = [
       allowCylic: false,
       allowSources: ['SageCell', 'Stickie'] as AppName[],
     },
+    {
+      name: 'Stickie' as AppName,
+      relationship: 'many->app->many',
+      // relationshipInboundRule: 'one->app',
+      allowCylic: true,
+      allowSources: ['SageCell', 'Stickie'] as AppName[],
+    },
   ];
+
+export const PROVENANCE_CONSTRAINTS_DEFAULT = {
+  allowAllApps: false,
+  outboundRelationship: '',
+  allowCylic: '',
+  inboundSources: {},  // This determines which apps your app can recieve data from
+}
+
+interface InboundRelationships {
+  [key: string]: 'one->app' | 'many->app';
+}
+
+export type PROVENANCE_CONSTRAINTS_TYPE_V2 = {
+  name: AppName;
+  outboundRelationship: 'app->many' | 'app->one';
+  inboundRelationships: InboundRelationships
+  // allowCylic: boolean
+
+}
+
+export const PROVENANCE_CONSTRAINTS_V2: PROVENANCE_CONSTRAINTS_TYPE_V2[] = [
+  {
+    name: 'SageCell' as AppName,
+    outboundRelationship: 'app->many',
+    inboundRelationships: {
+      ['SageCell' as AppName]: 'one->app',
+      ['Stickie' as AppName]: 'many->app',
+    },
+    // relationship: 'one->app->many',
+    // // relationshipInboundRule: 'one->app',
+    // allowCylic: false,
+    // allowSources: ['SageCell', 'Stickie'] as AppName[],
+  },
+  {
+    name: 'Stickie' as AppName,
+    outboundRelationship: 'app->many',
+    inboundRelationships: {
+      // ['SageCell' as AppName]: 'one->app',
+      ['Stickie' as AppName]: 'many->app',
+    },
+  },
+];
+
