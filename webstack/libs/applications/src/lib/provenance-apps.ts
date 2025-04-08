@@ -48,7 +48,7 @@ export const PROVENANCE_CONSTRAINTS: PROVENANCE_CONSTRAINTS_TYPE[] = [
         cyclic: true,
       },
       ['Stickie' as AppName]: {
-        relationship: 'one->app',
+        relationship: 'many->app',
         cyclic: true,
       },
     },
