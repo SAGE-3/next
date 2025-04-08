@@ -22,7 +22,6 @@ export type PROVENANCE_CONSTRAINTS_TYPE = {
   name: AppName;
   outboundRelationship: 'app->many' | 'app->one';
   inboundRelationships: InboundRelationships
-  // allowCylic: boolean
 }
 
 export const PROVENANCE_CONSTRAINTS: PROVENANCE_CONSTRAINTS_TYPE[] = [
@@ -39,10 +38,6 @@ export const PROVENANCE_CONSTRAINTS: PROVENANCE_CONSTRAINTS_TYPE[] = [
         cyclic: true,
       },
     },
-    // relationship: 'one->app->many',
-    // // relationshipInboundRule: 'one->app',
-    // allowCylic: false,
-    // allowSources: ['SageCell', 'Stickie'] as AppName[],
   },
   {
     name: 'Stickie' as AppName,
