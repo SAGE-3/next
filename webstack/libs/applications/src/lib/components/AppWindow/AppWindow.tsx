@@ -317,9 +317,9 @@ export function AppWindow(props: WindowProps) {
       const priorLinkedApp = cacheLinkedAppId(props.app._id);
 
       if (priorLinkedApp) {
-        // let allBoardApps: App[] | undefined = await fetchBoardApps(props.app.data.boardId);
+        const allBoardApps: App[] = JSON.parse(JSON.stringify(useAppStore.getState().apps)); // deep copy
+
         // many->app
-        let allBoardApps: App[] = JSON.parse(JSON.stringify(useAppStore.getState().apps)); // deep copy
         const currentSources = allBoardApps?.find((app: App) => app._id === props.app._id)?.data.state.sources || [];
         const manySources = Array.from(new Set([...currentSources, priorLinkedApp])); // must be unique
 
@@ -329,8 +329,6 @@ export function AppWindow(props: WindowProps) {
         const startAppName = allBoardApps?.find((app: App) => app._id === priorLinkedApp)?.data.type || '';
         const endAppName = allBoardApps?.find((app: App) => app._id === props.app._id)?.data.type || '';
         const [endToEndRelationship, allowCylic] = getEndToEndRelationship(startAppName, endAppName);
-
-        // console.log(endToEndRelationship);
 
         // This separates the startAppName from the rest of the sources and returns the rest of the sources
         // one -> app
@@ -344,17 +342,19 @@ export function AppWindow(props: WindowProps) {
           const tmpApp = allBoardApps?.find((app: App) => app._id === props.app._id);
           if (tmpApp && allBoardApps) {
             tmpApp.data.state.sources = manySources;
-            allBoardApps = [...allBoardApps]; // Trigger a re-render if using state
+            // allBoardApps = [...allBoardApps]; // Trigger a re-render if using state
           }
 
           // Clear tmp if cylic
-          if (hasSourceCycles(props.app, allBoardApps)) {
+          if (hasSourceCycles(props.app, allBoardApps, startAppName as AppName)) {
             return;
           }
         }
 
         // This accounts for the four relationship types per app type, hence the multiple filtering needed.
         // Confusing yes; dont think too hard about it, just use test cases to confirm behaviour
+        // Also this does not ensure that all links on board satisfy the constraints
+        // Todo: to have similar behaviour w/ cylic detection, we should not allow link creation if conditions are not satisfied, instead of overwritting
         if (endToEndRelationship === 'one->app:app->one') {
           const updates = [];
           allBoardApps?.forEach((app: App) => {
@@ -669,12 +669,13 @@ export function AppWindow(props: WindowProps) {
   );
 }
 
-// AI GENERATED FUNCTION
-function hasSourceCycles(rootApp: App, allBoardApps: App[]) {
+function hasSourceCycles(rootApp: App, allBoardApps: App[], appType: AppName) {
   // Create a map of app IDs to apps for easy lookup
   const appMap = new Map();
   allBoardApps.forEach((app) => {
-    appMap.set(app._id, app);
+    if (appType === undefined || app.data.type === appType) {
+      appMap.set(app._id, app);
+    }
   });
 
   // Define a helper function to check for cycles

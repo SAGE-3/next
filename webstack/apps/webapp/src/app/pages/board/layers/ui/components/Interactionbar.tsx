@@ -345,6 +345,8 @@ export function Interactionbar(props: {
             onClick={() => {
               eraserOnClose();
               annotationsOnClose();
+              setSelectedApp('');
+              setSelectedAppsIds([]);
               clearLinkAppId();
               setPrimaryActionMode('linker');
             }}

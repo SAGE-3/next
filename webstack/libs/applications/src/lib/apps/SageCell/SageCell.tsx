@@ -350,6 +350,7 @@ function AppComponent(props: App): JSX.Element {
     }
   };
 
+  ////// Todo: temporary proof of concept block...
   // Evaluate the sagecells in provenance (source) order
   // waitSeconds and executeAppNoChecks directly pulled from the toolbar.tsx, should consider some refactor strategy to resolve duplicated code
   async function waitSeconds(x: number): Promise<void> {
@@ -377,9 +378,14 @@ function AppComponent(props: App): JSX.Element {
       return false;
     }
 
-    if (props.data.state.sources) {
-      const allBoardApps = useAppStore.getState().apps;
-      let source = props.data.state.sources[0];
+    const allBoardApps: App[] = JSON.parse(JSON.stringify(useAppStore.getState().apps)); // deep copy
+    const sourceApps = allBoardApps?.filter((app: App) => props.data.state.sources.includes(app._id));
+    const sageCellSources = sourceApps.filter((app: App) => app.data.type === 'SageCell').map((app: App) => app._id);
+
+    console.log(sourceApps, sageCellSources);
+    if (sageCellSources) {
+      // const allBoardApps = useAppStore.getState().apps;
+      let source = sageCellSources[0];
       let appStack = [];
 
       // Push apps onto stack by following the first source of the provenance chain
@@ -390,11 +396,13 @@ function AppComponent(props: App): JSX.Element {
 
         appStack.push(sourceApp);
 
-        if (!sourceApp?.data?.state?.sources || sourceApp.data.state.sources.length === 0) {
+        const parentSourceApps = allBoardApps?.filter((app: App) => sourceApp?.data?.state?.sources.includes(app._id));
+        const parentSageCellSources = parentSourceApps.filter((app: App) => app.data.type === 'SageCell').map((app: App) => app._id);
+        if (!parentSageCellSources || parentSageCellSources.length === 0) {
           break;
         }
 
-        source = sourceApp.data.state.sources[0];
+        source = parentSageCellSources[0];
       }
 
       // reverse through the stack (can also pop if you want) and execute the code as we go
@@ -410,6 +418,7 @@ function AppComponent(props: App): JSX.Element {
       handleExecute();
     }
   };
+  //////
 
   // Track the execute flag from the store in the toolbar
   useEffect(() => {
