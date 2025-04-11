@@ -24,24 +24,26 @@ import {
   IconButton,
   Tooltip,
   Badge,
+  Button,
 } from '@chakra-ui/react';
 import { FaCrown } from 'react-icons/fa';
 import { ImExit } from 'react-icons/im';
 
 // SAGE3 Imports
-import { useBoardStore, useHexColor, usePresenceStore, useUser, useUsersStore } from '@sage3/frontend';
+import { useBoardStore, useConfigStore, useHexColor, usePresenceStore, useUser, useUsersStore } from '@sage3/frontend';
 
 // Party Imports
 import { usePartyStore } from './PartyStore';
-import { MdClose, MdDelete, MdSend } from 'react-icons/md';
+import { MdClose, MdCopyAll, MdDelete, MdLock, MdLockOutline, MdPrivacyTip, MdSend, MdShield } from 'react-icons/md';
 import { Board, Presence } from '@sage3/shared/types';
 
 export function PartyInstance(): JSX.Element {
   // Store imports
-  const { leaveParty, partyMembers, currentParty, disbandParty, chats } = usePartyStore();
+  const { leaveParty, partyMembers, currentParty, disbandParty, chats, togglePartyPrivate } = usePartyStore();
   const { user } = useUser();
   const fetchBoard = useBoardStore((state) => state.fetchBoard);
   const [board, setBoard] = useState<Board | undefined>(undefined);
+  const { config } = useConfigStore();
 
   // Fetch the board when the component mounts
   useEffect(() => {
@@ -72,6 +74,13 @@ export function PartyInstance(): JSX.Element {
     members.unshift(currentParty.ownerId);
   }
 
+  // Copy Board Sharable Id
+  const copyPartyShareableId = () => {
+    const id = encodeUID(currentParty.ownerId.substring(0, 7), config.namespace);
+    // Add to clipboard
+    navigator.clipboard.writeText(id);
+  };
+
   return (
     <Flex direction="column" height="100%">
       <Tabs height="100%">
@@ -95,29 +104,51 @@ export function PartyInstance(): JSX.Element {
         <HStack justify="space-between" align="center">
           <HStack flex="1" justify="flex-start">
             <Tooltip label="Board Name" placement="top" hasArrow>
-              <Badge
-                colorScheme={board ? board.data.color : 'teal'}
-                fontSize="sm"
-                px="2"
-                py="1"
-                borderRadius="md"
-                variant="subtle"
-                maxWidth="200px"
-                userSelect={'none'}
-              >
-                {board ? board.data.name : 'No Board'}
-              </Badge>
+              <Text>{board ? board.data.name : 'No Board'}</Text>
             </Tooltip>
           </HStack>
 
           <HStack flex="1" justify="flex-end">
+            {isOwner && (
+              <Tooltip label={`Copy Party Sharable Id`} placement="top" hasArrow>
+                <IconButton
+                  size="sm"
+                  icon={<MdCopyAll />}
+                  colorScheme={'teal'}
+                  aria-label="Copy Party Sharable Id"
+                  onClick={copyPartyShareableId}
+                  gap="1"
+                  variant={'ghost'}
+                />
+              </Tooltip>
+            )}
+            {isOwner && (
+              <Tooltip label={`${currentParty.private ? 'Private' : 'Public'}`} placement="top" hasArrow>
+                <IconButton
+                  size="sm"
+                  icon={currentParty.private ? <MdLock /> : <MdLockOutline />}
+                  colorScheme={currentParty.private ? 'red' : 'green'}
+                  aria-label="Set Party Privacy"
+                  onClick={togglePartyPrivate}
+                  gap="1"
+                  variant={'ghost'}
+                />
+              </Tooltip>
+            )}
             {isOwner ? (
               <Tooltip label="Disband Party" placement="top" hasArrow>
-                <IconButton size="sm" icon={<MdClose />} aria-label="Clear Chats" onClick={disbandParty} colorScheme="red" />
+                <IconButton
+                  size="sm"
+                  icon={<MdClose />}
+                  aria-label="Clear Chats"
+                  onClick={disbandParty}
+                  colorScheme="red"
+                  variant={'ghost'}
+                />
               </Tooltip>
             ) : (
               <Tooltip label="Leave Party" placement="top" hasArrow>
-                <IconButton size="sm" icon={<ImExit />} aria-label="Clear Chats" onClick={leaveParty} colorScheme="red" />
+                <IconButton size="sm" icon={<ImExit />} aria-label="Clear Chats" onClick={leaveParty} colorScheme="red" variant={'ghost'} />
               </Tooltip>
             )}
           </HStack>
@@ -317,14 +348,43 @@ function PartyChats(): JSX.Element {
         />
 
         <Tooltip label="Send Message" placement="top" hasArrow>
-          <IconButton size="sm" icon={<MdSend />} aria-label="Send Message " onClick={handleSendMessage} colorScheme="teal" />
+          <IconButton
+            size="sm"
+            icon={<MdSend />}
+            aria-label="Send Message "
+            onClick={handleSendMessage}
+            colorScheme="teal"
+            variant={'ghost'}
+          />
         </Tooltip>
         {isOwner && (
           <Tooltip label="Clear Chat" placement="top" hasArrow>
-            <IconButton size="sm" icon={<MdDelete />} aria-label="Clear Chats" onClick={handleClearChat} colorScheme="red" />
+            <IconButton
+              size="sm"
+              icon={<MdDelete />}
+              aria-label="Clear Chats"
+              onClick={handleClearChat}
+              colorScheme="red"
+              variant={'ghost'}
+            />
           </Tooltip>
         )}
       </Flex>
     </>
   );
+}
+
+// Encode party sharable UID
+function encodeUID(uid: string, s: string): string {
+  const salt = s.substring(0, 5);
+  const encoder = new TextEncoder();
+  const uidBytes = encoder.encode(uid);
+  const saltBytes = encoder.encode(salt);
+  const result = new Uint8Array(uidBytes.length);
+
+  for (let i = 0; i < uidBytes.length; i++) {
+    result[i] = uidBytes[i] ^ saltBytes[i % saltBytes.length];
+  }
+
+  return btoa(String.fromCharCode(...result));
 }

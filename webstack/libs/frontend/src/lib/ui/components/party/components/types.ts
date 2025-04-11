@@ -18,6 +18,7 @@ type PartyChatMessage = {
 type Party = {
   ownerId: string; // Who Created the party
   board?: { boardId: string; roomId: string }; // The board ID and room ID for the party
+  private?: boolean;
 };
 
 // PartyMember type definition

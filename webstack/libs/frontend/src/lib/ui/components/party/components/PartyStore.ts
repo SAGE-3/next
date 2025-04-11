@@ -53,6 +53,7 @@ type PartyStore = {
   leaveParty: () => void;
   createParty: () => void;
   disbandParty: () => void;
+  togglePartyPrivate: () => void;
 };
 
 // Global USER variable to store the current user
@@ -163,7 +164,6 @@ const usePartyStore = create<PartyStore>((set, get) => {
           yDoc.getMap<Party>('parties').set(currentParty.ownerId, newParty);
         } else {
           const newParty = { ownerId: currentParty.ownerId, board: { boardId, roomId } };
-          console.log('newBoard', newParty);
           yDoc.getMap<Party>('parties').set(currentParty.ownerId, newParty);
         }
       }
@@ -232,6 +232,18 @@ const usePartyStore = create<PartyStore>((set, get) => {
       set({ currentParty: null });
       get().clearChat({ ownerId: USER._id });
       leaveParty();
+    },
+    togglePartyPrivate: () => {
+      const { currentParty } = get();
+      if (!currentParty) return;
+      const { yDoc } = get();
+      if (!yDoc) return;
+      const party = yDoc.getMap<Party>('parties').get(currentParty.ownerId);
+      if (party) {
+        const isPrivate = party.private ? true : false;
+        const newParty = { ownerId: currentParty.ownerId, board: currentParty.board, private: !isPrivate } as Party;
+        yDoc.getMap<Party>('parties').set(currentParty.ownerId, newParty);
+      }
     },
   };
 });
