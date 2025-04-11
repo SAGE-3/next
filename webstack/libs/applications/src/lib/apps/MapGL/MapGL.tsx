@@ -295,8 +295,14 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     if (map) {
-      map.removeLayer('geotiff-layer');
-      map.removeSource('geotiff');
+      if (map.getLayer('geotiff-layer')) {
+        // Remove the geotiff layer if it exists
+        map.removeLayer('geotiff-layer');
+      }
+      // Remove the geotiff source if it exists
+      if (map.getSource('geotiff')) {
+        map.removeSource('geotiff');
+      }
 
       const canvas = document.createElement('canvas');
       canvas.setAttribute('id', 'canvas');
