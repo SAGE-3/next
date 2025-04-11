@@ -90,6 +90,8 @@ export type MesonetResponse = {
   summary: string;
   success: boolean;
   actions?: any[];
+  start_date: string;
+  end_date: string;
 };
 
 // PDF request
