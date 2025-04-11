@@ -62,6 +62,7 @@ import {
   useUser,
   useThrottleScale,
   MainButton,
+  PartyButton,
 } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 
@@ -490,6 +491,11 @@ export function UILayer(props: UILayerProps) {
             onClick={alfredOnOpen}
           />
         </Tooltip>
+      </Box>
+
+      {/* Party Button */}
+      <Box position="absolute" right="2" bottom="2" zIndex="1000">
+        <PartyButton iconSize="sm" />
       </Box>
 
       {/* Hub-Room-Board Name Top Left */}

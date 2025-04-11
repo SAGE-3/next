@@ -78,6 +78,7 @@ import {
   useUserSettings,
   isUUIDv4,
   MainButton,
+  PartyButton,
 } from '@sage3/frontend';
 
 // Home Page Components
@@ -157,6 +158,8 @@ export function HomePage() {
   // Colors
   const tealValue = useColorModeValue('teal.400', 'teal.500');
   const teal = useHexColor(tealValue);
+  const hoverTealValue = useColorModeValue('teal.500', 'teal.600');
+  const hoverTeal = useHexColor(hoverTealValue);
   const scrollBarValue = useColorModeValue('gray.300', '#666666');
   const scrollBarColor = useHexColor(scrollBarValue);
   const sidebarBackgroundValue = useColorModeValue('gray.50', '#303030');
@@ -884,6 +887,10 @@ export function HomePage() {
   return (
     // Main Container
     <Box display="flex" width="100svw" height="100svh" alignItems="center" p="3" backgroundColor={mainBackgroundColor} ref={introRef}>
+      {/* Party Button */}
+      <Box position="absolute" right="2" bottom="2" zIndex="1000" pl="2" pt="2" backgroundColor={mainBackgroundValue} borderRadius={'lg'}>
+        <PartyButton iconSize="sm" />
+      </Box>
       {/* Joyride */}
       <Joyride
         ref={joyrideRef}
@@ -985,25 +992,25 @@ export function HomePage() {
         {/* Server selection and main actions */}
         {hubs.length > 0 ? (
           <Box ref={hubNameRef}>
-            <Menu placement="bottom-end">
+            <Menu placement="bottom-start">
               <MenuButton
                 marginTop="auto"
                 display="flex"
                 as={Box}
                 backgroundColor={teal}
-                height="40px"
+                height="32px"
                 alignItems={'center'}
                 justifyContent={'left'}
                 borderRadius="10"
                 width="100%"
                 transition={'all 0.5s'}
-                _hover={{ cursor: 'pointer' }}
+                _hover={{ cursor: 'pointer', backgroundColor: hoverTeal }}
               >
                 <Box display="flex" justifyContent={'space-between'} alignItems={'center'}>
-                  <Text ml="2" fontSize="24px" fontWeight="bold" whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow="hidden">
+                  <Text ml="2" fontSize="lg" fontWeight="bold" whiteSpace={'nowrap'} textOverflow={'ellipsis'} overflow="hidden">
                     {config.serverName}
                   </Text>
-                  <Box pr="3" fontSize="24px">
+                  <Box pr="3" fontSize="lg">
                     <LuChevronsUpDown />
                   </Box>
                 </Box>

@@ -7,7 +7,6 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router';
 import {
   Input,
   VStack,
@@ -24,41 +23,41 @@ import {
   TabList,
   IconButton,
   Tooltip,
+  Badge,
 } from '@chakra-ui/react';
 import { FaCrown } from 'react-icons/fa';
 import { ImExit } from 'react-icons/im';
 
 // SAGE3 Imports
-import { useHexColor, useRouteNav, useUser, useUsersStore } from '@sage3/frontend';
+import { useBoardStore, useHexColor, usePresenceStore, useUser, useUsersStore } from '@sage3/frontend';
 
 // Party Imports
 import { usePartyStore } from './PartyStore';
-import { MdDelete, MdExitToApp, MdPresentToAll, MdSend } from 'react-icons/md';
+import { MdClose, MdDelete, MdSend } from 'react-icons/md';
+import { Board, Presence } from '@sage3/shared/types';
 
 export function PartyInstance(): JSX.Element {
   // Store imports
-  const { leaveParty, partyMembers, currentParty, disbandParty, chats, setPartyBoard } = usePartyStore();
+  const { leaveParty, partyMembers, currentParty, disbandParty, chats } = usePartyStore();
   const { user } = useUser();
+  const fetchBoard = useBoardStore((state) => state.fetchBoard);
+  const [board, setBoard] = useState<Board | undefined>(undefined);
 
-  // Route imports
-  const { boardId, roomId } = useParams();
-  const { toBoard } = useRouteNav();
+  // Fetch the board when the component mounts
+  useEffect(() => {
+    if (currentParty && currentParty.board) {
+      if (board && board._id === currentParty.board.boardId) return;
+      fetchBoard(currentParty.board.boardId).then((boardData) => {
+        if (!boardData) return;
+        setBoard(boardData);
+      });
+    }
+  }, [board, currentParty, fetchBoard]);
 
   // Is this user the owner of the party?
   const isOwner = currentParty?.ownerId === user?._id;
   const partySize = partyMembers.filter((member) => member.party === currentParty?.ownerId).length;
   const chatSize = chats.length;
-
-  // Use Effect to set the current board of the party. Based of the owner
-  useEffect(() => {
-    if (isOwner) {
-      if (boardId && roomId) {
-        setPartyBoard(boardId, roomId);
-      } else {
-        setPartyBoard();
-      }
-    }
-  }, [boardId, roomId, setPartyBoard, isOwner]);
 
   // Theme
   if (!currentParty) {
@@ -72,16 +71,6 @@ export function PartyInstance(): JSX.Element {
     members.splice(ownerIndex, 1);
     members.unshift(currentParty.ownerId);
   }
-
-  const handlePresent = () => {
-    console.log('Present');
-  };
-
-  const handleGoToBoard = () => {
-    if (currentParty?.board) {
-      toBoard(currentParty.board.roomId, currentParty.board.boardId);
-    }
-  };
 
   return (
     <Flex direction="column" height="100%">
@@ -103,28 +92,25 @@ export function PartyInstance(): JSX.Element {
 
       <Flex flexDir="column" mt="auto" width="100%">
         <Divider my="2" />
-        <HStack justify="space-between">
-          <HStack>
-            <Tooltip label="Present to Party" placement="top" hasArrow>
-              <IconButton size="sm" icon={<MdPresentToAll />} aria-label="Create Party" onClick={handlePresent} colorScheme="teal" />
-            </Tooltip>
-            {!isOwner && (
-              <Tooltip label="Go to Board" placement="top" hasArrow>
-                <IconButton
-                  size="sm"
-                  icon={<MdExitToApp />}
-                  aria-label="Go to Board"
-                  onClick={handleGoToBoard}
-                  colorScheme="teal"
-                  isDisabled={!currentParty?.board}
-                />
-              </Tooltip>
-            )}
+        <HStack justify="space-between" align="center">
+          <HStack flex="1" justify="flex-start">
+            <Badge
+              colorScheme={board ? board.data.color : 'teal'}
+              fontSize="sm"
+              px="2"
+              py="1"
+              borderRadius="md"
+              variant="subtle"
+              maxWidth="200px"
+            >
+              {board ? board.data.name : 'No Board'}
+            </Badge>
           </HStack>
-          <HStack>
+
+          <HStack flex="1" justify="flex-end">
             {isOwner ? (
               <Tooltip label="Disband Party" placement="top" hasArrow>
-                <IconButton size="sm" icon={<ImExit />} aria-label="Clear Chats" onClick={disbandParty} colorScheme="red" />
+                <IconButton size="sm" icon={<MdClose />} aria-label="Clear Chats" onClick={disbandParty} colorScheme="red" />
               </Tooltip>
             ) : (
               <Tooltip label="Leave Party" placement="top" hasArrow>
@@ -143,6 +129,20 @@ function PartyMembersList(props: { members: string[] }): JSX.Element {
   // Stores
   const { users } = useUsersStore();
   const { currentParty } = usePartyStore();
+  const presence = usePresenceStore((state) => state.partialPrescences);
+
+  // Map the members to the users
+  const members = props.members
+    .map((member) => {
+      const u = users.find((el) => el._id === member);
+      if (!u) return null;
+      const presenceData = presence.find((el) => el._id === member) as Presence | undefined;
+      return {
+        ...u,
+        presence: presenceData,
+      };
+    })
+    .filter((member) => member !== null);
 
   // Theme
   const yellowHex = useHexColor('yellow.400');
@@ -170,19 +170,19 @@ function PartyMembersList(props: { members: string[] }): JSX.Element {
         },
       }}
     >
-      {props.members.map((member) => {
-        const u = users.find((el) => el._id === member);
-        const name = u ? u.data.name : 'Unknown';
-        const email = u ? u.data.email : 'Unknown';
-        const isOwner = u ? u._id === currentParty?.ownerId : false;
+      {members.map((member) => {
+        const name = member.data.name;
+        const email = member.data.email;
+        const isOwner = member._id === currentParty?.ownerId;
         return (
-          <HStack justify={'space-between'} key={member}>
-            <VStack align="start" gap="0" key={member}>
+          <HStack justify={'space-between'} key={member._id}>
+            <VStack align="start" gap="0">
               <Text fontSize="sm" fontWeight="bold">
                 {name}
               </Text>
               <Text fontSize="xs">{email}</Text>
             </VStack>
+            <HStack></HStack>
             {isOwner && <FaCrown color={yellowHex} />}
           </HStack>
         );
