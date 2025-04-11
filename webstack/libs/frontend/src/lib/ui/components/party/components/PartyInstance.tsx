@@ -81,17 +81,17 @@ export function PartyInstance(): JSX.Element {
         </TabList>
 
         <TabPanels>
-          <TabPanel>
+          <TabPanel px="0">
             <PartyMembersList members={members} />
           </TabPanel>
-          <TabPanel height="100%">
+          <TabPanel height="100%" px="0">
             <PartyChats />
           </TabPanel>
         </TabPanels>
       </Tabs>
 
       <Flex flexDir="column" mt="auto" width="100%">
-        <Divider my="2" />
+        <Divider mb="2" />
         <HStack justify="space-between" align="center">
           <HStack flex="1" justify="flex-start">
             <Badge
@@ -234,7 +234,7 @@ function PartyChats(): JSX.Element {
   return (
     <>
       <VStack
-        height="275px"
+        height="280px"
         flex={1}
         spacing={3}
         align="stretch"
@@ -257,38 +257,43 @@ function PartyChats(): JSX.Element {
       >
         {chats.map((chat) => {
           const u = users.find((el) => el._id === chat.senderId);
-          const name = u ? u.data.name : 'Unknown';
+          let name = (u ? u.data.name : 'Unknown').substring(0, 15);
+          name = name.length >= 15 ? name.concat('...') : name;
           const time = new Date(chat.timestamp);
           // Formatted time showing date and time. Only show date if the message is older than today
           const today = new Date();
           const isToday = time.toDateString() !== today.toDateString();
+          const yours = chat.senderId === user!._id;
           const formattedTime = isToday
             ? time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             : time.toLocaleDateString([], {
+                hour: '2-digit',
+                minute: '2-digit',
                 year: 'numeric',
                 month: '2-digit',
                 day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
               });
 
           return (
-            <Flex key={chat.id} direction={chat.senderId === user!._id ? 'row-reverse' : 'row'}>
-              <Box
-                padding="5px"
-                borderRadius="md"
-                maxWidth="80%"
-                backgroundColor={chat.senderId === user!._id ? 'blue.500' : 'gray.200'}
-                color={chat.senderId === user!._id ? 'white' : 'black'}
-                boxShadow="md"
-                display={'flex'}
-                flexDir={'column'}
-              >
-                <Text fontSize="xs">
-                  {name} - {formattedTime}
-                </Text>
-
-                <Text fontWeight="bold">{chat.text}</Text>
+            <Flex key={chat.id} direction={yours ? 'row-reverse' : 'row'}>
+              <Box display="flex" flexDir="column" maxWidth="80%">
+                <Box textAlign={yours ? 'right' : 'left'}>
+                  <Text fontSize="xs">
+                    {!yours && name} {formattedTime}
+                  </Text>
+                </Box>
+                <Box
+                  borderRadius="lg"
+                  py="3px"
+                  px="7px"
+                  backgroundColor={yours ? 'blue.300' : 'gray.200'}
+                  color={yours ? 'black' : 'black'}
+                  // boxShadow="md"
+                  display={'flex'}
+                  flexDir={'column'}
+                >
+                  <Text fontSize="sm">{chat.text}</Text>
+                </Box>
               </Box>
             </Flex>
           );
@@ -304,6 +309,8 @@ function PartyChats(): JSX.Element {
           onKeyDown={handleKeyDown}
           size="sm"
           flex="1"
+          borderRadius="xl"
+          _placeholder={{ opacity: 0.5, color: 'gray.400' }}
         />
 
         <Tooltip label="Send Message" placement="top" hasArrow>
