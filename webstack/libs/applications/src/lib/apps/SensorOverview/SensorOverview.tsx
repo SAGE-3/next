@@ -47,7 +47,12 @@ import { state as AppState } from './index';
 import VariableCard from './viewers/VariableCard';
 import EChartsViewer from './viewers/EChartsViewer';
 import CurrentConditions from './viewers/CurrentConditions';
-import { getFormattedDateTime1MonthBefore, getFormattedDateTime1WeekBefore, getFormattedDateTime1YearBefore, getFormattedDateTime24HoursBefore } from './utils';
+import {
+  getFormattedDateTime1MonthBefore,
+  getFormattedDateTime1WeekBefore,
+  getFormattedDateTime1YearBefore,
+  getFormattedDateTime24HoursBefore,
+} from './utils';
 import StationMetadata from './viewers/StationMetadata';
 import FriendlyVariableCard from './viewers/FriendlyVariableCard';
 import StatisticCard from './viewers/StatisticCard';
@@ -107,7 +112,6 @@ const resolveTimePeriod = (timePeriod: string) => {
   }
 };
 
-
 function formatDuration(ms: number) {
   if (ms < 0) ms = -ms;
   const mins = Math.floor(ms / 60000) % 60;
@@ -138,9 +142,8 @@ function AppComponent(props: App): JSX.Element {
   const [lastUpdate, setLastUpdate] = useState<number>(Date.now());
   const [timeSinceLastUpdate, setTimeSinceLastUpdate] = useState<string>(formatDuration(Date.now() - lastUpdate));
   const createApp = useAppStore((state) => state.create);
-  const [stationData, setStationData] = useState<StationDataType[]>([])
+  const [stationData, setStationData] = useState<StationDataType[]>([]);
   const [stationMetadata, setStationMetadata] = useState({});
-
 
   useEffect(() => {
     const updateTimesinceLastUpdate = () => {
@@ -175,14 +178,14 @@ function AppComponent(props: App): JSX.Element {
 
   const fetchStationData = async () => {
     try {
-      const token = "71c5efcd8cfe303f2795e51f01d19c6";
-      
+      const token = '71c5efcd8cfe303f2795e51f01d19c6';
+
       // First fetch station data
-      const stationResponse = await fetch(`https://api.hcdp.ikewai.org/mesonet/db/stations?station_ids=${s.stationNames.join(",")}`, {
-        method: "GET",
+      const stationResponse = await fetch(`https://api.hcdp.ikewai.org/mesonet/db/stations?station_ids=${s.stationNames.join(',')}`, {
+        method: 'GET',
         headers: {
-          "Authorization": `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (!stationResponse.ok) {
@@ -202,19 +205,17 @@ function AppComponent(props: App): JSX.Element {
           // Build query URL with start date
           const queryParams = new URLSearchParams({
             station_ids: station.station_id,
-            var_ids: s.widget.yAxisNames.join(","),
+            var_ids: s.widget.yAxisNames.join(','),
             row_mode: 'json',
-            limit: '100'
+            limit: '100',
           });
-          const measurements = await fetch(
-            `https://api.hcdp.ikewai.org/mesonet/db/measurements?${queryParams}`,
-            {
-              method: "GET",
-              headers: {
-                "Authorization": `Bearer ${token}`
-              }
-            }
-          );
+          const url = s.url !== '' ? s.url : `https://api.hcdp.ikewai.org/mesonet/db/measurements?${queryParams}`;
+          const measurements = await fetch(url, {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
           if (!measurements.ok) {
             console.warn(`Measurement API error for station ${station.station_id}: ${measurements.status}`);
             stationByMeasurements[station.station_id] = [];
@@ -233,9 +234,8 @@ function AppComponent(props: App): JSX.Element {
       setStationMetadata(stationByMeasurements);
       setIsLoaded(true);
       setLastUpdate(Date.now());
-
     } catch (err) {
-      console.error("Failed to fetch station data:", err);
+      console.error('Failed to fetch station data:', err);
       setIsLoaded(true); // Set loaded even on error to prevent infinite loading state
       // Optionally show error to user
     }
@@ -393,7 +393,13 @@ function AppComponent(props: App): JSX.Element {
                 {props.data.state.widget.visualizationType === 'map' ? (
                   <>
                     <Box id={'container' + props._id} width={props.data.size.width - 30} height={props.data.size.height - 78}>
-                      <MapViewer {...props} isSelectingStations={false} isLoaded={isLoaded} stationData={stationData} stationMetadata={stationMetadata} />
+                      <MapViewer
+                        {...props}
+                        isSelectingStations={false}
+                        isLoaded={isLoaded}
+                        stationData={stationData}
+                        stationMetadata={stationMetadata}
+                      />
                     </Box>
                   </>
                 ) : null}
@@ -451,7 +457,7 @@ function ToolbarComponent(props: App): JSX.Element {
   useEffect(() => {
     const fetchAvailableVariables = async () => {
       try {
-        const token = "71c5efcd8cfe303f2795e51f01d19c6";
+        const token = '71c5efcd8cfe303f2795e51f01d19c6';
         const allVariables = new Set<string>();
 
         // Fetch variables for each station
@@ -460,8 +466,8 @@ function ToolbarComponent(props: App): JSX.Element {
             `https://api.hcdp.ikewai.org/mesonet/db/measurements?station_ids=${stationId}&limit=100&row_mode=json&join_metadata=true`,
             {
               headers: {
-                "Authorization": `Bearer ${token}`
-              }
+                Authorization: `Bearer ${token}`,
+              },
             }
           );
           if (response.ok) {
@@ -476,9 +482,8 @@ function ToolbarComponent(props: App): JSX.Element {
 
         // Update state with unique variables
         updateState(props._id, { availableVariableNames: Array.from(allVariables) });
-
       } catch (err) {
-        console.error("Failed to fetch available variables:", err);
+        console.error('Failed to fetch available variables:', err);
       }
     };
 
@@ -785,8 +790,6 @@ function ToolbarComponent(props: App): JSX.Element {
           })}
         </Select>
       </Tooltip>
-
-
     </>
   );
 }

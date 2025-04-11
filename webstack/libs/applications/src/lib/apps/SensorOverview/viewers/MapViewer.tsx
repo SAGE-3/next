@@ -26,6 +26,7 @@ import { App } from '../../../schema';
 import { state as AppState } from '../index';
 // import { state as AppState } from './index';
 // import redMarker from './redMarker.png';
+import { variable_dict } from '../data/variableConversion';
 
 // Styling
 import './maplibre-gl.css';
@@ -54,7 +55,9 @@ const baselayers = {
   OpenStreetMap: `https://api.maptiler.com/maps/streets/style.json?key=${mapTilerAPI}`,
 };
 
-const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boolean; stationData: StationDataType[]; stationMetadata: any }): JSX.Element => {
+const MapViewer = (
+  props: App & { isSelectingStations: boolean; isLoaded?: boolean; stationData: StationDataType[]; stationMetadata: any }
+): JSX.Element => {
   const s = props.data.state as AppState;
   // const [map, setMap] = useState<maplibregl.Map>();
   const updateState = useAppStore((state) => state.updateState);
@@ -69,7 +72,12 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
   const [file, setFile] = useState<Asset>();
   const [markers, setMarkers] = useState<Marker[]>([]);
   const [scaleToFontSize, setScaleToFontSize] = useState(100);
-  const variableName = props.data.state.widget.yAxisNames[0].split('_').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1));
+
+  const variableName =
+    variable_dict.find(
+      (v: { standard_name: string; units: string | null; units_short: string | null; display_name: string }) =>
+        v.standard_name === s.widget.yAxisNames[0]
+    )?.display_name || s.widget.yAxisNames[0];
 
   // Source
   const [source, setSource] = useState<{ id: string; data: any } | null>(null);
@@ -279,12 +287,12 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
       }
       // Loop through each station's metadata
       Object.entries(props.stationMetadata).forEach(([stationId, measurements]) => {
-          const station = props.stationData.find((s) => s.station_id === stationId);
-          if (station) {
-            const el = document.createElement('div');
-            if (measurements && Array.isArray(measurements) && measurements.length > 0) {
-              const latestMeasurement = measurements[0].value; // Most recent measurement
-              el.innerHTML = `<div style="position: relative; z-index: 1000;">
+        const station = props.stationData.find((s) => s.station_id === stationId);
+        if (station) {
+          const el = document.createElement('div');
+          if (measurements && Array.isArray(measurements) && measurements.length > 0) {
+            const latestMeasurement = measurements[0].value; // Most recent measurement
+            el.innerHTML = `<div style="position: relative; z-index: 1000;">
               <div style="
                 border-radius: 50%; 
                 position: absolute; 
@@ -314,8 +322,8 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
                 </p>
               </div>
             </div>`;
-            } else {
-              el.innerHTML = `<div style="position: relative; z-index: 1;">
+          } else {
+            el.innerHTML = `<div style="position: relative; z-index: 1;">
                 <div style="
                   border-radius: 50%; 
                   position: absolute; 
@@ -335,19 +343,18 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
                   <p style="font-size:7px; font-weight: bold; text-align: center">-</p>
                 </div>
               </div>`;
-            }
-            if (el && el !== null) {
-              const marker = new maplibregl.Marker({
-                color: '#000000',
-                element: el.firstChild as HTMLElement,
-              })
-                .setLngLat([station.lng, station.lat])
-                .addTo(map);
-              marker.togglePopup();
-              setMarkers((prev) => [...prev, marker]);
-            }
           }
-        
+          if (el && el !== null) {
+            const marker = new maplibregl.Marker({
+              color: '#000000',
+              element: el.firstChild as HTMLElement,
+            })
+              .setLngLat([station.lng, station.lat])
+              .addTo(map);
+            marker.togglePopup();
+            setMarkers((prev) => [...prev, marker]);
+          }
+        }
       });
     }
   }, [map, props.isLoaded, JSON.stringify(props.stationMetadata), JSON.stringify(s.stationNames), JSON.stringify(s.stationScale), scale]);
@@ -378,7 +385,7 @@ const MapViewer = (props: App & { isSelectingStations: boolean; isLoaded?: boole
       {/* <Box id={'container' + props._id + "0"} w={props.data.size.width} h={props.data.size.height}> */}
       <Box zIndex={999999999} bg="#2D62D2" textAlign={'center'}>
         <Text color="white" textShadow={'black 2px 2px'} fontSize={scaleToFontSize / 10}>
-          {variableName.join(' ') + ' (' + units + ')'}
+          {variableName + ' (' + units + ')'}
         </Text>
       </Box>
       <Box id={'map' + props._id + '0'} w={'100%'} h={'100%'} />

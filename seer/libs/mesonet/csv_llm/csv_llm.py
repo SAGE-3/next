@@ -36,7 +36,6 @@ class LLM:
         df = pd.read_excel(path)
         df.iloc[:, 0] = df.iloc[:, 0].str.strip()
 
-        print(df.head)
 
         samples = []
 
@@ -438,7 +437,6 @@ Take a deep breath, think it through, assume you are the user and imagine their 
 
         # Format it in a readable way
         readable_format = dt.strftime("%B %d, %Y")
-        print(readable_format)
         system = """ You are a date expert selector.
         You will be given a query from a user and you will select the appropriate dates to filter the data by. 
         Todays date is currently {readable_format}

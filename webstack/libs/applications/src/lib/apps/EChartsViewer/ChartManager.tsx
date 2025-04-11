@@ -73,16 +73,16 @@ export const ChartManager = (
   stationMetadata: StationData,
   timePeriod: string,
   size: { width: number; height: number; depth: number },
-  variable_dict: {standard_name: string, units: string | null, units_short: string | null, display_name: string}[]
+  variable_dict: { standard_name: string; units: string | null; units_short: string | null; display_name: string }[]
 ): EChartsOption => {
   let options: EChartsOption = {};
-  const stationReadableNames = ["TODO"," FIXME"];
+  const stationReadableNames = ['TODO', ' FIXME'];
   //
   if (yAxisAttributes[0] === 'Elevation & Current Temperature') {
     yAxisAttributes[0] = 'elevation';
     xAxisAttributes[0] = 'current temperature';
   }
-  
+
   // This generates the data for charts, NOT the chart itself
   const { xAxisData, yAxisData } = createAxisData(stationMetadata, yAxisAttributes, xAxisAttributes);
   switch (chartType) {
@@ -183,19 +183,17 @@ const createXAxis = (
 const createYAxis = (options: EChartsOption, yAxisAttributes: string[]) => {
   let units: string | null = '';
   let variableName: string | null = '';
-  console.log(variable_dict, yAxisAttributes)
-  for(let i = 0; i < variable_dict.length; i++) {
-    if(variable_dict[i].standard_name == yAxisAttributes[0]) {
-      variableName = variable_dict[i].display_name
-      units = variable_dict[i].units
-      console.log(variable_dict[i])
+
+  for (let i = 0; i < variable_dict.length; i++) {
+    if (variable_dict[i].standard_name == yAxisAttributes[0]) {
+      variableName = variable_dict[i].display_name;
+      units = variable_dict[i].units;
       break;
     }
   }
 
-
   options.yAxis = {
-    name: `${variableName} ${units === null ? "" : `(${units})`}`,
+    name: `${variableName} ${units === null ? '' : `(${units})`}`,
     nameTextStyle: {
       fontSize: 40,
       fontWeight: 'bold',
@@ -214,11 +212,11 @@ const createColors = (options: EChartsOption, data: StationData) => {
   const colors: string[] = [];
   Object.keys(data).forEach((stationId, index) => {
     if (data[stationId].length > 0) {
-      colors.push(getColor(index % 9));  // Use modulo to cycle through the 9 available colors
+      colors.push(getColor(index % 9)); // Use modulo to cycle through the 9 available colors
     }
   });
   return colors;
-}
+};
 
 function createMultiLineChart(
   options: EChartsOption,
@@ -251,8 +249,8 @@ function createMultiLineChart(
 
   options.legend = {
     data: Object.keys(data)
-      .filter(stationId => Array.isArray(data[stationId]) && data[stationId].length > 0)
-      .map(id => `Station ${id}`),
+      .filter((stationId) => Array.isArray(data[stationId]) && data[stationId].length > 0)
+      .map((id) => `Station ${id}`),
     textStyle: {
       fontSize: 32,
       lineHeight: -20,
@@ -271,7 +269,7 @@ function createLineChart(
   xAxisData: any[]
 ) {
   options.series = [];
-  console.log(yAxisData)
+  console.log(yAxisData);
   for (let i = 0; i < yAxisData.length; i++) {
     options.series.push({
       type: 'line',
@@ -314,7 +312,6 @@ function createLineChart(
   //   },
   // ];
 }
-
 
 function createScatterPlot(
   options: EChartsOption,
@@ -361,14 +358,14 @@ function createTitle(
       break;
     }
   }
-  for(let i = 0; i < variable_dict.length; i++) {
-    if(variable_dict[i].standard_name == yAxisAttributes[0]) {
-      variableName = variable_dict[i].display_name
+  for (let i = 0; i < variable_dict.length; i++) {
+    if (variable_dict[i].standard_name == yAxisAttributes[0]) {
+      variableName = variable_dict[i].display_name;
     }
   }
 
   options.title = {
-    text: `${variableName} versus Time for ${timePeriod}`,
+    text: `${variableName} versus Time`,
     textStyle: {
       fontSize: 40,
     },
@@ -392,7 +389,7 @@ function createBoxplot(
       name: yAxisAttributes[0],
       boxWidth: [30, 30],
       itemStyle: {
-        borderWidth: 1, 
+        borderWidth: 1,
         borderColor: 'black',
       },
       markLine: {
@@ -422,7 +419,7 @@ function createPieChart(
   for (let i = 0; i < yAxisData.length; i++) {
     options.series.push({
       type: 'pie',
-      data: yAxisData[i],   
+      data: yAxisData[i],
       name: yAxisAttributes[0],
       radius: '50%',
       label: { show: true, fontSize: 20 },
@@ -453,8 +450,6 @@ function createColumnHistogram(
     });
   }
 }
-
-
 
 const formatDate = (date: Date) => {
   const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -495,15 +490,13 @@ const createAxisData = (data: StationData, yAxisAttributes: string[], xAxisAttri
   // First, collect all unique timestamps
   Object.entries(data).forEach(([stationId, measurements]) => {
     if (!Array.isArray(measurements) || measurements.length === 0) return;
-    measurements.forEach(measurement => {
+    measurements.forEach((measurement) => {
       allTimestamps.add(formatDate(new Date(measurement.timestamp)));
     });
   });
 
   // Convert to sorted array
-  xAxisData = Array.from(allTimestamps).sort((a, b) => 
-    new Date(a).getTime() - new Date(b).getTime()
-  );
+  xAxisData = Array.from(allTimestamps).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
 
   // Create data series for each station
   Object.entries(data).forEach(([stationId, measurements]) => {
@@ -511,17 +504,12 @@ const createAxisData = (data: StationData, yAxisAttributes: string[], xAxisAttri
 
     // Create a map of timestamp to value for this station
     const timestampMap = new Map<string, number>();
-    measurements.forEach(measurement => {
-      timestampMap.set(
-        formatDate(new Date(measurement.timestamp)),
-        parseFloat(measurement.value)
-      );
+    measurements.forEach((measurement) => {
+      timestampMap.set(formatDate(new Date(measurement.timestamp)), parseFloat(measurement.value));
     });
 
     // Create the data array for this station, matching the xAxisData timestamps
-    const stationData = xAxisData.map(timestamp => 
-      timestampMap.has(timestamp) ? timestampMap.get(timestamp)! : null
-    );
+    const stationData = xAxisData.map((timestamp) => (timestampMap.has(timestamp) ? timestampMap.get(timestamp)! : null));
 
     yAxisData.push(stationData);
   });

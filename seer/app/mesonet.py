@@ -73,6 +73,9 @@ class GraphState(TypedDict):
     Represents the state of the graph.
     """
     request: MesonetQuery
+    start_date: str
+    end_date: str
+    url: str
     data_statistics: str
     llm_re: LLM
     llm_base: LLM
@@ -93,8 +96,7 @@ class GraphState(TypedDict):
     measurements: str
     date_extracted: str
     date_reasoning: str
-    start_date = str
-    end_date = str
+
 
 def convert_to_iso(date_dict):
     """
@@ -150,14 +152,17 @@ class MesonetAgent:
                 # max_tokens=1000,
                 streaming=False,
             )
-        
         # Templates
         sys_template_str = """Today is {date}. 
-        You are a helpful and succinct assistant, providing informative answers to {username} (whose location is {location}). 
+        You are a helpful and succinct assistant, providing informative answers to {username}. 
         You are a date expert selector.
         You are tasked to select a start date and end date according to the user's query. 
         Take a deep breath. Think it through. Imagine you are the user and imagine their intent. 
-        You are only strictly to answer in the format {{"start_date": str, "end_date": str}}"""
+        You are only strictly to answer in the format {{"start_date": str, "end_date": str}}
+        Provide your answer in ISO 8601 format (YYYY-MM-DDTHH:MM:SSZ).
+        Make sure to provide times between the start date and end date. 
+        Do not include any other information or reasoning in your answer.
+        """
         human_template_str = "Answer: {question}"
         
         # For OpenAI / Message API compatible models
@@ -217,28 +222,19 @@ class MesonetAgent:
 
     async def process(self, qq: MesonetQuery):
         self.logger.info("Got Mesonet> from " + qq.user + ": " + qq.q)
-        # Default answer
-        description = "No description available."
-        print(qq.url)
         token = "71c5efcd8cfe303f2795e51f01d19c6"
         
-        print(qq)
-
         # Initialize LangGraph
         workflow = StateGraph(GraphState)
 
 
         def initialize_llms(state: GraphState):
-            return {
-                "llm_re": LLM(self.client, {"model": "gpt-4o", "temperature": 0}),
-                "llm_base": LLM(self.client, {"model": "gpt-4o","temperature": 0}),
-                "llm_transform": LLM(self.client, {"model": "gpt-4o", "temperature": 0}),
-                "llm_station": LLM(self.client, {"model": "gpt-4o", "temperature": 0}),
-                "llm": LLM(self.client, {"model": "gpt-4o", "temperature": 0})
-            }
+            state["llm_re"] = LLM(self.client, {"model": "gpt-4o", "temperature": 1})
+            return state
         
         def get_all_stations(state: GraphState):
             res = requests.get("https://api.hcdp.ikewai.org/mesonet/db/stations", headers={"Authorization": f"Bearer {token}"})
+            
             return {"stations": res.text}
             # res = pd.read_csv('data/stations_v2.csv', dtype={'station_id': str}).to_json()
             # res = pd.read_csv('data/stations_v1.csv').to_json()
@@ -295,13 +291,13 @@ class MesonetAgent:
         def extract_attributes(state: GraphState):
             user_prompt = state["request"].q
             attributes_extracted, attribute_reasoning = state["llm_re"].prompt_select_attributes(user_prompt, state["attributes_extracted"])
-            print(attributes_extracted)
+            print("Attributes Extracted:",attributes_extracted)
             return {"attributes_extracted": attributes_extracted, "attribute_reasoning": attribute_reasoning}
 
         def extract_chart_type(state: GraphState):
             user_prompt = state["request"].q
             chart_type_extracted, chart_type_reasoning = state["llm_re"].prompt_charts_via_chart_info(user_prompt, state["attributes_extracted"])
-            print(chart_type_extracted)
+            print("Chart Type Chosen:", chart_type_extracted)
             return {"chart_type_extracted": chart_type_extracted, "chart_type_reasoning": chart_type_reasoning}
         
         def fetch_with_retries(url, headers, max_retries=3):
@@ -368,6 +364,60 @@ class MesonetAgent:
             print(code_output_model_summary)
             return {"measurements": res.text, "summary": code_output_model_summary}
 
+        def get_answer_with_reasoning(state: GraphState):
+            url = f"https://api.hcdp.ikewai.org/mesonet/db/measurements?station_ids={','.join(state['stations_extracted'])}&var_ids={','.join(state['attributes_extracted'])}&start_date={state['start_date']}&end_date={state['end_date']}&row_mode=json&join_metadata=true"
+            
+            res = requests.get(url, headers={"Authorization": f"Bearer {token}"})
+            print("Start Date:", state['start_date'])
+            print("End Date:", state['end_date'])
+            # Validate JSON response
+            try:
+                data = json.loads(res.text)
+                df = pd.DataFrame(data)
+            except json.JSONDecodeError:
+                print("Invalid JSON response from API")
+                return {"error": "Invalid JSON response from API"}
+
+            # Check for empty data
+            if df.empty:
+                print("No data retrieved from API")
+                return {"error": "No data retrieved from API"}
+
+            # Ensure required columns exist
+            required_columns = {"timestamp", "value", "variable", "station_name"}
+            if not required_columns.issubset(df.columns):
+                print("Missing required columns:", required_columns - set(df.columns))
+                return {"error": f"Missing required columns: {required_columns - set(df.columns)}"}
+
+            # Convert timestamp to datetime and handle errors
+            df["timestamp"] = pd.to_datetime(df["timestamp"], format="%Y-%m-%dT%H:%M:%S.%fZ", errors="coerce")
+            df = df.dropna(subset=["timestamp"])  # Drop rows where timestamp is NaT
+
+            # Convert value to numeric and remove NaN
+            df["value"] = pd.to_numeric(df["value"], errors="coerce")
+            df = df.dropna(subset=["value"])  # Drop rows where value is NaN
+
+            # Convert timestamps to hourly intervals
+            df["timestamp"] = df["timestamp"].dt.floor("H")
+
+            # Aggregate data: mean per timestamp-variable-station_name
+            df_resampled = df.groupby(["timestamp", "variable", "station_name"]).agg({"value": "mean"}).reset_index()
+            
+            #Print length of data
+            print("Length of data before resampled:", len(df))
+            print("Length of data after resampled:", len(df_resampled))
+
+            # Convert DataFrame to JSON format
+            measurements_json = df_resampled.to_dict(orient="records")
+
+            # Generate summary
+            summary, summary_reasoning = state["llm_re"].prompt_summarize_reasoning(
+                state["request"].q, state["attribute_reasoning"], state["station_reasoning"], measurements_json
+            )
+            summary = summary + f" {state['start_date']} to {state['end_date']}"
+            print(summary)
+            return {"measurements": measurements_json, "summary": summary, "url": url}
+
 
         # # Define nodes
         # def load_data(state: GraphState):
@@ -415,31 +465,24 @@ class MesonetAgent:
 
         # Compile the graph
         app = workflow.compile()
-        print(qq)
         
         response = await self.session_llama.ainvoke(  # Make sure self.session_llama is available in state
                     {
                         "history": [("human", ""), ("ai", "")],
                         "question": qq.q,
-                        "username": "RJ",
-                        "location": "Honolulu",
+                        "username": qq.user,
                         "date": qq.currentTime,
                     }
                 )
         response = json.loads(response)
-        print(response,"---------")
-        # Execute the graph
-        initial_state = GraphState(request=qq, start_date=response['start_date'], end_date=response['end_date'])
-        print(initial_state,"*****")
+        initial_state = GraphState(testing="This is a test", request=qq,  start_date=response['start_date'], end_date=response['end_date'])
         final_state = app.invoke(initial_state)
 
-        # Process final state and return response
-        chartInformation = {
-            "userPrompt": qq.q
-        }
-
-                # Propose the answer to the user
-        action1 = json.dumps(
+        attributes = final_state.get("attributes_extracted", [])
+        actions = []
+        print(attributes, 'attributes')
+        for attribute in attributes:
+            actions.append(json.dumps(
             {
                 "type": "create_app",
                 "app": "Hawaii Mesonet",
@@ -455,14 +498,14 @@ class MesonetAgent:
                     "overlay": True,
                     "availableVariableNames": [],
                     "stationScale": 5,
-                    "url": '',
+                    "url": final_state.get("url", ""),  # URL for the data
                     "widget": {
                         "visualizationType": final_state.get("chart_type_extracted", ["line"])[0],  # Default to "line" chart
-                        "yAxisNames": final_state.get("attributes_extracted", ["temperature"]),  # Default to temperature
+                        "yAxisNames": [attribute],  # Default to temperature
                         "xAxisNames": ["date_time"],
                         "color": "#5AB2D3",
-                        "startDate": "202401181356",
-                        "endDate": "202401191356",
+                        "startDate": final_state.get("start_date", "202401191356"),  # Default to current date
+                        "endDate": final_state.get("end_date", "202401191356"),  # Default to current date
                         "timePeriod": "24 hours",
                         "liveData": True,
                         "layout": {"x": 0, "y": 0, "w": 11, "h": 130},
@@ -474,13 +517,16 @@ class MesonetAgent:
                     "size": {"width": 2000, "height": 1000, "depth": 0},
                 },
             }
-        )
+        ))
+
 
         return  MesonetAnswer(
             attributes=final_state.get("attributes_extracted", []),  # Get extracted attributes from final state
             stations=final_state.get("stations_extracted", []),  # Get extracted stations from final state
             chart_type=final_state.get("chart_type_extracted", []),  # Get extracted chart type from final state
-            summary=final_state.get("summary", ""),
+            start_date=final_state.get("start_date", ""),  # Get extracted chart type from final state
+            end_date=final_state.get("end_date", ""),  # Get extracted chart type from final state
+            summary=final_state.get("summary" , ""),
             success=True,
-            actions=[action1]
+            actions=actions
         )
