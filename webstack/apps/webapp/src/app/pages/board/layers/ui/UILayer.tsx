@@ -84,6 +84,7 @@ import {
   PluginsMenu,
   UsersMenu,
   AssetsMenu,
+  EscapeApp,
 } from './components';
 
 type UILayerProps = {
@@ -409,6 +410,7 @@ export function UILayer(props: UILayerProps) {
           />
           <Divider orientation="vertical" mx="1" />
           <Interactionbar isContextMenuOpen={isContextMenuOpen} />
+          <EscapeApp />
           <Divider orientation="vertical" mx="1" />
           <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdPeople />} tooltip={'Users'} title={'Users'}>
             <UsersMenu boardId={props.boardId} />
