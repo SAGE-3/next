@@ -26,7 +26,7 @@ import {
 } from '@sage3/frontend';
 
 import { initialValues } from '@sage3/applications/initialValues';
-import { App, AppName, AppState } from '@sage3/applications/schema';
+import { App, AppName, AppSchema, AppState } from '@sage3/applications/schema';
 
 // Renders all the apps
 export function Apps() {
@@ -36,8 +36,8 @@ export function Apps() {
   // Apps Store
   const apps = useThrottleApps(250);
   const appsFetched = useAppStore((state) => state.fetched);
-  const createApp = useAppStore((state) => state.create);
   const deleteApp = useAppStore((state) => state.delete);
+  const createBatch = useAppStore((state) => state.createBatch);
 
   // Save the previous location and scale when zoming to an application
   const scale = useThrottleScale(250);
@@ -131,34 +131,57 @@ export function Apps() {
       if (boardCursor && apps.length > 0) {
         const cx = boardCursor.x;
         const cy = boardCursor.y;
-        let found = false;
-        // Sort the apps by the last time they were updated to order them correctly
-        apps
-          .slice()
-          .sort((a, b) => b._updatedAt - a._updatedAt)
-          .forEach((el) => {
-            if (found) return;
-            const x1 = el.data.position.x;
-            const y1 = el.data.position.y;
-            const x2 = x1 + el.data.size.width;
-            const y2 = y1 + el.data.size.height;
-            // If the cursor is inside the app, delete it. Only delete the top one
-            if (cx >= x1 && cx <= x2 && cy >= y1 && cy <= y2) {
-              found = true;
-              // Put the app data into the clipboard
-              if (navigator.clipboard) {
-                navigator.clipboard.writeText(JSON.stringify({ sage3: el }));
-                // Notify the user
-                toast({
-                  title: 'Success',
-                  description: `Application Copied to Clipboard`,
-                  duration: 2000,
-                  isClosable: true,
-                  status: 'success',
-                });
+
+        const selectedappids = useUIStore.getState().savedSelectedAppsIds;
+        if (selectedappids.length > 0) {
+          // Use selected apps if any or all apps
+          const selectedapps = useAppStore.getState().apps.filter((a) => selectedappids.includes(a._id));
+          // Put the app data into the clipboard
+          if (navigator.clipboard) {
+            navigator.clipboard.writeText(JSON.stringify({ sage3: selectedapps }));
+            // Notify the user
+            toast({
+              title: 'Success',
+              description: `Applications Copied to Clipboard: ${selectedapps.length}`,
+              duration: 2000,
+              isClosable: true,
+              status: 'success',
+            });
+          }
+        } else {
+          let found = false;
+          // Sort the apps by the last time they were updated to order them correctly
+          apps
+            .slice()
+            .sort((a, b) => b._updatedAt - a._updatedAt)
+            .forEach((el) => {
+              if (found) return;
+              const x1 = el.data.position.x;
+              const y1 = el.data.position.y;
+              const x2 = x1 + el.data.size.width;
+              const y2 = y1 + el.data.size.height;
+              // If the cursor is inside the app, delete it. Only delete the top one
+              if (cx >= x1 && cx <= x2 && cy >= y1 && cy <= y2) {
+                found = true;
+                // Put the app data into the clipboard
+                if (navigator.clipboard) {
+                  navigator.clipboard.writeText(JSON.stringify({ sage3: [el] }));
+                  // Notify the user
+                  toast({
+                    title: 'Success',
+                    description: `Application Copied to Clipboard`,
+                    duration: 2000,
+                    isClosable: true,
+                    status: 'success',
+                  });
+                }
               }
-            }
-          });
+            });
+          if (!found) {
+            // No app under the cursor - clear the clipboard
+            navigator.clipboard.writeText("");
+          }
+        }
       }
     },
     { dependencies: [JSON.stringify(apps)] }
@@ -176,24 +199,34 @@ export function Apps() {
             const parsed = JSON.parse(data);
             // Test if sage3 JSON data
             if (parsed.sage3) {
-              // Create a new duplicate app
-              const type = parsed.sage3.data.type as AppName;
-              const size = parsed.sage3.data.size;
-              const state = parsed.sage3.data.state;
-              // Create the app
-              createApp({
-                title: type,
-                roomId: roomId!,
-                boardId: boardId!,
-                position: { x: cx, y: cy, z: 0 },
-                size: size,
-                rotation: { x: 0, y: 0, z: 0 },
-                type: type,
-                state: { ...(initialValues[type] as AppState), ...state },
-                raised: true,
-                dragging: false,
-                pinned: false,
-              });
+              const batch: AppSchema[] = [];
+              const app0 = parsed.sage3[0].data as AppSchema;
+              const pos0 = app0.position;
+              for (let i = 0; i < parsed.sage3.length; i++) {
+                // Get the app data
+                const data = parsed.sage3[i].data as AppSchema;
+                const type = data.type as AppName;
+                const size = data.size;
+                const pos = data.position;
+                const state = data.state;
+                // Create a new duplicate app
+                const app: AppSchema = {
+                  title: type,
+                  roomId: roomId!,
+                  boardId: boardId!,
+                  // offset the position of the app based on the first app
+                  position: { x: cx + (pos.x - pos0.x), y: cy + (pos.y - pos0.y), z: 0 },
+                  size: size,
+                  rotation: { x: 0, y: 0, z: 0 },
+                  type: type,
+                  state: { ...(initialValues[type] as AppState), ...state },
+                  raised: true,
+                  dragging: false,
+                  pinned: false,
+                };
+                batch.push(app);
+              }
+              createBatch(batch);
             } else {
               console.log('Paste> JSON is not a SAGE3 app');
             }
