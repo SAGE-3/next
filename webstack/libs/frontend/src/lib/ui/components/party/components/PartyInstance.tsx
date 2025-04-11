@@ -94,17 +94,20 @@ export function PartyInstance(): JSX.Element {
         <Divider mb="2" />
         <HStack justify="space-between" align="center">
           <HStack flex="1" justify="flex-start">
-            <Badge
-              colorScheme={board ? board.data.color : 'teal'}
-              fontSize="sm"
-              px="2"
-              py="1"
-              borderRadius="md"
-              variant="subtle"
-              maxWidth="200px"
-            >
-              {board ? board.data.name : 'No Board'}
-            </Badge>
+            <Tooltip label="Board Name" placement="top" hasArrow>
+              <Badge
+                colorScheme={board ? board.data.color : 'teal'}
+                fontSize="sm"
+                px="2"
+                py="1"
+                borderRadius="md"
+                variant="subtle"
+                maxWidth="200px"
+                userSelect={'none'}
+              >
+                {board ? board.data.name : 'No Board'}
+              </Badge>
+            </Tooltip>
           </HStack>
 
           <HStack flex="1" justify="flex-end">
@@ -257,12 +260,12 @@ function PartyChats(): JSX.Element {
       >
         {chats.map((chat) => {
           const u = users.find((el) => el._id === chat.senderId);
-          let name = (u ? u.data.name : 'Unknown').substring(0, 15);
-          name = name.length >= 15 ? name.concat('...') : name;
+          let name = (u ? u.data.name : 'Unknown').substring(0, 12);
+          name = name.length >= 12 ? name.concat('...') : name;
           const time = new Date(chat.timestamp);
           // Formatted time showing date and time. Only show date if the message is older than today
           const today = new Date();
-          const isToday = time.toDateString() !== today.toDateString();
+          const isToday = time.toDateString() === today.toDateString();
           const yours = chat.senderId === user!._id;
           const formattedTime = isToday
             ? time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -288,7 +291,7 @@ function PartyChats(): JSX.Element {
                   px="7px"
                   backgroundColor={yours ? 'blue.300' : 'gray.200'}
                   color={yours ? 'black' : 'black'}
-                  // boxShadow="md"
+                  boxShadow="md"
                   display={'flex'}
                   flexDir={'column'}
                 >
