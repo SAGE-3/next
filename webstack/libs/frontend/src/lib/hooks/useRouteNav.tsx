@@ -40,6 +40,11 @@ export function useRouteNav() {
 
   function toBoard(roomId: string, boardId: string) {
     const boardPath = `/board/${roomId}/${boardId}`;
+    // Check if the currentl url contains the boardId and roomId
+    const currentPath = window.location.pathname;
+    if (currentPath.includes(boardId) && currentPath.includes(roomId)) {
+      return; // Already on the correct board
+    }
     navigate(boardPath);
 
     // If moving forward in history, clear any forward entries

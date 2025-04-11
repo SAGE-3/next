@@ -7,3 +7,4 @@
  */
 
 export * from './Party';
+export * from './components/PartyStore';

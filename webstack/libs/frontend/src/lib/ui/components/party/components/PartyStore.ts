@@ -110,7 +110,7 @@ const usePartyStore = create<PartyStore>((set, get) => {
           if (!party) {
             get().setCurrentParty(null);
           } else {
-            get().setCurrentParty(currentParty);
+            get().setCurrentParty(party);
           }
         }
       });
@@ -159,11 +159,12 @@ const usePartyStore = create<PartyStore>((set, get) => {
       const party = yDoc.getMap<Party>('parties').get(currentParty.ownerId);
       if (party) {
         if (!boardId || !roomId) {
-          party.board = undefined;
-          yDoc.getMap<Party>('parties').set(currentParty.ownerId, party);
+          const newParty = { ownerId: currentParty.ownerId };
+          yDoc.getMap<Party>('parties').set(currentParty.ownerId, newParty);
         } else {
-          party.board = { boardId, roomId };
-          yDoc.getMap<Party>('parties').set(currentParty.ownerId, party);
+          const newParty = { ownerId: currentParty.ownerId, board: { boardId, roomId } };
+          console.log('newBoard', newParty);
+          yDoc.getMap<Party>('parties').set(currentParty.ownerId, newParty);
         }
       }
     },

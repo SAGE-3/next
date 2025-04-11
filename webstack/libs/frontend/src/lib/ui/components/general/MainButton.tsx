@@ -65,7 +65,6 @@ import {
   Alfred,
   truncateWithEllipsis,
   EditUserSettingsModal,
-  PartyButton,
 } from '@sage3/frontend';
 
 import { Board, OpenConfiguration } from '@sage3/shared/types';
@@ -227,7 +226,7 @@ export function MainButton(props: MainButtonProps) {
               <MenuButton
                 as={Button}
                 size="sm"
-                maxWidth="150px"
+                // maxWidth="150px"
                 variant={props.buttonStyle ? props.buttonStyle : 'outline'}
                 colorScheme={user?.data.color ? user.data.color : 'white'}
                 p={2}
@@ -247,7 +246,6 @@ export function MainButton(props: MainButtonProps) {
                 </Box>
               </MenuButton>
             </Tooltip>
-            <PartyButton iconSize="sm" isBoard />
           </Flex>
         ) : (
           <Flex gap="2">
@@ -256,11 +254,11 @@ export function MainButton(props: MainButtonProps) {
               display="flex"
               as={Box}
               backgroundColor={userColor}
-              height="40px"
+              height="32px"
               alignItems={'center'}
               justifyContent={'left'}
               borderRadius="10"
-              width="calc(100% - 40px)"
+              width="100%"
               transition={'all 0.5s'}
               _hover={{ cursor: 'pointer' }}
               overflow={'hidden'}
@@ -277,7 +275,6 @@ export function MainButton(props: MainButtonProps) {
                 </Box>
               </Box>
             </MenuButton>
-            <PartyButton />
           </Flex>
         )}
 

@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { Button, VStack, HStack, Text, Flex, Divider, useColorModeValue, IconButton, Tooltip } from '@chakra-ui/react';
+import { Button, VStack, HStack, Text, Flex, Divider, useColorModeValue, IconButton, Tooltip, Box } from '@chakra-ui/react';
 
 // SAGE3 Imports
 import { useUsersStore } from '@sage3/frontend';
@@ -89,7 +89,8 @@ export function PartyHub(): JSX.Element {
       </Flex>
       <Flex flexDir="column" mt="auto" width="100%">
         <Divider my="2" />
-        <HStack>
+        <HStack justify="space-between" align="center">
+          <Box></Box>
           <Tooltip label="Create a new party" placement="top" hasArrow>
             <IconButton size="sm" icon={<MdAdd />} aria-label="Create Party" onClick={createParty} colorScheme="teal" />
           </Tooltip>
