@@ -8,6 +8,7 @@ from libs.localtypes import (
     Question,
     WebQuery,
     PDFQuery,
+    CSVQuery,
     CodeRequest,
     WebScreenshot,
 )
@@ -35,6 +36,7 @@ from app.summary import SummaryAgent
 from app.web import WebAgent
 from app.image import ImageAgent
 from app.pdf import PDFAgent
+from app.csv import CSVAgent
 from app.code import CodeAgent
 
 
@@ -44,6 +46,7 @@ codeAG = CodeAgent(logger, ps3)
 summaryAG = SummaryAgent(logger, ps3)
 imageAG = ImageAgent(logger, ps3)
 pdfAG = PDFAgent(logger, ps3)
+csvAG = CSVAgent(logger, ps3)
 webAG = WebAgent(logger, ps3)
 asyncio.ensure_future(webAG.init())
 
@@ -160,6 +163,17 @@ async def pdf(qq: PDFQuery):
     try:
         # do the work
         val = await pdfAG.process(qq)
+        return val
+    except HTTPException as e:
+        # Get the error message
+        text = e.detail
+        raise HTTPException(status_code=500, detail=text)
+
+@app.post("/csv")
+async def csv(qq: CSVQuery):
+    try:
+        # do the work
+        val = await csvAG.process(qq)
         return val
     except HTTPException as e:
         # Get the error message

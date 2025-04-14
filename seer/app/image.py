@@ -116,6 +116,7 @@ class ImageAgent:
                 }
                 url = self.server + "/v1/chat/completions"
                 response = self.httpx_client.post(url, json=data)
+                print(response)
                 if response.status_code == 200:
                     description = response.json()["choices"][0]["message"]["content"]
             elif qq.model == "openai":

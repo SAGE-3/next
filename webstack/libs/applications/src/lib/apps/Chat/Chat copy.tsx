@@ -28,7 +28,6 @@ import {
   ListIcon,
   ListItem,
   Textarea,
-  useDisclosure,
 } from '@chakra-ui/react';
 import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle, MdFileDownload, MdChat, MdSettings } from 'react-icons/md';
 import { HiCommandLine } from 'react-icons/hi2';
@@ -51,23 +50,8 @@ import {
   AiAPI,
   useUserSettings,
   useUIStore,
-  EditUserSettingsModal,
 } from '@sage3/frontend';
-import {
-  genId,
-  AskRequest,
-  ImageQuery,
-  PDFQuery,
-  CodeRequest,
-  WebQuery,
-  WebScreenshot,
-  CSVQuery,
-  ImageAnswer,
-  CSVAnswer,
-  PDFAnswer,
-  WebAnswer,
-  CodeResponse,
-} from '@sage3/shared';
+import { genId, AskRequest, ImageQuery, PDFQuery, CodeRequest, WebQuery, WebScreenshot, CSVQuery } from '@sage3/shared';
 
 import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
@@ -75,7 +59,6 @@ import { AppWindow } from '../../components';
 
 import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot, callCSV } from './tRPC';
 import { apiUrls } from '../../../../../frontend/src/lib/config';
-import { get } from 'http';
 
 const OrderedList: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => (
   <ol style={{ paddingLeft: '24px' }} {...props}>
@@ -111,7 +94,7 @@ function AppComponent(props: App): JSX.Element {
   // Colors for Dark theme and light theme
   // Chat Bubble Colors
   const myColor = useHexColor(`blue.300`);
-  const sageColor = useHexColor('purple.200');
+  const sageColor = useHexColor('purple.300');
   const aiTypingColor = useHexColor('orange.300');
   const otherUserColor = useHexColor('gray.300');
   // Background, scrollbar, and Foreground Colors
@@ -122,8 +105,6 @@ function AppComponent(props: App): JSX.Element {
   const sc = useColorModeValue('gray.300', 'gray.500');
   const scrollColor = useHexColor(sc);
   const textColor = useColorModeValue('gray.800', 'gray.100');
-
-  const { isOpen: editSettingsIsOpen, onOpen: editSettingsOnOpen, onClose: editSettingsOnClose } = useDisclosure();
 
   // App state management
   const updateState = useAppStore((state) => state.updateState);
@@ -146,7 +127,7 @@ function AppComponent(props: App): JSX.Element {
 
   const [previousQuestion, setPreviousQuestion] = useState<string>(s.previousQ);
   const [previousAnswer, setPreviousAnswer] = useState<string>(s.previousA);
-  const [status] = useState<string>('AI can make mistakes. User caution is advised.');
+  const [status] = useState<string>('AI can make mistakes. Check important information.');
   const [actions, setActions] = useState<any[]>([]);
   const [mode, setMode] = useState<OperationMode>('chat');
   const [location, setLocation] = useState('');
@@ -304,7 +285,6 @@ function AppComponent(props: App): JSX.Element {
 
         const body: AskRequest = {
           ctx: {
-            context: [],
             previousQ: previousQuestion,
             previousA: previousAnswer,
             pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
@@ -352,6 +332,80 @@ function AppComponent(props: App): JSX.Element {
               },
             ],
           });
+        }
+      }
+    }
+  };
+
+  const newAIMessage = async (new_input: string, query: CSVQuery | ImageQuery) => {
+    if (!user) return;
+    const isQuestion = new_input.toUpperCase().startsWith('@S');
+    const name = isQuestion ? 'SAGE' : user?.data.name;
+    // Add messages
+    if (s.sources.length > 0) {
+      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+
+      if (roomId && boardId) {
+        const now = await serverTime();
+        const initialAnswer = {
+          id: genId(),
+          userId: user._id,
+          creationId: '',
+          creationDate: now.epoch,
+          userName: 'SAGE',
+          query: new_input,
+          response: isQuestion ? 'Working on it...' : '',
+        };
+        updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
+
+        if (isQuestion) {
+          const request = isQuestion ? new_input.slice(2) : new_input;
+          const assetids = apps.map((d) => d.data.state.assetid);
+          setProcessing(true);
+          setActions([]);
+          let response;
+          if (query instanceof ImageQuery) {
+            response = await callImage(query);
+          } else if (query instanceof CSVQuery) {
+            response = await callCSV(query);
+          }
+          setProcessing(false);
+          if ('message' in response) {
+            toast({
+              title: 'Error',
+              description: response.message || 'Error sending query to the agent. Please try again.',
+              status: 'error',
+              duration: 4000,
+              isClosable: true,
+            });
+          } else {
+            // Clear the stream text
+            setStreamText('');
+            ctrlRef.current = null;
+            setPreviousAnswer(response.r);
+            // Add messages
+            updateState(props._id, {
+              ...s,
+              previousQ: 'Describe the content',
+              previousA: response.r,
+              messages: [
+                ...s.messages,
+                initialAnswer,
+                {
+                  id: genId(),
+                  userId: user._id,
+                  creationId: '',
+                  creationDate: now.epoch + 1,
+                  userName: 'SAGE',
+                  query: '',
+                  response: response.r,
+                },
+              ],
+            });
+            if (response.actions) {
+              setActions(response.actions);
+            }
+          }
         }
       }
     }
@@ -429,144 +483,98 @@ function AppComponent(props: App): JSX.Element {
   };
 
   const onImageSummary = async () => {
-    return onContentImage('@S Describe the image in details');
+    return onContentImage('Describe the image in details');
   };
   const onImageCaption = async () => {
-    return onContentImage('@S Generate a caption for the image, fit for a scientific publication');
+    return onContentImage('Generate a caption for the image, fit for a scientific publication');
   };
   const onImageProsCons = async () => {
-    return onContentImage('@S Describe the good parts and then the bad parts of the image at conveying its message');
+    return onContentImage('Describe the good parts and then the bad parts of the image at conveying its message');
   };
   const onImageKeywords = async () => {
-    return onContentImage('@S Read the image and extract 3-5 keywords that best capture the essence and subject matter of the image');
+    return onContentImage('Read the image and extract 3-5 keywords that best capture the essence and subject matter of the image');
   };
   const onImageFacts = async () => {
-    return onContentImage('@S Read the image and provide two or three interesting facts from the image');
-  };
-
-  const getInitialAnswer = async (input: string, isQuestion: boolean) => {
-    if (!user) return;
-    const now = await serverTime();
-    const initialAnswer = {
-      id: genId(),
-      userId: user._id,
-      creationId: '',
-      creationDate: now.epoch,
-      userName: 'SAGE',
-      query: input,
-      response: isQuestion ? 'Working on it...' : '',
-    };
-    return initialAnswer;
-  };
-
-  const newAIMessage = async (
-    new_input: string,
-    query: CSVQuery | ImageQuery | PDFQuery | WebQuery | CodeRequest,
-    type: 'csv' | 'image' | 'pdf' | 'web' | 'code'
-  ) => {
-    if (!user) return;
-    const isQuestion = new_input.toUpperCase().startsWith('@S');
-    // Add messages
-    if (s.sources.length > 0) {
-      if (roomId && boardId) {
-        const initialAnswer = await getInitialAnswer(new_input, isQuestion);
-        updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
-        for (let i = 0; i < s.messages.length; i++) {
-          const message = s.messages[i];
-          const prevQuery = message.query.slice(2);
-          query.ctx.context.push({ query: prevQuery, response: message.response });
-        }
-        if (isQuestion) {
-          setProcessing(true);
-          setActions([]);
-          let response;
-          if (type === 'image') {
-            response = await callImage(query as ImageQuery);
-            setProcessing(false);
-
-            return response as ImageAnswer;
-          } else if (type === 'csv') {
-            response = await callCSV(query as CSVQuery);
-            setProcessing(false);
-
-            return response as CSVAnswer;
-          } else if (type === 'pdf') {
-            response = await callPDF(query as PDFQuery);
-            setProcessing(false);
-            return response as PDFAnswer;
-          } else if (type === 'web') {
-            response = await callWeb(query as WebQuery);
-            setProcessing(false);
-            return response as WebAnswer;
-          } else if (type === 'code') {
-            response = await callCode(query as CodeRequest);
-            setProcessing(false);
-            return response as CodeResponse;
-          }
-          return response;
-        }
-      }
-    }
-    return null;
+    return onContentImage('Read the image and provide two or three interesting facts from the image');
   };
 
   const onContentImage = async (prompt: string) => {
     if (!user) return;
-    const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
-    const assetids = apps.map((d) => d.data.state.assetid);
-    const now = await serverTime();
-    if (roomId && boardId) {
-      const request = prompt.slice(2);
-      const q: ImageQuery = {
-        ctx: {
-          context: [],
-          previousQ: previousQuestion,
-          previousA: previousAnswer,
-          pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
-          roomId,
-          boardId,
-        },
-        q: request,
-        user: username,
-        asset: assetids[0],
-        model: selectedModel || 'llama',
-      };
+    if (s.sources.length > 0) {
+      // Update the context with the stickies
+      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
 
-      const response = (await newAIMessage(prompt, q, 'image')) as ImageAnswer;
-      if (response) {
-        if ('message' in response) {
-          toast({
-            title: 'Error',
-            description: (response.message as React.ReactNode) || 'Error sending query to the agent. Please try again.',
-            status: 'error',
-            duration: 4000,
-            isClosable: true,
-          });
-        } else {
-          // Clear the stream text
-          setStreamText('');
-          ctrlRef.current = null;
-          setPreviousAnswer(response.r);
-          // Add messages
-          updateState(props._id, {
-            ...s,
-            previousQ: 'Describe the content',
-            previousA: response.r,
-            messages: [
-              ...s.messages,
-              {
-                id: genId(),
-                userId: user._id,
-                creationId: '',
-                creationDate: now.epoch + 1,
-                userName: 'SAGE',
-                query: prompt,
-                response: response.r,
-              },
-            ],
-          });
-          if (response.actions) {
-            setActions(response.actions);
+      // Check for image
+      if (apps && apps[0].data.type === 'ImageViewer') {
+        if (roomId && boardId) {
+          const now = await serverTime();
+          const initialAnswer = {
+            id: genId(),
+            userId: user._id,
+            creationId: '',
+            creationDate: now.epoch,
+            userName: 'SAGE',
+            query: prompt,
+            response: 'Working on it...',
+          };
+          updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
+
+          const assetid = apps[0].data.state.assetid;
+          // Build the query
+          const q: ImageQuery = {
+            ctx: {
+              previousQ: previousQuestion,
+              previousA: previousAnswer,
+              pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+              roomId,
+              boardId,
+            },
+            q: prompt,
+            user: username,
+            asset: assetid,
+            model: selectedModel || 'llama',
+          };
+          setProcessing(true);
+          setActions([]);
+          // Invoke the agent
+          const response = await callImage(q);
+          setProcessing(false);
+
+          if ('message' in response) {
+            toast({
+              title: 'Error',
+              description: response.message || 'Error sending query to the agent. Please try again.',
+              status: 'error',
+              duration: 4000,
+              isClosable: true,
+            });
+          } else {
+            // Clear the stream text
+            setStreamText('');
+            ctrlRef.current = null;
+            setPreviousAnswer(response.r);
+            // Add messages
+            updateState(props._id, {
+              ...s,
+              previousQ: 'Describe the content',
+              previousA: response.r,
+              messages: [
+                ...s.messages,
+                initialAnswer,
+                {
+                  id: genId(),
+                  userId: user._id,
+                  creationId: '',
+                  creationDate: now.epoch + 1,
+                  userName: 'SAGE',
+                  query: '',
+                  response: response.r,
+                },
+              ],
+            });
+            if (response.actions) {
+              setActions(response.actions);
+            }
           }
         }
       }
@@ -610,72 +618,100 @@ function AppComponent(props: App): JSX.Element {
 
   const onContentCsvViewer = async (prompt: string) => {
     if (!user) return;
-    const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
-    const assetids = apps.map((d) => d.data.state.assetid);
-    const now = await serverTime();
 
-    if (roomId && boardId) {
-      const request = prompt.slice(2);
+    const isQuestion = prompt.toUpperCase().startsWith('@S');
+    const name = isQuestion ? 'SAGE' : user?.data.name;
+    const contextMessages = [];
 
-      // Build the query
-      const q: CSVQuery = {
-        ctx: {
-          context: [],
-          previousQ: previousQuestion,
-          previousA: previousAnswer,
-          pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
-          roomId,
-          boardId,
-        },
-        q: request,
-        user: username,
-        assetids: assetids,
-      };
-      const response = (await newAIMessage(prompt, q, 'csv')) as CSVAnswer;
-      if (response) {
-        if ('message' in response) {
-          toast({
-            title: 'Error',
-            description: (response.message as React.ReactNode) || 'Error sending query to the agent. Please try again.',
-            status: 'error',
-            duration: 4000,
-            isClosable: true,
-          });
-        } else {
-          // Clear the stream text
-          setStreamText('');
-          ctrlRef.current = null;
+    if (s.sources.length > 0) {
+      // Update the context with the stickies
+      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
 
-          const response_upload = await upload(`data:image/png;base64,${response.img}`);
-          let code_response = '';
-          if (response.actions && response_upload) {
-            response.actions.find((a) => a.app === 'ImageViewer').state.assetid = response_upload[0];
-            code_response = response.actions.find((a) => a.app === 'CodeEditor').state.content;
-          }
-          if ('content' in response) {
-            setPreviousAnswer(code_response);
-          }
-          setPreviousQuestion(request);
-          // Add messages
-          updateState(props._id, {
-            ...s,
-            previousQ: previousQuestion,
-            messages: [
-              ...s.messages,
-              {
-                id: genId(),
-                userId: user._id,
-                creationId: '',
-                creationDate: now.epoch + 1,
-                userName: 'SAGE',
-                query: prompt,
-                response: code_response,
-                metadata: code_response,
+      // Check for csv
+      if (apps && apps[0].data.type === 'CSVViewer') {
+        if (roomId && boardId) {
+          const now = await serverTime();
+          const initialAnswer = {
+            id: genId(),
+            userId: user._id,
+            creationId: '',
+            creationDate: now.epoch,
+            userName: name,
+            query: prompt,
+            response: isQuestion ? 'Working on it...' : '',
+            metadata: '',
+          };
+          updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
+
+          if (isQuestion) {
+            const request = isQuestion ? prompt.slice(2) : prompt;
+            const assetids = apps.map((d) => d.data.state.assetid);
+
+            // Build the query
+            const q: CSVQuery = {
+              ctx: {
+                context: contextMessages,
+                previousQ: previousQuestion,
+                previousA: previousAnswer,
+                pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+                roomId,
+                boardId,
               },
-            ],
-          });
-          if (response.actions) {
-            setActions(response.actions);
+              q: request,
+              user: username,
+              assetids: assetids,
+            };
+            setProcessing(true);
+            setActions([]);
+            // Invoke the agent
+            const response = await callCSV(q);
+            setProcessing(false);
+
+            if ('message' in response) {
+              toast({
+                title: 'Error',
+                description: response.message || 'Error sending query to the agent. Please try again.',
+                status: 'error',
+                duration: 4000,
+                isClosable: true,
+              });
+            } else {
+              // Clear the stream text
+              setStreamText('');
+              ctrlRef.current = null;
+
+              const response_upload = await upload(`data:image/png;base64,${response.img}`);
+              let code_response = '';
+              if (response.actions && response_upload) {
+                response.actions.find((a) => a.app === 'ImageViewer').state.assetid = response_upload[0];
+                code_response = response.actions.find((a) => a.app === 'CodeEditor').state.content;
+              }
+              console.log('response_upload', response_upload);
+              setPreviousAnswer(response.content + code_response);
+              setPreviousQuestion(request);
+              // Add messages
+              updateState(props._id, {
+                ...s,
+                previousQ: previousQuestion,
+                messages: [
+                  ...s.messages,
+                  initialAnswer,
+                  {
+                    id: genId(),
+                    userId: user._id,
+                    creationId: '',
+                    creationDate: now.epoch + 1,
+                    userName: 'SAGE',
+                    query: '',
+                    response: response.content,
+                    metadata: code_response,
+                  },
+                ],
+              });
+              if (response.actions) {
+                setActions(response.actions);
+              }
+            }
           }
         }
       }
@@ -684,81 +720,108 @@ function AppComponent(props: App): JSX.Element {
 
   const onContentPDF = async (prompt: string) => {
     if (!user) return;
-    const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
-    const assetids = apps.map((d) => d.data.state.assetid);
-    const now = await serverTime();
 
-    if (roomId && boardId) {
-      const request = prompt.slice(2);
-      const q: PDFQuery = {
-        ctx: {
-          context: [],
+    const isQuestion = prompt.toUpperCase().startsWith('@S');
+    const name = isQuestion ? 'SAGE' : user?.data.name;
 
-          previousQ: previousQuestion,
-          previousA: previousAnswer,
-          pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
-          roomId,
-          boardId,
-        },
-        q: request,
-        user: username,
-        assetids: assetids,
-      };
-      const response = (await newAIMessage(prompt, q, 'pdf')) as PDFAnswer;
-      if (response) {
-        if ('message' in response) {
-          const errorMessage = 'There has been an error, please try again or report it through the menu.';
-          setStreamText('');
-          setPreviousAnswer(errorMessage);
-          updateState(props._id, {
-            ...s,
-            previousQ: q.q,
-            previousA: errorMessage,
-            messages: [
-              ...s.messages,
-              getInitialAnswer(prompt, true),
-              {
-                id: genId(),
-                userId: user._id,
-                creationId: '',
-                creationDate: now.epoch + 1,
-                userName: 'SAGE',
-                query: '',
-                response: errorMessage,
+    if (s.sources.length > 0) {
+      // Update the context with the stickies
+      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+
+      // Check for image
+      if (apps && apps[0].data.type === 'PDFViewer') {
+        if (roomId && boardId) {
+          const now = await serverTime();
+          const initialAnswer = {
+            id: genId(),
+            userId: user._id,
+            creationId: '',
+            creationDate: now.epoch,
+            userName: name,
+            query: prompt,
+            response: isQuestion ? 'Working on it...' : '',
+          };
+          updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
+
+          if (isQuestion) {
+            const request = isQuestion ? prompt.slice(2) : prompt;
+            const assetids = apps.map((d) => d.data.state.assetid);
+            // Build the query
+            const q: PDFQuery = {
+              ctx: {
+                previousQ: previousQuestion,
+                previousA: previousAnswer,
+                pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+                roomId,
+                boardId,
               },
-            ],
-          });
-          toast({
-            title: 'Error',
-            description: (response.message as React.ReactNode) || 'Error sending query to the agent. Please try again.',
-            status: 'error',
-            duration: 4000,
-            isClosable: true,
-          });
-        } else {
-          // Clear the stream text
-          setStreamText('');
-          ctrlRef.current = null;
-          setPreviousAnswer(response.r);
-          // Add messages
-          updateState(props._id, {
-            ...s,
-            previousQ: 'Describe the content',
-            messages: [
-              ...s.messages,
-              {
-                id: genId(),
-                userId: user._id,
-                creationId: '',
-                creationDate: now.epoch + 1,
-                userName: 'SAGE',
-                query: prompt,
-                response: response.r,
-              },
-            ],
-          });
-          if (response.actions) {
-            setActions(response.actions);
+              q: request,
+              user: username,
+              assetids: assetids,
+            };
+            setProcessing(true);
+            setActions([]);
+            // Invoke the agent
+            const response = await callPDF(q);
+            setProcessing(false);
+
+            if ('message' in response) {
+              const errorMessage = 'There has been an error, please try again or report it through the menu.';
+              setStreamText('');
+              setPreviousAnswer(errorMessage);
+              updateState(props._id, {
+                ...s,
+                previousQ: q.q,
+                previousA: errorMessage,
+                messages: [
+                  ...s.messages,
+                  initialAnswer,
+                  {
+                    id: genId(),
+                    userId: user._id,
+                    creationId: '',
+                    creationDate: now.epoch + 1,
+                    userName: 'SAGE',
+                    query: '',
+                    response: errorMessage,
+                  },
+                ],
+              });
+              toast({
+                title: 'Error',
+                description: response.message || 'Error sending query to the agent. Please try again.',
+                status: 'error',
+                duration: 4000,
+                isClosable: true,
+              });
+            } else {
+              // Clear the stream text
+              setStreamText('');
+              ctrlRef.current = null;
+              setPreviousAnswer(response.r);
+              // Add messages
+              updateState(props._id, {
+                ...s,
+                previousQ: 'Describe the content',
+                previousA: response.r,
+                messages: [
+                  ...s.messages,
+                  initialAnswer,
+                  {
+                    id: genId(),
+                    userId: user._id,
+                    creationId: '',
+                    creationDate: now.epoch + 1,
+                    userName: 'SAGE',
+                    query: '',
+                    response: response.r,
+                  },
+                ],
+              });
+              if (response.actions) {
+                setActions(response.actions);
+              }
+            }
           }
         }
       }
@@ -768,61 +831,82 @@ function AppComponent(props: App): JSX.Element {
   // Generic code to handle the web content
   const onContentWeb = async (prompt: string) => {
     if (!user) return;
-    const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
-    const now = await serverTime();
-    if (roomId && boardId) {
-      const request = prompt.slice(2);
-      // Build the query
-      const q: WebQuery = {
-        ctx: {
-          context: [],
+    if (s.sources.length > 0) {
+      // Update the context with the stickies
+      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
 
-          previousQ: previousQuestion,
-          previousA: previousAnswer,
-          pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
-          roomId,
-          boardId,
-        },
-        q: request,
-        url: apps[0].data.state.webviewurl,
-        user: username,
-        model: selectedModel || 'llama',
-        extras: prompt.includes('pdf') ? 'pdfs' : prompt.includes('images') ? 'images' : prompt.includes('links') ? 'links' : 'text',
-      };
-      const response = (await newAIMessage(prompt, q, 'web')) as WebAnswer;
-      if ('message' in response) {
-        toast({
-          title: 'Error',
-          description: (response.message as React.ReactNode) || 'Error sending query to the agent. Please try again.',
-          status: 'error',
-          duration: 4000,
-          isClosable: true,
-        });
-      } else {
-        // Clear the stream text
-        setStreamText('');
-        ctrlRef.current = null;
-        setPreviousAnswer(response.r);
-        // Add messages
-        updateState(props._id, {
-          ...s,
-          previousQ: 'Describe the content',
-          previousA: response.r,
-          messages: [
-            ...s.messages,
-            {
-              id: genId(),
-              userId: user._id,
-              creationId: '',
-              creationDate: now.epoch + 1,
-              userName: 'SAGE',
-              query: request,
-              response: response.r,
+      // Check for image
+      if (apps && apps[0].data.type === 'Webview') {
+        if (roomId && boardId) {
+          const now = await serverTime();
+          const initialAnswer = {
+            id: genId(),
+            userId: user._id,
+            creationId: '',
+            creationDate: now.epoch,
+            userName: 'SAGE',
+            query: prompt,
+            response: 'Working on it...',
+          };
+          updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
+
+          // Build the query
+          const q: WebQuery = {
+            ctx: {
+              previousQ: previousQuestion,
+              previousA: previousAnswer,
+              pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+              roomId,
+              boardId,
             },
-          ],
-        });
-        if (response.actions) {
-          setActions(response.actions);
+            q: prompt,
+            url: apps[0].data.state.webviewurl,
+            user: username,
+            model: selectedModel || 'llama',
+            extras: prompt.includes('pdf') ? 'pdfs' : prompt.includes('images') ? 'images' : prompt.includes('links') ? 'links' : 'text',
+          };
+          setProcessing(true);
+          setActions([]);
+          // Invoke the agent
+          const response = await callWeb(q);
+          setProcessing(false);
+
+          if ('message' in response) {
+            toast({
+              title: 'Error',
+              description: response.message || 'Error sending query to the agent. Please try again.',
+              status: 'error',
+              duration: 4000,
+              isClosable: true,
+            });
+          } else {
+            // Clear the stream text
+            setStreamText('');
+            ctrlRef.current = null;
+            setPreviousAnswer(response.r);
+            // Add messages
+            updateState(props._id, {
+              ...s,
+              previousQ: 'Describe the content',
+              previousA: response.r,
+              messages: [
+                ...s.messages,
+                initialAnswer,
+                {
+                  id: genId(),
+                  userId: user._id,
+                  creationId: '',
+                  creationDate: now.epoch + 1,
+                  userName: 'SAGE',
+                  query: '',
+                  response: response.r,
+                },
+              ],
+            });
+            if (response.actions) {
+              setActions(response.actions);
+            }
+          }
         }
       }
     }
@@ -928,39 +1012,53 @@ function AppComponent(props: App): JSX.Element {
     if (!user) return;
     // Get server time
     const now = await serverTime();
-
-    if (roomId && boardId) {
+    // Is it a question to SAGE?
+    const isQuestion = prompt.toUpperCase().startsWith('@S');
+    const name = isQuestion ? 'SAGE' : user?.data.name;
+    // Add messages
+    const initialAnswer = {
+      id: genId(),
+      userId: user._id,
+      creationId: '',
+      creationDate: now.epoch,
+      userName: name,
+      query: prompt,
+      response: isQuestion ? 'Working on it...' : '',
+    };
+    updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
+    if (isQuestion) {
+      setProcessing(true);
       // Remove the @S from the question
-      const request = prompt.slice(2);
+      const request = isQuestion ? prompt.slice(2) : prompt;
 
-      const body: CodeRequest = {
-        ctx: {
-          context: [],
-          previousQ: previousQuestion,
-          previousA: previousAnswer,
-          pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
-          roomId: roomId!,
-          boardId: boardId!,
-        },
-        user: username,
-        id: genId(),
-        model: selectedModel || 'llama',
-        location: location,
-        q: request,
-        method: method,
-      };
-      const response = (await newAIMessage(prompt, body, 'code')) as CodeResponse;
-      if (response) {
+      if (isQuestion) {
+        const body: CodeRequest = {
+          ctx: {
+            previousQ: previousQuestion,
+            previousA: previousAnswer,
+            pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+            roomId: roomId!,
+            boardId: boardId!,
+          },
+          user: username,
+          id: genId(),
+          model: selectedModel || 'llama',
+          location: location,
+          q: request,
+          method: method,
+        };
+        const response = await callCode(body);
         if ('message' in response) {
           toast({
             title: 'Error',
-            description: (response.message as React.ReactNode) || 'Error sending query to the agent. Please try again.',
+            description: response.message || 'Error sending query to the agent. Please try again.',
             status: 'error',
             duration: 4000,
             isClosable: true,
           });
         } else {
           const new_text = response.r || '';
+          setProcessing(false);
           // Clear the stream text
           setStreamText('');
           ctrlRef.current = null;
@@ -972,6 +1070,7 @@ function AppComponent(props: App): JSX.Element {
             previousA: new_text,
             messages: [
               ...s.messages,
+              initialAnswer,
               {
                 id: genId(),
                 userId: user._id,
@@ -1296,7 +1395,7 @@ function AppComponent(props: App): JSX.Element {
               width: '12px',
             },
             '&::-webkit-scrollbar-track': {
-              WebkitBoxShadow: 'inset 0 0 6px rgba(0,0,0,0.00)',
+              '-webkit-box-shadow': 'inset 0 0 6px rgba(0,0,0,0.00)',
             },
             '&::-webkit-scrollbar-thumb': {
               backgroundColor: `${scrollColor}`,
@@ -1322,13 +1421,13 @@ function AppComponent(props: App): JSX.Element {
                     {isMe ? (
                       <Box top="-15px" right={'15px'} position={'absolute'} textAlign={'right'}>
                         <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                          Me - {time}
+                          Me
                         </Text>
                       </Box>
                     ) : (
                       <Box top="-15px" left={'15px'} position={'absolute'} textAlign={'right'}>
                         <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                          {message.userName} - {time}
+                          {message.userName}
                         </Text>
                       </Box>
                     )}
@@ -1340,8 +1439,7 @@ function AppComponent(props: App): JSX.Element {
                         fontSize={'xs'}
                         placement="top"
                         hasArrow={true}
-                        // label={time}
-                        label={'Drag to board - Double-click to clipboard'}
+                        label={time}
                         openDelay={400}
                         closeDelay={2000}
                       >
@@ -1349,7 +1447,7 @@ function AppComponent(props: App): JSX.Element {
                           color="black"
                           rounded={'md'}
                           boxShadow="md"
-                          fontFamily="Arial"
+                          fontFamily="arial"
                           textAlign={isMe ? 'right' : 'left'}
                           bg={isMe ? myColor : otherUserColor}
                           px={2}
@@ -1405,7 +1503,7 @@ function AppComponent(props: App): JSX.Element {
                   <Box position="relative" my={1} maxWidth={'70%'}>
                     <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
                       <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                        {message.userName} - {time}
+                        {message.userName}
                       </Text>
                     </Box>
 
@@ -1416,7 +1514,7 @@ function AppComponent(props: App): JSX.Element {
                         fontSize={'xs'}
                         placement="top"
                         hasArrow={true}
-                        label={'Drag to board - Double-click to clipboard'}
+                        label={time}
                         openDelay={400}
                         closeDelay={2000}
                       >
@@ -1429,7 +1527,7 @@ function AppComponent(props: App): JSX.Element {
                           px={2}
                           py={1}
                           m={3}
-                          fontFamily="Arial"
+                          fontFamily="arial"
                           onDoubleClick={() => {
                             if (navigator.clipboard) {
                               // Copy into clipboard
@@ -1511,7 +1609,7 @@ function AppComponent(props: App): JSX.Element {
               </Box>
 
               <Box display={'flex'} justifyContent="left" position={'relative'} top={'15px'} mb={'15px'}>
-                <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={aiTypingColor} p={1} m={3} fontFamily="Arial">
+                <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={aiTypingColor} p={1} m={3} fontFamily="arial">
                   {streamText}
                 </Box>
               </Box>
@@ -1521,33 +1619,33 @@ function AppComponent(props: App): JSX.Element {
           <Box display={'flex'} justifyContent={'left'}>
             {actions && (
               <List>
-                {actions.map((action, index) => (
-                  <Box
-                    color="black"
-                    rounded={'md'}
-                    boxShadow="md"
-                    fontFamily="Arial"
-                    textAlign={'left'}
-                    bg={textColor}
-                    p={1}
-                    m={3}
-                    // maxWidth="80%"
-                    userSelect={'none'}
-                    _hover={{ background: 'purple.300' }}
-                    background={'purple.200'}
-                    // onDoubleClick={applyAction(action)}
-                    onClick={applyAction(action)}
-                    key={'list-' + index}
-                  >
-                    <Tooltip label="Click to show result on the board" aria-label="A tooltip">
-                      <ListItem key={index}>
-                        <ListIcon as={MdSettings} color="green.500" />
-                        Show result on the board
-                        {/* Show result {index + 1} on the board: {action.type} {action.app} */}
-                      </ListItem>
-                    </Tooltip>
-                  </Box>
-                ))}
+                {actions.map((action, index) => {
+                  return (
+                    <Box
+                      color="black"
+                      rounded={'md'}
+                      boxShadow="md"
+                      fontFamily="arial"
+                      textAlign={'left'}
+                      bg={textColor}
+                      p={1}
+                      m={3}
+                      // maxWidth="80%"
+                      userSelect={'none'}
+                      _hover={{ background: 'purple.300' }}
+                      background={'purple.200'}
+                      onDoubleClick={applyAction(action)}
+                      key={'list-' + index}
+                    >
+                      <Tooltip label="Double click to apply action" aria-label="A tooltip">
+                        <ListItem key={index}>
+                          <ListIcon as={MdSettings} color="green.500" />
+                          Show result {index + 1} on the board: {action.type} {action.app}
+                        </ListItem>
+                      </Tooltip>
+                    </Box>
+                  );
+                })}
               </List>
             )}
           </Box>
@@ -1591,19 +1689,6 @@ function AppComponent(props: App): JSX.Element {
               variant="ghost"
               icon={<MdChangeCircle size="24px" />}
               onClick={resetSAGE}
-              width="33%"
-            />
-          </Tooltip>
-          <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Settings'} openDelay={400}>
-            <IconButton
-              aria-label="reset"
-              size={'xs'}
-              p={0}
-              m={0}
-              colorScheme={'blue'}
-              variant="ghost"
-              icon={<MdSettings size="24px" />}
-              onClick={editSettingsOnOpen}
               width="33%"
             />
           </Tooltip>
@@ -1962,9 +2047,6 @@ function AppComponent(props: App): JSX.Element {
             {status}
           </Text>
         </Box>
-
-        {/* Intelligence settings */}
-        <EditUserSettingsModal isOpen={editSettingsIsOpen} onClose={editSettingsOnClose} tab={'intelligence'} />
       </Flex>
     </AppWindow>
   );
@@ -2022,10 +2104,9 @@ function ToolbarComponent(props: App): JSX.Element {
 }
 
 function getDateString(epoch: number): string {
-  // const date = new Date(epoch).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
+  const date = new Date(epoch).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
   const time = new Date(epoch).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  // return `${date} - ${time}`;
-  return `${time}`;
+  return `${date} - ${time}`;
 }
 
 /**

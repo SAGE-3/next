@@ -343,6 +343,38 @@ def getPDFFile(ps3, assetid):
             if r.is_success:
                 return r.content
     return None
+  
+def getCSVFile(ps3, assetid):
+    """
+    Retrieve a PDF file from the SAGE3 basset manager based on the provided asset ID.
+
+    Args:
+      ps3 (object): SAGE3 API handle.
+      assetid (str): The unique identifier of the asset to retrieve.
+
+    Returns:
+      bytes: The content of the PDF file if found and successfully downloaded.
+      None: If the asset is not found or the download fails.
+    """
+    # Get all the assets
+    assets = ps3.s3_comm.get_assets()
+    # Find the asset
+    for f in assets:
+        if f["_id"] == assetid:
+            asset = f["data"]
+            # Build the URL
+            url = (
+                ps3.s3_comm.conf[ps3.s3_comm.prod_type]["web_server"]
+                + ps3.s3_comm.routes["get_static_content"]
+                + asset["file"]
+            )
+            # Get the authorization headers
+            headers = ps3.s3_comm._SageCommunication__headers
+            # Download the PDF
+            r = ps3.s3_comm.httpx_client.get(url, headers=headers)
+            if r.is_success:
+                return r.content
+    return None
 
 
 def isValidPDFDocument(document):
