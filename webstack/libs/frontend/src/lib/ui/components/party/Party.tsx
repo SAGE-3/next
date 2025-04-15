@@ -30,7 +30,7 @@ import { useHexColor, useRouteNav, useUser, useUsersStore } from '@sage3/fronten
 
 // Pary Imports
 import { PartyHub, PartyInstance, usePartyStore } from './components';
-import { useParams } from 'react-router';
+import { useParams, useLocation } from 'react-router';
 
 interface PartyIconProps {
   iconSize?: 'xs' | 'sm' | 'md';
@@ -67,6 +67,8 @@ export function PartyButton(props: PartyIconProps): JSX.Element {
   const { user } = useUser();
   const { toBoard } = useRouteNav();
 
+  const location = useLocation();
+
   // Values
   const partySize = partyMembers.filter((member) => member.party === currentParty?.ownerId).length;
   const ownerUserAccount = users.find((el) => el._id === currentParty?.ownerId);
@@ -81,13 +83,22 @@ export function PartyButton(props: PartyIconProps): JSX.Element {
 
   const { boardId, roomId } = useParams();
 
+  // If you are the owner
   useEffect(() => {
     if (!isOwner) return;
-    if (currentParty && boardId && roomId && currentParty.board?.boardId !== boardId) {
-      setPartyBoard(boardId, roomId);
+    const path = location.pathname;
+    if (currentParty) {
+      if (boardId && roomId && currentParty.board?.boardId !== boardId) {
+        setPartyBoard(boardId, roomId);
+      }
+      console.log(path, currentParty.board);
+      if (path.includes('home') && currentParty.board) {
+        setPartyBoard();
+      }
     }
-  }, [currentParty, boardId, roomId, isOwner, setPartyBoard]);
+  }, [currentParty, boardId, roomId, isOwner, setPartyBoard, location.pathname]);
 
+  // IF you are not the owner
   useEffect(() => {
     if (!currentParty || isOwner) return;
     if (currentParty && currentParty.board) {

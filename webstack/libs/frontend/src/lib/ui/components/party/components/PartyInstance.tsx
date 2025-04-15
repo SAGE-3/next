@@ -34,7 +34,7 @@ import { useBoardStore, useConfigStore, useHexColor, usePresenceStore, useUser, 
 
 // Party Imports
 import { usePartyStore } from './PartyStore';
-import { MdClose, MdCopyAll, MdDelete, MdLock, MdLockOutline, MdPrivacyTip, MdSend, MdShield } from 'react-icons/md';
+import { MdClose, MdCopyAll, MdDelete, MdLock, MdLockOutline, MdSend } from 'react-icons/md';
 import { Board, Presence } from '@sage3/shared/types';
 
 export function PartyInstance(): JSX.Element {
@@ -53,6 +53,8 @@ export function PartyInstance(): JSX.Element {
         if (!boardData) return;
         setBoard(boardData);
       });
+    } else {
+      setBoard(undefined);
     }
   }, [board, currentParty, fetchBoard]);
 
@@ -109,19 +111,18 @@ export function PartyInstance(): JSX.Element {
           </HStack>
 
           <HStack flex="1" justify="flex-end">
-            {isOwner && (
-              <Tooltip label={`Copy Party Sharable Id`} placement="top" hasArrow>
-                <IconButton
-                  size="sm"
-                  icon={<MdCopyAll />}
-                  colorScheme={'teal'}
-                  aria-label="Copy Party Sharable Id"
-                  onClick={copyPartyShareableId}
-                  gap="1"
-                  variant={'ghost'}
-                />
-              </Tooltip>
-            )}
+            <Tooltip label={`Copy Party Sharable Id`} placement="top" hasArrow>
+              <IconButton
+                size="sm"
+                icon={<MdCopyAll />}
+                colorScheme={'teal'}
+                aria-label="Copy Party Sharable Id"
+                onClick={copyPartyShareableId}
+                gap="1"
+                variant={'ghost'}
+              />
+            </Tooltip>
+
             {isOwner && (
               <Tooltip label={`${currentParty.private ? 'Private' : 'Public'}`} placement="top" hasArrow>
                 <IconButton
@@ -210,7 +211,7 @@ function PartyMembersList(props: { members: string[] }): JSX.Element {
         const isOwner = member._id === currentParty?.ownerId;
         return (
           <HStack justify={'space-between'} key={member._id}>
-            <VStack align="start" gap="0">
+            <VStack align="start" gap="0" width="90%" overflow={'hidden'}>
               <Text fontSize="sm" fontWeight="bold">
                 {name}
               </Text>

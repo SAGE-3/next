@@ -18,7 +18,6 @@ import {
   Divider,
   ButtonGroup,
   Text,
-  Button,
 } from '@chakra-ui/react';
 
 import { HiChip, HiPuzzle } from 'react-icons/hi';
