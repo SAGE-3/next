@@ -23,19 +23,18 @@ import {
   TabList,
   IconButton,
   Tooltip,
-  Badge,
-  Button,
 } from '@chakra-ui/react';
+
 import { FaCrown } from 'react-icons/fa';
 import { ImExit } from 'react-icons/im';
+import { MdClose, MdCopyAll, MdDelete, MdLock, MdLockOutline, MdSend } from 'react-icons/md';
 
 // SAGE3 Imports
 import { useBoardStore, useConfigStore, useHexColor, usePresenceStore, useUser, useUsersStore } from '@sage3/frontend';
+import { Board, Presence } from '@sage3/shared/types';
 
 // Party Imports
 import { usePartyStore } from './PartyStore';
-import { MdClose, MdCopyAll, MdDelete, MdLock, MdLockOutline, MdSend } from 'react-icons/md';
-import { Board, Presence } from '@sage3/shared/types';
 
 export function PartyInstance(): JSX.Element {
   // Store imports
@@ -301,12 +300,12 @@ function PartyChats(): JSX.Element {
           const formattedTime = isToday
             ? time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             : time.toLocaleDateString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-              });
+              hour: '2-digit',
+              minute: '2-digit',
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+            });
 
           return (
             <Flex key={chat.id} direction={yours ? 'row-reverse' : 'row'}>
