@@ -8,6 +8,8 @@
 
 // React and Chakra Imports
 import { useEffect } from 'react';
+import { useParams, useLocation } from 'react-router';
+
 import {
   Text,
   Popover,
@@ -30,7 +32,6 @@ import { useHexColor, useRouteNav, useUser, useUsersStore } from '@sage3/fronten
 
 // Pary Imports
 import { PartyHub, PartyInstance, usePartyStore } from './components';
-import { useParams, useLocation } from 'react-router';
 
 interface PartyIconProps {
   iconSize?: 'xs' | 'sm' | 'md';

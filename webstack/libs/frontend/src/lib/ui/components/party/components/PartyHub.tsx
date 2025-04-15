@@ -6,15 +6,16 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { useState } from 'react';
 import { Button, VStack, HStack, Text, Flex, Divider, useColorModeValue, IconButton, Tooltip, Box, Input } from '@chakra-ui/react';
+import { MdAdd, MdArrowForward } from 'react-icons/md';
 
 // SAGE3 Imports
 import { useConfigStore, useUsersStore } from '@sage3/frontend';
 
 // Party Imports
 import { usePartyStore } from '././PartyStore';
-import { MdAdd, MdArrowForward } from 'react-icons/md';
-import { useState } from 'react';
+
 
 export function PartyHub(): JSX.Element {
   // Store imports
