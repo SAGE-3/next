@@ -223,6 +223,7 @@ function AppComponent(props: App): JSX.Element {
           }
 
           const measurementData = await measurements.json();
+          console.log(measurementData, s.widget.yAxisNames);
           stationByMeasurements[station.station_id] = measurementData;
         } catch (err) {
           console.warn(`Failed to fetch measurements for station ${station.station_id}:`, err);

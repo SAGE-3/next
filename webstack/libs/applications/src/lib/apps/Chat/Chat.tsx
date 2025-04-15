@@ -527,6 +527,16 @@ function AppComponent(props: App): JSX.Element {
 
   const onContentMesonet = async (prompt: string) => {
     if (!user) return;
+    if (selectedModel == 'llama') {
+      toast({
+        title: 'Mesonet Feature not available for llama model',
+        description: 'Please switch SAGE Intelligence to OpenAI in User Settings.',
+        status: 'error',
+        duration: 4000,
+        isClosable: true,
+      });
+      return;
+    }
     if (s.sources.length > 0) {
       const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
       if (apps && apps[0].data.type === 'Hawaii Mesonet') {
@@ -557,7 +567,7 @@ function AppComponent(props: App): JSX.Element {
             q: prompt,
             url: url,
             user: username,
-            currentTime: isoString
+            currentTime: isoString,
           };
           setProcessing(true);
           setActions([]);
@@ -582,11 +592,11 @@ function AppComponent(props: App): JSX.Element {
               updateState(mesonetApp._id, {
                 ...mesonetApp.data.state,
                 stationNames: response.stations,
-                
+
                 widget: {
                   ...mesonetApp.data.state.widget,
-                  yAxisNames: response.attributes
-                }
+                  yAxisNames: response.attributes,
+                },
               });
             }
 
@@ -596,14 +606,13 @@ function AppComponent(props: App): JSX.Element {
               previousA: response.summary,
               messages: [
                 ...s.messages,
-                initialAnswer,
                 {
                   id: genId(),
                   userId: user._id,
                   creationId: '',
                   creationDate: now.epoch + 1,
                   userName: 'SAGE',
-                  query: '',
+                  query: initialAnswer.query,
                   response: response.summary,
                 },
               ],

@@ -88,7 +88,7 @@ class GraphState(TypedDict):
     stations: str
     attributes_extracted: List[str]
     stations_extracted: List[str]
-    chart_type_extracted: str
+    chart_type_extracted: List[str]
     attribute_reasoning: str
     station_reasoning: str
     station_data: str
@@ -162,6 +162,7 @@ class MesonetAgent:
         Provide your answer in ISO 8601 format (YYYY-MM-DDTHH:MM:SSZ).
         Make sure to provide times between the start date and end date. 
         Do not include any other information or reasoning in your answer.
+        Only choose dates between January 1, 2024 to today, whch is {date}.
         """
         human_template_str = "Answer: {question}"
         
@@ -229,7 +230,7 @@ class MesonetAgent:
 
 
         def initialize_llms(state: GraphState):
-            state["llm_re"] = LLM(self.client, {"model": "gpt-4o", "temperature": 1})
+            state["llm_re"] = LLM(self.client, {"model": "gpt-4o", "temperature": 0})
             return state
         
         def get_all_stations(state: GraphState):
@@ -257,7 +258,7 @@ class MesonetAgent:
                 print(f'ITERATION: {i+1}')
                 print(station_id_str)
             print(f'TRACKED DICTIONARY: {tracked_station_id}')
-            return {"stations_extracted": stations_extracted, "station_reasoning": station_reasoning}
+            return {"stations_extracted": stations_extracted if stations_extracted else [], "station_reasoning": station_reasoning}
         
         def get_station_attributes(state: GraphState):
             # Get attributes for each station in stations_extracted
@@ -291,14 +292,13 @@ class MesonetAgent:
         def extract_attributes(state: GraphState):
             user_prompt = state["request"].q
             attributes_extracted, attribute_reasoning = state["llm_re"].prompt_select_attributes(user_prompt, state["attributes_extracted"])
-            print("Attributes Extracted:",attributes_extracted)
-            return {"attributes_extracted": attributes_extracted, "attribute_reasoning": attribute_reasoning}
+            return {"attributes_extracted": attributes_extracted if attributes_extracted else [], "attribute_reasoning": attribute_reasoning}
 
         def extract_chart_type(state: GraphState):
             user_prompt = state["request"].q
             chart_type_extracted, chart_type_reasoning = state["llm_re"].prompt_charts_via_chart_info(user_prompt, state["attributes_extracted"])
             print("Chart Type Chosen:", chart_type_extracted)
-            return {"chart_type_extracted": chart_type_extracted, "chart_type_reasoning": chart_type_reasoning}
+            return {"chart_type_extracted": chart_type_extracted if chart_type_extracted else [], "chart_type_reasoning": chart_type_reasoning}
         
         def fetch_with_retries(url, headers, max_retries=3):
             for attempt in range(max_retries):
@@ -368,8 +368,6 @@ class MesonetAgent:
             url = f"https://api.hcdp.ikewai.org/mesonet/db/measurements?station_ids={','.join(state['stations_extracted'])}&var_ids={','.join(state['attributes_extracted'])}&start_date={state['start_date']}&end_date={state['end_date']}&row_mode=json&join_metadata=true"
             
             res = requests.get(url, headers={"Authorization": f"Bearer {token}"})
-            print("Start Date:", state['start_date'])
-            print("End Date:", state['end_date'])
             # Validate JSON response
             try:
                 data = json.loads(res.text)
@@ -403,38 +401,18 @@ class MesonetAgent:
             # Aggregate data: mean per timestamp-variable-station_name
             df_resampled = df.groupby(["timestamp", "variable", "station_name"]).agg({"value": "mean"}).reset_index()
             
-            #Print length of data
-            print("Length of data before resampled:", len(df))
-            print("Length of data after resampled:", len(df_resampled))
-
             # Convert DataFrame to JSON format
             measurements_json = df_resampled.to_dict(orient="records")
 
             # Generate summary
-            summary, summary_reasoning = state["llm_re"].prompt_summarize_reasoning(
+            summary, _ = state["llm_re"].prompt_summarize_reasoning(
                 state["request"].q, state["attribute_reasoning"], state["station_reasoning"], measurements_json
             )
             summary = summary + f" {state['start_date']} to {state['end_date']}"
-            print(summary)
             return {"measurements": measurements_json, "summary": summary, "url": url}
 
 
-        # # Define nodes
-        # def load_data(state: GraphState):
-        #     # TODO: Fetch the data and compute statistics
-        #     res = requests.get(qq.url, headers={"Authorization": f"Bearer {token}"})
-        #     data_statistics = "Sample statistics"  # Replace with actual data processing
-        #     return {"data_statistics": data_statistics}
 
-
-        # def process_prompt(state: GraphState):
-        #     user_prompt = state["request"].q
-        #     user_prompt_modified, user_prompt_reasoning = state["llm_re"].prompt_reiterate(user_prompt)
-        #     print(user_prompt_modified)
-        #     return {
-        #         "user_prompt_modified": user_prompt_modified,
-        #         "user_prompt_reasoning": user_prompt_reasoning
-        #     }
 
         # Add nodes to the graph
         workflow.add_node("initialize_llms", initialize_llms)
@@ -480,7 +458,6 @@ class MesonetAgent:
 
         attributes = final_state.get("attributes_extracted", [])
         actions = []
-        print(attributes, 'attributes')
         for attribute in attributes:
             actions.append(json.dumps(
             {
@@ -518,15 +495,24 @@ class MesonetAgent:
                 },
             }
         ))
+        print("Attributes:", final_state.get("attributes_extracted", []))
+        print("Stations:", final_state.get("stations_extracted", []))
+        print("Chart Type:", final_state.get("chart_type_extracted", []))
+        print("Start Date:", final_state.get("start_date", []))
+        print("End Date:", final_state.get("end_date", []))
+        print("Summary:", final_state.get("summary", "something went wrong"))
 
-
-        return  MesonetAnswer(
+        mesonet_answer = MesonetAnswer(
             attributes=final_state.get("attributes_extracted", []),  # Get extracted attributes from final state
             stations=final_state.get("stations_extracted", []),  # Get extracted stations from final state
             chart_type=final_state.get("chart_type_extracted", []),  # Get extracted chart type from final state
             start_date=final_state.get("start_date", ""),  # Get extracted chart type from final state
             end_date=final_state.get("end_date", ""),  # Get extracted chart type from final state
-            summary=final_state.get("summary" , ""),
+            summary=final_state.get("summary" , "I'm sorry, something went wrong. To improve results, try to be more specific in your prompt by adding a location, time, and attributes that you might want to see."),
             success=True,
             actions=actions
         )
+        
+
+
+        return  mesonet_answer
