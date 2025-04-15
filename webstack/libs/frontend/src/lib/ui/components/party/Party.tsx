@@ -91,7 +91,7 @@ export function PartyButton(props: PartyIconProps): JSX.Element {
       if (boardId && roomId && currentParty.board?.boardId !== boardId) {
         setPartyBoard(boardId, roomId);
       }
-      console.log(path, currentParty.board);
+      // Set board to undefined if you are on the homepage
       if (path.includes('home') && currentParty.board) {
         setPartyBoard();
       }

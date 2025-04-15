@@ -42,7 +42,6 @@ export function PartyHub(): JSX.Element {
   const uniqueParties = Array.from(new Set(partyList));
   // Does the party really exist?
   const availableParties = parties.filter((party) => {
-    console.log(party);
     return uniqueParties.includes(party.ownerId) && !party.private;
   });
 
