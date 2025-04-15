@@ -262,7 +262,6 @@ function PartyChats(): JSX.Element {
   }
 
   const handleClearChat = () => {
-    console.log('Clear chat');
     if (!currentParty) return;
     clearChat(currentParty);
   };

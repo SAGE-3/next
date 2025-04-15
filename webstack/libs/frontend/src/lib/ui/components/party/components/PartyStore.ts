@@ -68,7 +68,6 @@ const usePartyStore = create<PartyStore>((set, get) => {
     const { provider } = get();
     if (provider) {
       // If the provider is already initialized we need to do nothing
-      console.log('Party Provider already initialized');
       return;
     }
 
