@@ -43,6 +43,11 @@
     "url": "http://seer:9999"
   },
 
+  // Fastapi python server for co-sage-container-manager backend 
+  "vms": {
+    "managerUrl": "http://cosagecontainermanager:4024",
+    "streamUrl": "http://cosagecontainermanager:4033"
+  },
 
   // Feedback URL
   "feedback": {

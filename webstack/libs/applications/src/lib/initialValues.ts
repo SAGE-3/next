@@ -10,6 +10,7 @@ import { name as ChatName, init as defaultChat } from './apps/Chat';
 import { name as ClockName, init as defaultClock } from './apps/Clock';
 import { name as CobrowseName, init as defaultCobrowse } from './apps/Cobrowse';
 import { name as CodeEditorName, init as defaultCodeEditor } from './apps/CodeEditor';
+import { name as CollabBrowserName, init as defaultCollabBrowser } from './apps/CollabBrowser';
 import { name as CounterName, init as defaultCounter } from './apps/Counter';
 import { name as DeepZoomImageName, init as defaultDeepZoomImage } from './apps/DeepZoomImage';
 import { name as EChartsViewerName, init as defaultEChartsViewer } from './apps/EChartsViewer';
@@ -34,6 +35,7 @@ import { name as StickieName, init as defaultStickie } from './apps/Stickie';
 import { name as TLDrawName, init as defaultTLDraw } from './apps/TLDraw';
 import { name as TimerName, init as defaultTimer } from './apps/Timer';
 import { name as TwilioScreenshareName, init as defaultTwilioScreenshare } from './apps/TwilioScreenshare';
+import { name as VNCName, init as defaultVNC } from './apps/VNC';
 import { name as VegaLiteName, init as defaultVegaLite } from './apps/VegaLite';
 import { name as VegaLiteViewerName, init as defaultVegaLiteViewer } from './apps/VegaLiteViewer';
 import { name as VideoViewerName, init as defaultVideoViewer } from './apps/VideoViewer';
@@ -51,6 +53,7 @@ export const initialValues = {
   [ClockName]: defaultClock,
   [CobrowseName]: defaultCobrowse,
   [CodeEditorName]: defaultCodeEditor,
+  [CollabBrowserName]: defaultCollabBrowser,
   [CounterName]: defaultCounter,
   [DeepZoomImageName]: defaultDeepZoomImage,
   [EChartsViewerName]: defaultEChartsViewer,
@@ -75,6 +78,7 @@ export const initialValues = {
   [TLDrawName]: defaultTLDraw,
   [TimerName]: defaultTimer,
   [TwilioScreenshareName]: defaultTwilioScreenshare,
+  [VNCName]: defaultVNC,
   [VegaLiteName]: defaultVegaLite,
   [VegaLiteViewerName]: defaultVegaLiteViewer,
   [VideoViewerName]: defaultVideoViewer,

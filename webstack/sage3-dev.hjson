@@ -43,6 +43,13 @@
     "url": "http://127.0.0.1:9999"
   },
 
+  // Fastapi python server for co-sage-container-manager backend 
+  "vms": {
+    "managerUrl": "http://127.0.0.1:4024",
+    "streamUrl": "http://127.0.0.1:4033"
+  },
+
+
   // Feedback URL
   "feedback": {
     "url": "http://sage3-server-status.cis230038.projects.jetstream-cloud.org:3000/feedback"

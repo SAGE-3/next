@@ -47,6 +47,8 @@ import {
   PresenceThrottle,
   AiRouter,
   AgentRouter,
+  VmsRouter,
+  VmsStreamRouter,
 } from './custom';
 
 import { config } from '../../config';
@@ -71,6 +73,10 @@ export function expressAPIRouter(): express.Router {
 
   // Kernels Routes
   router.use('/kernels', KernelsRouter());
+
+  // Vms Routes
+  router.use('/vm', VmsRouter());
+  // router.use('/vmstream', VmsStreamRouter());
 
   // Collections
   router.use('/users', UsersCollection.router());
