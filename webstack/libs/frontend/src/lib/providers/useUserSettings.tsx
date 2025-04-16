@@ -78,18 +78,18 @@ type UserSettingsContextType = {
 
 const UserSettingsContext = createContext<UserSettingsContextType>({
   settings: defaultSettings,
-  toggleShowCursors: () => {},
-  toggleShowViewports: () => {},
-  toggleShowAppTitles: () => {},
-  toggleProvenance: (value: UserSettings['showProvenance']) => {},
-  toggleShowUI: () => {},
-  toggleShowTags: () => {},
-  setBoardListView: (value: UserSettings['selectedBoardListView']) => {},
-  setPrimaryActionMode: (value: UserSettings['primaryActionMode']) => {},
-  setDefaultPrimaryActionMode: () => {},
-  restoreDefaultSettings: () => {},
-  setAIModel: (value: UserSettings['aiModel']) => {},
-  setUIScale: (value: UserSettings['uiScale']) => {},
+  toggleShowCursors: () => { },
+  toggleShowViewports: () => { },
+  toggleShowAppTitles: () => { },
+  toggleProvenance: (value: UserSettings['showProvenance']) => { },
+  toggleShowUI: () => { },
+  toggleShowTags: () => { },
+  setBoardListView: (value: UserSettings['selectedBoardListView']) => { },
+  setPrimaryActionMode: (value: UserSettings['primaryActionMode']) => { },
+  setDefaultPrimaryActionMode: () => { },
+  restoreDefaultSettings: () => { },
+  setAIModel: (value: UserSettings['aiModel']) => { },
+  setUIScale: (value: UserSettings['uiScale']) => { },
 });
 
 /**
@@ -116,7 +116,7 @@ export function getUserSettings() {
 
 function setElectronUIScale(value: UserSettings['uiScale']) {
   if (isElectron()) {
-    window.electron.send('set-scale-level', uiScaleDict[value] / window.devicePixelRatio);
+    window.electron.send('set-scale-level', uiScaleDict[value] * window.devicePixelRatio);
   }
 }
 

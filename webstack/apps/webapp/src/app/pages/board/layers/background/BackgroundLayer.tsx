@@ -40,7 +40,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   const setScale = useUIStore((state) => state.setScale);
 
   // Local States with Delayed Syncing to useUIStore
-  const [localBoardPosition, setLocalBoardPosition] = useState({ x: 0, y: 0, scale: 0 });
+  const [localBoardPosition, setLocalBoardPosition] = useState({ x: boardPosition.x, y: boardPosition.y, scale: scale });
   const [localSynced, setLocalSynced] = useState(true); // optimize performance against the useUIStore
   const [, setLastTouch] = useState([
     { x: 0, y: 0 },

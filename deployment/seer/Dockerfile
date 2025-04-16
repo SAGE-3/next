@@ -2,7 +2,7 @@ FROM python:3.9-slim AS builder
 
 WORKDIR /code
 
-RUN apt-get update && apt-get install -y build-essential && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y build-essential git && rm -rf /var/lib/apt/lists/*
 
 COPY ./seer/requirements.txt /code/requirements.txt
 
@@ -27,4 +27,4 @@ COPY ./seer/app /code/app
 COPY ./seer/libs/ /code/libs
 COPY ./seer/main.py /code
 
-CMD ["fastapi", "run", "main.py", "--proxy-headers", "--port", "9999", "--workers", "4"]
+CMD ["uvicorn", "main:app", "--proxy-headers", "--port", "9999", "--workers", "4"]

@@ -65,7 +65,7 @@ import {
   MdOutlinePushPin,
 } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
-import { IoMdExit } from 'react-icons/io';
+import { MdDeselect } from 'react-icons/md';
 import { IoSparklesSharp } from 'react-icons/io5';
 
 import { formatDistance } from 'date-fns';
@@ -91,6 +91,8 @@ import { SAGEColors } from '@sage3/shared';
 import { AI_ENABLED_APPS, Applications } from '@sage3/applications/apps';
 import { Position, Size } from '@sage3/shared/types';
 import ky from 'ky';
+
+const UI_BAR_OFFSET = 50;
 
 type AppToolbarProps = {
   boardId: string;
@@ -217,7 +219,7 @@ export function AppToolbar(props: AppToolbarProps) {
       }
 
       // Default Toolbar Poistion. Middle of screen at bottom
-      const defaultPosition = screenLimit({ x: ww / 2 - twhalf, y: wh - toolbarHeight });
+      const defaultPosition = screenLimit({ x: ww / 2 - twhalf, y: wh - toolbarHeight - UI_BAR_OFFSET });
 
       // App Bottom Position
       const appBottomPosition = screenLimit({ x: appXWin + aw / 2 - twhalf, y: appBYWin });
@@ -236,7 +238,7 @@ export function AppToolbar(props: AppToolbarProps) {
         setAppToolbarPosition(defaultPosition);
       }
       // App is close to bottom of the screen
-      else if (appBYWin + toolbarHeight > wh) {
+      else if (appBYWin + toolbarHeight + UI_BAR_OFFSET > wh) {
         setPosition(appTopPosition);
         setAppToolbarPosition(appTopPosition);
       } else {
@@ -733,19 +735,20 @@ export function AppToolbar(props: AppToolbarProps) {
         </Modal>
 
         {/* Delete tag confirmation */}
-        {isDeleteTagOpen && <ConfirmModal
-          isOpen={isDeleteTagOpen}
-          onClose={onDeleteTagClose}
-          onConfirm={handleDeleteTag}
-          title="Delete this Tag"
-          message="Are you sure you want to delete this tag from this app?"
-          cancelText="Cancel"
-          confirmText="Delete"
-          cancelColor="green"
-          confirmColor="red"
-          size="lg"
-        />
-        }
+        {isDeleteTagOpen && (
+          <ConfirmModal
+            isOpen={isDeleteTagOpen}
+            onClose={onDeleteTagClose}
+            onConfirm={handleDeleteTag}
+            title="Delete this Tag"
+            message="Are you sure you want to delete this tag from this app?"
+            cancelText="Cancel"
+            confirmText="Delete"
+            cancelColor="green"
+            confirmColor="red"
+            size="lg"
+          />
+        )}
       </HStack>
     );
   }
@@ -860,7 +863,7 @@ export function AppToolbar(props: AppToolbarProps) {
                 </MenuItem>
                 <MenuDivider />
 
-                <MenuItem icon={<IoMdExit size="18px" />} onClick={() => setSelectedApp('')} py="1px" m="0">
+                <MenuItem icon={<MdDeselect size="18px" />} onClick={() => setSelectedApp('')} py="1px" m="0">
                   Deselect Application
                 </MenuItem>
               </MenuList>
@@ -872,7 +875,7 @@ export function AppToolbar(props: AppToolbarProps) {
               </Button>
             </Tooltip>
 
-            {isDeleteOpen &&
+            {isDeleteOpen && (
               <ConfirmModal
                 isOpen={isDeleteOpen}
                 onClose={onDeleteClose}
@@ -885,7 +888,7 @@ export function AppToolbar(props: AppToolbarProps) {
                 size="lg"
                 xOffSet={Math.max(0, (position.x - 150) / window.innerWidth)}
               />
-            }
+            )}
           </>
         </ErrorBoundary>
       );

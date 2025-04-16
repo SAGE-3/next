@@ -1,21 +1,29 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2025. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
 
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
 
-/**
- * Get a piece of JSON data from the server
- * From react docs
- * @param url the url to send the request to
- * @returns
- */
+// Global history stack (singleton)
+const history: string[] = [];
+let currentIndex = -1;
+
 export function useRouteNav() {
   const navigate = useNavigate();
+
+  // State for enabling/disabling back & forward buttons
+  const [canGoBack, setCanGoBack] = useState(currentIndex > 0 && history.length > 1);
+  const [canGoForward, setCanGoForward] = useState(currentIndex < history.length - 1);
+
+  function updateState() {
+    setCanGoBack(currentIndex > 0);
+    setCanGoForward(currentIndex < history.length - 1);
+  }
 
   function toHome(roomId?: string) {
     if (roomId) {
@@ -23,6 +31,7 @@ export function useRouteNav() {
     } else {
       navigate('/home');
     }
+    updateState();
   }
 
   function toQuickAccess(quickAccess: 'active' | 'starred' | 'recent') {
@@ -30,7 +39,42 @@ export function useRouteNav() {
   }
 
   function toBoard(roomId: string, boardId: string) {
-    navigate(`/board/${roomId}/${boardId}`);
+    const boardPath = `/board/${roomId}/${boardId}`;
+    // Check if the currentl url contains the boardId and roomId
+    const currentPath = window.location.pathname;
+    if (currentPath.includes(boardPath)) {
+      return; // Already on the correct board
+    }
+    navigate(boardPath);
+
+    // If moving forward in history, clear any forward entries
+    if (currentIndex < history.length - 1) {
+      history.splice(currentIndex + 1);
+    }
+
+    // Prevent adding duplicate consecutive entries
+    if (history[currentIndex] !== boardPath) {
+      history.push(boardPath);
+      currentIndex = history.length - 1;
+    }
+
+    updateState();
+  }
+
+  function back() {
+    if (currentIndex > 0) {
+      currentIndex -= 1;
+      navigate(history[currentIndex]);
+      updateState();
+    }
+  }
+
+  function forward() {
+    if (currentIndex < history.length - 1) {
+      currentIndex += 1;
+      navigate(history[currentIndex]);
+      updateState();
+    }
   }
 
   function toLogin() {
@@ -41,9 +85,5 @@ export function useRouteNav() {
     navigate(`/admin`);
   }
 
-  function back() {
-    navigate(-1);
-  }
-
-  return { toHome, toBoard, toLogin, toAdmin, toQuickAccess, back };
+  return { toHome, toBoard, toLogin, toAdmin, toQuickAccess, back, forward, canGoBack, canGoForward };
 }
