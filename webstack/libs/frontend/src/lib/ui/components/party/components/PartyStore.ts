@@ -126,6 +126,15 @@ const usePartyStore = create<PartyStore>((set, get) => {
     });
   }
 
+  let yChatDoc = null as Y.Array<PartyChatMessage> | null;
+
+  const onChatsUpdate = (event: Y.YArrayEvent<PartyChatMessage>) => {
+    if (!yChatDoc) return;
+    const chats = yChatDoc.toArray();
+    chats.sort((a, b) => a.timestamp - b.timestamp);
+    set({ chats });
+  };
+
   return {
     yDoc: null,
     provider: null,
@@ -178,15 +187,12 @@ const usePartyStore = create<PartyStore>((set, get) => {
         set({ chats: [] });
         return;
       } else {
-        const chats = yDoc.getArray<PartyChatMessage>(party.ownerId).toArray();
+        const yDocChats = yDoc.getArray<PartyChatMessage>(party.ownerId);
+        if (yChatDoc) yChatDoc.unobserve(onChatsUpdate);
+        yChatDoc = yDocChats;
+        const chats = yDocChats.toArray();
         set({ chats });
-        yDoc.getArray<PartyChatMessage>(party.ownerId).observe((event) => {
-          const chats = yDoc.getArray<PartyChatMessage>(party.ownerId).toArray();
-          // Sort in descending order
-          chats.sort((a, b) => a.timestamp - b.timestamp);
-          // Set the chats in the store
-          set({ chats });
-        });
+        yChatDoc.observe(onChatsUpdate);
       }
     },
     async addChat(message: string) {
