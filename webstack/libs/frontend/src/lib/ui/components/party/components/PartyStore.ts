@@ -6,49 +6,80 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// Yjs imports
+/**
+ * PartyStore: a Zustand store backed by a single Yjs document + y-websocket.
+ * Manages:
+ *   - A global parties map (Y.Map) to track available parties
+ *   - Awareness of who is in which party
+ *   - A per-party Y.Array of chat messages
+ */
+
+// Yjs imports (shared CRDT document and awareness protocol)
 import * as Y from 'yjs';
 import { Awareness } from 'y-protocols/awareness';
 import { WebsocketProvider } from 'y-websocket';
 
-// Zustand store import
+// Zustand store creator
 import { create } from 'zustand';
 
-// Local imports
+// Local utility imports
 import { genId } from '@sage3/shared';
 import { User } from '@sage3/shared/types';
 import { serverTime } from '@sage3/frontend';
 import { Party, PartyChatMessage, PartyMember } from './types';
 
-// The Zustand store for the party
+/**
+ * Defines the shape of the PartyStore state and actions
+ */
 type PartyStore = {
-  // Yjs and Websocket provider
+  // Yjs document for global party list
   yDoc: Y.Doc | null;
+  // Websocket provider for global party Hub
   provider: WebsocketProvider | null;
+  // Awareness protocol instance for membership
   awareness: Awareness | null;
 
-  // Initialize the Yjs provider and awareness
+  /**
+   * Initialize the Yjs + websocket connection for parties
+   * Must be called once, passing the authenticated user
+   */
   initPartyConnection: (user: User) => void;
 
-  // All avaialble parties
+  // List of all parties available
   parties: Party[];
   setParties: (parties: Party[]) => void;
 
-  // The current party the user is in
+  // The currently active party (or null if none)
   currentParty: Party | null;
   setCurrentParty: (party: Party | null) => void;
+
+  /**
+   * Update the board/room metadata for the current party
+   */
   setPartyBoard: (boardId?: string, roomId?: string) => void;
 
-  // The current party members
+  // List of members in the current party (via awareness)
   partyMembers: PartyMember[];
 
-  // The current chat messages
+  // Chat messages for the current party
   chats: PartyChatMessage[];
+
+  /**
+   * Switches which party's chats are loaded and observed
+   */
   setChats: (party: Party | null) => void;
+
+  /**
+   * Adds a new chat message for the current party
+   */
   addChat: (message: string) => Promise<void>;
+
+  /**
+   * Clears all chat messages for a given party
+   */
   clearChat: (party: Party) => void;
 
-  // Party management functions
+  // Convenience actions
   joinParty: (party: Party) => void;
   leaveParty: () => void;
   createParty: () => void;
@@ -56,199 +87,242 @@ type PartyStore = {
   togglePartyPrivate: () => void;
 };
 
-// Global USER variable to store the current user
-// React hooks in the store are not allowed, so we need to use a global variable
+// Global variable to hold the current user (hooks cannot be used directly)
 let USER: User | null = null;
 
-// Create the Zustand store
+/**
+ * Create the Zustand store for party management
+ */
 const usePartyStore = create<PartyStore>((set, get) => {
-  // Initialize the Yjs provider and awareness
-  function initPartyConnection(user: User) {
-    // Check to see if the provider is already initialized
-    const { provider } = get();
-    if (provider) {
-      // If the provider is already initialized we need to do nothing
-      return;
-    }
+  // Internal reference to the Y.Array currently being observed
+  let yChatDoc: Y.Array<PartyChatMessage> | null = null;
 
-    // Set the user for the store to use
-    USER = user;
-
-    // Create the Yjs document and WebSocket provider
-    const yDoc = new Y.Doc();
-    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    const url = `${protocol}://${window.location.host}/yjs`;
-    const websocketProvider = new WebsocketProvider(url, 'partyHub', yDoc);
-    const awareness = websocketProvider.awareness;
-    set({ provider: websocketProvider, yDoc, awareness });
-
-    // Once the connection is established, set the user ID in the awareness
-    websocketProvider.on('sync', () => {
-      // Set the currently available parties
-      const currentParties = Array.from(yDoc.getMap<Party>('parties').values());
-      set({ parties: currentParties });
-
-      // If you have a party already created, set it as the current party
-      const partyAlreadyCreated = currentParties.find((party) => party.ownerId === user._id);
-      if (partyAlreadyCreated) {
-        get().setCurrentParty(partyAlreadyCreated);
-      } else {
-        set({ currentParty: null });
-      }
-
-      // Observe the parties map for changes
-      yDoc.getMap<Party>('parties').observe(() => {
-        // Get the current parties from the Yjs document
-        const currentParties = Array.from(yDoc.getMap<Party>('parties').values());
-        // Set the current parties in the store
-        set({ parties: currentParties });
-
-        // If you are in a party and that party has been removed, leave the party
-        const { currentParty } = get();
-        if (currentParty) {
-          const party = currentParties.find((party) => party.ownerId === currentParty.ownerId);
-          if (!party) {
-            get().setCurrentParty(null);
-          } else {
-            get().setCurrentParty(party);
-          }
-        }
-      });
-    });
-
-    // Set the awareness state for the user
-    awareness.on('change', () => {
-      const userData = Array.from(awareness.getStates().values());
-      const usersMaped = userData.map((el) => {
-        return el as PartyMember;
-      });
-      set({ partyMembers: usersMaped });
-    });
-  }
-
-  let yChatDoc = null as Y.Array<PartyChatMessage> | null;
-
-  const onChatsUpdate = (event: Y.YArrayEvent<PartyChatMessage>) => {
+  /**
+   * Handler invoked whenever the observed chat array changes
+   * Sorts messages by timestamp and updates React state
+   */
+  const onChatsUpdate = () => {
     if (!yChatDoc) return;
-    const chats = yChatDoc.toArray();
-    chats.sort((a, b) => a.timestamp - b.timestamp);
-    set({ chats });
+    const msgs = yChatDoc.toArray();
+    msgs.sort((a, b) => a.timestamp - b.timestamp);
+    set({ chats: msgs });
   };
 
   return {
+    /**
+     * Yjs document reference (global parties)
+     */
     yDoc: null,
+    /**
+     * Websocket provider for the global parties map
+     */
     provider: null,
+    /**
+     * Awareness instance for membership tracking
+     */
     awareness: null,
-    initPartyConnection,
 
+    /**
+     * Called once after login to initialize Yjs + websocket
+     */
+    initPartyConnection: (user: User) => {
+      const { provider } = get();
+      // If already initialized, do nothing
+      if (provider) return;
+
+      // Store user globally for later message metadata
+      USER = user;
+
+      // Create a new Y.Doc and connect via WebsocketProvider
+      const yDoc = new Y.Doc();
+      const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+      const url = `${protocol}://${window.location.host}/yjs`;
+      const websocketProvider = new WebsocketProvider(url, 'partyHub', yDoc);
+      const awareness = websocketProvider.awareness;
+
+      // Save to store
+      set({ provider: websocketProvider, yDoc, awareness });
+
+      // 1) Grab the shared "parties" map
+      const partiesMap = yDoc.getMap<Party>('parties');
+
+      // 2) Observe changes only once for the lifetime of the app
+      partiesMap.observe(() => {
+        const updated = Array.from(partiesMap.values());
+        set({ parties: updated });
+
+        // If our currentParty was removed or changed, sync it
+        const { currentParty } = get();
+        if (currentParty) {
+          const stillThere = updated.find((p) => p.ownerId === currentParty.ownerId);
+          get().setCurrentParty(stillThere || null);
+        }
+      });
+
+      // 3) On initial sync, seed state and auto-join your party if it exists
+      websocketProvider.on('sync', () => {
+        const currentParties = Array.from(partiesMap.values());
+        set({ parties: currentParties });
+
+        // Auto-join if user already owns a party
+        const mine = currentParties.find((p) => p.ownerId === user._id);
+        if (mine) get().setCurrentParty(mine);
+        else set({ currentParty: null });
+      });
+
+      // 4) Track awareness updates (who is in which party)
+      awareness.on('change', () => {
+        const states = Array.from(awareness.getStates().values());
+        set({ partyMembers: states as PartyMember[] });
+      });
+    },
+
+    /**
+     * Local React state list of parties
+     */
     parties: [],
     setParties: (parties) => set({ parties }),
 
+    /**
+     * The party the user is currently in
+     */
     currentParty: null,
     setCurrentParty: (party) => {
       const { awareness, setChats } = get();
+      if (!awareness) return;
+
       if (party) {
-        if (!awareness) return;
+        // Join: update awareness so others see you
         awareness.setLocalState({ userId: USER!._id, party: party.ownerId });
         set({ currentParty: party });
+        // Load and observe this party's chats
         setChats(party);
       } else {
+        // Leave: clear awareness & chats
+        awareness.setLocalState({ userId: USER!._id, party: null });
         set({ currentParty: null });
         setChats(null);
-        const { awareness } = get();
-        if (!awareness) return;
-        awareness.setLocalState({ userId: USER!._id, party: null });
-      }
-    },
-    setPartyBoard: (boardId?: string, roomId?: string) => {
-      const { currentParty } = get();
-      if (!currentParty) return;
-      const { yDoc } = get();
-      if (!yDoc) return;
-      const party = yDoc.getMap<Party>('parties').get(currentParty.ownerId);
-      if (party) {
-        if (!boardId || !roomId) {
-          const newParty = { ownerId: currentParty.ownerId };
-          yDoc.getMap<Party>('parties').set(currentParty.ownerId, newParty);
-        } else {
-          const newParty = { ownerId: currentParty.ownerId, board: { boardId, roomId } };
-          yDoc.getMap<Party>('parties').set(currentParty.ownerId, newParty);
-        }
       }
     },
 
+    /**
+     * Update the board/room metadata for the current party
+     */
+    setPartyBoard: (boardId, roomId) => {
+      const { currentParty, yDoc } = get();
+      if (!currentParty || !yDoc) return;
+      const partiesMap = yDoc.getMap<Party>('parties');
+      const existing = partiesMap.get(currentParty.ownerId) || currentParty;
+      const updated: Party = {
+        ...existing,
+        board: boardId && roomId ? { boardId, roomId } : undefined,
+      };
+      partiesMap.set(currentParty.ownerId, updated);
+    },
+
+    /**
+     * List of members in the current party (kept in sync via awareness)
+     */
     partyMembers: [],
 
+    /**
+     * Sorted chat messages for the current party
+     */
     chats: [],
-    setChats: (party: Party | null) => {
+
+    /**
+     * Switch chat observation to the given party (or clear if null)
+     */
+    setChats: (party) => {
       const { yDoc } = get();
       if (!yDoc) return;
+
+      // 1) Unsubscribe previous chat observer
+      if (yChatDoc) {
+        yChatDoc.unobserve(onChatsUpdate);
+        yChatDoc = null;
+      }
+
+      // 2) If no party selected, clear messages
       if (!party) {
         set({ chats: [] });
         return;
-      } else {
-        const yDocChats = yDoc.getArray<PartyChatMessage>(party.ownerId);
-        if (yChatDoc) yChatDoc.unobserve(onChatsUpdate);
-        yChatDoc = yDocChats;
-        const chats = yDocChats.toArray();
-        set({ chats });
-        yChatDoc.observe(onChatsUpdate);
       }
+
+      // 3) Subscribe to new party's chat array
+      const arr = yDoc.getArray<PartyChatMessage>(party.ownerId);
+      yChatDoc = arr;
+
+      // Load initial messages & sort
+      const initial = arr.toArray();
+      initial.sort((a, b) => a.timestamp - b.timestamp);
+      set({ chats: initial });
+
+      // Observe subsequent updates
+      arr.observe(onChatsUpdate);
     },
-    async addChat(message: string) {
-      const { currentParty } = get();
-      if (!currentParty) return;
-      const { yDoc } = get();
-      if (!yDoc) return;
-      const chats = yDoc.getArray<PartyChatMessage>(currentParty.ownerId);
-      const timestamp = await serverTime();
+
+    /**
+     * Add a chat message to the current party
+     */
+    async addChat(message) {
+      const { currentParty, yDoc } = get();
+      if (!currentParty || !yDoc) return;
+      const arr = yDoc.getArray<PartyChatMessage>(currentParty.ownerId);
+      const { epoch } = await serverTime();
       const chat: PartyChatMessage = {
         id: genId(),
         text: message,
         senderId: USER!._id,
-        timestamp: timestamp.epoch,
+        timestamp: epoch,
       };
-      chats.push([chat]);
-    },
-    clearChat: (party: Party) => {
-      const { yDoc } = get();
-      if (!yDoc) return;
-      const chats = yDoc.getArray<PartyChatMessage>(party.ownerId);
-      chats.delete(0, chats.length);
+      arr.push([chat]);
     },
 
-    joinParty: (party) => get().setCurrentParty(party),
-    leaveParty: () => {
-      const { awareness } = get();
-      if (!awareness) return;
-      awareness.setLocalState({ userId: USER!._id, party: null });
-      set({ currentParty: null, chats: [] });
+    /**
+     * Remove all chat messages for the specified party
+     */
+    clearChat: (party) => {
+      const { yDoc } = get();
+      if (!yDoc) return;
+      const arr = yDoc.getArray<PartyChatMessage>(party.ownerId);
+      arr.delete(0, arr.length);
     },
+
+    // Aliases for joining/leaving
+    joinParty: (party) => get().setCurrentParty(party),
+    leaveParty: () => get().setCurrentParty(null),
+
+    /**
+     * Create a new party owned by the current user and join it
+     */
     createParty: () => {
       const { provider, setCurrentParty } = get();
       const party: Party = { ownerId: USER!._id };
-      provider?.doc.getMap('parties').set(USER!._id, party);
+      provider?.doc.getMap<Party>('parties').set(USER!._id, party);
       setCurrentParty(party);
     },
+
+    /**
+     * Disband the user's owned party and leave
+     */
     disbandParty: () => {
       if (!USER) return;
-      const { provider, leaveParty } = get();
-      provider?.doc.getMap('parties').delete(USER._id);
-      set({ currentParty: null });
-      get().clearChat({ ownerId: USER._id });
+      const { provider, clearChat, leaveParty } = get();
+      provider?.doc.getMap<Party>('parties').delete(USER._id);
+      clearChat({ ownerId: USER._id } as Party);
       leaveParty();
     },
+
+    /**
+     * Toggle the 'private' flag on the current party
+     */
     togglePartyPrivate: () => {
-      const { currentParty } = get();
-      if (!currentParty) return;
-      const { yDoc } = get();
-      if (!yDoc) return;
-      const party = yDoc.getMap<Party>('parties').get(currentParty.ownerId);
-      if (party) {
-        const isPrivate = party.private ? true : false;
-        const newParty = { ownerId: currentParty.ownerId, board: currentParty.board, private: !isPrivate } as Party;
-        yDoc.getMap<Party>('parties').set(currentParty.ownerId, newParty);
-      }
+      const { currentParty, yDoc } = get();
+      if (!currentParty || !yDoc) return;
+      const partiesMap = yDoc.getMap<Party>('parties');
+      const existing = partiesMap.get(currentParty.ownerId) || currentParty;
+      partiesMap.set(currentParty.ownerId, { ...existing, private: !existing.private });
     },
   };
 });
