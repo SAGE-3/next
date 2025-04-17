@@ -22,44 +22,48 @@ export function KernelsRouter() {
     target: config.kernels.url,
     changeOrigin: true,
     pathRewrite: { '^/api/kernels': '' },
-    logLevel: 'warn', // 'debug' | 'info' | 'warn' | 'error' | 'silent'
-    logProvider: () => console,
+    logger: {
+      info: () => {},
+      warn: () => {},
+      error: console.error,
+    },
     selfHandleResponse: true, // Add this to handle the response manually
     // request handler making sure the body is parsed before proxying
-    onProxyReq: restream,
-    onProxyRes: (proxyRes, req, res) => {
-      let data = '';
+    on: {
+      proxyReq: restream,
+      proxyRes: (proxyRes, req, res) => {
+        let data = '';
 
-      // Only for SSE routes
-      if (req.path.includes('stream')) {
-        res.writeHead(200, {
-          'Cache-Control': 'no-cache',
-          Connection: 'keep-alive',
-          'Content-Type': 'text/event-stream',
-        });
-        proxyRes.on('data', (chunk) => {
-          data += chunk;
-          res.write(chunk);
-          res.flush();
-        });
+        // Only for SSE routes
+        if (req.path.includes('stream')) {
+          res.writeHead(200, {
+            'Cache-Control': 'no-cache',
+            Connection: 'keep-alive',
+            'Content-Type': 'text/event-stream',
+          });
+          proxyRes.on('data', (chunk) => {
+            data += chunk;
+            res.write(chunk);
+            // res.flush();
+          });
 
-        proxyRes.on('end', () => {
-          res.write(data);
-          res.end();
-        });
-      } else {
-        // Handle other routes normally
-        proxyRes.on('data', (chunk) => {
-          res.write(chunk);
-        });
+          proxyRes.on('end', () => {
+            res.write(data);
+            res.end();
+          });
+        } else {
+          // Handle other routes normally
+          proxyRes.on('data', (chunk) => {
+            res.write(chunk);
+          });
 
-        proxyRes.on('end', () => {
-          res.end();
-        });
-      }
+          proxyRes.on('end', () => {
+            res.end();
+          });
+        }
+      },
     },
   });
-
   return router;
 }
 
