@@ -6,10 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// React and Chakra Imports
 import { useEffect } from 'react';
-import { useParams, useLocation } from 'react-router';
-
+import { useParams } from 'react-router';
 import {
   Text,
   Popover,
@@ -27,10 +25,7 @@ import {
 } from '@chakra-ui/react';
 import { MdGroups } from 'react-icons/md';
 
-// SAGE3 Imports
 import { useHexColor, useRouteNav, useUser, useUsersStore } from '@sage3/frontend';
-
-// Pary Imports
 import { PartyHub, PartyInstance, usePartyStore } from './components';
 
 interface PartyIconProps {
@@ -38,16 +33,17 @@ interface PartyIconProps {
   isBoard?: boolean;
 }
 
-// Popover open state
+// Popover open state persisted across mounts
 let popoverOpen = false;
 
-// The Partybutton Component.
-// Contains the Popover with the party members and chat.
+/**
+ * PartyButton: button that opens a popover showing party members & chat
+ */
 export function PartyButton(props: PartyIconProps): JSX.Element {
-  // Popover control
+  // Chakra popover controls
   const { isOpen, onToggle, onClose, onOpen } = useDisclosure();
 
-  // Popover open logic to keep it open when entering and exiting a board
+  // Keep popoverOpen flag in sync when entering/exiting routes
   useEffect(() => {
     if (popoverOpen) onOpen();
   }, [onOpen]);
@@ -56,74 +52,86 @@ export function PartyButton(props: PartyIconProps): JSX.Element {
     popoverOpen = !isOpen;
     onToggle();
   };
-
   const handleOnClose = () => {
     popoverOpen = false;
     onClose();
   };
 
-  // Stores
+  // Zustand stores and route helpers
   const { currentParty, partyMembers, setPartyBoard } = usePartyStore();
   const { users } = useUsersStore();
   const { user } = useUser();
   const { toBoard } = useRouteNav();
 
-  const location = useLocation();
+  // Get route params for board context
+  const { boardId: routeBoardId, roomId: routeRoomId } = useParams();
 
-  // Values
-  const partySize = partyMembers.filter((member) => member.party === currentParty?.ownerId).length;
-  const ownerUserAccount = users.find((el) => el._id === currentParty?.ownerId);
+  // Determine party size badge
+  const partySize = partyMembers.filter((m) => m.party === currentParty?.ownerId).length;
+  const ownerAccount = users.find((u) => u._id === currentParty?.ownerId);
 
-  // Theme
+  // Styling
   const iconSize = props.iconSize || 'md';
   const iconColor = 'teal';
-  const isOwner = currentParty?.ownerId === user?._id;
+  const fontSize = iconSize === 'xs' ? 'sm' : iconSize === 'sm' ? 'md' : 'lg';
   const badgeColor = useColorModeValue('red.500', 'red.200');
   const badgeHex = useHexColor(badgeColor);
   const badgeTextColor = useColorModeValue('white', 'black');
+  const isOwner = currentParty?.ownerId === user?._id;
 
-  const { boardId, roomId } = useParams();
-
-  // If you are the owner
+  /**
+   * Owner: when boardId/roomId change, update party metadata
+   */
   useEffect(() => {
-    if (!isOwner) return;
-    const path = location.pathname;
-    if (currentParty) {
-      if (boardId && roomId && currentParty.board?.boardId !== boardId) {
-        setPartyBoard(boardId, roomId);
+    if (!isOwner || !currentParty) return;
+    if (routeBoardId && routeRoomId) {
+      // Only update if different than stored
+      if (currentParty.board?.boardId !== routeBoardId || currentParty.board?.roomId !== routeRoomId) {
+        setPartyBoard(routeBoardId, routeRoomId);
       }
-      // Set board to undefined if you are on the homepage
-      if (path.includes('home') && currentParty.board) {
-        setPartyBoard();
+    } else {
+      // On homepage or missing params, clear board
+      if (currentParty.board) {
+        setPartyBoard(undefined, undefined);
       }
     }
-  }, [currentParty, boardId, roomId, isOwner, setPartyBoard, location.pathname]);
+    // Depend on exact board params and ownership
+  }, [isOwner, currentParty, routeBoardId, routeRoomId, setPartyBoard]);
 
-  // IF you are not the owner
+  /**
+   * Non-owner: navigate to the owner's board when they change it
+   * Guard to prevent infinite loops by checking current route
+   */
+  const targetBoard = currentParty?.board?.boardId;
+  const targetRoom = currentParty?.board?.roomId;
   useEffect(() => {
-    if (!currentParty || isOwner) return;
-    if (currentParty && currentParty.board) {
-      toBoard(currentParty.board.roomId, currentParty.board.boardId);
+    if (isOwner || !currentParty?.board) return;
+    const { boardId: targetBoard, roomId: targetRoom } = currentParty.board;
+    // Only navigate if route does not match target
+    if (routeBoardId !== targetBoard || routeRoomId !== targetRoom) {
+      toBoard(targetRoom, targetBoard);
     }
-  }, [currentParty, isOwner, toBoard]);
+    // Include route params, currentParty.board, and toBoard
+  }, [isOwner, targetBoard, targetRoom, routeBoardId, routeRoomId, toBoard, currentParty?.board]);
 
-  // Popover Header. If you are in a party show the party owner's name. If not, show "Party Hub"
-  const header = ownerUserAccount ? (
-    `${ownerUserAccount.data.name.trim().substring(0, 15)}'s Party`
+  // Popover header: show owner's name or generic
+  const header = ownerAccount ? (
+    `
+      ${ownerAccount.data.name.trim().substring(0, 15)}'s Party
+    `
   ) : (
-    <Flex alignItems="center" gap={2}>
+    <Flex align="center" gap={2}>
       <Text fontSize="2xl" fontWeight="bold">
         <MdGroups />
       </Text>
       <Text>Party Hub</Text>
     </Flex>
   );
-  const fontSize = iconSize === 'xs' ? 'sm' : iconSize === 'sm' ? 'md' : iconSize === 'md' ? 'lg' : 'xl';
 
   return (
-    <Popover isOpen={isOpen} onClose={handleOnClose} closeOnBlur={false} closeOnEsc={true}>
+    <Popover isOpen={isOpen} onClose={handleOnClose} closeOnBlur={false} closeOnEsc>
       <PopoverTrigger>
-        <Box>
+        <Box position="relative">
           <IconButton
             onClick={handleOnToggle}
             size={iconSize}
@@ -134,17 +142,17 @@ export function PartyButton(props: PartyIconProps): JSX.Element {
           />
           {currentParty && (
             <Box
-              backgroundColor={badgeHex}
-              borderRadius="100%"
-              width="16px"
-              height="16px"
-              position="absolute"
-              right="-4px"
+              bg={badgeHex}
+              borderRadius="full"
+              w="16px"
+              h="16px"
+              pos="absolute"
               top="-4px"
+              right="-4px"
               fontSize="10px"
               display="flex"
-              justifyContent={'center'}
-              alignItems={'center'}
+              alignItems="center"
+              justifyContent="center"
               color={badgeTextColor}
             >
               {partySize}
@@ -152,11 +160,11 @@ export function PartyButton(props: PartyIconProps): JSX.Element {
           )}
         </Box>
       </PopoverTrigger>
-      <PopoverContent width="500px" height="500px" mr="2">
+      <PopoverContent w="500px" h="500px" mr="2">
         <PopoverArrow />
         <PopoverCloseButton onClick={handleOnClose} />
         <PopoverHeader>{header}</PopoverHeader>
-        <PopoverBody height="455px">
+        <PopoverBody h="455px">
           <Party />
         </PopoverBody>
       </PopoverContent>
@@ -164,21 +172,17 @@ export function PartyButton(props: PartyIconProps): JSX.Element {
   );
 }
 
-// The Party Component
-// Contains the PartyHub and PartyInstance components.
+/**
+ * Party: decides whether to show the lobby (PartyHub) or live chat (PartyInstance)
+ */
 function Party(): JSX.Element {
-  const { currentParty } = usePartyStore();
+  const { currentParty, initPartyConnection } = usePartyStore();
   const { user } = useUser();
 
-  const { initPartyConnection } = usePartyStore();
+  // Initialize connection once we know the user
   useEffect(() => {
-    if (user) {
-      initPartyConnection(user);
-    }
+    if (user) initPartyConnection(user);
   }, [user, initPartyConnection]);
 
-  if (!currentParty) {
-    return <PartyHub />;
-  }
-  return <PartyInstance />;
+  return currentParty ? <PartyInstance /> : <PartyHub />;
 }
