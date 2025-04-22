@@ -102,6 +102,7 @@ def read_root():
 # CHAT QUESTION
 @app.post("/ask")
 async def ask_question(qq: Question):
+    logger.info("/ask")
     try:
         # do the work
         val = await chatAG.process(qq)
