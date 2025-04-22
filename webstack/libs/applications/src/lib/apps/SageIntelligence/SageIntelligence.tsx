@@ -277,6 +277,7 @@ function AppComponent(props: App): JSX.Element {
           p={2}
           onDragOver={e => e.preventDefault()}
           onDrop={handleDrop}
+          minH={'150px'}
         >
           {sortedMessages.map(msg => (
             <MessageBubble key={msg.id} isMe={msg.userName !== 'Docusage'} message={msg} />
@@ -295,14 +296,16 @@ function AppComponent(props: App): JSX.Element {
               <IconButton aria-label="send" icon={<MdSend />} onClick={sendMessage} />
             </InputRightElement>
           </InputGroup>
+
           <HStack spacing={4} w="100%" justify="center">
-            <Tooltip label="Reset Chat"><IconButton aria-label="reset" icon={<MdChangeCircle />} onClick={resetChat} /></Tooltip>
-            <Tooltip label="Toggle Side Panel"><IconButton aria-label="panel" icon={isPanelOpen ? <LuPanelTopClose /> : <LuPanelTopOpen />} onClick={togglePanel} /></Tooltip>
+            <Tooltip label="Reset Chat"><IconButton fontSize={31} aria-label="reset" icon={<MdChangeCircle />} onClick={resetChat} /></Tooltip>
+            <Tooltip label="Show uplaoded apps"><IconButton fontSize={30} aria-label="panel" icon={isPanelOpen ? <LuPanelTopClose /> : <LuPanelTopOpen />} onClick={togglePanel} /></Tooltip>
             <Tooltip label={colorMode === 'light' ? 'Dark Mode' : 'Light Mode'}>
-              <IconButton aria-label="toggle-color-mode" icon={colorMode === 'light' ? <MdDarkMode /> : <MdLightMode />} onClick={toggleColorMode} />
+              <IconButton fontSize={30} aria-label="toggle-color-mode" icon={colorMode === 'light' ? <MdDarkMode /> : <MdLightMode />} onClick={toggleColorMode} />
             </Tooltip>
-            <Tooltip label="Download Transcript">
+            <Tooltip label="Download Chat History">
               <IconButton
+                fontSize={30}
                 aria-label="download"
                 icon={<MdFileDownload />}
                 onClick={() => {
@@ -318,7 +321,7 @@ function AppComponent(props: App): JSX.Element {
         </VStack>
         {/* Uploaded Apps Panel */}
         <Collapse in={isPanelOpen} animateOpacity>
-          <Box bg={useColorModeValue('gray.100', 'gray.600')} p={4} mt={4} borderRadius="md" maxH="300px" overflowY="auto">
+          <Box bg={useColorModeValue('gray.100', 'gray.600')} p={4} mt={4} borderRadius="md" maxH="300px" minH="150px" overflowY="auto">
             <Text fontSize="lg" mb={2}>Uploaded Apps ({uploaded.length})</Text>
             <Text fontSize="sm" mb={2}>Drag an app into chat. Click to append its ID.</Text>
             <Box>
@@ -339,6 +342,10 @@ function AppComponent(props: App): JSX.Element {
             </Box>
           </Box>
         </Collapse>
+        <Box bg={useColorModeValue('blackAlpha.100','gray.700')} p={2} mt={4} borderRadius="sm">
+          <Text textAlign="center" fontSize="xs" color={useColorModeValue('gray.600','gray.300')}
+          >AI can make mistakes. User caution is advised.</Text>
+        </Box>
       </Flex>
     </AppWindow>
   );
