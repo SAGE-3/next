@@ -17,7 +17,7 @@
 import uuid
 import json
 import copy
-from typing import List, Optional
+# from typing import List, Optional
 from foresight.board import Board
 from foresight.room import Room
 from foresight.smartbitfactory import SmartBitFactory
@@ -203,6 +203,9 @@ class PySage3:
         # TODO: prevent updates to fields that were touched
         # TODO: this in a smarter way. For now, just overwrite the complete object
 
+        print(f"I AM HERE and collection is {collection} doc is {doc} and updates is {updates}")
+
+
         id = doc["_id"]
         if collection == "ROOMS":
             self.rooms[id].handleUpdate(doc)
@@ -212,7 +215,7 @@ class PySage3:
         elif collection == "APPS":
             board_id = doc["data"]["boardId"]
             room_id = doc["data"]["roomId"]
-            sb = self.rooms[room_id].boards[board_id].smartbits[id]
+            sb = self.rooms[room_id].boards[board_id].smartbits[uuid.UUID(id)]
 
             if sb is not None and type(sb) is not GenericSmartBit:
                 # Note that set_data_form_update clear touched field

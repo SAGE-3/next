@@ -58,64 +58,54 @@ class TrackedBaseModel(BaseModel):
             return False
 
     def refresh_data_form_update(self, update_data, updates):
-        # TODO replace this temp solution, which updates everything with a
-        #  solution that updates only necessary fields
-
+        # First, copy state to top level
         update_data["state"] = update_data["data"]["state"]
         del update_data["data"]["state"]
-        # we don't need to update the following keys:
+        
+        # Remove keys we don't want to modify
         do_not_modify = ["_id", "_createdAt", "_updatedAt", "_createdBy", "_updatedBy"]
-        _ = [update_data.pop(key) for key in do_not_modify]
-
-        def attrsetter(name):
-            def setter(obj, val):
-                fields = name.split(".")
-                is_dict = False
-                for field in fields[0:-1]:
+        for key in do_not_modify:
+            if key in update_data:
+                update_data.pop(key)
+        
+        def set_by_path(obj, path, value):
+            """Set a value in nested object using a dotted path string"""
+            fields = path.split(".")
+            
+            # Navigate to the parent object
+            for i, field in enumerate(fields[:-1]):
+                if hasattr(obj, field):
+                    obj = getattr(obj, field)
+                elif isinstance(obj, dict) and field in obj:
+                    obj = obj[field]
+                else:
+                    # Path doesn't exist, create it
                     try:
+                        # Try to set as attribute first
+                        setattr(obj, field, {})
                         obj = getattr(obj, field)
-
                     except:
-                        try:
-                            obj[field] = {}
-                            obj = obj[field]
-                        except:
-                            raise Exception("Not a dict?")
-
-                # using object setattr to avoid adding field to touched
-                error = True
-                try:
-                    object.__setattr__(obj, fields[-1], val)
-                    error = False
-                except:
-                    obj[fields[-1]] = val
-                    error = False
-                finally:
-                    if error:
-                        raise Exception(f"Error Happened updating {obj[fields[-1]]} ")
-
-            return setter
-
-        def recursive_iter(u_data, path=[]):
-            if isinstance(u_data, dict) and len(u_data) > 0:
-                for k, item in u_data.items():
-                    path.append(k)
-                    yield from recursive_iter(item, path)
-                    path.pop(-1)
-            else:
-                dotted_path = ".".join(path)
-                yield (dotted_path, u_data)
-
-        # what was updated?
-        for updated_field_id, updated_field_val in updates.items():
-            if len(updated_field_id.split(".")) > 1 and self.is_dotted_path_dict(
-                updated_field_id
-            ):
-                attrsetter(updated_field_id)(self, updated_field_val)
-            else:
-                for dotted_path, val in recursive_iter(update_data):
-                    # print(f"working on {dotted_path} and {val}")
-                    attrsetter(dotted_path)(self, val)
+                        # Fall back to dictionary
+                        if not isinstance(obj, dict):
+                            obj = {}
+                        obj[field] = {}
+                        obj = obj[field]
+            
+            # Set the final field value
+            last_field = fields[-1]
+            try:
+                # Try direct attribute setting first to avoid touching
+                object.__setattr__(obj, last_field, value)
+            except:
+                # Fall back to dictionary assignment
+                obj[last_field] = value
+        
+        # Process explicit updates first
+        for field_path, new_value in updates.items():
+            try:
+                set_by_path(self, field_path, new_value)
+            except Exception as e:
+                print(f"Error updating {field_path}: {e}")
 
     def copy_touched(self):
         touched = self.touched
