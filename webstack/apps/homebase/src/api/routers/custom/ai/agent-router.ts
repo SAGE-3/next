@@ -44,11 +44,17 @@ async function fetchGet(url: string) {
 }
 async function fetchPost(url: string, data: object) {
   // return await ky.post(url, { json: data }).json();
+  console.log('fetchPost', url, data);
   return fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
-  }).then((res) => res.json());
+  })
+    .then((res) => res.json())
+    .catch((err) => {
+      console.error('fetchPost> Error', err);
+      return { message: 'Error' };
+    });
 }
 
 // Forward functions to the agents
