@@ -13,7 +13,7 @@ from pydantic import BaseModel, Json
 # Pydantic models: Question, Answer, Context
 
 
-class Context(NamedTuple):
+class Context(BaseModel):
     previousQ: str  # previous prompt
     previousA: str  # previous answer
     pos: List[float]  # position in the board
@@ -71,7 +71,7 @@ class ImageAnswer(BaseModel):
 class PDFQuery(BaseModel):
     ctx: Context  # context
     # asset: str  # question
-    assetids: List[str] # pdfs in sage
+    assetids: List[str]  # pdfs in sage
     user: str  # user name
     q: str  # question
 
