@@ -37,7 +37,7 @@ import {
 const makeRpcPost = async (mth: string, data: object) => {
   try {
     const base = apiUrls.ai.agents.base;
-    console.log(`${base}${mth}`);
+    console.log(`RPC: ${base}${mth}`, data);
     const response = await ky.post<Response>(`${base}${mth}`, { json: data, timeout: 120 * 1000 }).json();
     return response;
   } catch (e) {

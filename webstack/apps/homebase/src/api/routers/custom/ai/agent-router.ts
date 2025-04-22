@@ -128,6 +128,7 @@ export function AgentRouter(): express.Router {
     } else if (handler.method === 'POST') {
       router.post(route, async (req, res) => {
         try {
+          console.log('AgentRouter> POST', route, req.body);
           const response = await handler.func(req.body);
           return res.json(response);
         } catch (e) {
