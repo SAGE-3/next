@@ -44,7 +44,6 @@ async function fetchGet(url: string) {
 }
 async function fetchPost(url: string, data: object) {
   // return await ky.post(url, { json: data }).json();
-  console.log('fetchPost', url, data);
   return fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -134,7 +133,6 @@ export function AgentRouter(): express.Router {
     } else if (handler.method === 'POST') {
       router.post(route, async (req, res) => {
         try {
-          console.log('AgentRouter> POST', route, req.body);
           const response = await handler.func(req.body);
           return res.json(response);
         } catch (e) {
