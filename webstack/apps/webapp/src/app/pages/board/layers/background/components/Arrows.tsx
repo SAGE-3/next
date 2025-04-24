@@ -11,13 +11,23 @@ import { useColorModeValue } from '@chakra-ui/react';
 import { getBoxToBoxArrow } from 'perfect-arrows';
 
 // SAGE Imports
-import { useThrottleApps, useUIStore, useUserSettings, useHexColor, useCursorBoardPosition, useAppStore } from '@sage3/frontend';
+import {
+  useThrottleApps,
+  useUIStore,
+  useUserSettings,
+  useHexColor,
+  useCursorBoardPosition,
+  useAppStore,
+  useLinkStore,
+} from '@sage3/frontend';
 import { App } from '@sage3/applications/schema';
 import { useEffect, useState } from 'react';
+import { ca } from 'date-fns/locale';
+import { Link } from '@sage3/shared/types';
 
 // Keep seperate to avoid unnecessary rerenders caused by cursor movement
 export function ArrowToCursor() {
-  const linkedAppId = useUIStore((state) => state.linkedAppId);
+  const linkedAppId = useLinkStore((state) => state.linkedAppId);
   return <>{linkedAppId && <ArrowToCursorMain linkedAppId={linkedAppId} />}</>;
 }
 
@@ -99,6 +109,7 @@ export function Arrows() {
   const selectedAppId = useUIStore((state) => state.selectedAppId);
   const candidates = selectedAppId ? [selectedAppId] : selectedApps;
   const appCandidates = apps.filter((a) => candidates.includes(a._id));
+  const links = useLinkStore((state) => state.links);
 
   // UI Store
   const boardWidth = useUIStore((state) => state.boardWidth);
@@ -109,137 +120,72 @@ export function Arrows() {
   const primaryActionMode = settings.primaryActionMode;
 
   // Chakra Color Mode for grid color
-  const gray = useColorModeValue('gray.200', 'gray.600');
-  const strokeColor = useHexColor(gray);
+  const teal = useColorModeValue('teal.200', 'teal.600');
+  const strokeColor = useHexColor(teal);
   const dotColor = useHexColor('red.400');
   const tipColor = useHexColor('green.400');
-  const arrows: JSX.Element[] = [];
-
   // Linker Interaction Mode
-  const linkedAppId = useUIStore((state) => state.linkedAppId);
-  const updateState = useAppStore((state) => state.updateState);
+  const linkedAppId = useLinkStore((state) => state.linkedAppId);
+  const removeLink = useAppStore((state) => state.delete);
 
-  function deleteLink(app1: App, app2: App) {
-    const newSources = app2.data.state.sources.filter((source: string) => source !== app1._id);
-    updateState(app2._id, { sources: newSources });
+  function handleDeleteLink(linkId: string) {
+    removeLink(linkId);
   }
 
-  if (showUI && (showProvenance === 'all' || primaryActionMode === 'linker')) {
-    return (
-      <div className="arrows-container" style={{ pointerEvents: 'none', touchAction: 'auto' }}>
-        <svg
-          id="arrows"
-          className="canvas-layer"
-          style={{
-            position: 'absolute',
-            width: boardWidth + 'px',
-            height: boardHeight + 'px',
-            left: 0,
-            top: 0,
-            zIndex: 0,
-          }}
-        >
-          {/* All arrows */}
-          {apps.map((app) => {
-            if (app.data.state.sources && app.data.state.sources.length > 0) {
-              const sources = app.data.state.sources;
-
-              for (let i = 0; i < sources.length; i++) {
-                const src = sources[i];
-                const srcApp = apps.find((a) => a._id === src);
-                if (srcApp) {
-                  const arrow = buildArrow(
-                    srcApp,
-                    app,
-                    strokeColor,
-                    tipColor,
-                    dotColor,
-                    linkedAppId === '' && primaryActionMode === 'linker',
-                    linkedAppId === '' && primaryActionMode === 'linker'
-                      ? () => {
-                          deleteLink(srcApp, app);
-                        }
-                      : undefined
-                  );
-                  arrows.push(arrow);
-                }
-              }
-              if (arrows.length > 0) {
-                return arrows;
-              } else {
-                return null;
-              }
-            } else {
-              return null;
-            }
-          })}
-        </svg>
-      </div>
-    );
-  } else if (showUI && showProvenance === 'selected') {
-    return (
-      <div className="arrows-container" style={{ pointerEvents: 'none', touchAction: 'auto' }}>
-        <svg
-          id="arrows"
-          className="canvas-layer"
-          style={{
-            position: 'absolute',
-            width: boardWidth + 'px',
-            height: boardHeight + 'px',
-            left: 0,
-            top: 0,
-            cursor: 'crosshair',
-          }}
-        >
-          {/* Arrows to destinations */}
-          {appCandidates.map((ac) => {
-            return apps.map((app) => {
-              if (app.data.state.sources && app.data.state.sources.length > 0) {
-                const sources = app.data.state.sources;
-
-                if (sources.includes(ac._id)) {
-                  const srcApp = apps.find((a) => a._id === ac._id);
-                  if (srcApp) {
-                    const arrow = buildArrow(srcApp, app, strokeColor, tipColor, dotColor);
-                    arrows.push(arrow);
-                  }
-                }
-              }
-            });
-          })}
-
-          {/* Arrows to sources */}
-          {apps.map((app) => {
-            if (selectedAppId !== app._id && !selectedApps.includes(app._id)) return null;
-            if (app.data.state.sources && app.data.state.sources.length > 0) {
-              const sources = app.data.state.sources;
-              const arrows = [];
-
-              for (let i = 0; i < sources.length; i++) {
-                const src = sources[i];
-                const srcApp = apps.find((a) => a._id === src);
-                if (srcApp) {
-                  const arrow = buildArrow(srcApp, app, strokeColor, tipColor, dotColor);
-                  arrows.push(arrow);
-                }
-              }
-              if (arrows.length > 0) {
-                return arrows;
-              } else {
-                return null;
-              }
-            } else {
-              return null;
-            }
-          })}
-
-          {arrows}
-        </svg>
-      </div>
-    );
-  } else {
-    return null;
+  function filterLinksToDraw(link: Link) {
+    if (showUI && (showProvenance === 'all' || primaryActionMode === 'linker')) return true;
+    if (showUI && showProvenance === 'selected') {
+      if (candidates.includes(link.data.sourceAppId) || candidates.includes(link.data.targetAppId)) {
+        return true;
+      }
+    }
+    return false;
   }
+
+  console.log('links', links);
+
+  return (
+    <div className="arrows-container" style={{ pointerEvents: 'none', touchAction: 'auto' }}>
+      <svg
+        id="arrows"
+        className="canvas-layer"
+        style={{
+          position: 'absolute',
+          width: boardWidth + 'px',
+          height: boardHeight + 'px',
+          left: 0,
+          top: 0,
+          zIndex: 0,
+        }}
+      >
+        {/* All arrows */}
+        {links.map((link) => {
+          const { data } = link;
+          const { sourceAppId, targetAppId } = data;
+          const srcApp = apps.find((a) => a._id === sourceAppId);
+          const app = apps.find((a) => a._id === targetAppId);
+          const isSageCell = app?.data.type === 'SageCell' && srcApp?.data.type === 'SageCell';
+
+          if (!srcApp || !app) return null;
+
+          const arrow = buildArrow(
+            srcApp,
+            app,
+            strokeColor,
+            tipColor,
+            dotColor,
+            isSageCell,
+            linkedAppId === '' && primaryActionMode === 'linker'
+              ? () => {
+                  handleDeleteLink(link._id);
+                }
+              : undefined
+          );
+          return arrow;
+        })}
+      </svg>
+    </div>
+  );
 }
 
 type Box = {
@@ -295,13 +241,21 @@ function createArrow(
   const [sx, sy, cx, cy, ex, ey, ae, as, ec] = arrow;
   const endAngleAsDegrees = ae * (180 / Math.PI);
 
+  const dist = Math.hypot(cx - sx, cy - sy);
+
+  const arrowCount = Math.max(2, Math.min(6, Math.floor(dist / 100))); // between 2 and 6 arrows
+  const dur = Math.max(1.5, Math.min(4, dist / 100)); // animation duration (in seconds)
+  const delayGap = dur / arrowCount;
+
   return (
     <g key={`array-${key}`}>
       <path
-        d={`M${sx},${sy} Q${cx},${cy} ${ex},${ey}`}
+        id={`arrow-path-${key}`}
+        d={`M${ex},${ey} Q${cx},${cy} ${sx},${sy}`}
         fill="none"
         stroke={strokeColor}
-        strokeWidth={10}
+        strokeWidth={6}
+        strokeDasharray="10,10"
         style={interactable ? { pointerEvents: 'auto', touchAction: 'auto' } : { pointerEvents: 'none', touchAction: 'none' }}
         onClick={onClick}
         onMouseEnter={(e) => {
@@ -315,13 +269,21 @@ function createArrow(
           (e.target as SVGPathElement).setAttribute('stroke', strokeColor);
         }}
       />
+      {interactable &&
+        Array.from({ length: arrowCount }).map((_, index) => (
+          <polygon key={`animated-arrow-${key}-${index}`} points="0,-16 24,0 0,16" fill={dotColor}>
+            <animateMotion dur={`${dur}s`} begin={`${index * delayGap}s`} repeatCount="indefinite" rotate="auto">
+              <mpath href={`#arrow-path-${key}`} />
+            </animateMotion>
+          </polygon>
+        ))}
       <polygon
-        points="-18,-6 -6,0, -18,6" // offset since no padding
+        points="-48,-14 -5,0, -48,14" // offset since no padding
         transform={`translate(${ex},${ey}) rotate(${endAngleAsDegrees})`}
-        stroke={tipColor}
+        stroke={dotColor}
         strokeWidth={8}
+        fill={dotColor}
       />
-      <circle cx={sx} cy={sy} r={8} fill={dotColor} />
     </g>
   );
 }
@@ -363,8 +325,8 @@ function buildArrow(
   onClick?: () => any
 ) {
   return createArrow(
-    { pos: app1.data.position, size: app1.data.size },
     { pos: app2.data.position, size: app2.data.size },
+    { pos: app1.data.position, size: app1.data.size },
     `${app1._id}-${app2._id}`,
     strokeColor,
     tipColor,

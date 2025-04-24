@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Box, useToast, useColorModeValue, Icon } from '@chakra-ui/react';
 
 import { DraggableData, ResizableDelta, Position, Rnd, RndDragEvent } from 'react-rnd';
@@ -14,12 +14,21 @@ import { MdWindow } from 'react-icons/md';
 import { IconType } from 'react-icons/lib';
 
 // SAGE3 Frontend
-import { useAppStore, useUIStore, useHexColor, useThrottleScale, useAbility, useInsightStore, useUserSettings } from '@sage3/frontend';
+import {
+  useAppStore,
+  useUIStore,
+  useHexColor,
+  useThrottleScale,
+  useAbility,
+  useInsightStore,
+  useUserSettings,
+  useLinkStore,
+} from '@sage3/frontend';
 
 // Window Components
 import { App, AppName } from '../../schema';
 import { ProcessingBox, BlockInteraction, WindowTitle, WindowBorder } from './components';
-import { PROVENANCE_CONSTRAINTS } from '@sage3/applications/apps';
+import { getLinkEndToEndRelationship, PROVENANCE_CONSTRAINTS } from '@sage3/applications/apps';
 
 // Consraints on the app window size
 const APP_MIN_WIDTH = 200;
@@ -82,13 +91,12 @@ export function AppWindow(props: WindowProps) {
   const selectedApps = useUIStore((state) => state.selectedAppsIds);
 
   const updateState = useAppStore((state) => state.updateState);
-  const updateStateBatch = useAppStore((state) => state.updateStateBatch);
-  const fetchBoardApps = useAppStore((state) => state.fetchBoardApps);
+  const addLink = useLinkStore((state) => state.addLink);
 
   // Linker
-  const linkedAppId = useUIStore((state) => state.linkedAppId);
-  const cacheLinkedAppId = useUIStore((state) => state.cacheLinkedAppId);
-  const clearLinkAppId = useUIStore((state) => state.clearLinkAppId);
+  const linkedAppId = useLinkStore((state) => state.linkedAppId);
+  const cacheLinkedAppId = useLinkStore((state) => state.cacheLinkedAppId);
+  const clearLinkAppId = useLinkStore((state) => state.clearLinkAppId);
 
   // Tag Highlight
   // Insight Store
@@ -288,20 +296,6 @@ export function AppWindow(props: WindowProps) {
     }
   }
 
-  function getEndToEndRelationship(
-    startAppName: string,
-    endAppName: string
-  ): ['one->app:app->one' | 'many->app:app->one' | 'one->app:app->many' | 'many->app:app->many' | undefined, boolean] {
-    const outbound = PROVENANCE_CONSTRAINTS.find((constraint) => constraint.name === startAppName)?.outboundRelationship || undefined;
-    const inbound =
-      PROVENANCE_CONSTRAINTS.find((constraint) => constraint.name === endAppName)?.inboundRelationships[startAppName] || undefined;
-
-    if (outbound && inbound) {
-      return [`${inbound.relationship}:${outbound}`, inbound.cyclic];
-    }
-    return [undefined, true];
-  }
-
   async function handleAppClick(e: MouseEvent) {
     e.stopPropagation();
 
@@ -316,74 +310,79 @@ export function AppWindow(props: WindowProps) {
     if (primaryActionMode === 'linker' && canLink) {
       const priorLinkedApp = cacheLinkedAppId(props.app._id);
 
+      // If the Prior Linked App is the same as the current app, clear it
+      if (priorLinkedApp === props.app._id) {
+        return;
+      }
       if (priorLinkedApp) {
-        const allBoardApps: App[] = JSON.parse(JSON.stringify(useAppStore.getState().apps)); // deep copy
+        addLink(props.app._id, priorLinkedApp, props.app.data.boardId, 'run_order');
+        // const allBoardApps: App[] = JSON.parse(JSON.stringify(useAppStore.getState().apps)); // deep copy
 
-        // many->app
-        const currentSources = allBoardApps?.find((app: App) => app._id === props.app._id)?.data.state.sources || [];
-        const manySources = Array.from(new Set([...currentSources, priorLinkedApp])); // must be unique
+        // // many->app
+        // const currentSources = allBoardApps?.find((app: App) => app._id === props.app._id)?.data.state.sources || [];
+        // const manySources = Array.from(new Set([...currentSources, priorLinkedApp])); // must be unique
 
-        // Start App: priorLinkedApp
-        // End App: this
+        // // Start App: priorLinkedApp
+        // // End App: this
 
-        const startAppName = allBoardApps?.find((app: App) => app._id === priorLinkedApp)?.data.type || '';
-        const endAppName = allBoardApps?.find((app: App) => app._id === props.app._id)?.data.type || '';
-        const [endToEndRelationship, allowCylic] = getEndToEndRelationship(startAppName, endAppName);
+        // const startAppName = allBoardApps?.find((app: App) => app._id === priorLinkedApp)?.data.type || '';
+        // const endAppName = allBoardApps?.find((app: App) => app._id === props.app._id)?.data.type || '';
+        // const [endToEndRelationship, allowCylic] = getLinkEndToEndRelationship(startAppName, endAppName);
 
-        // This separates the startAppName from the rest of the sources and returns the rest of the sources
-        // one -> app
-        const sourceApps = allBoardApps?.filter((app: App) => currentSources.includes(app._id));
-        const filteredSourceAppIds = Array.from(
-          new Set(sourceApps?.filter((app: App) => app.data.type !== (startAppName as AppName)).map((app: App) => app._id)) // make unique, just in case
-        );
+        // // This separates the startAppName from the rest of the sources and returns the rest of the sources
+        // // one -> app
+        // const sourceApps = allBoardApps?.filter((app: App) => currentSources.includes(app._id));
+        // const filteredSourceAppIds = Array.from(
+        //   new Set(sourceApps?.filter((app: App) => app.data.type !== (startAppName as AppName)).map((app: App) => app._id)) // make unique, just in case
+        // );
 
-        // Cylic Detection
-        if (!allowCylic) {
-          const tmpApp = allBoardApps?.find((app: App) => app._id === props.app._id);
-          if (tmpApp && allBoardApps) {
-            tmpApp.data.state.sources = manySources;
-            // allBoardApps = [...allBoardApps]; // Trigger a re-render if using state
-          }
+        // // Cylic Detection
+        // if (!allowCylic) {
+        //   const tmpApp = allBoardApps?.find((app: App) => app._id === props.app._id);
+        //   if (tmpApp && allBoardApps) {
+        //     tmpApp.data.state.sources = manySources;
+        //     // allBoardApps = [...allBoardApps]; // Trigger a re-render if using state
+        //   }
 
-          // Clear tmp if cylic
-          if (hasSourceCycles(props.app, allBoardApps, startAppName as AppName)) {
-            return;
-          }
-        }
+        //   // Clear tmp if cylic
+        //   if (hasSourceCycles(props.app, allBoardApps, startAppName as AppName)) {
+        //     return;
+        //   }
+        // }
 
-        // This accounts for the four relationship types per app type, hence the multiple filtering needed.
-        // Confusing yes; dont think too hard about it, just use test cases to confirm behaviour
-        // Also this does not ensure that all links on board satisfy the constraints
-        // Todo: to have similar behaviour w/ cylic detection, we should not allow link creation if conditions are not satisfied, instead of overwritting
-        if (endToEndRelationship === 'one->app:app->one') {
-          const updates = [];
-          allBoardApps?.forEach((app: App) => {
-            if (app.data.state.sources?.includes(priorLinkedApp)) {
-              updates.push({
-                id: app._id,
-                updates: { sources: app.data.state.sources.filter((source: string) => source !== priorLinkedApp) },
-              });
-            }
-          });
-          updates.push({ id: props.app._id, updates: { sources: [...filteredSourceAppIds, priorLinkedApp] } });
-          updateStateBatch(updates);
-        } else if (endToEndRelationship === 'one->app:app->many') {
-          updateState(props.app._id, { sources: [...filteredSourceAppIds, priorLinkedApp] });
-        } else if (endToEndRelationship === 'many->app:app->one') {
-          const updates = [];
-          allBoardApps?.forEach((app: App) => {
-            if (app.data.state.sources?.includes(priorLinkedApp)) {
-              updates.push({
-                id: app._id,
-                updates: { sources: app.data.state.sources.filter((source: string) => source !== priorLinkedApp) },
-              });
-            }
-          });
-          updates.push({ id: props.app._id, updates: { sources: manySources } });
-          updateStateBatch(updates);
-        } else if (endToEndRelationship === 'many->app:app->many') {
-          updateState(props.app._id, { sources: manySources });
-        }
+        // // This accounts for the four relationship types per app type, hence the multiple filtering needed.
+        // // Confusing yes; dont think too hard about it, just use test cases to confirm behaviour
+        // // Also this does not ensure that all links on board satisfy the constraints
+        // // Todo: to have similar behaviour w/ cylic detection, we should not allow link creation if conditions are not satisfied, instead of overwritting
+        // if (endToEndRelationship === 'one->app:app->one') {
+        //   const updates = [];
+        //   allBoardApps?.forEach((app: App) => {
+        //     if (app.data.state.sources?.includes(priorLinkedApp)) {
+        //       updates.push({
+        //         id: app._id,
+        //         updates: { sources: app.data.state.sources.filter((source: string) => source !== priorLinkedApp) },
+        //       });
+        //     }
+        //   });
+        //   updates.push({ id: props.app._id, updates: { sources: [...filteredSourceAppIds, priorLinkedApp] } });
+        //   updateStateBatch(updates);
+        // } else if (endToEndRelationship === 'one->app:app->many') {
+        //   updateState(props.app._id, { sources: [...filteredSourceAppIds, priorLinkedApp] });
+        // } else if (endToEndRelationship === 'many->app:app->one') {
+        //   const updates = [];
+        //   allBoardApps?.forEach((app: App) => {
+        //     if (app.data.state.sources?.includes(priorLinkedApp)) {
+        //       updates.push({
+        //         id: app._id,
+        //         updates: { sources: app.data.state.sources.filter((source: string) => source !== priorLinkedApp) },
+        //       });
+        //     }
+        //   });
+        //   updates.push({ id: props.app._id, updates: { sources: manySources } });
+        //   updateStateBatch(updates);
+        // } else if (endToEndRelationship === 'many->app:app->many') {
+        //   updateState(props.app._id, { sources: manySources });
+        // }
       }
       return;
     }

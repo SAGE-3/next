@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2025. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -20,6 +20,7 @@ import {
   InsightCollection,
   RoomMembersCollection,
   AnnotationsCollection,
+  LinkCollection,
 } from '../collections';
 
 export * from './apps';
@@ -33,6 +34,7 @@ export * from './plugins';
 export * from './insight';
 export * from './roommembers';
 export * from './annotations';
+export * from './link';
 
 /**
  * Load the various models at startup.
@@ -49,6 +51,7 @@ export async function loadCollections(): Promise<void> {
   await InsightCollection.initialize();
   await RoomMembersCollection.initialize();
   await AnnotationsCollection.initialize();
+  await LinkCollection.initialize();
 
   // Setup default room and board
   RoomsCollection.getAll().then(async (rooms) => {
