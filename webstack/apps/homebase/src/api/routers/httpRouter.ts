@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2025. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -31,6 +31,7 @@ import {
   InsightCollection,
   RoomMembersCollection,
   AnnotationsCollection,
+  LinkCollection,
 } from '../collections';
 
 // SAGEBase Imports
@@ -83,6 +84,7 @@ export function expressAPIRouter(): express.Router {
   router.use('/insight', InsightCollection.router());
   router.use('/roommembers', RoomMembersCollection.router());
   router.use('/annotations', AnnotationsCollection.router());
+  router.use('/links', LinkCollection.router());
 
   // Check to see if plugins module is enabled.
   if (config.features.plugins) {

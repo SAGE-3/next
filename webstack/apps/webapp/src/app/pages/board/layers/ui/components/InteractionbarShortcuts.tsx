@@ -7,7 +7,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { useUserSettings, useHotkeys, useUIStore, useKeyPress } from '@sage3/frontend';
+import { useUserSettings, useHotkeys, useUIStore, useKeyPress, useLinkStore } from '@sage3/frontend';
 
 // keywords: interaction hotkeys
 
@@ -18,7 +18,7 @@ export function InteractionbarShortcuts() {
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
-  const clearLinkAppId = useUIStore((state) => state.clearLinkAppId);
+  const clearLinkAppId = useLinkStore((state) => state.clearLinkAppId);
 
   const [cachedPrimaryActionMode, setCachedPrimaryActionMode] = useState<'lasso' | 'grab' | 'pen' | 'eraser' | 'linker' | undefined>(
     undefined

@@ -24,6 +24,7 @@ export type AppSchema = {
   raised: boolean;
   dragging: boolean;
   pinned: boolean;
+  sourceApps?: SBDoc['_id'][];
 };
 
 export type App = SBDoc & { data: AppSchema };

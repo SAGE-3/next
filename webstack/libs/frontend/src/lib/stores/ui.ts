@@ -122,11 +122,6 @@ interface UIState {
     [appId: string]: { x: number; y: number };
   };
   setDeltaLocalMove: (delta: { x: number; y: number }, appIds: string[]) => void;
-
-  // Linker interaction to link two apps
-  linkedAppId:  string;
-  cacheLinkedAppId: (appId: string) => string;
-  clearLinkAppId: () => void;
 }
 
 /**
@@ -373,32 +368,6 @@ export const useUIStore = create<UIState>()((set, get) => ({
     });
     set((state) => ({ ...state, deltaLocalMove: newLocalMove }));
   },
-
-  // Linker interaction to link two apps
-  linkedAppId: "",
-  cacheLinkedAppId: (appId: string) => {
-    const cachedLinkAppid = get().linkedAppId;
-    set((state) => {
-      if (state.linkedAppId === appId) {
-        return state;
-      }
-      if (cachedLinkAppid) {
-        return {
-          ...state,
-          linkedAppId: ""
-        };
-      }
-      else {
-        return {
-          ...state,
-          linkedAppId: appId
-        };
-      }
-    });
-    
-    return cachedLinkAppid;
-  },
-  clearLinkAppId: () => set((state) => ({ ...state, linkedAppId: "" })),
 }));
 
 /**

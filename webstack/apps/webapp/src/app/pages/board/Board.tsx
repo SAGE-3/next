@@ -40,6 +40,7 @@ import {
   useInsightStore,
   useAssetStore,
   useHexColor,
+  useLinkStore,
 } from '@sage3/frontend';
 
 // Board Layers
@@ -70,6 +71,7 @@ export function BoardPage() {
   const subRooms = useRoomStore((state) => state.subscribeToAllRooms);
   const subAssets = useAssetStore((state) => state.subscribe);
   const subPlugins = usePluginStore((state) => state.subscribeToPlugins);
+  const subLinks = useLinkStore((state) => state.subscribe);
 
   // Initial Load state
   const [initialLoad, setInitialLoad] = useState(false);
@@ -188,6 +190,8 @@ export function BoardPage() {
       // plugins
       subPlugins();
       setInitialLoad(true);
+      // links
+      subLinks(bId);
     }
 
     handleJoinBoard(roomId, boardId);
