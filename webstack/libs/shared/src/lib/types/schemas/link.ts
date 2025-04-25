@@ -10,7 +10,7 @@ import { z } from 'zod';
 import { SBDoc } from './SBSchema';
 import { colors } from '@sage3/shared';
 
-const LinkType = z.union([z.literal('provenance'), z.literal('run_order')]);
+const LinkType = z.union([z.literal('provenance'), z.literal('run_order'), z.literal('visual')]);
 const LinkColors = z.enum([...colors]);
 
 const LinkSchema = z.object({

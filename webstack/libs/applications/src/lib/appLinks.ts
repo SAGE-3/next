@@ -1,144 +1,126 @@
 /**
- * Copyright (c) SAGE3 Development Team 2025. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2025
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
- * Distributed under the terms of the SAGE3 License.  The full license is in
- * the file LICENSE, distributed as part of this software.
+ * Refactored link constraints to allow per-source and per-target configuration.
  */
 
 import { AppName } from './types';
 import { Link, LinkSchema } from '@sage3/shared/types';
 import { App } from './schema';
 
-type LinkType = LinkSchema['type'];
+// Union of allowed link types
+export type LinkType = LinkSchema['type'];
 
-// Define constraints for Link.sourceAppId -> Link.targetAppId under specific LinkType
-interface TargetRelationships {
-  [sourceName: string]: {
-    relationship: 'one->app' | 'many->app';
-    cyclic: boolean;
-    allowedLinkTypes?: LinkType[];
-  };
+// Constraint for a single source->target pairing
+interface PairConstraint {
+  allowedTypes: LinkType[]; // link types permitted
+  maxIncoming?: number; // max incoming links of any type
+  maxOutgoing?: number; // max outgoing links of any type
+  allowCycles?: boolean; // if cycles permitted
 }
 
-export type LINKS_CONSTRAINTS_TYPE = {
-  name: AppName;
-  sourceRelationship: 'app->many' | 'app->one';
-  allowedSourceLinkTypes?: LinkType[];
-  targetRelationships: TargetRelationships;
+// Constraints for a given source app type
+interface LinkConstraint {
+  // Per-target pairing configuration
+  targets: Partial<Record<AppName, PairConstraint>>;
+}
+
+// Only define constraints for relevant AppNames; others omitted
+export const linkConstraints: Partial<Record<AppName, LinkConstraint>> = {
+  SageCell: {
+    targets: {
+      // 1-to-1 run_order between SageCells
+      SageCell: {
+        allowedTypes: ['run_order'],
+        maxIncoming: 1,
+        maxOutgoing: 1,
+        allowCycles: false,
+      },
+      // unlimited visual from SageCell to Stickie
+      Stickie: {
+        allowedTypes: ['visual'],
+        allowCycles: true,
+      },
+    },
+  },
+  Stickie: {
+    targets: {
+      // unlimited visual in either direction
+      SageCell: { allowedTypes: ['visual'], allowCycles: true },
+      Stickie: { allowedTypes: ['visual'], allowCycles: true },
+    },
+  },
 };
 
-export const LINKS_CONSTRAINTS: LINKS_CONSTRAINTS_TYPE[] = [
-  {
-    name: 'SageCell' as AppName,
-    sourceRelationship: 'app->one',
-    allowedSourceLinkTypes: ['run_order'],
-    targetRelationships: {
-      SageCell: {
-        relationship: 'one->app',
-        cyclic: false,
-        allowedLinkTypes: ['run_order'],
-      },
-    },
-  },
-  {
-    name: 'Stickie' as AppName,
-    sourceRelationship: 'app->many',
-    allowedSourceLinkTypes: ['run_order', 'provenance'],
-    targetRelationships: {
-      Stickie: {
-        relationship: 'many->app',
-        cyclic: true,
-        allowedLinkTypes: ['run_order'],
-      },
-    },
-  },
-];
-
 /**
- * Determine end-to-end relationship and cyclicity for a given link between source and target apps.
+ * Returns allowed link types for a source->target pairing.
+ * Applies per-pair cardinality and cycle rules.
  */
-function getLinkEndToEndRelationship(sourceAppName: AppName, targetAppName: AppName, type?: LinkType): [string | undefined, boolean] {
-  const source = LINKS_CONSTRAINTS.find((c) => c.name === sourceAppName);
-  const target = LINKS_CONSTRAINTS.find((c) => c.name === targetAppName);
-  if (!source || !target) {
-    return [undefined, true];
-  }
-  if (type && source.allowedSourceLinkTypes && !source.allowedSourceLinkTypes.includes(type)) {
-    return [undefined, false];
-  }
-  const rel = target.targetRelationships[sourceAppName];
-  if (!rel) {
-    return [undefined, true];
-  }
-  if (type && rel.allowedLinkTypes && !rel.allowedLinkTypes.includes(type)) {
-    return [undefined, false];
-  }
-  return [`${rel.relationship}:${source.sourceRelationship}`, rel.cyclic];
+export function getAllowedLinkTypes(source: App, target: App, existingLinks: Link[], typeFilter?: LinkType): LinkType[] {
+  const sType = source.data.type as AppName;
+  const tType = target.data.type as AppName;
+  const srcConstraint = linkConstraints[sType];
+  const pair = srcConstraint?.targets[tType];
+  if (!srcConstraint || !pair) return [];
+
+  // Base allowed types
+  let types = [...pair.allowedTypes];
+  if (typeFilter) types = types.includes(typeFilter) ? [typeFilter] : [];
+
+  return types.filter((type) => {
+    // Outgoing count
+    if (pair.maxOutgoing !== undefined) {
+      const outCount = existingLinks.filter((l) => l.data.sourceAppId === source._id && l.data.type === type).length;
+      if (outCount >= pair.maxOutgoing) return false;
+    }
+    // Incoming count
+    if (pair.maxIncoming !== undefined) {
+      const inCount = existingLinks.filter((l) => l.data.targetAppId === target._id && l.data.type === type).length;
+      if (inCount >= pair.maxIncoming) return false;
+    }
+    // Cycle check
+    if (pair.allowCycles === false && wouldIntroduceCycle(existingLinks, source._id, target._id, type)) {
+      return false;
+    }
+    return true;
+  });
 }
 
 /**
- * Check if adding a link would introduce a disallowed cycle in the graph.
+ * Quick boolean: can source link to target at all?
  */
-function wouldIntroduceCycle(links: Link[], apps: App[], sourceId: string, targetId: string): boolean {
-  const sourceApp = apps.find((a) => a._id === sourceId);
-  const targetApp = apps.find((a) => a._id === targetId);
-  if (!sourceApp || !targetApp) {
-    return false;
-  }
-  const [, cyclesAllowed] = getLinkEndToEndRelationship(sourceApp.data.type as AppName, targetApp.data.type as AppName);
-  if (cyclesAllowed) {
-    return false;
-  }
+export function isLinkValid(source: App, target: App, existingLinks: Link[]): boolean {
+  return getAllowedLinkTypes(source, target, existingLinks).length > 0;
+}
+
+/**
+ * Check if adding a link of a given type introduces a disallowed cycle.
+ */
+export function wouldIntroduceCycle(links: Link[], sourceId: string, targetId: string, type: LinkType): boolean {
   const adj = new Map<string, string[]>();
   for (const l of links) {
-    const s = l.data.sourceAppId;
-    const t = l.data.targetAppId;
-    if (!adj.has(s)) adj.set(s, []);
-    adj.get(s)!.push(t);
+    if (l.data.type === type) {
+      adj.set(l.data.sourceAppId, [...(adj.get(l.data.sourceAppId) || []), l.data.targetAppId]);
+    }
   }
-  if (!adj.has(sourceId)) adj.set(sourceId, []);
-  adj.get(sourceId)!.push(targetId);
+  adj.set(sourceId, [...(adj.get(sourceId) || []), targetId]);
+
   const visited = new Set<string>();
   const stack = [targetId];
   while (stack.length) {
-    const curr = stack.pop()!;
-    if (curr === sourceId) {
-      return true;
-    }
-    if (!visited.has(curr)) {
-      visited.add(curr);
-      for (const neigh of adj.get(curr) || []) {
-        if (!visited.has(neigh)) {
-          stack.push(neigh);
-        }
-      }
-    }
+    const cur = stack.pop()!;
+    if (cur === sourceId) return true;
+    if (visited.has(cur)) continue;
+    visited.add(cur);
+    for (const nbr of adj.get(cur) || []) stack.push(nbr);
   }
   return false;
 }
 
 /**
- * Validate whether a given source->target link of a particular type is allowed.
- *
- * @param sourceApp  the App initiating the link
- * @param targetApp  the App receiving the link
- * @param linkType   the type of link (e.g., 'run_order' or 'provenance')
- * @param allApps    array of all Apps on the board
- * @param links      existing Link[] on the board
- * @returns          true if the link is valid under constraints and won't create disallowed cycles
+ * Get all apps that can start a link of the given type.
  */
-export function checkLinkValid(sourceApp: App, targetApp: App, linkType: LinkType, allApps: App[], links: Link[]): boolean {
-  const sourceName = sourceApp.data.type as AppName;
-  const targetName = targetApp.data.type as AppName;
-  // 1) Check constraints (relationship + cycle rule)
-  const [relationship, cyclesAllowed] = getLinkEndToEndRelationship(sourceName, targetName, linkType);
-  if (!relationship) {
-    return false;
-  }
-  // 2) Check for disallowed cycles
-  if (!cyclesAllowed && wouldIntroduceCycle(links, allApps, sourceApp._id, targetApp._id)) {
-    return false;
-  }
-  return true;
+export function getSourceCandidates(allApps: App[], existingLinks: Link[], type: LinkType): App[] {
+  return allApps.filter((app) => getAllowedLinkTypes(app, { data: { type: app.data.type } } as App, existingLinks, type).length > 0);
 }

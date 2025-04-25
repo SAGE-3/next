@@ -1,96 +1,145 @@
-import { checkLinkValid } from '@sage3/applications/apps';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useToast } from '@chakra-ui/react';
+import { getAllowedLinkTypes } from '@sage3/applications/apps';
 import { useHexColor, useLinkStore, useThrottleApps, useUIStore } from '@sage3/frontend';
-import { useState } from 'react';
+import type { App } from '@sage3/applications/schema';
+import type { Link } from '@sage3/shared/types';
 
+/**
+ * Simple Linker overlay:
+ * 1. Select a source app that can originate at least one link.
+ * 2. Highlight valid targets based on constraints.
+ * 3. Add the first allowed link type on click, then reset.
+ */
 export function LinkerMode() {
+  // Throttled list of apps and current link graph
   const apps = useThrottleApps(250);
-  const links = useLinkStore((state) => state.links);
-  const addLink = useLinkStore((state) => state.addLink);
-  const boardWidth = useUIStore((state) => state.boardWidth);
-  const boardHeight = useUIStore((state) => state.boardHeight);
+  const links = useLinkStore((s) => s.links);
+  const addLink = useLinkStore((s) => s.addLink);
 
-  const scale = useUIStore((state) => state.scale);
-
-  const [candidateApps, setCandidateApps] = useState<string[]>([]);
-
-  const appBoxes = apps.map((app) => ({
-    id: app._id,
-    position: app.data.position,
-    size: app.data.size,
-    type: app.data.type,
+  // Board viewport dimensions and zoom scale
+  const { boardWidth, boardHeight, scale } = useUIStore((s) => ({
+    boardWidth: s.boardWidth,
+    boardHeight: s.boardHeight,
+    scale: s.scale,
   }));
 
+  const toast = useToast();
+
+  // Selection state: currently picked source ID
+  const selectedSourceId = useLinkStore((s) => s.linkedAppId);
+  const setSelectedSourceId = useLinkStore((s) => s.cacheLinkedAppId);
+
+  // Candidate app IDs (either sources or valid targets)
+  const [candidates, setCandidates] = useState<string[]>([]);
+
+  // Prepare svg boxes for each app
+  const boxes = useMemo(
+    () =>
+      apps.map((app: App) => ({
+        id: app._id,
+        position: app.data.position,
+        size: app.data.size,
+      })),
+    [apps]
+  );
+
+  // Colors
   const green = useHexColor('green');
   const red = useHexColor('red');
+  const teal = useHexColor('teal');
 
-  // Linker Store
-  const linkedAppId = useLinkStore((state) => state.linkedAppId);
-  const setLinkedAppId = useLinkStore((state) => state.cacheLinkedAppId);
+  // On mount or apps/links change: if no source selected, list all valid sources
+  useEffect(() => {
+    if (!selectedSourceId) {
+      const srcs = apps.filter((src) => apps.some((tgt) => getAllowedLinkTypes(src, tgt, links).length > 0));
+      setCandidates(srcs.map((a) => a._id));
+    }
+  }, [selectedSourceId, apps, links]);
 
-  function handleOnClick(e: React.MouseEvent<SVGRectElement>, targetId: string) {
+  // Handle click on an app rectangle
+  const handleClick = (e: React.MouseEvent<SVGRectElement>, appId: string) => {
     e.stopPropagation();
-    if (linkedAppId) {
-      if (linkedAppId === targetId) {
-        setLinkedAppId('');
+
+    // 1) No source yet: pick source
+    if (!selectedSourceId) {
+      if (!candidates.includes(appId)) {
+        toast({
+          title: 'Invalid Source',
+          description: 'This app cannot start any link.',
+          status: 'error',
+          duration: 2000,
+          isClosable: true,
+          position: 'top',
+        });
         return;
-      } else {
-        const sourceApp = apps.find((a) => a._id === linkedAppId);
-        const targetApp = apps.find((a) => a._id === targetId);
-        if (sourceApp && targetApp) {
-          const valid = checkLinkValid(sourceApp, targetApp, 'run_order', apps, links);
-          if (valid) {
-            setLinkedAppId('');
-            addLink(linkedAppId, targetId, sourceApp.data.boardId, 'run_order');
-            return;
-          }
-        }
       }
+      setSelectedSourceId(appId);
+      // Compute targets for this source
+      const sourceApp = apps.find((a) => a._id === appId)!;
+      const tgts = apps.filter((t) => getAllowedLinkTypes(sourceApp, t, links).length > 0);
+      setCandidates(tgts.map((t) => t._id));
+      return;
     }
-    if (targetId) {
-      const targetApp = apps.find((a) => a._id === targetId);
-      if (targetApp) {
-        setLinkedAppId(targetId);
-        // Calculate the canidate apps
-        const canidateApps = apps
-          .map((a) => {
-            const valid = checkLinkValid(targetApp, a, 'run_order', apps, links);
-            if (valid) {
-              return a._id;
-            }
-            return null;
-          })
-          .filter((a) => a !== null) as string[];
-        setCandidateApps(canidateApps);
-      }
+
+    // 2) Clicking same source: deselect
+    if (selectedSourceId === appId) {
+      setSelectedSourceId('');
+      setCandidates([]);
+      return;
     }
-  }
+
+    // 3) Add link: validate target
+    if (!candidates.includes(appId)) {
+      toast({
+        title: 'Invalid Target',
+        description: 'Cannot link to this app.',
+        status: 'error',
+        duration: 2000,
+        isClosable: true,
+        position: 'top',
+      });
+      return;
+    }
+
+    // Create link of first allowed type
+    const src = apps.find((a) => a._id === selectedSourceId)!;
+    const allowed = getAllowedLinkTypes(src, apps.find((a) => a._id === appId)!, links);
+    if (allowed.length === 0) {
+      toast({
+        title: 'No Link Available',
+        description: 'No valid link type between these apps.',
+        status: 'error',
+        duration: 2000,
+        isClosable: true,
+        position: 'top',
+      });
+    } else {
+      addLink(selectedSourceId, appId, src.data.boardId, allowed[0]);
+      setSelectedSourceId('');
+      setCandidates([]);
+    }
+  };
 
   return (
-    <svg
-      style={{
-        position: 'absolute',
-        left: 0,
-        top: 0,
-        zIndex: 100000,
-      }}
-      width={boardWidth}
-      height={boardHeight}
-    >
-      {appBoxes.map((appBox) => (
-        <g key={appBox.id}>
+    <svg width={boardWidth} height={boardHeight} style={{ position: 'absolute', top: 0, left: 0, zIndex: 100000, pointerEvents: 'none' }}>
+      {boxes.map(({ id, position, size }) => {
+        const color = selectedSourceId === id ? teal : candidates.includes(id) ? green : red;
+        return (
           <rect
-            x={appBox.position.x}
-            y={appBox.position.y}
-            width={appBox.size.width}
-            height={appBox.size.height}
-            stroke={linkedAppId === appBox.id || candidateApps.includes(appBox.id) ? green : red}
+            key={id}
+            x={position.x}
+            y={position.y}
+            width={size.width}
+            height={size.height}
+            stroke={color}
             strokeWidth={2 / scale}
             fill="transparent"
-            style={{ pointerEvents: 'auto', touchAction: 'auto' }}
-            onClick={(e) => handleOnClick(e, appBox.id)}
+            onClick={(e) => handleClick(e, id)}
+            style={{ pointerEvents: 'auto' }}
           />
-        </g>
-      ))}
+        );
+      })}
     </svg>
   );
 }

@@ -62,7 +62,7 @@ export function LinksArrows(props: { links: Link[] }) {
           const targetApp = apps.find((a) => a._id === targetAppId);
 
           if (!sourceApp || !targetApp) return null;
-          const isAnimated = link.data.type !== 'provenance';
+          const isAnimated = link.data.type === 'run_order';
           const sBox = {
             position: sourceApp.data.position,
             size: sourceApp.data.size,

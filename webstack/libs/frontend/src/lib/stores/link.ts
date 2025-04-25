@@ -23,7 +23,6 @@ interface LinkStoreState {
 
   subscribe: (boardId: string) => Promise<void>;
   unsubscribe: () => void;
-
   // Linker interaction to link two apps
   linkedAppId: string;
   cacheLinkedAppId: (appId: string) => string;
@@ -99,6 +98,7 @@ const LinkStore = create<LinkStoreState>()((set, get) => {
       }
       return res;
     },
+
     removeLinks: async (linkId: string | string[]) => {
       const res = await deleteLink(linkId);
       if (!res) {

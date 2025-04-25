@@ -372,15 +372,9 @@ export function Interactionbar(props: {
             <PopoverHeader userSelect="none">Linker</PopoverHeader>
             <PopoverBody>
               <Flex direction="row" alignContent="left" my="2" gap="2">
-                <Tooltip placement="top" hasArrow label="Add Link">
+                <Tooltip placement="top" hasArrow label="Add Run Order Link">
                   <Button size="sm">
                     <MdAdd />
-                  </Button>
-                </Tooltip>
-
-                <Tooltip placement="top" hasArrow label="Remove Link">
-                  <Button size="sm">
-                    <MdRemove />
                   </Button>
                 </Tooltip>
 
@@ -389,21 +383,6 @@ export function Interactionbar(props: {
                     <FaTrash />
                   </Button>
                 </Tooltip>
-
-                <Select
-                  id="other-viewports"
-                  colorScheme="teal"
-                  size="sm"
-                  onChange={(e) => setShowLinks(e.target.value as 'none' | 'selected' | 'selected-path' | 'all')}
-                  value={showLinks}
-                  width="200px"
-                  textAlign={'right'}
-                >
-                  <option value="none">None</option>
-                  <option value="selected">Selected App</option>
-                  <option value="selected-path">Selected App Path</option>
-                  <option value="all">All</option>
-                </Select>
               </Flex>
             </PopoverBody>
           </PopoverContent>
