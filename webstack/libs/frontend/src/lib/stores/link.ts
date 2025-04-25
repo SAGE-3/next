@@ -20,9 +20,7 @@ import { APIHttp, SocketAPI } from '../api';
 
 interface LinkStoreState {
   links: Link[];
-  error: string | null;
-  create: (link: LinkSchema) => Promise<void>;
-  clearError: () => void;
+
   subscribe: (boardId: string) => Promise<void>;
   unsubscribe: () => void;
 
@@ -37,8 +35,12 @@ interface LinkStoreState {
     targetId: string,
     boardId: string,
     linkType: LinkSchema['type'],
+    color?: LinkSchema['color'],
     meta?: LinkSchema['metadata']
-  ) => Promise<void>;
+  ) => Promise<Link | undefined>;
+  // Remove Link
+  removeLinks: (linkId: string | string[]) => Promise<boolean>;
+  removeAllLinks: () => Promise<boolean>;
 }
 
 /**
@@ -47,20 +49,71 @@ interface LinkStoreState {
 
 const LinkStore = create<LinkStoreState>()((set, get) => {
   let linkSub: (() => void) | null = null;
+
+  // Create a new link
+  const createLink = async (newLink: LinkSchema): Promise<Link | undefined> => {
+    if (!SAGE3Ability.canCurrentUser('create', 'apps')) return;
+    const link = await SocketAPI.sendRESTMessage('/links', 'POST', newLink);
+    if (!link.success) {
+      console.error('Error creating link', link);
+
+      return undefined;
+    }
+    return link;
+  };
+
+  // Delete a link
+  const deleteLink = async (id: string | string[]): Promise<boolean> => {
+    if (!SAGE3Ability.canCurrentUser('delete', 'links')) return false;
+    if (Array.isArray(id)) {
+      const res = await SocketAPI.sendRESTMessage('/links', 'DELETE', { batch: id });
+      return res.success;
+    } else {
+      const res = await SocketAPI.sendRESTMessage('/links/' + id, 'DELETE');
+      return res.success;
+    }
+  };
+
   return {
     links: [],
-    error: null,
-    clearError: () => {
-      set({ error: null });
-    },
-    create: async (newLink: LinkSchema) => {
-      if (!SAGE3Ability.canCurrentUser('create', 'apps')) return;
-      const link = await SocketAPI.sendRESTMessage('/links', 'POST', newLink);
-      if (!link.success) {
-        set({ error: link.message });
+    // Adding Logic
+    addLink: async (
+      sourceAppId: string,
+      targetAppId: string,
+      boardId: string,
+      linkType: LinkSchema['type'],
+      color?: LinkSchema['color'],
+      meta?: LinkSchema['metadata']
+    ) => {
+      const newLink = {
+        sourceAppId,
+        targetAppId,
+        boardId,
+        type: linkType,
+        color: color,
+        metadata: meta,
+      } as LinkSchema;
+      const res = createLink(newLink);
+      if (!res) {
+        console.error('Error creating link', res);
       }
-      return link;
+      return res;
     },
+    removeLinks: async (linkId: string | string[]) => {
+      const res = await deleteLink(linkId);
+      if (!res) {
+        console.error('Error deleting link', res);
+      }
+      return res;
+    },
+    removeAllLinks: async () => {
+      const res = await deleteLink(get().links.map((l) => l._id));
+      if (!res) {
+        console.error('Error deleting all links', res);
+      }
+      return res;
+    },
+
     unsubscribe: () => {
       // Unsubscribe old subscription
       if (linkSub) {
@@ -71,11 +124,10 @@ const LinkStore = create<LinkStoreState>()((set, get) => {
     subscribe: async (boardId: string) => {
       if (!SAGE3Ability.canCurrentUser('read', 'links')) return;
       const res = await APIHttp.QUERY<Link>('/links', { boardId: boardId });
-      console.log('LinkStore: subscribe', res);
       if (res.success) {
         set({ links: res.data });
       } else {
-        set({ error: 'Error reading links' });
+        console.error('Error subscribing to links', res);
         return;
       }
 
@@ -144,25 +196,6 @@ const LinkStore = create<LinkStoreState>()((set, get) => {
       return cachedLinkAppid;
     },
     clearLinkAppId: () => set((state) => ({ ...state, linkedAppId: '' })),
-
-    // Adding Logic
-    addLink: async (
-      sourceAppId: string,
-      targetAppId: string,
-      boardId: string,
-      linkType: LinkSchema['type'],
-      meta?: LinkSchema['metadata']
-    ) => {
-      const newLink = {
-        sourceAppId,
-        targetAppId,
-        boardId,
-        type: linkType,
-        metadata: meta,
-      } as LinkSchema;
-      const res = await get().create(newLink);
-      console.log('Link created', res);
-    },
   };
 });
 

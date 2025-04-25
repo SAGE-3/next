@@ -14,21 +14,11 @@ import { MdWindow } from 'react-icons/md';
 import { IconType } from 'react-icons/lib';
 
 // SAGE3 Frontend
-import {
-  useAppStore,
-  useUIStore,
-  useHexColor,
-  useThrottleScale,
-  useAbility,
-  useInsightStore,
-  useUserSettings,
-  useLinkStore,
-} from '@sage3/frontend';
+import { useAppStore, useUIStore, useHexColor, useThrottleScale, useAbility, useInsightStore, useUserSettings } from '@sage3/frontend';
 
 // Window Components
-import { App, AppName } from '../../schema';
+import { App } from '../../schema';
 import { ProcessingBox, BlockInteraction, WindowTitle, WindowBorder } from './components';
-import { getLinkEndToEndRelationship, PROVENANCE_CONSTRAINTS } from '@sage3/applications/apps';
 
 // Consraints on the app window size
 const APP_MIN_WIDTH = 200;
@@ -90,14 +80,6 @@ export function AppWindow(props: WindowProps) {
   const selected = selectedApp === props.app._id;
   const selectedApps = useUIStore((state) => state.selectedAppsIds);
 
-  const updateState = useAppStore((state) => state.updateState);
-  const addLink = useLinkStore((state) => state.addLink);
-
-  // Linker
-  const linkedAppId = useLinkStore((state) => state.linkedAppId);
-  const cacheLinkedAppId = useLinkStore((state) => state.cacheLinkedAppId);
-  const clearLinkAppId = useLinkStore((state) => state.clearLinkAppId);
-
   // Tag Highlight
   // Insight Store
   const insights = useInsightStore((state) => state.insights);
@@ -141,18 +123,6 @@ export function AppWindow(props: WindowProps) {
   // Display messages
   const toast = useToast();
   const toastID = 'error-toast';
-
-  // Linker Provenance Interaction
-  const { canLink } = useMemo(() => {
-    const matchedConstraint = PROVENANCE_CONSTRAINTS.find((constraint) => constraint.name === props.app.data.type);
-
-    return {
-      canLink: !!matchedConstraint,
-      // outboundLinkRelationship: matchedConstraint?.outboundRelationship, // default value
-      // linkAllowCyclic: matchedConstraint?.allowCylic || false, // default value
-    };
-  }, [props.app.data.type]);
-  const [linkerInteractionCursors, setLinkerInteractionCursors] = useState({});
 
   // Track the app store errors
   useEffect(() => {
@@ -285,113 +255,15 @@ export function AppWindow(props: WindowProps) {
     }
   }, [props.app.data.raised]);
 
-  // Delete all arrows going to this app
-  function handleAppRightClick(e: MouseEvent) {
-    e.stopPropagation();
-    e.preventDefault();
-    if (primaryActionMode === 'linker' && canLink) {
-      updateState(props.app._id, { sources: [] });
-      clearLinkAppId();
-      return;
-    }
-  }
-
   async function handleAppClick(e: MouseEvent) {
     e.stopPropagation();
 
     if (primaryActionMode === 'grab') {
       return;
     }
-
-    //////////////////////////////////
-    // Linker Interaction Behaviour //
-    //////////////////////////////////
-    // Keyword: Linker Interaction Mode / Provenance Interaction Mode
-    if (primaryActionMode === 'linker' && canLink) {
-      const priorLinkedApp = cacheLinkedAppId(props.app._id);
-
-      // If the Prior Linked App is the same as the current app, clear it
-      if (priorLinkedApp === props.app._id) {
-        return;
-      }
-      if (priorLinkedApp) {
-        addLink(props.app._id, priorLinkedApp, props.app.data.boardId, 'run_order');
-        // const allBoardApps: App[] = JSON.parse(JSON.stringify(useAppStore.getState().apps)); // deep copy
-
-        // // many->app
-        // const currentSources = allBoardApps?.find((app: App) => app._id === props.app._id)?.data.state.sources || [];
-        // const manySources = Array.from(new Set([...currentSources, priorLinkedApp])); // must be unique
-
-        // // Start App: priorLinkedApp
-        // // End App: this
-
-        // const startAppName = allBoardApps?.find((app: App) => app._id === priorLinkedApp)?.data.type || '';
-        // const endAppName = allBoardApps?.find((app: App) => app._id === props.app._id)?.data.type || '';
-        // const [endToEndRelationship, allowCylic] = getLinkEndToEndRelationship(startAppName, endAppName);
-
-        // // This separates the startAppName from the rest of the sources and returns the rest of the sources
-        // // one -> app
-        // const sourceApps = allBoardApps?.filter((app: App) => currentSources.includes(app._id));
-        // const filteredSourceAppIds = Array.from(
-        //   new Set(sourceApps?.filter((app: App) => app.data.type !== (startAppName as AppName)).map((app: App) => app._id)) // make unique, just in case
-        // );
-
-        // // Cylic Detection
-        // if (!allowCylic) {
-        //   const tmpApp = allBoardApps?.find((app: App) => app._id === props.app._id);
-        //   if (tmpApp && allBoardApps) {
-        //     tmpApp.data.state.sources = manySources;
-        //     // allBoardApps = [...allBoardApps]; // Trigger a re-render if using state
-        //   }
-
-        //   // Clear tmp if cylic
-        //   if (hasSourceCycles(props.app, allBoardApps, startAppName as AppName)) {
-        //     return;
-        //   }
-        // }
-
-        // // This accounts for the four relationship types per app type, hence the multiple filtering needed.
-        // // Confusing yes; dont think too hard about it, just use test cases to confirm behaviour
-        // // Also this does not ensure that all links on board satisfy the constraints
-        // // Todo: to have similar behaviour w/ cylic detection, we should not allow link creation if conditions are not satisfied, instead of overwritting
-        // if (endToEndRelationship === 'one->app:app->one') {
-        //   const updates = [];
-        //   allBoardApps?.forEach((app: App) => {
-        //     if (app.data.state.sources?.includes(priorLinkedApp)) {
-        //       updates.push({
-        //         id: app._id,
-        //         updates: { sources: app.data.state.sources.filter((source: string) => source !== priorLinkedApp) },
-        //       });
-        //     }
-        //   });
-        //   updates.push({ id: props.app._id, updates: { sources: [...filteredSourceAppIds, priorLinkedApp] } });
-        //   updateStateBatch(updates);
-        // } else if (endToEndRelationship === 'one->app:app->many') {
-        //   updateState(props.app._id, { sources: [...filteredSourceAppIds, priorLinkedApp] });
-        // } else if (endToEndRelationship === 'many->app:app->one') {
-        //   const updates = [];
-        //   allBoardApps?.forEach((app: App) => {
-        //     if (app.data.state.sources?.includes(priorLinkedApp)) {
-        //       updates.push({
-        //         id: app._id,
-        //         updates: { sources: app.data.state.sources.filter((source: string) => source !== priorLinkedApp) },
-        //       });
-        //     }
-        //   });
-        //   updates.push({ id: props.app._id, updates: { sources: manySources } });
-        //   updateStateBatch(updates);
-        // } else if (endToEndRelationship === 'many->app:app->many') {
-        //   updateState(props.app._id, { sources: manySources });
-        // }
-      }
+    if (primaryActionMode === 'linker') {
       return;
     }
-
-    if (primaryActionMode === 'linker' && !canLink) {
-      clearLinkAppId();
-      return;
-    }
-
     // Set the selected app in the UI store
     if (appWasDragged) setAppWasDragged(false);
     else {
@@ -453,31 +325,6 @@ export function AppWindow(props: WindowProps) {
     };
   }, [selectedApp]);
 
-  // Set cursor icon here, or it will get quite messy in the html
-  useEffect(() => {
-    if (primaryActionMode === 'linker' && canLink && !linkedAppId) {
-      setLinkerInteractionCursors({
-        '&': {
-          cursor: 'alias',
-        },
-      });
-    } else if (primaryActionMode === 'linker' && canLink && linkedAppId) {
-      setLinkerInteractionCursors({
-        '&': {
-          cursor: 'copy',
-        },
-      });
-    } else if (primaryActionMode === 'linker' && !canLink) {
-      setLinkerInteractionCursors({
-        '&': {
-          cursor: 'no-drop',
-        },
-      });
-    } else {
-      setLinkerInteractionCursors({});
-    }
-  }, [primaryActionMode, canLink, linkedAppId]);
-
   // Caclulate if the app is within the user's Viewport
   const outsideView = useMemo(() => {
     const x = pos.x;
@@ -509,7 +356,6 @@ export function AppWindow(props: WindowProps) {
       onResize={handleResize}
       onResizeStop={handleResizeStop}
       onClick={handleAppClick}
-      onContextMenu={handleAppRightClick}
       // select an app on touch
       onPointerDown={handleAppTouchStart}
       onPointerMove={handleAppTouchMove}
@@ -605,28 +451,7 @@ export function AppWindow(props: WindowProps) {
                     cursor: 'grabbing',
                   },
                 }
-              : primaryActionMode === 'linker'
-              ? linkerInteractionCursors
               : {}
-            // : primaryActionMode === 'linker' && canLink && !linkedAppId
-            // ? {
-            //     '&': {
-            //       cursor: 'alias',
-            //     },
-            //   }
-            // : primaryActionMode === 'linker' && canLink && linkedAppId
-            // ? {
-            //     '&': {
-            //       cursor: 'copy',
-            //     },
-            //   }
-            // : primaryActionMode === 'linker' && !canLink
-            // ? {
-            //     '&': {
-            //       cursor: 'no-drop',
-            //     },
-            //   }
-            // : {}
           }
           userSelect={'none'}
           zIndex={3}
@@ -666,48 +491,4 @@ export function AppWindow(props: WindowProps) {
       )}
     </Rnd>
   );
-}
-
-function hasSourceCycles(rootApp: App, allBoardApps: App[], appType: AppName) {
-  // Create a map of app IDs to apps for easy lookup
-  const appMap = new Map();
-  allBoardApps.forEach((app) => {
-    if (appType === undefined || app.data.type === appType) {
-      appMap.set(app._id, app);
-    }
-  });
-
-  // Define a helper function to check for cycles
-  function checkCycle(appId: string, visited = new Set(), recursionStack = new Set()) {
-    // Mark current node as visited and add to recursion stack
-    visited.add(appId);
-    recursionStack.add(appId);
-
-    // Get the current app
-    const currentApp = appMap.get(appId);
-
-    // If the app exists and has sources
-    if (currentApp && currentApp.data && currentApp.data.state.sources) {
-      // Check all adjacent vertices
-      for (const sourceAppId of currentApp.data.state.sources) {
-        // If not visited, check if there's a cycle starting from this vertex
-        if (!visited.has(sourceAppId)) {
-          if (checkCycle(sourceAppId, visited, recursionStack)) {
-            return true;
-          }
-        }
-        // If the app is already in the recursion stack, we found a cycle
-        else if (recursionStack.has(sourceAppId)) {
-          return true;
-        }
-      }
-    }
-
-    // Remove the vertex from recursion stack
-    recursionStack.delete(appId);
-    return false;
-  }
-
-  // Start checking from our root app
-  return checkCycle(rootApp._id);
 }

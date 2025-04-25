@@ -8,14 +8,17 @@
 
 import { z } from 'zod';
 import { SBDoc } from './SBSchema';
+import { colors } from '@sage3/shared';
 
 const LinkType = z.union([z.literal('provenance'), z.literal('run_order')]);
+const LinkColors = z.enum([...colors]);
 
 const LinkSchema = z.object({
   sourceAppId: z.string(),
   targetAppId: z.string(),
   boardId: z.string(),
   type: LinkType,
+  color: z.optional(LinkColors),
   metadata: z.optional(z.record(z.any())), // optional extras: confidence, labels, etc.
 });
 

@@ -12,7 +12,7 @@ import { Box } from '@chakra-ui/react';
 import { Rnd } from 'react-rnd';
 
 import { useUIStore, useAbility, WheelStepZoom, MinZoom, MaxZoom, useUserSettings } from '@sage3/frontend';
-import { Background, Apps, Whiteboard, Lasso, PresenceComponent, RndSafety, Arrows, ArrowToCursor } from './components';
+import { Background, Apps, Whiteboard, Lasso, PresenceComponent, RndSafety, Links, CursorArrow, LinkerMode } from './components';
 
 type BackgroundLayerProps = {
   boardId: string;
@@ -461,11 +461,13 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         dragHandleClassName={'board-handle'}
         disableDragging={true}
       >
+        {primaryActionMode === 'linker' && <LinkerMode />}
+
         {/* The board's apps */}
         <Apps />
 
-        <ArrowMemo />
-        <ArrowToCursorMemo />
+        <Links />
+        <CursorArrow />
 
         {/* Whiteboard */}
         <WhiteboardMemo roomId={props.roomId} boardId={props.boardId} />
@@ -485,8 +487,6 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
     </Box>
   );
 }
-const ArrowMemo = React.memo(Arrows);
-const ArrowToCursorMemo = React.memo(ArrowToCursor);
 const RndMemo = React.memo(RndSafety);
 const LassoMemo = React.memo(Lasso);
 const WhiteboardMemo = React.memo(Whiteboard);
