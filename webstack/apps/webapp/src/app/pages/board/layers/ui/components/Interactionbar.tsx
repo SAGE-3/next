@@ -45,9 +45,10 @@ export function Interactionbar(props: {
   position?: { x: number; y: number };
 }) {
   // Settings
-  const { settings, setPrimaryActionMode } = useUserSettings();
+  const { settings, setPrimaryActionMode, setShowLinks } = useUserSettings();
   const primaryActionMode = settings.primaryActionMode;
   const isContextMenuOpen = props.isContextMenuOpen ? props.isContextMenuOpen : false;
+  const showLinks = settings.showLinks;
 
   // User
   const { user } = useUser();
@@ -58,7 +59,7 @@ export function Interactionbar(props: {
   const clearLinkAppId = useLinkStore((state) => state.clearLinkAppId);
 
   // AppStore
-  // const removeAllLinks = useAppStore((state) => state.removeAllLinks);
+  const removeAllLinks = useLinkStore((state) => state.removeAllLinks);
 
   // Tooltip Placment
   const tooltipPlacement = props.tooltipPlacement ? props.tooltipPlacement : 'top';
@@ -384,15 +385,24 @@ export function Interactionbar(props: {
                 </Tooltip>
 
                 <Tooltip placement="top" hasArrow label="Remove All Links">
-                  <Button size="sm">
+                  <Button size="sm" onClick={removeAllLinks}>
                     <FaTrash />
                   </Button>
                 </Tooltip>
 
-                <Select size="sm">
-                  <option value="one-to-one">All Links</option>
-                  <option value="one-to-many">Selected App</option>
-                  <option value="many-to-many">Hide all links</option>
+                <Select
+                  id="other-viewports"
+                  colorScheme="teal"
+                  size="sm"
+                  onChange={(e) => setShowLinks(e.target.value as 'none' | 'selected' | 'selected-path' | 'all')}
+                  value={showLinks}
+                  width="200px"
+                  textAlign={'right'}
+                >
+                  <option value="none">None</option>
+                  <option value="selected">Selected App</option>
+                  <option value="selected-path">Selected App Path</option>
+                  <option value="all">All</option>
                 </Select>
               </Flex>
             </PopoverBody>

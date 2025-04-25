@@ -86,6 +86,7 @@ import {
   setupApp,
   useAssetStore,
   apiUrls,
+  useLinkStore,
 } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 import { AI_ENABLED_APPS, Applications } from '@sage3/applications/apps';
@@ -115,6 +116,9 @@ export function AppToolbar(props: AppToolbarProps) {
   const createApp = useAppStore((state) => state.create);
   const update = useAppStore((state) => state.update);
   const duplicate = useAppStore((state) => state.duplicateApps);
+
+  // Link Store
+  const addLink = useLinkStore((state) => state.addLink);
 
   // UI Store
   const selectedApp = useUIStore((state) => state.selectedAppId);
@@ -962,9 +966,14 @@ export function AppToolbar(props: AppToolbarProps) {
       }
       if (context) {
         // Create the chat app with the context
-        const source = app._id;
-        const state = setupApp('', 'Chat', x, y, props.roomId, props.boardId, { w, h }, { context, sources: [source] });
-        createApp(state);
+        const sourceId = app._id;
+        const state = setupApp('', 'Chat', x, y, props.roomId, props.boardId, { w, h }, { context });
+
+        const res = await createApp(state);
+        if (res.success) {
+          const newApp = res.data;
+          addLink(sourceId, newApp._id, props.boardId, 'provenance');
+        }
         useUIStore.getState().setSelectedApp('');
       }
     }

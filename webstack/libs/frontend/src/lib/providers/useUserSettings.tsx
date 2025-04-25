@@ -17,7 +17,7 @@ import { useCallback, createContext, useContext, useState, useEffect } from 'rea
  * @property {boolean} showCursors - Indicates whether cursors should be displayed.
  * @property {boolean} showViewports - Indicates whether viewports should be displayed.
  * @property {boolean} showAppTitles - Indicates whether application titles should be displayed.
- * @property {'none'| 'selected' | 'all'} showProvenance - Indicates whether provenance information should be displayed (arrows).
+ * @property {'none'| 'selected' | 'all'} showLinks - Indicates whether provenance information should be displayed (arrows).
  * @property {boolean} showUI - Indicates whether the user interface should be displayed.
  * @property {boolean} showTags - Indicates whether tags should be displayed.
  * @property {'grid' | 'list'} selectedBoardListView - The view mode for the board list, either 'grid' or 'list'.
@@ -28,7 +28,7 @@ type UserSettings = {
   showCursors: boolean;
   showViewports: boolean;
   showAppTitles: boolean;
-  showProvenance: 'none' | 'selected' | 'all';
+  showLinks: 'none' | 'selected' | 'selected-path' | 'all';
   showUI: boolean;
   showTags: boolean;
   selectedBoardListView: 'grid' | 'list';
@@ -49,7 +49,7 @@ const defaultSettings: UserSettings = {
   showCursors: true,
   showViewports: true,
   showAppTitles: false,
-  showProvenance: 'selected',
+  showLinks: 'selected',
   showUI: true,
   showTags: false,
   selectedBoardListView: 'grid',
@@ -65,7 +65,7 @@ type UserSettingsContextType = {
   toggleShowCursors: () => void;
   toggleShowViewports: () => void;
   toggleShowAppTitles: () => void;
-  toggleProvenance: (value: UserSettings['showProvenance']) => void;
+  setShowLinks: (value: UserSettings['showLinks']) => void;
   toggleShowUI: () => void;
   toggleShowTags: () => void;
   setBoardListView: (value: UserSettings['selectedBoardListView']) => void;
@@ -78,18 +78,18 @@ type UserSettingsContextType = {
 
 const UserSettingsContext = createContext<UserSettingsContextType>({
   settings: defaultSettings,
-  toggleShowCursors: () => { },
-  toggleShowViewports: () => { },
-  toggleShowAppTitles: () => { },
-  toggleProvenance: (value: UserSettings['showProvenance']) => { },
-  toggleShowUI: () => { },
-  toggleShowTags: () => { },
-  setBoardListView: (value: UserSettings['selectedBoardListView']) => { },
-  setPrimaryActionMode: (value: UserSettings['primaryActionMode']) => { },
-  setDefaultPrimaryActionMode: () => { },
-  restoreDefaultSettings: () => { },
-  setAIModel: (value: UserSettings['aiModel']) => { },
-  setUIScale: (value: UserSettings['uiScale']) => { },
+  toggleShowCursors: () => {},
+  toggleShowViewports: () => {},
+  toggleShowAppTitles: () => {},
+  setShowLinks: (value: UserSettings['showLinks']) => {},
+  toggleShowUI: () => {},
+  toggleShowTags: () => {},
+  setBoardListView: (value: UserSettings['selectedBoardListView']) => {},
+  setPrimaryActionMode: (value: UserSettings['primaryActionMode']) => {},
+  setDefaultPrimaryActionMode: () => {},
+  restoreDefaultSettings: () => {},
+  setAIModel: (value: UserSettings['aiModel']) => {},
+  setUIScale: (value: UserSettings['uiScale']) => {},
 });
 
 /**
@@ -175,11 +175,11 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
     });
   }, [setSettings]);
 
-  const toggleProvenance = useCallback(
-    (value: UserSettings['showProvenance']) => {
+  const setShowLinks = useCallback(
+    (value: UserSettings['showLinks']) => {
       setSettings((prev) => {
         const newSettings = { ...prev };
-        newSettings.showProvenance = value;
+        newSettings.showLinks = value;
         setUserSettings(newSettings);
         return newSettings;
       });
@@ -268,7 +268,7 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
         toggleShowViewports,
         toggleShowAppTitles,
         toggleShowUI,
-        toggleProvenance,
+        setShowLinks,
         toggleShowTags,
         setBoardListView,
         setPrimaryActionMode,
