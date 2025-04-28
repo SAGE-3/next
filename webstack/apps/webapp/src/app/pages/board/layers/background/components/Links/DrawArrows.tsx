@@ -7,7 +7,7 @@
  */
 
 // Arrow library
-import { useHexColor } from '@sage3/frontend';
+import { useHexColor, useUserSettings } from '@sage3/frontend';
 import { Position, Size } from '@sage3/shared/types';
 import { getBoxToBoxArrow } from 'perfect-arrows';
 
@@ -24,6 +24,7 @@ export function BoxToCursorArrow(box: Box, posX: number, posY: number, strokeCol
 
     `cursor-arrow`,
     strokeColor,
+    'solid',
     arrowColor,
     false
   );
@@ -49,11 +50,12 @@ export function BoxToBoxArrow(
   targetBox: Box,
   key: string,
   strokeColor: string,
+  strokeType: 'dashed' | 'solid' = 'dashed',
   arrowColor: string,
   interactable: boolean = false,
   onClick?: () => any
 ) {
-  return createArrow(sourceBox, targetBox, key, strokeColor, arrowColor, interactable, onClick);
+  return createArrow(sourceBox, targetBox, key, strokeColor, strokeType, arrowColor, interactable, onClick);
 }
 
 function createArrow(
@@ -61,6 +63,7 @@ function createArrow(
   box2: Box,
   key: string,
   strokeColor: string,
+  strokeType: 'dashed' | 'solid' = 'dashed',
   arrowColor: string,
   animated: boolean = false,
   onClick?: () => any
@@ -99,8 +102,13 @@ function createArrow(
 
   const strokeColorHex = useHexColor(strokeColor);
   const arrowColorHex = useHexColor(arrowColor);
+  const deleteColorHex = useHexColor('red');
 
   const isInteractable = onClick ? true : false;
+
+  const t = 0.5;
+  const midX = (1 - t) * (1 - t) * sx + 2 * (1 - t) * t * cx + t * t * ex;
+  const midY = (1 - t) * (1 - t) * sy + 2 * (1 - t) * t * cy + t * t * ey;
 
   return (
     <g key={`array-${key}`}>
@@ -110,7 +118,7 @@ function createArrow(
         fill="none"
         stroke={strokeColorHex}
         strokeWidth={6}
-        strokeDasharray="10,10"
+        strokeDasharray={strokeType === 'dashed' ? '10,10' : '0'}
         style={isInteractable ? { pointerEvents: 'auto', touchAction: 'auto' } : { pointerEvents: 'none', touchAction: 'none' }}
         onClick={onClick}
         onMouseEnter={(e) => {
@@ -151,6 +159,14 @@ function createArrow(
           (e.target as SVGPolygonElement).setAttribute('fill', arrowColorHex);
         }}
       />
+
+      <g style={{ pointerEvents: 'auto', touchAction: 'auto', cursor: 'pointer' }} onClick={onClick}>
+        {/* Background circle */}
+        <circle cx={midX} cy={midY} r={24} fill="white" stroke={deleteColorHex} strokeWidth={5} />
+        {/* X lines */}
+        <line x1={midX - 8} y1={midY - 8} x2={midX + 8} y2={midY + 8} stroke={deleteColorHex} strokeWidth={3} strokeLinecap="round" />
+        <line x1={midX + 8} y1={midY - 8} x2={midX - 8} y2={midY + 8} stroke={deleteColorHex} strokeWidth={3} strokeLinecap="round" />
+      </g>
     </g>
   );
 }

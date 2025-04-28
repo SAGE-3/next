@@ -80,6 +80,7 @@ import {
   serverTime,
   YjsRoomConnection,
   useThrottleScale,
+  useLinkStore,
 } from '@sage3/frontend';
 import { KernelInfo, ContentItem } from '@sage3/shared/types';
 import { SAGE3Ability } from '@sage3/shared';
@@ -93,6 +94,7 @@ import { useStore } from './components/store';
 
 // Styling
 import './SageCell.css';
+import { getRunOrderChain } from '../../appLinks';
 
 /**
  * SageCell - SAGE3 application
@@ -358,61 +360,44 @@ function AppComponent(props: App): JSX.Element {
   }
 
   const handleExecuteChain = async () => {
-    // TODO: Need to move this out and into a general function
-    // async function executeAppNoChecks(appid: string, userid: string) {
-    //   // Get the code from the store
-    //   const code = useAppStore.getState().apps.find((app) => app._id === appid)?.data.state.code;
-    //   console.log();
-    //   // Get the kernel from the store, since function executed from monoaco editor
-    //   const kernel = useStore.getState().kernel[appid];
-    //   if (kernel && code) {
-    //     const response = await useKernelStore.getState().executeCode(code, kernel, userid);
-    //     if (response.ok) {
-    //       const msgId = response.msg_id;
-    //       useAppStore.getState().updateState(appid, { msgId: msgId, session: userid });
-    //       return true;
-    //     } else {
-    //       useAppStore.getState().updateState(appid, { streaming: false, msgId: '' });
-    //       return false;
-    //     }
-    //   }
-    //   return false;
-    // }
-    // const allBoardApps: App[] = JSON.parse(JSON.stringify(useAppStore.getState().apps)); // deep copy
-    // const sourceApps = allBoardApps?.filter((app: App) => props.data.appLinks.sources.includes(app._id));
-    // const sageCellSources = sourceApps.filter((app: App) => app.data.type === 'SageCell').map((app: App) => app._id);
-    // console.log(sourceApps, sageCellSources);
-    // if (sageCellSources) {
-    //   // const allBoardApps = useAppStore.getState().apps;
-    //   let source = sageCellSources[0];
-    //   let appStack = [];
-    //   // Push apps onto stack by following the first source of the provenance chain
-    //   appStack.push(props);
-    //   while (source) {
-    //     const sourceApp = allBoardApps?.find((app) => app._id === source);
-    //     if (!sourceApp) break;
-    //     appStack.push(sourceApp);
-    //     const parentSourceApps = allBoardApps?.filter((app: App) => sourceApp?.data?.state?.sources.includes(app._id));
-    //     const parentSageCellSources = parentSourceApps.filter((app: App) => app.data.type === 'SageCell').map((app: App) => app._id);
-    //     if (!parentSageCellSources || parentSageCellSources.length === 0) {
-    //       break;
-    //     }
-    //     source = parentSageCellSources[0];
-    //   }
-    //   // reverse through the stack (can also pop if you want) and execute the code as we go
-    //   for (let i = appStack.length - 1; i >= 0; i--) {
-    //     const app = appStack[i];
-    //     const res = await executeAppNoChecks(app._id, app.data.state.session);
-    //     // if error, break the loop
-    //     if (!res) break;
-    //     // Give illusion of sequential execution
-    //     await waitSeconds(0.1);
-    //   }
-    // } else {
-    //   handleExecute();
-    // }
+    async function executeAppNoChecks(appid: string) {
+      // Get the code from the store
+      const code = useAppStore.getState().apps.find((app) => app._id === appid)?.data.state.code;
+      const userId = user?._id;
+      const kernel = useStore.getState().kernel[appid];
+
+      if (kernel && code && userId) {
+        const response = await executeCode(code, kernel, userId);
+        console.log('executeAppNoChecks> response', response, appid);
+        if (response.ok) {
+          const msgId = response.msg_id;
+          useAppStore.getState().updateState(appid, { msgId: msgId, session: userId });
+          return true;
+        } else {
+          useAppStore.getState().updateState(appid, { streaming: false, msgId: '' });
+          return false;
+        }
+      }
+      return false;
+    }
+
+    const allBoardApps: App[] = JSON.parse(JSON.stringify(useAppStore.getState().apps)); // deep copy
+    const links = useLinkStore.getState().links;
+
+    const run_order_appIds = getRunOrderChain(props._id, links);
+    // flip the order of the array to execute the apps in reverse order
+    run_order_appIds.reverse();
+
+    for (let i = run_order_appIds.length - 1; i >= 0; i--) {
+      const app = allBoardApps.find((a) => a._id === run_order_appIds[i]);
+      if (!app) break;
+      const res = await executeAppNoChecks(app._id);
+      // if error, break the loop
+      if (!res) break;
+      // Give illusion of sequential execution
+      await waitSeconds(0.1);
+    }
   };
-  //////
 
   // Track the execute flag from the store in the toolbar
   useEffect(() => {
@@ -1226,7 +1211,7 @@ function AppComponent(props: App): JSX.Element {
                       isDisabled={!s.kernel || !canExecuteCode}
                     />
                   </Tooltip>
-                  <Tooltip hasArrow label="Execute all prior sage cells in this chain" placement="right-start">
+                  <Tooltip hasArrow label="Execute all SageCells in this Chain" placement="right-start">
                     <IconButton
                       onClick={handleExecuteChain}
                       aria-label={''}
