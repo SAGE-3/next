@@ -203,7 +203,7 @@ class PySage3:
         # TODO: prevent updates to fields that were touched
         # TODO: this in a smarter way. For now, just overwrite the complete object
 
-        print(f"I AM HERE and collection is {collection} doc is {doc} and updates is {updates}")
+        # print(f"I AM HERE and collection is {collection} doc is {doc} and updates is {updates}")
 
 
         id = doc["_id"]
@@ -572,6 +572,9 @@ class PySage3:
     #     apps = sorted(apps, key=lambda x: x['data']['size']['width'], reverse=False)
     #     apps = sorted(apps, key=lambda x: x['data']['size']['height'], reverse=False)
     #     return apps
+
+    def get_viewport_center(self) -> dict:
+        return self.s3_comm.get_presence()
 
     def get_types_count(self, apps: list = None) -> dict:
         """
