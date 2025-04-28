@@ -125,6 +125,8 @@ export function LinkerMode() {
     <svg width={boardWidth} height={boardHeight} style={{ position: 'absolute', top: 0, left: 0, zIndex: 100000, pointerEvents: 'none' }}>
       {boxes.map(({ id, position, size }) => {
         const color = selectedSourceId === id ? teal : candidates.includes(id) ? green : red;
+        // Fill should be color but a little transparent
+        const fill = color + '40';
         return (
           <rect
             key={id}
@@ -134,7 +136,7 @@ export function LinkerMode() {
             height={size.height}
             stroke={color}
             strokeWidth={2 / scale}
-            fill="transparent"
+            fill={fill}
             onClick={(e) => handleClick(e, id)}
             style={{ pointerEvents: 'auto' }}
           />

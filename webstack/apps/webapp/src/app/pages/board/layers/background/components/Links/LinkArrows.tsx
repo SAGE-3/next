@@ -60,6 +60,7 @@ export function LinksArrows(props: { links: Link[] }) {
           const { sourceAppId, targetAppId } = data;
           const sourceApp = apps.find((a) => a._id === sourceAppId);
           const targetApp = apps.find((a) => a._id === targetAppId);
+          const strokeType = data.type === 'run_order' || data.type === 'provenance' ? 'solid' : 'dashed';
 
           if (!sourceApp || !targetApp) return null;
           const isAnimated = link.data.type === 'run_order';
@@ -72,7 +73,9 @@ export function LinksArrows(props: { links: Link[] }) {
             size: targetApp.data.size,
           };
           const arrowColor = link.data.color ? link.data.color : ('teal' as SAGEColors);
-          const arrow = BoxToBoxArrow(sBox, tBox, link._id, strokeColor, arrowColor, isAnimated, () => handleDeleteLink(link._id));
+          const arrow = BoxToBoxArrow(sBox, tBox, link._id, strokeColor, strokeType, arrowColor, isAnimated, () =>
+            handleDeleteLink(link._id)
+          );
           return arrow;
         })}
       </svg>
