@@ -574,7 +574,12 @@ class PySage3:
     #     return apps
 
     def get_viewport_center(self) -> dict:
-        return self.s3_comm.get_presence()
+        presence =  self.s3_comm.get_presence()
+        width = presence['size']['width']
+        height = presence['size']['height']
+        x = presence['position']['x'] + (width / 2)
+        y = presence['position']['y'] + (height / 2)
+        return {"x": x, "y": y, "z": 0}
 
     def get_types_count(self, apps: list = None) -> dict:
         """
