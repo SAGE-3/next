@@ -11,9 +11,17 @@ import { useParams } from 'react-router';
 
 import { Button, ButtonGroup, HStack, Select, Tooltip, useDisclosure, useToast } from '@chakra-ui/react';
 import {
-  MdAdd, MdArrowDropDown, MdFileDownload,
-  MdFileUpload, MdHelp, MdWeb, MdRemove, MdPlayArrow,
-  MdStop, MdOutlineKeyboardDoubleArrowRight
+  MdAdd,
+  MdArrowDropDown,
+  MdFileDownload,
+  MdFileUpload,
+  MdHelp,
+  MdWeb,
+  MdRemove,
+  MdPlayArrow,
+  MdStop,
+  MdOutlineKeyboardDoubleArrowRight,
+  MdFastForward,
 } from 'react-icons/md';
 // Date manipulation (for filename)
 import { format } from 'date-fns/format';
@@ -34,6 +42,7 @@ import { App, AppGroup } from '../../../schema';
 import { state as AppState } from '../index';
 import { HelpModal } from './help';
 import { useStore } from './store';
+import { VscRunAll } from 'react-icons/vsc';
 
 /**
  * UI toolbar for the SAGEcell application
@@ -47,6 +56,7 @@ export function ToolbarComponent(props: App): JSX.Element {
   // Store between toolbar and appWindow
   const setDrawer = useStore((state) => state.setDrawer);
   const setExecute = useStore((state) => state.setExecute);
+  const setExecuteAll = useStore((state) => state.setExecuteAll);
   const setInterrupt = useStore((state) => state.setInterrupt);
   // App State
   const s = props.data.state as AppState;
@@ -211,6 +221,9 @@ export function ToolbarComponent(props: App): JSX.Element {
     // Set the flag to execute the cell
     setExecute(props._id, true);
   };
+  const setExecuteAllTrue = () => {
+    setExecuteAll(props._id, true, 'all');
+  };
   const setStopTrue = () => {
     // Set the flag to stop the cell
     setInterrupt(props._id, true);
@@ -250,7 +263,7 @@ export function ToolbarComponent(props: App): JSX.Element {
       )}
 
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Execute'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Execute'} openDelay={400}>
           <Button
             isDisabled={!selectedKernel || !canExecuteCode}
             onClick={setExecuteTrue}
@@ -261,17 +274,28 @@ export function ToolbarComponent(props: App): JSX.Element {
             <MdPlayArrow />
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Stop'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Execute All In Chain'} openDelay={400}>
+          <Button
+            isDisabled={!selectedKernel || !canExecuteCode}
+            onClick={setExecuteAllTrue}
+            _hover={{ opacity: 0.7 }}
+            size="xs"
+            colorScheme="teal"
+          >
+            <VscRunAll />
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top" hasArrow={true} label={'Stop'} openDelay={400}>
           <Button isDisabled={!s.msgId || !canExecuteCode} onClick={setStopTrue} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal">
             <MdStop />
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Open in Drawer'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Open in Drawer'} openDelay={400}>
           <Button onClick={openInDrawer}>
             <MdWeb />
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Click for help'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Click for help'} openDelay={400}>
           <Button onClick={helpOnOpen} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal">
             <MdHelp />
           </Button>
@@ -279,15 +303,15 @@ export function ToolbarComponent(props: App): JSX.Element {
       </ButtonGroup>
 
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
           <Button isDisabled={s.fontSize <= 8} onClick={decreaseFontSize} _hover={{ opacity: 0.7 }}>
             <MdRemove />
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Current Font Size'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Current Font Size'} openDelay={400}>
           <Button _hover={{ opacity: 0.7 }}>{s.fontSize}</Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
           <Button isDisabled={s.fontSize > 42} onClick={increaseFontSize} _hover={{ opacity: 0.7 }}>
             <MdAdd />
           </Button>
@@ -295,13 +319,13 @@ export function ToolbarComponent(props: App): JSX.Element {
       </ButtonGroup>
 
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Save Code in Asset Manager'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Save Code in Asset Manager'} openDelay={400}>
           <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }} isDisabled={s.code.length === 0}>
             <MdFileUpload />
           </Button>
         </Tooltip>
 
-        <Tooltip placement="top-start" hasArrow={true} label={'Download Code'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Download Code'} openDelay={400}>
           <Button onClick={downloadPy} _hover={{ opacity: 0.7 }}>
             <MdFileDownload />
           </Button>
@@ -424,7 +448,7 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
         useAppStore.getState().updateState(appid, { msgId: msgId, session: userid });
         return true;
       } else {
-        useAppStore.getState().updateState(appid, { streaming: false, msgId: '', });
+        useAppStore.getState().updateState(appid, { streaming: false, msgId: '' });
         return false;
       }
     }
@@ -440,7 +464,7 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
 
   // Wait for x seconds
   async function waitSeconds(x: number): Promise<void> {
-    await new Promise(resolve => setTimeout(resolve, x * 1000));
+    await new Promise((resolve) => setTimeout(resolve, x * 1000));
   }
 
   // Evaluate the sagecells in order
@@ -455,7 +479,6 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
       // Give illusion of sequential execution
       await waitSeconds(0.1);
     }
-
   };
 
   // Stop all selected cells
@@ -466,8 +489,11 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
   };
 
   // This function efficiently calculates the enclosing bounding box for a given set of rectangles.
-  function getBoundingBox(rectangles: Array<{ id: string, x: number; y: number; width: number; height: number }>) {
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  function getBoundingBox(rectangles: Array<{ id: string; x: number; y: number; width: number; height: number }>) {
+    let minX = Infinity,
+      minY = Infinity,
+      maxX = -Infinity,
+      maxY = -Infinity;
 
     rectangles.forEach(({ x, y, width, height }) => {
       minX = Math.min(minX, x);
@@ -482,7 +508,7 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
       y: minY,
       width: width,
       height: height,
-      orientation: height > 1.3 * width ? "column" : width > 1.3 * height ? "row" : "squarish",
+      orientation: height > 1.3 * width ? 'column' : width > 1.3 * height ? 'row' : 'squarish',
     };
 
     return boundingBox;
@@ -501,7 +527,7 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
       height: app.data.size.height,
       cx: app.data.position.x + app.data.size.width / 2,
       cy: app.data.position.y + app.data.size.height / 2,
-    }))
+    }));
 
     // Get the bounding box of the group and orientation
     // const box = getBoundingBox(boxes);
@@ -515,8 +541,7 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
     const sorted = [...boxes].sort((a, b) =>
       // If box `a` and `b` overlap in y, sort by x
       // Otherwise, sort by y
-      (Math.max(a.y, b.y) < Math.min(a.y + a.height, b.y + b.height))
-        ? a.x - b.x : a.y - b.y
+      Math.max(a.y, b.y) < Math.min(a.y + a.height, b.y + b.height) ? a.x - b.x : a.y - b.y
     );
 
     // if (box.orientation !== "squarish") {
@@ -529,7 +554,6 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
     updateStateBatch(ps);
     // }
   };
-
 
   /**
    * This is called when the user selects a kernel from the dropdown
@@ -606,18 +630,18 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
 
       {/* Execute all selected cells */}
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        {/* <Tooltip placement="top-start" hasArrow={true} label={'Execute All Selected Cells'} openDelay={400}>
+        {/* <Tooltip placement="top" hasArrow={true} label={'Execute All Selected Cells'} openDelay={400}>
           <Button onClick={setExecuteAll} isDisabled={!canExecuteCode} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal">
             <MdPlayArrow />
           </Button>
         </Tooltip> */}
 
-        <Tooltip placement="top-start" hasArrow={true} label={'Execute Selected Cells in Order'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Execute Selected Cells in Order'} openDelay={400}>
           <Button onClick={setExecuteinOrder} isDisabled={!canExecuteCode} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal">
             <MdPlayArrow />
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Stop All Selected Cells'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Stop All Selected Cells'} openDelay={400}>
           <Button onClick={setStopAll} isDisabled={!canExecuteCode} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal">
             <MdStop />
           </Button>
@@ -625,17 +649,17 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
       </ButtonGroup>
 
       <ButtonGroup isAttached size="xs" colorScheme="teal" mr="2">
-        <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
           <Button onClick={handleDecreaseFont} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdRemove />
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Current Font Size'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Current Font Size'} openDelay={400}>
           <Button _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             {Math.min(...props.apps.map((app) => app.data.state.fontSize))}
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
           <Button onClick={handleIncreaseFont} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdAdd />
           </Button>
