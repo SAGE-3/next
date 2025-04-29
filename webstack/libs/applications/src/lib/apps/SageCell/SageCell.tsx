@@ -369,7 +369,6 @@ function AppComponent(props: App): JSX.Element {
 
       if (kernel && code && userId) {
         const response = await executeCode(code, kernel, userId);
-        console.log('executeAppNoChecks> response', response, appid);
         if (response.ok) {
           const msgId = response.msg_id;
           useAppStore.getState().updateState(appid, { msgId: msgId, session: userId });
@@ -619,7 +618,11 @@ function AppComponent(props: App): JSX.Element {
                   if (item['text/plain']) {
                     const title = item['text/plain'];
                     // remove the quotes from the title
-                    e.dataTransfer.setData('title', title.slice(1, -1));
+                    const data = JSON.stringify({
+                      title: title.slice(1, -1),
+                      sources: [props._id],
+                    });
+                    e.dataTransfer.setData('app_state', data);
                   }
                 }}
               />
@@ -633,8 +636,11 @@ function AppComponent(props: App): JSX.Element {
                   // set the title in the drag transfer data
                   if (item['text/plain']) {
                     const title = item['text/plain'];
-                    // remove the quotes from the title
-                    e.dataTransfer.setData('title', title.slice(1, -1));
+                    const data = JSON.stringify({
+                      title: title.slice(1, -1),
+                      sources: [props._id],
+                    });
+                    e.dataTransfer.setData('app_state', data);
                   }
                 }}
               />

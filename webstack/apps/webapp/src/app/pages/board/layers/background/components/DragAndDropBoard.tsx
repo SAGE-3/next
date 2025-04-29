@@ -154,9 +154,13 @@ export const useDragAndDropBoard = (props: useDragAndDropBoardProps) => {
           const pastedText = event.dataTransfer.getData('Url');
           if (pastedText) {
             if (pastedText.startsWith('data:image/png;base64')) {
-              const title = event.dataTransfer.getData('title') || 'Image';
+              const appState = event.dataTransfer.getData('app_state');
+              if (!appState) return;
+              const parsedState = JSON.parse(appState);
+              const title = parsedState.title;
+              const sources = parsedState.sources;
               // it's a base64 image
-              getImageDimensionsFromBase64(pastedText).then((res) => {
+              getImageDimensionsFromBase64(pastedText).then(async (res) => {
                 const ar = res.w / res.h;
                 let w = res.w;
                 let h = w / ar;
@@ -164,7 +168,16 @@ export const useDragAndDropBoard = (props: useDragAndDropBoardProps) => {
                   w = res.h * ar;
                   h = res.h;
                 }
-                createApp(setupApp(title, 'ImageViewer', xdrop, ydrop, props.roomId, props.boardId, { w, h }, { assetid: pastedText }));
+                const r = await createApp(
+                  setupApp(title, 'ImageViewer', xdrop, ydrop, props.roomId, props.boardId, { w, h }, { assetid: pastedText })
+                );
+                if (r.success) {
+                  if (sources && sources.length) {
+                    const tId = r.data._id;
+                    const sId = sources[0];
+                    addLink(sId, tId, props.boardId, 'provenance');
+                  }
+                }
               });
             } else {
               // Is it a valid URL
@@ -210,9 +223,7 @@ export const useDragAndDropBoard = (props: useDragAndDropBoardProps) => {
                 dragging: false,
                 pinned: false,
               };
-              console.log(appstate);
               const res = await createApp(newState);
-              console.log('Created app', res);
               if (res.success) {
                 if (appstate.sources && appstate.sources.length) {
                   const tId = res.data._id;
