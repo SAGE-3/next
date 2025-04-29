@@ -7,7 +7,7 @@
  */
 
 // Arrow library
-import { useHexColor, useUserSettings } from '@sage3/frontend';
+import { useHexColor, useUIStore, useUserSettings } from '@sage3/frontend';
 import { Position, Size } from '@sage3/shared/types';
 import { getBoxToBoxArrow } from 'perfect-arrows';
 
@@ -18,16 +18,11 @@ type Box = {
 
 // Create an arrow from a box to the cursor position
 export function BoxToCursorArrow(box: Box, posX: number, posY: number, strokeColor: string, arrowColor: string) {
-  return createArrow(
-    box,
-    { position: { x: posX, y: posY, z: 0 }, size: { width: 1, height: 1, depth: 0 } },
-
-    `cursor-arrow`,
-    strokeColor,
-    'solid',
-    arrowColor,
-    false
-  );
+  const cursorBox = {
+    position: { x: posX, y: posY, z: 0 },
+    size: { width: 1, height: 1, depth: 0 },
+  };
+  return createArrow(box, cursorBox, `cursor-arrow`, strokeColor, 'solid', arrowColor);
 }
 
 /**
@@ -52,10 +47,10 @@ export function BoxToBoxArrow(
   strokeColor: string,
   strokeType: 'dashed' | 'solid' = 'dashed',
   arrowColor: string,
-  interactable: boolean = false,
+  scale: number,
   onClick?: () => any
 ) {
-  return createArrow(sourceBox, targetBox, key, strokeColor, strokeType, arrowColor, interactable, onClick);
+  return createArrow(sourceBox, targetBox, key, strokeColor, strokeType, arrowColor, scale, onClick);
 }
 
 function createArrow(
@@ -65,7 +60,7 @@ function createArrow(
   strokeColor: string,
   strokeType: 'dashed' | 'solid' = 'dashed',
   arrowColor: string,
-  animated: boolean = false,
+  scale: number = 1,
   onClick?: () => any
 ) {
   const p0x = Math.round(box1.position.x);
@@ -80,7 +75,7 @@ function createArrow(
   const arrow = getBoxToBoxArrow(p0x, p0y, s0w, s0h, p1x, p1y, s1w, s1h, {
     padStart: 0, // leave at 0 - otherwise bug in lib
     padEnd: 0, // leave at 0 - otherwise bug in lib
-    bow: 0.25,
+    bow: 0.0,
     straights: true,
     stretch: 0.5,
     stretchMin: 0,
@@ -103,6 +98,7 @@ function createArrow(
   const strokeColorHex = useHexColor(strokeColor);
   const arrowColorHex = useHexColor(arrowColor);
   const deleteColorHex = useHexColor('red');
+  const gray = useHexColor('gray.500');
 
   const isInteractable = onClick ? true : false;
 
@@ -117,56 +113,44 @@ function createArrow(
         d={`M${sx},${sy} Q${cx},${cy} ${ex},${ey}`}
         fill="none"
         stroke={strokeColorHex}
-        strokeWidth={6}
-        strokeDasharray={strokeType === 'dashed' ? '10,10' : '0'}
-        style={isInteractable ? { pointerEvents: 'auto', touchAction: 'auto' } : { pointerEvents: 'none', touchAction: 'none' }}
-        onClick={onClick}
-        onMouseEnter={(e) => {
-          if (!isInteractable) return;
-
-          (e.target as SVGPathElement).setAttribute('stroke', 'red');
-        }}
-        onMouseLeave={(e) => {
-          if (!isInteractable) return;
-
-          (e.target as SVGPathElement).setAttribute('stroke', strokeColorHex);
-        }}
+        strokeWidth={14}
+        strokeDasharray={strokeType === 'dashed' ? '30,40' : '0'}
       />
-      {animated &&
+      {/* {animated &&
         Array.from({ length: arrowCount }).map((_, index) => (
           <polygon key={`animated-arrow-${key}-${index}`} points="0,-16 24,0 0,16" fill={arrowColorHex}>
             <animateMotion dur={`${dur}s`} begin={`${index * delayGap}s`} repeatCount="indefinite" rotate="auto">
               <mpath href={`#arrow-path-${key}`} />
             </animateMotion>
           </polygon>
-        ))}
+        ))} */}
       <polygon
-        points="-48,-14 -5,0 -48,14"
+        points="-72,-36 -10,0 -72,36"
         transform={`translate(${ex},${ey}) rotate(${angleDegrees})`}
         stroke={arrowColorHex}
         strokeWidth={8}
         fill={arrowColorHex}
-        style={isInteractable ? { pointerEvents: 'auto', touchAction: 'auto' } : { pointerEvents: 'none', touchAction: 'none' }}
+        style={
+          isInteractable
+            ? { pointerEvents: 'auto', touchAction: 'auto', cursor: 'pointer' }
+            : { pointerEvents: 'none', touchAction: 'none' }
+        }
         onClick={onClick}
-        onMouseEnter={(e) => {
-          if (!isInteractable) return;
-          (e.target as SVGPolygonElement).setAttribute('stroke', 'red');
-          (e.target as SVGPolygonElement).setAttribute('fill', 'red');
-        }}
-        onMouseLeave={(e) => {
-          if (!isInteractable) return;
-          (e.target as SVGPolygonElement).setAttribute('stroke', arrowColorHex);
-          (e.target as SVGPolygonElement).setAttribute('fill', arrowColorHex);
-        }}
       />
 
-      <g style={{ pointerEvents: 'auto', touchAction: 'auto', cursor: 'pointer' }} onClick={onClick}>
-        {/* Background circle */}
-        <circle cx={midX} cy={midY} r={24} fill="white" stroke={deleteColorHex} strokeWidth={5} />
-        {/* X lines */}
-        <line x1={midX - 8} y1={midY - 8} x2={midX + 8} y2={midY + 8} stroke={deleteColorHex} strokeWidth={3} strokeLinecap="round" />
-        <line x1={midX + 8} y1={midY - 8} x2={midX - 8} y2={midY + 8} stroke={deleteColorHex} strokeWidth={3} strokeLinecap="round" />
-      </g>
+      {isInteractable && (
+        <g
+          style={{ pointerEvents: 'auto', touchAction: 'auto', cursor: 'pointer' }}
+          onClick={onClick}
+          transform={`translate(${midX}, ${midY}) scale(${1 / scale}) translate(${-midX}, ${-midY})`}
+        >
+          {/* Background circle */}
+          <circle cx={midX} cy={midY} r={14} fill="white" stroke={deleteColorHex} strokeWidth={2} />
+          {/* X lines */}
+          <line x1={midX - 6} y1={midY - 6} x2={midX + 6} y2={midY + 6} stroke={deleteColorHex} strokeWidth={4} strokeLinecap="round" />
+          <line x1={midX + 6} y1={midY - 6} x2={midX - 6} y2={midY + 6} stroke={deleteColorHex} strokeWidth={4} strokeLinecap="round" />
+        </g>
+      )}
     </g>
   );
 }

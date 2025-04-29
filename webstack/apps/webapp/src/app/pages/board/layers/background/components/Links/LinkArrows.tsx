@@ -7,11 +7,12 @@
  */
 
 // SAGE Imports
-import { useThrottleApps, useUIStore, useLinkStore } from '@sage3/frontend';
+import { useThrottleApps, useUIStore, useLinkStore, useUserSettings } from '@sage3/frontend';
 
 import { BoxToBoxArrow } from './DrawArrows';
 import { Link } from '@sage3/shared/types';
 import { SAGEColors } from '@sage3/shared';
+import { useColorModeValue } from '@chakra-ui/react';
 
 /**
  * The Arrows component, showing arrows of links between apps.
@@ -23,6 +24,9 @@ export function LinksArrows(props: { links: Link[] }) {
   // Links to draw
   const links = props.links;
 
+  const { settings } = useUserSettings();
+  const interactionMode = settings?.primaryActionMode === 'linker';
+
   // Apps Store
   const apps = useThrottleApps(200);
 
@@ -30,8 +34,9 @@ export function LinksArrows(props: { links: Link[] }) {
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
 
+  const scale = useUIStore((state) => state.scale);
   // Default Theme
-  const strokeColor = 'gray' as SAGEColors;
+  const strokeColor = useColorModeValue('gray.500', 'gray.500');
 
   // Linker Interaction Mode
   const removeLink = useLinkStore((state) => state.removeLinks);
@@ -60,7 +65,7 @@ export function LinksArrows(props: { links: Link[] }) {
           const { sourceAppId, targetAppId } = data;
           const sourceApp = apps.find((a) => a._id === sourceAppId);
           const targetApp = apps.find((a) => a._id === targetAppId);
-          const strokeType = data.type === 'run_order' || data.type === 'provenance' ? 'solid' : 'dashed';
+          const strokeType = data.type === 'run_order' ? 'solid' : 'dashed';
 
           if (!sourceApp || !targetApp) return null;
           const isAnimated = link.data.type === 'run_order';
@@ -73,9 +78,8 @@ export function LinksArrows(props: { links: Link[] }) {
             size: targetApp.data.size,
           };
           const arrowColor = link.data.color ? link.data.color : ('teal' as SAGEColors);
-          const arrow = BoxToBoxArrow(sBox, tBox, link._id, strokeColor, strokeType, arrowColor, isAnimated, () =>
-            handleDeleteLink(link._id)
-          );
+          const interactionFunction = interactionMode ? () => handleDeleteLink(link._id) : undefined;
+          const arrow = BoxToBoxArrow(sBox, tBox, link._id, strokeColor, strokeType, arrowColor, scale, interactionFunction);
           return arrow;
         })}
       </svg>

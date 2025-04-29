@@ -206,7 +206,7 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
 
                 <FormControl display="flex" mt="2" alignItems="center" justifyContent="space-between">
                   <FormLabel htmlFor="hide-provenance" mb="0">
-                    Provenance
+                    Links
                     <InfoTooltip label={'Show/Hide SAGE3 arrows for provenance. Must enable User Interface.'} />
                   </FormLabel>
                   <Select
@@ -221,7 +221,7 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
                   >
                     <option value="none">None</option>
                     <option value="selected">Selected App</option>
-                    <option value="selected-path">Selected App Path</option>
+                    <option value="selected-path">Selected App's Path</option>
                     <option value="all">All Links</option>
                   </Select>
                 </FormControl>
