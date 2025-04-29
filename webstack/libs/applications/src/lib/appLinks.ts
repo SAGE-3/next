@@ -38,19 +38,19 @@ export const linkConstraints: Partial<Record<AppName, LinkConstraint>> = {
         allowCycles: false,
       },
       // unlimited visual from SageCell to Stickie
-      Stickie: {
-        allowedTypes: ['visual'],
-        allowCycles: true,
-      },
+      // Stickie: {
+      //   allowedTypes: ['visual'],
+      //   allowCycles: true,
+      // },
     },
   },
-  Stickie: {
-    targets: {
-      // unlimited visual in either direction
-      SageCell: { allowedTypes: ['visual'], allowCycles: true },
-      Stickie: { allowedTypes: ['visual'], allowCycles: true },
-    },
-  },
+  // Stickie: {
+  //   targets: {
+  //     // unlimited visual in either direction
+  //     SageCell: { allowedTypes: ['visual'], allowCycles: true },
+  //     Stickie: { allowedTypes: ['visual'], allowCycles: true },
+  //   },
+  // },
 };
 
 /**

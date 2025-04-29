@@ -29,10 +29,9 @@ import {
 } from '@chakra-ui/react';
 
 import { BiPencil } from 'react-icons/bi';
-import { MdAdd, MdGraphicEq, MdRemove } from 'react-icons/md';
+import { MdGraphicEq } from 'react-icons/md';
 import { BsEraserFill } from 'react-icons/bs';
-import { FaUndo, FaEraser, FaTrash } from 'react-icons/fa';
-import { FaLinkSlash, FaLink } from 'react-icons/fa6';
+import { FaUndo, FaEraser, FaTrash, FaLink } from 'react-icons/fa';
 
 import { LiaMousePointerSolid, LiaHandPaperSolid } from 'react-icons/lia';
 
@@ -45,10 +44,9 @@ export function Interactionbar(props: {
   position?: { x: number; y: number };
 }) {
   // Settings
-  const { settings, setPrimaryActionMode, setShowLinks } = useUserSettings();
+  const { settings, setPrimaryActionMode } = useUserSettings();
   const primaryActionMode = settings.primaryActionMode;
   const isContextMenuOpen = props.isContextMenuOpen ? props.isContextMenuOpen : false;
-  const showLinks = settings.showLinks;
 
   // User
   const { user } = useUser();
@@ -57,9 +55,6 @@ export function Interactionbar(props: {
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
   const clearLinkAppId = useLinkStore((state) => state.clearLinkAppId);
-
-  // AppStore
-  const removeAllLinks = useLinkStore((state) => state.removeAllLinks);
 
   // Tooltip Placment
   const tooltipPlacement = props.tooltipPlacement ? props.tooltipPlacement : 'top';
@@ -336,57 +331,26 @@ export function Interactionbar(props: {
             </PopoverBody>
           </PopoverContent>
         </Popover>
-        <Popover isOpen={linkerIsOpen && primaryActionMode === 'linker'}>
-          <Tooltip label={'Link — [5]'} placement={tooltipPlacement} hasArrow={true} openDelay={400} shouldWrapChildren={true}>
-            <PopoverTrigger>
-              <IconButton
-                borderRadius={'0 0.5rem 0.5rem 0'}
-                size="sm"
-                colorScheme={primaryActionMode === 'linker' ? user?.data.color || 'teal' : 'gray'}
-                sx={{
-                  _dark: {
-                    bg: primaryActionMode === 'linker' ? `${user?.data.color}.200` : 'gray.600',
-                  },
-                }}
-                icon={<FaLink />}
-                fontSize="lg"
-                aria-label={'input-type'}
-                onClick={() => {
-                  eraserOnClose();
-                  annotationsOnClose();
-                  if (linkerIsOpen) linkerOnClose();
-                  else {
-                    if (!isContextMenuOpen) {
-                      linkerOnOpen();
-                    }
-                  }
-                  setSelectedApp('');
-                  setSelectedAppsIds([]);
-                  clearLinkAppId();
-                  setPrimaryActionMode('linker');
-                }}
-              ></IconButton>
-            </PopoverTrigger>
-          </Tooltip>
-          <PopoverContent width="300px">
-            <PopoverHeader userSelect="none">Linker</PopoverHeader>
-            <PopoverBody>
-              <Flex direction="row" alignContent="left" my="2" gap="2">
-                <Tooltip placement="top" hasArrow label="Add Run Order Link">
-                  <Button size="sm">
-                    <MdAdd />
-                  </Button>
-                </Tooltip>
-
-                <Tooltip placement="top" hasArrow label="Remove All Links">
-                  <Button size="sm" onClick={removeAllLinks}>
-                    <FaTrash />
-                  </Button>
-                </Tooltip>
-              </Flex>
-            </PopoverBody>
-          </PopoverContent>
-        </Popover>
+        <Tooltip label={'Linker — [5]'} placement={tooltipPlacement} hasArrow={true} openDelay={400} shouldWrapChildren={true}>
+          <IconButton
+            borderRadius={'0 0.5rem 0.5rem 0'}
+            size="sm"
+            colorScheme={primaryActionMode === 'linker' ? user?.data.color || 'teal' : 'gray'}
+            sx={{
+              _dark: {
+                bg: primaryActionMode === 'linker' ? `${user?.data.color}.200` : 'gray.600',
+              },
+            }}
+            icon={<FaLink />}
+            fontSize="lg"
+            aria-label={'linker-mode'}
+            onClick={() => {
+              eraserOnClose();
+              annotationsOnClose();
+              setPrimaryActionMode('linker');
+            }}
+          ></IconButton>
+        </Tooltip>
       </ButtonGroup>
 
       {myIsOpen && (

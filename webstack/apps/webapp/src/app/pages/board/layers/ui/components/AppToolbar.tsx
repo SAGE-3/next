@@ -49,6 +49,7 @@ import {
   MenuItem,
   MenuDivider,
   Spacer,
+  Flex,
 } from '@chakra-ui/react';
 
 import {
@@ -92,6 +93,7 @@ import { SAGEColors } from '@sage3/shared';
 import { AI_ENABLED_APPS, Applications } from '@sage3/applications/apps';
 import { Position, Size } from '@sage3/shared/types';
 import ky from 'ky';
+import { FaLink } from 'react-icons/fa';
 
 const UI_BAR_OFFSET = 50;
 
@@ -119,6 +121,7 @@ export function AppToolbar(props: AppToolbarProps) {
 
   // Link Store
   const addLink = useLinkStore((state) => state.addLink);
+  const cacheLinkedAppId = useLinkStore((state) => state.cacheLinkedAppId);
 
   // UI Store
   const selectedApp = useUIStore((state) => state.selectedAppId);
@@ -134,9 +137,10 @@ export function AppToolbar(props: AppToolbarProps) {
   const selectColor = useHexColor('teal');
   const intelligenceColor = useColorModeValue('purple.500', 'purple.400');
   const intelligenceBgColor = useColorModeValue('purple.400', 'purple.500');
+  const linkColor = useColorModeValue('blue.500', 'blue.400');
 
   // Settings
-  const { settings } = useUserSettings();
+  const { settings, setPrimaryActionMode } = useUserSettings();
   const showUI = settings.showUI;
   const showTags = settings.showTags;
 
@@ -979,6 +983,14 @@ export function AppToolbar(props: AppToolbarProps) {
     }
   };
 
+  const enterLinkerMode = () => {
+    setPrimaryActionMode('linker');
+    // wait 1 second
+    setTimeout(() => {
+      cacheLinkedAppId(selectedApp);
+    }, 1000);
+  };
+
   if (showUI && app)
     return (
       <Box
@@ -1005,28 +1017,46 @@ export function AppToolbar(props: AppToolbarProps) {
 
             <Spacer />
 
-            {/* Sage Intelligence */}
-            {
-              // Is app AiEnabled
-              AI_ENABLED_APPS.includes(app.data.type) && (
-                <Box>
-                  <Tooltip placement="top" hasArrow={true} openDelay={400} ml="1" label={'Chat with SAGE Intelligence'}>
-                    <Button
-                      onClick={openChat}
-                      backgroundColor={intelligenceColor}
-                      variant="solid"
-                      size="xs"
-                      m={0}
-                      mr={2}
-                      p={0}
-                      _hover={{ cursor: 'pointer', transform: 'scale(1.2)', opacity: 1, backgroundColor: intelligenceBgColor }}
-                    >
-                      <IoSparklesSharp size="16px" color={'white'} />
-                    </Button>
-                  </Tooltip>
-                </Box>
-              )
-            }
+            <Flex>
+              <Box>
+                <Tooltip placement="top" hasArrow={true} openDelay={400} ml="1" label={'Link Application'}>
+                  <Button
+                    onClick={enterLinkerMode}
+                    backgroundColor={linkColor}
+                    variant="solid"
+                    size="xs"
+                    m={0}
+                    mr={2}
+                    p={0}
+                    _hover={{ cursor: 'pointer', transform: 'scale(1.2)', opacity: 1, backgroundColor: linkColor }}
+                  >
+                    <FaLink size="16px" color={'white'} />
+                  </Button>
+                </Tooltip>
+              </Box>
+              {/* Sage Intelligence */}
+              {
+                // Is app AiEnabled
+                AI_ENABLED_APPS.includes(app.data.type) && (
+                  <Box>
+                    <Tooltip placement="top" hasArrow={true} openDelay={400} ml="1" label={'Chat with SAGE Intelligence'}>
+                      <Button
+                        onClick={openChat}
+                        backgroundColor={intelligenceColor}
+                        variant="solid"
+                        size="xs"
+                        m={0}
+                        mr={2}
+                        p={0}
+                        _hover={{ cursor: 'pointer', transform: 'scale(1.2)', opacity: 1, backgroundColor: intelligenceBgColor }}
+                      >
+                        <IoSparklesSharp size="16px" color={'white'} />
+                      </Button>
+                    </Tooltip>
+                  </Box>
+                )
+              }
+            </Flex>
           </Box>
 
           <Box alignItems="center" mt="1" p="1" width="100%" display="flex" height="32px" userSelect={'none'}>

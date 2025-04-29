@@ -30,6 +30,9 @@ function ArrowToCursorMain({ linkedAppId }: { linkedAppId: string }) {
   const boardHeight = useUIStore((state) => state.boardHeight);
   const boardSynced = useUIStore((state) => state.boardSynced);
 
+  // Theme
+  const strokeColor = useColorModeValue('gray.500', 'gray.500');
+
   // User Cursor
   // const { boardCursor: cursorPosition } = useCursorBoardPosition();
   const { uiToBoard } = useCursorBoardPosition();
@@ -54,7 +57,7 @@ function ArrowToCursorMain({ linkedAppId }: { linkedAppId: string }) {
 
     if (srcApp && cursorPos.x !== -1 && cursorPos.y !== -1) {
       const box = { position: srcApp.data.position, size: srcApp.data.size };
-      return BoxToCursorArrow(box, cursorPos.x, cursorPos.y, 'teal', 'red');
+      return BoxToCursorArrow(box, cursorPos.x, cursorPos.y, strokeColor, 'red');
     }
     return null;
   }
