@@ -42,7 +42,7 @@ import { App, AppGroup } from '../../../schema';
 import { state as AppState } from '../index';
 import { HelpModal } from './help';
 import { useStore } from './store';
-import { VscRunAll } from 'react-icons/vsc';
+import { VscRunAbove, VscRunAll, VscRunBelow } from 'react-icons/vsc';
 
 /**
  * UI toolbar for the SAGEcell application
@@ -224,6 +224,12 @@ export function ToolbarComponent(props: App): JSX.Element {
   const setExecuteAllTrue = () => {
     setExecuteAll(props._id, true, 'all');
   };
+  const setExecuteUpTrue = () => {
+    setExecuteAll(props._id, true, 'up');
+  };
+  const setExecuteDownTrue = () => {
+    setExecuteAll(props._id, true, 'down');
+  };
   const setStopTrue = () => {
     // Set the flag to stop the cell
     setInterrupt(props._id, true);
@@ -263,7 +269,7 @@ export function ToolbarComponent(props: App): JSX.Element {
       )}
 
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top" hasArrow={true} label={'Execute'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Run'} openDelay={400}>
           <Button
             isDisabled={!selectedKernel || !canExecuteCode}
             onClick={setExecuteTrue}
@@ -274,7 +280,7 @@ export function ToolbarComponent(props: App): JSX.Element {
             <MdPlayArrow />
           </Button>
         </Tooltip>
-        <Tooltip placement="top" hasArrow={true} label={'Execute All In Chain'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Run All'} openDelay={400}>
           <Button
             isDisabled={!selectedKernel || !canExecuteCode}
             onClick={setExecuteAllTrue}
@@ -283,6 +289,28 @@ export function ToolbarComponent(props: App): JSX.Element {
             colorScheme="teal"
           >
             <VscRunAll />
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top" hasArrow={true} label={'Run Above'} openDelay={400}>
+          <Button
+            isDisabled={!selectedKernel || !canExecuteCode}
+            onClick={setExecuteUpTrue}
+            _hover={{ opacity: 0.7 }}
+            size="xs"
+            colorScheme="teal"
+          >
+            <VscRunAbove />
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top" hasArrow={true} label={'Run Below'} openDelay={400}>
+          <Button
+            isDisabled={!selectedKernel || !canExecuteCode}
+            onClick={setExecuteDownTrue}
+            _hover={{ opacity: 0.7 }}
+            size="xs"
+            colorScheme="teal"
+          >
+            <VscRunBelow />
           </Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={'Stop'} openDelay={400}>
