@@ -53,8 +53,6 @@ export function LinkerMode() {
   useEffect(() => {
     if (!selectedSourceId) {
       const srcs = apps.filter((src) => apps.some((tgt) => getAllowedLinkTypes(src, tgt, links).length > 0));
-      console.log('setting candidates', selectedSourceId);
-      console.log(srcs);
       setCandidates(srcs.map((a) => a._id));
     }
   }, [selectedSourceId, apps, links]);
@@ -62,7 +60,6 @@ export function LinkerMode() {
   // Handle click on an app rectangle
   const handleClick = (e: React.MouseEvent<SVGRectElement>, appId: string) => {
     e.stopPropagation();
-    console.log(selectedSourceId, appId);
     // 1) No source yet: pick source
     if (!selectedSourceId) {
       if (!candidates.includes(appId)) {
