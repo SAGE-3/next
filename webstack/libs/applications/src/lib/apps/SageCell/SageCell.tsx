@@ -41,7 +41,7 @@ import {
 
 // Icons
 import { MdError, MdDelete, MdPlayArrow, MdStop } from 'react-icons/md';
-import { VscRunAll } from 'react-icons/vsc';
+import { VscRunAbove, VscRunAll, VscRunBelow } from 'react-icons/vsc';
 import { FaPython } from 'react-icons/fa';
 
 // Event Source import
@@ -114,7 +114,6 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const createApp = useAppStore((state) => state.create);
-  const fetchBoardApps = useAppStore((state) => state.fetchBoardApps);
 
   // Apps selection
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
@@ -123,8 +122,10 @@ function AppComponent(props: App): JSX.Element {
   const drawer = useStore((state) => state.drawer[props._id]);
   const setDrawer = useStore((state) => state.setDrawer);
   const execute = useStore((state) => state.execute[props._id]);
+  const executeAll = useStore((state) => state.executeAll[props._id]);
   const interrupt = useStore((state) => state.interrupt[props._id]);
   const setExecute = useStore((state) => state.setExecute);
+  const setExecuteAll = useStore((state) => state.setExecuteAll);
   const setInterrupt = useStore((state) => state.setInterrupt);
   const setKernel = useStore((state) => state.setKernel);
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -359,7 +360,7 @@ function AppComponent(props: App): JSX.Element {
     await new Promise((resolve) => setTimeout(resolve, x * 1000));
   }
 
-  const handleExecuteChain = async () => {
+  const handleExecuteChain = async (type: 'up' | 'down' | 'all') => {
     async function executeAppNoChecks(appid: string) {
       // Get the code from the store
       const code = useAppStore.getState().apps.find((app) => app._id === appid)?.data.state.code;
@@ -387,6 +388,14 @@ function AppComponent(props: App): JSX.Element {
     const run_order_appIds = getRunOrderChain(props._id, links);
     // flip the order of the array to execute the apps in reverse order
     run_order_appIds.reverse();
+    // If the type is up, only get the apps upstream, if down, only get the apps downstream, if all no change
+    if (type === 'down') {
+      const idx = run_order_appIds.indexOf(props._id);
+      run_order_appIds.splice(idx + 1, run_order_appIds.length - idx - 1);
+    } else if (type === 'up') {
+      const idx = run_order_appIds.indexOf(props._id);
+      run_order_appIds.splice(0, idx);
+    }
 
     for (let i = run_order_appIds.length - 1; i >= 0; i--) {
       const app = allBoardApps.find((a) => a._id === run_order_appIds[i]);
@@ -406,6 +415,14 @@ function AppComponent(props: App): JSX.Element {
       setExecute(props._id, false);
     }
   }, [execute]);
+
+  // Track the execute flag from the store in the toolbar
+  useEffect(() => {
+    if (executeAll && executeAll.exec) {
+      handleExecuteChain(executeAll.type);
+      setExecuteAll(props._id, false, 'all');
+    }
+  }, [executeAll]);
 
   // Track the interrupt flag from the store in the toolbar
   useEffect(() => {
@@ -1203,7 +1220,7 @@ function AppComponent(props: App): JSX.Element {
               {/* The editor action panel (right side) */}
               <Box p={1}>
                 <ButtonGroup isAttached variant="outline" size="lg" orientation="vertical">
-                  <Tooltip hasArrow label="Execute" placement="right-start">
+                  <Tooltip hasArrow label="Run" placement="right-start">
                     <IconButton
                       onClick={handleExecute}
                       aria-label={''}
@@ -1211,11 +1228,27 @@ function AppComponent(props: App): JSX.Element {
                       isDisabled={!s.kernel || !canExecuteCode}
                     />
                   </Tooltip>
-                  <Tooltip hasArrow label="Execute all SageCells in this Chain" placement="right-start">
+                  <Tooltip hasArrow label="Run All" placement="right-start">
                     <IconButton
-                      onClick={handleExecuteChain}
+                      onClick={() => handleExecuteChain('all')}
                       aria-label={''}
                       icon={s.msgId ? <Spinner size="sm" color="teal.500" /> : <VscRunAll size={'1em'} color="#008080" />}
+                      isDisabled={!s.kernel || !canExecuteCode}
+                    />
+                  </Tooltip>
+                  <Tooltip hasArrow label="Run Above" placement="right-start">
+                    <IconButton
+                      onClick={() => handleExecuteChain('up')}
+                      aria-label={''}
+                      icon={s.msgId ? <Spinner size="sm" color="teal.500" /> : <VscRunAbove size={'1em'} color="#008080" />}
+                      isDisabled={!s.kernel || !canExecuteCode}
+                    />
+                  </Tooltip>
+                  <Tooltip hasArrow label="Run Below" placement="right-start">
+                    <IconButton
+                      onClick={() => handleExecuteChain('down')}
+                      aria-label={''}
+                      icon={s.msgId ? <Spinner size="sm" color="teal.500" /> : <VscRunBelow size={'1em'} color="#008080" />}
                       isDisabled={!s.kernel || !canExecuteCode}
                     />
                   </Tooltip>
