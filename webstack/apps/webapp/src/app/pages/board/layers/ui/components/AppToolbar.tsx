@@ -988,7 +988,7 @@ export function AppToolbar(props: AppToolbarProps) {
     // wait 1 second
     setTimeout(() => {
       cacheLinkedAppId(selectedApp);
-    }, 1000);
+    }, 250);
   };
 
   if (showUI && app)
@@ -1018,22 +1018,24 @@ export function AppToolbar(props: AppToolbarProps) {
             <Spacer />
 
             <Flex>
-              <Box>
-                <Tooltip placement="top" hasArrow={true} openDelay={400} ml="1" label={'Link Application'}>
-                  <Button
-                    onClick={enterLinkerMode}
-                    backgroundColor={linkColor}
-                    variant="solid"
-                    size="xs"
-                    m={0}
-                    mr={2}
-                    p={0}
-                    _hover={{ cursor: 'pointer', transform: 'scale(1.2)', opacity: 1, backgroundColor: linkColor }}
-                  >
-                    <FaLink size="16px" color={'white'} />
-                  </Button>
-                </Tooltip>
-              </Box>
+              {app.data.type === 'SageCell' && (
+                <Box>
+                  <Tooltip placement="top" hasArrow={true} openDelay={400} ml="1" label={'Link Application'}>
+                    <Button
+                      onClick={enterLinkerMode}
+                      backgroundColor={linkColor}
+                      variant="solid"
+                      size="xs"
+                      m={0}
+                      mr={2}
+                      p={0}
+                      _hover={{ cursor: 'pointer', transform: 'scale(1.2)', opacity: 1, backgroundColor: linkColor }}
+                    >
+                      <FaLink size="16px" color={'white'} />
+                    </Button>
+                  </Tooltip>
+                </Box>
+              )}
               {/* Sage Intelligence */}
               {
                 // Is app AiEnabled
