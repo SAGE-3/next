@@ -447,15 +447,15 @@ export function AppWindow(props: WindowProps) {
           sx={
             primaryActionMode === 'grab'
               ? {
-                  '&:active': {
-                    cursor: 'grabbing',
-                  },
-                }
+                '&:active': {
+                  cursor: 'grabbing',
+                },
+              }
               : {}
           }
           userSelect={'none'}
           zIndex={3}
-          // borderRadius={innerBorderRadius}
+        // borderRadius={innerBorderRadius}
         ></Box>
       )}
 

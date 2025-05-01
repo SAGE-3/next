@@ -7,9 +7,10 @@
  */
 
 // Arrow library
-import { useHexColor, useUIStore, useUserSettings } from '@sage3/frontend';
-import { Position, Size } from '@sage3/shared/types';
 import { getBoxToBoxArrow } from 'perfect-arrows';
+
+import { useHexColor } from '@sage3/frontend';
+import { Position, Size } from '@sage3/shared/types';
 
 type Box = {
   position: Position;

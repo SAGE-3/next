@@ -25,7 +25,6 @@ import {
   SliderThumb,
   SliderTrack,
   Text,
-  Select,
 } from '@chakra-ui/react';
 
 import { BiPencil } from 'react-icons/bi';

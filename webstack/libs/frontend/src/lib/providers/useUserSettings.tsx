@@ -6,8 +6,9 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { isElectron } from 'libs/applications/src/lib/apps/Cobrowse/util';
 import { useCallback, createContext, useContext, useState, useEffect } from 'react';
+
+import { isElectron } from 'libs/applications/src/lib/apps/Cobrowse/util';
 
 /**
  * Represents the user preferences for the application.
@@ -78,18 +79,18 @@ type UserSettingsContextType = {
 
 const UserSettingsContext = createContext<UserSettingsContextType>({
   settings: defaultSettings,
-  toggleShowCursors: () => {},
-  toggleShowViewports: () => {},
-  toggleShowAppTitles: () => {},
-  setShowLinks: (value: UserSettings['showLinks']) => {},
-  toggleShowUI: () => {},
-  toggleShowTags: () => {},
-  setBoardListView: (value: UserSettings['selectedBoardListView']) => {},
-  setPrimaryActionMode: (value: UserSettings['primaryActionMode']) => {},
-  setDefaultPrimaryActionMode: () => {},
-  restoreDefaultSettings: () => {},
-  setAIModel: (value: UserSettings['aiModel']) => {},
-  setUIScale: (value: UserSettings['uiScale']) => {},
+  toggleShowCursors: () => { },
+  toggleShowViewports: () => { },
+  toggleShowAppTitles: () => { },
+  setShowLinks: (value: UserSettings['showLinks']) => { },
+  toggleShowUI: () => { },
+  toggleShowTags: () => { },
+  setBoardListView: (value: UserSettings['selectedBoardListView']) => { },
+  setPrimaryActionMode: (value: UserSettings['primaryActionMode']) => { },
+  setDefaultPrimaryActionMode: () => { },
+  restoreDefaultSettings: () => { },
+  setAIModel: (value: UserSettings['aiModel']) => { },
+  setUIScale: (value: UserSettings['uiScale']) => { },
 });
 
 /**
