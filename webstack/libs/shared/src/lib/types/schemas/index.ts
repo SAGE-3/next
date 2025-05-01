@@ -19,3 +19,4 @@ export * from './output';
 export * from './roommembers';
 export * from './insight';
 export * from './annotation';
+export * from './link';

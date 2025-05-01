@@ -41,6 +41,7 @@ import {
 
 // Icons
 import { MdError, MdDelete, MdPlayArrow, MdStop } from 'react-icons/md';
+import { VscRunAbove, VscRunAll, VscRunBelow } from 'react-icons/vsc';
 import { FaPython } from 'react-icons/fa';
 
 // Event Source import
@@ -79,6 +80,7 @@ import {
   serverTime,
   YjsRoomConnection,
   useThrottleScale,
+  useLinkStore,
 } from '@sage3/frontend';
 import { KernelInfo, ContentItem } from '@sage3/shared/types';
 import { SAGE3Ability } from '@sage3/shared';
@@ -92,6 +94,7 @@ import { useStore } from './components/store';
 
 // Styling
 import './SageCell.css';
+import { getRunOrderChain } from '../../appLinks';
 
 /**
  * SageCell - SAGE3 application
@@ -111,6 +114,7 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const createApp = useAppStore((state) => state.create);
+
   // Apps selection
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
 
@@ -118,8 +122,10 @@ function AppComponent(props: App): JSX.Element {
   const drawer = useStore((state) => state.drawer[props._id]);
   const setDrawer = useStore((state) => state.setDrawer);
   const execute = useStore((state) => state.execute[props._id]);
+  const executeAll = useStore((state) => state.executeAll[props._id]);
   const interrupt = useStore((state) => state.interrupt[props._id]);
   const setExecute = useStore((state) => state.setExecute);
+  const setExecuteAll = useStore((state) => state.setExecuteAll);
   const setInterrupt = useStore((state) => state.setInterrupt);
   const setKernel = useStore((state) => state.setKernel);
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -347,6 +353,60 @@ function AppComponent(props: App): JSX.Element {
     }
   };
 
+  ////// Todo: temporary proof of concept block...
+  // Evaluate the sagecells in provenance (source) order
+  // waitSeconds and executeAppNoChecks directly pulled from the toolbar.tsx, should consider some refactor strategy to resolve duplicated code
+  async function waitSeconds(x: number): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve, x * 1000));
+  }
+
+  const handleExecuteChain = async (type: 'up' | 'down' | 'all') => {
+    async function executeAppNoChecks(appid: string) {
+      // Get the code from the store
+      const code = useAppStore.getState().apps.find((app) => app._id === appid)?.data.state.code;
+      const userId = user?._id;
+      const kernel = useStore.getState().kernel[appid];
+
+      if (kernel && code && userId) {
+        const response = await executeCode(code, kernel, userId);
+        if (response.ok) {
+          const msgId = response.msg_id;
+          useAppStore.getState().updateState(appid, { msgId: msgId, session: userId });
+          return true;
+        } else {
+          useAppStore.getState().updateState(appid, { streaming: false, msgId: '' });
+          return false;
+        }
+      }
+      return false;
+    }
+
+    const allBoardApps: App[] = JSON.parse(JSON.stringify(useAppStore.getState().apps)); // deep copy
+    const links = useLinkStore.getState().links;
+
+    const run_order_appIds = getRunOrderChain(props._id, links);
+    // flip the order of the array to execute the apps in reverse order
+    run_order_appIds.reverse();
+    // If the type is up, only get the apps upstream, if down, only get the apps downstream, if all no change
+    if (type === 'down') {
+      const idx = run_order_appIds.indexOf(props._id);
+      run_order_appIds.splice(idx + 1, run_order_appIds.length - idx - 1);
+    } else if (type === 'up') {
+      const idx = run_order_appIds.indexOf(props._id);
+      run_order_appIds.splice(0, idx);
+    }
+
+    for (let i = run_order_appIds.length - 1; i >= 0; i--) {
+      const app = allBoardApps.find((a) => a._id === run_order_appIds[i]);
+      if (!app) break;
+      const res = await executeAppNoChecks(app._id);
+      // if error, break the loop
+      if (!res) break;
+      // Give illusion of sequential execution
+      await waitSeconds(0.1);
+    }
+  };
+
   // Track the execute flag from the store in the toolbar
   useEffect(() => {
     if (execute) {
@@ -354,6 +414,14 @@ function AppComponent(props: App): JSX.Element {
       setExecute(props._id, false);
     }
   }, [execute]);
+
+  // Track the execute flag from the store in the toolbar
+  useEffect(() => {
+    if (executeAll && executeAll.exec) {
+      handleExecuteChain(executeAll.type);
+      setExecuteAll(props._id, false, 'all');
+    }
+  }, [executeAll]);
 
   // Track the interrupt flag from the store in the toolbar
   useEffect(() => {
@@ -550,7 +618,11 @@ function AppComponent(props: App): JSX.Element {
                   if (item['text/plain']) {
                     const title = item['text/plain'];
                     // remove the quotes from the title
-                    e.dataTransfer.setData('title', title.slice(1, -1));
+                    const data = JSON.stringify({
+                      title: title.slice(1, -1),
+                      sources: [props._id],
+                    });
+                    e.dataTransfer.setData('app_state', data);
                   }
                 }}
               />
@@ -564,8 +636,11 @@ function AppComponent(props: App): JSX.Element {
                   // set the title in the drag transfer data
                   if (item['text/plain']) {
                     const title = item['text/plain'];
-                    // remove the quotes from the title
-                    e.dataTransfer.setData('title', title.slice(1, -1));
+                    const data = JSON.stringify({
+                      title: title.slice(1, -1),
+                      sources: [props._id],
+                    });
+                    e.dataTransfer.setData('app_state', data);
                   }
                 }}
               />
@@ -1151,11 +1226,35 @@ function AppComponent(props: App): JSX.Element {
               {/* The editor action panel (right side) */}
               <Box p={1}>
                 <ButtonGroup isAttached variant="outline" size="lg" orientation="vertical">
-                  <Tooltip hasArrow label="Execute" placement="right-start">
+                  <Tooltip hasArrow label="Run" placement="right-start">
                     <IconButton
                       onClick={handleExecute}
                       aria-label={''}
                       icon={s.msgId ? <Spinner size="sm" color="teal.500" /> : <MdPlayArrow size={'1.5em'} color="#008080" />}
+                      isDisabled={!s.kernel || !canExecuteCode}
+                    />
+                  </Tooltip>
+                  <Tooltip hasArrow label="Run All" placement="right-start">
+                    <IconButton
+                      onClick={() => handleExecuteChain('all')}
+                      aria-label={''}
+                      icon={s.msgId ? <Spinner size="sm" color="teal.500" /> : <VscRunAll size={'1em'} color="#008080" />}
+                      isDisabled={!s.kernel || !canExecuteCode}
+                    />
+                  </Tooltip>
+                  <Tooltip hasArrow label="Run To Here" placement="right-start">
+                    <IconButton
+                      onClick={() => handleExecuteChain('up')}
+                      aria-label={''}
+                      icon={s.msgId ? <Spinner size="sm" color="teal.500" /> : <VscRunAbove size={'1em'} color="#008080" />}
+                      isDisabled={!s.kernel || !canExecuteCode}
+                    />
+                  </Tooltip>
+                  <Tooltip hasArrow label="Run From Here" placement="right-start">
+                    <IconButton
+                      onClick={() => handleExecuteChain('down')}
+                      aria-label={''}
+                      icon={s.msgId ? <Spinner size="sm" color="teal.500" /> : <VscRunBelow size={'1em'} color="#008080" />}
                       isDisabled={!s.kernel || !canExecuteCode}
                     />
                   </Tooltip>
