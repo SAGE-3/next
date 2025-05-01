@@ -46,7 +46,6 @@ import {
 // Board Layers
 import { BackgroundLayer, UILayer } from './layers';
 import { InteractionbarShortcuts } from './layers/ui/components';
-import { set, sub } from 'date-fns';
 
 // Development or production
 const development: boolean = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';

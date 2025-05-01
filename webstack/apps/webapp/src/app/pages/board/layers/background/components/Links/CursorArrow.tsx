@@ -6,12 +6,11 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { useEffect, useState } from 'react';
 import { useColorModeValue } from '@chakra-ui/react';
 
 // SAGE Imports
 import { useThrottleApps, useUIStore, useCursorBoardPosition, useLinkStore } from '@sage3/frontend';
-
-import { useEffect, useState } from 'react';
 
 import { BoxToCursorArrow } from './DrawArrows';
 

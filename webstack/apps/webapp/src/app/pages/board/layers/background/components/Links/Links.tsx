@@ -7,22 +7,23 @@
  */
 
 import { useMemo } from 'react';
+
 import { useLinkStore, useUIStore, useUserSettings } from '@sage3/frontend';
 import { LinksArrows } from './LinkArrows';
 import { Link } from '@sage3/shared/types';
 
 export function Links() {
-  // --- UI state ---
+  // UI state
   const selectedApps = useUIStore((s) => s.selectedAppsIds);
   const selectedAppId = useUIStore((s) => s.selectedAppId);
   const candidates = selectedAppId ? [selectedAppId] : selectedApps;
   const { settings } = useUserSettings();
   const { showLinks, primaryActionMode, showUI } = settings;
 
-  // --- all links from the store ---
+  // All links from the store
   const links = useLinkStore((s) => s.links);
 
-  // --- compute full‐depth path apps once, whenever links or selection changes ---
+  // Compute full‐depth path apps once, whenever links or selection changes
   const pathAppIds = useMemo(() => {
     if (showLinks !== 'selected-path' || candidates.length === 0) {
       return new Set<string>();
@@ -49,7 +50,7 @@ export function Links() {
     return visited;
   }, [links, candidates, showLinks]);
 
-  // --- filter logic ---
+  // Filter logic
   function filterLinksToDraw(link: Link) {
     const { sourceAppId, targetAppId } = link.data;
     if (showUI && primaryActionMode === 'linker') {
@@ -62,7 +63,7 @@ export function Links() {
       case 'selected':
         return candidates.includes(sourceAppId) || candidates.includes(targetAppId);
       case 'selected-path':
-        // only draw links where both ends are in the reachable set
+        // Only draw links where both ends are in the reachable set
         return pathAppIds.has(sourceAppId) && pathAppIds.has(targetAppId);
       case 'none':
       default:

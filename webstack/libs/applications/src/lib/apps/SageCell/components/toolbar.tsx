@@ -20,8 +20,6 @@ import {
   MdRemove,
   MdPlayArrow,
   MdStop,
-  MdOutlineKeyboardDoubleArrowRight,
-  MdFastForward,
 } from 'react-icons/md';
 // Date manipulation (for filename)
 import { format } from 'date-fns/format';

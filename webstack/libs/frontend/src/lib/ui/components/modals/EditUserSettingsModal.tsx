@@ -37,9 +37,9 @@ import {
 import { MdInfo } from 'react-icons/md';
 
 // SAGE Imports
+import { ServerConfiguration } from '@sage3/shared/types';
 import { useUserSettings } from '../../../providers';
 import { useConfigStore } from '../../../stores';
-import { ServerConfiguration } from '@sage3/shared/types';
 import { isElectron } from '../../../utils';
 
 interface EditUserSettingsModalProps {

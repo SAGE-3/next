@@ -6,13 +6,14 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { useColorModeValue } from '@chakra-ui/react';
+
 // SAGE Imports
 import { useThrottleApps, useUIStore, useLinkStore, useUserSettings } from '@sage3/frontend';
-
-import { BoxToBoxArrow } from './DrawArrows';
 import { Link } from '@sage3/shared/types';
 import { SAGEColors } from '@sage3/shared';
-import { useColorModeValue } from '@chakra-ui/react';
+
+import { BoxToBoxArrow } from './DrawArrows';
 
 /**
  * The Arrows component, showing arrows of links between apps.

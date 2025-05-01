@@ -6,11 +6,9 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { Tree, formatFiles, installPackagesTask } from '@nrwl/devkit';
-// import { libraryGenerator } from '@nrwl/workspace/generators';
-// import { getProjectConfig } from '@nrwl/workspace';
 import { join } from 'path';
 import { promises as fs } from 'fs';
+import { Tree, formatFiles, installPackagesTask } from '@nrwl/devkit';
 
 // Arguments to the build
 interface Schema {
