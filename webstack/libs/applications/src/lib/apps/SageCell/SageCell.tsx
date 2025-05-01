@@ -1242,7 +1242,7 @@ function AppComponent(props: App): JSX.Element {
                       isDisabled={!s.kernel || !canExecuteCode}
                     />
                   </Tooltip>
-                  <Tooltip hasArrow label="Run Above" placement="right-start">
+                  <Tooltip hasArrow label="Run To Here" placement="right-start">
                     <IconButton
                       onClick={() => handleExecuteChain('up')}
                       aria-label={''}
@@ -1250,7 +1250,7 @@ function AppComponent(props: App): JSX.Element {
                       isDisabled={!s.kernel || !canExecuteCode}
                     />
                   </Tooltip>
-                  <Tooltip hasArrow label="Run Below" placement="right-start">
+                  <Tooltip hasArrow label="Run From Here" placement="right-start">
                     <IconButton
                       onClick={() => handleExecuteChain('down')}
                       aria-label={''}

@@ -291,7 +291,7 @@ export function ToolbarComponent(props: App): JSX.Element {
             <VscRunAll />
           </Button>
         </Tooltip>
-        <Tooltip placement="top" hasArrow={true} label={'Run Above'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Run To Here'} openDelay={400}>
           <Button
             isDisabled={!selectedKernel || !canExecuteCode}
             onClick={setExecuteUpTrue}
@@ -302,7 +302,7 @@ export function ToolbarComponent(props: App): JSX.Element {
             <VscRunAbove />
           </Button>
         </Tooltip>
-        <Tooltip placement="top" hasArrow={true} label={'Run Below'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Run From Here'} openDelay={400}>
           <Button
             isDisabled={!selectedKernel || !canExecuteCode}
             onClick={setExecuteDownTrue}
