@@ -454,27 +454,145 @@ Take a deep breath, think it through, assume you are the user and imagine their 
         return self.__base_prompt_with_self_reflection__(user_prompt, system,
             messages=self.__message_builder__(system, user_prompt), filter_method=self.__results_filter_dates__)
         
-    def prompt_summarize_reasoning(self, user_prompt, attribute_reasoning, station_reasoning, station_data):
-        system = f""" You are an expert summarizer.
-        You have just created chart(s) for the user based on a prompt.
-        Here is the user's prompt: {user_prompt}
+    def prompt_summarize_reasoning(self, user_prompt, attribute_reasoning, station_reasoning, station_data_columns, manually_test_df):
+        # test that it can write code and showcase the code at the bottom, tell it that it is passed a pandas dataframe, 
+        # system = f""" You are an expert summarizer.
+        # You have just created chart(s) for the user based on a prompt.
+        # Here is the user's prompt: {user_prompt}
         
-        Here is some information on the decisions that you have made when creating this chart.
+        # Here is some information on the decisions that you have made when creating this chart.
         
-        Choosing the attributes:
-        {attribute_reasoning}
+        # Choosing the attributes:
+        # {attribute_reasoning}
        
-        Choosing the stations:
+        # Choosing the stations:
+        # {station_reasoning}
+
+        # You will be provided with a python dataframe containing all the variables needed to answer the user query. You are an expert at coding and statistical analysis.
+        # The python dataframe name is "station_data".
+        # Each attribute in the dataframe will be found under the column "variable", and it's value will be under the column "value". All values within the dataframe are considered Dtype "object".
+        # Given the python dataframe "station_data", write a python script that will answer the user's prompt in the ``` ``` section. 
+        # Do not write more information than is necessary.
+
+        # ``` 
+        
+        # ```
+        
+        # """
+                
+
+        # add in all comun datatypes
+        # say to print the statement
+        # ask gpt what details I can provide it for it to create code that works
+        # test to send a dataframe with summary = df.summary() and see if it would work better
+        system = f"""
+        You are an expert climate data analyst and summarizer.
+        You have just created chart(s) for the user based on their prompt. Your role is to analyze climate conditions using Hawaii-based atmospheric data.
+        Here is the user’s prompt: {user_prompt}
+
+        ### Context and Assumptions
+
+        You are working with a Python dataframe called `station_data` with the following schema:
+
+        - `timestamp` (datetime64[ns, UTC]): timestamp the measurement was collected
+        - `station_id` (string[python])
+        - `variable` (string[python]): the name of the measured attribute
+        - `value` (float64): numeric value
+        - `flag` (int64): (you may ignore for now)
+
+        ### Attribute Selection
+
+        Here is some information on the decisions that you have made when choosing the attributes:
+        {attribute_reasoning}
+
+        ### Station Selection
+
+        These stations are known to provide climate data relevant to the user's prompt.
+        Here is some information on the decisions that you have made when choosing the stations:
         {station_reasoning}
 
-        Here is the data that you used to create the chart:
-        {station_data}
-        
-        You now need to respond back to the user. 
-        Say two or three senteces that you think will help the user.
-        
-        Do not write more information than is necessary.
-        
+        ### Data Analysis Requirements
+
+        - If the user prompt is vague, infer context and include assumptions as comments.
+        - If no time range is provided, infer the best timestamps to answer the user's prompt
+        - Use the `timestamp` column to group and resample data. Default aggregation should be **monthly** unless the prompt specifies otherwise.
+        - If multiple variables are selected, analyze them separately unless a joint trend comparison is meaningful.
+        - You may use statistical approaches to analyze data (e.g., moving average, standard deviation, percent deviation from mean).
+        - If required variables are missing, raise a `ValueError` listing the missing variables.
+
+        ### Output Expectations
+        - The script should print a concise 1 to 3 sentence conclusion such as “El Niño-like conditions detected” or “No clear evidence of El Niño,” along with supporting summary statistics.
+        - Keep the output minimal, clear, and focused only on what is needed to answer the prompt.
+
+        Given the dataframe `station_data`, write a Python script to answer the user’s prompt below using the above criteria.
+
+        ```python
+        # Your Python code here
+
+        ```
+
         """
+        # potentially remove the code block to not confuse the ai or provide it as an example ^ example: blah blah code
+        
         print(system)
         return self.__base_prompt__(user_prompt, system)
+    
+    def prompt_exec_output_response(self, user_prompt, exec_output):
+        system = f"""You now need to respond back to the user. 
+        Here is the user's prompt: {user_prompt}
+        Given the output:```{exec_output}```
+        Based on the output, say two or three sentences that answers the user's prompt.
+        """
+
+        print(system)
+        return self.__base_prompt__(user_prompt, system)
+    
+    def prompt_review_code(self, user_prompt, system_code):
+        # provide system_code to see if the response improves as the context window from the previous messages may confuse gpt
+
+        system = f"""Review your answer in the code block below and find problems with your answer.
+            {system_code}
+        """
+        
+        print(system)
+        return self.__base_prompt__(user_prompt, system)
+    
+    def prompt_improve_code(self, user_prompt, code_problems, system_code):
+        # provide the code_problems and system_code to see if the response improves for the same reason for prompt_review_code() method 
+        system = f"""Based on the PROBLEMS you found improve your PREVIOUS_ANSWER. 
+        Write an improved python script that will answer the user's prompt. 
+        Only return a script wrapped in the following quotes ``` ```. Do not write more information than is necessary. 
+        PROBLEMS: {code_problems}
+
+        PREVIOUS_ANSWER: {system_code}
+        """
+        
+        print(system)
+        return self.__base_prompt__(user_prompt, system)
+    
+    # def prompt_summarize_reasoning(self, user_prompt, attribute_reasoning, station_reasoning, station_data):
+    #     # test that it can write code and showcase the code at the bottom, tell it that it is passed a pandas dataframe, 
+        
+    #     system = f""" You are an expert summarizer.
+    #     You have just created chart(s) for the user based on a prompt.
+    #     Here is the user's prompt: {user_prompt}
+        
+    #     Here is some information on the decisions that you have made when creating this chart.
+        
+    #     Choosing the attributes:
+    #     {attribute_reasoning}
+       
+    #     Choosing the stations:
+    #     {station_reasoning}
+
+    #     Here is the data that you used to create the chart:
+    #     {station_data}
+        
+    #     You now need to respond back to the user. 
+    #     Say two or three senteces that you think will help the user.
+        
+    #     Do not write more information than is necessary.
+        
+    #     """
+    #     print(system)
+    #     return self.__base_prompt__(user_prompt, system)

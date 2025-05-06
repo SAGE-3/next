@@ -150,6 +150,7 @@ class MesonetAgent:
                 # max_tokens=1000,
                 streaming=False,
             )
+
         
         # Templates
         sys_template_str = """Today is {date}. 
@@ -175,6 +176,7 @@ class MesonetAgent:
         output_parser = StrOutputParser()
         
         if self.llm_llama:
+            print('HITS THE SYS PROMPT')
             self.session_llama = prompt | self.llm_llama | output_parser
 
         # Create the ChromaDB client
@@ -221,7 +223,6 @@ class MesonetAgent:
         print(qq.url)
         token = "71c5efcd8cfe303f2795e51f01d19c6"
         
-        
         print(qq)
 
         # Initialize LangGraph
@@ -230,7 +231,7 @@ class MesonetAgent:
 
         def initialize_llms(state: GraphState):
             return {
-                "llm_re": LLM(self.client, {"model": "gpt-4o", "temperature": 1}),
+                "llm_re": LLM(self.client, {"model": "gpt-4o", "temperature": 0}),
                 "llm_base": LLM(self.client, {"model": "gpt-4o","temperature": 0}),
                 "llm_transform": LLM(self.client, {"model": "gpt-4o", "temperature": 0}),
                 "llm_station": LLM(self.client, {"model": "gpt-4o", "temperature": 0}),
@@ -240,11 +241,27 @@ class MesonetAgent:
         def get_all_stations(state: GraphState):
             res = requests.get("https://api.hcdp.ikewai.org/mesonet/db/stations", headers={"Authorization": f"Bearer {token}"})
             return {"stations": res.text}
+            # res = pd.read_csv('data/stations_v2.csv', dtype={'station_id': str}).to_json()
+            # res = pd.read_csv('data/stations_v1.csv').to_json()
+            # return {"stations": res}
+            
     
         def extract_stations(state: GraphState):
             user_prompt = state["request"].q
-            stations_extracted, station_reasoning = state["llm_re"].prompt_select_stations(user_prompt, state["stations"]) #TODO add data_statistics to the prompt
-            print(stations_extracted)
+            import numpy as np
+            tracked_station_id = {}
+            
+            # Ask this question a couple times and trigger a conversation_reset each time
+            for i in range(1):
+                stations_extracted, station_reasoning = state["llm_re"].prompt_select_stations(user_prompt, state["stations"]) #TODO add data_statistics to the prompt
+                station_id_str = f"{np.sort(stations_extracted)}"
+                if station_id_str not in tracked_station_id:
+                    tracked_station_id[station_id_str] = 1
+                else:
+                    tracked_station_id[station_id_str]+=1
+                print(f'ITERATION: {i+1}')
+                print(station_id_str)
+            print(f'TRACKED DICTIONARY: {tracked_station_id}')
             return {"stations_extracted": stations_extracted, "station_reasoning": station_reasoning}
         
         def get_station_attributes(state: GraphState):
@@ -264,13 +281,13 @@ class MesonetAgent:
                     headers={"Authorization": f"Bearer {token}"}
                 )
                 
+                # for each station grabbed I should download it and test it
                 if res.status_code == 200:
                     data = res.json()
                     if data and len(data) > 0:
                         # Extract just the variable name from each measurement
                         variables = [item.get('variable', '') for item in data]
                         # Add unique variables to the set
-
 
                         all_attributes.update(variables)
             
@@ -287,15 +304,77 @@ class MesonetAgent:
             chart_type_extracted, chart_type_reasoning = state["llm_re"].prompt_charts_via_chart_info(user_prompt, state["attributes_extracted"])
             print(chart_type_extracted)
             return {"chart_type_extracted": chart_type_extracted, "chart_type_reasoning": chart_type_reasoning}
-
+        
+        def fetch_with_retries(url, headers, max_retries=3):
+            for attempt in range(max_retries):
+                try:
+                    res = requests.get(url, headers=headers)
+                    if res.status_code == 200:
+                        return res
+                    else:
+                        print(f"Non-200 status ({res.status_code}) on attempt {attempt+1}")
+                except requests.RequestException as e:
+                    print(f"Request error on attempt {attempt+1}: {e}")
+            return None  # all retries failed
 
         def get_answer_with_reasoning(state: GraphState):
+            # get the extracted stations and their associated island names and lon and lattitudes
+            
+            # TOOD move to the top of the file
+            import io
+            import contextlib
+            user_prompt = state["request"].q
             url = f"https://api.hcdp.ikewai.org/mesonet/db/measurements?station_ids={','.join(state['stations_extracted'])}&var_ids={','.join(state['attributes_extracted'])}&limit=100"
             print(url)
-            res = requests.get(url, headers={"Authorization": f"Bearer {token}"})
-            summary, summary_reasoning = state["llm_re"].prompt_summarize_reasoning(state["request"].q, state["attribute_reasoning"], state["station_reasoning"], res.text)
-            print(summary)
+            # add in code to retry the request if it errors
+            # res = requests.get(url, headers={"Authorization": f"Bearer {token}"})
+            res = fetch_with_retries(url, headers={"Authorization": f"Bearer {token}"})
+            if res:
+                station_data = pd.DataFrame(res.json())
+                station_data['timestamp'] = station_data['timestamp'].str.replace('Z','+00:00')
+                station_data['timestamp'] = pd.to_datetime(station_data['timestamp'], utc=True)
+                station_data['station_id'] = station_data['station_id'].astype("string")
+                station_data['variable'] = station_data['variable'].astype("string")
+                station_data['value'] = station_data['value'].astype(float)
+                # summary, summary_reasoning = state["llm_re"].prompt_summarize_reasoning(state["request"].q, state["attribute_reasoning"], state["station_reasoning"], res.text)
+                print(f'json data: {res.text}')
+                summary, summary_reasoning = state["llm_re"].prompt_summarize_reasoning(user_prompt, state["attribute_reasoning"], state["station_reasoning"], station_data.columns.to_list(), res.text)
+                print(summary)
+            
+                # code_improvements, _ = state["llm_re"].prompt_review_code(user_prompt, summary)
+                # print(code_improvements)
+                # code, _ = state["llm_re"].prompt_improve_code(user_prompt, code_improvements, summary)
+                # print(code)
+
+                try:
+                    # Capture output
+                    output_buffer = io.StringIO()
+                    error_buffer = io.StringIO()
+                    summary = summary.replace('python', '')
+                    code = summary[summary.index("```")+3: summary.rindex("```")]
+                    with contextlib.redirect_stdout(output_buffer):  # Redirect stdout
+                        exec(code)  # Execute the generated code
+
+                    # Get captured output as a string
+                    exec_output = output_buffer.getvalue()
+
+                    summary, _ = state["llm_re"].prompt_exec_output_response(user_prompt, exec_output)
+                except Exception as e:
+                    error_buffer.write(str(e))
+                    summary = "CODE ERRORED OUT"
+                    print(error_buffer.getvalue())
+                print(summary)
+            else:
+                summary = 'REQUEST FAILED'
             return {"measurements": res.text, "summary": summary}
+        
+        # def get_answer_with_reasoning(state: GraphState):
+        #     url = f"https://api.hcdp.ikewai.org/mesonet/db/measurements?station_ids={','.join(state['stations_extracted'])}&var_ids={','.join(state['attributes_extracted'])}&limit=100"
+        #     print(url)
+        #     res = requests.get(url, headers={"Authorization": f"Bearer {token}"})
+        #     summary, summary_reasoning = state["llm_re"].prompt_summarize_reasoning(state["request"].q, state["attribute_reasoning"], state["station_reasoning"], res.text)
+        #     print(summary)
+        #     return {"measurements": res.text, "summary": summary}
 
 
         # # Define nodes
