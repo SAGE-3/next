@@ -194,7 +194,7 @@ export function RowFile({ file, clickCB, dragCB, scale }: RowFileProps) {
   }, [divRef]);
 
   // Context menu handler (right click)
-  useEventListener('contextmenu', (e) => {
+  useEventListener(document, 'contextmenu', (e: any) => {
     // deselect file selection
     setSelected(false);
     // hide context menu
