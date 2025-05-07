@@ -11,7 +11,6 @@ import {
   IconButton,
   Tooltip,
   ButtonGroup,
-  useColorModeValue,
   Popover,
   PopoverBody,
   PopoverContent,
@@ -31,16 +30,17 @@ import {
 import { BiPencil } from 'react-icons/bi';
 import { MdGraphicEq } from 'react-icons/md';
 import { BsEraserFill } from 'react-icons/bs';
-import { FaUndo, FaEraser, FaTrash } from 'react-icons/fa';
+import { FaUndo, FaEraser, FaTrash, FaLink } from 'react-icons/fa';
+
 import { LiaMousePointerSolid, LiaHandPaperSolid } from 'react-icons/lia';
 
 import { SAGEColors } from '@sage3/shared';
-import { useUserSettings, useUser, useUIStore, useHexColor, ColorPicker, ConfirmModal, useCursorBoardPosition } from '@sage3/frontend';
+import { useUserSettings, useUser, useUIStore, useHexColor, ColorPicker, ConfirmModal, useAppStore, useLinkStore } from '@sage3/frontend';
 
 export function Interactionbar(props: {
   isContextMenuOpen?: boolean;
-  tooltipPlacement?: 'top' | 'bottom' | 'left' | 'right',
-  position?: { x: number; y: number }
+  tooltipPlacement?: 'top' | 'bottom' | 'left' | 'right';
+  position?: { x: number; y: number };
 }) {
   // Settings
   const { settings, setPrimaryActionMode } = useUserSettings();
@@ -53,6 +53,7 @@ export function Interactionbar(props: {
   // UiStore
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
+  const clearLinkAppId = useLinkStore((state) => state.clearLinkAppId);
 
   // Tooltip Placment
   const tooltipPlacement = props.tooltipPlacement ? props.tooltipPlacement : 'top';
@@ -102,6 +103,8 @@ export function Interactionbar(props: {
   const { isOpen: annotationsIsOpen, onOpen: annotationsOnOpen, onClose: annotationsOnClose } = useDisclosure();
   // Eraser popover
   const { isOpen: eraserIsOpen, onOpen: eraserOnOpen, onClose: eraserOnClose } = useDisclosure();
+  // Linker popover
+  const { isOpen: linkerIsOpen, onOpen: linkerOnOpen, onClose: linkerOnClose } = useDisclosure();
 
   const eraseYourLines = () => {
     setClearMarkers(true);
@@ -150,6 +153,7 @@ export function Interactionbar(props: {
               eraserOnClose();
               annotationsOnClose();
               setPrimaryActionMode('lasso');
+              clearLinkAppId();
             }}
           ></IconButton>
         </Tooltip>
@@ -173,6 +177,7 @@ export function Interactionbar(props: {
               setPrimaryActionMode('grab');
               setSelectedAppsIds([]);
               setSelectedApp('');
+              clearLinkAppId();
             }}
           ></IconButton>
         </Tooltip>
@@ -203,6 +208,7 @@ export function Interactionbar(props: {
                   setPrimaryActionMode('pen');
                   setSelectedApp('');
                   setSelectedAppsIds([]);
+                  clearLinkAppId();
                 }}
               ></IconButton>
             </PopoverTrigger>
@@ -272,7 +278,7 @@ export function Interactionbar(props: {
           <Tooltip label={'Eraser — [4]'} placement={tooltipPlacement} hasArrow={true} openDelay={400} shouldWrapChildren={true}>
             <PopoverTrigger>
               <IconButton
-                borderRadius={'0 0.5rem 0.5rem 0'}
+                borderRadius={'0 0 0 0'}
                 size="sm"
                 colorScheme={primaryActionMode === 'eraser' ? user?.data.color || 'teal' : 'gray'}
                 sx={{
@@ -294,6 +300,7 @@ export function Interactionbar(props: {
                   setPrimaryActionMode('eraser');
                   setSelectedApp('');
                   setSelectedAppsIds([]);
+                  clearLinkAppId();
                 }}
               ></IconButton>
             </PopoverTrigger>
@@ -323,9 +330,29 @@ export function Interactionbar(props: {
             </PopoverBody>
           </PopoverContent>
         </Popover>
+        <Tooltip label={'Linker — [5]'} placement={tooltipPlacement} hasArrow={true} openDelay={400} shouldWrapChildren={true}>
+          <IconButton
+            borderRadius={'0 0.5rem 0.5rem 0'}
+            size="sm"
+            colorScheme={primaryActionMode === 'linker' ? user?.data.color || 'teal' : 'gray'}
+            sx={{
+              _dark: {
+                bg: primaryActionMode === 'linker' ? `${user?.data.color}.200` : 'gray.600',
+              },
+            }}
+            icon={<FaLink />}
+            fontSize="lg"
+            aria-label={'linker-mode'}
+            onClick={() => {
+              eraserOnClose();
+              annotationsOnClose();
+              setPrimaryActionMode('linker');
+            }}
+          ></IconButton>
+        </Tooltip>
       </ButtonGroup>
 
-      {myIsOpen &&
+      {myIsOpen && (
         <ConfirmModal
           isOpen={myIsOpen}
           onClose={myOnClose}
@@ -339,8 +366,8 @@ export function Interactionbar(props: {
           size="lg"
           xOffSet={props.position ? (props.position.x + 150) / window.innerWidth : undefined}
         />
-      }
-      {allIsOpen &&
+      )}
+      {allIsOpen && (
         <ConfirmModal
           isOpen={allIsOpen}
           onClose={allOnClose}
@@ -354,7 +381,7 @@ export function Interactionbar(props: {
           size="lg"
           xOffSet={props.position ? (props.position.x + 150) / window.innerWidth : undefined}
         />
-      }
+      )}
     </>
   );
 }

@@ -12,7 +12,7 @@ import { Box } from '@chakra-ui/react';
 import { Rnd } from 'react-rnd';
 
 import { useUIStore, useAbility, WheelStepZoom, MinZoom, MaxZoom, useUserSettings } from '@sage3/frontend';
-import { Background, Apps, Whiteboard, Lasso, PresenceComponent, RndSafety, Arrows } from './components';
+import { Background, Apps, Whiteboard, Lasso, PresenceComponent, RndSafety, Links, CursorArrow, LinkerMode } from './components';
 
 type BackgroundLayerProps = {
   boardId: string;
@@ -322,6 +322,8 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         // Tranversal/Panning
         if (primaryActionMode === 'grab' && event.buttons & 1 && draggedOn !== 'other') {
           move();
+        } else if (primaryActionMode === 'linker' && event.buttons & 1 && draggedOn !== 'other' && draggedOn !== 'app') {
+          move();
         } else if (event.buttons & 4 && (draggedOn === 'app' || draggedOn === 'board' || draggedOn === 'board-actions')) {
           move();
         }
@@ -351,7 +353,11 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         }
         if (event.touches.length === 1) {
           // Looking for lasso interaction? Touch lasso are handled in Lasso.tsx
-          if (primaryActionMode === 'grab' && draggedOn !== 'board-actions') {
+          // Looking for linker interaction? linker are handled in AppWindow.tsx
+          if (
+            (primaryActionMode === 'grab' && draggedOn !== 'board-actions') ||
+            (primaryActionMode === 'linker' && draggedOn !== 'board-actions' && draggedOn !== 'app')
+          ) {
             setLastTouch((prev) => {
               if (prev.length !== 1) {
                 return prev;
@@ -455,10 +461,13 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         dragHandleClassName={'board-handle'}
         disableDragging={true}
       >
+        {primaryActionMode === 'linker' && <LinkerMode />}
+
         {/* The board's apps */}
         <Apps />
 
-        <Arrows />
+        <Links />
+        <CursorArrow />
 
         {/* Whiteboard */}
         <WhiteboardMemo roomId={props.roomId} boardId={props.boardId} />
