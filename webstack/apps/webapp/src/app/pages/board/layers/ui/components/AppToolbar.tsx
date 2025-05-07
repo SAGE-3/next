@@ -31,7 +31,6 @@ import {
   Tag,
   TagLabel,
   TagCloseButton,
-  keyframes,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -51,6 +50,8 @@ import {
   Spacer,
   Flex,
 } from '@chakra-ui/react';
+import { keyframes } from '@emotion/react'
+
 
 import {
   MdClose,

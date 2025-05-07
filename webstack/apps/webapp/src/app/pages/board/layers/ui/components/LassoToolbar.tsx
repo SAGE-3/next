@@ -27,7 +27,6 @@ import {
   MenuDivider,
   useToast,
   Input,
-  keyframes,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -40,6 +39,7 @@ import {
   AlertDescription,
   Spacer,
 } from '@chakra-ui/react';
+import { keyframes } from '@emotion/react'
 
 import {
   MdDownload,
@@ -797,9 +797,8 @@ for b in bits:
           onClose={deleteOnClose}
           onConfirm={closeSelectedApps}
           title="Delete Selected Applications"
-          message={`Are you sure you want to delete the selected ${
-            lassoApps.length > 1 ? `${lassoApps.length} applications?` : 'application?'
-          } `}
+          message={`Are you sure you want to delete the selected ${lassoApps.length > 1 ? `${lassoApps.length} applications?` : 'application?'
+            } `}
           cancelText="Cancel"
           confirmText="Delete"
           confirmColor="red"
@@ -814,7 +813,7 @@ for b in bits:
  * Packing function
  */
 
-const GrowingPacker = function () {};
+const GrowingPacker = function () { };
 
 GrowingPacker.prototype = {
   fit: function (blocks: any[]) {
