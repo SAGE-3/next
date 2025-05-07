@@ -156,7 +156,7 @@ function AppComponent(props: App): JSX.Element {
       .filter((el) => {
         return el.data.targetAppId === props._id;
       })
-      .map((link) => link._id);
+      .map((link) => link.data.sourceAppId);
     setSouceApps(sources);
   }, [links]);
 
