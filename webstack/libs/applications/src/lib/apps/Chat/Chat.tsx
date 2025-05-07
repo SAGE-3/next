@@ -52,6 +52,7 @@ import {
   useUserSettings,
   useUIStore,
   EditUserSettingsModal,
+  useLinkStore,
 } from '@sage3/frontend';
 import { genId, AskRequest, ImageQuery, PDFQuery, CodeRequest, WebQuery, WebScreenshot } from '@sage3/shared';
 
@@ -91,6 +92,10 @@ function AppComponent(props: App): JSX.Element {
   const { user } = useUser();
   const [username, setUsername] = useState('');
   const createApp = useAppStore((state) => state.create);
+
+  const [sourceApps, setSouceApps] = useState<string[]>([]);
+
+  const links = useLinkStore((state) => state.links);
 
   // Colors for Dark theme and light theme
   // Chat Bubble Colors
@@ -144,6 +149,16 @@ function AppComponent(props: App): JSX.Element {
 
   // Sort messages by creation date to display in order
   const sortedMessages = s.messages ? s.messages.sort((a, b) => a.creationDate - b.creationDate) : [];
+
+  useEffect(() => {
+    // Find the links that are "sources" to this app
+    const sources = links
+      .filter((el) => {
+        return el.data.targetAppId === props._id;
+      })
+      .map((link) => link._id);
+    setSouceApps(sources);
+  }, [links]);
 
   // Input text for query
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -237,8 +252,8 @@ function AppComponent(props: App): JSX.Element {
   }, [s.firstQuestion]);
 
   useEffect(() => {
-    if (s.sources && s.sources.length >= 1) {
-      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+    if (sourceApps && sourceApps.length >= 1) {
+      const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
       if (apps && apps[0] && apps[0].data.type === 'ImageViewer') {
         setMode('image');
       } else if (apps && apps[0] && apps[0].data.type === 'PDFViewer') {
@@ -253,7 +268,7 @@ function AppComponent(props: App): JSX.Element {
         setMode('text');
       }
     }
-  }, [s.sources]);
+  }, [sourceApps]);
 
   const newMessage = async (new_input: string) => {
     if (!user) return;
@@ -389,9 +404,9 @@ function AppComponent(props: App): JSX.Element {
     if (!user) return;
     // Get the current context
     let newctx = s.context;
-    if (!newctx && s.sources.length > 0) {
+    if (!newctx && sourceApps.length > 0) {
       // Update the context with the stickies
-      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+      const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
       newctx = apps.reduce((accumulate, app) => {
         if (app.data.type === 'Stickie') accumulate += app.data.state.text + '\n\n';
         return accumulate;
@@ -428,9 +443,9 @@ function AppComponent(props: App): JSX.Element {
 
   const onContentImage = async (prompt: string) => {
     if (!user) return;
-    if (s.sources.length > 0) {
+    if (sourceApps.length > 0) {
       // Update the context with the stickies
-      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+      const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
 
       // Check for image
       if (apps && apps[0].data.type === 'ImageViewer') {
@@ -636,14 +651,14 @@ function AppComponent(props: App): JSX.Element {
 
   const onContentPDF = async (prompt: string) => {
     if (!user) return;
-    console.log('sources', s.sources);
+    console.log('sources', sourceApps);
 
     const isQuestion = prompt.toUpperCase().startsWith('@S');
     const name = isQuestion ? 'SAGE' : user?.data.name;
 
-    if (s.sources.length > 0) {
+    if (sourceApps.length > 0) {
       // Update the context with the stickies
-      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+      const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
 
       // Check for image
       if (apps && apps[0].data.type === 'PDFViewer') {
@@ -748,9 +763,9 @@ function AppComponent(props: App): JSX.Element {
   // Generic code to handle the web content
   const onContentWeb = async (prompt: string) => {
     if (!user) return;
-    if (s.sources.length > 0) {
+    if (sourceApps.length > 0) {
       // Update the context with the stickies
-      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+      const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
 
       // Check for image
       if (apps && apps[0].data.type === 'Webview') {
@@ -832,9 +847,9 @@ function AppComponent(props: App): JSX.Element {
   // Get a screenshot of the web content
   const onContentWebScreenshot = async () => {
     if (!user) return;
-    if (s.sources.length > 0) {
+    if (sourceApps.length > 0) {
       // Update the context with the stickies
-      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+      const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
 
       // Check for image
       if (apps && apps[0].data.type === 'Webview') {
@@ -1112,10 +1127,10 @@ function AppComponent(props: App): JSX.Element {
     if (!user) return;
     // Get the current context
     let newctx = s.context;
-    if (!newctx && s.sources.length > 0) {
+    if (!newctx && sourceApps.length > 0) {
       // Update the context with the stickies
       let language = 'python';
-      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+      const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
       newctx = apps.reduce((accumulate, app) => {
         if (app.data.type === 'CodeEditor') {
           accumulate += app.data.state.content + '\n\n';
@@ -1140,10 +1155,10 @@ function AppComponent(props: App): JSX.Element {
     if (!user) return;
     // Get the current context
     let newctx = s.context;
-    if (!newctx && s.sources.length > 0) {
+    if (!newctx && sourceApps.length > 0) {
       // Update the context with the stickies
       let language = 'python';
-      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+      const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
       newctx = apps.reduce((accumulate, app) => {
         if (app.data.type === 'CodeEditor') {
           accumulate += app.data.state.content + '\n\n';
@@ -1168,10 +1183,10 @@ function AppComponent(props: App): JSX.Element {
     if (!user) return;
     // Get the current context
     let newctx = s.context;
-    if (s.sources.length > 0) {
+    if (sourceApps.length > 0) {
       // Update the context with the stickies
       let language = 'python';
-      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+      const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
       newctx = apps.reduce((accumulate, app) => {
         if (app.data.type === 'CodeEditor') {
           accumulate += app.data.state.content + '\n\n';
@@ -1193,10 +1208,10 @@ function AppComponent(props: App): JSX.Element {
     if (!user) return;
     // Get the current context
     let newctx = s.context;
-    if (!newctx && s.sources.length > 0) {
+    if (!newctx && sourceApps.length > 0) {
       // Update the context with the stickies
       let language = 'python';
-      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+      const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
       newctx = apps.reduce((accumulate, app) => {
         if (app.data.type === 'CodeEditor') {
           accumulate += app.data.state.content + '\n\n';
