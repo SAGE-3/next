@@ -19,11 +19,11 @@ class SAGE3AppsCollection extends SAGE3Collection<AppSchema> {
     });
     const router = sageRouter<AppSchema>(this);
 
-    // GET: Get all the docs, multiple docs by id, or query
+    // Get subset snapshot of the apps to build preview on frontend
     router.post('/preview', async ({ body }, res) => {
       const boardId = body.boardId;
       if (!boardId) {
-        res.status(500).send({ success: false, message: 'No BoardID Provided.' });
+        res.status(500).send({ success: false, message: 'No BoardID Provided.', data: undefined });
       } else {
         let docs = null;
         const apps = [] as { position: Position; size: Size; type: AppName; id: string }[];

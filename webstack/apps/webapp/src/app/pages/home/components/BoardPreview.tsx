@@ -10,9 +10,9 @@ import { useState, useEffect, useRef } from 'react';
 import { Box, Text, Icon, useColorModeValue } from '@chakra-ui/react';
 import { MdLock } from 'react-icons/md';
 
-import { APIHttp, useHexColor } from '@sage3/frontend';
+import { apiUrls, useHexColor } from '@sage3/frontend';
 import { Board, Position, Size } from '@sage3/shared/types';
-import { App, AppName } from '@sage3/applications/schema';
+import { AppName } from '@sage3/applications/schema';
 
 // Type for app info
 type AppInfo = { position: Position; size: Size; type: AppName; id: string };
@@ -44,7 +44,7 @@ const getAppInfo = async (boardId: string): Promise<AppInfo[]> => {
 };
 
 const updateAppInfo = async (boardId: string): Promise<AppInfo[]> => {
-  const response = await fetch('/api/apps/preview', {
+  const response = await fetch(apiUrls.apps.preview, {
     body: JSON.stringify({ boardId: boardId }),
     method: 'POST',
     credentials: 'include',
