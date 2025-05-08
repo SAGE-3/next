@@ -44,17 +44,21 @@ const getAppInfo = async (boardId: string): Promise<AppInfo[]> => {
 };
 
 const updateAppInfo = async (boardId: string): Promise<AppInfo[]> => {
-  const res = await APIHttp.QUERY<App>('/apps', { boardId });
-  if (res.success && res.data) {
-    const apps = res.data;
-    const appArray = [] as AppInfo[];
-    apps.forEach((app) => {
-      const aInfo = { position: app.data.position, size: app.data.size, type: app.data.type, id: app._id };
-      appArray.push(aInfo);
-    });
-    return appArray;
+  const response = await fetch('/api/apps/preview', {
+    body: JSON.stringify({ boardId: boardId }),
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+  });
+  const docs = await response.json();
+  if (docs.success && docs.data) {
+    return docs.data;
+  } else {
+    return [];
   }
-  return [];
 };
 
 export function BoardPreview(props: { board: Board; width: number; height: number; isSelected?: boolean }): JSX.Element {
