@@ -13,6 +13,9 @@ export const apiUrls = {
   config: {
     getConfig: '/api/configuration',
   },
+  apps: {
+    preview: '/api/apps/preview',
+  },
   assets: {
     getAssets: '/api/assets',
     getAssetById: (id: string) => `/api/assets/static/${id}`,
