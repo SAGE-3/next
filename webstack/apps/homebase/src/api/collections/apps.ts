@@ -6,8 +6,9 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { AppSchema } from '@sage3/applications/schema';
+import { AppName, AppSchema } from '@sage3/applications/schema';
 import { SAGE3Collection, sageRouter } from '@sage3/backend';
+import { Position, Size } from '@sage3/shared/types';
 
 class SAGE3AppsCollection extends SAGE3Collection<AppSchema> {
   constructor() {
@@ -17,6 +18,24 @@ class SAGE3AppsCollection extends SAGE3Collection<AppSchema> {
       type: 'Stickie',
     });
     const router = sageRouter<AppSchema>(this);
+
+    // Get subset snapshot of the apps to build preview on frontend
+    router.post('/preview', async ({ body }, res) => {
+      const boardId = body.boardId;
+      if (!boardId) {
+        res.status(500).send({ success: false, message: 'No BoardID Provided.', data: undefined });
+      } else {
+        let docs = null;
+        const apps = [] as { position: Position; size: Size; type: AppName; id: string }[];
+        docs = await this.collection.query('boardId', boardId);
+        docs.forEach((app) => {
+          const aInfo = { position: app.data.position, size: app.data.size, type: app.data.type, id: app._id };
+          apps.push(aInfo);
+        });
+        if (docs) res.status(200).send({ success: true, message: 'Successfully retrieved documents.', data: apps });
+        else res.status(500).send({ success: false, message: 'Failed to retrieve documents.', data: undefined });
+      }
+    });
     this.httpRouter = router;
   }
 
