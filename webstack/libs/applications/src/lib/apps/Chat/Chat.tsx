@@ -30,7 +30,17 @@ import {
   Textarea,
   useDisclosure,
 } from '@chakra-ui/react';
-import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle, MdFileDownload, MdChat, MdSettings } from 'react-icons/md';
+import {
+  MdSend,
+  MdExpandCircleDown,
+  MdStopCircle,
+  MdChangeCircle,
+  MdFileDownload,
+  MdChat,
+  MdSettings,
+  MdOpenInNew,
+  MdOpenWith,
+} from 'react-icons/md';
 import { HiCommandLine } from 'react-icons/hi2';
 
 // Date management
@@ -60,7 +70,8 @@ import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
 
-import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot } from './tRPC';
+import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot, callMesonet } from './tRPC';
+import React from 'react';
 
 const OrderedList: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => (
   <ol style={{ paddingLeft: '24px' }} {...props}>
@@ -74,7 +85,7 @@ const UnorderedList: React.FC<{ children: React.ReactNode }> = ({ children, ...p
   </ul>
 );
 
-type OperationMode = 'chat' | 'text' | 'image' | 'web' | 'pdf' | 'code';
+type OperationMode = 'chat' | 'text' | 'image' | 'web' | 'pdf' | 'code' | 'Hawaii Mesonet';
 
 // AI model information from the backend
 interface modelInfo {
@@ -96,6 +107,7 @@ function AppComponent(props: App): JSX.Element {
   const [sourceApps, setSouceApps] = useState<string[]>([]);
 
   const links = useLinkStore((state) => state.links);
+  const addLink = useLinkStore((state) => state.addLink);
 
   // Colors for Dark theme and light theme
   // Chat Bubble Colors
@@ -182,11 +194,13 @@ function AppComponent(props: App): JSX.Element {
     } else if (mode === 'web') {
       // Code
       onContentWeb(text);
+    } else if (mode === 'Hawaii Mesonet') {
+      // Code
+      onContentMesonet(text);
     } else {
       await newMessage(text);
     }
   };
-
   const onSubmit = (e: React.KeyboardEvent) => {
     // Keyboard instead of pressing the button
     if (e.key === 'Enter') {
@@ -260,6 +274,8 @@ function AppComponent(props: App): JSX.Element {
         setMode('code');
       } else if (apps && apps[0] && apps[0].data.type === 'Webview') {
         setMode('web');
+      } else if (apps && apps[0] && apps[0].data.type === 'Hawaii Mesonet') {
+        setMode('Hawaii Mesonet');
       } else {
         setMode('text');
       }
@@ -520,9 +536,133 @@ function AppComponent(props: App): JSX.Element {
     }
   };
 
+  const onMesonetSummary = async () => {
+    return onContentMesonet('Summarize the key weather patterns from the Mesonet dataset.');
+  };
+  const onMesonetTrends = async () => {
+    return onContentMesonet('Identify key trends in the Mesonet weather data.');
+  };
+  const onMesonetComparison = async () => {
+    return onContentMesonet('Compare weather conditions between different Mesonet stations.');
+  };
+  const onMesonetForecast = async () => {
+    return onContentMesonet('Provide insights based on past data to predict future weather trends.');
+  };
+  const onMesonetExtremes = async () => {
+    return onContentMesonet('Find the extreme values (highest and lowest) recorded in the dataset.');
+  };
+
+  const onContentMesonet = async (prompt: string) => {
+    if (!user) return;
+    if (selectedModel == 'llama') {
+      toast({
+        title: 'Mesonet Feature not available for llama model',
+        description: 'Please switch SAGE Intelligence to OpenAI in User Settings.',
+        status: 'error',
+        duration: 4000,
+        isClosable: true,
+      });
+      return;
+    }
+    if (sourceApps && sourceApps.length >= 1) {
+      const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
+      if (apps && apps[0].data.type === 'Hawaii Mesonet') {
+        const url = apps[0].data.state.url;
+        if (roomId && boardId) {
+          const now = await serverTime();
+          const isoNow = new Date();
+          const isoString = isoNow.toISOString();
+          const initialAnswer = {
+            id: genId(),
+            userId: user._id,
+            creationId: '',
+            creationDate: now.epoch,
+            userName: 'SAGE',
+            query: prompt,
+            response: 'Working on it...',
+          };
+          updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
+
+          const q = {
+            ctx: {
+              previousQ: previousQuestion,
+              previousA: previousAnswer,
+              pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+              roomId,
+              boardId,
+            },
+            q: prompt,
+            url: url,
+            user: username,
+            currentTime: isoString,
+          };
+          setProcessing(true);
+          setActions([]);
+          const response = await callMesonet(q);
+          setProcessing(false);
+
+          if ('message' in response) {
+            toast({
+              title: 'Error',
+              description: response.message || 'Error sending query to the agent. Please try again.',
+              status: 'error',
+              duration: 4000,
+              isClosable: true,
+            });
+          } else {
+            setStreamText('');
+            ctrlRef.current = null;
+            setPreviousAnswer(response.summary);
+            // Update the Mesonet app's state with the selected stations
+            if (response.stations && response.stations.length > 0) {
+              const mesonetApp = apps[0];
+              updateState(mesonetApp._id, {
+                ...mesonetApp.data.state,
+                stationNames: response.stations,
+
+                widget: {
+                  ...mesonetApp.data.state.widget,
+                  yAxisNames: response.attributes,
+                },
+              });
+            }
+
+            updateState(props._id, {
+              ...s,
+              previousQ: 'Describe the content',
+              previousA: response.summary,
+              messages: [
+                ...s.messages,
+                {
+                  id: genId(),
+                  userId: user._id,
+                  creationId: '',
+                  creationDate: now.epoch + 1,
+                  userName: 'SAGE',
+                  query: initialAnswer.query,
+                  response: response.summary,
+                },
+              ],
+            });
+            if (response.actions) {
+              setActions(response.actions);
+            }
+          }
+        }
+      }
+    }
+  };
+
+  const mesonetPrompts: { title: string; action: () => void; prompt: string }[] = [
+    // { title: 'Summarize Mesonet Data', action: onMesonetSummary, prompt: 'Summarize key weather patterns from the Mesonet dataset.' },
+    // { title: 'Find Trends', action: onMesonetTrends, prompt: 'Identify key trends in the Mesonet weather data.' },
+    // { title: 'Compare Locations', action: onMesonetComparison, prompt: 'Compare weather conditions between different Mesonet stations.' },
+    // { title: 'Generate Forecast Insights', action: onMesonetForecast, prompt: 'Provide insights based on past data to predict trends.' },
+    // { title: 'Find Extremes', action: onMesonetExtremes, prompt: 'Find the extreme values (highest and lowest) recorded in the dataset.' },
+  ];
+
   const onContentPDF = async (prompt: string) => {
     if (!user) return;
-    console.log('sources', sourceApps);
 
     const isQuestion = prompt.toUpperCase().startsWith('@S');
     const name = isQuestion ? 'SAGE' : user?.data.name;
@@ -1157,7 +1297,7 @@ function AppComponent(props: App): JSX.Element {
       const pos = action.data.position;
       const state = action.state;
       // Create the app
-      createApp({
+      const res = await createApp({
         title: type,
         roomId: roomId!,
         boardId: boardId!,
@@ -1170,6 +1310,11 @@ function AppComponent(props: App): JSX.Element {
         dragging: false,
         pinned: false,
       });
+      if (res.success === true) {
+        const sourceId = props._id;
+        const targetId = res.data._id;
+        addLink(sourceId, targetId, props.data.boardId, 'provenance');
+      }
       toast({
         title: 'Info',
         description: 'Action applied.',
@@ -1177,6 +1322,7 @@ function AppComponent(props: App): JSX.Element {
         duration: 3000,
         isClosable: true,
       });
+      addLink;
     } else {
       console.log('Action> not valid');
     }
@@ -1422,33 +1568,41 @@ function AppComponent(props: App): JSX.Element {
           <Box display={'flex'} justifyContent={'left'}>
             {actions && (
               <List>
-                {actions.map((action, index) => (
-                  <Box
-                    color="black"
-                    rounded={'md'}
-                    boxShadow="md"
-                    fontFamily="Arial"
-                    textAlign={'left'}
-                    bg={textColor}
-                    p={1}
-                    m={3}
-                    // maxWidth="80%"
-                    userSelect={'none'}
-                    _hover={{ background: 'purple.300' }}
-                    background={'purple.200'}
-                    // onDoubleClick={applyAction(action)}
-                    onClick={applyAction(action)}
-                    key={'list-' + index}
-                  >
-                    <Tooltip label="Click to show result on the board" aria-label="A tooltip">
-                      <ListItem key={index}>
-                        <ListIcon as={MdSettings} color="green.500" />
-                        Show result on the board
-                        {/* Show result {index + 1} on the board: {action.type} {action.app} */}
-                      </ListItem>
-                    </Tooltip>
-                  </Box>
-                ))}
+                {actions.map((action, index) => {
+                  let propName = undefined;
+                  try {
+                    propName = action.state.widget.yAxisNames[0];
+                  } catch (e) {
+                    console.log('ChatApp Exception> No property Name found.');
+                  }
+                  return (
+                    <Box
+                      color="black"
+                      rounded={'md'}
+                      boxShadow="md"
+                      fontFamily="Arial"
+                      textAlign={'left'}
+                      bg={textColor}
+                      p={1}
+                      m={3}
+                      // maxWidth="80%"
+                      userSelect={'none'}
+                      _hover={{ background: 'purple.300' }}
+                      background={'purple.200'}
+                      // onDoubleClick={applyAction(action)}
+                      onClick={applyAction(action)}
+                      key={'list-' + index}
+                    >
+                      <Tooltip label="Click to show result on the board" aria-label="A tooltip">
+                        <ListItem key={index}>
+                          <ListIcon as={MdOpenInNew} color="white" fontWeight={'bold'} />
+                          Show {propName ? propName : ''} on the board
+                          {/* Show result {index + 1} on the board: {action.type} {action.app} */}
+                        </ListItem>
+                      </Tooltip>
+                    </Box>
+                  );
+                })}
               </List>
             )}
           </Box>
@@ -1511,6 +1665,32 @@ function AppComponent(props: App): JSX.Element {
         </HStack>
 
         {mode !== 'chat' && <hr />}
+
+        {mode === 'Hawaii Mesonet' && (
+          <HStack>
+            {mesonetPrompts.map((p, i) => (
+              <Tooltip key={'tip' + i} fontSize={'xs'} placement="top" hasArrow={true} label={p.prompt} openDelay={400}>
+                <Button
+                  key={'button' + i}
+                  aria-label="stop"
+                  size={'xs'}
+                  p={0}
+                  m={0}
+                  colorScheme={'blue'}
+                  variant="ghost"
+                  textAlign={'left'}
+                  onClick={() => p.action()}
+                  width="34%"
+                >
+                  <HiCommandLine fontSize={'24px'} />
+                  <Text key={'text' + i} ml={'2'}>
+                    {p.title}
+                  </Text>
+                </Button>
+              </Tooltip>
+            ))}
+          </HStack>
+        )}
 
         {/* AI Prompts */}
         {mode === 'text' && (

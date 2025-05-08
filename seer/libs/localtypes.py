@@ -9,7 +9,7 @@
 # Models
 from typing import List, NamedTuple, Optional
 from pydantic import BaseModel, Json
-
+import io
 # Pydantic models: Question, Answer, Context
 
 
@@ -61,6 +61,23 @@ class ImageQuery(BaseModel):
     model: str  # AI model: llama, openai
     q: str  # question
 
+
+class MesonetQuery(BaseModel):
+    ctx: Context  # context
+    user: str  # user name
+    q: str  # question
+    url: str
+    currentTime: str
+
+class MesonetAnswer(BaseModel):
+    attributes: List[str]
+    stations: List[str]
+    chart_type: List[str]
+    end_date: str
+    start_date: str
+    summary: str
+    success: bool = True  # success flag
+    actions: List[Json]  # actions to be performed
 
 class ImageAnswer(BaseModel):
     r: str  # answer
