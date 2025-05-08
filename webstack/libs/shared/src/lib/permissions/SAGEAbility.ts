@@ -45,7 +45,8 @@ export type ResourceArg =
   | 'kernels'
   | 'insight'
   | 'annotations'
-  | 'roommembers';
+  | 'roommembers'
+  | 'links';
 
 // Abliity
 type Ability = { role: Role[]; action: Action[]; resource: Resource[] };
@@ -62,13 +63,13 @@ const config: AbilityConfig = {
     { role: ['guest'], resource: ['apps'], action: ['resize', 'move', 'lasso'] },
     {
       role: ['guest'],
-      resource: ['assets', 'boards', 'message', 'plugins', 'rooms', 'insight', 'roommembers', 'annotations'],
+      resource: ['assets', 'boards', 'message', 'plugins', 'rooms', 'insight', 'roommembers', 'annotations', 'links'],
       action: ['read', 'sub', 'unsub'],
     },
     { role: ['guest'], resource: ['assets'], action: ['download'] },
     {
       role: ['spectator'],
-      resource: ['assets', 'apps', 'boards', 'message', 'plugins', 'presence', 'rooms', 'users', 'insight', 'annotations'],
+      resource: ['assets', 'apps', 'boards', 'message', 'plugins', 'presence', 'rooms', 'users', 'insight', 'annotations', 'links'],
       action: ['read', 'sub', 'unsub'],
     },
     { role: ['spectator'], resource: ['assets'], action: ['download'] },

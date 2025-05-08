@@ -18,7 +18,6 @@ import {
   Divider,
   ButtonGroup,
   Text,
-  Button,
 } from '@chakra-ui/react';
 
 import { HiChip, HiPuzzle } from 'react-icons/hi';
@@ -61,6 +60,8 @@ import {
   useHexColor,
   useUser,
   useThrottleScale,
+  MainButton,
+  PartyButton,
 } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 
@@ -82,7 +83,7 @@ import {
   PluginsMenu,
   UsersMenu,
   AssetsMenu,
-  MainButton,
+  EscapeApp,
 } from './components';
 
 type UILayerProps = {
@@ -408,6 +409,7 @@ export function UILayer(props: UILayerProps) {
           />
           <Divider orientation="vertical" mx="1" />
           <Interactionbar isContextMenuOpen={isContextMenuOpen} />
+          <EscapeApp />
           <Divider orientation="vertical" mx="1" />
           <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdPeople />} tooltip={'Users'} title={'Users'}>
             <UsersMenu boardId={props.boardId} />
@@ -489,6 +491,11 @@ export function UILayer(props: UILayerProps) {
             onClick={alfredOnOpen}
           />
         </Tooltip>
+      </Box>
+
+      {/* Party Button */}
+      <Box position="absolute" right="2" bottom="2" zIndex="1000">
+        <PartyButton iconSize="sm" />
       </Box>
 
       {/* Hub-Room-Board Name Top Left */}

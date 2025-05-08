@@ -31,7 +31,6 @@ import {
   Tag,
   TagLabel,
   TagCloseButton,
-  keyframes,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -49,7 +48,10 @@ import {
   MenuItem,
   MenuDivider,
   Spacer,
+  Flex,
 } from '@chakra-ui/react';
+import { keyframes } from '@emotion/react'
+
 
 import {
   MdClose,
@@ -65,7 +67,7 @@ import {
   MdOutlinePushPin,
 } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
-import { IoMdExit } from 'react-icons/io';
+import { MdDeselect } from 'react-icons/md';
 import { IoSparklesSharp } from 'react-icons/io5';
 
 import { formatDistance } from 'date-fns';
@@ -86,13 +88,15 @@ import {
   setupApp,
   useAssetStore,
   apiUrls,
+  useLinkStore,
 } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 import { AI_ENABLED_APPS, Applications } from '@sage3/applications/apps';
 import { Position, Size } from '@sage3/shared/types';
 import ky from 'ky';
+import { FaLink } from 'react-icons/fa';
 
-const UI_BAR_OFFSET = 50
+const UI_BAR_OFFSET = 50;
 
 type AppToolbarProps = {
   boardId: string;
@@ -116,6 +120,10 @@ export function AppToolbar(props: AppToolbarProps) {
   const update = useAppStore((state) => state.update);
   const duplicate = useAppStore((state) => state.duplicateApps);
 
+  // Link Store
+  const addLink = useLinkStore((state) => state.addLink);
+  const cacheLinkedAppId = useLinkStore((state) => state.cacheLinkedAppId);
+
   // UI Store
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
@@ -130,9 +138,10 @@ export function AppToolbar(props: AppToolbarProps) {
   const selectColor = useHexColor('teal');
   const intelligenceColor = useColorModeValue('purple.500', 'purple.400');
   const intelligenceBgColor = useColorModeValue('purple.400', 'purple.500');
+  const linkColor = useColorModeValue('blue.500', 'blue.400');
 
   // Settings
-  const { settings } = useUserSettings();
+  const { settings, setPrimaryActionMode } = useUserSettings();
   const showUI = settings.showUI;
   const showTags = settings.showTags;
 
@@ -735,19 +744,20 @@ export function AppToolbar(props: AppToolbarProps) {
         </Modal>
 
         {/* Delete tag confirmation */}
-        {isDeleteTagOpen && <ConfirmModal
-          isOpen={isDeleteTagOpen}
-          onClose={onDeleteTagClose}
-          onConfirm={handleDeleteTag}
-          title="Delete this Tag"
-          message="Are you sure you want to delete this tag from this app?"
-          cancelText="Cancel"
-          confirmText="Delete"
-          cancelColor="green"
-          confirmColor="red"
-          size="lg"
-        />
-        }
+        {isDeleteTagOpen && (
+          <ConfirmModal
+            isOpen={isDeleteTagOpen}
+            onClose={onDeleteTagClose}
+            onConfirm={handleDeleteTag}
+            title="Delete this Tag"
+            message="Are you sure you want to delete this tag from this app?"
+            cancelText="Cancel"
+            confirmText="Delete"
+            cancelColor="green"
+            confirmColor="red"
+            size="lg"
+          />
+        )}
       </HStack>
     );
   }
@@ -862,7 +872,7 @@ export function AppToolbar(props: AppToolbarProps) {
                 </MenuItem>
                 <MenuDivider />
 
-                <MenuItem icon={<IoMdExit size="18px" />} onClick={() => setSelectedApp('')} py="1px" m="0">
+                <MenuItem icon={<MdDeselect size="18px" />} onClick={() => setSelectedApp('')} py="1px" m="0">
                   Deselect Application
                 </MenuItem>
               </MenuList>
@@ -874,7 +884,7 @@ export function AppToolbar(props: AppToolbarProps) {
               </Button>
             </Tooltip>
 
-            {isDeleteOpen &&
+            {isDeleteOpen && (
               <ConfirmModal
                 isOpen={isDeleteOpen}
                 onClose={onDeleteClose}
@@ -887,7 +897,7 @@ export function AppToolbar(props: AppToolbarProps) {
                 size="lg"
                 xOffSet={Math.max(0, (position.x - 150) / window.innerWidth)}
               />
-            }
+            )}
           </>
         </ErrorBoundary>
       );
@@ -961,12 +971,25 @@ export function AppToolbar(props: AppToolbarProps) {
       }
       if (context) {
         // Create the chat app with the context
-        const source = app._id;
-        const state = setupApp('', 'Chat', x, y, props.roomId, props.boardId, { w, h }, { context, sources: [source] });
-        createApp(state);
+        const sourceId = app._id;
+        const state = setupApp('', 'Chat', x, y, props.roomId, props.boardId, { w, h }, { context });
+
+        const res = await createApp(state);
+        if (res.success) {
+          const newApp = res.data;
+          addLink(sourceId, newApp._id, props.boardId, 'provenance');
+        }
         useUIStore.getState().setSelectedApp('');
       }
     }
+  };
+
+  const enterLinkerMode = () => {
+    setPrimaryActionMode('linker');
+    // wait 1 second
+    setTimeout(() => {
+      cacheLinkedAppId(selectedApp);
+    }, 250);
   };
 
   if (showUI && app)
@@ -995,28 +1018,48 @@ export function AppToolbar(props: AppToolbarProps) {
 
             <Spacer />
 
-            {/* Sage Intelligence */}
-            {
-              // Is app AiEnabled
-              AI_ENABLED_APPS.includes(app.data.type) && (
+            <Flex>
+              {app.data.type === 'SageCell' && (
                 <Box>
-                  <Tooltip placement="top" hasArrow={true} openDelay={400} ml="1" label={'Chat with SAGE Intelligence'}>
+                  <Tooltip placement="top" hasArrow={true} openDelay={400} ml="1" label={'Link Application'}>
                     <Button
-                      onClick={openChat}
-                      backgroundColor={intelligenceColor}
+                      onClick={enterLinkerMode}
+                      backgroundColor={linkColor}
                       variant="solid"
                       size="xs"
                       m={0}
                       mr={2}
                       p={0}
-                      _hover={{ cursor: 'pointer', transform: 'scale(1.2)', opacity: 1, backgroundColor: intelligenceBgColor }}
+                      _hover={{ cursor: 'pointer', transform: 'scale(1.2)', opacity: 1, backgroundColor: linkColor }}
                     >
-                      <IoSparklesSharp size="16px" color={'white'} />
+                      <FaLink size="16px" color={'white'} />
                     </Button>
                   </Tooltip>
                 </Box>
-              )
-            }
+              )}
+              {/* Sage Intelligence */}
+              {
+                // Is app AiEnabled
+                AI_ENABLED_APPS.includes(app.data.type) && (
+                  <Box>
+                    <Tooltip placement="top" hasArrow={true} openDelay={400} ml="1" label={'Chat with SAGE Intelligence'}>
+                      <Button
+                        onClick={openChat}
+                        backgroundColor={intelligenceColor}
+                        variant="solid"
+                        size="xs"
+                        m={0}
+                        mr={2}
+                        p={0}
+                        _hover={{ cursor: 'pointer', transform: 'scale(1.2)', opacity: 1, backgroundColor: intelligenceBgColor }}
+                      >
+                        <IoSparklesSharp size="16px" color={'white'} />
+                      </Button>
+                    </Tooltip>
+                  </Box>
+                )
+              }
+            </Flex>
           </Box>
 
           <Box alignItems="center" mt="1" p="1" width="100%" display="flex" height="32px" userSelect={'none'}>

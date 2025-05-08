@@ -6,11 +6,9 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { Tree, formatFiles, installPackagesTask, generateFiles } from '@nrwl/devkit';
-// import { libraryGenerator } from '@nrwl/workspace/generators';
-// import { getProjectConfig } from '@nrwl/workspace';
 import { join } from 'path';
 import { promises as fs } from 'fs';
+import { Tree, formatFiles, installPackagesTask, generateFiles } from '@nrwl/devkit';
 
 // Arguments to the build
 interface Schema {
@@ -94,6 +92,7 @@ async function updateApps(root: string) {
   output += `\n`;
   output += `export * from './components';\n`;
   output += `export * from './ai-apps';\n`;
+  output += `export * from './provenance-apps';\n`;
 
   // Export all the applications and save
   await fs.writeFile(indexPath, output);

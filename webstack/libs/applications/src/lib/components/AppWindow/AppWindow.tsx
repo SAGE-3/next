@@ -255,14 +255,15 @@ export function AppWindow(props: WindowProps) {
     }
   }, [props.app.data.raised]);
 
-  function handleAppClick(e: MouseEvent) {
+  async function handleAppClick(e: MouseEvent) {
     e.stopPropagation();
 
-    // Uncomment me to block selection behaviour on AppWindows
     if (primaryActionMode === 'grab') {
       return;
     }
-
+    if (primaryActionMode === 'linker') {
+      return;
+    }
     // Set the selected app in the UI store
     if (appWasDragged) setAppWasDragged(false);
     else {
@@ -281,6 +282,10 @@ export function AppWindow(props: WindowProps) {
 
     // Uncomment me to block selection behaviour on AppWindows
     if (primaryActionMode === 'grab') {
+      return;
+    }
+
+    if (primaryActionMode === 'linker') {
       return;
     }
 
@@ -357,7 +362,9 @@ export function AppWindow(props: WindowProps) {
       // enableResizing={enableResize && canResize && !isPinned}
       enableResizing={enableResize && canResize && !isPinned && primaryActionMode === 'lasso'} // Temporary solution to fix resize while drag -> && (selectedApp !== "")
       // boardSync && rndSafeForAction is a temporary solution to prevent the most common type of bug which is zooming followed by a click
-      disableDragging={!canMove || isPinned || !(boardSynced && rndSafeForAction) || primaryActionMode === 'grab'}
+      disableDragging={
+        !canMove || isPinned || !(boardSynced && rndSafeForAction) || primaryActionMode === 'grab' || primaryActionMode === 'linker'
+      }
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{
         zIndex: props.lockToBackground ? 0 : myZ,
@@ -405,7 +412,7 @@ export function AppWindow(props: WindowProps) {
         scale={scale}
         borderWidth={borderWidth}
         borderColor={borderColor}
-        selectColor={props.app.data.state?.msgId ? "#F69637" : selectColor} // Orange for SageCell when running
+        selectColor={props.app.data.state?.msgId ? '#F69637' : selectColor} // Orange for SageCell when running
         borderRadius={outerBorderRadius}
         pinned={isPinned}
         background={background}

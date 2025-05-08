@@ -37,9 +37,9 @@ import {
 import { MdInfo } from 'react-icons/md';
 
 // SAGE Imports
+import { ServerConfiguration } from '@sage3/shared/types';
 import { useUserSettings } from '../../../providers';
 import { useConfigStore } from '../../../stores';
-import { ServerConfiguration } from '@sage3/shared/types';
 import { isElectron } from '../../../utils';
 
 interface EditUserSettingsModalProps {
@@ -71,7 +71,7 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
     toggleShowViewports,
     toggleShowAppTitles,
     toggleShowUI,
-    toggleProvenance,
+    setShowLinks,
     toggleShowTags,
     setAIModel,
     setUIScale,
@@ -83,7 +83,7 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
   const showAppTitles = userSettings.showAppTitles;
   const showUI = userSettings.showUI;
   const showTags = userSettings.showTags;
-  const showProvenance = userSettings.showProvenance;
+  const showLinks = userSettings.showLinks;
   const uiScale = userSettings.uiScale;
 
   // SAGE Intelligence Settings
@@ -206,22 +206,23 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
 
                 <FormControl display="flex" mt="2" alignItems="center" justifyContent="space-between">
                   <FormLabel htmlFor="hide-provenance" mb="0">
-                    Provenance
+                    Links
                     <InfoTooltip label={'Show/Hide SAGE3 arrows for provenance. Must enable User Interface.'} />
                   </FormLabel>
                   <Select
                     id="other-viewports"
                     colorScheme="teal"
                     size="sm"
-                    onChange={(e) => toggleProvenance(e.target.value as 'none' | 'selected' | 'all')}
-                    value={showProvenance}
+                    onChange={(e) => setShowLinks(e.target.value as 'none' | 'selected' | 'selected-path' | 'all')}
+                    value={showLinks}
                     isDisabled={!showUI}
                     width="180px"
                     textAlign={'right'}
                   >
                     <option value="none">None</option>
-                    <option value="selected">Selected Application</option>
-                    <option value="all">All Applications</option>
+                    <option value="selected">Selected App</option>
+                    <option value="selected-path">Selected App's Path</option>
+                    <option value="all">All Links</option>
                   </Select>
                 </FormControl>
               </TabPanel>

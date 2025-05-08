@@ -27,7 +27,6 @@ import {
   MenuDivider,
   useToast,
   Input,
-  keyframes,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -40,6 +39,7 @@ import {
   AlertDescription,
   Spacer,
 } from '@chakra-ui/react';
+import { keyframes } from '@emotion/react'
 
 import {
   MdDownload,
@@ -74,6 +74,7 @@ import {
   useInsightStore,
   useUserSettings,
   ColorPicker,
+  useLinkStore,
 } from '@sage3/frontend';
 import { AI_ENABLED_APPS, Applications } from '@sage3/applications/apps';
 import { AppSchema } from '@sage3/applications/schema';
@@ -103,6 +104,9 @@ export function LassoToolbar(props: LassoToolbarProps) {
   const duplicate = useAppStore((state) => state.duplicateApps);
   const createApp = useAppStore((state) => state.create);
   const updateBatch = useAppStore((state) => state.updateBatch);
+
+  // Links Store
+  const addLink = useLinkStore((state) => state.addLink);
 
   // UI Store
   const lassoApps = useUIStore((state) => state.selectedAppsIds);
@@ -412,7 +416,7 @@ export function LassoToolbar(props: LassoToolbarProps) {
     });
   };
 
-  const openInChat = () => {
+  const openInChat = async () => {
     const x = boardCursor.x - 200;
     const y = boardCursor.y - 700;
     if (roomId && boardId) {
@@ -427,7 +431,14 @@ export function LassoToolbar(props: LassoToolbarProps) {
             return acc;
           }, '');
         }
-        createApp(setupApp('Chat', 'Chat', x, y, roomId, boardId, { w: 800, h: 420 }, { context: context, sources: lassoApps }));
+        const res = await createApp(setupApp('Chat', 'Chat', x, y, roomId, boardId, { w: 800, h: 420 }, { context: context }));
+        if (res.success) {
+          const targetId = res.data._id;
+          lassoApps.forEach((sourceId) => {
+            const newApp = res.data;
+            addLink(sourceId, targetId, boardId, 'provenance');
+          });
+        }
       } else {
         createApp(setupApp('Chat', 'Chat', x, y, roomId, boardId, { w: 800, h: 420 }, { sources: lassoApps }));
       }
@@ -786,9 +797,8 @@ for b in bits:
           onClose={deleteOnClose}
           onConfirm={closeSelectedApps}
           title="Delete Selected Applications"
-          message={`Are you sure you want to delete the selected ${
-            lassoApps.length > 1 ? `${lassoApps.length} applications?` : 'application?'
-          } `}
+          message={`Are you sure you want to delete the selected ${lassoApps.length > 1 ? `${lassoApps.length} applications?` : 'application?'
+            } `}
           cancelText="Cancel"
           confirmText="Delete"
           confirmColor="red"
@@ -803,7 +813,7 @@ for b in bits:
  * Packing function
  */
 
-const GrowingPacker = function () {};
+const GrowingPacker = function () { };
 
 GrowingPacker.prototype = {
   fit: function (blocks: any[]) {

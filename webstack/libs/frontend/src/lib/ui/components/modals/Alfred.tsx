@@ -337,7 +337,7 @@ export function Alfred(props: props) {
           rotation: { x: 0, y: 0, z: 0 },
           type: 'Chat',
           state: {
-            ...(initialValues['Stickie'] as AppState),
+            ...(initialValues['Chat'] as AppState),
             firstQuestion: term,
             messages: [question],
             previousQ: '',
