@@ -65,24 +65,10 @@
       "model": "gpt-3.5-turbo"
     },
     "llama": {
-      // "url": "https://arcade.evl.uic.edu/llama",
-      // "model": "llama3",
-      // "max_tokens": 2048,
-      // "apiKey": ""
       "url": "https://arcade.evl.uic.edu/llama32-11B-vision",
       "model": "meta/llama-3.2-11b-vision-instruct",
       "apiKey": "",
       "max_tokens": 1000
-    },
-    "codellama": {
-      "url": "https://arcade.evl.uic.edu/llama31_8bf",
-      "model": "meta/llama-3.1-8b-instruct",
-      "apiKey": "",
-      "max_tokens": 1000
-    },
-    "yolo": {
-      "url": "https://arcade.evl.uic.edu/yolov8",
-      "apiKey": ""
     }
   },
 
@@ -115,8 +101,7 @@
     "strategies": [
       "guest",
       "jwt",
-      "google" // "spectator" 
-      // "cilogon"
+      "google" // "spectator"       // "cilogon"
     ],
     // A List of emails to enable those users to be admins.
     "admins": [],

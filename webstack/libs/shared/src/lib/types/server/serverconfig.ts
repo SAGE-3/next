@@ -64,8 +64,6 @@ export interface ServerConfiguration {
     twilio: TwilioConfiguration;
     openai: OpenAIConfiguration;
     llama: LlamaConfiguration;
-    codellama: CodeLlamaConfiguration;
-    yolo: YoloConfiguration;
   };
 
   // Feature flags
@@ -165,16 +163,4 @@ export interface LlamaConfiguration {
   model: string; // LLM model
   apiKey: string; // API Key
   max_tokens: number;
-}
-
-export interface CodeLlamaConfiguration {
-  url: string;
-  model: string; // LLM model
-  apiKey: string;
-  max_tokens: number;
-}
-
-export interface YoloConfiguration {
-  url: string;
-  apiKey: string;
 }

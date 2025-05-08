@@ -75,16 +75,6 @@
       "model": "meta/llama-3.2-11b-vision-instruct",
       "apiKey": "",
       "max_tokens": 1000
-    },
-    "codellama": {
-      "url": "https://arcade.evl.uic.edu/llama31_8bf",
-      "model": "meta/llama-3.1-8b-instruct",
-      "apiKey": "",
-      "max_tokens": 1000
-    },
-    "yolo": {
-      "url": "https://arcade.evl.uic.edu/yolov8",
-      "apiKey": ""
     }
   },
 
