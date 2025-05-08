@@ -663,7 +663,6 @@ function AppComponent(props: App): JSX.Element {
 
   const onContentPDF = async (prompt: string) => {
     if (!user) return;
-    console.log('sources', sourceApps);
 
     const isQuestion = prompt.toUpperCase().startsWith('@S');
     const name = isQuestion ? 'SAGE' : user?.data.name;
@@ -1035,7 +1034,6 @@ function AppComponent(props: App): JSX.Element {
   };
 
   const onProsCons = async () => {
-    const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
     if (s.context) {
       // ProsCons prompt
       const ctx = `@S, Please carefully read the following document text:
