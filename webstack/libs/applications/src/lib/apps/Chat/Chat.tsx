@@ -30,7 +30,17 @@ import {
   Textarea,
   useDisclosure,
 } from '@chakra-ui/react';
-import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle, MdFileDownload, MdChat, MdSettings } from 'react-icons/md';
+import {
+  MdSend,
+  MdExpandCircleDown,
+  MdStopCircle,
+  MdChangeCircle,
+  MdFileDownload,
+  MdChat,
+  MdSettings,
+  MdOpenInNew,
+  MdOpenWith,
+} from 'react-icons/md';
 import { HiCommandLine } from 'react-icons/hi2';
 
 // Date management
@@ -61,6 +71,7 @@ import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
 
 import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot, callMesonet } from './tRPC';
+import React from 'react';
 
 const OrderedList: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => (
   <ol style={{ paddingLeft: '24px' }} {...props}>
@@ -96,6 +107,7 @@ function AppComponent(props: App): JSX.Element {
   const [sourceApps, setSouceApps] = useState<string[]>([]);
 
   const links = useLinkStore((state) => state.links);
+  const addLink = useLinkStore((state) => state.addLink);
 
   // Colors for Dark theme and light theme
   // Chat Bubble Colors
@@ -552,8 +564,8 @@ function AppComponent(props: App): JSX.Element {
       });
       return;
     }
-    if (s.sources.length > 0) {
-      const apps = useAppStore.getState().apps.filter((app) => s.sources.includes(app._id));
+    if (sourceApps && sourceApps.length >= 1) {
+      const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
       if (apps && apps[0].data.type === 'Hawaii Mesonet') {
         const url = apps[0].data.state.url;
         if (roomId && boardId) {
@@ -641,12 +653,12 @@ function AppComponent(props: App): JSX.Element {
     }
   };
 
-  const mesonetPrompts = [
-    { title: 'Summarize Mesonet Data', action: onMesonetSummary, prompt: 'Summarize key weather patterns from the Mesonet dataset.' },
-    { title: 'Find Trends', action: onMesonetTrends, prompt: 'Identify key trends in the Mesonet weather data.' },
-    { title: 'Compare Locations', action: onMesonetComparison, prompt: 'Compare weather conditions between different Mesonet stations.' },
-    { title: 'Generate Forecast Insights', action: onMesonetForecast, prompt: 'Provide insights based on past data to predict trends.' },
-    { title: 'Find Extremes', action: onMesonetExtremes, prompt: 'Find the extreme values (highest and lowest) recorded in the dataset.' },
+  const mesonetPrompts: { title: string; action: () => void; prompt: string }[] = [
+    // { title: 'Summarize Mesonet Data', action: onMesonetSummary, prompt: 'Summarize key weather patterns from the Mesonet dataset.' },
+    // { title: 'Find Trends', action: onMesonetTrends, prompt: 'Identify key trends in the Mesonet weather data.' },
+    // { title: 'Compare Locations', action: onMesonetComparison, prompt: 'Compare weather conditions between different Mesonet stations.' },
+    // { title: 'Generate Forecast Insights', action: onMesonetForecast, prompt: 'Provide insights based on past data to predict trends.' },
+    // { title: 'Find Extremes', action: onMesonetExtremes, prompt: 'Find the extreme values (highest and lowest) recorded in the dataset.' },
   ];
 
   const onContentPDF = async (prompt: string) => {
@@ -1287,7 +1299,7 @@ function AppComponent(props: App): JSX.Element {
       const pos = action.data.position;
       const state = action.state;
       // Create the app
-      createApp({
+      const res = await createApp({
         title: type,
         roomId: roomId!,
         boardId: boardId!,
@@ -1300,6 +1312,11 @@ function AppComponent(props: App): JSX.Element {
         dragging: false,
         pinned: false,
       });
+      if (res.success === true) {
+        const sourceId = props._id;
+        const targetId = res.data._id;
+        addLink(sourceId, targetId, props.data.boardId, 'provenance');
+      }
       toast({
         title: 'Info',
         description: 'Action applied.',
@@ -1307,6 +1324,7 @@ function AppComponent(props: App): JSX.Element {
         duration: 3000,
         isClosable: true,
       });
+      addLink;
     } else {
       console.log('Action> not valid');
     }
@@ -1552,33 +1570,41 @@ function AppComponent(props: App): JSX.Element {
           <Box display={'flex'} justifyContent={'left'}>
             {actions && (
               <List>
-                {actions.map((action, index) => (
-                  <Box
-                    color="black"
-                    rounded={'md'}
-                    boxShadow="md"
-                    fontFamily="Arial"
-                    textAlign={'left'}
-                    bg={textColor}
-                    p={1}
-                    m={3}
-                    // maxWidth="80%"
-                    userSelect={'none'}
-                    _hover={{ background: 'purple.300' }}
-                    background={'purple.200'}
-                    // onDoubleClick={applyAction(action)}
-                    onClick={applyAction(action)}
-                    key={'list-' + index}
-                  >
-                    <Tooltip label="Click to show result on the board" aria-label="A tooltip">
-                      <ListItem key={index}>
-                        <ListIcon as={MdSettings} color="green.500" />
-                        Show result on the board
-                        {/* Show result {index + 1} on the board: {action.type} {action.app} */}
-                      </ListItem>
-                    </Tooltip>
-                  </Box>
-                ))}
+                {actions.map((action, index) => {
+                  let propName = undefined;
+                  try {
+                    propName = action.state.widget.yAxisNames[0];
+                  } catch (e) {
+                    console.log('ChatApp Exception> No property Name found.');
+                  }
+                  return (
+                    <Box
+                      color="black"
+                      rounded={'md'}
+                      boxShadow="md"
+                      fontFamily="Arial"
+                      textAlign={'left'}
+                      bg={textColor}
+                      p={1}
+                      m={3}
+                      // maxWidth="80%"
+                      userSelect={'none'}
+                      _hover={{ background: 'purple.300' }}
+                      background={'purple.200'}
+                      // onDoubleClick={applyAction(action)}
+                      onClick={applyAction(action)}
+                      key={'list-' + index}
+                    >
+                      <Tooltip label="Click to show result on the board" aria-label="A tooltip">
+                        <ListItem key={index}>
+                          <ListIcon as={MdOpenInNew} color="white" fontWeight={'bold'} />
+                          Show {propName ? propName : ''} on the board
+                          {/* Show result {index + 1} on the board: {action.type} {action.app} */}
+                        </ListItem>
+                      </Tooltip>
+                    </Box>
+                  );
+                })}
               </List>
             )}
           </Box>
