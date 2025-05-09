@@ -6,16 +6,17 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useCallback } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
+import { Box, useColorModeValue } from '@chakra-ui/react';
 
 import { useAppStore } from '@sage3/frontend';
 
 import { App } from '../../schema';
 import { state as AppState } from './index';
-import { NewPollForm, PollView } from './components';
-import { usePollsStore } from './stores/pollStore';
 import { AppWindow } from '../../components';
-import { Box, useColorModeValue } from '@chakra-ui/react';
+import { usePollsStore } from './stores/pollStore';
+import { NewPollForm, PollView } from './components';
+
 
 /* App component for poll */
 
@@ -25,6 +26,8 @@ function AppComponent(props: App): JSX.Element {
   const pollStore = usePollsStore((state) => updateState(props._id, { poll: state }));
 
   const backgroundColor = useColorModeValue('white', 'gray.700');
+  // Scaling the app based on its width
+  const [scale, setScale] = useState(1);
 
   const handleSavePoll = useCallback(
     (question: string, options: string[]) => {
@@ -65,22 +68,31 @@ function AppComponent(props: App): JSX.Element {
     [pollStore]
   );
 
+  // Track the width of the app window and set the scale accordingly
+  useEffect(() => {
+    const w = props.data.size.width;
+    if (w < 300) setScale(0.5);
+    else setScale(w / 600);
+  }, [props.data.size.width]);
+
   return (
     <AppWindow app={props}>
-      <Box height="100%" width="100%" background={backgroundColor}>
-        {poll == null ? (
-          <NewPollForm onSave={handleSavePoll} />
-        ) : (
-          <PollView
-            _id={props._id}
-            question={poll.question}
-            options={poll.options}
-            updatePollQuestion={updatePollQuestion}
-            addNewOption={handleAddOption}
-            onUpVote={handleUpVote}
-            onDownVote={handleDownVote}
-          />
-        )}
+      <Box width="100%" height="auto" background={backgroundColor}>
+        <Box transform={`scale(${scale})`} transformOrigin={'top left'} width={`${100 / scale}%`}>
+          {poll == null ? (
+            <NewPollForm onSave={handleSavePoll} />
+          ) : (
+            <PollView
+              _id={props._id}
+              question={poll.question}
+              options={poll.options}
+              updatePollQuestion={updatePollQuestion}
+              addNewOption={handleAddOption}
+              onUpVote={handleUpVote}
+              onDownVote={handleDownVote}
+            />
+          )}
+        </Box>
       </Box>
     </AppWindow>
   );
