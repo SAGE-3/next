@@ -24,6 +24,8 @@ import {
   PDFAnswer,
   WebScreenshot,
   WebScreenshotAnswer,
+  MesonetRequest,
+  MesonetResponse,
 } from '@sage3/shared';
 
 /**
@@ -35,6 +37,7 @@ import {
 const makeRpcPost = async (mth: string, data: object) => {
   try {
     const base = apiUrls.ai.agents.base;
+    console.log(`${base}${mth}`);
     const response = await ky.post<Response>(`${base}${mth}`, { json: data, timeout: 120 * 1000 }).json();
     return response;
   } catch (e) {
@@ -71,6 +74,9 @@ const makeRpcGet = async (mth: string) => {
  */
 export const callStatus = async () => {
   return makeRpcGet(AgentRoutes.status) as Promise<HealthResponse | SError>;
+};
+export const callMesonet = async (data: MesonetRequest) => {
+  return makeRpcPost(AgentRoutes.mesonet, data) as Promise<MesonetResponse | SError>;
 };
 export const callAsk = async (data: AskRequest) => {
   return makeRpcPost(AgentRoutes.ask, data) as Promise<AskResponse | SError>;

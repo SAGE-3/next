@@ -13,11 +13,11 @@ export type Baselayer = z.infer<typeof Baselayer>;
 
 const widget = {
   visualizationType: 'map',
-  yAxisNames: ['soil_moisture_set_1'],
+  yAxisNames: ['RH_1_Min'],
   xAxisNames: ['date_time'],
   color: '#5AB2D3',
-  startDate: '202401181356',
-  endDate: '202401191356',
+  startDate: '2024-01-18T13:56:00.000Z',
+  endDate: '2024-01-19T13:56:00.000Z',
   timePeriod: '24 hours',
   liveData: true,
   layout: { x: 0, y: 0, w: 11, h: 130 },
@@ -42,13 +42,14 @@ export const schema = z.object({
   assetid: z.string().optional(),
   availableVariableNames: z.string().array(),
   stationScale: z.number(),
+  url: z.string(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   sensorData: {},
-  stationNames: ['016HI', '012HI', '014HI'],
-  listOfStationNames: '016HI',
+  stationNames: ['0501', '0502', '0503'],
+  listOfStationNames: '',
   location: [-157.816, 20.9], //lnglat
   zoom: 6,
   baseLayer: 'OpenStreetMap',
@@ -58,6 +59,7 @@ export const init: Partial<state> = {
   widget: widget,
   availableVariableNames: [],
   stationScale: 5,
+  url: '',
 };
 
 export const name = 'Hawaii Mesonet';
