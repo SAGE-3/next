@@ -69,6 +69,38 @@
       "model": "meta/llama-3.2-11b-vision-instruct",
       "apiKey": "",
       "max_tokens": 1000
+    },
+    "azure": {
+      "text": {
+        "url": "",
+        "model": "gpt-4.1-mini",
+        "api_version": "2024-12-01-preview",
+        "apiKey": ""
+      },
+      "embedding": {
+        "url": "",
+        "model": "text-embedding-3-small",
+        "api_version": "2024-12-01-preview",
+        "apiKey": ""
+      },
+      "transcription": {
+        "url": "",
+        "model": "gpt-4o-mini-transcribe",
+        "api_version": "2025-03-01-preview",
+        "apiKey": ""
+      },
+      "reasoning": {
+        "url": "",
+        "model": "o4-mini",
+        "api_version": "2024-12-01-preview",
+        "apiKey": ""
+      },
+      "vision": {
+        "url": "",
+        "model": "gpt-4.1-mini",
+        "api_version": "2024-12-01-preview",
+        "apiKey": ""
+      }
     }
   },
 
@@ -149,7 +181,6 @@
       "callbackURL": "/auth/cilogon/redirect"
     }
   },
-
 
   // Namespace for signing uuid v5 keys
   "namespace": "150e32f0-62b8-11ed-974d-1b79350be347"
