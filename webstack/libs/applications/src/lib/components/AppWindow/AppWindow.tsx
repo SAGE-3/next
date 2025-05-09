@@ -412,7 +412,7 @@ export function AppWindow(props: WindowProps) {
         scale={scale}
         borderWidth={borderWidth}
         borderColor={borderColor}
-        selectColor={props.app.data.state?.msgId ? '#F69637' : selectColor} // Orange for SageCell when running
+        selectColor={selectColor}
         borderRadius={outerBorderRadius}
         pinned={isPinned}
         background={background}
@@ -447,15 +447,15 @@ export function AppWindow(props: WindowProps) {
           sx={
             primaryActionMode === 'grab'
               ? {
-                '&:active': {
-                  cursor: 'grabbing',
-                },
-              }
+                  '&:active': {
+                    cursor: 'grabbing',
+                  },
+                }
               : {}
           }
           userSelect={'none'}
           zIndex={3}
-        // borderRadius={innerBorderRadius}
+          // borderRadius={innerBorderRadius}
         ></Box>
       )}
 

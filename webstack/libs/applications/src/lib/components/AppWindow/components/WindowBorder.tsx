@@ -6,7 +6,6 @@
  * the file LICENSE, distributed as part of this software.
  */
 import { Box } from '@chakra-ui/react';
-import { useUIStore } from '@sage3/frontend';
 
 type WindowBorderProps = {
   size: { width: number; height: number };

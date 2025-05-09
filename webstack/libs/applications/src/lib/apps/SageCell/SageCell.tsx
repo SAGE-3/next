@@ -119,7 +119,7 @@ function AppComponent(props: App): JSX.Element {
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
 
   // Store between app window and toolbar
-  const drawer = useStore((state) => state.drawer[props._id]);
+  // const drawer = useStore((state) => state.drawer[props._id]);
   const setDrawer = useStore((state) => state.setDrawer);
   const execute = useStore((state) => state.execute[props._id]);
   const executeAll = useStore((state) => state.executeAll[props._id]);
@@ -128,7 +128,7 @@ function AppComponent(props: App): JSX.Element {
   const setExecuteAll = useStore((state) => state.setExecuteAll);
   const setInterrupt = useStore((state) => state.setInterrupt);
   const setKernel = useStore((state) => state.setKernel);
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  // const { isOpen, onOpen, onClose } = useDisclosure();
 
   // Styling
   const defaultTheme = useColorModeValue('vs', 'vs-dark');
@@ -143,10 +143,10 @@ function AppComponent(props: App): JSX.Element {
   // Room and Board info
   const roomId = props.data.roomId;
   const boardId = props.data.boardId;
-  const setBoardPosition = useUIStore((state) => state.setBoardPosition);
-  const boardPosition = useUIStore((state) => state.boardPosition);
-  const scale = useThrottleScale(250);
-  const { uiToBoard } = useCursorBoardPosition();
+  // const setBoardPosition = useUIStore((state) => state.setBoardPosition);
+  // const boardPosition = useUIStore((state) => state.boardPosition);
+  // const scale = useThrottleScale(250);
+  // const { getBoardCursor } = useCursorBoardPosition();
 
   // Local state
   const [cursorPosition, setCursorPosition] = useState({ r: 0, c: 0 });
@@ -185,7 +185,7 @@ function AppComponent(props: App): JSX.Element {
   const [error, setError] = useState<{ traceback?: string[]; ename?: string; evalue?: string } | null>(null);
 
   // Drawer size: user's preference from local storage or default
-  const [drawerWidth, setDrawerWidth] = useState(localStorage.getItem('sage_preferred_drawer_width') || '50vw');
+  // const [drawerWidth, setDrawerWidth] = useState(localStorage.getItem('sage_preferred_drawer_width') || '50vw');
 
   useEffect(() => {
     // If the API Status is down, set the publicKernels to empty array
@@ -271,12 +271,12 @@ function AppComponent(props: App): JSX.Element {
    * Executes the code in the editor
    * @returns void
    */
-  const handleExecuteDrawer = async () => {
-    // Copy the drawer code to the editor
-    editorRef.current?.setValue(editorRef2.current?.getValue() || '');
-    // Execute the code
-    handleExecute();
-  };
+  // const handleExecuteDrawer = async () => {
+  //   // Copy the drawer code to the editor
+  //   editorRef.current?.setValue(editorRef2.current?.getValue() || '');
+  //   // Execute the code
+  //   handleExecute();
+  // };
 
   const handleExecute = async () => {
     const canExec = SAGE3Ability.canCurrentUser('execute', 'kernels');
@@ -811,12 +811,12 @@ function AppComponent(props: App): JSX.Element {
   const handleFontDecrease = () => {
     setFontSize((prev) => Math.max(8, prev - 2));
   };
-  const handleSaveCode = () => {
-    if (editorRef2.current) {
-      // Copy the drawer code to the editor in the board
-      editorRef.current?.setValue(editorRef2.current.getValue());
-    }
-  };
+  // const handleSaveCode = () => {
+  //   if (editorRef2.current) {
+  //     // Copy the drawer code to the editor in the board
+  //     editorRef.current?.setValue(editorRef2.current.getValue());
+  //   }
+  // };
 
   /**
    *
@@ -931,115 +931,115 @@ function AppComponent(props: App): JSX.Element {
     setDrawer(props._id, false);
   };
 
-  const handleMountDrawer: OnMount = (editor, monaco) => {
-    // set the editorRef
-    editorRef2.current = editor;
+  // const handleMountDrawer: OnMount = (editor, monaco) => {
+  //   // set the editorRef
+  //   editorRef2.current = editor;
 
-    // set the editor options
-    editor.updateOptions({ readOnly: !access || !apiStatus || !s.kernel });
-    // Default width and font size
-    const preference = localStorage.getItem('sage_preferred_drawer_width');
-    setDrawerWidth(preference || '50vw');
+  //   // set the editor options
+  //   editor.updateOptions({ readOnly: !access || !apiStatus || !s.kernel });
+  //   // Default width and font size
+  //   const preference = localStorage.getItem('sage_preferred_drawer_width');
+  //   setDrawerWidth(preference || '50vw');
 
-    // set the editor theme
-    monaco.editor.setTheme(defaultTheme);
-    // set the editor language
-    monaco.editor.setModelLanguage(editor.getModel() as editor.ITextModel, 'python');
-    // set the editor cursor position
-    editor.setPosition({ lineNumber: cursorPosition.r, column: cursorPosition.c });
-    // set the editor cursor selection
-    editor.setSelection({
-      startLineNumber: cursorPosition.r,
-      startColumn: cursorPosition.c,
-      endLineNumber: cursorPosition.r,
-      endColumn: cursorPosition.c,
-    });
-    // set the editor layout
-    editor.layout({
-      width: props.data.size.width - 60,
-      height: editorHeight && editorHeight > 150 ? editorHeight : 150,
-      minHeight: '100%',
-      minWidth: '100%',
-    } as editor.IDimension);
+  //   // set the editor theme
+  //   monaco.editor.setTheme(defaultTheme);
+  //   // set the editor language
+  //   monaco.editor.setModelLanguage(editor.getModel() as editor.ITextModel, 'python');
+  //   // set the editor cursor position
+  //   editor.setPosition({ lineNumber: cursorPosition.r, column: cursorPosition.c });
+  //   // set the editor cursor selection
+  //   editor.setSelection({
+  //     startLineNumber: cursorPosition.r,
+  //     startColumn: cursorPosition.c,
+  //     endLineNumber: cursorPosition.r,
+  //     endColumn: cursorPosition.c,
+  //   });
+  //   // set the editor layout
+  //   editor.layout({
+  //     width: props.data.size.width - 60,
+  //     height: editorHeight && editorHeight > 150 ? editorHeight : 150,
+  //     minHeight: '100%',
+  //     minWidth: '100%',
+  //   } as editor.IDimension);
 
-    editor.onDidChangeCursorPosition((e) => {
-      setCursorPosition({ r: e.position.lineNumber, c: e.position.column });
-    });
-    editor.addAction({
-      id: 'execute',
-      label: 'Cell Execute',
-      contextMenuOrder: 0,
-      contextMenuGroupId: '2_sage3',
-      keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
-      run: handleExecuteDrawer,
-    });
-    editor.addAction({
-      id: 'interrupt',
-      label: 'Cell Interrupt',
-      contextMenuOrder: 1,
-      contextMenuGroupId: '2_sage3',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI],
-      run: handleInterrupt,
-    });
-    editor.addAction({
-      id: 'syncForServer',
-      label: 'Cell Save',
-      contextMenuOrder: 2,
-      contextMenuGroupId: '2_sage3',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
-      run: handleSaveCode,
-    });
+  //   editor.onDidChangeCursorPosition((e) => {
+  //     setCursorPosition({ r: e.position.lineNumber, c: e.position.column });
+  //   });
+  //   editor.addAction({
+  //     id: 'execute',
+  //     label: 'Cell Execute',
+  //     contextMenuOrder: 0,
+  //     contextMenuGroupId: '2_sage3',
+  //     keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
+  //     run: handleExecuteDrawer,
+  //   });
+  //   editor.addAction({
+  //     id: 'interrupt',
+  //     label: 'Cell Interrupt',
+  //     contextMenuOrder: 1,
+  //     contextMenuGroupId: '2_sage3',
+  //     keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI],
+  //     run: handleInterrupt,
+  //   });
+  //   editor.addAction({
+  //     id: 'syncForServer',
+  //     label: 'Cell Save',
+  //     contextMenuOrder: 2,
+  //     contextMenuGroupId: '2_sage3',
+  //     keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
+  //     run: handleSaveCode,
+  //   });
 
-    editor.addAction({
-      id: 'setup_sage3',
-      label: 'Setup SAGE API',
-      contextMenuOrder: 0,
-      contextMenuGroupId: '3_sagecell',
-      run: handleInsertAPI,
-    });
-    editor.addAction({
-      id: 'insert_vars',
-      label: 'Insert Board Variables',
-      contextMenuOrder: 1,
-      contextMenuGroupId: '3_sagecell',
-      run: handleInsertInfo,
-    });
-    editor.addAction({
-      id: 'clear',
-      label: 'Clear Cell',
-      contextMenuOrder: 2,
-      contextMenuGroupId: '3_sagecell',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyL],
-      run: handleClear,
-    });
+  //   editor.addAction({
+  //     id: 'setup_sage3',
+  //     label: 'Setup SAGE API',
+  //     contextMenuOrder: 0,
+  //     contextMenuGroupId: '3_sagecell',
+  //     run: handleInsertAPI,
+  //   });
+  //   editor.addAction({
+  //     id: 'insert_vars',
+  //     label: 'Insert Board Variables',
+  //     contextMenuOrder: 1,
+  //     contextMenuGroupId: '3_sagecell',
+  //     run: handleInsertInfo,
+  //   });
+  //   editor.addAction({
+  //     id: 'clear',
+  //     label: 'Clear Cell',
+  //     contextMenuOrder: 2,
+  //     contextMenuGroupId: '3_sagecell',
+  //     keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyL],
+  //     run: handleClear,
+  //   });
 
-    editor.addAction({
-      id: 'increaseFontSize',
-      label: 'Increase Font Size',
-      contextMenuOrder: 0,
-      contextMenuGroupId: '4_font',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Equal],
-      run: handleFontIncrease,
-    });
-    editor.addAction({
-      id: 'decreaseFontSize',
-      label: 'Decrease Font Size',
-      contextMenuOrder: 1,
-      contextMenuGroupId: '4_font',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Minus],
-      run: handleFontDecrease,
-    });
+  //   editor.addAction({
+  //     id: 'increaseFontSize',
+  //     label: 'Increase Font Size',
+  //     contextMenuOrder: 0,
+  //     contextMenuGroupId: '4_font',
+  //     keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Equal],
+  //     run: handleFontIncrease,
+  //   });
+  //   editor.addAction({
+  //     id: 'decreaseFontSize',
+  //     label: 'Decrease Font Size',
+  //     contextMenuOrder: 1,
+  //     contextMenuGroupId: '4_font',
+  //     keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Minus],
+  //     run: handleFontDecrease,
+  //   });
 
-    // Update database on key up
-    editor.onKeyUp((e) => {
-      if (e.code === 'Escape') {
-        // Deselect the app
-        setSelectedApp('');
-        closingDrawer();
-        return;
-      }
-    });
-  };
+  //   // Update database on key up
+  //   editor.onKeyUp((e) => {
+  //     if (e.code === 'Escape') {
+  //       // Deselect the app
+  //       setSelectedApp('');
+  //       closingDrawer();
+  //       return;
+  //     }
+  //   });
+  // };
 
   /**
    * Put the kernel in the store, read from the action in Monaco
@@ -1062,73 +1062,73 @@ function AppComponent(props: App): JSX.Element {
     });
   }, [s.fontSize]);
 
-  useEffect(() => {
-    if (drawer) {
-      onOpen();
-      // If the right side of the app is beyond the center of the board, move the board
-      const xw = props.data.position.x + props.data.size.width;
-      let position = 1;
-      if (drawerWidth === '25vw') {
-        position = (3 * innerWidth) / 4;
-      } else if (drawerWidth === '50vw') {
-        position = innerWidth / 2;
-      } else if (drawerWidth === '75vw') {
-        position = innerWidth / 4;
-      }
-      const center = uiToBoard(position, innerHeight);
-      if (xw > center.x) {
-        const offset = xw - center.x + 10 / scale;
-        setBoardPosition({ x: boardPosition.x - offset, y: boardPosition.y });
-      }
-    }
-  }, [drawer]);
+  // useEffect(() => {
+  //   if (drawer) {
+  //     onOpen();
+  //     // If the right side of the app is beyond the center of the board, move the board
+  //     const xw = props.data.position.x + props.data.size.width;
+  //     let position = 1;
+  //     if (drawerWidth === '25vw') {
+  //       position = (3 * innerWidth) / 4;
+  //     } else if (drawerWidth === '50vw') {
+  //       position = innerWidth / 2;
+  //     } else if (drawerWidth === '75vw') {
+  //       position = innerWidth / 4;
+  //     }
+  //     const center = uiToBoard(position, innerHeight);
+  //     if (xw > center.x) {
+  //       const offset = xw - center.x + 10 / scale;
+  //       setBoardPosition({ x: boardPosition.x - offset, y: boardPosition.y });
+  //     }
+  //   }
+  // }, [drawer]);
 
-  const closingDrawer = () => {
-    setDrawer(props._id, false);
-    if (editorRef2.current) {
-      // Copy the drawer code to the editor in the board
-      editorRef.current?.setValue(editorRef2.current.getValue());
-    }
-    onClose();
-  };
+  // const closingDrawer = () => {
+  //   setDrawer(props._id, false);
+  //   if (editorRef2.current) {
+  //     // Copy the drawer code to the editor in the board
+  //     editorRef.current?.setValue(editorRef2.current.getValue());
+  //   }
+  //   onClose();
+  // };
 
-  const drawerEditor = (
-    <Editor
-      defaultValue={editorRef.current?.getValue()}
-      loading={<Spinner />}
-      options={canExecuteCode ? { ...monacoOptionsDrawer } : { ...monacoOptionsDrawer, readOnly: true }}
-      onMount={handleMountDrawer}
-      height={'100%'}
-      width={'100%'}
-      theme={defaultTheme}
-      language={s.language}
-    />
-  );
+  // const drawerEditor = (
+  //   <Editor
+  //     defaultValue={editorRef.current?.getValue()}
+  //     loading={<Spinner />}
+  //     options={canExecuteCode ? { ...monacoOptionsDrawer } : { ...monacoOptionsDrawer, readOnly: true }}
+  //     onMount={handleMountDrawer}
+  //     height={'100%'}
+  //     width={'100%'}
+  //     theme={defaultTheme}
+  //     language={s.language}
+  //   />
+  // );
 
-  const make25W = () => {
-    setDrawerWidth('25vw');
-    // save the value in local storage, user's preference
-    localStorage.setItem('sage_preferred_drawer_width', '25vw');
-    const base = 6;
-    const newFontsize = Math.round(Math.min(1.2 * base + (0.25 * innerWidth) / 100, 3 * base));
-    if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
-  };
-  const make50W = () => {
-    setDrawerWidth('50vw');
-    // save the value in local storage, user's preference
-    localStorage.setItem('sage_preferred_drawer_width', '50vw');
-    const base = 6;
-    const newFontsize = Math.round(Math.min(1.2 * base + (0.5 * innerWidth) / 100, 3 * base));
-    if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
-  };
-  const make75W = () => {
-    setDrawerWidth('75vw');
-    // save the value in local storage, user's preference
-    localStorage.setItem('sage_preferred_drawer_width', '75vw');
-    const base = 6;
-    const newFontsize = Math.round(Math.min(1.2 * base + (0.75 * innerWidth) / 100, 3 * base));
-    if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
-  };
+  // const make25W = () => {
+  //   setDrawerWidth('25vw');
+  //   // save the value in local storage, user's preference
+  //   localStorage.setItem('sage_preferred_drawer_width', '25vw');
+  //   const base = 6;
+  //   const newFontsize = Math.round(Math.min(1.2 * base + (0.25 * innerWidth) / 100, 3 * base));
+  //   if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
+  // };
+  // const make50W = () => {
+  //   setDrawerWidth('50vw');
+  //   // save the value in local storage, user's preference
+  //   localStorage.setItem('sage_preferred_drawer_width', '50vw');
+  //   const base = 6;
+  //   const newFontsize = Math.round(Math.min(1.2 * base + (0.5 * innerWidth) / 100, 3 * base));
+  //   if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
+  // };
+  // const make75W = () => {
+  //   setDrawerWidth('75vw');
+  //   // save the value in local storage, user's preference
+  //   localStorage.setItem('sage_preferred_drawer_width', '75vw');
+  //   const base = 6;
+  //   const newFontsize = Math.round(Math.min(1.2 * base + (0.75 * innerWidth) / 100, 3 * base));
+  //   if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
+  // };
 
   // Start dragging
   function OnDragOver(event: React.DragEvent<HTMLDivElement>) {
@@ -1154,7 +1154,7 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props} hideBackgroundIcon={FaPython}>
       <>
-        <Drawer placement="right" variant="code" isOpen={isOpen} onClose={closingDrawer} closeOnOverlayClick={true}>
+        {/* <Drawer placement="right" variant="code" isOpen={isOpen} onClose={closingDrawer} closeOnOverlayClick={true}>
           <DrawerContent maxW={drawerWidth}>
             <DrawerCloseButton />
             <DrawerHeader p={1} m={1}>
@@ -1190,7 +1190,7 @@ function AppComponent(props: App): JSX.Element {
               </Box>
             </DrawerBody>
           </DrawerContent>
-        </Drawer>
+        </Drawer> */}
 
         <Box className="sc" h={'calc(100% - 1px)'} w={'100%'} display="flex" flexDirection="column" backgroundColor={bgColor}>
           <StatusBar kernelName={selectedKernelName} access={access} online={apiStatus} rank={props.data.state.rank} />

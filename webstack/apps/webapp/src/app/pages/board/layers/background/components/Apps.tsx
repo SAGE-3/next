@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useParams } from 'react-router';
 import { throttle } from 'throttle-debounce';
@@ -56,7 +56,7 @@ export function Apps() {
   const boardSynced = useUIStore((state) => state.boardSynced);
 
   // Cursor Position
-  const { boardCursor } = useCursorBoardPosition();
+  const { getBoardCursor } = useCursorBoardPosition();
 
   // Display some notifications
   const toast = useToast();
@@ -78,9 +78,13 @@ export function Apps() {
   useHotkeys(
     'ctrl+d,cmd+d',
     (evt) => {
+      const boardCursor = getBoardCursor();
       if (lassoApps.length > 0) {
         // filter out the pinned apps
-        const tobedeleted = apps.filter((el) => lassoApps.includes(el._id)).filter((el) => !el.data.pinned).map((el) => el._id);
+        const tobedeleted = apps
+          .filter((el) => lassoApps.includes(el._id))
+          .filter((el) => !el.data.pinned)
+          .map((el) => el._id);
         // If there are selected apps, delete them
         deleteApp(tobedeleted);
         setSelectedApps([]);
@@ -128,6 +132,7 @@ export function Apps() {
     (evt) => {
       evt.preventDefault();
       evt.stopPropagation();
+      const boardCursor = getBoardCursor();
       if (boardCursor && apps.length > 0) {
         const cx = boardCursor.x;
         const cy = boardCursor.y;
@@ -179,7 +184,7 @@ export function Apps() {
             });
           if (!found) {
             // No app under the cursor - clear the clipboard
-            navigator.clipboard.writeText("");
+            navigator.clipboard.writeText('');
           }
         }
       }
@@ -245,6 +250,8 @@ export function Apps() {
   useHotkeys(
     'v',
     (evt) => {
+      const boardCursor = getBoardCursor();
+
       if (boardSynced) {
         evt.preventDefault();
         evt.stopPropagation();
@@ -265,6 +272,8 @@ export function Apps() {
   useHotkeys(
     'z',
     (evt) => {
+      const boardCursor = getBoardCursor();
+
       if (boardCursor && apps.length > 0 && !appDragging) {
         const cx = boardCursor.x;
         const cy = boardCursor.y;
@@ -311,14 +320,10 @@ export function Apps() {
     }
   );
 
-  return (
-    <>
-      {/* Apps array */}
-      {apps.map((app) => {
-        return <AppRenderMemo key={app._id} app={app} />;
-      })}
-    </>
-  );
+  // only re-compute this when `apps` changes
+  const appElements = useMemo(() => apps.map((app) => <AppRenderMemo key={app._id} app={app} />), [apps]);
+
+  return <>{appElements}</>;
 }
 
 function AppRender(props: { app: App }) {
