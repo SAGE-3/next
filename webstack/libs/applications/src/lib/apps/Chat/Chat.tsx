@@ -48,7 +48,6 @@ import {
   serverTime,
   downloadFile,
   useUsersStore,
-  AiAPI,
   useUserSettings,
   useUIStore,
   EditUserSettingsModal,
@@ -119,7 +118,6 @@ function AppComponent(props: App): JSX.Element {
   // Get presences of users
   const users = useUsersStore((state) => state.users);
   // Model Preferences
-  const [onlineModels, setOnlineModels] = useState<modelInfo[]>([]);
   const { settings } = useUserSettings();
   const [selectedModel, setSelectedModel] = useState(settings.aiModel);
 
@@ -1104,13 +1102,6 @@ function AppComponent(props: App): JSX.Element {
   };
 
   useEffect(() => {
-    async function fetchStatus() {
-      const response = await AiAPI.chat.status();
-      const models = response.onlineModels as modelInfo[];
-      setOnlineModels(models);
-    }
-    fetchStatus();
-
     // Scroll to bottom of chat box immediately
     chatBox.current?.scrollTo({
       top: chatBox.current?.scrollHeight,
@@ -1132,12 +1123,9 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     if (settings.aiModel) {
-      const model = onlineModels.find((m) => m.name === settings.aiModel);
-      if (model) {
-        setSelectedModel(model.name as 'openai' | 'llama');
-      }
+      setSelectedModel(settings.aiModel);
     }
-  }, [settings.aiModel, onlineModels]);
+  }, [settings.aiModel]);
 
   // Wait for new messages to scroll to the bottom
   useEffect(() => {

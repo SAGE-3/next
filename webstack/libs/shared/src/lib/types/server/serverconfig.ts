@@ -64,6 +64,7 @@ export interface ServerConfiguration {
     twilio: TwilioConfiguration;
     openai: OpenAIConfiguration;
     llama: LlamaConfiguration;
+    azure: AzureConfig;
   };
 
   // Feature flags
@@ -97,6 +98,7 @@ export type OpenConfiguration = Pick<
   features: ServerConfiguration['features'];
   openai: ServerConfiguration['services']['openai'];
   llama: ServerConfiguration['services']['llama'];
+  azure: ServerConfiguration['services']['azure'];
 };
 
 /**
@@ -164,3 +166,19 @@ export interface LlamaConfiguration {
   apiKey: string; // API Key
   max_tokens: number;
 }
+
+// Azure Configuration
+export type AzureServiceConfig = {
+  url: string;
+  model: string;
+  apiKey: string;
+  api_version: string;
+};
+
+export type AzureConfig = {
+  text: AzureServiceConfig;
+  embedding: AzureServiceConfig;
+  transcription: AzureServiceConfig;
+  reasoning: AzureServiceConfig;
+  vision: AzureServiceConfig;
+};
