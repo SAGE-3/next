@@ -155,7 +155,7 @@ class MesonetAgent:
             )
             self.client = openai_client.OpenAI(
                 base_url="https://api.openai.com/v1",
-                api_key=["apiKey"]
+                api_key=openai["apiKey"]
             )
         # Templates
         sys_template_str = """Today is {date}. 
