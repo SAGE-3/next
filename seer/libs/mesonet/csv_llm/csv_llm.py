@@ -432,8 +432,6 @@ Take a deep breath, think it through, assume you are the user and imagine their 
         """
         return self.__base_prompt_with_self_reflection__(user_prompt, system,
             messages=self.__message_builder__(system, user_prompt),  filter_method=self.__results_filter__)
-
-    
         
     def prompt_select_dates(self, user_prompt, current_time):
         dt = dateutil.parser.parse(current_time)
@@ -454,37 +452,9 @@ Take a deep breath, think it through, assume you are the user and imagine their 
         return self.__base_prompt_with_self_reflection__(user_prompt, system,
             messages=self.__message_builder__(system, user_prompt), filter_method=self.__results_filter_dates__)
         
-    def prompt_summarize_reasoning(self, user_prompt, attribute_reasoning, station_reasoning, station_data_columns, manually_test_df):
+    def prompt_generate_data_analysis_code(self, user_prompt, attribute_reasoning, station_reasoning, station_data_columns, manually_test_df):
         # test that it can write code and showcase the code at the bottom, tell it that it is passed a pandas dataframe, 
-        # system = f""" You are an expert summarizer.
-        # You have just created chart(s) for the user based on a prompt.
-        # Here is the user's prompt: {user_prompt}
-        
-        # Here is some information on the decisions that you have made when creating this chart.
-        
-        # Choosing the attributes:
-        # {attribute_reasoning}
-       
-        # Choosing the stations:
-        # {station_reasoning}
 
-        # You will be provided with a python dataframe containing all the variables needed to answer the user query. You are an expert at coding and statistical analysis.
-        # The python dataframe name is "station_data".
-        # Each attribute in the dataframe will be found under the column "variable", and it's value will be under the column "value". All values within the dataframe are considered Dtype "object".
-        # Given the python dataframe "station_data", write a python script that will answer the user's prompt in the ``` ``` section. 
-        # Do not write more information than is necessary.
-
-        # ``` 
-        
-        # ```
-        
-        # """
-                
-
-        # add in all comun datatypes
-        # say to print the statement
-        # ask gpt what details I can provide it for it to create code that works
-        # test to send a dataframe with summary = df.summary() and see if it would work better
         system = f"""
         You are an expert climate data analyst and summarizer.
         You have just created chart(s) for the user based on their prompt. Your role is to analyze climate conditions using Hawaii-based atmospheric data.
@@ -569,30 +539,3 @@ Take a deep breath, think it through, assume you are the user and imagine their 
         
         print(system)
         return self.__base_prompt__(user_prompt, system)
-    
-    # def prompt_summarize_reasoning(self, user_prompt, attribute_reasoning, station_reasoning, station_data):
-    #     # test that it can write code and showcase the code at the bottom, tell it that it is passed a pandas dataframe, 
-        
-    #     system = f""" You are an expert summarizer.
-    #     You have just created chart(s) for the user based on a prompt.
-    #     Here is the user's prompt: {user_prompt}
-        
-    #     Here is some information on the decisions that you have made when creating this chart.
-        
-    #     Choosing the attributes:
-    #     {attribute_reasoning}
-       
-    #     Choosing the stations:
-    #     {station_reasoning}
-
-    #     Here is the data that you used to create the chart:
-    #     {station_data}
-        
-    #     You now need to respond back to the user. 
-    #     Say two or three senteces that you think will help the user.
-        
-    #     Do not write more information than is necessary.
-        
-    #     """
-    #     print(system)
-    #     return self.__base_prompt__(user_prompt, system)

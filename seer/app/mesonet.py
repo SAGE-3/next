@@ -150,7 +150,6 @@ class MesonetAgent:
                 # max_tokens=1000,
                 streaming=False,
             )
-
         
         # Templates
         sys_template_str = """Today is {date}. 
@@ -317,7 +316,7 @@ class MesonetAgent:
                     print(f"Request error on attempt {attempt+1}: {e}")
             return None  # all retries failed
 
-        def get_answer_with_reasoning(state: GraphState):
+        def generate_data_analysis_code(state: GraphState):
             # get the extracted stations and their associated island names and lon and lattitudes
             
             # TOOD move to the top of the file
@@ -336,10 +335,9 @@ class MesonetAgent:
                 station_data['station_id'] = station_data['station_id'].astype("string")
                 station_data['variable'] = station_data['variable'].astype("string")
                 station_data['value'] = station_data['value'].astype(float)
-                # summary, summary_reasoning = state["llm_re"].prompt_summarize_reasoning(state["request"].q, state["attribute_reasoning"], state["station_reasoning"], res.text)
                 print(f'json data: {res.text}')
-                summary, summary_reasoning = state["llm_re"].prompt_summarize_reasoning(user_prompt, state["attribute_reasoning"], state["station_reasoning"], station_data.columns.to_list(), res.text)
-                print(summary)
+                model_response, summary_reasoning = state["llm_re"].prompt_generate_data_analysis_code(user_prompt, state["attribute_reasoning"], state["station_reasoning"], station_data.columns.to_list(), res.text)
+                print(model_response)
             
                 # code_improvements, _ = state["llm_re"].prompt_review_code(user_prompt, summary)
                 # print(code_improvements)
@@ -350,31 +348,29 @@ class MesonetAgent:
                     # Capture output
                     output_buffer = io.StringIO()
                     error_buffer = io.StringIO()
-                    summary = summary.replace('python', '')
-                    code = summary[summary.index("```")+3: summary.rindex("```")]
+                    code_block = model_response.replace('python', '')
+                    code = code_block[code_block.index("```")+3: code_block.rindex("```")]
                     with contextlib.redirect_stdout(output_buffer):  # Redirect stdout
                         exec(code)  # Execute the generated code
 
                     # Get captured output as a string
                     exec_output = output_buffer.getvalue()
 
-                    summary, _ = state["llm_re"].prompt_exec_output_response(user_prompt, exec_output)
+                    code_output_model_summary, _ = state["llm_re"].prompt_exec_output_response(user_prompt, exec_output)
                 except Exception as e:
                     error_buffer.write(str(e))
-                    summary = "CODE ERRORED OUT"
+                    code_output_model_summary = "CODE ERRORED OUT"
                     print(error_buffer.getvalue())
-                print(summary)
+                print(code_output_model_summary)
             else:
-                summary = 'REQUEST FAILED'
-            return {"measurements": res.text, "summary": summary}
-        
-        # def get_answer_with_reasoning(state: GraphState):
-        #     url = f"https://api.hcdp.ikewai.org/mesonet/db/measurements?station_ids={','.join(state['stations_extracted'])}&var_ids={','.join(state['attributes_extracted'])}&limit=100"
-        #     print(url)
-        #     res = requests.get(url, headers={"Authorization": f"Bearer {token}"})
-        #     summary, summary_reasoning = state["llm_re"].prompt_summarize_reasoning(state["request"].q, state["attribute_reasoning"], state["station_reasoning"], res.text)
-        #     print(summary)
-        #     return {"measurements": res.text, "summary": summary}
+                code_output_model_summary = 'REQUEST FAILED'
+            
+            # Provides answer to user query and explanation to generated visualization - needs to improve so that the explanation between vis and generated code are more seamless or are separte responses
+            code_output_model_summary = f'{code_output_model_summary}'
+            
+
+            print(code_output_model_summary)
+            return {"measurements": res.text, "summary": code_output_model_summary}
 
 
         # # Define nodes
@@ -402,7 +398,7 @@ class MesonetAgent:
         workflow.add_node("extract_attributes", extract_attributes)
         workflow.add_node("extract_chart_type", extract_chart_type)
         # workflow.add_node("extract_date", extract_date)
-        workflow.add_node("get_answer_with_reasoning", get_answer_with_reasoning)
+        workflow.add_node("generate_data_analysis_code", generate_data_analysis_code)
         # workflow.add_node("load_data", load_data)
         # workflow.add_node("process_prompt", process_prompt)
 
@@ -412,9 +408,9 @@ class MesonetAgent:
         workflow.add_edge("extract_stations", "get_station_attributes")
         workflow.add_edge("get_station_attributes", "extract_attributes")
         workflow.add_edge("extract_attributes", "extract_chart_type")
-        workflow.add_edge("extract_chart_type", "get_answer_with_reasoning")
+        workflow.add_edge("extract_chart_type", "generate_data_analysis_code")
         # workflow.add_edge("extract_date", "get_answer_with_reasoning")
-        workflow.add_edge("get_answer_with_reasoning", END)
+        workflow.add_edge("generate_data_analysis_code", END)
         # workflow.add_edge("load_data", "process_prompt")
         # workflow.add_edge("process_prompt", END)
 
