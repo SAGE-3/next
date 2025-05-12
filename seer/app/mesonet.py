@@ -336,24 +336,24 @@ class MesonetAgent:
                 station_data['variable'] = station_data['variable'].astype("string")
                 station_data['value'] = station_data['value'].astype(float)
                 print(f'json data: {res.text}')
-                model_response, summary_reasoning = state["llm_re"].prompt_generate_data_analysis_code(user_prompt, state["attribute_reasoning"], state["station_reasoning"], station_data.columns.to_list(), res.text)
+                model_response, model_reasoning = state["llm_re"].prompt_generate_data_analysis_code(user_prompt, state["attribute_reasoning"], state["station_reasoning"], station_data.columns.to_list(), res.text)
                 print(model_response)
-            
-                # code_improvements, _ = state["llm_re"].prompt_review_code(user_prompt, summary)
+
+                # code_improvements, _ = state["llm_re"].prompt_review_code(user_prompt, model_response)
                 # print(code_improvements)
-                # code, _ = state["llm_re"].prompt_improve_code(user_prompt, code_improvements, summary)
+                # code, _ = state["llm_re"].prompt_improve_code(user_prompt, code_improvements, model_response)
                 # print(code)
 
                 try:
-                    # Capture output
+                    # captures output
                     output_buffer = io.StringIO()
                     error_buffer = io.StringIO()
                     code_block = model_response.replace('python', '')
                     code = code_block[code_block.index("```")+3: code_block.rindex("```")]
                     with contextlib.redirect_stdout(output_buffer):  # Redirect stdout
-                        exec(code)  # Execute the generated code
+                        exec(code)  # runs generated code
 
-                    # Get captured output as a string
+                    # retrieves string from captured output
                     exec_output = output_buffer.getvalue()
 
                     code_output_model_summary, _ = state["llm_re"].prompt_exec_output_response(user_prompt, exec_output)
@@ -365,10 +365,6 @@ class MesonetAgent:
             else:
                 code_output_model_summary = 'REQUEST FAILED'
             
-            # Provides answer to user query and explanation to generated visualization - needs to improve so that the explanation between vis and generated code are more seamless or are separte responses
-            code_output_model_summary = f'{code_output_model_summary}'
-            
-
             print(code_output_model_summary)
             return {"measurements": res.text, "summary": code_output_model_summary}
 
