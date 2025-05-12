@@ -254,9 +254,12 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
             </TabPanels>
           </Tabs>
         </ModalBody>
-        <ModalFooter display="flex" justifyContent={'left'}>
-          <Button colorScheme="teal" size="sm" width="100%" onClick={restoreDefaultSettings} ref={initialRef}>
+        <ModalFooter display="flex" justifyContent={'space-between'}>
+          <Button colorScheme="teal" size="sm" onClick={restoreDefaultSettings}>
             Restore Default Settings
+          </Button>
+          <Button colorScheme="green" size="sm" width="80px" onClick={props.onClose} ref={initialRef}>
+            OK
           </Button>
         </ModalFooter>
       </ModalContent>
