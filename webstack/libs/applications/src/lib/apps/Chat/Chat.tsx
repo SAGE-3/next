@@ -71,6 +71,7 @@ import { AppWindow } from '../../components';
 import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot, callMesonet } from './tRPC';
 import React from 'react';
 
+// Override the default markdown options for lists
 const OrderedList: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => (
   <ol style={{ paddingLeft: '24px' }} {...props}>
     {children}
@@ -428,7 +429,7 @@ function AppComponent(props: App): JSX.Element {
         ${newctx}
         </document>
         After reading through the document, identify the main topics, themes, and key concepts that are covered.
-        Provide all your answers in a few sentences using the Markdown syntax`;
+        Provide all your answers in a few sentences.`;
       newMessage(ctx);
       setInput('');
     }
@@ -941,9 +942,9 @@ function AppComponent(props: App): JSX.Element {
     {
       title: 'Generate Keywords',
       action: onContentWeb,
-      prompt: 'Extract 3-5 keywords that best capture the essence and subject matter of the text.',
+      prompt: 'Return a list of 3-5 keywords that best capture the essence and subject matter of the text.',
     },
-    { title: 'Find Facts', action: onContentWeb, prompt: 'Provide two or three interesting facts from the text.' },
+    { title: 'Find Facts', action: onContentWeb, prompt: 'Provide a list of two or three interesting facts from the text.' },
     { title: 'Screenshot', action: onContentWebScreenshot, prompt: 'Take a screenshot' },
   ];
 
@@ -1038,7 +1039,7 @@ function AppComponent(props: App): JSX.Element {
         ${s.context}
         </document>
         After reading through the document, identify the pros and cons.
-        Provide all your answers in a few sentences using the Markdown syntax`;
+        Provide all your answers in a few sentences.`;
       newMessage(ctx);
       setInput('');
     }
@@ -1051,7 +1052,7 @@ function AppComponent(props: App): JSX.Element {
         ${s.context}
         </document>
         Extract 3-5 keywords that best capture the essence and subject matter of the document. These keywords should concisely represent the most important and central ideas conveyed by the text.
-        Provide all your answers using a list in Markdown syntax`;
+        Provide all your answers using a list.`;
       newMessage(ctx);
       setInput('');
     }
@@ -1063,7 +1064,7 @@ function AppComponent(props: App): JSX.Element {
         <document>
         ${s.context}
         </document>
-        Provide a short opinion on the document using the Markdown syntax`;
+        Provide a short opinion on the document.`;
       newMessage(ctx);
       setInput('');
     }
@@ -1075,7 +1076,7 @@ function AppComponent(props: App): JSX.Element {
         <document>
         ${s.context}
         </document>
-        Provide two or three interesting facts from the document, using a list in Markdown syntax`;
+        List two or three interesting facts from the document.`;
       newMessage(ctx);
       setInput('');
     }
@@ -1497,6 +1498,7 @@ function AppComponent(props: App): JSX.Element {
                               );
                             }}
                           >
+
                             <Box>
                               <Markdown
                                 options={{
@@ -1514,6 +1516,7 @@ function AppComponent(props: App): JSX.Element {
                                 {message.response}
                               </Markdown>
                             </Box>
+
                           </Box>
                         </Box>
                       </Tooltip>
@@ -1560,7 +1563,7 @@ function AppComponent(props: App): JSX.Element {
                   try {
                     propName = action.state.widget.yAxisNames[0];
                   } catch (e) {
-                    console.log('ChatApp Exception> No property Name found.');
+                    // console.log('ChatApp Exception> No property Name found.');
                   }
                   return (
                     <Box
@@ -1572,11 +1575,9 @@ function AppComponent(props: App): JSX.Element {
                       bg={textColor}
                       p={1}
                       m={3}
-                      // maxWidth="80%"
                       userSelect={'none'}
                       _hover={{ background: 'purple.300' }}
                       background={'purple.200'}
-                      // onDoubleClick={applyAction(action)}
                       onClick={applyAction(action)}
                       key={'list-' + index}
                     >
@@ -1584,7 +1585,6 @@ function AppComponent(props: App): JSX.Element {
                         <ListItem key={index}>
                           <ListIcon as={MdOpenInNew} color="white" fontWeight={'bold'} />
                           Show {propName ? propName : ''} on the board
-                          {/* Show result {index + 1} on the board: {action.type} {action.app} */}
                         </ListItem>
                       </Tooltip>
                     </Box>
