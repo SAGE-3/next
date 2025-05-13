@@ -88,8 +88,16 @@ class ChatAgent:
             )
 
         # Templates
-        sys_template_str = "Today is {date}. You are a helpful and succinct assistant, providing informative answers to {username} (whose location is {location})."
-        human_template_str = "Answer: {question}"
+        sys_template_str = """Today is {date}. You are a helpful and succinct assistant, providing informative answers to {username} (whose location is {location}).
+        Always format your responses using valid Markdown syntax. Use appropriate elements like:
+        •	# for headings
+      	•	**bold** or _italic_ for emphasis
+      	•	`inline code` and code blocks (...) for code
+      	•	Bullet lists, numbered lists, and links as needed
+        If you include code, always wrap it in fenced code blocks with the correct language tag (e.g., ```python). Default to Python if no language is specified. If asked to create plots, please use Matplotlib. .
+        If you don't know the answer, say "I don't know" and suggest to search the web."""
+
+        human_template_str = "{question}"
 
         # For OpenAI / Message API compatible models
         prompt = ChatPromptTemplate.from_messages(
