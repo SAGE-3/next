@@ -154,6 +154,10 @@ class MesonetAgent:
                 # max_tokens=1000,
                 streaming=False,
             )
+            self.client = openai_client.OpenAI(
+                base_url="https://api.openai.com/v1",
+                api_key=openai["apiKey"]
+            )
         # Templates
         sys_template_str = """Today is {date}. 
         You are a helpful and succinct assistant, providing informative answers to {username}. 

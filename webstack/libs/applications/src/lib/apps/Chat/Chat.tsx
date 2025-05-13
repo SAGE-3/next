@@ -39,7 +39,6 @@ import {
   MdChat,
   MdSettings,
   MdOpenInNew,
-  MdOpenWith,
 } from 'react-icons/md';
 import { HiCommandLine } from 'react-icons/hi2';
 
