@@ -34,7 +34,7 @@ type UserSettings = {
   showTags: boolean;
   selectedBoardListView: 'grid' | 'list';
   primaryActionMode: 'lasso' | 'grab' | 'pen' | 'eraser' | 'linker';
-  aiModel: 'llama' | 'openai';
+  aiModel: 'llama' | 'openai' | 'azure';
   uiScale: 'xs' | 's' | 'md' | 'lg' | 'xl';
 };
 

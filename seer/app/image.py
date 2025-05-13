@@ -26,7 +26,7 @@ from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplat
 from langchain_core.messages import HumanMessage, SystemMessage, BaseMessage
 
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
-from langchain_openai import ChatOpenAI
+from langchain_openai import ChatOpenAI, AzureChatOpenAI
 
 # Typing for RPC
 from libs.localtypes import ImageQuery, ImageAnswer
@@ -34,6 +34,15 @@ from libs.utils import getModelsInfo, getImageFile, scaleImage, isURL, isDataURL
 
 # Downsized image size for processing by LLMs
 ImageSize = 600
+
+sys_template_str = """You are a helpful and succinct assistant, providing informative answers.
+  Always format your responses using valid Markdown syntax. Use appropriate elements like:
+  •	# for headings
+  •	**bold** or _italic_ for emphasis
+  •	`inline code` and code blocks (...) for code
+  •	Bullet lists, numbered lists, and links as needed
+  If you include code, always wrap it in fenced code blocks with the correct language tag (e.g., ```python). Default to Python if no language is specified. If asked to create plots, please use Matplotlib. .
+  If you don't know the answer, say "I don't know" and suggest to search the web."""
 
 
 class ImageAgent:
@@ -48,6 +57,7 @@ class ImageAgent:
         models = getModelsInfo(ps3)
         llama = models["llama"]
         openai = models["openai"]
+        azure = models["azure"]
         # Llama model
         self.server = llama["url"]
         self.model = llama["model"]
@@ -68,6 +78,21 @@ class ImageAgent:
                 model=openai["model"],
                 # max_tokens=1000,
                 streaming=False,
+            )
+
+        # Azure OpenAI model
+        if azure["vision"]["apiKey"] and azure["vision"]["model"]:
+            model = azure["vision"]["model"]
+            endpoint = azure["vision"]["url"]
+            credential = azure["vision"]["apiKey"]
+            api_version = azure["vision"]["api_version"]
+
+            self.llm_azure = AzureChatOpenAI(
+                azure_deployment=model,
+                api_version=api_version,
+                azure_endpoint=endpoint,
+                azure_ad_token=credential,
+                model=model,
             )
 
     async def process(self, qq: ImageQuery):
@@ -95,10 +120,7 @@ class ImageAgent:
                 data = {
                     "model": self.model,
                     "messages": [
-                        {
-                            "role": "assistant",
-                            "content": "You are a helpful assistant, providing detailed  answers to the user, using the Markdown format.",
-                        },
+                        {"role": "assistant", "content": sys_template_str},
                         {
                             "role": "user",
                             "content": [
@@ -120,11 +142,7 @@ class ImageAgent:
                     description = response.json()["choices"][0]["message"]["content"]
             elif qq.model == "openai":
                 messages: List[BaseMessage] = []
-                messages.append(
-                    SystemMessage(
-                        content="You are a helpful assistant, providing detailed  answers to the user, using the Markdown format."
-                    )
-                )
+                messages.append(SystemMessage(content=sys_template_str))
                 messages.append(
                     HumanMessage(
                         content=[
@@ -139,6 +157,24 @@ class ImageAgent:
                     )
                 )
                 response = await self.llm_openai.ainvoke(messages)
+                description = str(response.content)
+            elif qq.model == "azure":
+                messages: List[BaseMessage] = []
+                messages.append(SystemMessage(content=sys_template_str))
+                messages.append(
+                    HumanMessage(
+                        content=[
+                            {"type": "text", "text": qq.q},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/png;base64,{image_base64}"
+                                },
+                            },
+                        ]
+                    )
+                )
+                response = await self.llm_azure.ainvoke(messages)
                 description = str(response.content)
         else:
             description = "Failed to get image."
