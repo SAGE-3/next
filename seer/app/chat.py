@@ -21,7 +21,7 @@ from foresight.Sage3Sugar.pysage3 import PySage3
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
-from langchain_openai import ChatOpenAI
+from langchain_openai import ChatOpenAI, AzureChatOpenAI
 
 # Typing for RPC
 from libs.localtypes import Context, Question, Answer
@@ -41,15 +41,23 @@ class ChatAgent:
         models = getModelsInfo(ps3)
         openai = models["openai"]
         llama = models["llama"]
+        azure = models["azure"]
         self.logger.info(
             ("openai key: " + openai["apiKey"] + " - model: " + openai["model"]),
         )
         self.logger.info(
             "chat server: url: " + llama["url"] + " - model: " + llama["model"],
         )
+        self.logger.info(
+            "chat server: url: "
+            + azure["text"]["url"]
+            + " - model: "
+            + azure["text"]["model"],
+        )
 
         llm_llama = None
         llm_openai = None
+        llm_azure = None
 
         # Llama model
         if llama["url"] and llama["model"]:
@@ -63,6 +71,21 @@ class ChatAgent:
         # OpenAI model
         if openai["apiKey"] and openai["model"]:
             llm_openai = ChatOpenAI(api_key=openai["apiKey"], model=openai["model"])
+
+        # Azure OpenAI model
+        if azure["text"]["apiKey"] and azure["text"]["model"]:
+            model = azure["text"]["model"]
+            endpoint = azure["text"]["url"]
+            credential = azure["text"]["apiKey"]
+            api_version = azure["text"]["api_version"]
+
+            llm_azure = AzureChatOpenAI(
+                azure_deployment=model,
+                api_version=api_version,
+                azure_endpoint=endpoint,
+                azure_ad_token=credential,
+                model=model,
+            )
 
         # Templates
         sys_template_str = "Today is {date}. You are a helpful and succinct assistant, providing informative answers to {username} (whose location is {location})."
@@ -84,12 +107,15 @@ class ChatAgent:
 
         self.session_llama = None
         self.session_openai = None
+        self.session_azure = None
 
         # Session : prompt building and then LLM
         if llm_openai:
             self.session_openai = prompt | llm_openai | output_parser
         if llm_llama:
             self.session_llama = prompt | llm_llama | output_parser
+        if llm_azure:
+            self.session_azure = prompt | llm_azure | output_parser
 
         if not self.session_llama and not self.session_openai:
             raise HTTPException(status_code=500, detail="Langchain> Model unknown")
@@ -115,6 +141,16 @@ class ChatAgent:
             )
         elif qq.model == "openai" and self.session_openai:
             response = await self.session_openai.ainvoke(
+                {
+                    "history": [("human", qq.ctx.previousQ), ("ai", qq.ctx.previousA)],
+                    "question": qq.q,
+                    "username": qq.user,
+                    "location": qq.location,
+                    "date": today,
+                }
+            )
+        elif qq.model == "azure" and self.session_azure:
+            response = await self.session_azure.ainvoke(
                 {
                     "history": [("human", qq.ctx.previousQ), ("ai", qq.ctx.previousA)],
                     "question": qq.q,
