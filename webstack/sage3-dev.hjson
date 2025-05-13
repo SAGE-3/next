@@ -65,24 +65,42 @@
       "model": "gpt-3.5-turbo"
     },
     "llama": {
-      // "url": "https://arcade.evl.uic.edu/llama",
-      // "model": "llama3",
-      // "max_tokens": 2048,
-      // "apiKey": ""
       "url": "https://arcade.evl.uic.edu/llama32-11B-vision",
       "model": "meta/llama-3.2-11b-vision-instruct",
       "apiKey": "",
       "max_tokens": 1000
     },
-    "codellama": {
-      "url": "https://arcade.evl.uic.edu/llama31_8bf",
-      "model": "meta/llama-3.1-8b-instruct",
-      "apiKey": "",
-      "max_tokens": 1000
-    },
-    "yolo": {
-      "url": "https://arcade.evl.uic.edu/yolov8",
-      "apiKey": ""
+    "azure": {
+      "text": {
+        "url": "",
+        "model": "gpt-4.1-mini",
+        "api_version": "2024-12-01-preview",
+        "apiKey": ""
+      },
+      "embedding": {
+        "url": "",
+        "model": "text-embedding-3-small",
+        "api_version": "2024-12-01-preview",
+        "apiKey": ""
+      },
+      "transcription": {
+        "url": "",
+        "model": "gpt-4o-mini-transcribe",
+        "api_version": "2025-03-01-preview",
+        "apiKey": ""
+      },
+      "reasoning": {
+        "url": "",
+        "model": "o4-mini",
+        "api_version": "2024-12-01-preview",
+        "apiKey": ""
+      },
+      "vision": {
+        "url": "",
+        "model": "gpt-4.1-mini",
+        "api_version": "2024-12-01-preview",
+        "apiKey": ""
+      }
     }
   },
 
@@ -115,8 +133,7 @@
     "strategies": [
       "guest",
       "jwt",
-      "google" // "spectator" 
-      // "cilogon"
+      "google" // "spectator"       // "cilogon"
     ],
     // A List of emails to enable those users to be admins.
     "admins": [],
@@ -164,7 +181,6 @@
       "callbackURL": "/auth/cilogon/redirect"
     }
   },
-
 
   // Namespace for signing uuid v5 keys
   "namespace": "150e32f0-62b8-11ed-974d-1b79350be347"
