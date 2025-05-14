@@ -99,6 +99,7 @@ export type OpenConfiguration = Pick<
   openai: ServerConfiguration['services']['openai'];
   llama: ServerConfiguration['services']['llama'];
   azure: ServerConfiguration['services']['azure'];
+  fluentd: ServerConfiguration['fluentd'];
 };
 
 /**
