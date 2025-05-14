@@ -32,6 +32,9 @@ from langchain_openai import ChatOpenAI, AzureChatOpenAI
 from libs.localtypes import ImageQuery, ImageAnswer
 from libs.utils import getModelsInfo, getImageFile, scaleImage, isURL, isDataURL
 
+# AI logging
+from libs.ai_logging import ai_logger
+
 # Downsized image size for processing by LLMs
 ImageSize = 600
 
@@ -94,6 +97,16 @@ class ImageAgent:
                 azure_ad_token=credential,
                 model=model,
             )
+
+        ai_logger.emit(
+            "init",
+            {
+                "agent": "image",
+                "openai": openai["apiKey"] is not None,
+                "llama": llama["url"] is not None,
+                "azure": azure["text"]["apiKey"] is not None,
+            },
+        )
 
     async def process(self, qq: ImageQuery):
         self.logger.info("Got image> from " + qq.user + ": " + qq.q + " - " + qq.model)

@@ -37,6 +37,9 @@ from langchain_openai import ChatOpenAI, AzureChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
+# AI logging
+from libs.ai_logging import ai_logger
+
 
 ww = 1080
 hh = 1920
@@ -65,18 +68,6 @@ class WebAgent:
         openai = models["openai"]
         llama = models["llama"]
         azure = models["azure"]
-        self.logger.info(
-            ("openai key: " + openai["apiKey"] + " - model: " + openai["model"]),
-        )
-        self.logger.info(
-            "chat server: url: " + llama["url"] + " - model: " + llama["model"],
-        )
-        self.logger.info(
-            "chat server: url: "
-            + azure["text"]["url"]
-            + " - model: "
-            + azure["text"]["model"],
-        )
 
         llm_llama = None
         llm_openai = None
@@ -109,6 +100,16 @@ class WebAgent:
                 azure_ad_token=credential,
                 model=model,
             )
+
+        ai_logger.emit(
+            "init",
+            {
+                "agent": "web",
+                "openai": openai["apiKey"] is not None,
+                "llama": llama["url"] is not None,
+                "azure": azure["text"]["apiKey"] is not None,
+            },
+        )
 
         # Templates
         human_template_str = "{question}"

@@ -8,7 +8,7 @@
 
 # Chat Agent
 
-import time, json
+import time, json, uuid
 from logging import Logger
 
 # Web API
@@ -26,6 +26,55 @@ from langchain_openai import ChatOpenAI, AzureChatOpenAI
 # Typing for RPC
 from libs.localtypes import Context, Question, Answer
 from libs.utils import getModelsInfo
+
+# AI logging
+from libs.ai_logging import ai_logger
+
+from langchain.callbacks.base import AsyncCallbackHandler
+from typing import Any, Dict, List, Union
+
+
+class LoggingHandler(AsyncCallbackHandler):
+    def __init__(self):
+        super().__init__()
+        # Save the human prompt
+        self.human = ""
+
+    async def on_chain_start(
+        self,
+        serialized: Dict[str, Any],
+        inputs: Dict[str, Any],
+        *,
+        run_id: uuid.UUID,
+        parent_run_id: Union[uuid.UUID, None] = None,
+        tags: Union[List[str], None] = None,
+        metadata: Union[Dict[str, Any], None] = None,
+        **kwargs: Any,
+    ) -> Any:
+        if type(inputs) is dict:
+            self.human = inputs["question"].strip()
+        else:
+            if inputs.usage_metadata:
+                in_tokens = inputs.usage_metadata.get("input_tokens")
+                out_tokens = inputs.usage_metadata.get("output_tokens")
+                total_tokens = inputs.usage_metadata.get("total_tokens")
+                model = inputs.response_metadata.get("model_name")
+                print(
+                    f"[AZURE] Prompt: {self.human} - Model: {model} - Input tokens: {in_tokens} - Output tokens: {out_tokens} - Total tokens: {total_tokens}"
+                )
+                ai_logger.emit(
+                    "azure_prompt",
+                    {
+                        "prompt": self.human,
+                        "model": model,
+                        "input_tokens": in_tokens,
+                        "output_tokens": out_tokens,
+                        "total_tokens": total_tokens,
+                    },
+                )
+
+
+handler_azure = LoggingHandler()
 
 
 class ChatAgent:
@@ -86,6 +135,16 @@ class ChatAgent:
                 azure_ad_token=credential,
                 model=model,
             )
+
+        ai_logger.emit(
+            "init",
+            {
+                "agent": "chat",
+                "openai": openai["apiKey"] is not None,
+                "llama": llama["url"] is not None,
+                "azure": azure["text"]["apiKey"] is not None,
+            },
+        )
 
         # Templates
         sys_template_str = """Today is {date}. You are a helpful and succinct assistant, providing informative answers to {username} (whose location is {location}).
@@ -165,7 +224,8 @@ class ChatAgent:
                     "username": qq.user,
                     "location": qq.location,
                     "date": today,
-                }
+                },
+                config={"callbacks": [handler_azure]},
             )
         else:
             raise HTTPException(status_code=500, detail="Langchain> Model unknown")
