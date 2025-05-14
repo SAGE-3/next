@@ -63,7 +63,7 @@ class LoggingHandler(AsyncCallbackHandler):
                     f"[AZURE] Prompt: {self.human} - Model: {model} - Input tokens: {in_tokens} - Output tokens: {out_tokens} - Total tokens: {total_tokens}"
                 )
                 ai_logger.emit(
-                    "azure_prompt",
+                    "azure.chat",
                     {
                         "prompt": self.human,
                         "model": model,
