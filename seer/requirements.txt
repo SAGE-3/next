@@ -52,3 +52,6 @@ pandas
 matplotlib
 seaborn
 
+# Logging
+fluent-logger
+
