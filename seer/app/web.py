@@ -37,11 +37,17 @@ from langchain_openai import ChatOpenAI, AzureChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
+# AI logging
+from libs.ai_logging import ai_logger, LoggingChainHandler
+
+# Handler in Langchain to log the AI prompt
+ai_handler = LoggingChainHandler("web")
+
 
 ww = 1080
 hh = 1920
 
-sys_template_str = """Today is {date}. You are a helpful and succinct assistant, providing informative answers to {username} (whose location is {location}).
+sys_template_str = """Today is {date}. You are a helpful and succinct assistant, providing informative answers to {username}.
   Always format your responses using valid Markdown syntax. Use appropriate elements like:
   •	# for headings
   •	**bold** or _italic_ for emphasis
@@ -65,18 +71,6 @@ class WebAgent:
         openai = models["openai"]
         llama = models["llama"]
         azure = models["azure"]
-        self.logger.info(
-            ("openai key: " + openai["apiKey"] + " - model: " + openai["model"]),
-        )
-        self.logger.info(
-            "chat server: url: " + llama["url"] + " - model: " + llama["model"],
-        )
-        self.logger.info(
-            "chat server: url: "
-            + azure["text"]["url"]
-            + " - model: "
-            + azure["text"]["model"],
-        )
 
         llm_llama = None
         llm_openai = None
@@ -109,6 +103,16 @@ class WebAgent:
                 azure_ad_token=credential,
                 model=model,
             )
+
+        ai_logger.emit(
+            "init",
+            {
+                "agent": "web",
+                "openai": openai["apiKey"] is not None,
+                "llama": llama["url"] is not None,
+                "azure": azure["text"]["apiKey"] is not None,
+            },
+        )
 
         # Templates
         human_template_str = "{question}"
@@ -214,6 +218,9 @@ class WebAgent:
         await page.close()
         await context.close()
 
+        # Save the ai name for the logs
+        ai_handler.setAI(qq.model)
+
         # Ask the question
         if qq.model == "llama" and self.session_llama:
             response = await self.session_llama.ainvoke(
@@ -223,7 +230,8 @@ class WebAgent:
                     "question": qq.q,
                     "username": qq.user,
                     "date": today,
-                }
+                },
+                config={"callbacks": [ai_handler]},
             )
         elif qq.model == "openai" and self.session_openai:
             response = await self.session_openai.ainvoke(
@@ -233,7 +241,8 @@ class WebAgent:
                     "question": qq.q,
                     "username": qq.user,
                     "date": today,
-                }
+                },
+                config={"callbacks": [ai_handler]},
             )
         elif qq.model == "azure" and self.session_azure:
             response = await self.session_azure.ainvoke(
@@ -243,7 +252,8 @@ class WebAgent:
                     "question": qq.q,
                     "username": qq.user,
                     "date": today,
-                }
+                },
+                config={"callbacks": [ai_handler]},
             )
         else:
             raise HTTPException(status_code=500, detail="Langchain> Model unknown")
