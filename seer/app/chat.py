@@ -24,57 +24,14 @@ from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from langchain_openai import ChatOpenAI, AzureChatOpenAI
 
 # Typing for RPC
-from libs.localtypes import Context, Question, Answer
+from libs.localtypes import Question, Answer
 from libs.utils import getModelsInfo
 
 # AI logging
-from libs.ai_logging import ai_logger
+from libs.ai_logging import ai_logger, LoggingChainHandler
 
-from langchain.callbacks.base import AsyncCallbackHandler
-from typing import Any, Dict, List, Union
-
-
-class LoggingHandler(AsyncCallbackHandler):
-    def __init__(self):
-        super().__init__()
-        # Save the human prompt
-        self.human = ""
-
-    async def on_chain_start(
-        self,
-        serialized: Dict[str, Any],
-        inputs: Dict[str, Any],
-        *,
-        run_id: uuid.UUID,
-        parent_run_id: Union[uuid.UUID, None] = None,
-        tags: Union[List[str], None] = None,
-        metadata: Union[Dict[str, Any], None] = None,
-        **kwargs: Any,
-    ) -> Any:
-        if type(inputs) is dict:
-            self.human = inputs["question"].strip()
-        else:
-            if inputs.usage_metadata:
-                in_tokens = inputs.usage_metadata.get("input_tokens")
-                out_tokens = inputs.usage_metadata.get("output_tokens")
-                total_tokens = inputs.usage_metadata.get("total_tokens")
-                model = inputs.response_metadata.get("model_name")
-                print(
-                    f"[AZURE] Prompt: {self.human} - Model: {model} - Input tokens: {in_tokens} - Output tokens: {out_tokens} - Total tokens: {total_tokens}"
-                )
-                ai_logger.emit(
-                    "azure.chat",
-                    {
-                        "prompt": self.human,
-                        "model": model,
-                        "input_tokens": in_tokens,
-                        "output_tokens": out_tokens,
-                        "total_tokens": total_tokens,
-                    },
-                )
-
-
-handler_azure = LoggingHandler()
+# Handler in Langchain to log the AI prompt
+ai_handler = LoggingChainHandler("chat")
 
 
 class ChatAgent:
@@ -195,6 +152,9 @@ class ChatAgent:
         # Get the current date and time
         today = time.asctime()
 
+        # Save the ai name for the logs
+        ai_handler.setAI(qq.model)
+
         # Ask the question
         if qq.model == "llama" and self.session_llama:
             response = await self.session_llama.ainvoke(
@@ -204,7 +164,8 @@ class ChatAgent:
                     "username": qq.user,
                     "location": qq.location,
                     "date": today,
-                }
+                },
+                config={"callbacks": [ai_handler]},
             )
         elif qq.model == "openai" and self.session_openai:
             response = await self.session_openai.ainvoke(
@@ -214,7 +175,8 @@ class ChatAgent:
                     "username": qq.user,
                     "location": qq.location,
                     "date": today,
-                }
+                },
+                config={"callbacks": [ai_handler]},
             )
         elif qq.model == "azure" and self.session_azure:
             response = await self.session_azure.ainvoke(
@@ -225,7 +187,7 @@ class ChatAgent:
                     "location": qq.location,
                     "date": today,
                 },
-                config={"callbacks": [handler_azure]},
+                config={"callbacks": [ai_handler]},
             )
         else:
             raise HTTPException(status_code=500, detail="Langchain> Model unknown")
