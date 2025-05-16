@@ -6,26 +6,23 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useColorModeValue, Box, Avatar, AvatarGroup, BoxProps } from '@chakra-ui/react';
+import { useColorModeValue, Box, Avatar, AvatarGroup } from '@chakra-ui/react';
 
 import { User, PresencePartial } from '@sage3/shared/types';
 import { useHexColor, useUsersStore, initials } from '@sage3/frontend';
 
 export function UserPresenceIcons(
-  props: { usersPresent: PresencePartial[]; maxUsersDisplayed: number; anonymousNames?: boolean } & Omit<
-    BoxProps,
-    'usersPresent' | 'maxUsersDisplayed' | 'anonymousNames'
-  >
+  props: { usersPresent: PresencePartial[]; maxUsersDisplayed: number; anonymousNames?: boolean }
 ) {
-  const { usersPresent, maxUsersDisplayed, anonymousNames, ...boxProps } = props;
+  const { usersPresent, maxUsersDisplayed, anonymousNames } = props;
   const users = useUsersStore((state) => state.users);
 
   return (
-    <Box {...boxProps}>
-      <AvatarGroup size="sm" max={props.maxUsersDisplayed}>
-        {props.usersPresent.map((pUser, index) => (
+    <Box overflow="hidden" width={150} height={20}>
+      <AvatarGroup size="sm" max={maxUsersDisplayed}>
+        {usersPresent.map((pUser, index) => (
           <Box key={index}>
-            <UserIcons users={users} currentUser={pUser} anonymousNames={props.anonymousNames} />
+            <UserIcons users={users} currentUser={pUser} anonymousNames={anonymousNames} />
           </Box>
         ))}
       </AvatarGroup>
