@@ -41,6 +41,11 @@ from foresight.Sage3Sugar.pysage3 import PySage3
 import requests
 import json
 
+# brian-gpt-code-generation
+import numpy as np
+import io
+import contextlib
+
 # AI
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate, MessagesPlaceholder
@@ -250,7 +255,6 @@ class MesonetAgent:
     
         def extract_stations(state: GraphState):
             user_prompt = state["request"].q
-            import numpy as np
             tracked_station_id = {}
             
             # Ask this question a couple times and trigger a conversation_reset each time
@@ -319,10 +323,7 @@ class MesonetAgent:
 
         def generate_data_analysis_code(state: GraphState):
             # get the extracted stations and their associated island names and lon and lattitudes
-            
-            # TOOD move to the top of the file
-            import io
-            import contextlib
+
             user_prompt = state["request"].q
             url = f"https://api.hcdp.ikewai.org/mesonet/db/measurements?station_ids={','.join(state['stations_extracted'])}&var_ids={','.join(state['attributes_extracted'])}&limit=100"
             print(url)
@@ -339,11 +340,6 @@ class MesonetAgent:
                 print(f'json data: {res.text}')
                 model_response, model_reasoning = state["llm_re"].prompt_generate_data_analysis_code(user_prompt, state["attribute_reasoning"], state["station_reasoning"], station_data.columns.to_list(), res.text)
                 print(model_response)
-
-                # code_improvements, _ = state["llm_re"].prompt_review_code(user_prompt, model_response)
-                # print(code_improvements)
-                # code, _ = state["llm_re"].prompt_improve_code(user_prompt, code_improvements, model_response)
-                # print(code)
 
                 try:
                     # captures output
