@@ -44,6 +44,7 @@ import {
   MdOutlineStickyNote2,
   MdInfoOutline,
   MdSettings,
+  MdMic,
 } from 'react-icons/md';
 import { v5 as uuidv5 } from 'uuid';
 
@@ -560,6 +561,39 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
     }
   }, [filteredList]);
 
+
+  // Voice command
+  const triggerVoice = () => {
+    // Check if the browser supports speech recognition
+    if ('webkitSpeechRecognition' in window) {
+      const recognition = new (window as any).webkitSpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      recognition.start();
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setTerm(transcript);
+        setListIndex(0);
+        if (initialRef.current) {
+          initialRef.current.value = transcript;
+          initialRef.current.focus();
+        }
+        // Feels to fast to trigger the action automatically
+        // props.onAction(transcript);
+        // props.onClose();
+      };
+      recognition.onerror = (event: any) => {
+        console.error('Speech recognition error:', event.error);
+      };
+      recognition.onend = () => {
+        console.log('Speech recognition ended');
+      };
+    } else {
+      console.error('Speech recognition not supported in this browser.');
+    }
+  };
+
   return (
     <>
       <Modal
@@ -569,7 +603,6 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
         initialFocusRef={initialRef}
         blockScrollOnMount={false}
         scrollBehavior={'inside'}
-      // isCentered
       >
         <ModalOverlay />
         <ModalContent maxH={'30vh'} top={'4rem'}>
@@ -593,6 +626,12 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
                 onKeyDown={onSubmit}
               />
             </InputGroup>
+
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Voice to text - Click and speak'} openDelay={400}>
+              <Button p={0} m={'8px 0px 8px 0px'} disabled={!('webkitSpeechRecognition' in window)} onClick={triggerVoice}>
+                <MdMic size="24px" />
+              </Button>
+            </Tooltip>
 
             {/* Help box */}
             <Popover trigger="hover">
