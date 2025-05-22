@@ -359,6 +359,10 @@ function AppComponent(props: App): JSX.Element {
               },
             ],
           });
+          // Check if there are actions to be taken
+          if (response.actions) {
+            setActions(response.actions);
+          }
         }
       }
     }
@@ -1584,7 +1588,7 @@ function AppComponent(props: App): JSX.Element {
                       <Tooltip label="Click to show result on the board" aria-label="A tooltip">
                         <ListItem key={index}>
                           <ListIcon as={MdOpenInNew} color="white" fontWeight={'bold'} />
-                          Show {propName ? propName : ''} on the board
+                          Show {propName ? propName : action.app} on the board
                         </ListItem>
                       </Tooltip>
                     </Box>
