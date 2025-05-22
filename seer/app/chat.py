@@ -8,7 +8,7 @@
 
 # Chat Agent
 
-import time, json, uuid
+import time, json, uuid, re
 from logging import Logger
 
 # Web API
@@ -25,7 +25,7 @@ from langchain_openai import ChatOpenAI, AzureChatOpenAI
 
 # Typing for RPC
 from libs.localtypes import Question, Answer
-from libs.utils import getModelsInfo
+from libs.utils import getModelsInfo, extract_code_blocks
 
 # AI logging
 from libs.ai_logging import ai_logger, LoggingChainHandler
@@ -193,7 +193,8 @@ class ChatAgent:
             raise HTTPException(status_code=500, detail="Langchain> Model unknown")
 
         # Annotate the answer
-        response = response.strip() + "\n\n---\n"
+        text = response.strip()
+        response = text + "\n\n---\n"
         response += "Text generated using an AI model [" + qq.model + "]\n"
 
         # Propose the answer to the user
@@ -209,11 +210,62 @@ class ChatAgent:
                 },
             }
         )
+        actions = [action1]
+
+        # Extract code blocks
+        blocks = extract_code_blocks(text)
+        for bl in blocks:
+            code = bl.get("code")
+            lang = bl.get("language")
+            if lang is None:
+                lang = "python"
+            if lang == "python":
+                act = json.dumps(
+                    {
+                        "type": "create_app",
+                        "app": "SageCell",
+                        "state": {
+                            "code": code,
+                            "language": "python",
+                        },
+                        "data": {
+                            "title": "Answer",
+                            "position": {
+                                "x": qq.ctx.pos[0],
+                                "y": qq.ctx.pos[1],
+                                "z": 0,
+                            },
+                            "size": {"width": 600, "height": 420, "depth": 0},
+                        },
+                    }
+                )
+            else:
+                act = json.dumps(
+                    {
+                        "type": "create_app",
+                        "app": "CodeEditor",
+                        "state": {
+                            "content": code,
+                            "language": lang,
+                        },
+                        "data": {
+                            "title": "Answer",
+                            "position": {
+                                "x": qq.ctx.pos[0],
+                                "y": qq.ctx.pos[1],
+                                "z": 0,
+                            },
+                            "size": {"width": 600, "height": 420, "depth": 0},
+                        },
+                    }
+                )
+            actions.append(act)
+        print("Actions: ", len(actions))
 
         # Build the answer object
         val = Answer(
             id=qq.id,
             r=response,
-            actions=[action1],
+            actions=actions,
         )
         return val

@@ -14,8 +14,7 @@ from fluent import sender
 
 # Langchain API
 from langchain.callbacks.base import AsyncCallbackHandler
-from langchain.schema import BaseMessage
-from typing import Any, Dict, List, Union, Optional
+from typing import Any, Dict, List, Union
 import uuid
 
 ai_logger = None
