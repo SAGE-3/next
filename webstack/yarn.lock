@@ -4321,7 +4321,7 @@
   dependencies:
     "@types/node" "*"
 
-"@types/multer@^1.4.7":
+"@types/multer@^1.4.12":
   version "1.4.12"
   resolved "https://registry.yarnpkg.com/@types/multer/-/multer-1.4.12.tgz#da67bd0c809f3a63fe097c458c0d4af1fea50ab7"
   integrity sha512-pQ2hoqvXiJt2FP9WQVLPRO+AmiIm/ZYkavPlIQnx282u4ZrVdztx0pkh3jjpQt0Kz+YI0YhSG264y08UJKoUQg==
