@@ -65,6 +65,7 @@ import {
   MdMenu,
   MdPushPin,
   MdOutlinePushPin,
+  MdCenterFocusStrong,
 } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
 import { MdDeselect } from 'react-icons/md';
@@ -141,7 +142,7 @@ export function AppToolbar(props: AppToolbarProps) {
   const linkColor = useColorModeValue('blue.500', 'blue.400');
 
   // Settings
-  const { settings, setPrimaryActionMode } = useUserSettings();
+  const { settings, setPrimaryActionMode, toggleShowUI } = useUserSettings();
   const showUI = settings.showUI;
   const showTags = settings.showTags;
 
@@ -162,6 +163,9 @@ export function AppToolbar(props: AppToolbarProps) {
   const boxRef = useRef<HTMLDivElement>(null);
   const [previousLocation, setPreviousLocation] = useState({ x: 0, y: 0, s: 1, set: false, app: '' });
   const [previousSize, setPreviousSize] = useState({ x: 0, y: 0, w: 0, h: 0, set: false, app: '' });
+
+  // Focus Mode
+  const setFocusedAppId = useUIStore((state) => state.setFocusedAppId);
 
   // Insight labels
   const [tags, setTags] = useState<string[]>([]);
@@ -448,6 +452,19 @@ export function AppToolbar(props: AppToolbarProps) {
       update(app._id, { pinned: !app.data.pinned });
     }
   };
+
+  const onFocusMode = () => {
+    const curentApp = app ? app._id : '';
+    if (curentApp) {
+      setFocusedAppId(curentApp);
+      setSelectedApp('');
+      if (showUI) {
+        toggleShowUI();
+      }
+    }
+  };
+
+
 
   function getAppTags() {
     // Semantic to separate a tag's string name from color
@@ -841,6 +858,13 @@ export function AppToolbar(props: AppToolbarProps) {
 
             {/* Hamburger */}
             <Menu placement="top-start">
+
+              <Tooltip placement="top" hasArrow={true} label={'Focus Mode'} openDelay={400} ml="1">
+                <Button onClick={onFocusMode} backgroundColor={commonButtonColors} size="xs" mr="1" p={0} isDisabled={!canPin}>
+                  <MdCenterFocusStrong size="18px" color={buttonTextColor} />
+                </Button>
+              </Tooltip>
+
               <Tooltip hasArrow={true} label={'Actions'} openDelay={300}>
                 <MenuButton size="xs" as={Button} backgroundColor={commonButtonColors} mr="1" p={0} display="grid" placeItems="center">
                   <MdMenu size="14px" color={buttonTextColor} />
