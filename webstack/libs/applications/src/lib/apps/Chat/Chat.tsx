@@ -703,6 +703,7 @@ function AppComponent(props: App): JSX.Element {
               q: request,
               user: username,
               assetids: assetids,
+              model: selectedModel || 'openai',
             };
             setProcessing(true);
             setActions([]);
