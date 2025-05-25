@@ -271,10 +271,8 @@ class MesonetAgent:
                 if res.status_code == 200:
                     data = res.json()
                     if data and len(data) > 0:
-                        # Extract just the variable name from each measurement
-                        variables = [item.get('variable', '') for item in data]
-                        # Add unique variables to the set
-
+                        # Extract variable names and add to set
+                        variables = [item['variable'] for item in data]
                         all_attributes.update(variables)
 
             return {"attributes_extracted": list(all_attributes)}
@@ -391,6 +389,46 @@ class MesonetAgent:
 
         attributes = final_state.get("attributes_extracted", [])
         actions = []
+        if len(attributes) > 0:
+            actions.append(json.dumps({
+                "type": "create_app",
+                        "app": "Hawaii Mesonet",
+                        "state": {
+                            "sensorData": {},
+                            "stationNames": final_state.get("stations_extracted", []),
+                            "listOfStationNames": '016HI',
+                            "location": [-157.816, 20.9],
+                            "zoom": 6,
+                            "baseLayer": "OpenStreetMap",
+                            "bearing": 0,
+                            "pitch": 0,
+                            "overlay": True,
+                            "availableVariableNames": [],
+                            "stationScale": 5,
+                            # URL for the data
+                            "url": final_state.get("url", ""),
+                            "widget": {
+                                # Default to "line" chart
+                                "visualizationType": 'map',
+                                # Default to temperature
+                                "yAxisNames": [attributes[0]],
+                                "xAxisNames": ["date_time"],
+                                "color": "#5AB2D3",
+                                # Default to current date
+                                "startDate": final_state.get("start_date", "202401191356"),
+                                # Default to current date
+                                "endDate": final_state.get("end_date", "202401191356"),
+                                "timePeriod": "24 hours",
+                                "liveData": True,
+                                "layout": {"x": 0, "y": 0, "w": 11, "h": 130},
+                            }
+                        },
+                "data": {
+                            "title": "Answer",
+                            "position": {"x": qq.ctx.pos[0], "y": qq.ctx.pos[1], "z": 0},
+                            "size": {"width": 2000, "height": 1000, "depth": 0},
+                        },
+            }))
         for attribute in attributes:
             actions.append(json.dumps(
                 {

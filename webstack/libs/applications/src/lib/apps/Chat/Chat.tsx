@@ -612,18 +612,18 @@ function AppComponent(props: App): JSX.Element {
             ctrlRef.current = null;
             setPreviousAnswer(response.summary);
             // Update the Mesonet app's state with the selected stations
-            if (response.stations && response.stations.length > 0) {
-              const mesonetApp = apps[0];
-              updateState(mesonetApp._id, {
-                ...mesonetApp.data.state,
-                stationNames: response.stations,
+            // if (response.stations && response.stations.length > 0) {
+            //   const mesonetApp = apps[0];
+            //   updateState(mesonetApp._id, {
+            //     ...mesonetApp.data.state,
+            //     stationNames: response.stations,
 
-                widget: {
-                  ...mesonetApp.data.state.widget,
-                  yAxisNames: response.attributes,
-                },
-              });
-            }
+            //     widget: {
+            //       ...mesonetApp.data.state.widget,
+            //       yAxisNames: response.attributes,
+            //     },
+            //   });
+            // }
 
             updateState(props._id, {
               ...s,
@@ -1560,8 +1560,10 @@ function AppComponent(props: App): JSX.Element {
               <List>
                 {actions.map((action, index) => {
                   let propName = undefined;
+                  let chartType = undefined;
                   try {
                     propName = action.state.widget.yAxisNames[0];
+                    chartType = action.state.widget.visualizationType;
                   } catch (e) {
                     // console.log('ChatApp Exception> No property Name found.');
                   }
@@ -1584,7 +1586,7 @@ function AppComponent(props: App): JSX.Element {
                       <Tooltip label="Click to show result on the board" aria-label="A tooltip">
                         <ListItem key={index}>
                           <ListIcon as={MdOpenInNew} color="white" fontWeight={'bold'} />
-                          Show {propName ? propName : ''} on the board
+                          {chartType === 'map' ? 'Show Map' : 'Show ' + propName} on the board
                         </ListItem>
                       </Tooltip>
                     </Box>
