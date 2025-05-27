@@ -1,6 +1,14 @@
+# -----------------------------------------------------------------------------
+#  Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
+#  University of Hawaii, University of Illinois Chicago, Virginia Tech
+#
+#  Distributed under the terms of the SAGE3 License.  The full license is in
+#  the file LICENSE, distributed as part of this software.
+# -----------------------------------------------------------------------------
+
 import sqlite3
 import pandas as pd
-import numpy as np
+
 
 class CSVDB:
     def __init__(self, file_path):
@@ -11,9 +19,9 @@ class CSVDB:
     def __create__(self, file_path):
         # Open the CSV file
         df = pd.read_csv(file_path, low_memory=False)
-        db_path = ':memory:'
+        db_path = ":memory:"
         conn = sqlite3.connect(db_path)
-        df.to_sql('csv', conn, if_exists='replace', index=False)
+        df.to_sql("csv", conn, if_exists="replace", index=False)
         return conn
 
     # def fetch_as_json(self, query):
@@ -38,7 +46,7 @@ class CSVDB:
 
     def to_csv(csv_sav_path, path):
         self.df.to_csv(csv_sav_path, index=False)
-    
+
 
 # Example:
 # csv_db = CSVDB('../datasets/CarPrice.csv')
