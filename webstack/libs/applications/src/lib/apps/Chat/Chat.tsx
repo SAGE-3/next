@@ -29,6 +29,8 @@ import {
   ListItem,
   Textarea,
   useDisclosure,
+  Table, Tr, Thead, Tbody,
+  Th,
 } from '@chakra-ui/react';
 import {
   MdSend,
@@ -72,26 +74,46 @@ import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot, callMesone
 import React from 'react';
 
 // Override the default markdown options for lists
-const OrderedList: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => (
+const MdOrderedList: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => (
   <ol style={{ paddingLeft: '24px' }} {...props}>
     {children}
   </ol>
 );
 
-const UnorderedList: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => (
+const MdUnorderedList: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => (
   <ul style={{ paddingLeft: '24px' }} {...props}>
     {children}
   </ul>
 );
 
+const MdCode: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => {
+  // @ts-ignore
+  const lang = props.className ? props.className.replace('lang-', '') : 'text';
+  return <Table variant="unstyled" size="sm" style={{
+    borderSpacing: 0,
+    borderCollapse: 'separate',
+    borderRadius: '10px 10px 10px 10px',
+    border: '1px solid black'
+  }}>
+    <Thead>
+      <Tr backgroundColor="#e5e5e5">
+        <Th style={{ borderRadius: '10px 10px 0 0' }}>{lang}</Th>
+      </Tr>
+    </Thead>
+    <Tbody>
+      <Tr>
+        <pre style={{ fontSize: 'smaller', paddingLeft: '24px', backgroundColor: '#fafafa', borderRadius: '0 0 10px 10px' }} {...props}>
+          <code {...props} style={{ userSelect: "text" }}>
+            {children}
+          </code>
+        </pre>
+      </Tr>
+    </Tbody>
+  </Table >
+};
+
 type OperationMode = 'chat' | 'text' | 'image' | 'web' | 'pdf' | 'code' | 'Hawaii Mesonet';
 
-// AI model information from the backend
-interface modelInfo {
-  name: string;
-  model: string;
-  maxTokens: number;
-}
 
 /* App component for Chat */
 
@@ -1354,6 +1376,14 @@ function AppComponent(props: App): JSX.Element {
             const when = diff > 0 ? formatDistance(previousTime, now, { addSuffix: true }) : '';
             const last = index === sortedMessages.length - 1;
 
+            // Remove single backticks and replace with double asterisks for bold
+            const response = message.response.replace(
+              /`([^`\n]+)`/g,
+              (match, p1) => {
+                return `**${p1}**`;
+              }
+            );
+
             return (
               <Fragment key={index}>
                 {/* Start of User Messages */}
@@ -1509,16 +1539,19 @@ function AppComponent(props: App): JSX.Element {
                                 options={{
                                   overrides: {
                                     ol: {
-                                      component: OrderedList,
+                                      component: MdOrderedList,
                                     },
                                     ul: {
-                                      component: UnorderedList,
+                                      component: MdUnorderedList,
+                                    },
+                                    code: {
+                                      component: MdCode,
                                     },
                                   },
                                 }}
                                 style={{ userSelect: 'none' }}
                               >
-                                {message.response}
+                                {response}
                               </Markdown>
                             </Box>
 
