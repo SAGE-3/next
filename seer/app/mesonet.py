@@ -19,12 +19,6 @@ from langchain_openai.embeddings import OpenAIEmbeddings
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
-
-# Vector DB
-import chromadb
-from langchain_chroma import Chroma
-from chromadb.config import Settings
-
 # Utils
 from libs.mesonet.csv_llm.csv_llm import LLM
 
@@ -38,9 +32,6 @@ from foresight.Sage3Sugar.pysage3 import PySage3
 # Typing for RPC
 from libs.localtypes import MesonetQuery, MesonetAnswer
 from libs.utils import getModelsInfo
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
 
 # Define the State for LangGraph
 class GraphState(TypedDict):
@@ -154,42 +145,8 @@ class MesonetAgent:
         if self.llm_llama:
             self.session_llama = prompt | self.llm_llama | output_parser
 
-        # Create the ChromaDB client
-        chromaServer = "127.0.0.1"
-        chromaPort = 8100
-        if os.getenv("ENVIRONMENT") == "production":
-            chromaServer = "chromadb"
-            chromaPort = 8000
-
-        self.chroma = chromadb.HttpClient(
-            # Local ChromaDB server - docker instance
-            host=chromaServer,
-            # Port changed to 8100 to avoid conflicts with other services
-            port=chromaPort,
-            # Authorization
-            settings=Settings(
-                # http basic auth scheme
-                chroma_client_auth_provider="chromadb.auth.basic_authn.BasicAuthClientProvider",
-                # credentials for the basic auth scheme loaded from .env file
-                chroma_client_auth_credentials=os.getenv(
-                    "CHROMA_CLIENT_AUTH_CREDENTIALS"
-                ),
-            ),
-        )
-
         # OpenAI for now, can explore more in the future
         self.embedding_model = OpenAIEmbeddings(api_key=openai["apiKey"])
-
-        # Langchain Chroma
-        self.vector_store = Chroma(
-            client=self.chroma,
-            collection_name="csv_docs",
-            embedding_function=self.embedding_model,
-        )
-
-        # Using Langchain's Chromadb
-        # Heartbeat to check the connection
-        self.chroma.heartbeat()
 
     async def process(self, qq: MesonetQuery):
         self.logger.info("Got Mesonet> from " + qq.user + ": " + qq.q)
