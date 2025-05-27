@@ -480,10 +480,10 @@ export function AppWindow(props: WindowProps) {
     }
   };
 
-  const focusedAppId = useUIStore((state) => state.focusedAppId);
+  const isFocused = useUIStore((state) => state.focusedAppId === props.app._id);
 
   return (
-    focusedAppId === props.app._id ?
+    isFocused ?
       <Portal >
         <Box
           id={'app_' + props.app._id}
@@ -494,20 +494,18 @@ export function AppWindow(props: WindowProps) {
           width="100%"
           height="100%"
           zIndex={999999999}
-          background={backgroundColor}
+          background={"backgroundColor"}
         >
-          {/* {props.children} */}
           {memoizedChildren}
-          {/* <Text fontSize="2xl" color="white">
-            {props.app.data.title}
-          </Text> */}
         </Box>
         <Button
           position="absolute"
           left="50%"
           bottom="0px"
           zIndex={999999999}
+          opacity={0.75}
           backgroundColor={backgroundColor}
+          _hover={{ backgroundColor: "teal", opacity: 1, transform: 'scale(1.15)' }}
           color="white"
           onClick={() => {
             useUIStore.getState().setFocusedAppId('');

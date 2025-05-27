@@ -23,6 +23,7 @@ import {
   useThrottleScale,
   useThrottleApps,
   useUIStore,
+  useUserSettings,
 } from '@sage3/frontend';
 
 import { initialValues } from '@sage3/applications/initialValues';
@@ -121,6 +122,9 @@ export function Apps() {
     },
     { dependencies: [JSON.stringify(apps)] }
   );
+
+  const { settings, toggleShowUI } = useUserSettings();
+  const showUI = settings.showUI;
 
   // Copy an application into the clipboard
   useHotkeys(
@@ -304,6 +308,43 @@ export function Apps() {
             fitApps(apps);
           }
         }
+      }
+    },
+    {
+      dependencies: [previousLocation.set, appDragging, scale, boardPosition.x, boardPosition.y, JSON.stringify(apps)],
+    }
+  );
+
+  // Focus to app when pressing f over an app
+  useHotkeys(
+    'f',
+    (evt) => {
+      if (boardCursor && apps.length > 0 && !appDragging) {
+        const cx = boardCursor.x;
+        const cy = boardCursor.y;
+        let found = false;
+        // Sort the apps by the last time they were updated to order them correctly
+        apps
+          .slice()
+          .sort((a, b) => b._updatedAt - a._updatedAt)
+          .forEach((el) => {
+            if (found) return;
+            if (el.data.dragging) return;
+
+            const x1 = el.data.position.x;
+            const y1 = el.data.position.y;
+            const x2 = x1 + el.data.size.width;
+            const y2 = y1 + el.data.size.height;
+            // If the cursor is inside the app, focus it.
+            if (cx >= x1 && cx <= x2 && cy >= y1 && cy <= y2) {
+              found = true;
+              useUIStore.getState().setFocusedAppId(el._id);
+              useUIStore.getState().setSelectedApp('');
+              if (showUI) {
+                toggleShowUI();
+              }
+            }
+          });
       }
     },
     {

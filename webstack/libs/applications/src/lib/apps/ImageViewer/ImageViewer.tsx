@@ -125,6 +125,8 @@ function AppComponent(props: App): JSX.Element {
           <>
             <Image
               width="100%"
+              height="100%"
+              objectFit="contain"
               userSelect={'auto'}
               draggable={false}
               alt={file?.data.originalfilename}
