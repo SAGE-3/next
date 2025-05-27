@@ -217,8 +217,6 @@ class ChatAgent:
         for bl in blocks:
             code = bl.get("code")
             lang = bl.get("language")
-            if lang is None:
-                lang = "python"
             if lang == "python":
                 act = json.dumps(
                     {
@@ -246,7 +244,7 @@ class ChatAgent:
                         "app": "CodeEditor",
                         "state": {
                             "content": code,
-                            "language": lang,
+                            "language": lang if lang else "markdown",
                         },
                         "data": {
                             "title": "Answer",
