@@ -29,8 +29,7 @@ import {
   ListItem,
   Textarea,
   useDisclosure,
-  Table, Tr, Thead, Tbody,
-  Th,
+  Table, Tr, Thead, Tbody, Th,
 } from '@chakra-ui/react';
 import {
   MdSend,
@@ -42,6 +41,7 @@ import {
   MdSettings,
   MdOpenInNew,
 } from 'react-icons/md';
+import { BsCopy, BsCheck } from 'react-icons/bs';
 import { HiCommandLine } from 'react-icons/hi2';
 
 // Date management
@@ -71,7 +71,6 @@ import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
 
 import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot, callMesonet } from './tRPC';
-import React from 'react';
 
 // Override the default markdown options for lists
 const MdOrderedList: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => (
@@ -89,6 +88,7 @@ const MdUnorderedList: React.FC<{ children: React.ReactNode }> = ({ children, ..
 const MdCode: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => {
   // @ts-ignore
   const lang = props.className ? props.className.replace('lang-', '') : 'text';
+  const [copied, setCopied] = useState(false);
   return <Table variant="unstyled" size="sm" style={{
     borderSpacing: 0,
     borderCollapse: 'separate',
@@ -97,7 +97,20 @@ const MdCode: React.FC<{ children: React.ReactNode }> = ({ children, ...props })
   }}>
     <Thead>
       <Tr backgroundColor="#e5e5e5">
-        <Th style={{ borderRadius: '10px 10px 0 0' }}>{lang}</Th>
+        <Th style={{ borderRadius: '10px 10px 0 0' }} textTransform={'capitalize'} fontWeight={'normal'}>
+          <Box display={"flex"} justifyContent={'space-between'}>
+            <span><b>{lang}</b></span>
+            <Box display={"flex"} alignItems={'center'} userSelect={'none'} _hover={{ cursor: 'pointer' }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setCopied(true);
+                // Copy the code to clipboard
+                navigator.clipboard.writeText(children as string);
+              }}>
+              {copied ? <BsCheck /> : <BsCopy />} <span> {copied ? 'Copied' : 'Copy'} </span>
+            </Box>
+          </Box>
+        </Th>
       </Tr>
     </Thead>
     <Tbody>
@@ -146,6 +159,9 @@ function AppComponent(props: App): JSX.Element {
   const textColor = useColorModeValue('gray.800', 'gray.100');
 
   const { isOpen: editSettingsIsOpen, onOpen: editSettingsOnOpen, onClose: editSettingsOnClose } = useDisclosure();
+
+  // Is the app in focus mode?
+  const isFocused = useUIStore((state) => state.focusedAppId === props._id);
 
   // App state management
   const updateState = useAppStore((state) => state.updateState);
@@ -1426,7 +1442,7 @@ function AppComponent(props: App): JSX.Element {
                           py={1}
                           m={3}
                           maxWidth="70%"
-                          userSelect={'none'}
+                          userSelect={isFocused ? 'text' : 'none'}
                           onDoubleClick={() => {
                             if (navigator.clipboard) {
                               // Copy into clipboard
@@ -1441,7 +1457,7 @@ function AppComponent(props: App): JSX.Element {
                               });
                             }
                           }}
-                          draggable={true}
+                          draggable={!isFocused}
                           // Store the query into the drag/drop events to create stickies
                           onDragStart={(e) => {
                             e.dataTransfer.clearData();
@@ -1517,7 +1533,7 @@ function AppComponent(props: App): JSX.Element {
                         >
                           <Box
                             // pl={3}
-                            draggable={true}
+                            draggable={!isFocused}
                             onDragStart={(e) => {
                               // Store the response into the drag/drop events to create stickies
                               e.dataTransfer.clearData();
@@ -1549,7 +1565,7 @@ function AppComponent(props: App): JSX.Element {
                                     },
                                   },
                                 }}
-                                style={{ userSelect: 'none' }}
+                                style={{ userSelect: isFocused ? 'text' : 'none' }}
                               >
                                 {response}
                               </Markdown>
