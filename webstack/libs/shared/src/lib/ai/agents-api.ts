@@ -99,6 +99,7 @@ export type PDFQuery = {
   ctx: { previousQ: string; previousA: string; pos: number[]; roomId: string; boardId: string };
   assetids: string[];
   user: string;
+  model: string;
   q: string;
 };
 export type PDFAnswer = {

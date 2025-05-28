@@ -2,18 +2,17 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import SystemMessage
 
-from langgraph.constants import Send
 from langgraph.graph import END, START, StateGraph, MessagesState
 from langgraph.prebuilt import ToolNode
 
 from pydantic import BaseModel
 
 from libs.localtypes import PDFQuery
-from langchain_openai import ChatOpenAI
+from langchain_openai import ChatOpenAI, AzureChatOpenAI
 
 
 async def generate_answer(
-    qq: PDFQuery, llm: ChatOpenAI, retrievers, markdown_files_dict
+    qq: PDFQuery, llm: ChatOpenAI | AzureChatOpenAI, retrievers, markdown_files_dict
 ):
 
     # total_tokens = 0

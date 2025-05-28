@@ -44,6 +44,7 @@ import {
   MdOutlineStickyNote2,
   MdInfoOutline,
   MdSettings,
+  MdMic,
 } from 'react-icons/md';
 import { v5 as uuidv5 } from 'uuid';
 
@@ -79,6 +80,7 @@ type props = {
 };
 
 const MaxElements = 12;
+let recognition: any = null;
 
 export function Alfred(props: props) {
   // Configuration information
@@ -397,6 +399,9 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
   // colors
   const intelligenceColor = useColorModeValue('purple.500', 'purple.400');
   const { isOpen: editSettingsIsOpen, onOpen: editSettingsOnOpen, onClose: editSettingsOnClose } = useDisclosure();
+  // Default mic color
+  const [recording, setRecording] = useState(false);
+  const micColorRecording = useColorModeValue('green.400', 'green.600');
 
   // Select the file when clicked
   const handleChange = (event: React.FormEvent<HTMLInputElement>) => {
@@ -560,6 +565,54 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
     }
   }, [filteredList]);
 
+
+  // Voice command
+  const triggerVoice = () => {
+    // Check if the browser supports speech recognition
+    if (recording) {
+      setRecording(false);
+      if (recognition) {
+        recognition.stop();
+      }
+    }
+    if ('webkitSpeechRecognition' in window) {
+      recognition = new (window as any).webkitSpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      recognition.start();
+      console.log('Speech recognition start');
+      setRecording(true);
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        console.log('Speech recognition result:', transcript);
+        setTerm(transcript);
+        setListIndex(0);
+        if (initialRef.current) {
+          initialRef.current.value = transcript;
+          initialRef.current.focus();
+        }
+        // Feels to fast to trigger the action automatically
+        // props.onAction(transcript);
+        // props.onClose();
+      };
+      recognition.onerror = (event: any) => {
+        console.log('Speech recognition error:', event.error);
+        setRecording(false);
+        if (recognition) recognition.stop();
+      };
+      recognition.onend = () => {
+        console.log('Speech recognition ended');
+        setRecording(false);
+        if (recognition) recognition.stop();
+      };
+    } else {
+      console.error('Speech recognition not supported in this browser.');
+      setRecording(false);
+      if (recognition) recognition.stop();
+    }
+  };
+
   return (
     <>
       <Modal
@@ -569,7 +622,6 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
         initialFocusRef={initialRef}
         blockScrollOnMount={false}
         scrollBehavior={'inside'}
-      // isCentered
       >
         <ModalOverlay />
         <ModalContent maxH={'30vh'} top={'4rem'}>
@@ -577,7 +629,7 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
             {/* Search box */}
             <InputGroup>
               <InputLeftAddon p={2} m={'8px 0px 8px 8px'} backgroundColor={intelligenceColor}>
-                <IoSparklesSharp size="22px" color={'white'} />{' '}
+                <IoSparklesSharp size="22px" color={'white'} />
               </InputLeftAddon>
               <Input
                 ref={initialRef}
@@ -593,6 +645,14 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
                 onKeyDown={onSubmit}
               />
             </InputGroup>
+
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Voice to text - Click and speak'} openDelay={400}>
+              <Button p={0} m={'8px 0px 8px 0px'} disabled={!('webkitSpeechRecognition' in window)} onClick={triggerVoice}
+                background={recording ? micColorRecording : 'gray.100'}
+                _hover={{ background: recording ? micColorRecording : 'gray.200' }}>
+                <MdMic size="24px" />
+              </Button>
+            </Tooltip>
 
             {/* Help box */}
             <Popover trigger="hover">
