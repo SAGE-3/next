@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Image, Button, ButtonGroup, Tooltip, Box } from '@chakra-ui/react';
+import { Image, Button, ButtonGroup, Tooltip, Box, useColorModeValue } from '@chakra-ui/react';
 // Icons
 import { MdBrokenImage, MdFileDownload, MdImage } from 'react-icons/md';
 import { HiPencilAlt } from 'react-icons/hi';
@@ -46,6 +46,7 @@ function AppComponent(props: App): JSX.Element {
   // Original image sizes
   const [origSizes, setOrigSizes] = useState({ width: 0, height: 0 });
   const boardDragging = useUIStore((state) => state.boardDragging);
+  const backgroundColor = useColorModeValue('white', 'gray.700');
 
   // Convert the ID to an asset
   useEffect(() => {
@@ -112,14 +113,23 @@ function AppComponent(props: App): JSX.Element {
   return (
     // background false to handle alpha channel
     <AppWindow app={props} lockAspectRatio={aspectRatio} background={url == '' ? true : false} hideBackgroundIcon={MdImage}>
-      <div
+      {/* <div
         ref={ref}
         style={{
           position: 'relative',
           overflowY: 'hidden',
           height: aspectRatio ? displaySize.width / (aspectRatio as number) : 'auto',
           maxHeight: '100%',
-        }}
+        }} */}
+      <Box
+        ref={ref}
+        position="relative"
+        overflowY="hidden"
+        // height={aspectRatio ? displaySize.width / (aspectRatio as number) : 'auto'}
+        height="100%"
+        maxHeight="100%"
+        background={backgroundColor}
+        objectFit="contain"
       >
         {url ? (
           <>
@@ -161,7 +171,7 @@ function AppComponent(props: App): JSX.Element {
             <MdBrokenImage size="100%" />
           </Box>
         )}
-      </div>
+      </Box>
     </AppWindow>
   );
 }

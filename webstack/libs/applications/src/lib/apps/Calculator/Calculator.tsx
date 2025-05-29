@@ -8,7 +8,6 @@
 
 import { useEffect, useState } from 'react';
 import {
-  Container,
   Tooltip,
   ButtonGroup,
   Button,
@@ -24,10 +23,11 @@ import {
   DrawerHeader,
   Box,
   AspectRatio,
+  useColorModeValue,
 } from '@chakra-ui/react';
 import { MdList, MdCopyAll, MdBackspace, MdDelete } from 'react-icons/md';
 
-import { useAppStore } from '@sage3/frontend';
+import { useAppStore, useUIStore } from '@sage3/frontend';
 
 import { App } from '../../schema';
 import { state as AppState } from './index';
@@ -40,6 +40,7 @@ function AppComponent(props: App): JSX.Element {
 
   // Scaling the app based on its width
   const [scale, setScale] = useState(1);
+  const backgroundColor = useColorModeValue('white', 'gray.700');
 
   // Set a title for the app
   useEffect(() => {
@@ -82,13 +83,17 @@ function AppComponent(props: App): JSX.Element {
   };
 
   // Track the width of the app window and set the scale accordingly
+  const isFocused = useUIStore((state) => state.focusedAppId === props._id);
   useEffect(() => {
-    setScale(props.data.size.width / 230);
+    let newScale = props.data.size.width / 230;
+    if (isFocused) newScale = window.innerWidth / 230;
+    setScale(newScale);
   }, [props.data.size.width]);
+
 
   return (
     <AppWindow app={props} lockAspectRatio={true}>
-      <AspectRatio width={"100%"} height="100%" ratio={0.7} p={0} m={0}>
+      <AspectRatio width={"100%"} height="100%" ratio={0.7} p={0} m={0} background={backgroundColor}>
         <Box transform={`scale(${scale})`} transformOrigin={'center'} p={0} m={0}>
           <Grid templateColumns="repeat(4, 1fr)" gap="2">
             <GridItem colSpan={4}>
