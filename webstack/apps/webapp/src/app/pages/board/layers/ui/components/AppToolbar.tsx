@@ -464,8 +464,6 @@ export function AppToolbar(props: AppToolbarProps) {
     }
   };
 
-
-
   function getAppTags() {
     // Semantic to separate a tag's string name from color
     const delimiter = ':';
@@ -860,7 +858,8 @@ export function AppToolbar(props: AppToolbarProps) {
             <Menu placement="top-start">
 
               <Tooltip placement="top" hasArrow={true} label={'Focus Mode'} openDelay={400} ml="1">
-                <Button onClick={onFocusMode} backgroundColor={commonButtonColors} size="xs" mr="1" p={0} isDisabled={!canPin}>
+                <Button onClick={onFocusMode} backgroundColor={commonButtonColors} size="xs" mr="1" p={0}
+                  isDisabled={!canPin || app.data.type === 'VideoViewer'}>
                   <MdCenterFocusStrong size="18px" color={buttonTextColor} />
                 </Button>
               </Tooltip>
