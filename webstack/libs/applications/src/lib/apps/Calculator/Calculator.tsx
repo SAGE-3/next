@@ -6,6 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { useEffect, useState } from 'react';
 import {
   Container,
   Tooltip,
@@ -21,6 +22,8 @@ import {
   DrawerCloseButton,
   DrawerContent,
   DrawerHeader,
+  Box,
+  AspectRatio,
 } from '@chakra-ui/react';
 import { MdList, MdCopyAll, MdBackspace, MdDelete } from 'react-icons/md';
 
@@ -29,12 +32,14 @@ import { useAppStore } from '@sage3/frontend';
 import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
-import { useEffect } from 'react';
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
+
+  // Scaling the app based on its width
+  const [scale, setScale] = useState(1);
 
   // Set a title for the app
   useEffect(() => {
@@ -42,10 +47,6 @@ function AppComponent(props: App): JSX.Element {
       update(props._id, { title: 'Calculator' });
     }
   }, []);
-
-  // Set size for the app
-  props.data.size.width = 260;
-  props.data.size.height = 369;
 
   const handleButtonClick = (value: string) => {
     let newInput = s.input + value;
@@ -80,105 +81,112 @@ function AppComponent(props: App): JSX.Element {
     updateState(props._id, { history: s.history + expression + ' = ' + result + '\n' });
   };
 
+  // Track the width of the app window and set the scale accordingly
+  useEffect(() => {
+    setScale(props.data.size.width / 230);
+  }, [props.data.size.width]);
+
   return (
-    <AppWindow app={props} disableResize={true}>
-      <Container maxW="xs" p="6">
-        <Grid templateColumns="repeat(4, 1fr)" gap={3}>
-          <GridItem colSpan={4}>
-            <Input value={s.input} isReadOnly mb="5" p="4" textAlign="right" borderRadius="md" />
-          </GridItem>
-          <GridItem colSpan={2}>
-            <Button onClick={handleClear} w="100%" colorScheme="orange">
-              Clear
-            </Button>
-          </GridItem>
-          <GridItem colSpan={2}>
-            <Button onClick={handleBackspace} w="100%" colorScheme="orange">
-              <MdBackspace />
-            </Button>
-          </GridItem>
-          <GridItem colSpan={1}>
-            <Button onClick={() => handleButtonClick('1')} w="100%">
-              1
-            </Button>
-          </GridItem>
-          <GridItem colSpan={1}>
-            <Button onClick={() => handleButtonClick('2')} w="100%">
-              2
-            </Button>
-          </GridItem>
-          <GridItem colSpan={1}>
-            <Button onClick={() => handleButtonClick('3')} w="100%">
-              3
-            </Button>
-          </GridItem>
-          <GridItem colSpan={1}>
-            <Button onClick={() => handleButtonClick('+')} w="100%" colorScheme="teal">
-              +
-            </Button>
-          </GridItem>
-          <GridItem colSpan={1}>
-            <Button onClick={() => handleButtonClick('4')} w="100%">
-              4
-            </Button>
-          </GridItem>
-          <GridItem colSpan={1}>
-            <Button onClick={() => handleButtonClick('5')} w="100%">
-              5
-            </Button>
-          </GridItem>
-          <GridItem colSpan={1}>
-            <Button onClick={() => handleButtonClick('6')} w="100%">
-              6
-            </Button>
-          </GridItem>
-          <GridItem colSpan={1}>
-            <Button onClick={() => handleButtonClick('-')} w="100%" colorScheme="teal">
-              -
-            </Button>
-          </GridItem>
-          <GridItem colSpan={1}>
-            <Button onClick={() => handleButtonClick('7')} w="100%">
-              7
-            </Button>
-          </GridItem>
-          <GridItem colSpan={1}>
-            <Button onClick={() => handleButtonClick('8')} w="100%">
-              8
-            </Button>
-          </GridItem>
-          <GridItem colSpan={1}>
-            <Button onClick={() => handleButtonClick('9')} w="100%">
-              9
-            </Button>
-          </GridItem>
-          <GridItem colSpan={1}>
-            <Button onClick={() => handleButtonClick('*')} w="100%" colorScheme="teal">
-              *
-            </Button>
-          </GridItem>
-          <GridItem colSpan={1}>
-            <Button onClick={() => handleButtonClick('.')} w="100%">
-              .
-            </Button>
-          </GridItem>
-          <GridItem colSpan={1}>
-            <Button onClick={() => handleButtonClick('0')} w="100%">
-              0
-            </Button>
-          </GridItem>
-          <GridItem colSpan={1}>
-            <Button onClick={handleEqual} w="100%" colorScheme="orange">
-              =
-            </Button>
-          </GridItem>
-          <GridItem colSpan={1}>
-            <Button onClick={() => handleButtonClick('/')} w="100%" colorScheme="teal">
-              /
-            </Button>
-          </GridItem>
-        </Grid>
-      </Container>
+    <AppWindow app={props} lockAspectRatio={true}>
+      <AspectRatio width={"100%"} height="100%" ratio={0.7} p={0} m={0}>
+        <Box transform={`scale(${scale})`} transformOrigin={'center'} p={0} m={0}>
+          <Grid templateColumns="repeat(4, 1fr)" gap="2">
+            <GridItem colSpan={4}>
+              <Input value={s.input} isReadOnly textAlign="right" borderRadius="md" />
+            </GridItem>
+            <GridItem colSpan={2}>
+              <Button onClick={handleClear} w="100%" colorScheme="orange">
+                Clear
+              </Button>
+            </GridItem>
+            <GridItem colSpan={2}>
+              <Button onClick={handleBackspace} w="100%" colorScheme="orange">
+                <MdBackspace />
+              </Button>
+            </GridItem>
+            <GridItem colSpan={1}>
+              <Button onClick={() => handleButtonClick('1')} w="100%">
+                1
+              </Button>
+            </GridItem>
+            <GridItem colSpan={1}>
+              <Button onClick={() => handleButtonClick('2')} w="100%">
+                2
+              </Button>
+            </GridItem>
+            <GridItem colSpan={1}>
+              <Button onClick={() => handleButtonClick('3')} w="100%">
+                3
+              </Button>
+            </GridItem>
+            <GridItem colSpan={1}>
+              <Button onClick={() => handleButtonClick('+')} w="100%" colorScheme="teal">
+                +
+              </Button>
+            </GridItem>
+            <GridItem colSpan={1}>
+              <Button onClick={() => handleButtonClick('4')} w="100%">
+                4
+              </Button>
+            </GridItem>
+            <GridItem colSpan={1}>
+              <Button onClick={() => handleButtonClick('5')} w="100%">
+                5
+              </Button>
+            </GridItem>
+            <GridItem colSpan={1}>
+              <Button onClick={() => handleButtonClick('6')} w="100%">
+                6
+              </Button>
+            </GridItem>
+            <GridItem colSpan={1}>
+              <Button onClick={() => handleButtonClick('-')} w="100%" colorScheme="teal">
+                -
+              </Button>
+            </GridItem>
+            <GridItem colSpan={1}>
+              <Button onClick={() => handleButtonClick('7')} w="100%">
+                7
+              </Button>
+            </GridItem>
+            <GridItem colSpan={1}>
+              <Button onClick={() => handleButtonClick('8')} w="100%">
+                8
+              </Button>
+            </GridItem>
+            <GridItem colSpan={1}>
+              <Button onClick={() => handleButtonClick('9')} w="100%">
+                9
+              </Button>
+            </GridItem>
+            <GridItem colSpan={1}>
+              <Button onClick={() => handleButtonClick('*')} w="100%" colorScheme="teal">
+                *
+              </Button>
+            </GridItem>
+            <GridItem colSpan={1}>
+              <Button onClick={() => handleButtonClick('.')} w="100%">
+                .
+              </Button>
+            </GridItem>
+            <GridItem colSpan={1}>
+              <Button onClick={() => handleButtonClick('0')} w="100%">
+                0
+              </Button>
+            </GridItem>
+            <GridItem colSpan={1}>
+              <Button onClick={handleEqual} w="100%" colorScheme="orange">
+                =
+              </Button>
+            </GridItem>
+            <GridItem colSpan={1}>
+              <Button onClick={() => handleButtonClick('/')} w="100%" colorScheme="teal">
+                /
+              </Button>
+            </GridItem>
+          </Grid>
+        </Box>
+      </AspectRatio>
     </AppWindow>
   );
 }

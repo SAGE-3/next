@@ -338,10 +338,12 @@ export function Apps() {
             // If the cursor is inside the app, focus it.
             if (cx >= x1 && cx <= x2 && cy >= y1 && cy <= y2) {
               found = true;
-              useUIStore.getState().setFocusedAppId(el._id);
-              useUIStore.getState().setSelectedApp('');
-              if (showUI) {
-                toggleShowUI();
+              if (el.data.type !== 'VideoViewer') {
+                useUIStore.getState().setFocusedAppId(el._id);
+                useUIStore.getState().setSelectedApp('');
+                if (showUI) {
+                  toggleShowUI();
+                }
               }
             }
           });
