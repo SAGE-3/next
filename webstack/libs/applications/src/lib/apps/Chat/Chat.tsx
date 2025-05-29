@@ -238,6 +238,13 @@ function AppComponent(props: App): JSX.Element {
     }
   };
   const onSubmit = (e: React.KeyboardEvent) => {
+    if (e.code === 'Escape') {
+      // Deselect the text area
+      inputRef.current?.blur();
+      // Deselect the app
+      useUIStore.getState().setSelectedApp('');
+      return;
+    }
     // Keyboard instead of pressing the button
     if (e.key === 'Enter') {
       if (e.shiftKey) {
@@ -398,7 +405,7 @@ function AppComponent(props: App): JSX.Element {
             ],
           });
           // Check if there are actions to be taken
-          if (response.actions) {
+          if (response.actions && response.actions.length > 0) {
             setActions(response.actions);
           }
         }
