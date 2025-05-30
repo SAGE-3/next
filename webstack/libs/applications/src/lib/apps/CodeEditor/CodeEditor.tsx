@@ -26,8 +26,7 @@ import {
   MenuItem,
 } from '@chakra-ui/react';
 import { debounce } from 'throttle-debounce';
-import { MdLock, MdLockOpen, MdRemove, MdAdd, MdFileDownload, MdFileUpload, MdCode } from 'react-icons/md';
-import { FaMarkdown } from "react-icons/fa";
+import { MdLock, MdLockOpen, MdRemove, MdAdd, MdFileDownload, MdFileUpload, MdCode, MdSlideshow } from 'react-icons/md';
 
 // Markdown
 import Markdown from 'markdown-to-jsx';
@@ -273,21 +272,34 @@ function ToolbarComponent(props: App): JSX.Element {
     downloadFile(txturl, filename);
   };
 
-  // Preview the markdown
-  const previewMD = (): void => {
+  // Preview some content
+  const previewContent = (): void => {
     if (!roomId || !boardId) return;
-    // Create a new app with the markdown
-    const elt = <Markdown>{s.content}</Markdown>;
-    const htmlResult = renderToStaticMarkup(elt);
-    const w = props.data.size.width;
-    const h = props.data.size.height;
-    const x = props.data.position.x + w + 20;
-    const y = props.data.position.y;
-    createApp(
-      setupApp('Markdown', 'IFrame', x, y, roomId, boardId, { w, h }, { doc: htmlResult })
-    );
+    if (s.language === 'markdown') {
+      // Create a new app with the markdown
+      const elt = <Markdown>{s.content}</Markdown>;
+      const htmlResult = renderToStaticMarkup(elt);
+      const w = props.data.size.width;
+      const h = props.data.size.height;
+      const x = props.data.position.x + w + 20;
+      const y = props.data.position.y;
+      createApp(
+        setupApp('Markdown', 'IFrame', x, y, roomId, boardId, { w, h }, { doc: htmlResult })
+      );
+    } else if (s.language === 'html') {
+      // Create a new app with the HTML
+      const htmlResult = s.content;
+      const w = props.data.size.width;
+      const h = props.data.size.height;
+      const x = props.data.position.x + w + 20;
+      const y = props.data.position.y;
+      createApp(
+        setupApp('HTML', 'IFrame', x, y, roomId, boardId, { w, h }, { doc: htmlResult })
+      );
 
+    }
   };
+
 
   // Save the code in the asset manager
   const handleSave = useCallback(
@@ -423,11 +435,11 @@ function ToolbarComponent(props: App): JSX.Element {
           </Button>
         </Tooltip>
       </ButtonGroup>
-      {s.language === 'markdown' && (
+      {(s.language === 'markdown' || s.language === 'html') && (
         <ButtonGroup isAttached size="xs" colorScheme="teal" ml={1}>
-          <Tooltip placement="top-start" hasArrow={true} label={'Preview Markdown'} openDelay={400}>
-            <Button onClick={previewMD} _hover={{ opacity: 0.7 }}>
-              <FaMarkdown />
+          <Tooltip placement="top-start" hasArrow={true} label={'Preview Content'} openDelay={400}>
+            <Button onClick={previewContent} _hover={{ opacity: 0.7 }}>
+              <MdSlideshow size="18px" />
             </Button>
           </Tooltip>
         </ButtonGroup>
