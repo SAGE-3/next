@@ -30,13 +30,6 @@ import {
   Text,
   useColorModeValue,
   useToast,
-  Drawer,
-  DrawerBody,
-  DrawerCloseButton,
-  DrawerContent,
-  DrawerHeader,
-  useDisclosure,
-  Button,
 } from '@chakra-ui/react';
 
 // Icons
@@ -58,7 +51,7 @@ import { VegaLite } from 'react-vega';
 // Monaco Imports
 import Editor, { useMonaco, OnMount } from '@monaco-editor/react';
 import { editor } from 'monaco-editor';
-import { monacoOptions, monacoOptionsDrawer } from './components/monacoOptions';
+import { monacoOptions } from './components/monacoOptions';
 // Yjs Imports
 
 import { MonacoBinding } from 'y-monaco';
@@ -75,22 +68,21 @@ import {
   useUser,
   useUsersStore,
   useUIStore,
-  useCursorBoardPosition,
   useYjs,
   serverTime,
   YjsRoomConnection,
-  useThrottleScale,
   useLinkStore,
+  useWindowResize,
 } from '@sage3/frontend';
 import { KernelInfo, ContentItem } from '@sage3/shared/types';
 import { SAGE3Ability } from '@sage3/shared';
 
 // App Imports
-import { state as AppState } from './index';
-import { AppWindow } from '../../components';
-import { ToolbarComponent, GroupedToolbarComponent, PdfViewer, Markdown, StatusBar } from './components';
 import { App } from '../../schema';
 import { useStore } from './components/store';
+import { AppWindow } from '../../components';
+import { state as AppState } from './index';
+import { ToolbarComponent, GroupedToolbarComponent, PdfViewer, Markdown, StatusBar } from './components';
 
 // Styling
 import './SageCell.css';
@@ -119,8 +111,6 @@ function AppComponent(props: App): JSX.Element {
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
 
   // Store between app window and toolbar
-  const drawer = useStore((state) => state.drawer[props._id]);
-  const setDrawer = useStore((state) => state.setDrawer);
   const execute = useStore((state) => state.execute[props._id]);
   const executeAll = useStore((state) => state.executeAll[props._id]);
   const interrupt = useStore((state) => state.interrupt[props._id]);
@@ -128,7 +118,6 @@ function AppComponent(props: App): JSX.Element {
   const setExecuteAll = useStore((state) => state.setExecuteAll);
   const setInterrupt = useStore((state) => state.setInterrupt);
   const setKernel = useStore((state) => state.setKernel);
-  const { isOpen, onOpen, onClose } = useDisclosure();
 
   // Styling
   const defaultTheme = useColorModeValue('vs', 'vs-dark');
@@ -143,10 +132,6 @@ function AppComponent(props: App): JSX.Element {
   // Room and Board info
   const roomId = props.data.roomId;
   const boardId = props.data.boardId;
-  const setBoardPosition = useUIStore((state) => state.setBoardPosition);
-  const boardPosition = useUIStore((state) => state.boardPosition);
-  const scale = useThrottleScale(250);
-  const { uiToBoard } = useCursorBoardPosition();
 
   // Local state
   const [cursorPosition, setCursorPosition] = useState({ r: 0, c: 0 });
@@ -162,7 +147,6 @@ function AppComponent(props: App): JSX.Element {
   const { yApps } = useYjs();
   const monaco = useMonaco();
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
-  const editorRef2 = useRef<editor.IStandaloneCodeEditor | null>(null);
 
   // Local state
   const [access, setAccess] = useState(true);
@@ -183,9 +167,6 @@ function AppComponent(props: App): JSX.Element {
   // Memos and errors
   const renderedContent = useMemo(() => processedContent(content || []), [content]);
   const [error, setError] = useState<{ traceback?: string[]; ename?: string; evalue?: string } | null>(null);
-
-  // Drawer size: user's preference from local storage or default
-  const [drawerWidth, setDrawerWidth] = useState(localStorage.getItem('sage_preferred_drawer_width') || '50vw');
 
   useEffect(() => {
     // If the API Status is down, set the publicKernels to empty array
@@ -271,13 +252,6 @@ function AppComponent(props: App): JSX.Element {
    * Executes the code in the editor
    * @returns void
    */
-  const handleExecuteDrawer = async () => {
-    // Copy the drawer code to the editor
-    editorRef.current?.setValue(editorRef2.current?.getValue() || '');
-    // Execute the code
-    handleExecute();
-  };
-
   const handleExecute = async () => {
     const canExec = SAGE3Ability.canCurrentUser('execute', 'kernels');
     if (!user || !editorRef.current || !apiStatus || !access || !canExec) return;
@@ -458,20 +432,6 @@ function AppComponent(props: App): JSX.Element {
       ]);
       // Ensure we are always operating on the same line endings
       model.setEOL(0);
-    }
-    if (!editorRef2.current) return;
-    const model2 = editorRef2.current.getModel();
-    if (model2) {
-      // Clear the drawer editor
-      editorRef2.current.executeEdits('update-value', [
-        {
-          range: model2.getFullModelRange(),
-          text: '',
-          forceMoveMarkers: false,
-        },
-      ]);
-      // Ensure we are always operating on the same line endings
-      model2.setEOL(0);
     }
   };
 
@@ -811,12 +771,6 @@ function AppComponent(props: App): JSX.Element {
   const handleFontDecrease = () => {
     setFontSize((prev) => Math.max(8, prev - 2));
   };
-  const handleSaveCode = () => {
-    if (editorRef2.current) {
-      // Copy the drawer code to the editor in the board
-      editorRef.current?.setValue(editorRef2.current.getValue());
-    }
-  };
 
   /**
    *
@@ -849,9 +803,12 @@ function AppComponent(props: App): JSX.Element {
       endLineNumber: cursorPosition.r,
       endColumn: cursorPosition.c,
     });
-    // set the editor layout
+
+    // Set the editor layout
+    const isFocused = useUIStore.getState().focusedAppId === props._id;
+    const editorWidth = isFocused ? window.innerWidth - 60 : props.data.size.width - 60;
     editor.layout({
-      width: props.data.size.width - 60,
+      width: editorWidth,
       height: editorHeight && editorHeight > 150 ? editorHeight : 150,
       minHeight: '100%',
       minWidth: '100%',
@@ -926,120 +883,8 @@ function AppComponent(props: App): JSX.Element {
       }
       throttleFunc();
     });
-
-    // Not in drawer to start
-    setDrawer(props._id, false);
   };
 
-  const handleMountDrawer: OnMount = (editor, monaco) => {
-    // set the editorRef
-    editorRef2.current = editor;
-
-    // set the editor options
-    editor.updateOptions({ readOnly: !access || !apiStatus || !s.kernel });
-    // Default width and font size
-    const preference = localStorage.getItem('sage_preferred_drawer_width');
-    setDrawerWidth(preference || '50vw');
-
-    // set the editor theme
-    monaco.editor.setTheme(defaultTheme);
-    // set the editor language
-    monaco.editor.setModelLanguage(editor.getModel() as editor.ITextModel, 'python');
-    // set the editor cursor position
-    editor.setPosition({ lineNumber: cursorPosition.r, column: cursorPosition.c });
-    // set the editor cursor selection
-    editor.setSelection({
-      startLineNumber: cursorPosition.r,
-      startColumn: cursorPosition.c,
-      endLineNumber: cursorPosition.r,
-      endColumn: cursorPosition.c,
-    });
-    // set the editor layout
-    editor.layout({
-      width: props.data.size.width - 60,
-      height: editorHeight && editorHeight > 150 ? editorHeight : 150,
-      minHeight: '100%',
-      minWidth: '100%',
-    } as editor.IDimension);
-
-    editor.onDidChangeCursorPosition((e) => {
-      setCursorPosition({ r: e.position.lineNumber, c: e.position.column });
-    });
-    editor.addAction({
-      id: 'execute',
-      label: 'Cell Execute',
-      contextMenuOrder: 0,
-      contextMenuGroupId: '2_sage3',
-      keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
-      run: handleExecuteDrawer,
-    });
-    editor.addAction({
-      id: 'interrupt',
-      label: 'Cell Interrupt',
-      contextMenuOrder: 1,
-      contextMenuGroupId: '2_sage3',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI],
-      run: handleInterrupt,
-    });
-    editor.addAction({
-      id: 'syncForServer',
-      label: 'Cell Save',
-      contextMenuOrder: 2,
-      contextMenuGroupId: '2_sage3',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
-      run: handleSaveCode,
-    });
-
-    editor.addAction({
-      id: 'setup_sage3',
-      label: 'Setup SAGE API',
-      contextMenuOrder: 0,
-      contextMenuGroupId: '3_sagecell',
-      run: handleInsertAPI,
-    });
-    editor.addAction({
-      id: 'insert_vars',
-      label: 'Insert Board Variables',
-      contextMenuOrder: 1,
-      contextMenuGroupId: '3_sagecell',
-      run: handleInsertInfo,
-    });
-    editor.addAction({
-      id: 'clear',
-      label: 'Clear Cell',
-      contextMenuOrder: 2,
-      contextMenuGroupId: '3_sagecell',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyL],
-      run: handleClear,
-    });
-
-    editor.addAction({
-      id: 'increaseFontSize',
-      label: 'Increase Font Size',
-      contextMenuOrder: 0,
-      contextMenuGroupId: '4_font',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Equal],
-      run: handleFontIncrease,
-    });
-    editor.addAction({
-      id: 'decreaseFontSize',
-      label: 'Decrease Font Size',
-      contextMenuOrder: 1,
-      contextMenuGroupId: '4_font',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Minus],
-      run: handleFontDecrease,
-    });
-
-    // Update database on key up
-    editor.onKeyUp((e) => {
-      if (e.code === 'Escape') {
-        // Deselect the app
-        setSelectedApp('');
-        closingDrawer();
-        return;
-      }
-    });
-  };
 
   /**
    * Put the kernel in the store, read from the action in Monaco
@@ -1061,74 +906,6 @@ function AppComponent(props: App): JSX.Element {
       fontSize: s.fontSize,
     });
   }, [s.fontSize]);
-
-  useEffect(() => {
-    if (drawer) {
-      onOpen();
-      // If the right side of the app is beyond the center of the board, move the board
-      const xw = props.data.position.x + props.data.size.width;
-      let position = 1;
-      if (drawerWidth === '25vw') {
-        position = (3 * innerWidth) / 4;
-      } else if (drawerWidth === '50vw') {
-        position = innerWidth / 2;
-      } else if (drawerWidth === '75vw') {
-        position = innerWidth / 4;
-      }
-      const center = uiToBoard(position, innerHeight);
-      if (xw > center.x) {
-        const offset = xw - center.x + 10 / scale;
-        setBoardPosition({ x: boardPosition.x - offset, y: boardPosition.y });
-      }
-    }
-  }, [drawer]);
-
-  const closingDrawer = () => {
-    setDrawer(props._id, false);
-    if (editorRef2.current) {
-      // Copy the drawer code to the editor in the board
-      editorRef.current?.setValue(editorRef2.current.getValue());
-    }
-    onClose();
-  };
-
-  const drawerEditor = (
-    <Editor
-      defaultValue={editorRef.current?.getValue()}
-      loading={<Spinner />}
-      options={canExecuteCode ? { ...monacoOptionsDrawer } : { ...monacoOptionsDrawer, readOnly: true }}
-      onMount={handleMountDrawer}
-      height={'100%'}
-      width={'100%'}
-      theme={defaultTheme}
-      language={s.language}
-    />
-  );
-
-  const make25W = () => {
-    setDrawerWidth('25vw');
-    // save the value in local storage, user's preference
-    localStorage.setItem('sage_preferred_drawer_width', '25vw');
-    const base = 6;
-    const newFontsize = Math.round(Math.min(1.2 * base + (0.25 * innerWidth) / 100, 3 * base));
-    if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
-  };
-  const make50W = () => {
-    setDrawerWidth('50vw');
-    // save the value in local storage, user's preference
-    localStorage.setItem('sage_preferred_drawer_width', '50vw');
-    const base = 6;
-    const newFontsize = Math.round(Math.min(1.2 * base + (0.5 * innerWidth) / 100, 3 * base));
-    if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
-  };
-  const make75W = () => {
-    setDrawerWidth('75vw');
-    // save the value in local storage, user's preference
-    localStorage.setItem('sage_preferred_drawer_width', '75vw');
-    const base = 6;
-    const newFontsize = Math.round(Math.min(1.2 * base + (0.75 * innerWidth) / 100, 3 * base));
-    if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
-  };
 
   // Start dragging
   function OnDragOver(event: React.DragEvent<HTMLDivElement>) {
@@ -1154,44 +931,6 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props} hideBackgroundIcon={FaPython}>
       <>
-        <Drawer placement="right" variant="code" isOpen={isOpen} onClose={closingDrawer} closeOnOverlayClick={true}>
-          <DrawerContent maxW={drawerWidth}>
-            <DrawerCloseButton />
-            <DrawerHeader p={1} m={1}>
-              <Flex p={0} m={0}>
-                <Text flex={1} mr={'10px'}>
-                  SageCell
-                </Text>
-                <Box flex={2} width={'100px'} overflow={'clip'}>
-                  <Text fontSize={'md'} pt={1} whiteSpace={'nowrap'} textOverflow={'ellipsis'}>
-                    Use right-click for cell functions
-                  </Text>
-                </Box>
-                <Tooltip hasArrow label="Small Editor">
-                  <Button size={'sm'} p={2} m={'0 10px 0 10px'} onClick={make25W}>
-                    25%
-                  </Button>
-                </Tooltip>
-                <Tooltip hasArrow label="Medium Editor">
-                  <Button size={'sm'} p={2} m={'0 10px 0 1px'} onClick={make50W}>
-                    50%
-                  </Button>
-                </Tooltip>
-                <Tooltip hasArrow label="Large Editor">
-                  <Button size={'sm'} p={2} m={'0 40px 0 1px'} onClick={make75W}>
-                    75%
-                  </Button>
-                </Tooltip>
-              </Flex>
-            </DrawerHeader>
-            <DrawerBody p={0} m={0} boxSizing="border-box">
-              <Box style={{ width: '100%', height: '100%' }} border="1px solid darkgray">
-                {drawerEditor}
-              </Box>
-            </DrawerBody>
-          </DrawerContent>
-        </Drawer>
-
         <Box className="sc" h={'calc(100% - 1px)'} w={'100%'} display="flex" flexDirection="column" backgroundColor={bgColor}>
           <StatusBar kernelName={selectedKernelName} access={access} online={apiStatus} rank={props.data.state.rank} />
           <Box
@@ -1208,13 +947,12 @@ function AppComponent(props: App): JSX.Element {
           >
             <Flex direction={'row'}>
               {/* The editor status info (bottom) */}
-              <Flex direction={'column'}>
+              <Flex direction={'column'} w="100%">
                 <Editor
                   loading={<Spinner />}
                   options={canExecuteCode ? { ...monacoOptions } : { ...monacoOptions, readOnly: true }}
                   onMount={handleMount}
                   height={editorHeight && editorHeight > 150 ? editorHeight : 150}
-                  width={props.data.size.width - 60}
                   theme={defaultTheme}
                   language={s.language}
                 />

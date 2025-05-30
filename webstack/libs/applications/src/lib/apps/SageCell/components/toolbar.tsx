@@ -52,7 +52,6 @@ export function ToolbarComponent(props: App): JSX.Element {
   // Abilties
   const canExecuteCode = useAbility('execute', 'kernels');
   // Store between toolbar and appWindow
-  const setDrawer = useStore((state) => state.setDrawer);
   const setExecute = useStore((state) => state.setExecute);
   const setExecuteAll = useStore((state) => state.setExecuteAll);
   const setInterrupt = useStore((state) => state.setInterrupt);
@@ -169,11 +168,6 @@ export function ToolbarComponent(props: App): JSX.Element {
   // Decrease font size
   const decreaseFontSize = () => {
     updateState(props._id, { fontSize: Math.max(8, s.fontSize - 2) });
-  };
-
-  const openInDrawer = async () => {
-    // Set the drawer to open
-    setDrawer(props._id, true);
   };
 
   const handleSave = useCallback(
@@ -314,11 +308,6 @@ export function ToolbarComponent(props: App): JSX.Element {
         <Tooltip placement="top" hasArrow={true} label={'Stop'} openDelay={400}>
           <Button isDisabled={!s.msgId || !canExecuteCode} onClick={setStopTrue} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal">
             <MdStop />
-          </Button>
-        </Tooltip>
-        <Tooltip placement="top" hasArrow={true} label={'Open in Drawer'} openDelay={400}>
-          <Button onClick={openInDrawer}>
-            <MdWeb />
           </Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={'Click for help'} openDelay={400}>
