@@ -879,6 +879,8 @@ function AppComponent(props: App): JSX.Element {
       if (e.code === 'Escape') {
         // Deselect the app
         setSelectedApp('');
+        // Unfocus the app
+        useUIStore.getState().setFocusedAppId('');
         return;
       }
       throttleFunc();
