@@ -48,6 +48,7 @@ import {
   useUser,
   YjsRoomConnection,
   setupApp,
+  useUIStore,
 } from '@sage3/frontend';
 
 import { App } from '../../schema';
@@ -136,6 +137,17 @@ function AppComponent(props: App): JSX.Element {
     setEditor(props._id, editor);
     // Connect to Yjs
     connectToYjs(editor, yApps!);
+
+    // Update database on key up
+    editor.onKeyUp((e) => {
+      if (e.code === 'Escape') {
+        // Deselect the app
+        useUIStore.getState().setSelectedApp('');
+        // Unfocus the app
+        useUIStore.getState().setFocusedAppId('');
+        return;
+      }
+    });
   };
 
   const connectToYjs = async (editor: editor.IStandaloneCodeEditor, yRoom: YjsRoomConnection) => {
