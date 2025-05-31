@@ -3,6 +3,10 @@
     "target": "http://localhost:3002",
     "secure": false
   },
+  "/api/assets/submit": {
+    "target": "http://localhost:3002",
+    "secure": false
+  },
   "/api/assets/static": {
     "target": "http://localhost:3002",
     "secure": false

@@ -404,7 +404,7 @@ function ToolbarComponent(props: App): JSX.Element {
     downloadFile(txturl, filename);
   };
 
-  const saveInAssetManager = useCallback(
+  const saveInAssetManager1 = useCallback(
     (val: string) => {
       // save cell code in asset manager
       if (!val.endsWith('.url')) {
@@ -422,6 +422,46 @@ function ToolbarComponent(props: App): JSX.Element {
         fd.append('room', roomId);
         // Upload with a POST request
         fetch(apiUrls.assets.upload, { method: 'POST', body: fd })
+          .catch((error: Error) => {
+            toast({
+              title: 'Upload',
+              description: 'Upload failed: ' + error.message,
+              status: 'warning',
+              duration: 4000,
+              isClosable: true,
+            });
+          })
+          .finally(() => {
+            toast({
+              title: 'Upload',
+              description: 'Upload complete',
+              status: 'info',
+              duration: 4000,
+              isClosable: true,
+            });
+          });
+      }
+    },
+    [s.url, roomId]
+  );
+
+  const saveInAssetManager = useCallback(
+    (val: string) => {
+      const content = s.url;
+      // Save the code in the asset manager
+      if (roomId) {
+        const fd = {
+          url: content,
+          mimetype: 'text/uri-list',
+          originalname: val,
+          room: roomId,
+        };
+        // Upload with a POST request
+        fetch(apiUrls.assets.submit, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(fd)
+        })
           .catch((error: Error) => {
             toast({
               title: 'Upload',
@@ -517,7 +557,7 @@ function ToolbarComponent(props: App): JSX.Element {
         onConfirm={saveInAssetManager}
         title="Save URL in Asset Manager"
         message="Select a file name:"
-        initiaValue={props.data.title.split(' ').slice(0, 2).join('-') + '.url'}
+        initiaValue={props.data.title.split(' ').slice(0, 2).join('-')}
         cancelText="Cancel"
         confirmText="Save"
         confirmColor="green"
