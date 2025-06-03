@@ -29,19 +29,13 @@ import {
   ListItem,
   Textarea,
   useDisclosure,
-  Table, Tr, Thead, Tbody,
+  Table,
+  Tr,
+  Thead,
+  Tbody,
   Th,
 } from '@chakra-ui/react';
-import {
-  MdSend,
-  MdExpandCircleDown,
-  MdStopCircle,
-  MdChangeCircle,
-  MdFileDownload,
-  MdChat,
-  MdSettings,
-  MdOpenInNew,
-} from 'react-icons/md';
+import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle, MdFileDownload, MdChat, MdSettings, MdOpenInNew } from 'react-icons/md';
 import { HiCommandLine } from 'react-icons/hi2';
 
 // Date management
@@ -89,31 +83,36 @@ const MdUnorderedList: React.FC<{ children: React.ReactNode }> = ({ children, ..
 const MdCode: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => {
   // @ts-ignore
   const lang = props.className ? props.className.replace('lang-', '') : 'text';
-  return <Table variant="unstyled" size="sm" style={{
-    borderSpacing: 0,
-    borderCollapse: 'separate',
-    borderRadius: '10px 10px 10px 10px',
-    border: '1px solid black'
-  }}>
-    <Thead>
-      <Tr backgroundColor="#e5e5e5">
-        <Th style={{ borderRadius: '10px 10px 0 0' }}>{lang}</Th>
-      </Tr>
-    </Thead>
-    <Tbody>
-      <Tr>
-        <pre style={{ fontSize: 'smaller', paddingLeft: '24px', backgroundColor: '#fafafa', borderRadius: '0 0 10px 10px' }} {...props}>
-          <code {...props} style={{ userSelect: "text" }}>
-            {children}
-          </code>
-        </pre>
-      </Tr>
-    </Tbody>
-  </Table >
+  return (
+    <Table
+      variant="unstyled"
+      size="sm"
+      style={{
+        borderSpacing: 0,
+        borderCollapse: 'separate',
+        borderRadius: '10px 10px 10px 10px',
+        border: '1px solid black',
+      }}
+    >
+      <Thead>
+        <Tr backgroundColor="#e5e5e5">
+          <Th style={{ borderRadius: '10px 10px 0 0' }}>{lang}</Th>
+        </Tr>
+      </Thead>
+      <Tbody>
+        <Tr>
+          <pre style={{ fontSize: 'smaller', paddingLeft: '24px', backgroundColor: '#fafafa', borderRadius: '0 0 10px 10px' }} {...props}>
+            <code {...props} style={{ userSelect: 'text' }}>
+              {children}
+            </code>
+          </pre>
+        </Tr>
+      </Tbody>
+    </Table>
+  );
 };
 
 type OperationMode = 'chat' | 'text' | 'image' | 'web' | 'pdf' | 'code' | 'Hawaii Mesonet';
-
 
 /* App component for Chat */
 
@@ -638,18 +637,18 @@ function AppComponent(props: App): JSX.Element {
             ctrlRef.current = null;
             setPreviousAnswer(response.summary);
             // Update the Mesonet app's state with the selected stations
-            if (response.stations && response.stations.length > 0) {
-              const mesonetApp = apps[0];
-              updateState(mesonetApp._id, {
-                ...mesonetApp.data.state,
-                stationNames: response.stations,
+            // if (response.stations && response.stations.length > 0) {
+            //   const mesonetApp = apps[0];
+            //   updateState(mesonetApp._id, {
+            //     ...mesonetApp.data.state,
+            //     stationNames: response.stations,
 
-                widget: {
-                  ...mesonetApp.data.state.widget,
-                  yAxisNames: response.attributes,
-                },
-              });
-            }
+            //     widget: {
+            //       ...mesonetApp.data.state.widget,
+            //       yAxisNames: response.attributes,
+            //     },
+            //   });
+            // }
 
             updateState(props._id, {
               ...s,
@@ -1377,12 +1376,9 @@ function AppComponent(props: App): JSX.Element {
             const last = index === sortedMessages.length - 1;
 
             // Remove single backticks and replace with double asterisks for bold
-            const response = message.response.replace(
-              /`([^`\n]+)`/g,
-              (match, p1) => {
-                return `**${p1}**`;
-              }
-            );
+            const response = message.response.replace(/`([^`\n]+)`/g, (match, p1) => {
+              return `**${p1}**`;
+            });
 
             return (
               <Fragment key={index}>
@@ -1533,7 +1529,6 @@ function AppComponent(props: App): JSX.Element {
                               );
                             }}
                           >
-
                             <Box>
                               <Markdown
                                 options={{
@@ -1554,7 +1549,6 @@ function AppComponent(props: App): JSX.Element {
                                 {response}
                               </Markdown>
                             </Box>
-
                           </Box>
                         </Box>
                       </Tooltip>
@@ -1598,8 +1592,10 @@ function AppComponent(props: App): JSX.Element {
               <List>
                 {actions.map((action, index) => {
                   let propName = undefined;
+                  let chartType = undefined;
                   try {
                     propName = action.state.widget.yAxisNames[0];
+                    chartType = action.state.widget.visualizationType;
                   } catch (e) {
                     // console.log('ChatApp Exception> No property Name found.');
                   }
@@ -1622,7 +1618,7 @@ function AppComponent(props: App): JSX.Element {
                       <Tooltip label="Click to show result on the board" aria-label="A tooltip">
                         <ListItem key={index}>
                           <ListIcon as={MdOpenInNew} color="white" fontWeight={'bold'} />
-                          Show {propName ? propName : action.app} on the board
+                          {chartType === 'map' ? 'Show Map' : 'Show ' + propName} on the board
                         </ListItem>
                       </Tooltip>
                     </Box>
