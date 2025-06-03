@@ -6,8 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useState } from 'react';
-import { HStack, Box, ButtonGroup, Tooltip, Button, InputGroup, Input, useToast, Select } from '@chakra-ui/react';
+import { useEffect, useState, useRef } from 'react';
+import { HStack, Box, ButtonGroup, Tooltip, Button, InputGroup, Input, useToast, Select, useColorModeValue } from '@chakra-ui/react';
 import { MdAdd, MdRemove, MdMap, MdTerrain } from 'react-icons/md';
 
 // Data store
@@ -26,7 +26,7 @@ import center from '@turf/center';
 
 import { Asset } from '@sage3/shared/types';
 import { isGeoTiff, isTiff } from '@sage3/shared';
-import { useAppStore, useAssetStore, apiUrls } from '@sage3/frontend';
+import { useAppStore, useAssetStore, apiUrls, useUIStore } from '@sage3/frontend';
 
 import { App } from '../../schema';
 import { AppWindow } from '../../components';
@@ -102,6 +102,11 @@ function AppComponent(props: App): JSX.Element {
 
   // Toast to inform user about errors
   const toast = useToast();
+
+  const isFocused = useUIStore((state) => state.focusedAppId === props._id);
+  // Div containing the map
+  const divRef = useRef<HTMLDivElement>(null);
+  const backgroundColor = useColorModeValue('white', 'gray.700');
 
   // Add the source to the map
   // This is needed when the baselayer is changed
@@ -365,9 +370,14 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [source]);
 
+
   useEffect(() => {
+    console.log('MapGL> AppComponent useEffect', props._id, isFocused, divRef.current);
+    if (!divRef.current) return;
+    console.log('MapGL> Creating map in div', divRef.current.id);
     const localmap = new maplibregl.Map({
-      container: 'map' + props._id,
+      // container: 'map' + props._id,
+      container: divRef.current as HTMLDivElement,
       attributionControl: false,
       style: baselayers[s.baseLayer as 'OpenStreetMap' | 'Satellite'],
       center: s.location as maplibregl.LngLatLike,
@@ -404,7 +414,7 @@ function AppComponent(props: App): JSX.Element {
 
     // Save map to store
     saveMap(props._id, localmap);
-  }, [props._id]);
+  }, [props._id, isFocused]);
 
   // When the baselayer is changed
   useEffect(() => {
@@ -443,10 +453,12 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props} hideBackgroundIcon={MdMap}>
       {/* One box for map, one box for container */}
-      <Box id={'container' + props._id} w={props.data.size.width} h={props.data.size.height}>
-        <Box id={'map' + props._id} w="100%" h="100%" />
+      {/* <Box id={'container' + props._id} w={props.data.size.width} h={props.data.size.height}> */}
+      <Box ref={divRef} width="100%" height="100%" objectFit="contain"
+        position="relative" background={backgroundColor}>
+        {/* <Box id={'map' + props._id} w="100%" h="100%" /> */}
       </Box>
-    </AppWindow>
+    </AppWindow >
   );
 }
 

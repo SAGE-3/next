@@ -6,8 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useMemo, useState } from 'react';
-import { Box, useToast, useColorModeValue, Icon, Text, Portal, Button } from '@chakra-ui/react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
+import { Box, useToast, useColorModeValue, Icon, Portal, Button } from '@chakra-ui/react';
 
 import { DraggableData, ResizableDelta, Position, Rnd, RndDragEvent } from 'react-rnd';
 import { MdWindow } from 'react-icons/md';
@@ -19,6 +19,7 @@ import { useAppStore, useUIStore, useHexColor, useThrottleScale, useAbility, use
 // Window Components
 import { App } from '../../schema';
 import { ProcessingBox, BlockInteraction, WindowTitle, WindowBorder } from './components';
+import { use } from 'passport';
 
 // Consraints on the app window size
 const APP_MIN_WIDTH = 200;
@@ -482,11 +483,20 @@ export function AppWindow(props: WindowProps) {
 
   const isFocused = useUIStore((state) => state.focusedAppId === props.app._id);
 
+  const refCallback = useCallback((element: HTMLDivElement) => {
+    if (element) {
+      console.log('Element attached:', element);
+
+    } else {
+      console.log('Element detached');
+    }
+  }, []);
+
   return (
     isFocused ?
-      <Portal >
+      <Portal>
         <Box
-          id={'app_' + props.app._id}
+          id={'portalapp_' + props.app._id}
           overflow="hidden"
           left="0px"
           top="0px"
@@ -495,6 +505,7 @@ export function AppWindow(props: WindowProps) {
           height="100%"
           zIndex={999999999}
           background={"backgroundColor"}
+          ref={refCallback}
         >
           {memoizedChildren}
         </Box>

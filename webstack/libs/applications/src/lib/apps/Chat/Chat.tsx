@@ -63,8 +63,10 @@ import {
   useUIStore,
   EditUserSettingsModal,
   useLinkStore,
+  useAssetStore,
+  apiUrls,
 } from '@sage3/frontend';
-import { genId, AskRequest, ImageQuery, PDFQuery, CodeRequest, WebQuery, WebScreenshot } from '@sage3/shared';
+import { genId, AskRequest, ImageQuery, PDFQuery, CodeRequest, WebQuery, WebScreenshot, isGeoJSON } from '@sage3/shared';
 
 import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
@@ -125,7 +127,7 @@ const MdCode: React.FC<{ children: React.ReactNode }> = ({ children, ...props })
   </Table >
 };
 
-type OperationMode = 'chat' | 'text' | 'image' | 'web' | 'pdf' | 'code' | 'Hawaii Mesonet';
+type OperationMode = 'chat' | 'text' | 'image' | 'web' | 'pdf' | 'code' | 'map' | 'Hawaii Mesonet';
 
 
 /* App component for Chat */
@@ -230,6 +232,9 @@ function AppComponent(props: App): JSX.Element {
     } else if (mode === 'web') {
       // Code
       onContentWeb(text);
+    } else if (mode === 'map') {
+      // Map
+      onContentMap(text);
     } else if (mode === 'Hawaii Mesonet') {
       // Code
       onContentMesonet(text);
@@ -319,6 +324,8 @@ function AppComponent(props: App): JSX.Element {
         setMode('web');
       } else if (apps && apps[0] && apps[0].data.type === 'Hawaii Mesonet') {
         setMode('Hawaii Mesonet');
+      } else if (apps && apps[0] && apps[0].data.type === 'MapGL') {
+        setMode('map');
       } else {
         setMode('text');
       }
@@ -860,6 +867,125 @@ function AppComponent(props: App): JSX.Element {
           setActions([]);
           // Invoke the agent
           const response = await callWeb(q);
+          setProcessing(false);
+
+          if ('message' in response) {
+            toast({
+              title: 'Error',
+              description: response.message || 'Error sending query to the agent. Please try again.',
+              status: 'error',
+              duration: 4000,
+              isClosable: true,
+            });
+          } else {
+            // Clear the stream text
+            setStreamText('');
+            ctrlRef.current = null;
+            setPreviousAnswer(response.r);
+            // Add messages
+            updateState(props._id, {
+              ...s,
+              previousQ: 'Describe the content',
+              previousA: response.r,
+              messages: [
+                ...s.messages,
+                initialAnswer,
+                {
+                  id: genId(),
+                  userId: user._id,
+                  creationId: '',
+                  creationDate: now.epoch + 1,
+                  userName: 'SAGE',
+                  query: '',
+                  response: response.r,
+                },
+              ],
+            });
+            if (response.actions) {
+              setActions(response.actions);
+            }
+          }
+        }
+      }
+    }
+  };
+
+  // Generic code to handle the map content
+  const onContentMap = async (prompt: string) => {
+    if (!user) return;
+    if (sourceApps.length > 0) {
+      // Update the context with the stickies
+      const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
+
+      // Check for map
+      if (apps && apps[0].data.type === 'MapGL') {
+        if (roomId && boardId) {
+          const now = await serverTime();
+          const initialAnswer = {
+            id: genId(),
+            userId: user._id,
+            creationId: '',
+            creationDate: now.epoch,
+            userName: 'SAGE',
+            query: prompt,
+            response: 'Working on it...',
+          };
+          updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
+
+          const request = prompt.slice(2);
+          console.log('Map request', request);
+          console.log('GeoJSON', apps[0].data.state);
+          let ctx = '';
+          if (apps[0].data.state.assetid) {
+            const myasset = useAssetStore.getState().assets.find((a) => a._id === apps[0].data.state.assetid);
+            console.log('Map asset', myasset);
+            if (myasset && isGeoJSON(myasset.data.mimetype)) {
+              const newURL = apiUrls.assets.getAssetById(myasset.data.file);
+              console.log("🚀 > onContentMap > newURL:", newURL)
+              // Get the GEOJSON data from the asset
+              const response = await fetch(newURL, {
+                headers: {
+                  'Content-Type': 'application/json',
+                  Accept: 'application/json',
+                },
+              });
+              const geojson = await response.json();
+              console.log("🚀 > onContentMap > gjson:", geojson)
+
+              ctx = `Please read the following GeoJSON data:
+                <text>
+                ${JSON.stringify(geojson, null, 2)}
+                </text>
+                ${request}`;
+            }
+          } else {
+            ctx = `Please check the following map centered on the coordinates:
+              <data>
+              Lng ${apps[0].data.state.location[0]}, Lat ${apps[0].data.state.location[1]}
+              </data>
+              ${request}`;
+          }
+
+          // Build the query
+          const q: AskRequest = {
+            ctx: {
+              previousQ: previousQuestion,
+              previousA: previousAnswer,
+              pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+              roomId,
+              boardId,
+            },
+
+            user: username,
+            id: genId(),
+            model: selectedModel || 'llama',
+            location: location,
+            q: s.context ? ctx : request,
+          };
+          setProcessing(true);
+          setActions([]);
+          // Invoke the agent
+          const response = await callAsk(q);
           setProcessing(false);
 
           if ('message' in response) {
