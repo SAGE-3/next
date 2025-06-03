@@ -114,8 +114,8 @@ function createArrow(
         d={`M${sx},${sy} Q${cx},${cy} ${ex},${ey}`}
         fill="none"
         stroke={strokeColorHex}
-        strokeWidth={8}
-        strokeDasharray={strokeType === 'dashed' ? '30,40' : '0'}
+        strokeWidth={4 / scale}
+        strokeDasharray={strokeType === 'dashed' ? `${30},${40}` : '0'}
       />
       {/* {animated &&
         Array.from({ length: arrowCount }).map((_, index) => (
@@ -127,16 +127,12 @@ function createArrow(
         ))} */}
 
       {/* start of the arrow */}
-      <circle cx={sx} cy={sy} r="20"
-        stroke={arrowColorHex}
-        strokeWidth={2}
-        fill={arrowColorHex}
-      />
+      <circle cx={sx} cy={sy} r={20 / scale} stroke={arrowColorHex} strokeWidth={2} fill={arrowColorHex} />
 
       {/* end of the arrow */}
       <polygon
         points="-72,-36 -10,0 -72,36 -55,0"
-        transform={`translate(${ex},${ey}) rotate(${angleDegrees}) scale(0.6)`}
+        transform={`translate(${ex},${ey}) scale(${1 / scale}) rotate(${angleDegrees}) scale(0.6)`}
         stroke={arrowColorHex}
         strokeWidth={2}
         fill={arrowColorHex}
