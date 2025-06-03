@@ -21,6 +21,13 @@ export const schema = z.object({
   baseLayer: z.string(),
   overlay: z.boolean(),
   assetid: z.string().optional(),
+  // Remove single `assetid`; instead, keep an array of layers:
+  layers: z.array(
+    z.object({
+      assetid: z.string(),
+      visible: z.boolean(),
+    })
+  ),
   colorScale: z.string(),
 });
 export type state = z.infer<typeof schema>;
@@ -33,6 +40,8 @@ export const init: Partial<state> = {
   baseLayer: 'OpenStreetMap',
   overlay: true,
   assetid: '',
+  // Start with no overlay layers
+  layers: [],
   colorScale: 'greys',
 };
 
