@@ -212,11 +212,13 @@ function AppComponent(props: App): JSX.Element {
 
   const handleEditorResize = (deltaY: number) => {
     setEditorHeight((prevHeight) => {
-      const newHeight = prevHeight + deltaY;
-      // set the minimum height of the editor to 150px
-      if (newHeight < 150) return 150;
-      // set the maximum height of the editor to 50% of the window height
-      if (newHeight > props.data.size.height * 0.8) return props.data.size.height * 0.8;
+      const focused = useUIStore.getState().focusedAppId === props._id;
+      const maxHeight = focused ? window.innerHeight * 0.8 : props.data.size.height * 0.8;
+      let newHeight = prevHeight + deltaY;
+      // set the minimum height of the editor
+      if (newHeight < 280) newHeight = 280;
+      // set the maximum height of the editor to 80% of the window height
+      if (newHeight > maxHeight) newHeight = maxHeight;
       return newHeight;
     }); // update the Monaco editor height
   };
@@ -231,8 +233,9 @@ function AppComponent(props: App): JSX.Element {
    */
   useEffect(() => {
     if (!editorRef.current) return;
+    const focused = useUIStore.getState().focusedAppId === props._id;
     editorRef.current.layout({
-      width: props.data.size.width - 60,
+      width: focused ? window.innerWidth - 60 : props.data.size.width - 60,
       height: editorHeight && editorHeight > 150 ? editorHeight : 150,
       minHeight: '100%',
       minWidth: '100%',
