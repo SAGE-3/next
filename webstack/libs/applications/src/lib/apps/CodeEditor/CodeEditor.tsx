@@ -99,6 +99,7 @@ function AppComponent(props: App): JSX.Element {
 
   // Styling
   const defaultTheme = useColorModeValue('vs', 'vs-dark');
+  const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A'); // gray.100  gray.800
 
   // Monaco Editor Ref
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
@@ -187,7 +188,7 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props} hideBackgroundIcon={MdCode}>
-      <Box p={2} border={'none'} overflow="hidden" height="100%" borderRadius={'md'}>
+      <Box p={2} border={'none'} overflow="hidden" height="100%" borderRadius={'md'} background={bgColor}>
         <Editor
           // value={spec}
           onChange={handleTextChange}
