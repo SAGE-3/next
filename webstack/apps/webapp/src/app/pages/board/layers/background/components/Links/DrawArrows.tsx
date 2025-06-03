@@ -127,12 +127,12 @@ function createArrow(
         ))} */}
 
       {/* start of the arrow */}
-      <circle cx={sx} cy={sy} r={20 / scale} stroke={arrowColorHex} strokeWidth={2} fill={arrowColorHex} />
+      <circle cx={sx} cy={sy} r={10 / scale} stroke={arrowColorHex} strokeWidth={2} fill={arrowColorHex} />
 
       {/* end of the arrow */}
       <polygon
         points="-72,-36 -10,0 -72,36 -55,0"
-        transform={`translate(${ex},${ey}) scale(${1 / scale}) rotate(${angleDegrees}) scale(0.6)`}
+        transform={`translate(${ex},${ey}) scale(${1 / scale}) rotate(${angleDegrees}) scale(0.3)`}
         stroke={arrowColorHex}
         strokeWidth={2}
         fill={arrowColorHex}
