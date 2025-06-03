@@ -72,7 +72,6 @@ import {
   serverTime,
   YjsRoomConnection,
   useLinkStore,
-  useWindowResize,
 } from '@sage3/frontend';
 import { KernelInfo, ContentItem } from '@sage3/shared/types';
 import { SAGE3Ability } from '@sage3/shared';
