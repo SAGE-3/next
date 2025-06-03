@@ -53,9 +53,9 @@ import {
   getFormattedDateTime1YearBefore,
   getFormattedDateTime24HoursBefore,
 } from './utils';
-import StationMetadata from './viewers/StationMetadata';
-import FriendlyVariableCard from './viewers/FriendlyVariableCard';
-import StatisticCard from './viewers/StatisticCard';
+// import StationMetadata from './viewers/StationMetadata';
+// import FriendlyVariableCard from './viewers/FriendlyVariableCard';
+// import StatisticCard from './viewers/StatisticCard';
 import MapViewer from './viewers/MapViewer';
 import { checkAvailableVisualizations } from './utils';
 import MapGL from './MapGL';
@@ -144,6 +144,8 @@ function AppComponent(props: App): JSX.Element {
   const createApp = useAppStore((state) => state.create);
   const [stationData, setStationData] = useState<StationDataType[]>([]);
   const [stationMetadata, setStationMetadata] = useState({});
+  const [allStationsData, setAllStationsData] = useState<any>([]);
+  const [stationIdToName, setStationIdToName] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     const updateTimesinceLastUpdate = () => {
@@ -176,10 +178,31 @@ function AppComponent(props: App): JSX.Element {
     return () => clearInterval(interval);
   }, [JSON.stringify(s.stationNames), JSON.stringify(s.widget)]);
 
+  useEffect(() => {
+    const translations: { [key: string]: string } = {};
+    stationData.forEach(station => {
+      translations[station.station_id] = station.name;
+    });
+    setStationIdToName(translations);
+  }, [stationData]);
+
   const fetchStationData = async () => {
     try {
       const token = '71c5efcd8cfe303f2795e51f01d19c6';
 
+      const stations = await fetch(`https://api.hcdp.ikewai.org/mesonet/db/stations`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!stations.ok) {
+        throw new Error(`Station API error: ${stations.status}`);
+      }
+
+      const allStationsData = await stations.json();
+      setAllStationsData(allStationsData);
       // First fetch station data
       const stationResponse = await fetch(`https://api.hcdp.ikewai.org/mesonet/db/stations?station_ids=${s.stationNames.join(',')}`, {
         method: 'GET',
@@ -187,7 +210,6 @@ function AppComponent(props: App): JSX.Element {
           Authorization: `Bearer ${token}`,
         },
       });
-
       if (!stationResponse.ok) {
         throw new Error(`Station API error: ${stationResponse.status}`);
       }
@@ -198,42 +220,64 @@ function AppComponent(props: App): JSX.Element {
       const centerLon = data.reduce((acc, station) => acc + station.lng, 0) / data.length;
       setStationData(data);
       updateState(props._id, { location: [centerLon, centerLat] });
-      // Then fetch measurements for each station
-      const stationByMeasurements: any = {};
+      // Create a new object to store all measurements
+      const stationByMeasurements: { [key: string]: any[] } = {};
+      
+      // Fetch measurements for each station
       for (const station of data) {
         try {
-          // Build query URL with start date
+          // Build query URL with start date - only include the current station
           const queryParams = new URLSearchParams({
-            station_ids: station.station_id,
+            station_ids: station.station_id, // Only use the current station's ID
             var_ids: s.widget.yAxisNames.join(','),
             row_mode: 'json',
             limit: '100',
           });
-          const url = s.url !== '' ? s.url : `https://api.hcdp.ikewai.org/mesonet/db/measurements?${queryParams}`;
+          // Force the URL to be constructed with only the current station
+          const baseUrl = 'https://api.hcdp.ikewai.org/mesonet/db/measurements';
+          const url = `${baseUrl}?${queryParams.toString()}`;
+                    
           const measurements = await fetch(url, {
             method: 'GET',
             headers: {
               Authorization: `Bearer ${token}`,
             },
           });
+          
           if (!measurements.ok) {
-            console.warn(`Measurement API error for station ${station.station_id}: ${measurements.status}`);
             stationByMeasurements[station.station_id] = [];
             continue;
           }
 
           const measurementData = await measurements.json();
-          stationByMeasurements[station.station_id] = measurementData;
+          
+          // Only update if we have valid data
+          if (Array.isArray(measurementData) && measurementData.length > 0) {
+            // Filter the data to only include measurements for the current station
+            const filteredData = measurementData.filter(measurement => 
+              measurement.station_id === station.station_id
+            );
+            stationByMeasurements[station.station_id] = filteredData;
+          } else {
+            console.warn(`No valid data received for station ${station.station_id}`);
+            stationByMeasurements[station.station_id] = [];
+          }
         } catch (err) {
           console.warn(`Failed to fetch measurements for station ${station.station_id}:`, err);
           stationByMeasurements[station.station_id] = [];
         }
       }
 
-      // Final state update
-      setStationMetadata(stationByMeasurements);
-      setIsLoaded(true);
-      setLastUpdate(Date.now());
+
+      // Final state update - only update if we have data
+      if (Object.keys(stationByMeasurements).length > 0) {
+        setStationMetadata(stationByMeasurements);
+        setIsLoaded(true);
+        setLastUpdate(Date.now());
+      } else {
+        console.warn('No measurement data was fetched for any station');
+        setIsLoaded(true);
+      }
     } catch (err) {
       console.error('Failed to fetch station data:', err);
       setIsLoaded(true); // Set loaded even on error to prevent infinite loading state
@@ -267,42 +311,36 @@ function AppComponent(props: App): JSX.Element {
     setButtonPosition({ top: buttonRect.top, left: buttonCenterX });
     onOpen();
   };
-
   const handleDuplicateVisualizationsAs = async (visualizationType: string) => {
-    const widget = { ...props.data.state.widget, visualizationType: visualizationType };
+    // Create a copy of the current app's state
+    const currentState = props.data.state;
+    
     await createApp({
-      title: 'Hawaii Mesonet',
+      title: props.data.title,
       roomId: props.data.roomId!,
       boardId: props.data.boardId!,
-      //TODO get middle of the screen space
       position: {
         x: props.data.position.x + props.data.size.width,
         y: props.data.position.y,
-        z: 0,
+        z: props.data.position.z,
       },
       size: {
         width: props.data.size.width,
         height: props.data.size.height,
-        depth: 0,
+        depth: props.data.size.depth,
       },
-      rotation: { x: 0, y: 0, z: 0 },
-      type: 'Hawaii Mesonet',
+      rotation: props.data.rotation,
+      type: props.data.type,
       state: {
-        sensorData: {},
-        stationNames: props.data.state.stationNames,
-        listOfStationNames: s.stationNames[0],
-        location: [-157.816, 21.297],
-        zoom: 10,
-        pitch: 0,
-        stationScale: 5,
-        baseLayer: 'OpenStreetMap',
-        overlay: true,
-        widget: widget,
+        ...currentState,
+        widget: {
+          ...currentState.widget,
+          visualizationType: visualizationType
+        }
       },
-
-      raised: true,
-      dragging: false,
-      pinned: false,
+      raised: props.data.raised,
+      dragging: props.data.dragging,
+      pinned: props.data.pinned,
     });
   };
   const duplicateMenuBackground = useColorModeValue('gray.50', 'gray.800');
@@ -312,64 +350,15 @@ function AppComponent(props: App): JSX.Element {
     <AppWindow app={props} lockAspectRatio={handleLockAspectRatio()} hideBackgroundIcon={MdSensors}>
       <Box overflowY="auto" bg={bgColor} h="100%" border={`solid #7B7B7B 15px`}>
         <Box position="absolute" top="50%" right="1rem" zIndex={999}>
-          <Button
-            onMouseEnter={handleButtonHover}
-            onMouseLeave={() => {
-              onClose();
-            }}
-            colorScheme="twitter"
-            height="10%"
-          >
-            <MdDoubleArrow size="40" />
-          </Button>
-          {isOpen && (
-            <Portal>
-              <Box
-                onMouseEnter={() => {
-                  onOpen();
-                }}
-                onMouseLeave={() => {
-                  onClose();
-                }}
-                position="absolute"
-                top={`${buttonPosition.top}px`}
-                left={`${buttonPosition.left}px`}
-                // bg="blue.200"
-                borderRadius="lg"
-                p={4}
-                zIndex={1}
-                border={'solid 1px grey'}
-                borderLeft={'solid #60CDBA 3px'}
-                bg={duplicateMenuBackground}
-                transform={`scale(0.9) translateY(-${buttonPosition.top / 4}px)`}
-                transformOrigin={'top left'}
-                shadow={'xl'}
-              >
-                {/* Content of the opened div */}
-                <Text fontWeight={'bold'}>Duplicate as:</Text>
-                {/* <Tooltip label={'Select a visualization that you would like to see'} aria-label="A tooltip"> */}
-                {checkAvailableVisualizations(s.widget.yAxisNames[0]).map(
-                  (visualization: { value: string; name: string }, index: number) => {
-                    return (
-                      <Text
-                        key={index}
-                        onClick={() => {
-                          handleDuplicateVisualizationsAs(visualization.value);
-                        }}
-                        className="selectableListItem"
-                        backgroundColor={duplicateMenuItems}
-                        border={'grey solid 2px'}
-                        _hover={{ backgroundColor: duplicateHoverMenuItem }}
-                      >
-                        {visualization.name}
-                      </Text>
-                    );
-                  }
-                )}
-                {/* </Tooltip> */}
-              </Box>
-            </Portal>
-          )}
+          <Tooltip label="Duplicate this visualization" placement="left">
+            <Button
+              onClick={() => handleDuplicateVisualizationsAs(s.widget.visualizationType)}
+              colorScheme="twitter"
+              height="10%"
+            >
+              <MdDoubleArrow size="40" />
+            </Button>
+          </Tooltip>
         </Box>
 
         {stationMetadata ? (
@@ -382,12 +371,14 @@ function AppComponent(props: App): JSX.Element {
                 props.data.state.widget.visualizationType === 'Scatter Chart' ? (
                   <EChartsViewer
                     stationNames={s.stationNames}
+                    stationFriendlyNames={s.stationFriendlyNames}
                     isLoaded={true}
                     startDate={props.data.state.widget.startDate}
                     timeSinceLastUpdate={timeSinceLastUpdate}
                     widget={s.widget}
                     size={{ width: props.data.size.width - 30, height: props.data.size.height - 35, depth: 0 }}
                     stationMetadata={stationMetadata}
+                    stationIdToName={stationIdToName}
                   />
                 ) : null}
                 {props.data.state.widget.visualizationType === 'map' ? (
@@ -443,6 +434,7 @@ function ToolbarComponent(props: App): JSX.Element {
 
   const stationNameRef = useRef<any>(s.stationNames);
   const toolbarStationData = useRef<any>(stationData);
+  const [allStationsData, setAllStationsData] = useState<any>([]);
 
   // useEffect(() => {
   //   if (selectedDates.length === 2) {
@@ -455,15 +447,32 @@ function ToolbarComponent(props: App): JSX.Element {
   // }, [selectedDates]);
 
   useEffect(() => {
-    const fetchAvailableVariables = async () => {
+    const fetchCall = async () => {
       try {
         const token = '71c5efcd8cfe303f2795e51f01d19c6';
+
+        // Fetch all stations data
+        const allStationsData = await fetch(`https://api.hcdp.ikewai.org/mesonet/db/stations`, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!allStationsData.ok) {
+          throw new Error(`Station API error: ${allStationsData.status}`);
+        }
+        const allStations = await allStationsData.json();
+        setAllStationsData(allStations);
+
+        //********
+
+        // Fetch all variables
         const allVariables = new Set<string>();
 
         // Fetch variables for each station
         for (const stationId of s.stationNames) {
           const response = await fetch(
-            `https://api.hcdp.ikewai.org/mesonet/db/measurements?station_ids=${stationId}&limit=100&row_mode=json&join_metadata=true`,
+            `https://api.hcdp.ikewai.org/mesonet/db/measurements?station_ids=${stationId}&limit=20&row_mode=json&join_metadata=true`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -487,8 +496,8 @@ function ToolbarComponent(props: App): JSX.Element {
       }
     };
 
-    fetchAvailableVariables();
-  }, [s.stationNames]);
+    fetchCall();
+  }, [JSON.stringify(s.stationNames)]);
 
   const handleChangeVariable = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const variable = event.target.value;
@@ -574,12 +583,11 @@ function ToolbarComponent(props: App): JSX.Element {
 
   const tableRows = [
     { propName: 'selected', name: 'Selected' },
-    { propName: 'ID', name: 'ID' },
+    { propName: 'station_id', name: 'Station ID' },
     { propName: 'name', name: 'Station Name' },
-    { propName: 'county', name: 'County Name' },
     { propName: 'elevation', name: 'Elevation' },
     { propName: 'lat', name: 'Latitude' },
-    { propName: 'lon', name: 'Longitude' },
+    { propName: 'lng', name: 'Longitude' },
   ];
   const handleChangeSelectedStation = (e: React.ChangeEvent<HTMLInputElement>, stationSTID: string) => {
     let updatedStations;
@@ -616,7 +624,7 @@ function ToolbarComponent(props: App): JSX.Element {
           <ModalHeader>Station Selection</ModalHeader>
           <ModalCloseButton />
           <Box rounded="2xl" height={'40rem'} width="60rem">
-            <MapGL {...props} isSelectingStations={true} stationNameRef={stationNameRef} />
+            <MapGL {...props} isSelectingStations={true} stationNameRef={stationNameRef} allStationsData={allStationsData} />
           </Box>
           <ModalBody>
             <Box
@@ -647,25 +655,22 @@ function ToolbarComponent(props: App): JSX.Element {
 
                     switch (row.propName) {
                       case 'selected':
-                        widthSize = '9%';
+                        widthSize = '5%';
                         break;
-                      case 'ID':
+                      case 'station_id':
                         widthSize = '9%';
                         break;
                       case 'name':
                         widthSize = '18%';
                         break;
-                      case 'county':
-                        widthSize = '20%';
-                        break;
                       case 'elevation':
-                        widthSize = '10%';
+                        widthSize = '5%';
                         break;
                       case 'lat':
-                        widthSize = '10%';
+                        widthSize = '8%';
                         break;
-                      case 'lon':
-                        widthSize = '10%';
+                      case 'lng':
+                        widthSize = '8%';
                         break;
                     }
                     return (
@@ -676,24 +681,22 @@ function ToolbarComponent(props: App): JSX.Element {
                       </th>
                     );
                   })}
-                  {toolbarStationData.current.map((station: any, index: number) => {
-                    const isSelected = s.stationNames.includes(station.id);
+                  {allStationsData.map((station: any, index: number) => {
+                    const isSelected = s.stationNames.includes(station.station_id);
                     return (
                       <tr key={index}>
                         <td style={{ textAlign: 'center', width: '10px' }}>
                           <Checkbox
                             colorScheme="teal"
                             isChecked={isSelected}
-                            onChange={(e) => handleChangeSelectedStation(e, station.id)}
+                            onChange={(e) => handleChangeSelectedStation(e, station.station_id)}
                           />
                         </td>
-                        <td>{station.id}</td>
+                        <td>{station.station_id}</td>
                         <td>{station.name}</td>
-                        <td>{station.county}</td>
                         <td style={{ textAlign: 'right' }}>{station.elevation}</td>
-                        <td style={{ textAlign: 'right' }}>{Number(station.lat).toFixed(1)}</td>
-                        <td style={{ textAlign: 'right' }}>{Number(station.lon).toFixed(1)}</td>
-                        {/* <td>variable</td> */}
+                        <td style={{ textAlign: 'right' }}>{Number(station.lat).toFixed(4)}</td>
+                        <td style={{ textAlign: 'right' }}>{Number(station.lng).toFixed(4)}</td>
                       </tr>
                     );
                   })}
@@ -718,7 +721,7 @@ function ToolbarComponent(props: App): JSX.Element {
         </ModalContent>
       </Modal>
       <Divider border={'1px'} size={'2xl'} orientation="vertical" />
-      <Text fontSize={'sm'} mx="1rem">
+      {/* <Text fontSize={'sm'} mx="1rem">
         Live Data
       </Text>
       <Switch colorScheme={'green'} isChecked={s.widget.liveData} onChange={handleChangeLiveData} />
@@ -743,7 +746,7 @@ function ToolbarComponent(props: App): JSX.Element {
           selectedDates={selectedDates}
           onDateChange={setSelectedDates}
         />
-      )}
+      )} */}
 
       {/* <Text mx="1rem">OR</Text> */}
       {/* <Tooltip label={'Select a custom start date for this visualization'} aria-label="A tooltip">
