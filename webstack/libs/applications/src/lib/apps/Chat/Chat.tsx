@@ -29,8 +29,12 @@ import {
   ListItem,
   Textarea,
   useDisclosure,
-  Table, Tr, Thead, Tbody,
+  Table,
+  Tr,
+  Td,
   Th,
+  Thead,
+  Tbody,
 } from '@chakra-ui/react';
 import {
   MdSend,
@@ -42,6 +46,7 @@ import {
   MdSettings,
   MdOpenInNew,
 } from 'react-icons/md';
+import { BsCopy, BsCheck } from 'react-icons/bs';
 import { HiCommandLine } from 'react-icons/hi2';
 
 // Date management
@@ -71,7 +76,6 @@ import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
 
 import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot, callMesonet } from './tRPC';
-import React from 'react';
 
 // Override the default markdown options for lists
 const MdOrderedList: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => (
@@ -89,6 +93,7 @@ const MdUnorderedList: React.FC<{ children: React.ReactNode }> = ({ children, ..
 const MdCode: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => {
   // @ts-ignore
   const lang = props.className ? props.className.replace('lang-', '') : 'text';
+  const [copied, setCopied] = useState(false);
   return <Table variant="unstyled" size="sm" style={{
     borderSpacing: 0,
     borderCollapse: 'separate',
@@ -97,23 +102,37 @@ const MdCode: React.FC<{ children: React.ReactNode }> = ({ children, ...props })
   }}>
     <Thead>
       <Tr backgroundColor="#e5e5e5">
-        <Th style={{ borderRadius: '10px 10px 0 0' }}>{lang}</Th>
+        <Th style={{ borderRadius: '10px 10px 0 0' }} textTransform={'capitalize'} fontWeight={'normal'}>
+          <Box display={"flex"} justifyContent={'space-between'}>
+            <span><b>{lang}</b></span>
+            <Box display={"flex"} alignItems={'center'} userSelect={'none'} _hover={{ cursor: 'pointer' }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setCopied(true);
+                // Copy the code to clipboard
+                navigator.clipboard.writeText(children as string);
+              }}>
+              {copied ? <BsCheck /> : <BsCopy />} <span> {copied ? 'Copied' : 'Copy'} </span>
+            </Box>
+          </Box>
+        </Th>
       </Tr>
     </Thead>
     <Tbody>
       <Tr>
-        <pre style={{ fontSize: 'smaller', paddingLeft: '24px', backgroundColor: '#fafafa', borderRadius: '0 0 10px 10px' }} {...props}>
-          <code {...props} style={{ userSelect: "text" }}>
-            {children}
-          </code>
-        </pre>
+        <Td style={{ padding: 0 }} colSpan={1}>
+          <pre style={{ fontSize: 'smaller', paddingLeft: '24px', backgroundColor: '#fafafa', borderRadius: '0 0 10px 10px' }} {...props}>
+            <code {...props} style={{ userSelect: "text" }}>
+              {children}
+            </code>
+          </pre>
+        </Td>
       </Tr>
     </Tbody>
   </Table >
 };
 
 type OperationMode = 'chat' | 'text' | 'image' | 'web' | 'pdf' | 'code' | 'Hawaii Mesonet';
-
 
 /* App component for Chat */
 
@@ -146,6 +165,9 @@ function AppComponent(props: App): JSX.Element {
   const textColor = useColorModeValue('gray.800', 'gray.100');
 
   const { isOpen: editSettingsIsOpen, onOpen: editSettingsOnOpen, onClose: editSettingsOnClose } = useDisclosure();
+
+  // Is the app in focus mode?
+  const isFocused = useUIStore((state) => state.focusedAppId === props._id);
 
   // App state management
   const updateState = useAppStore((state) => state.updateState);
@@ -222,6 +244,13 @@ function AppComponent(props: App): JSX.Element {
     }
   };
   const onSubmit = (e: React.KeyboardEvent) => {
+    if (e.code === 'Escape') {
+      // Deselect the text area
+      inputRef.current?.blur();
+      // Deselect the app
+      useUIStore.getState().setSelectedApp('');
+      return;
+    }
     // Keyboard instead of pressing the button
     if (e.key === 'Enter') {
       if (e.shiftKey) {
@@ -382,7 +411,7 @@ function AppComponent(props: App): JSX.Element {
             ],
           });
           // Check if there are actions to be taken
-          if (response.actions) {
+          if (response.actions && response.actions.length > 0) {
             setActions(response.actions);
           }
         }
@@ -638,18 +667,18 @@ function AppComponent(props: App): JSX.Element {
             ctrlRef.current = null;
             setPreviousAnswer(response.summary);
             // Update the Mesonet app's state with the selected stations
-            if (response.stations && response.stations.length > 0) {
-              const mesonetApp = apps[0];
-              updateState(mesonetApp._id, {
-                ...mesonetApp.data.state,
-                stationNames: response.stations,
+            // if (response.stations && response.stations.length > 0) {
+            //   const mesonetApp = apps[0];
+            //   updateState(mesonetApp._id, {
+            //     ...mesonetApp.data.state,
+            //     stationNames: response.stations,
 
-                widget: {
-                  ...mesonetApp.data.state.widget,
-                  yAxisNames: response.attributes,
-                },
-              });
-            }
+            //     widget: {
+            //       ...mesonetApp.data.state.widget,
+            //       yAxisNames: response.attributes,
+            //     },
+            //   });
+            // }
 
             updateState(props._id, {
               ...s,
@@ -1377,12 +1406,9 @@ function AppComponent(props: App): JSX.Element {
             const last = index === sortedMessages.length - 1;
 
             // Remove single backticks and replace with double asterisks for bold
-            const response = message.response.replace(
-              /`([^`\n]+)`/g,
-              (match, p1) => {
-                return `**${p1}**`;
-              }
-            );
+            const response = message.response.replace(/`([^`\n]+)`/g, (match, p1) => {
+              return `**${p1}**`;
+            });
 
             return (
               <Fragment key={index}>
@@ -1426,7 +1452,7 @@ function AppComponent(props: App): JSX.Element {
                           py={1}
                           m={3}
                           maxWidth="70%"
-                          userSelect={'none'}
+                          userSelect={isFocused ? 'text' : 'none'}
                           onDoubleClick={() => {
                             if (navigator.clipboard) {
                               // Copy into clipboard
@@ -1441,7 +1467,7 @@ function AppComponent(props: App): JSX.Element {
                               });
                             }
                           }}
-                          draggable={true}
+                          draggable={!isFocused}
                           // Store the query into the drag/drop events to create stickies
                           onDragStart={(e) => {
                             e.dataTransfer.clearData();
@@ -1517,7 +1543,7 @@ function AppComponent(props: App): JSX.Element {
                         >
                           <Box
                             // pl={3}
-                            draggable={true}
+                            draggable={!isFocused}
                             onDragStart={(e) => {
                               // Store the response into the drag/drop events to create stickies
                               e.dataTransfer.clearData();
@@ -1533,7 +1559,6 @@ function AppComponent(props: App): JSX.Element {
                               );
                             }}
                           >
-
                             <Box>
                               <Markdown
                                 options={{
@@ -1549,12 +1574,11 @@ function AppComponent(props: App): JSX.Element {
                                     },
                                   },
                                 }}
-                                style={{ userSelect: 'none' }}
+                                style={{ userSelect: isFocused ? 'text' : 'none' }}
                               >
                                 {response}
                               </Markdown>
                             </Box>
-
                           </Box>
                         </Box>
                       </Tooltip>
@@ -1598,8 +1622,10 @@ function AppComponent(props: App): JSX.Element {
               <List>
                 {actions.map((action, index) => {
                   let propName = undefined;
+                  let chartType = undefined;
                   try {
                     propName = action.state.widget.yAxisNames[0];
+                    chartType = action.state.widget.visualizationType;
                   } catch (e) {
                     // console.log('ChatApp Exception> No property Name found.');
                   }
@@ -1622,7 +1648,7 @@ function AppComponent(props: App): JSX.Element {
                       <Tooltip label="Click to show result on the board" aria-label="A tooltip">
                         <ListItem key={index}>
                           <ListIcon as={MdOpenInNew} color="white" fontWeight={'bold'} />
-                          Show {propName ? propName : action.app} on the board
+                          {chartType === 'map' ? 'Show Map' : 'Show ' + (propName || action.app)} on the board
                         </ListItem>
                       </Tooltip>
                     </Box>

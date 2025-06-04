@@ -43,6 +43,7 @@ export const schema = z.object({
   availableVariableNames: z.string().array(),
   stationScale: z.number(),
   url: z.string(),
+  stationFriendlyNames: z.string().array(),
 });
 export type state = z.infer<typeof schema>;
 
@@ -60,6 +61,7 @@ export const init: Partial<state> = {
   availableVariableNames: [],
   stationScale: 5,
   url: '',
+  stationFriendlyNames: [],
 };
 
 export const name = 'Hawaii Mesonet';

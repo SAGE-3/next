@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useCallback, useState, useEffect, useRef } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { Box, useColorModeValue } from '@chakra-ui/react';
 
 import { useAppStore } from '@sage3/frontend';
@@ -24,8 +24,8 @@ function AppComponent(props: App): JSX.Element {
   const { poll } = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const pollStore = usePollsStore((state) => updateState(props._id, { poll: state }));
-
   const backgroundColor = useColorModeValue('white', 'gray.700');
+
   // Scaling the app based on its width
   const [scale, setScale] = useState(1);
 
@@ -77,7 +77,7 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <Box width="100%" height="auto" background={backgroundColor}>
+      <Box width="100%" height="100%" background={backgroundColor}>
         <Box transform={`scale(${scale})`} transformOrigin={'top left'} width={`${100 / scale}%`}>
           {poll == null ? (
             <NewPollForm onSave={handleSavePoll} />

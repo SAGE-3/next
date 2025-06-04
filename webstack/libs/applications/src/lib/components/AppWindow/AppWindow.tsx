@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { Box, useToast, useColorModeValue, Icon } from '@chakra-ui/react';
+import { Box, useToast, useColorModeValue, Icon, Text, Portal, Button } from '@chakra-ui/react';
 
 import { DraggableData, ResizableDelta, Position, Rnd, RndDragEvent } from 'react-rnd';
 import { MdWindow } from 'react-icons/md';
@@ -49,7 +49,8 @@ type WindowProps = {
 
 export function AppWindow(props: WindowProps) {
   // Settings
-  const { settings } = useUserSettings();
+  const { settings, toggleShowUI } = useUserSettings();
+  const showUI = settings.showUI;
   const primaryActionMode = settings.primaryActionMode;
 
   // Can update
@@ -479,155 +480,192 @@ export function AppWindow(props: WindowProps) {
     }
   };
 
+  const isFocused = useUIStore((state) => state.focusedAppId === props.app._id);
+
   return (
-    <Rnd
-      bounds="parent"
-      dragHandleClassName="handle"
-      size={{ width: size.width, height: size.height }}
-      position={pos}
-      onDragStart={handleDragStart}
-      onDrag={handleDrag}
-      onDragStop={handleDragStop}
-      onResizeStart={handleResizeStart}
-      onResize={handleResize}
-      onResizeStop={handleResizeStop}
-      onClick={handleAppClick}
-      // Handle double click on the app window borders
-      onDoubleClick={onDoubleClick}
-      // Select an app on touch
-      onPointerDown={handleAppTouchStart}
-      onPointerMove={handleAppTouchMove}
-      // EnableResizing={enableResize && canResize && !isPinned}
-      enableResizing={enableResize && canResize && !isPinned && primaryActionMode === 'lasso'} // Temporary solution to fix resize while drag -> && (selectedApp !== "")
-      // BoardSync && rndSafeForAction is a temporary solution to prevent the most common type of bug which is zooming followed by a click
-      disableDragging={
-        !canMove || isPinned || !(boardSynced && rndSafeForAction) || primaryActionMode === 'grab' || primaryActionMode === 'linker'
-      }
-      lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
-      style={{
-        zIndex: props.lockToBackground ? 0 : myZ,
-        pointerEvents: lassoMode || (!canMove && !canResize) ? 'none' : 'auto',
-        borderRadius: outerBorderRadius, // This is used to prevent selection at very edge of corner in grab mode
-        touchAction: 'none', // needed to prevent pinch to zoom
-      }}
-      resizeHandleStyles={{
-        bottom: { transform: `scaleY(${handleScale})` },
-        bottomLeft: { transform: `scale(${handleScale})` },
-        bottomRight: { transform: `scale(${handleScale})` },
-        left: { transform: `scaleX(${handleScale})` },
-        right: { transform: `scaleX(${handleScale})` },
-        top: { transform: `scaleY(${handleScale})` },
-        topLeft: { transform: `scale(${handleScale})` },
-        topRight: { transform: `scale(${handleScale})` },
-      }}
-      resizeHandleClasses={{
-        bottom: 'app-window-resize-handle',
-        bottomLeft: 'app-window-resize-handle',
-        bottomRight: 'app-window-resize-handle',
-        left: 'app-window-resize-handle',
-        right: 'app-window-resize-handle',
-        top: 'app-window-resize-handle',
-        topLeft: 'app-window-resize-handle',
-        topRight: 'app-window-resize-handle',
-      }}
-      // min/max app window dimensions
-      minWidth={APP_MIN_WIDTH}
-      minHeight={APP_MIN_HEIGHT}
-      maxWidth={APP_MAX_WIDTH}
-      maxHeight={APP_MAX_HEIGHT}
-      // Scaling of the board
-      scale={scale}
-    >
-      {/* Title Above app, not when dragging the board */}
-      {!boardDragging && <WindowTitle size={size} scale={scale} title={props.app.data.title} selected={selected} />}
-
-      {/* Border Box around app to show it is selected */}
-      <WindowBorder
-        size={size}
-        selected={selected}
-        isGrouped={isGrouped}
-        dragging={!appDragging && props.app.data.dragging}
-        scale={scale}
-        borderWidth={borderWidth}
-        borderColor={borderColor}
-        selectColor={props.app.data.state?.msgId ? '#F69637' : selectColor} // Orange for SageCell when running
-        borderRadius={outerBorderRadius}
-        pinned={isPinned}
-        background={background}
-        isHighlight={isHighlight}
-      />
-
-      {/* The Application */}
-      <Box
-        id={'app_' + props.app._id}
-        width="100%"
-        height="100%"
-        overflow="hidden"
-        zIndex={2}
-        background={background || outsideView ? backgroundColor : 'unset'}
-        borderRadius={innerBorderRadius}
-        boxShadow={hideApp || isPinned || !background ? '' : `4px 4px 12px 0px ${shadowColor}`} //|| primaryActionMode === 'grab'
-        style={{ contentVisibility: hideApp ? 'hidden' : 'visible' }}
-      >
-        {memoizedChildren}
-      </Box>
-
-      {/* This div is to allow users to drag anywhere within the window when the app isnt selected*/}
-      {!selected && (
+    isFocused ?
+      <Portal >
         <Box
-          className="handle" // The CSS name react-rnd latches on to for the drag events
-          position="absolute"
+          id={'app_' + props.app._id}
+          overflow="hidden"
           left="0px"
           top="0px"
+          position={'absolute'}
           width="100%"
           height="100%"
-          cursor={primaryActionMode === 'grab' ? 'grab' : 'move'}
-          sx={
-            primaryActionMode === 'grab'
-              ? {
-                '&:active': {
-                  cursor: 'grabbing',
-                },
-              }
-              : {}
-          }
-          userSelect={'none'}
-          zIndex={3}
-        // borderRadius={innerBorderRadius}
-        ></Box>
-      )}
-
-      {/* If the app is being dragged block interaction with the app */}
-      {(boardDragging || appDragging || props.app.data.dragging) && <BlockInteraction innerBorderRadius={innerBorderRadius} />}
-
-      {/* Processing Box */}
-      {props.processing && (
-        <ProcessingBox size={size} selected={selected} colors={{ backgroundColor, selectColor, notSelectColor: borderColor }} />
-      )}
-
-      {/* Icon when app is dragging */}
-      {hideApp && (
-        <Box
-          position="absolute"
-          left="0px"
-          top="0px"
-          width={size.width}
-          height={size.height}
-          pointerEvents={'none'}
-          userSelect={'none'}
           zIndex={999999999}
-          justifyContent={'center'}
-          alignItems={'center'}
-          display={'flex'}
-          backgroundColor={hideBackgroundColorHex}
-          fontSize={Math.min(size.width, size.height) / 2}
-          borderRadius={innerBorderRadius}
-          outline={`${borderWidth}px solid ${props.hideBordercolor ? props.hideBordercolor : borderColor}`}
+          background={"backgroundColor"}
         >
-          {props.hideBackgroundIcon ? <Icon as={props.hideBackgroundIcon} /> : <MdWindow />}
+          {memoizedChildren}
         </Box>
-      )}
-    </Rnd>
+        <Button
+          position="absolute"
+          left="50%"
+          bottom="0px"
+          zIndex={999999999}
+          opacity={0.75}
+          backgroundColor={backgroundColor}
+          _hover={{ backgroundColor: "teal", opacity: 1, transform: 'scale(1.15)' }}
+          color="white"
+          onClick={() => {
+            useUIStore.getState().setFocusedAppId('');
+            if (!showUI) {
+              toggleShowUI();
+            }
+          }}
+        >
+          Exit
+        </Button>
+      </Portal>
+      :
+      <Rnd
+        bounds="parent"
+        dragHandleClassName="handle"
+        size={{ width: size.width, height: size.height }}
+        position={pos}
+        onDragStart={handleDragStart}
+        onDrag={handleDrag}
+        onDragStop={handleDragStop}
+        onResizeStart={handleResizeStart}
+        onResize={handleResize}
+        onResizeStop={handleResizeStop}
+        onClick={handleAppClick}
+        // Handle double click on the app window borders
+        onDoubleClick={onDoubleClick}
+        // Select an app on touch
+        onPointerDown={handleAppTouchStart}
+        onPointerMove={handleAppTouchMove}
+        // EnableResizing={enableResize && canResize && !isPinned}
+        enableResizing={enableResize && canResize && !isPinned && primaryActionMode === 'lasso'} // Temporary solution to fix resize while drag -> && (selectedApp !== "")
+        // BoardSync && rndSafeForAction is a temporary solution to prevent the most common type of bug which is zooming followed by a click
+        disableDragging={
+          !canMove || isPinned || !(boardSynced && rndSafeForAction) || primaryActionMode === 'grab' || primaryActionMode === 'linker'
+        }
+        lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
+        style={{
+          zIndex: props.lockToBackground ? 0 : myZ,
+          pointerEvents: lassoMode || (!canMove && !canResize) ? 'none' : 'auto',
+          borderRadius: outerBorderRadius, // This is used to prevent selection at very edge of corner in grab mode
+          touchAction: 'none', // needed to prevent pinch to zoom
+        }}
+        resizeHandleStyles={{
+          bottom: { transform: `scaleY(${handleScale})` },
+          bottomLeft: { transform: `scale(${handleScale})` },
+          bottomRight: { transform: `scale(${handleScale})` },
+          left: { transform: `scaleX(${handleScale})` },
+          right: { transform: `scaleX(${handleScale})` },
+          top: { transform: `scaleY(${handleScale})` },
+          topLeft: { transform: `scale(${handleScale})` },
+          topRight: { transform: `scale(${handleScale})` },
+        }}
+        resizeHandleClasses={{
+          bottom: 'app-window-resize-handle',
+          bottomLeft: 'app-window-resize-handle',
+          bottomRight: 'app-window-resize-handle',
+          left: 'app-window-resize-handle',
+          right: 'app-window-resize-handle',
+          top: 'app-window-resize-handle',
+          topLeft: 'app-window-resize-handle',
+          topRight: 'app-window-resize-handle',
+        }}
+        // min/max app window dimensions
+        minWidth={APP_MIN_WIDTH}
+        minHeight={APP_MIN_HEIGHT}
+        maxWidth={APP_MAX_WIDTH}
+        maxHeight={APP_MAX_HEIGHT}
+        // Scaling of the board
+        scale={scale}
+      >
+        {/* Title Above app, not when dragging the board */}
+        {!boardDragging && <WindowTitle size={size} scale={scale} title={props.app.data.title} selected={selected} />}
+
+        {/* Border Box around app to show it is selected */}
+        <WindowBorder
+          size={size}
+          selected={selected}
+          isGrouped={isGrouped}
+          dragging={!appDragging && props.app.data.dragging}
+          scale={scale}
+          borderWidth={borderWidth}
+          borderColor={borderColor}
+          selectColor={props.app.data.state?.msgId ? '#F69637' : selectColor} // Orange for SageCell when running
+          borderRadius={outerBorderRadius}
+          pinned={isPinned}
+          background={background}
+          isHighlight={isHighlight}
+        />
+
+        {/* The Application */}
+        <Box
+          id={'app_' + props.app._id}
+          width="100%"
+          height="100%"
+          overflow="hidden"
+          zIndex={2}
+          background={background || outsideView ? backgroundColor : 'unset'}
+          borderRadius={innerBorderRadius}
+          boxShadow={hideApp || isPinned || !background ? '' : `4px 4px 12px 0px ${shadowColor}`} //|| primaryActionMode === 'grab'
+          style={{ contentVisibility: hideApp ? 'hidden' : 'visible' }}
+        >
+          {memoizedChildren}
+        </Box>
+
+        {/* This div is to allow users to drag anywhere within the window when the app isnt selected*/}
+        {!selected && (
+          <Box
+            className="handle" // The CSS name react-rnd latches on to for the drag events
+            position="absolute"
+            left="0px"
+            top="0px"
+            width="100%"
+            height="100%"
+            cursor={primaryActionMode === 'grab' ? 'grab' : 'move'}
+            sx={
+              primaryActionMode === 'grab'
+                ? {
+                  '&:active': {
+                    cursor: 'grabbing',
+                  },
+                }
+                : {}
+            }
+            userSelect={'none'}
+            zIndex={3}
+          // borderRadius={innerBorderRadius}
+          ></Box>
+        )}
+
+        {/* If the app is being dragged block interaction with the app */}
+        {(boardDragging || appDragging || props.app.data.dragging) && <BlockInteraction innerBorderRadius={innerBorderRadius} />}
+
+        {/* Processing Box */}
+        {props.processing && (
+          <ProcessingBox size={size} selected={selected} colors={{ backgroundColor, selectColor, notSelectColor: borderColor }} />
+        )}
+
+        {/* Icon when app is dragging */}
+        {hideApp && (
+          <Box
+            position="absolute"
+            left="0px"
+            top="0px"
+            width={size.width}
+            height={size.height}
+            pointerEvents={'none'}
+            userSelect={'none'}
+            zIndex={999999999}
+            justifyContent={'center'}
+            alignItems={'center'}
+            display={'flex'}
+            backgroundColor={hideBackgroundColorHex}
+            fontSize={Math.min(size.width, size.height) / 2}
+            borderRadius={innerBorderRadius}
+            outline={`${borderWidth}px solid ${props.hideBordercolor ? props.hideBordercolor : borderColor}`}
+          >
+            {props.hideBackgroundIcon ? <Icon as={props.hideBackgroundIcon} /> : <MdWindow />}
+          </Box>
+        )}
+      </Rnd>
   );
 }
 
