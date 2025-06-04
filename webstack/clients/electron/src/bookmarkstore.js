@@ -44,17 +44,21 @@ const defaultBookmarks = [
     url: 'https://pele.sage3.app',
   },
   {
-    name: 'JetStream',
-    id: genId(),
-    url: 'https://jetsage3.cis230038.projects.jetstream-cloud.org',
-  },
-  {
     name: 'Virgina Tech',
     id: genId(),
     url: 'https://sage3.cs.vt.edu',
   },
 ];
-store.get('bookmarks', defaultBookmarks);
+
+// Current list of bookmarks
+const currentList = store.get('bookmarks', defaultBookmarks);
+// Remove JetStream if it exists
+const jsIdx = currentList.findIndex((el) => el.url == 'https://jetsage3.cis230038.projects.jetstream-cloud.org');
+if (jsIdx > -1) {
+  currentList.splice(jsIdx, 1);
+}
+// Add it back to the store
+store.set('bookmarks', currentList);
 
 module.exports = {
   getBookmarks: function () {
