@@ -10,7 +10,7 @@ import { useEffect, useState, useCallback, useRef, MouseEvent } from 'react';
 import { useParams } from 'react-router';
 
 // Chakra UI
-import { Box, Button, ButtonGroup, Tooltip, HStack, Fade } from '@chakra-ui/react';
+import { Box, Button, ButtonGroup, Tooltip, HStack, Fade, Image } from '@chakra-ui/react';
 // Icons
 import {
   MdFileDownload,
@@ -376,8 +376,19 @@ function AppComponent(props: App): JSX.Element {
           {urls
             .filter((u, i) => i >= s.currentPage && i < s.currentPage + s.displayPages)
             .map((url, idx) => (
-              <Box id={'pane~' + props._id + idx} key={idx} p={1} m={1} bg="white" color="gray.800" shadow="base" rounded="lg" width={'100%'}>
-                <img src={url} style={{ userSelect: 'none' }} width={'100%'} draggable={false} alt={file?.data.originalfilename} />
+              <Box id={'pane~' + props._id + idx} key={idx} p={1} m={1}
+                rounded="lg" bg="white" color="gray.800" shadow="base"
+                width="100%" height="100%"
+              >
+                <Image
+                  src={url}
+                  userSelect={'none'}
+                  draggable={false}
+                  width="100%"
+                  height="100%"
+                  objectFit="contain"
+                  alt={file?.data.originalfilename}
+                />
               </Box>
             ))}
         </HStack>

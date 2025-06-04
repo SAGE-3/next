@@ -28,7 +28,7 @@ import { FaEyeSlash } from 'react-icons/fa';
 
 import { create } from 'zustand';
 
-import { useAppStore, useUser, processContentURL, useHexColor, ConfirmValueModal, apiUrls, useUIStore } from '@sage3/frontend';
+import { useAppStore, useUser, processContentURL, useHexColor, ConfirmValueModal, apiUrls, useUIStore, useWindowResize } from '@sage3/frontend';
 import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow, ElectronRequired } from '../../components';
@@ -312,9 +312,13 @@ function AppComponent(props: App): JSX.Element {
     }
   };
 
+  // Window resize hook
+  const isFocused = useUIStore((state) => state.focusedAppId === props._id);
+  const { width: winWidth, height: winHeight } = useWindowResize();
+
   const webviewStyle: React.CSSProperties = {
-    width: props.data.size.width + 'px',
-    height: props.data.size.height + 'px',
+    width: isFocused ? winWidth + 'px' : props.data.size.width + 'px',
+    height: isFocused ? winHeight + 'px' : props.data.size.height + 'px',
     objectFit: 'contain',
     background: 'white',
     visibility: boardDragging ? 'hidden' : 'visible',
@@ -324,14 +328,6 @@ function AppComponent(props: App): JSX.Element {
     <AppWindow app={props} hideBackgroundIcon={MdWeb}>
       {isElectron() ? (
         <div>
-          {/* button */}
-          {/* <Tooltip placement="top" hasArrow={true} label={'Open in Desktop'} openDelay={400}>
-            <Button colorScheme="teal" variant="ghost" top={0} right={0} position={'absolute'} size={'lg'} onClick={handleOpen}>
-              <MdOpenInNew />
-            </Button>
-          </Tooltip> */}
-          {/* Webview */}
-
           {/* Warning Icon to show your view might not match others */}
           {!urlMatchesState && (
             <Tooltip placement="top" hasArrow={true} label={'Your view might not match everyone elses.'}>

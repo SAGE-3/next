@@ -34,26 +34,3 @@ export const monacoOptions: monaco.editor.IStandaloneEditorConstructionOptions =
     arrowSize: 30,
   },
 };
-
-export const monacoOptionsDrawer: monaco.editor.IStandaloneEditorConstructionOptions = {
-  minimap: { enabled: false },
-  quickSuggestions: true,
-  glyphMargin: true,
-  automaticLayout: true,
-  wordWrap: 'off',
-  lineNumbers: 'on',
-  lineDecorationsWidth: 0,
-  lineNumbersMinChars: 3,
-  scrollBeyondLastLine: false,
-  fontFamily: "'Source Code Pro', 'Menlo', 'Monaco', 'Consolas', 'monospace'",
-  scrollbar: {
-    useShadows: true,
-    verticalHasArrows: true,
-    horizontalHasArrows: true,
-    vertical: 'auto',
-    horizontal: 'auto',
-    verticalScrollbarSize: 18,
-    horizontalScrollbarSize: 18,
-    arrowSize: 30,
-  },
-};
