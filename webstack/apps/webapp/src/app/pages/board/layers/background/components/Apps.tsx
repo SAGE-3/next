@@ -338,7 +338,8 @@ export function Apps() {
             // If the cursor is inside the app, focus it.
             if (cx >= x1 && cx <= x2 && cy >= y1 && cy <= y2) {
               found = true;
-              if (el.data.type !== 'VideoViewer' && el.data.type !== 'Stickie') {
+              const notAllowedTypes = ['VideoViewer', 'Stickie', 'Screenshare'];
+              if (!notAllowedTypes.includes(el.data.type)) {
                 useUIStore.getState().setFocusedAppId(el._id);
                 useUIStore.getState().setSelectedApp('');
                 if (showUI) {
