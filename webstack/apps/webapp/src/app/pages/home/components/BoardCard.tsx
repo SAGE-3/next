@@ -166,9 +166,6 @@ export function BoardCard(props: BoardCardProps) {
                   usersPresent={props.usersPresent}
                   maxUsersDisplayed={5}
                   anonymousNames={props.board.data.isPrivate}
-                  overflow="hidden"
-                  width={150}
-                  height={20}
                 />
               </Box>
             </Box>

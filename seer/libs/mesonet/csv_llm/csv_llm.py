@@ -1,17 +1,30 @@
+# -----------------------------------------------------------------------------
+#  Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
+#  University of Hawaii, University of Illinois Chicago, Virginia Tech
+#
+#  Distributed under the terms of the SAGE3 License.  The full license is in
+#  the file LICENSE, distributed as part of this software.
+# -----------------------------------------------------------------------------
+
+import re, json
 import pandas as pd
-import openai
-import re
-import json
-import ast
+import dateutil.parser
+
 from .utils import Utils
 from .chart_info import *
 from collections import Counter
-import datetime
-import dateutil.parser
 
 
 class LLM:
-    def __init__(self, client, llm_profile, samples_path=None, context_path=None, iterations=1, iter_self_reflection=0):
+    def __init__(
+        self,
+        client,
+        llm_profile,
+        samples_path=None,
+        context_path=None,
+        iterations=1,
+        iter_self_reflection=0,
+    ):
         self.client = client
         self.llm_profile = llm_profile
         self.iterations = iterations
@@ -31,11 +44,9 @@ class LLM:
             # print(self.csv_headers)
             # print(json.dumps(self.csv_context, indent=2))
 
-
     def __load_samples__(self, path):
         df = pd.read_excel(path)
         df.iloc[:, 0] = df.iloc[:, 0].str.strip()
-
 
         samples = []
 
@@ -46,28 +57,37 @@ class LLM:
             response = row.iloc[1]
             samples.append({"role": "user", "content": prompt})
             samples.append({"role": "assistant", "content": response})
-                # print(prompt)
+            # print(prompt)
         return samples
 
     def __chat_wrapper__(self, messages):
         completion = self.client.chat.completions.create(
-        model=self.llm_profile["model"],
-        messages=messages,
-        temperature=self.llm_profile["temperature"]
+            model=self.llm_profile["model"],
+            messages=messages,
+            temperature=self.llm_profile["temperature"],
         )
 
         output = completion.choices[0].message.content
         return output, completion
 
-
-    def __message_builder__(self, system, user_prompt, csv_headers=None, csv_context=None, few_shot_context=None, chart_type=None, attributes=None, conversational_context=None):#**kwargs): #system, user_prompt, csv_headers_only=False):
+    def __message_builder__(
+        self,
+        system,
+        user_prompt,
+        csv_headers=None,
+        csv_context=None,
+        few_shot_context=None,
+        chart_type=None,
+        attributes=None,
+        conversational_context=None,
+    ):  # **kwargs): #system, user_prompt, csv_headers_only=False):
 
         messages = [{"role": "system", "content": system}]
-        
+
         if few_shot_context:
             # print("using few shot samples")
             messages += few_shot_context
-        
+
         # User Msg Builder
         user_message = []
 
@@ -76,19 +96,25 @@ class LLM:
             # print("using csv context")
             user_message.append(f"# This is additional context: \n{csv_context}")
             # user_message.append(f"This is the CSV decomposed: {csv_context}")
-            
+
         if conversational_context:
             # print("using conversational context")
-            user_message.append(f"# This is additional context from the conversation: \n{conversational_context}")
+            user_message.append(
+                f"# This is additional context from the conversation: \n{conversational_context}"
+            )
             # user_message.append(f"This is the CSV decomposed: {csv_context}")
 
         if csv_headers:
             # print("using csv headers", csv_headers)
-            user_message.append(f"# These are the attributes names/ headers in the dataset: \n{csv_headers}")
+            user_message.append(
+                f"# These are the attributes names/ headers in the dataset: \n{csv_headers}"
+            )
 
         if chart_type:
             # print("using recommended chart type(s)", chart_type)
-            user_message.append(f"# These are the recommended chart type(s): \n{chart_type}")
+            user_message.append(
+                f"# These are the recommended chart type(s): \n{chart_type}"
+            )
 
         if attributes:
             # print("using recommened attributes", attributes)
@@ -103,15 +129,14 @@ class LLM:
 
         return messages
 
-
     # Filters
-    
+
     def __results_no_filter__(self, output):
         return output
-    
+
     def __results_filter_dates__(self, output):
         # Find text within the double curly braces
-        matches = re.findall(r'\{.*?\}', output)
+        matches = re.findall(r"\{.*?\}", output)
         if matches:
             try:
                 # Get the content of the last match, assuming that is the intended result
@@ -125,7 +150,7 @@ class LLM:
 
     def __results_filter__(self, output):
         # Find all text between the outermost brackets
-        matches = re.findall(r'\[(.*)\]', ' '.join(output.split()))
+        matches = re.findall(r"\[(.*)\]", " ".join(output.split()))
         results = []
         if matches:
             try:
@@ -138,35 +163,41 @@ class LLM:
                 start_idx = 0
                 # Manually split by commas accounting for nested structures
                 for i, char in enumerate(cleaned_str):
-                    if char == '[':
+                    if char == "[":
                         depth += 1
-                    elif char == ']':
+                    elif char == "]":
                         depth -= 1
-                    elif char == ',' and depth == 0:
+                    elif char == "," and depth == 0:
                         items.append(cleaned_str[start_idx:i].strip())
                         start_idx = i + 1
                 # Append the last item
                 items.append(cleaned_str[start_idx:].strip())
 
                 # Clean up items to remove any stray quotes and handle special characters
-                results = [re.sub(r'([\"\'].*?[\"\'])\s*<\s*(\d+)', r'\1 < \2', item).strip('\"') for item in items]
+                results = [
+                    re.sub(r"([\"\'].*?[\"\'])\s*<\s*(\d+)", r"\1 < \2", item).strip(
+                        '"'
+                    )
+                    for item in items
+                ]
 
             except Exception as e:
                 print(e, "Error occurred in results_filter")
         return results
 
     def __results_filter_charts__(self, output):
-        matches = re.findall(r'\[(.*?)\]', ' '.join(output.split()))
+        matches = re.findall(r"\[(.*?)\]", " ".join(output.split()))
         results = []
         if matches:
-            results = json.loads(f"""[{matches[-1].replace("'",'"').replace('“','"').replace('”','"')}]""")
+            results = json.loads(
+                f"""[{matches[-1].replace("'",'"').replace('“','"').replace('”','"')}]"""
+            )
             results = list({result.split("->")[-1].strip() for result in results})
         return results
 
-
     def __results_filter_sql__(self, output):
         try:
-            matches = re.findall(r'\`\`\`(.*?)\`\`\`', ' '.join(output.split()))
+            matches = re.findall(r"\`\`\`(.*?)\`\`\`", " ".join(output.split()))
             match = matches[-1] if matches[-1][:3].lower() != "sql" else matches[-1][3:]
             match = match.replace("\\n", " ")
             return match
@@ -174,7 +205,7 @@ class LLM:
             return ""
 
     # class PromptTemplates:
-    def __base_prompt__(self, user_prompt, system ):
+    def __base_prompt__(self, user_prompt, system):
         output_history = []
         results_history = []
         messages = [{"role": "system", "content": system}]
@@ -186,12 +217,18 @@ class LLM:
             return output, output_history
         else:
             return "", output_history
-        
-        self.__base_prompt_with_self_reflection__(user_prompt, system,
-            messages=self.__message_builder__(system, user_prompt), filter_method=self.__results_filter_dates__)
+
+        self.__base_prompt_with_self_reflection__(
+            user_prompt,
+            system,
+            messages=self.__message_builder__(system, user_prompt),
+            filter_method=self.__results_filter_dates__,
+        )
 
     # class PromptTemplates:
-    def __base_prompt_with_self_reflection__(self, user_prompt, system, messages, filter_method):
+    def __base_prompt_with_self_reflection__(
+        self, user_prompt, system, messages, filter_method
+    ):
         output_history = []
         results_history = []
 
@@ -201,7 +238,9 @@ class LLM:
         results_history.append(filter_method(output))
 
         for i in range(self.iter_self_reflection):
-            output, completion, early_stop = self.__prompt_self_reflection__(user_prompt, system, output_history)
+            output, completion, early_stop = self.__prompt_self_reflection__(
+                user_prompt, system, output_history
+            )
             output_history.append(output)
             results_history.append(filter_method(output))
 
@@ -217,15 +256,20 @@ class LLM:
             return "", output_history
 
     def __prompt_self_reflection__(self, user_prompt, system, history):
-        output, completion = self.__chat_wrapper__(messages=
-            [{"role": "system", "content": system}] + 
-            [{"role": "assistant", "content": json.dumps(line)} for line in history] +
-            [{"role": "user", "content": f"This is my prompt: {user_prompt} Did you follow the tasks?  Think about it carefully.  Does your solution satisfy the requirements?  Did you forget to complete some parts?  If you believe you have the correct solution explain your reasoning and then say \"ACCOMPLISHED\""}])
+        output, completion = self.__chat_wrapper__(
+            messages=[{"role": "system", "content": system}]
+            + [{"role": "assistant", "content": json.dumps(line)} for line in history]
+            + [
+                {
+                    "role": "user",
+                    "content": f'This is my prompt: {user_prompt} Did you follow the tasks?  Think about it carefully.  Does your solution satisfy the requirements?  Did you forget to complete some parts?  If you believe you have the correct solution explain your reasoning and then say "ACCOMPLISHED"',
+                }
+            ]
+        )
 
         early_stop = "ACCOMPLISHED" in output
         # results = self.__results_filter__(output)
         return output, completion, early_stop
-
 
     def __base_prompt_with_consistency__(self, messages, filter_method):
         completions = []
@@ -275,14 +319,18 @@ class LLM:
     """
 
         return self.__base_prompt_with_consistency__(
-            messages=self.__message_builder__(system, user_prompt, few_shot_context=self.samples, attributes=attributes),
-            filter_method=self.__results_filter_charts__)
-
-
+            messages=self.__message_builder__(
+                system,
+                user_prompt,
+                few_shot_context=self.samples,
+                attributes=attributes,
+            ),
+            filter_method=self.__results_filter_charts__,
+        )
 
     def prompt_charts_via_chart_info(self, user_prompt, attributes):
         # print(json.dumps(chart_info_filter(["Car", "Price"])[0], indent=2))
-        
+
         charts_details, charts_decision_tree = chart_info_filter(attributes)
         # print("available Charts", list(set(charts_details)))
         system = f"""# Task
@@ -305,10 +353,12 @@ Take a deep breath, think it through, assume you are the user and imagine their 
 
     """
 
-        return self.__base_prompt_with_self_reflection__(user_prompt, system,
+        return self.__base_prompt_with_self_reflection__(
+            user_prompt,
+            system,
             messages=self.__message_builder__(system, user_prompt),
-            filter_method=self.__results_filter_charts__)
-
+            filter_method=self.__results_filter_charts__,
+        )
 
     def prompt_select_attributes(self, user_prompt, attributes):
 
@@ -320,9 +370,14 @@ Pick as many attributes as necessary to answer the user's question
 Take a deep breath, think it through, assume you are the user and imagine their intent, write your reasoning.
 Then provide your answer at the end in this format ["Answer 1", "Answer 2", "Answer 3"]."""
 
-        return self.__base_prompt_with_self_reflection__(user_prompt, system,
-            messages=self.__message_builder__(system, user_prompt, csv_headers=attributes),
-            filter_method=self.__results_filter__)
+        return self.__base_prompt_with_self_reflection__(
+            user_prompt,
+            system,
+            messages=self.__message_builder__(
+                system, user_prompt, csv_headers=attributes
+            ),
+            filter_method=self.__results_filter__,
+        )
 
     def prompt_transformations(self, user_prompt, attributes):
         system = f"""# Task
@@ -347,12 +402,18 @@ Note: Do not filter the data by date
 
 """
 
-        return self.__base_prompt_with_self_reflection__(user_prompt, system,
-            messages=self.__message_builder__(system, user_prompt,attributes=attributes, csv_headers=attributes),  filter_method=self.__results_filter__)
+        return self.__base_prompt_with_self_reflection__(
+            user_prompt,
+            system,
+            messages=self.__message_builder__(
+                system, user_prompt, attributes=attributes, csv_headers=attributes
+            ),
+            filter_method=self.__results_filter__,
+        )
 
     def prompt_proactive_reiterate(self, user_prompt, conversational_context):
         # print(user_prompt, conversational_context)
-        #You are a data scientist and a data visualization expert.
+        # You are a data scientist and a data visualization expert.
         system = f"""You are a proactive data visualization expert.
         Your task is to proactively generate a useful chart for the user based on the context of the current conversation.
         {conversational_context}
@@ -373,12 +434,16 @@ Note: Do not filter the data by date
         Do not include quotation marks, just return a prompt.
 
         """
-        return self.__base_prompt_with_self_reflection__(user_prompt, system,
-            messages=self.__message_builder__(system, user_prompt),  filter_method=self.__results_no_filter__)
+        return self.__base_prompt_with_self_reflection__(
+            user_prompt,
+            system,
+            messages=self.__message_builder__(system, user_prompt),
+            filter_method=self.__results_no_filter__,
+        )
 
     def prompt_reiterate(self, user_prompt):
         # print(user_prompt, conversational_context)
-        #You are a data scientist and a data visualization expert.
+        # You are a data scientist and a data visualization expert.
         system = """You are a data scientist and a data visualization expert.
 # Task
 Reword the user's prompt using precise and specific language that disambiguates.  Do note that the user's request pertains to visualization and graph generation.
@@ -392,8 +457,12 @@ Be very precise. Do not respond back with anything other than the rewritten prom
 Do not include quotation marks, just rewrite the prompt
 
 """
-        return self.__base_prompt_with_self_reflection__(user_prompt, system,
-            messages=self.__message_builder__(system, user_prompt),  filter_method=self.__results_no_filter__)
+        return self.__base_prompt_with_self_reflection__(
+            user_prompt,
+            system,
+            messages=self.__message_builder__(system, user_prompt),
+            filter_method=self.__results_no_filter__,
+        )
         # output, completion = self.__chat_wrapper__(messages=self.__message_builder__(system, user_prompt,csv_headers=self.csv_headers,  conversational_context=conversational_context))
         # return output
 
@@ -406,8 +475,11 @@ You must extract the intent from the user's promp.  Use adequate reasoning and a
 Take a deep breath, think it through, assume you are the user and imagine their intent.  Then explain your reasoning using precise language.
 """
 
-        output, completion = self.__chat_wrapper__(messages=self.__message_builder__(system, user_prompt))
+        output, completion = self.__chat_wrapper__(
+            messages=self.__message_builder__(system, user_prompt)
+        )
         return output
+
     #        Station 0605, PowerlineTrail is located on latitude: 22.113562 and longitude -159.438786
 
     def prompt_select_stations(self, user_prompt, station_list):
@@ -429,11 +501,13 @@ Take a deep breath, think it through, assume you are the user and imagine their 
         Explain your reasoning.
         Try to respond with at least 1 station.
         """
-        return self.__base_prompt_with_self_reflection__(user_prompt, system,
-            messages=self.__message_builder__(system, user_prompt),  filter_method=self.__results_filter__)
+        return self.__base_prompt_with_self_reflection__(
+            user_prompt,
+            system,
+            messages=self.__message_builder__(system, user_prompt),
+            filter_method=self.__results_filter__,
+        )
 
-    
-        
     def prompt_select_dates(self, user_prompt, current_time):
         dt = dateutil.parser.parse(current_time)
 
@@ -449,10 +523,16 @@ Take a deep breath, think it through, assume you are the user and imagine their 
         
 
         """
-        return self.__base_prompt_with_self_reflection__(user_prompt, system,
-            messages=self.__message_builder__(system, user_prompt), filter_method=self.__results_filter_dates__)
-        
-    def prompt_summarize_reasoning(self, user_prompt, attribute_reasoning, station_reasoning, station_data):
+        return self.__base_prompt_with_self_reflection__(
+            user_prompt,
+            system,
+            messages=self.__message_builder__(system, user_prompt),
+            filter_method=self.__results_filter_dates__,
+        )
+
+    def prompt_summarize_reasoning(
+        self, user_prompt, attribute_reasoning, station_reasoning, station_data
+    ):
         system = f""" You are an expert summarizer.
         You have just created chart(s) for the user based on a prompt.
         Here is the user's prompt: {user_prompt}

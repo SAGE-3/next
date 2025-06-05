@@ -478,3 +478,28 @@ def scaleImage(imageContent, imageSize):
 
     # Return the byte content of the scaled image
     return buffered.getvalue()
+
+
+def extract_code_blocks(text):
+    """
+    Extracts code blocks from a given text string.
+
+    This function searches for code blocks formatted with triple backticks (```)
+    optionally followed by a language identifier, and extracts their content and
+    language (if specified).
+
+    Args:
+      text (str): The input text containing code blocks.
+
+    Returns:
+      list of dict: A list of dictionaries, each containing:
+        - 'language' (str or None): The language identifier if present, otherwise None.
+        - 'code' (str): The code block content, stripped of leading/trailing whitespace.
+    """
+    pattern = r"```(\w+)?\n(.*?)```"
+    matches = re.findall(pattern, text, re.DOTALL)
+
+    code_blocks = []
+    for lang, code in matches:
+        code_blocks.append({"language": lang if lang else None, "code": code.strip()})
+    return code_blocks

@@ -27,6 +27,7 @@ import {
   PopoverTrigger,
   UnorderedList,
   ListItem,
+  AspectRatio,
 } from '@chakra-ui/react';
 import {
   MdAccessTime,
@@ -153,7 +154,8 @@ function AppComponent(props: App): JSX.Element {
     async (evt: KeyboardEvent) => {
       evt.stopPropagation();
       switch (evt.code) {
-        case 'Space': {
+        case 'Space':
+        case 'KeyP': {
           handlePlay();
           break;
         }
@@ -218,19 +220,7 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props} lockAspectRatio={aspectRatio} hideBackgroundIcon={MdMovie}>
-      <div
-        style={{
-          position: 'relative',
-          overflowY: 'hidden',
-          height: props.data.size.width / aspectRatio,
-          maxHeight: '100%',
-          borderRadius: '0 0 6px 6px',
-          background: '#004225',
-        }}
-        // setting for keyboard handler
-        ref={divRef}
-        tabIndex={1}
-      >
+      <AspectRatio width={"100%"} ratio={aspectRatio} ref={divRef} tabIndex={1}>
         <video
           ref={videoRef}
           id={`${props._id}-video`}
@@ -239,9 +229,9 @@ function AppComponent(props: App): JSX.Element {
           height="100%"
           width="100%"
           onEnded={onVideoEnd}
-          style={{ display: boardDragging ? 'none' : 'block' }}
+          style={{ display: boardDragging ? 'none' : 'block', objectFit: 'contain' }}
         ></video>
-      </div>
+      </AspectRatio>
     </AppWindow>
   );
 }

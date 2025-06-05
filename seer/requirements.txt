@@ -40,6 +40,7 @@ Pillow
 
 # Web scrapping
 playwright
+html2text
 
 # PDF
 pymupdf4llm
@@ -51,4 +52,8 @@ chromadb==0.5.16
 pandas
 matplotlib
 seaborn
+
+# Logging
+fluent-logger
+
 

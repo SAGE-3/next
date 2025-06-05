@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { Box, useToast, useColorModeValue, Icon } from '@chakra-ui/react';
+import { Box, useToast, useColorModeValue, Icon, Portal, Button } from '@chakra-ui/react';
 
 import { DraggableData, ResizableDelta, Position, Rnd, RndDragEvent } from 'react-rnd';
 import { MdWindow } from 'react-icons/md';
@@ -57,7 +57,8 @@ type WindowProps = {
 
 export function AppWindow(props: WindowProps) {
   // Settings
-  const { settings } = useUserSettings();
+  const { settings, toggleShowUI } = useUserSettings();
+  const showUI = settings.showUI;
   const primaryActionMode = settings.primaryActionMode;
 
   // Can update
@@ -485,7 +486,43 @@ export function AppWindow(props: WindowProps) {
     }
   };
 
-  return (
+  const isFocused = useUIStore((state) => state.focusedAppId === props.app._id);
+
+  return isFocused ? (
+    <Portal>
+      <Box
+        id={'app_' + props.app._id}
+        overflow="hidden"
+        left="0px"
+        top="0px"
+        position={'absolute'}
+        width="100%"
+        height="100%"
+        zIndex={999999999}
+        background={'backgroundColor'}
+      >
+        {memoizedChildren}
+      </Box>
+      <Button
+        position="absolute"
+        left="50%"
+        bottom="0px"
+        zIndex={999999999}
+        opacity={0.75}
+        backgroundColor={backgroundColor}
+        _hover={{ backgroundColor: 'teal', opacity: 1, transform: 'scale(1.15)' }}
+        color="white"
+        onClick={() => {
+          useUIStore.getState().setFocusedAppId('');
+          if (!showUI) {
+            toggleShowUI();
+          }
+        }}
+      >
+        Exit
+      </Button>
+    </Portal>
+  ) : (
     <Rnd
       bounds="parent"
       dragHandleClassName="handle"
@@ -503,7 +540,6 @@ export function AppWindow(props: WindowProps) {
       // Select an app on touch
       onPointerDown={handleAppTouchStart}
       onPointerMove={handleAppTouchMove}
-      // EnableResizing={enableResize && canResize && !isPinned}
       enableResizing={enableResize && canResize && !isPinned && primaryActionMode === 'lasso'} // Temporary solution to fix resize while drag -> && (selectedApp !== "")
       // BoardSync && rndSafeForAction is a temporary solution to prevent the most common type of bug which is zooming followed by a click
       disableDragging={
@@ -572,7 +608,7 @@ export function AppWindow(props: WindowProps) {
         zIndex={2}
         background={background || outsideView ? backgroundColor : 'unset'}
         borderRadius={innerBorderRadius}
-        boxShadow={hideApp || isPinned || !background ? '' : `4px 4px 12px 0px ${shadowColor}`} //|| primaryActionMode === 'grab'
+        boxShadow={hideApp || isPinned || !background ? '' : `4px 4px 12px 0px ${shadowColor}}`}
         style={{ contentVisibility: hideApp ? 'hidden' : 'visible' }}
       >
         {memoizedChildren}
@@ -599,7 +635,6 @@ export function AppWindow(props: WindowProps) {
           }
           userSelect={'none'}
           zIndex={3}
-          // borderRadius={innerBorderRadius}
         ></Box>
       )}
 

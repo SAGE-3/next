@@ -6,10 +6,13 @@
 #  the file LICENSE, distributed as part of this software.
 # -----------------------------------------------------------------------------
 
+#
 # PDFAgent
+#
+
 import json, os
 from logging import Logger
-import base64
+from typing import Dict, List
 
 # SAGE3 API
 from foresight.Sage3Sugar.pysage3 import PySage3
@@ -19,8 +22,8 @@ from langchain_core.messages import HumanMessage, SystemMessage, BaseMessage
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 
-from langchain_nvidia_ai_endpoints import ChatNVIDIA
-from langchain_openai import ChatOpenAI
+# from langchain_nvidia_ai_endpoints import ChatNVIDIA
+from langchain_openai import ChatOpenAI, AzureChatOpenAI
 
 # Typing for RPC
 from libs.localtypes import PDFQuery, PDFAnswer
@@ -31,14 +34,13 @@ import chromadb
 from chromadb.config import Settings
 from langchain_chroma import Chroma
 from langchain_openai.embeddings import OpenAIEmbeddings
+from langchain_openai import AzureOpenAIEmbeddings
+from langchain.vectorstores.base import VectorStoreRetriever
 
 # PDF
 import pymupdf4llm
 import pymupdf
 from io import BytesIO
-
-from langchain.vectorstores.base import VectorStoreRetriever
-from typing import Dict, List
 
 from libs.pdf.pdf_v3 import generate_answer
 from libs.utils import isValidPDFDocument, convertPDFToImages
@@ -54,19 +56,10 @@ class PDFAgent:
         self.logger = logger
         self.ps3 = ps3
         models = getModelsInfo(ps3)
-        llama = models["llama"]
+
         openai = models["openai"]
-        # Llama model
-        self.server = llama["url"]
-        self.model = llama["model"]
-        # Llama model
-        if llama["url"] and llama["model"]:
-            self.llm_llama = ChatNVIDIA(
-                base_url=llama["url"] + "/v1",
-                model=llama["model"],
-                stream=False,
-                max_tokens=1000,
-            )
+        azure = models["azure"]
+
         # OpenAI model
         if openai["apiKey"] and openai["model"]:
             self.llm_openai = ChatOpenAI(
@@ -74,6 +67,35 @@ class PDFAgent:
                 model=openai["model"],
                 streaming=False,
             )
+            # OpenAI embedding
+            self.embedding_openai = OpenAIEmbeddings(api_key=openai["apiKey"])
+
+        # Azure OpenAI model
+        if azure["text"]["apiKey"] and azure["text"]["model"]:
+            model = azure["text"]["model"]
+            endpoint = azure["text"]["url"]
+            credential = azure["text"]["apiKey"]
+            api_version = azure["text"]["api_version"]
+
+            self.llm_azure = AzureChatOpenAI(
+                azure_deployment=model,
+                api_version=api_version,
+                azure_endpoint=endpoint,
+                azure_ad_token=credential,
+                model=model,
+            )
+            # Azure embedding
+            model = azure["embedding"]["model"]
+            endpoint = azure["embedding"]["url"]
+            credential = azure["embedding"]["apiKey"]
+            api_version = azure["embedding"]["api_version"]
+            self.embedding_azure = AzureOpenAIEmbeddings(
+                model=model,
+                azure_endpoint=endpoint,
+                api_key=credential,
+                api_version=api_version,
+            )
+
         # Create the ChromaDB client
         chromaServer = "127.0.0.1"
         chromaPort = 8100
@@ -98,27 +120,32 @@ class PDFAgent:
             ),
         )
 
-        # OpenAI for now, can explore more in the future
-        self.embedding_model = OpenAIEmbeddings(api_key=openai["apiKey"])
-
         # Langchain Chroma
-        self.vector_store = Chroma(
-            client=self.chroma,
-            collection_name="pdf_docs",
-            embedding_function=self.embedding_model,
-        )
+        if azure["embedding"]["apiKey"] and azure["embedding"]["model"]:
+            self.vector_store = Chroma(
+                client=self.chroma,
+                collection_name="pdf_docs",
+                embedding_function=self.embedding_azure,
+            )
+        else:
+            self.vector_store = Chroma(
+                client=self.chroma,
+                collection_name="pdf_docs",
+                embedding_function=self.embedding_openai,
+            )
 
         # Using Langchain's Chromadb
         # Heartbeat to check the connection
         self.chroma.heartbeat()
 
-    def getMDfromPDFWithImages(self, id, content):
+    def getMDfromPDFWithImages(self, id, content, model):
         """
         Converts a PDF content to Markdown format and caches the result in a temporary file.
 
         Args:
           id (str): A unique identifier for the PDF content.
           content (bytes): The binary content of the PDF file.
+          model (str): llm model to use for processing.
 
         Returns:
           str: The Markdown representation of the PDF content.
@@ -151,7 +178,7 @@ class PDFAgent:
                 pages = []
 
                 for i, image in enumerate(images):
-                    pages.append(self.send_pdf_image_to_openai(image, i))
+                    pages.append(self.send_pdf_image_to_llm(image, i, model))
 
                 pages.sort(key=lambda x: x["index"])
                 md = "\n\n".join(page["content"] for page in pages)
@@ -160,7 +187,7 @@ class PDFAgent:
 
             return md
 
-    def send_pdf_image_to_openai(self, page_base64, page_num):
+    def send_pdf_image_to_llm(self, page_base64, page_num, model):
         messages: List[BaseMessage] = []
         messages.append(
             SystemMessage(
@@ -184,11 +211,18 @@ class PDFAgent:
             )
         )
 
-        response = self.llm_openai.invoke(messages)
+        if model == "openai":
+            response = self.llm_openai.invoke(messages)
+        elif model == "azure":
+            response = self.llm_azure.invoke(messages)
+        else:
+            raise ValueError(f"Unsupported model: {model}")
         return {"index": page_num, "content": str(response.content)}
 
     async def process(self, qq: PDFQuery):
-        self.logger.info("Got PDF> from " + qq.user + ": " + qq.q)
+        self.logger.info(
+            "Got PDF> from " + qq.user + ": " + qq.q + " using: " + qq.model
+        )
 
         pdfContents = [
             {"id": assetid, "content": getPDFFile(self.ps3, assetid)}
@@ -226,7 +260,9 @@ class PDFAgent:
 
             # Convert PDFs to markdown
             pdfs_to_md = {
-                pdf["id"]: self.getMDfromPDFWithImages(pdf["id"], pdf["content"])
+                pdf["id"]: self.getMDfromPDFWithImages(
+                    pdf["id"], pdf["content"], qq.model
+                )
                 for pdf in pdfContents
             }
 
@@ -262,14 +298,26 @@ class PDFAgent:
 
                     print(f"\n\ndocument splits: {len(res)}\n\n")
 
-            answer = await generate_answer(
-                qq=qq,
-                llm=self.llm_openai,
-                retrievers=retrievers,
-                markdown_files_dict=pdfs_to_md,
-            )
+            if qq.model == "openai":
+                answer = await generate_answer(
+                    qq=qq,
+                    llm=self.llm_openai,
+                    retrievers=retrievers,
+                    markdown_files_dict=pdfs_to_md,
+                )
+            elif qq.model == "azure":
+                answer = await generate_answer(
+                    qq=qq,
+                    llm=self.llm_azure,
+                    retrievers=retrievers,
+                    markdown_files_dict=pdfs_to_md,
+                )
+            else:
+                raise ValueError(f"Unsupported model: {qq.model}")
 
-        text = answer
+            text = answer.strip()
+            text = text + "\n\n---\n"
+            text += "Text generated using an AI model [" + qq.model + "]\n"
 
         # Propose the answer to the user
         action1 = json.dumps(

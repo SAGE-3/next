@@ -39,8 +39,8 @@ export function WindowBorder(props: WindowBorderProps) {
   const highight = props.isHighlight;
 
   // Calculate the outline width based on the scale, clamped between 4 and 16
-  const outlineWidth = Math.min(Math.max(Math.round(4 / props.scale), 3), 14);
-
+  // const outlineWidth = Math.min(Math.max(Math.round(4 / props.scale), 3), 14);
+  const outlineWidth = 4;
   return (
     <Box
       position="absolute"

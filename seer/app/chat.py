@@ -8,7 +8,7 @@
 
 # Chat Agent
 
-import time, json
+import time, json, uuid, re
 from logging import Logger
 
 # Web API
@@ -24,8 +24,14 @@ from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from langchain_openai import ChatOpenAI, AzureChatOpenAI
 
 # Typing for RPC
-from libs.localtypes import Context, Question, Answer
-from libs.utils import getModelsInfo
+from libs.localtypes import Question, Answer
+from libs.utils import getModelsInfo, extract_code_blocks
+
+# AI logging
+from libs.ai_logging import ai_logger, LoggingChainHandler
+
+# Handler in Langchain to log the AI prompt
+ai_handler = LoggingChainHandler("chat")
 
 
 class ChatAgent:
@@ -87,6 +93,16 @@ class ChatAgent:
                 model=model,
             )
 
+        ai_logger.emit(
+            "init",
+            {
+                "agent": "chat",
+                "openai": openai["apiKey"] is not None,
+                "llama": llama["url"] is not None,
+                "azure": azure["text"]["apiKey"] is not None,
+            },
+        )
+
         # Templates
         sys_template_str = """Today is {date}. You are a helpful and succinct assistant, providing informative answers to {username} (whose location is {location}).
         Always format your responses using valid Markdown syntax. Use appropriate elements like:
@@ -136,6 +152,9 @@ class ChatAgent:
         # Get the current date and time
         today = time.asctime()
 
+        # Save the ai name for the logs
+        ai_handler.setAI(qq.model)
+
         # Ask the question
         if qq.model == "llama" and self.session_llama:
             response = await self.session_llama.ainvoke(
@@ -145,7 +164,8 @@ class ChatAgent:
                     "username": qq.user,
                     "location": qq.location,
                     "date": today,
-                }
+                },
+                config={"callbacks": [ai_handler]},
             )
         elif qq.model == "openai" and self.session_openai:
             response = await self.session_openai.ainvoke(
@@ -155,7 +175,8 @@ class ChatAgent:
                     "username": qq.user,
                     "location": qq.location,
                     "date": today,
-                }
+                },
+                config={"callbacks": [ai_handler]},
             )
         elif qq.model == "azure" and self.session_azure:
             response = await self.session_azure.ainvoke(
@@ -165,13 +186,15 @@ class ChatAgent:
                     "username": qq.user,
                     "location": qq.location,
                     "date": today,
-                }
+                },
+                config={"callbacks": [ai_handler]},
             )
         else:
             raise HTTPException(status_code=500, detail="Langchain> Model unknown")
 
         # Annotate the answer
-        response = response.strip() + "\n\n---\n"
+        text = response.strip()
+        response = text + "\n\n---\n"
         response += "Text generated using an AI model [" + qq.model + "]\n"
 
         # Propose the answer to the user
@@ -187,11 +210,60 @@ class ChatAgent:
                 },
             }
         )
+        actions = [action1]
+
+        # Extract code blocks
+        blocks = extract_code_blocks(text)
+        for bl in blocks:
+            code = bl.get("code")
+            lang = bl.get("language")
+            if lang == "python":
+                act = json.dumps(
+                    {
+                        "type": "create_app",
+                        "app": "SageCell",
+                        "state": {
+                            "code": code,
+                            "language": "python",
+                        },
+                        "data": {
+                            "title": "Answer",
+                            "position": {
+                                "x": qq.ctx.pos[0],
+                                "y": qq.ctx.pos[1],
+                                "z": 0,
+                            },
+                            "size": {"width": 600, "height": 420, "depth": 0},
+                        },
+                    }
+                )
+            else:
+                act = json.dumps(
+                    {
+                        "type": "create_app",
+                        "app": "CodeEditor",
+                        "state": {
+                            "content": code,
+                            "language": lang if lang else "markdown",
+                        },
+                        "data": {
+                            "title": "Answer",
+                            "position": {
+                                "x": qq.ctx.pos[0],
+                                "y": qq.ctx.pos[1],
+                                "z": 0,
+                            },
+                            "size": {"width": 600, "height": 420, "depth": 0},
+                        },
+                    }
+                )
+            actions.append(act)
+        print("Actions: ", len(actions))
 
         # Build the answer object
         val = Answer(
             id=qq.id,
             r=response,
-            actions=[action1],
+            actions=actions,
         )
         return val

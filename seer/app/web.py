@@ -6,13 +6,19 @@
 #  the file LICENSE, distributed as part of this software.
 # -----------------------------------------------------------------------------
 
-
+#
 # WebAgent
+#
 
 import json, time, random
 from datetime import datetime
 from logging import Logger
 import urllib.request
+
+# HMTL to Markdown
+import re
+from urllib.parse import urljoin
+import html2text
 
 # Web API
 from fastapi import HTTPException
@@ -37,11 +43,17 @@ from langchain_openai import ChatOpenAI, AzureChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
+# AI logging
+from libs.ai_logging import ai_logger, LoggingChainHandler
+
+# Handler in Langchain to log the AI prompt
+ai_handler = LoggingChainHandler("web")
+
 
 ww = 1080
 hh = 1920
 
-sys_template_str = """Today is {date}. You are a helpful and succinct assistant, providing informative answers to {username} (whose location is {location}).
+sys_template_str = """Today is {date}. You are a helpful and succinct assistant, providing informative answers to {username}.
   Always format your responses using valid Markdown syntax. Use appropriate elements like:
   •	# for headings
   •	**bold** or _italic_ for emphasis
@@ -65,18 +77,6 @@ class WebAgent:
         openai = models["openai"]
         llama = models["llama"]
         azure = models["azure"]
-        self.logger.info(
-            ("openai key: " + openai["apiKey"] + " - model: " + openai["model"]),
-        )
-        self.logger.info(
-            "chat server: url: " + llama["url"] + " - model: " + llama["model"],
-        )
-        self.logger.info(
-            "chat server: url: "
-            + azure["text"]["url"]
-            + " - model: "
-            + azure["text"]["model"],
-        )
 
         llm_llama = None
         llm_openai = None
@@ -109,6 +109,16 @@ class WebAgent:
                 azure_ad_token=credential,
                 model=model,
             )
+
+        ai_logger.emit(
+            "init",
+            {
+                "agent": "web",
+                "openai": openai["apiKey"] is not None,
+                "llama": llama["url"] is not None,
+                "azure": azure["text"]["apiKey"] is not None,
+            },
+        )
 
         # Templates
         human_template_str = "{question}"
@@ -185,8 +195,9 @@ class WebAgent:
         # Get the title of the webpage
         title = await page.title()
         self.logger.info("web page title> " + title)
+
         # Get the whole text of the webpage
-        page_text = await page.inner_text("body")
+        page_text = getMarkdownFromPage(page, title, site)
 
         # extras: Optional[str]  # extra request data: 'links' | 'text' | 'images' | 'pdfs'
         links = None
@@ -214,6 +225,9 @@ class WebAgent:
         await page.close()
         await context.close()
 
+        # Save the ai name for the logs
+        ai_handler.setAI(qq.model)
+
         # Ask the question
         if qq.model == "llama" and self.session_llama:
             response = await self.session_llama.ainvoke(
@@ -223,7 +237,8 @@ class WebAgent:
                     "question": qq.q,
                     "username": qq.user,
                     "date": today,
-                }
+                },
+                config={"callbacks": [ai_handler]},
             )
         elif qq.model == "openai" and self.session_openai:
             response = await self.session_openai.ainvoke(
@@ -233,7 +248,8 @@ class WebAgent:
                     "question": qq.q,
                     "username": qq.user,
                     "date": today,
-                }
+                },
+                config={"callbacks": [ai_handler]},
             )
         elif qq.model == "azure" and self.session_azure:
             response = await self.session_azure.ainvoke(
@@ -243,10 +259,13 @@ class WebAgent:
                     "question": qq.q,
                     "username": qq.user,
                     "date": today,
-                }
+                },
+                config={"callbacks": [ai_handler]},
             )
         else:
             raise HTTPException(status_code=500, detail="Langchain> Model unknown")
+
+        actions = []
 
         # Propose the answer to the user
         action1 = json.dumps(
@@ -261,6 +280,8 @@ class WebAgent:
                 },
             }
         )
+        actions.append(action1)
+
         action2 = None
         if pdfs:
             asset = pdfs[0]
@@ -319,19 +340,15 @@ class WebAgent:
                     },
                 }
             )
-        # Build the answer object
         if action2:
-            val = WebAnswer(
-                r=response,
-                success=True,
-                actions=[action1, action2],
-            )
-        else:
-            val = WebAnswer(
-                r=response,
-                success=True,
-                actions=[action1],
-            )
+            actions.append(action2)
+
+        # Build the answer object
+        val = WebAnswer(
+            r=response,
+            success=True,
+            actions=actions,
+        )
         return val
 
     async def process_screenshot(self, qq: WebScreenshot):
@@ -444,3 +461,128 @@ def filter_strings(arr, keyword):
     """
     filtered_arr = [string for string in arr if keyword in string]
     return filtered_arr
+
+
+async def getMarkdownFromPage(page, title, site):
+    """
+    Extracts the main content from a web page, removes unwanted elements, and converts it to Markdown.
+
+    Args:
+      page: The Playwright page object.
+      title (str): The title of the page.
+      site (str): The base URL of the page.
+
+    Returns:
+      str: The cleaned Markdown representation of the page's main content.
+    """
+    # Remove unwanted elements (ads, navigation, scripts, etc.)
+    remove_selectors = [
+        ".advertisement",
+        ".sidebar",
+        ".navigation",
+        ".comments",
+        "script",
+        "style",
+    ]
+    for selector in remove_selectors:
+        await page.evaluate(
+            f"""
+      document.querySelectorAll('{selector}').forEach(el => el.remove())
+    """
+        )
+
+    # Try to extract the main content using common selectors
+    content_selectors = [
+        "main",
+        "article",
+        '[role="main"]',
+        ".content",
+        ".post-content",
+        ".entry-content",
+        "body",
+    ]
+    html_content = None
+    for selector in content_selectors:
+        try:
+            element = await page.query_selector(selector)
+            if element:
+                html_content = await element.inner_html()
+                break
+        except:
+            continue
+
+    # Fallback: get the full page content if no main content found
+    if not html_content:
+        html_content = await page.content()
+
+    # Convert HTML to Markdown
+    page_text = html_to_markdown(html_content, site, title)
+    return page_text
+
+
+## Utitlity functions for HTML to Markdown conversion
+
+
+def fix_relative_urls(html_content, base_url):
+    """Convert relative URLs to absolute URLs"""
+    import re
+
+    # Fix image sources
+    html_content = re.sub(
+        r'src="(/[^"]*)"',
+        lambda m: f'src="{urljoin(base_url, m.group(1))}"',
+        html_content,
+    )
+
+    # Fix links
+    html_content = re.sub(
+        r'href="(/[^"]*)"',
+        lambda m: f'href="{urljoin(base_url, m.group(1))}"',
+        html_content,
+    )
+
+    return html_content
+
+
+def clean_markdown(markdown):
+    """Clean up the generated markdown"""
+
+    # Remove excessive whitespace
+    markdown = re.sub(r"\n\s*\n\s*\n", "\n\n", markdown)
+
+    # Remove leading/trailing whitespace from lines
+    lines = [line.rstrip() for line in markdown.split("\n")]
+    markdown = "\n".join(lines)
+
+    # Remove empty markdown links
+    markdown = re.sub(r"\[\]\([^)]*\)", "", markdown)
+
+    # Clean up multiple consecutive empty lines
+    markdown = re.sub(r"\n{3,}", "\n\n", markdown)
+
+    return markdown.strip()
+
+
+def html_to_markdown(html_content, base_url, title):
+    """Convert HTML to clean Markdown"""
+
+    # Fix relative URLs
+    html_content = fix_relative_urls(html_content, base_url)
+
+    h = html2text.HTML2Text()
+    h.ignore_links = False
+    h.ignore_images = False
+    h.body_width = 0  # Don't wrap lines
+    h.single_line_break = True
+
+    # Convert to markdown
+    markdown = h.handle(html_content)
+
+    # Clean up the markdown
+    markdown = clean_markdown(markdown)
+
+    # Add title if available
+    if title:
+        markdown = f"# {title}\n\n{markdown}"
+
+    return markdown

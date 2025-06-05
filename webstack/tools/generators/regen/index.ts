@@ -67,7 +67,7 @@ async function updateApps(root: string) {
     output += `import { name as ${it}Name } from './apps/${it}';\n`;
   }
 
-  output += `\n\n`;
+  output += `\n`;
   output += `import React from 'react';\n`;
   output += `import { AppGroup } from './schema';\n`;
   output += `\n`;
@@ -77,18 +77,17 @@ async function updateApps(root: string) {
   }
 
   output += `\n`;
-  output += `\n`;
   output += `export const Applications = {\n`;
   for (let i in apps) {
     const it = apps[i];
-    output += `  [${it}Name]: { AppComponent: React.memo(${it}.AppComponent), ToolbarComponent: ${it}.ToolbarComponent, GroupedToolbarComponent: ${it}.GroupedToolbarComponent },\n`;
+    output += `  [${it}Name]: {\n    AppComponent: React.memo(${it}.AppComponent),\n    ToolbarComponent: ${it}.ToolbarComponent,\n    GroupedToolbarComponent: ${it}.GroupedToolbarComponent,\n  },\n`;
   }
-  output += `} as unknown as Record<string, { AppComponent: () => JSX.Element, ToolbarComponent: () => JSX.Element, GroupedToolbarComponent: (props: { apps: AppGroup }) => JSX.Element; }>;\n`;
+  output += `} as unknown as Record<\n  string,\n  {\n    AppComponent: () => JSX.Element;\n    ToolbarComponent: () => JSX.Element;\n    GroupedToolbarComponent: (props: { apps: AppGroup }) => JSX.Element;\n  }\n>;\n`;
 
   output += `\n`;
   output += `export * from './components';\n`;
   output += `export * from './ai-apps';\n`;
-  output += `export * from './provenance-apps';\n`;
+  output += `export * from './appLinks';\n`;
 
   // Export all the applications and save
   await fs.writeFile(indexPath, output);

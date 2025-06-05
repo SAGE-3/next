@@ -53,6 +53,7 @@ export function ConfigRouter(): express.Router {
       llama: config.services.llama || {},
       azure: config.services.azure || {},
       feedback: config.feedback || {},
+      fluentd: config.fluentd || {},
     } as OpenConfiguration;
     res.json(configuration);
   });
