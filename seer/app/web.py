@@ -197,7 +197,7 @@ class WebAgent:
         self.logger.info("web page title> " + title)
 
         # Get the whole text of the webpage
-        page_text = getMarkdownFromPage(page, title, site)
+        page_text = await getMarkdownFromPage(page, title, site)
 
         # extras: Optional[str]  # extra request data: 'links' | 'text' | 'images' | 'pdfs'
         links = None
