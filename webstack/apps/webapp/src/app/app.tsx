@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate, RouteProps, useParams } from 'react-router-dom';
 
 // Chakra UI
-import { Box, Button, ChakraProvider, CircularProgress, Spinner, Text, useToast } from '@chakra-ui/react';
+import { Box, Button, ChakraProvider, CircularProgress, Text, useToast } from '@chakra-ui/react';
 
 // SAGE3
 import {
@@ -20,7 +20,6 @@ import {
   useUser,
   AuthProvider,
   useAuth,
-  CheckUrlForBoardId,
   SocketAPI,
   useHexColor,
   useData,
@@ -33,7 +32,6 @@ import {
 import { Board, OpenConfiguration } from '@sage3/shared/types';
 // Pages
 import { LoginPage, HomePage, BoardPage, AccountPage, AdminPage, OpenDesktopPage } from './pages';
-import e from 'express';
 
 /**
  * Tries to connect for a length of time, then gives up.

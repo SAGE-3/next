@@ -48,6 +48,7 @@ import {
   YjsRoomConnection,
   setupApp,
   useUIStore,
+  useLinkStore,
 } from '@sage3/frontend';
 
 import { App } from '../../schema';
@@ -245,6 +246,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
   const createApp = useAppStore((state) => state.create);
+  const addLink = useLinkStore((state) => state.addLink);
 
   // Editor in Store
   // const editor = useStore((state) => state.editor[props._id] as editor.IStandaloneCodeEditor);
@@ -274,7 +276,7 @@ function ToolbarComponent(props: App): JSX.Element {
   };
 
   // Preview some content
-  const previewContent = (): void => {
+  const previewContent = async () => {
     if (!roomId || !boardId) return;
     if (s.language === 'markdown') {
       // Create a new app with the markdown
@@ -284,9 +286,15 @@ function ToolbarComponent(props: App): JSX.Element {
       const h = props.data.size.height;
       const x = props.data.position.x + w + 20;
       const y = props.data.position.y;
-      createApp(
-        setupApp('Markdown', 'IFrame', x, y, roomId, boardId, { w, h }, { doc: htmlResult })
-      );
+      const app = setupApp('Markdown', 'IFrame', x, y, roomId, boardId, { w, h }, { doc: htmlResult });
+      app.sourceApps = [props._id]; // Link to the original app
+      const res = await createApp(app);
+      // If the app was created successfully, add a link to the provenance
+      if (res.success === true) {
+        const sourceId = props._id;
+        const targetId = res.data._id;
+        addLink(sourceId, targetId, props.data.boardId, 'provenance');
+      }
     } else if (s.language === 'html') {
       // Create a new app with the HTML
       const htmlResult = s.content;
@@ -294,10 +302,15 @@ function ToolbarComponent(props: App): JSX.Element {
       const h = props.data.size.height;
       const x = props.data.position.x + w + 20;
       const y = props.data.position.y;
-      createApp(
-        setupApp('HTML', 'IFrame', x, y, roomId, boardId, { w, h }, { doc: htmlResult })
-      );
-
+      const app = setupApp('HTML', 'IFrame', x, y, roomId, boardId, { w, h }, { doc: htmlResult });
+      app.sourceApps = [props._id]; // Link to the original app
+      const res = await createApp(app);
+      // If the app was created successfully, add a link to the provenance
+      if (res.success === true) {
+        const sourceId = props._id;
+        const targetId = res.data._id;
+        addLink(sourceId, targetId, props.data.boardId, 'provenance');
+      }
     }
   };
 
