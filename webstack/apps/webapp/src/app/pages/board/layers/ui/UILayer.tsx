@@ -85,6 +85,8 @@ import {
   AssetsMenu,
   EscapeApp,
 } from './components';
+import { RemoteWall } from './components/remote-controller/remote-wall';
+import { RemoteControl } from './components/remote-controller/remote-control';
 
 type UILayerProps = {
   boardId: string;
@@ -545,6 +547,9 @@ export function UILayer(props: UILayerProps) {
       <Box position="absolute" bottom="50" left="2">
         <TagsDisplay />
       </Box>
+
+      {user?.data.userType === 'wall' && <RemoteWall />}
+      {user?.data.userType === 'client' && <RemoteControl />}
     </>
   );
 }
