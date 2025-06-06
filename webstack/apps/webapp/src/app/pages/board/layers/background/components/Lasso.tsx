@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 
 // SAGE Imports
 import { Position, Size } from '@sage3/shared/types';
-import { useHexColor, useThrottleScale, useThrottleApps, useUIStore, useUIToBoard } from '@sage3/frontend';
+import { useHexColor, useThrottleScale, useThrottleApps, useUIStore, useCursorBoardPosition } from '@sage3/frontend';
 import { useDragAndDropBoard } from './DragAndDropBoard';
 
 type LassoProps = {
@@ -42,10 +42,7 @@ export function Lasso(props: LassoProps) {
   const [modifierAction, setModifierAction] = useState<'none' | 'removal' | 'inverse'>('none');
 
   // Temporary Fix to Avoid Rerenders
-  // const boardPosition = useUIStore((state) => state.boardPosition);
-  // const scale = useUIStore((state) => state.scale);
-  // const { uiToBoard } = useMemo(() => useCursorBoardPosition(), [boardPosition.x, boardPosition.y, scale]);
-  const uiToBoard = useUIToBoard();
+  const { getBoardCursor } = useCursorBoardPosition();
 
   const [last_mousex, set_last_mousex] = useState(0);
   const [last_mousey, set_last_mousey] = useState(0);
@@ -60,7 +57,7 @@ export function Lasso(props: LassoProps) {
 
   // Get initial position
   const lassoStart = (x: number, y: number) => {
-    const position = uiToBoard(x, y);
+    const position = getBoardCursor();
     set_last_mousex(position.x);
     set_last_mousey(position.y);
     set_mousex(position.x);
@@ -86,7 +83,7 @@ export function Lasso(props: LassoProps) {
 
   // Get last position
   const lassoMove = (x: number, y: number) => {
-    const position = uiToBoard(x, y);
+    const position = getBoardCursor();
     setIsDragging(true);
     set_mousex(position.x);
     set_mousey(position.y);

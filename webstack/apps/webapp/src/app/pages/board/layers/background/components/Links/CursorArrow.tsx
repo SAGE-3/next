@@ -33,14 +33,13 @@ function ArrowToCursorMain({ linkedAppId }: { linkedAppId: string }) {
   const strokeColor = useColorModeValue('gray.500', 'gray.500');
 
   // User Cursor
-  // const { boardCursor: cursorPosition } = useCursorBoardPosition();
-  const { uiToBoard } = useCursorBoardPosition();
+  const { getBoardCursor } = useCursorBoardPosition();
   const [cursorPos, setCursorPos] = useState<{ x: number; y: number }>({ x: -1, y: -1 });
 
   useEffect(() => {
     const updateCursor = (e: MouseEvent) => {
       if (boardSynced) {
-        setCursorPos(uiToBoard(e.clientX, e.clientY));
+        setCursorPos(getBoardCursor());
       }
     };
 
@@ -49,7 +48,7 @@ function ArrowToCursorMain({ linkedAppId }: { linkedAppId: string }) {
     return () => {
       window.removeEventListener('mousemove', updateCursor);
     };
-  }, [uiToBoard, boardSynced]);
+  }, [boardSynced]);
 
   function buildArrow(src: string) {
     const srcApp = apps.find((a) => a._id === src);
