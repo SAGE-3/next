@@ -515,6 +515,7 @@ function AppComponent(props: App): JSX.Element {
       // Check for image
       if (apps && apps[0].data.type === 'ImageViewer') {
         if (roomId && boardId) {
+          const assetid = apps[0].data.state.assetid;
           const now = await serverTime();
           const initialAnswer = {
             id: genId(),
@@ -527,7 +528,6 @@ function AppComponent(props: App): JSX.Element {
           };
           updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
 
-          const assetid = apps[0].data.state.assetid;
           // Build the query
           const q: ImageQuery = {
             ctx: {

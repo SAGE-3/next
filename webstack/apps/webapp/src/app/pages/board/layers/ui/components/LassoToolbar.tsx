@@ -47,7 +47,6 @@ import {
   MdCopyAll,
   MdSend,
   MdZoomOutMap,
-  MdChat,
   MdMenu,
   MdPinDrop,
   MdAutoAwesomeMosaic,
@@ -436,7 +435,6 @@ export function LassoToolbar(props: LassoToolbarProps) {
         if (res.success) {
           const targetId = res.data._id;
           lassoApps.forEach((sourceId) => {
-            const newApp = res.data;
             addLink(sourceId, targetId, boardId, 'provenance');
           });
         }
@@ -799,9 +797,8 @@ for b in bits:
           onClose={deleteOnClose}
           onConfirm={closeSelectedApps}
           title="Delete Selected Applications"
-          message={`Are you sure you want to delete the selected ${
-            lassoApps.length > 1 ? `${lassoApps.length} applications?` : 'application?'
-          } `}
+          message={`Are you sure you want to delete the selected ${lassoApps.length > 1 ? `${lassoApps.length} applications?` : 'application?'
+            } `}
           cancelText="Cancel"
           confirmText="Delete"
           confirmColor="red"
@@ -816,7 +813,7 @@ for b in bits:
  * Packing function
  */
 
-const GrowingPacker = function () {};
+const GrowingPacker = function () { };
 
 GrowingPacker.prototype = {
   fit: function (blocks: any[]) {
