@@ -85,7 +85,7 @@ export function ToolbarButton(props: ToolbarButtonProps) {
         {props.stayActive && <PopoverCloseButton onClick={handleClick} />}
         <PopoverHeader>{props.title}</PopoverHeader>
         <PopoverBody p={1} m={1}>
-          {isOpen && props.children}
+          {props.children}
         </PopoverBody>
       </PopoverContent>
     </Popover>
