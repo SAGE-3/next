@@ -7,14 +7,23 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { Box, useToast, useColorModeValue, Icon, Text, Portal, Button } from '@chakra-ui/react';
+import { Box, useToast, useColorModeValue, Icon, Portal, Button } from '@chakra-ui/react';
 
 import { DraggableData, ResizableDelta, Position, Rnd, RndDragEvent } from 'react-rnd';
 import { MdWindow } from 'react-icons/md';
 import { IconType } from 'react-icons/lib';
 
 // SAGE3 Frontend
-import { useAppStore, useUIStore, useHexColor, useThrottleScale, useAbility, useInsightStore, useUserSettings, useUIToBoard } from '@sage3/frontend';
+import {
+  useAppStore,
+  useUIStore,
+  useHexColor,
+  useThrottleScale,
+  useAbility,
+  useInsightStore,
+  useUserSettings,
+  useCursorBoardPosition,
+} from '@sage3/frontend';
 
 // Window Components
 import { App } from '../../schema';
@@ -27,10 +36,9 @@ const APP_MAX_WIDTH = 8 * 1024;
 const APP_MAX_HEIGHT = 8 * 1024;
 
 // Window borders
-type Side = "left" | "right" | "top" | "bottom";
-type Corner = "top-left" | "top-right" | "bottom-left" | "bottom-right";
+type Side = 'left' | 'right' | 'top' | 'bottom';
+type Corner = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 type HitType = { edge?: Side; corner?: Corner } | null;
-
 
 type WindowProps = {
   app: App;
@@ -79,7 +87,7 @@ export function AppWindow(props: WindowProps) {
   const setLocalDeltaMove = useUIStore((state) => state.setDeltaLocalMove);
   const boardSynced = useUIStore((state) => state.boardSynced);
   const rndSafeForAction = useUIStore((state) => state.rndSafeForAction);
-  const uiToBoard = useUIToBoard();
+  const { uiToBoard } = useCursorBoardPosition();
 
   // Selected Apps Info
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
@@ -396,8 +404,7 @@ export function AppWindow(props: WindowProps) {
               newWidth = topRight.x - bottomLeft.x;
               newHeight = bottomLeft.y - topRight.y;
             }
-          }
-          else if (edge.corner === 'bottom-left') {
+          } else if (edge.corner === 'bottom-left') {
             const bottomLeft = uiToBoard(padx, window.innerHeight - pady);
             newOrigin = { x: bottomLeft.x, y: pos.y };
             newWidth = pos.x + size.width - bottomLeft.x;
@@ -408,8 +415,7 @@ export function AppWindow(props: WindowProps) {
               newWidth = topRight.x - bottomLeft.x;
               newHeight = bottomLeft.y - topRight.y;
             }
-          }
-          else if (edge.corner === 'bottom-right') {
+          } else if (edge.corner === 'bottom-right') {
             const bottomRight = uiToBoard(window.innerWidth - padx, window.innerHeight - pady);
             newWidth = bottomRight.x - pos.x;
             newHeight = bottomRight.y - pos.y;
@@ -431,8 +437,7 @@ export function AppWindow(props: WindowProps) {
               const topRight = uiToBoard(window.innerWidth - padx, pady);
               newWidth = topRight.x - topLeft.x;
             }
-          }
-          else if (edge.edge === 'right') {
+          } else if (edge.edge === 'right') {
             // Handle right edge double click
             const topRight = uiToBoard(window.innerWidth - padx, pady);
             newWidth = topRight.x - pos.x;
@@ -441,8 +446,7 @@ export function AppWindow(props: WindowProps) {
               newOrigin = { x: topLeft.x, y: pos.y };
               newWidth = topRight.x - topLeft.x;
             }
-          }
-          else if (edge.edge === 'top') {
+          } else if (edge.edge === 'top') {
             // Handle top edge double click
             const topLeft = uiToBoard(padx, pady);
             newOrigin = { x: pos.x, y: topLeft.y };
@@ -452,8 +456,7 @@ export function AppWindow(props: WindowProps) {
               const bottomLeft = uiToBoard(padx, window.innerHeight - pady);
               newHeight = bottomLeft.y - topLeft.y;
             }
-          }
-          else if (edge.edge === 'bottom') {
+          } else if (edge.edge === 'bottom') {
             // Handle bottom edge double click
             const bottomLeft = uiToBoard(padx, window.innerHeight - pady);
             newHeight = bottomLeft.y - pos.y;
@@ -467,11 +470,14 @@ export function AppWindow(props: WindowProps) {
         // Update the app size and position
         update(props.app._id, {
           position: {
-            ...props.app.data.position, x: newOrigin.x, y: newOrigin.y
+            ...props.app.data.position,
+            x: newOrigin.x,
+            y: newOrigin.y,
           },
           size: {
             ...props.app.data.size,
-            width: newWidth, height: newHeight
+            width: newWidth,
+            height: newHeight,
           },
         });
         // Deselect the app
@@ -482,193 +488,189 @@ export function AppWindow(props: WindowProps) {
 
   const isFocused = useUIStore((state) => state.focusedAppId === props.app._id);
 
-  return (
-    isFocused ?
-      <Portal >
+  return isFocused ? (
+    <Portal>
+      <Box
+        id={'app_' + props.app._id}
+        overflow="hidden"
+        left="0px"
+        top="0px"
+        position={'absolute'}
+        width="100%"
+        height="100%"
+        zIndex={999999999}
+        background={'backgroundColor'}
+      >
+        {memoizedChildren}
+      </Box>
+      <Button
+        position="absolute"
+        left="50%"
+        bottom="0px"
+        zIndex={999999999}
+        opacity={0.75}
+        backgroundColor={backgroundColor}
+        _hover={{ backgroundColor: 'teal', opacity: 1, transform: 'scale(1.15)' }}
+        color="white"
+        onClick={() => {
+          useUIStore.getState().setFocusedAppId('');
+          if (!showUI) {
+            toggleShowUI();
+          }
+        }}
+      >
+        Exit
+      </Button>
+    </Portal>
+  ) : (
+    <Rnd
+      bounds="parent"
+      dragHandleClassName="handle"
+      size={{ width: size.width, height: size.height }}
+      position={pos}
+      onDragStart={handleDragStart}
+      onDrag={handleDrag}
+      onDragStop={handleDragStop}
+      onResizeStart={handleResizeStart}
+      onResize={handleResize}
+      onResizeStop={handleResizeStop}
+      onClick={handleAppClick}
+      // Handle double click on the app window borders
+      onDoubleClick={onDoubleClick}
+      // Select an app on touch
+      onPointerDown={handleAppTouchStart}
+      onPointerMove={handleAppTouchMove}
+      enableResizing={enableResize && canResize && !isPinned && primaryActionMode === 'lasso'} // Temporary solution to fix resize while drag -> && (selectedApp !== "")
+      // BoardSync && rndSafeForAction is a temporary solution to prevent the most common type of bug which is zooming followed by a click
+      disableDragging={
+        !canMove || isPinned || !(boardSynced && rndSafeForAction) || primaryActionMode === 'grab' || primaryActionMode === 'linker'
+      }
+      lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
+      style={{
+        zIndex: props.lockToBackground ? 0 : myZ,
+        pointerEvents: lassoMode || (!canMove && !canResize) ? 'none' : 'auto',
+        borderRadius: outerBorderRadius, // This is used to prevent selection at very edge of corner in grab mode
+        touchAction: 'none', // needed to prevent pinch to zoom
+      }}
+      resizeHandleStyles={{
+        bottom: { transform: `scaleY(${handleScale})` },
+        bottomLeft: { transform: `scale(${handleScale})` },
+        bottomRight: { transform: `scale(${handleScale})` },
+        left: { transform: `scaleX(${handleScale})` },
+        right: { transform: `scaleX(${handleScale})` },
+        top: { transform: `scaleY(${handleScale})` },
+        topLeft: { transform: `scale(${handleScale})` },
+        topRight: { transform: `scale(${handleScale})` },
+      }}
+      resizeHandleClasses={{
+        bottom: 'app-window-resize-handle',
+        bottomLeft: 'app-window-resize-handle',
+        bottomRight: 'app-window-resize-handle',
+        left: 'app-window-resize-handle',
+        right: 'app-window-resize-handle',
+        top: 'app-window-resize-handle',
+        topLeft: 'app-window-resize-handle',
+        topRight: 'app-window-resize-handle',
+      }}
+      // min/max app window dimensions
+      minWidth={APP_MIN_WIDTH}
+      minHeight={APP_MIN_HEIGHT}
+      maxWidth={APP_MAX_WIDTH}
+      maxHeight={APP_MAX_HEIGHT}
+      // Scaling of the board
+      scale={scale}
+    >
+      {/* Title Above app, not when dragging the board */}
+      {!boardDragging && <WindowTitle size={size} scale={scale} title={props.app.data.title} selected={selected} />}
+
+      {/* Border Box around app to show it is selected */}
+      <WindowBorder
+        size={size}
+        selected={selected}
+        isGrouped={isGrouped}
+        dragging={!appDragging && props.app.data.dragging}
+        scale={scale}
+        borderWidth={borderWidth}
+        borderColor={borderColor}
+        selectColor={selectColor}
+        borderRadius={outerBorderRadius}
+        pinned={isPinned}
+        background={background}
+        isHighlight={isHighlight}
+      />
+
+      {/* The Application */}
+      <Box
+        id={'app_' + props.app._id}
+        width="100%"
+        height="100%"
+        overflow="hidden"
+        zIndex={2}
+        background={background || outsideView ? backgroundColor : 'unset'}
+        borderRadius={innerBorderRadius}
+        boxShadow={hideApp || isPinned || !background ? '' : `4px 4px 12px 0px ${shadowColor}}`}
+        style={{ contentVisibility: hideApp ? 'hidden' : 'visible' }}
+      >
+        {memoizedChildren}
+      </Box>
+
+      {/* This div is to allow users to drag anywhere within the window when the app isnt selected*/}
+      {!selected && (
         <Box
-          id={'app_' + props.app._id}
-          overflow="hidden"
+          className="handle" // The CSS name react-rnd latches on to for the drag events
+          position="absolute"
           left="0px"
           top="0px"
-          position={'absolute'}
           width="100%"
           height="100%"
-          zIndex={999999999}
-          background={"backgroundColor"}
-        >
-          {memoizedChildren}
-        </Box>
-        <Button
-          position="absolute"
-          left="50%"
-          bottom="0px"
-          zIndex={999999999}
-          opacity={0.75}
-          backgroundColor={backgroundColor}
-          _hover={{ backgroundColor: "teal", opacity: 1, transform: 'scale(1.15)' }}
-          color="white"
-          onClick={() => {
-            useUIStore.getState().setFocusedAppId('');
-            if (!showUI) {
-              toggleShowUI();
-            }
-          }}
-        >
-          Exit
-        </Button>
-      </Portal>
-      :
-      <Rnd
-        bounds="parent"
-        dragHandleClassName="handle"
-        size={{ width: size.width, height: size.height }}
-        position={pos}
-        onDragStart={handleDragStart}
-        onDrag={handleDrag}
-        onDragStop={handleDragStop}
-        onResizeStart={handleResizeStart}
-        onResize={handleResize}
-        onResizeStop={handleResizeStop}
-        onClick={handleAppClick}
-        // Handle double click on the app window borders
-        onDoubleClick={onDoubleClick}
-        // Select an app on touch
-        onPointerDown={handleAppTouchStart}
-        onPointerMove={handleAppTouchMove}
-        // EnableResizing={enableResize && canResize && !isPinned}
-        enableResizing={enableResize && canResize && !isPinned && primaryActionMode === 'lasso'} // Temporary solution to fix resize while drag -> && (selectedApp !== "")
-        // BoardSync && rndSafeForAction is a temporary solution to prevent the most common type of bug which is zooming followed by a click
-        disableDragging={
-          !canMove || isPinned || !(boardSynced && rndSafeForAction) || primaryActionMode === 'grab' || primaryActionMode === 'linker'
-        }
-        lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
-        style={{
-          zIndex: props.lockToBackground ? 0 : myZ,
-          pointerEvents: lassoMode || (!canMove && !canResize) ? 'none' : 'auto',
-          borderRadius: outerBorderRadius, // This is used to prevent selection at very edge of corner in grab mode
-          touchAction: 'none', // needed to prevent pinch to zoom
-        }}
-        resizeHandleStyles={{
-          bottom: { transform: `scaleY(${handleScale})` },
-          bottomLeft: { transform: `scale(${handleScale})` },
-          bottomRight: { transform: `scale(${handleScale})` },
-          left: { transform: `scaleX(${handleScale})` },
-          right: { transform: `scaleX(${handleScale})` },
-          top: { transform: `scaleY(${handleScale})` },
-          topLeft: { transform: `scale(${handleScale})` },
-          topRight: { transform: `scale(${handleScale})` },
-        }}
-        resizeHandleClasses={{
-          bottom: 'app-window-resize-handle',
-          bottomLeft: 'app-window-resize-handle',
-          bottomRight: 'app-window-resize-handle',
-          left: 'app-window-resize-handle',
-          right: 'app-window-resize-handle',
-          top: 'app-window-resize-handle',
-          topLeft: 'app-window-resize-handle',
-          topRight: 'app-window-resize-handle',
-        }}
-        // min/max app window dimensions
-        minWidth={APP_MIN_WIDTH}
-        minHeight={APP_MIN_HEIGHT}
-        maxWidth={APP_MAX_WIDTH}
-        maxHeight={APP_MAX_HEIGHT}
-        // Scaling of the board
-        scale={scale}
-      >
-        {/* Title Above app, not when dragging the board */}
-        {!boardDragging && <WindowTitle size={size} scale={scale} title={props.app.data.title} selected={selected} />}
-
-        {/* Border Box around app to show it is selected */}
-        <WindowBorder
-          size={size}
-          selected={selected}
-          isGrouped={isGrouped}
-          dragging={!appDragging && props.app.data.dragging}
-          scale={scale}
-          borderWidth={borderWidth}
-          borderColor={borderColor}
-          selectColor={props.app.data.state?.msgId ? '#F69637' : selectColor} // Orange for SageCell when running
-          borderRadius={outerBorderRadius}
-          pinned={isPinned}
-          background={background}
-          isHighlight={isHighlight}
-        />
-
-        {/* The Application */}
-        <Box
-          id={'app_' + props.app._id}
-          width="100%"
-          height="100%"
-          overflow="hidden"
-          zIndex={2}
-          background={background || outsideView ? backgroundColor : 'unset'}
-          borderRadius={innerBorderRadius}
-          boxShadow={hideApp || isPinned || !background ? '' : `4px 4px 12px 0px ${shadowColor}`} //|| primaryActionMode === 'grab'
-          style={{ contentVisibility: hideApp ? 'hidden' : 'visible' }}
-        >
-          {memoizedChildren}
-        </Box>
-
-        {/* This div is to allow users to drag anywhere within the window when the app isnt selected*/}
-        {!selected && (
-          <Box
-            className="handle" // The CSS name react-rnd latches on to for the drag events
-            position="absolute"
-            left="0px"
-            top="0px"
-            width="100%"
-            height="100%"
-            cursor={primaryActionMode === 'grab' ? 'grab' : 'move'}
-            sx={
-              primaryActionMode === 'grab'
-                ? {
+          cursor={primaryActionMode === 'grab' ? 'grab' : 'move'}
+          sx={
+            primaryActionMode === 'grab'
+              ? {
                   '&:active': {
                     cursor: 'grabbing',
                   },
                 }
-                : {}
-            }
-            userSelect={'none'}
-            zIndex={3}
-          // borderRadius={innerBorderRadius}
-          ></Box>
-        )}
+              : {}
+          }
+          userSelect={'none'}
+          zIndex={3}
+        ></Box>
+      )}
 
-        {/* If the app is being dragged block interaction with the app */}
-        {(boardDragging || appDragging || props.app.data.dragging) && <BlockInteraction innerBorderRadius={innerBorderRadius} />}
+      {/* If the app is being dragged block interaction with the app */}
+      {(boardDragging || appDragging || props.app.data.dragging) && <BlockInteraction innerBorderRadius={innerBorderRadius} />}
 
-        {/* Processing Box */}
-        {props.processing && (
-          <ProcessingBox size={size} selected={selected} colors={{ backgroundColor, selectColor, notSelectColor: borderColor }} />
-        )}
+      {/* Processing Box */}
+      {props.processing && (
+        <ProcessingBox size={size} selected={selected} colors={{ backgroundColor, selectColor, notSelectColor: borderColor }} />
+      )}
 
-        {/* Icon when app is dragging */}
-        {hideApp && (
-          <Box
-            position="absolute"
-            left="0px"
-            top="0px"
-            width={size.width}
-            height={size.height}
-            pointerEvents={'none'}
-            userSelect={'none'}
-            zIndex={999999999}
-            justifyContent={'center'}
-            alignItems={'center'}
-            display={'flex'}
-            backgroundColor={hideBackgroundColorHex}
-            fontSize={Math.min(size.width, size.height) / 2}
-            borderRadius={innerBorderRadius}
-            outline={`${borderWidth}px solid ${props.hideBordercolor ? props.hideBordercolor : borderColor}`}
-          >
-            {props.hideBackgroundIcon ? <Icon as={props.hideBackgroundIcon} /> : <MdWindow />}
-          </Box>
-        )}
-      </Rnd>
+      {/* Icon when app is dragging */}
+      {hideApp && (
+        <Box
+          position="absolute"
+          left="0px"
+          top="0px"
+          width={size.width}
+          height={size.height}
+          pointerEvents={'none'}
+          userSelect={'none'}
+          zIndex={999999999}
+          justifyContent={'center'}
+          alignItems={'center'}
+          display={'flex'}
+          backgroundColor={hideBackgroundColorHex}
+          fontSize={Math.min(size.width, size.height) / 2}
+          borderRadius={innerBorderRadius}
+          outline={`${borderWidth}px solid ${props.hideBordercolor ? props.hideBordercolor : borderColor}`}
+        >
+          {props.hideBackgroundIcon ? <Icon as={props.hideBackgroundIcon} /> : <MdWindow />}
+        </Box>
+      )}
+    </Rnd>
   );
 }
-
 
 /**
  * Determines which edge or corner of a rectangle a given point is near, within a specified tolerance.
@@ -679,8 +681,8 @@ export function AppWindow(props: WindowProps) {
  * @returns An object indicating the edge or corner the point is near, or null if the point is not near any edge or corner.
  */
 function getRectEdgeAtPoint(
-  point: { x: number, y: number },
-  rect: { x: number, y: number, width: number, height: number },
+  point: { x: number; y: number },
+  rect: { x: number; y: number; width: number; height: number },
   tolerance: number = 1
 ): HitType {
   const left = rect.x;
@@ -694,10 +696,10 @@ function getRectEdgeAtPoint(
   const nearBottomLeft = Math.abs(point.x - left) <= tolerance && Math.abs(point.y - bottom) <= tolerance;
   const nearBottomRight = Math.abs(point.x - right) <= tolerance && Math.abs(point.y - bottom) <= tolerance;
 
-  if (nearTopLeft) return { corner: "top-left" };
-  if (nearTopRight) return { corner: "top-right" };
-  if (nearBottomLeft) return { corner: "bottom-left" };
-  if (nearBottomRight) return { corner: "bottom-right" };
+  if (nearTopLeft) return { corner: 'top-left' };
+  if (nearTopRight) return { corner: 'top-right' };
+  if (nearBottomLeft) return { corner: 'bottom-left' };
+  if (nearBottomRight) return { corner: 'bottom-right' };
 
   // Edges
   const withinVerticalRange = point.y >= top - tolerance && point.y <= bottom + tolerance;
@@ -708,10 +710,10 @@ function getRectEdgeAtPoint(
   const onTop = Math.abs(point.y - top) <= tolerance && withinHorizontalRange;
   const onBottom = Math.abs(point.y - bottom) <= tolerance && withinHorizontalRange;
 
-  if (onLeft) return { edge: "left" };
-  if (onRight) return { edge: "right" };
-  if (onTop) return { edge: "top" };
-  if (onBottom) return { edge: "bottom" };
+  if (onLeft) return { edge: 'left' };
+  if (onRight) return { edge: 'right' };
+  if (onTop) return { edge: 'top' };
+  if (onBottom) return { edge: 'bottom' };
 
   return null;
 }

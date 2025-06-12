@@ -39,7 +39,7 @@ import {
   AlertDescription,
   Spacer,
 } from '@chakra-ui/react';
-import { keyframes } from '@emotion/react'
+import { keyframes } from '@emotion/react';
 
 import {
   MdDownload,
@@ -118,7 +118,7 @@ export function LassoToolbar(props: LassoToolbarProps) {
   const updateInsight = useInsightStore((state) => state.update);
 
   // Position
-  const { boardCursor } = useCursorBoardPosition();
+  const { getBoardCursor } = useCursorBoardPosition();
 
   // Boards
   const boards = useBoardStore((state) => state.boards);
@@ -417,6 +417,7 @@ export function LassoToolbar(props: LassoToolbarProps) {
   };
 
   const openInChat = async () => {
+    const boardCursor = getBoardCursor();
     const x = boardCursor.x - 200;
     const y = boardCursor.y - 700;
     if (roomId && boardId) {
@@ -446,6 +447,7 @@ export function LassoToolbar(props: LassoToolbarProps) {
   };
 
   const openInCell = () => {
+    const boardCursor = getBoardCursor();
     const x = boardCursor.x - 200;
     const y = boardCursor.y - 1000;
     if (roomId && boardId) {
@@ -797,8 +799,9 @@ for b in bits:
           onClose={deleteOnClose}
           onConfirm={closeSelectedApps}
           title="Delete Selected Applications"
-          message={`Are you sure you want to delete the selected ${lassoApps.length > 1 ? `${lassoApps.length} applications?` : 'application?'
-            } `}
+          message={`Are you sure you want to delete the selected ${
+            lassoApps.length > 1 ? `${lassoApps.length} applications?` : 'application?'
+          } `}
           cancelText="Cancel"
           confirmText="Delete"
           confirmColor="red"
@@ -813,7 +816,7 @@ for b in bits:
  * Packing function
  */
 
-const GrowingPacker = function () { };
+const GrowingPacker = function () {};
 
 GrowingPacker.prototype = {
   fit: function (blocks: any[]) {

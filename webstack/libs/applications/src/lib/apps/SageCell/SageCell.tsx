@@ -49,7 +49,7 @@ import { Vega, VisualizationSpec } from 'react-vega';
 // VegaLite library
 import { VegaLite } from 'react-vega';
 // Monaco Imports
-import Editor, { useMonaco, OnMount } from '@monaco-editor/react';
+import Editor, { OnMount } from '@monaco-editor/react';
 import { editor } from 'monaco-editor';
 import { monacoOptions } from './components/monacoOptions';
 // Yjs Imports
@@ -117,6 +117,7 @@ function AppComponent(props: App): JSX.Element {
   const setExecuteAll = useStore((state) => state.setExecuteAll);
   const setInterrupt = useStore((state) => state.setInterrupt);
   const setKernel = useStore((state) => state.setKernel);
+  // const { isOpen, onOpen, onClose } = useDisclosure();
 
   // Styling
   const defaultTheme = useColorModeValue('vs', 'vs-dark');
@@ -131,6 +132,10 @@ function AppComponent(props: App): JSX.Element {
   // Room and Board info
   const roomId = props.data.roomId;
   const boardId = props.data.boardId;
+  // const setBoardPosition = useUIStore((state) => state.setBoardPosition);
+  // const boardPosition = useUIStore((state) => state.boardPosition);
+  // const scale = useThrottleScale(250);
+  // const { getBoardCursor } = useCursorBoardPosition();
 
   // Local state
   const [cursorPosition, setCursorPosition] = useState({ r: 0, c: 0 });
@@ -144,7 +149,6 @@ function AppComponent(props: App): JSX.Element {
 
   // YJS and Monaco
   const { yApps } = useYjs();
-  const monaco = useMonaco();
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
 
   // Local state
@@ -166,6 +170,9 @@ function AppComponent(props: App): JSX.Element {
   // Memos and errors
   const renderedContent = useMemo(() => processedContent(content || []), [content]);
   const [error, setError] = useState<{ traceback?: string[]; ename?: string; evalue?: string } | null>(null);
+
+  // Drawer size: user's preference from local storage or default
+  // const [drawerWidth, setDrawerWidth] = useState(localStorage.getItem('sage_preferred_drawer_width') || '50vw');
 
   useEffect(() => {
     // If the API Status is down, set the publicKernels to empty array
@@ -250,10 +257,6 @@ function AppComponent(props: App): JSX.Element {
   // Keep a copy of the function
   const throttleFunc = useCallback(throttleUpdate, [editorRef.current]);
 
-  /**
-   * Executes the code in the editor
-   * @returns void
-   */
   const handleExecute = async () => {
     const canExec = SAGE3Ability.canCurrentUser('execute', 'kernels');
     if (!user || !editorRef.current || !apiStatus || !access || !canExec) return;
@@ -773,6 +776,12 @@ function AppComponent(props: App): JSX.Element {
   const handleFontDecrease = () => {
     setFontSize((prev) => Math.max(8, prev - 2));
   };
+  // const handleSaveCode = () => {
+  //   if (editorRef2.current) {
+  //     // Copy the drawer code to the editor in the board
+  //     editorRef.current?.setValue(editorRef2.current.getValue());
+  //   }
+  // };
 
   /**
    *
@@ -888,7 +897,6 @@ function AppComponent(props: App): JSX.Element {
       throttleFunc();
     });
   };
-
 
   /**
    * Put the kernel in the store, read from the action in Monaco

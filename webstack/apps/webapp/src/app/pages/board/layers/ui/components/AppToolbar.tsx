@@ -166,6 +166,8 @@ export function AppToolbar(props: AppToolbarProps) {
 
   // Focus Mode
   const setFocusedAppId = useUIStore((state) => state.setFocusedAppId);
+  // Cant focus on some apps
+  const doNotFocus = ['VideoViewer', 'Stickie', 'Screenshare'];
 
   // Insight labels
   const [tags, setTags] = useState<string[]>([]);
@@ -859,7 +861,7 @@ export function AppToolbar(props: AppToolbarProps) {
 
               <Tooltip placement="top" hasArrow={true} label={'Focus Mode'} openDelay={400} ml="1">
                 <Button onClick={onFocusMode} backgroundColor={commonButtonColors} size="xs" mr="1" p={0}
-                  isDisabled={!canPin || app.data.type === 'VideoViewer' || app.data.type === 'Stickie'}>
+                  isDisabled={!canPin || doNotFocus.includes(app.data.type)}>
                   <MdCenterFocusStrong size="18px" color={buttonTextColor} />
                 </Button>
               </Tooltip>
