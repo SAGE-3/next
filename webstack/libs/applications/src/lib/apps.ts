@@ -20,7 +20,7 @@ import { name as ImageViewerName } from './apps/ImageViewer';
 import { name as JupyterLabName } from './apps/JupyterLab';
 import { name as LeafLetName } from './apps/LeafLet';
 import { name as LinkerName } from './apps/Linker';
-import { name as MapGLName } from './apps/MapGL';
+import { name as MapName } from './apps/Map';
 import { name as NotepadName } from './apps/Notepad';
 import { name as PDFResultName } from './apps/PDFResult';
 import { name as PDFViewerName } from './apps/PDFViewer';
@@ -63,7 +63,7 @@ import ImageViewer from './apps/ImageViewer/ImageViewer';
 import JupyterLab from './apps/JupyterLab/JupyterLab';
 import LeafLet from './apps/LeafLet/LeafLet';
 import Linker from './apps/Linker/Linker';
-import MapGL from './apps/MapGL/MapGL';
+import Map from './apps/Map/Map';
 import Notepad from './apps/Notepad/Notepad';
 import PDFResult from './apps/PDFResult/PDFResult';
 import PDFViewer from './apps/PDFViewer/PDFViewer';
@@ -184,10 +184,10 @@ export const Applications = {
     ToolbarComponent: Linker.ToolbarComponent,
     GroupedToolbarComponent: Linker.GroupedToolbarComponent,
   },
-  [MapGLName]: {
-    AppComponent: React.memo(MapGL.AppComponent),
-    ToolbarComponent: MapGL.ToolbarComponent,
-    GroupedToolbarComponent: MapGL.GroupedToolbarComponent,
+  [MapName]: {
+    AppComponent: React.memo(Map.AppComponent),
+    ToolbarComponent: Map.ToolbarComponent,
+    GroupedToolbarComponent: Map.GroupedToolbarComponent,
   },
   [NotepadName]: {
     AppComponent: React.memo(Notepad.AppComponent),

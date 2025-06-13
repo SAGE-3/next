@@ -20,7 +20,7 @@ import { name as ImageViewerName, init as defaultImageViewer } from './apps/Imag
 import { name as JupyterLabName, init as defaultJupyterLab } from './apps/JupyterLab';
 import { name as LeafLetName, init as defaultLeafLet } from './apps/LeafLet';
 import { name as LinkerName, init as defaultLinker } from './apps/Linker';
-import { name as MapGLName, init as defaultMapGL } from './apps/MapGL';
+import { name as MapName, init as defaultMap } from './apps/Map';
 import { name as NotepadName, init as defaultNotepad } from './apps/Notepad';
 import { name as PDFResultName, init as defaultPDFResult } from './apps/PDFResult';
 import { name as PDFViewerName, init as defaultPDFViewer } from './apps/PDFViewer';
@@ -61,7 +61,7 @@ export const initialValues = {
   [JupyterLabName]: defaultJupyterLab,
   [LeafLetName]: defaultLeafLet,
   [LinkerName]: defaultLinker,
-  [MapGLName]: defaultMapGL,
+  [MapName]: defaultMap,
   [NotepadName]: defaultNotepad,
   [PDFResultName]: defaultPDFResult,
   [PDFViewerName]: defaultPDFViewer,
@@ -81,4 +81,3 @@ export const initialValues = {
   [WebpageLinkName]: defaultWebpageLink,
   [WebviewName]: defaultWebview,
 };
-

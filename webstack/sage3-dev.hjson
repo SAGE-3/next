@@ -112,7 +112,7 @@
     "apps": [
       "Chat",
       "ChartMaker",
-      "MapGL",
+      "Map",
       "Notepad",
       "Poll",
       "SageCell",
