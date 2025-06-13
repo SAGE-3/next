@@ -23,26 +23,30 @@ import {
   ModalHeader,
   ModalOverlay,
   useDisclosure,
+  IconButton,
+  Menu,
+  MenuButton,
+  MenuItem,
+  MenuList,
 } from '@chakra-ui/react';
-import { MdAdd, MdRemove, MdMap, MdTerrain } from 'react-icons/md';
+import { MdAdd, MdRemove, MdMap, MdTerrain, MdVisibility, MdVisibilityOff } from 'react-icons/md';
 import maplibregl from 'maplibre-gl';
 import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
-import { fromUrl, TypedArray, ReadRasterResult } from 'geotiff';
+import { fromUrl, TypedArray } from 'geotiff';
 // @ts-ignore
 import * as Plotty from 'plotty';
-import bbox from '@turf/bbox';
-import center from '@turf/center';
+
 import { create } from 'zustand';
 
 import { Asset } from '@sage3/shared/types';
 import { isGeoTiff, isTiff } from '@sage3/shared';
-import { useAppStore, useAssetStore, apiUrls } from '@sage3/frontend';
+import { useAppStore, useAssetStore, apiUrls, useHexColor } from '@sage3/frontend';
 
 import { App } from '../../schema';
 import { AppWindow } from '../../components';
 import { state as AppState, LayerType } from './index';
 
-import { getHexColor } from '@sage3/shared';
+import { getHexColor, SAGEColors } from '@sage3/shared';
 
 import './maplibre-gl.css';
 
@@ -51,7 +55,6 @@ const baselayers = {
   Satellite: `https://api.maptiler.com/maps/hybrid/style.json?key=${mapTilerAPI}`,
   OpenStreetMap: `https://api.maptiler.com/maps/streets/style.json?key=${mapTilerAPI}`,
 };
-
 const esriKey = 'AAPK74760e71edd04d12ac33fd375e85ba0d4CL8Ho3haHz1cOyUgnYG4UUEW6NG0xj2j1qsmVBAZNupoD44ZiSJ4DP36ksP-t3B';
 
 function getStaticAssetUrl(filename: string): string {
@@ -96,41 +99,41 @@ async function loadLayersOnMap(
     return;
   }
 
-  // Remove all existing layers on map if they exists
+  // 1) Clear your old layers then swap in the new style
   clearAllLayersAndSources(map);
-  // Readd the base layer and then load terrain and other layers
-  map.setStyle(baselayers[basemap]);
+  map.once('styledata', async () => {
+    // @ts-ignore: ProjectionSpecification in our version doesn’t list “name”
+    map.setProjection({ name: 'mercator' });
 
-  // Add 3d Terrain
-  // --- add your DEM source ---
-  map.addSource('terrain', {
-    type: 'raster-dem',
-    // MapTiler terrain-RGB tiles; swap YOUR_KEY for your MapTiler key
-    url: `https://api.maptiler.com/tiles/terrain-rgb-v2/tiles.json?key=${mapTilerAPI}`,
-    tileSize: 512,
-    maxzoom: 14,
+    // 3) Now add your DEM + terrain
+    if (!map.getSource('dem-source')) {
+      map.addSource('dem-source', {
+        type: 'raster-dem',
+        url: `https://api.maptiler.com/tiles/terrain-rgb-v2/tiles.json?key=${mapTilerAPI}`,
+        tileSize: 512,
+        maxzoom: 14,
+      });
+      map.setTerrain({ source: 'dem-source', exaggeration: 1.2 });
+    }
+
+    // 5) Finally, re-add your GeoTIFF / GeoJSON layers + legend
+    await Promise.all(
+      layers.map((layer) => {
+        if (!layer.visible) {
+          return Promise.resolve();
+        }
+        const asset = assets.find((a) => a._id === layer.assetId);
+        return asset
+          ? isGeoTiff(asset.data.mimetype) || isTiff(asset.data.mimetype)
+            ? addGeoTiffToMap(map, layer, asset)
+            : addGeoJsonToMap(map, layer, asset)
+          : Promise.resolve();
+      })
+    );
   });
 
-  // --- turn on 3D terrain ---
-  map.setTerrain({ source: 'terrain', exaggeration: 1.2 });
-
-  for (const layer of layers) {
-    const asset = assets.find((a) => a._id === layer.assetId);
-    if (!asset) {
-      console.warn(`Asset with ID ${layer.assetId} not found.`);
-      continue;
-    }
-    try {
-      // GEO TIFF
-      if (isGeoTiff(asset.data.mimetype) || isTiff(asset.data.mimetype)) {
-        addGeoTiffToMap(map, layer, asset);
-      } else if (asset.data.mimetype === 'application/geo+json' || asset.data.mimetype === 'application/json') {
-        addGeoJsonToMap(map, layer, asset);
-      }
-    } catch (error) {
-      console.error(`Error loading layer ${layer.assetId}:`, error);
-    }
-  }
+  // 7) Kick off the style swap
+  map.setStyle(baselayers[basemap]);
 }
 
 async function addGeoTiffToMap(map: maplibregl.Map, layer: LayerType, asset: Asset) {
@@ -270,16 +273,6 @@ export const useStore = create<MapStore>((set) => ({
 const MAX_ZOOM = 18;
 const MIN_ZOOM = 1;
 
-type TiffProps = {
-  min: number;
-  max: number;
-  width: number;
-  height: number;
-  data: ReadRasterResult;
-  bbox: [number, number, number, number];
-  fitted: boolean;
-};
-
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
@@ -289,8 +282,6 @@ function AppComponent(props: App): JSX.Element {
 
   // Save map into Zustand for toolbar access; ref is primary
   const saveMap = useStore((state) => state.saveMap);
-
-  const toast = useToast();
 
   function refreshLayers() {
     if (!mapRef.current) {
@@ -393,6 +384,7 @@ function AppComponent(props: App): JSX.Element {
     <AppWindow app={props} hideBackgroundIcon={MdMap}>
       <Box id={`container${props._id}`} w={props.data.size.width} h={props.data.size.height}>
         <Box id={`map${props._id}`} w="100%" h="100%" />
+        <LegendOverlay layers={s.layers} appId={props._id} />
       </Box>
     </AppWindow>
   );
@@ -615,6 +607,93 @@ function AddLayerModal({
           </ModalFooter>
         </ModalContent>
       </Modal>
+    </Box>
+  );
+}
+
+import { Text } from '@chakra-ui/react';
+
+function LegendOverlay(props: { layers: LayerType[]; appId: string }) {
+  const assets = useAssetStore((state) => state.assets);
+
+  const toggleLayerVisibilty = (assetId: string) => {
+    const updatedLayers = props.layers.map((layer) => (layer.assetId === assetId ? { ...layer, visible: !layer.visible } : layer));
+    useAppStore.getState().updateState(props.appId, { layers: updatedLayers });
+  };
+
+  // Color the text selection
+  const colorLayer = (assetId: string, value: string) => {
+    const updatedLayers = props.layers.map((layer) => {
+      if (layer.assetId === assetId) {
+        return { ...layer, color: value };
+      }
+      return layer;
+    });
+    useAppStore.getState().updateState(props.appId, { layers: updatedLayers });
+  };
+
+  const colors: { name: string; value: SAGEColors }[] = [
+    { name: 'Red', value: 'red' },
+    { name: 'Orange', value: 'orange' },
+    { name: 'Yellow', value: 'yellow' },
+    { name: 'Green', value: 'green' },
+    { name: 'Teal', value: 'teal' },
+    { name: 'Blue', value: 'blue' },
+    { name: 'Cyan', value: 'cyan' },
+    { name: 'Purple', value: 'purple' },
+    { name: 'Pink', value: 'pink' },
+  ];
+
+  return (
+    <Box position="absolute" top="4" left="4" bg="whiteAlpha.800" p="2" borderRadius="md" boxShadow="md" zIndex={10} fontSize="xs">
+      {props.layers.map((layer) => {
+        const asset = assets.find((a) => a._id === layer.assetId);
+        if (!asset) {
+          console.warn(`Asset with ID ${layer.assetId} not found.`);
+          return null;
+        }
+        return (
+          <HStack spacing="2" key={layer.assetId} mb="1">
+            {/* Chakra Menu Button to select a color */}
+            <Menu>
+              <Tooltip placement="top" hasArrow={true} label={'Layer Color'} openDelay={400}>
+                <MenuButton as={Button} size="xs" colorScheme={layer.color} mx="1" borderRadius="100%"></MenuButton>
+              </Tooltip>
+
+              <MenuList>
+                {/* MenuItems are not rendered unless Menu is open */}
+                {colors.map((color) => (
+                  <MenuItem onClick={() => colorLayer(layer.assetId, color.value)} key={props.appId + color.value}>
+                    <Box
+                      w="16px"
+                      h="16px"
+                      bg={color.value}
+                      mr="2"
+                      borderRadius="100%"
+                      border="solid 1px black"
+                      backgroundColor={color.value}
+                    />
+                    {color.name}
+                  </MenuItem>
+                ))}
+              </MenuList>
+            </Menu>
+
+            {/* Eye icon to hide and unhide layer */}
+            <IconButton
+              icon={layer.visible ? <MdVisibility /> : <MdVisibilityOff />}
+              colorScheme={layer.visible ? 'green' : 'red'}
+              variant="solid"
+              size="xs"
+              onClick={() => {
+                toggleLayerVisibilty(layer.assetId);
+              }}
+              aria-label={''}
+            />
+            <Text color="black">{asset.data.originalfilename.substring(0, 20) + '...'}</Text>
+          </HStack>
+        );
+      })}
     </Box>
   );
 }
