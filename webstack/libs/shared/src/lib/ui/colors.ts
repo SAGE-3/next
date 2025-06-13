@@ -8,7 +8,7 @@
 
 export const colors = ['red', 'orange', 'yellow', 'green', 'teal', 'blue', 'cyan', 'purple', 'pink'] as const;
 
-export type SAGEColors = typeof colors[number];
+export type SAGEColors = (typeof colors)[number];
 
 /**
  * Returns a color from the SAGE color palette
@@ -18,4 +18,29 @@ export type SAGEColors = typeof colors[number];
  */
 export function randomSAGEColor(): SAGEColors {
   return colors[Math.floor(Math.random() * colors.length)];
+}
+
+export function getHexColor(color: SAGEColors): string {
+  switch (color) {
+    case 'red':
+      return '#e53e3e';
+    case 'orange':
+      return '#dd6b20';
+    case 'yellow':
+      return '#d69e2e';
+    case 'green':
+      return '#38a169';
+    case 'teal':
+      return '#319795';
+    case 'blue':
+      return '#3182ce';
+    case 'cyan':
+      return '#00b5d8';
+    case 'purple':
+      return '#805ad5';
+    case 'pink':
+      return '#d53f8c';
+    default:
+      throw new Error(`Unknown color: ${color}`);
+  }
 }

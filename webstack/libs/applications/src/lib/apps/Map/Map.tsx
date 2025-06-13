@@ -42,8 +42,9 @@ import { App } from '../../schema';
 import { AppWindow } from '../../components';
 import { state as AppState, LayerType } from './index';
 
+import { getHexColor } from '@sage3/shared';
+
 import './maplibre-gl.css';
-import { map } from 'd3';
 
 const mapTilerAPI = 'elzgvVROErSfCRbrVabp';
 const baselayers = {
@@ -94,24 +95,24 @@ async function loadLayersOnMap(
     console.warn('Map is not ready or style is not loaded.');
     return;
   }
-  if (!assets || !Array.isArray(assets) || assets.length === 0) {
-    console.warn('No assets provided to load layers.');
-    return;
-  }
-  if (!layers || !Array.isArray(layers) || layers.length === 0) {
-    console.warn('No layers provided to load on the map.');
-    return;
-  }
+
   // Remove all existing layers on map if they exists
   clearAllLayersAndSources(map);
+  // Readd the base layer and then load terrain and other layers
+  map.setStyle(baselayers[basemap]);
 
-  // Set the basemap
-  if (baselayers[basemap]) {
-    map.setStyle(baselayers[basemap]);
-  } else {
-    console.warn(`Basemap ${basemap} not found. Using default OpenStreetMap.`);
-    map.setStyle(baselayers['OpenStreetMap']);
-  }
+  // Add 3d Terrain
+  // --- add your DEM source ---
+  map.addSource('terrain', {
+    type: 'raster-dem',
+    // MapTiler terrain-RGB tiles; swap YOUR_KEY for your MapTiler key
+    url: `https://api.maptiler.com/tiles/terrain-rgb-v2/tiles.json?key=${mapTilerAPI}`,
+    tileSize: 512,
+    maxzoom: 14,
+  });
+
+  // --- turn on 3D terrain ---
+  map.setTerrain({ source: 'terrain', exaggeration: 1.2 });
 
   for (const layer of layers) {
     const asset = assets.find((a) => a._id === layer.assetId);
@@ -235,7 +236,7 @@ async function addGeoJsonToMap(map: maplibregl.Map, layer: LayerType, asset: Ass
     type: 'fill',
     paint: {
       'fill-outline-color': '#000000',
-      'fill-color': '#39b5e6',
+      'fill-color': getHexColor(layer.color),
       'fill-opacity': 0.4,
     },
     filter: ['==', '$type', 'Polygon'],
@@ -318,17 +319,16 @@ function AppComponent(props: App): JSX.Element {
 
     // Sync user pan/zoom back to SAGE3
     initialMap.on('moveend', (evt) => {
+      // if originalEvent is null, this is a programmatic move
       if (evt.originalEvent) {
-        const z = initialMap.getZoom();
-        const ctr = initialMap.getCenter();
-        const p = initialMap.getPitch();
-        const b = initialMap.getBearing();
-        updateState(props._id, {
-          zoom: z,
-          location: [ctr.lng, ctr.lat],
-          pitch: p,
-          bearing: b,
-        });
+        const lmap = evt.target;
+        const zoom = lmap.getZoom();
+        const center = lmap.getCenter();
+        const pitch = lmap.getPitch();
+        const bearing = lmap.getBearing();
+
+        // Update center and zoom level
+        updateState(props._id, { zoom: zoom, location: [center.lng, center.lat], pitch: pitch, bearing: bearing });
       }
     });
 
@@ -339,9 +339,10 @@ function AppComponent(props: App): JSX.Element {
     initialMap.keyboard.disableRotation();
     initialMap.boxZoom.disable();
 
-    mapRef.current = initialMap;
-    // Load Current Layers
-    refreshLayers();
+    initialMap.on('load', () => {
+      mapRef.current = initialMap;
+      refreshLayers();
+    });
 
     saveMap(props._id, initialMap);
   }, [props._id, saveMap, updateState]);
@@ -371,11 +372,12 @@ function AppComponent(props: App): JSX.Element {
         pitch: s.pitch,
         center: [s.location[0], s.location[1]],
         zoom: s.zoom,
-        duration: 1000,
+        duration: 0,
       });
-      console.log('Map state updated:');
+
+      // Update the title of the app
     }
-  }, [map, s.bearing, s.pitch, s.location[0], s.location[1], s.zoom]);
+  }, [s.bearing, s.pitch, s.location[0], s.location[1], s.zoom]);
 
   /**----------------------------------------------------------
    * 7.9 Handle map resize when the app window changes size
