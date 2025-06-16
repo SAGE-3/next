@@ -28,8 +28,21 @@ import {
   MenuButton,
   MenuItem,
   MenuList,
+  Divider,
+  Checkbox,
+  Popover,
+  PopoverArrow,
+  PopoverBody,
+  PopoverCloseButton,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTrigger,
+  Slider,
+  SliderTrack,
+  SliderFilledTrack,
+  SliderThumb,
 } from '@chakra-ui/react';
-import { MdAdd, MdRemove, MdMap, MdTerrain, MdVisibility, MdVisibilityOff } from 'react-icons/md';
+import { MdAdd, MdRemove, MdMap, MdTerrain, MdArrowDropUp, MdArrowDropDown } from 'react-icons/md';
 import maplibregl from 'maplibre-gl';
 import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
 import { fromUrl, TypedArray } from 'geotiff';
@@ -199,7 +212,7 @@ async function addGeoTiffToMap(map: maplibregl.Map, layer: LayerType, asset: Ass
       id: layerName,
       type: 'raster',
       source: sourceName,
-      paint: { 'raster-opacity': 0.7 },
+      paint: { 'raster-opacity': layer.opacity || 1.0 },
     });
   } catch (error) {
     console.error(`Error loading GeoTIFF ${assetURL}:`, error);
@@ -228,8 +241,9 @@ async function addGeoJsonToMap(map: maplibregl.Map, layer: LayerType, asset: Ass
     source: layerId,
     type: 'line',
     paint: {
-      'line-color': '#000000',
+      'line-color': getHexColor(layer.color),
       'line-width': 2,
+      'line-opacity': layer.opacity || 1.0,
     },
     filter: ['==', '$type', 'Polygon'],
   });
@@ -240,7 +254,7 @@ async function addGeoJsonToMap(map: maplibregl.Map, layer: LayerType, asset: Ass
     paint: {
       'fill-outline-color': '#000000',
       'fill-color': getHexColor(layer.color),
-      'fill-opacity': 0.4,
+      'fill-opacity': layer.opacity || 1.0,
     },
     filter: ['==', '$type', 'Polygon'],
   });
@@ -249,12 +263,24 @@ async function addGeoJsonToMap(map: maplibregl.Map, layer: LayerType, asset: Ass
     source: layerId,
     type: 'circle',
     paint: {
-      'circle-color': '#ff7800',
-      'circle-opacity': 0.4,
+      'circle-color': getHexColor(layer.color),
+      'circle-opacity': layer.opacity || 1.0,
       'circle-stroke-width': 2,
       'circle-radius': 5,
     },
     filter: ['==', '$type', 'Point'],
+  });
+  map.addLayer({
+    id: `${layerId}-linestring`,
+    type: 'line',
+    source: layerId,
+
+    paint: {
+      'line-color': getHexColor(layer.color),
+      'line-width': 1,
+      'line-opacity': layer.opacity || 1.0,
+    },
+    filter: ['==', '$type', 'LineString'],
   });
 }
 
@@ -632,68 +658,233 @@ function LegendOverlay(props: { layers: LayerType[]; appId: string }) {
     useAppStore.getState().updateState(props.appId, { layers: updatedLayers });
   };
 
-  const colors: { name: string; value: SAGEColors }[] = [
-    { name: 'Red', value: 'red' },
-    { name: 'Orange', value: 'orange' },
-    { name: 'Yellow', value: 'yellow' },
-    { name: 'Green', value: 'green' },
-    { name: 'Teal', value: 'teal' },
-    { name: 'Blue', value: 'blue' },
-    { name: 'Cyan', value: 'cyan' },
-    { name: 'Purple', value: 'purple' },
-    { name: 'Pink', value: 'pink' },
+  const setLayerColorScale = (assetId: string, value: string) => {
+    const updatedLayers = props.layers.map((layer) => {
+      if (layer.assetId === assetId) {
+        return { ...layer, colorScale: value };
+      }
+      return layer;
+    });
+    useAppStore.getState().updateState(props.appId, { layers: updatedLayers });
+  };
+
+  // Opacity of layer
+  const setLayerOpacity = (assetId: string, value: number) => {
+    const updatedLayers = props.layers.map((layer) => {
+      if (layer.assetId === assetId) {
+        // Ensure value is between 0 and 1, and is just to two decimal places
+        value = Math.max(0, Math.min(1, parseFloat(value.toFixed(2))));
+        return { ...layer, opacity: value };
+      }
+      return layer;
+    });
+    useAppStore.getState().updateState(props.appId, { layers: updatedLayers });
+  };
+
+  const [minimized, setMinimized] = useState(false);
+
+  const redHex = useHexColor('red');
+  const orangeHex = useHexColor('orange');
+  const yellowHex = useHexColor('yellow');
+  const greenHex = useHexColor('green');
+  const tealHex = useHexColor('teal');
+  const blueHex = useHexColor('blue');
+  const cyanHex = useHexColor('cyan');
+  const purpleHex = useHexColor('purple');
+  const pinkHex = useHexColor('pink');
+  const colors: { name: string; value: SAGEColors; hex: string }[] = [
+    { name: 'Red', value: 'red', hex: redHex },
+    { name: 'Orange', value: 'orange', hex: orangeHex },
+    { name: 'Yellow', value: 'yellow', hex: yellowHex },
+    { name: 'Green', value: 'green', hex: greenHex },
+    { name: 'Teal', value: 'teal', hex: tealHex },
+    { name: 'Blue', value: 'blue', hex: blueHex },
+    { name: 'Cyan', value: 'cyan', hex: cyanHex },
+    { name: 'Purple', value: 'purple', hex: purpleHex },
+    { name: 'Pink', value: 'pink', hex: pinkHex },
+  ];
+
+  // Color Scales for geotiffs
+  // CSS For the color scales to show on the legend select
+  // Greyscale: black → white
+  const greys = 'linear-gradient(to right, ' + '#000000, #333333, #666666, #999999, #CCCCCC, #FFFFFF' + ')';
+
+  // Inferno: low (dark navy) → high (pale yellow)
+  const inferno = 'linear-gradient(to right, ' + '#000004, #420A68, #932567, #DD513A, #FCCA3E, #FCFFA4' + ')';
+
+  // Viridis: low (dark purple) → high (bright yellow-green)
+  const viridis = 'linear-gradient(to right, ' + '#440154, #3B528B, #21918C, #5EC962, #FDE725' + ')';
+
+  // Turbo: low (deep purple) → high (light yellow)
+  const turbo =
+    'linear-gradient(to right, ' +
+    '#30123b, #3e3891, #455ccf, #4680f6, ' +
+    '#3ba0fd, #23c3e4, #18ddc2, #2cf09e, ' +
+    '#59fb73, #8fff49, #b4f836, #d7e535, ' +
+    '#efcd3a, #fdae35, #fd8a26, #f26014, ' +
+    '#e14109, #c52603, #a41301, #7a0403' +
+    ')';
+
+  const colorScales = [
+    { name: 'Greyscale', value: 'greys', hex: greys },
+    { name: 'Inferno', value: 'inferno', hex: inferno },
+    { name: 'Viridis', value: 'viridis', hex: viridis },
+    { name: 'Turbo', value: 'turbo', hex: turbo },
   ];
 
   return (
-    <Box position="absolute" top="4" left="4" bg="whiteAlpha.800" p="2" borderRadius="md" boxShadow="md" zIndex={10} fontSize="xs">
-      {props.layers.map((layer) => {
-        const asset = assets.find((a) => a._id === layer.assetId);
-        if (!asset) {
-          console.warn(`Asset with ID ${layer.assetId} not found.`);
-          return null;
-        }
-        return (
-          <HStack spacing="2" key={layer.assetId} mb="1">
-            {/* Chakra Menu Button to select a color */}
-            <Menu>
-              <Tooltip placement="top" hasArrow={true} label={'Layer Color'} openDelay={400}>
-                <MenuButton as={Button} size="xs" colorScheme={layer.color} mx="1" borderRadius="100%"></MenuButton>
-              </Tooltip>
+    <Box
+      display="flex"
+      flexDir="column"
+      position="absolute"
+      top="4"
+      left="4"
+      bg="whiteAlpha.800"
+      p="2"
+      borderRadius="md"
+      boxShadow="md"
+      zIndex={10}
+      fontSize="xs"
+    >
+      <Box display="flex" justifyContent={'left'} alignItems="center" mb="0">
+        <Text color="black" size="md">
+          Layer Legend
+        </Text>
+        {/* Minimize Legend  Button*/}
+        <IconButton
+          icon={!minimized ? <MdArrowDropUp /> : <MdArrowDropDown />}
+          color={'black'}
+          variant="ghost"
+          size="xs"
+          fontSize="24px"
+          onClick={() => setMinimized(!minimized)}
+          aria-label="Toggle Legend Visibility"
+        />
+      </Box>
+      {!minimized && (
+        <>
+          <Divider my="1" bg="black" />
+          {props.layers.map((layer) => {
+            const asset = assets.find((a) => a._id === layer.assetId);
+            if (!asset) {
+              console.warn(`Asset with ID ${layer.assetId} not found.`);
+              return null;
+            }
+            const layerIsGeoTiff = isGeoTiff(asset.data.mimetype) || isTiff(asset.data.mimetype);
+            // Name to show that is limited to 20 characters. if it  is longer, truncate it and add ellipsis
+            let name = 'Unknown Layer';
 
-              <MenuList>
-                {/* MenuItems are not rendered unless Menu is open */}
-                {colors.map((color) => (
-                  <MenuItem onClick={() => colorLayer(layer.assetId, color.value)} key={props.appId + color.value}>
-                    <Box
-                      w="16px"
-                      h="16px"
-                      bg={color.value}
-                      mr="2"
-                      borderRadius="100%"
-                      border="solid 1px black"
-                      backgroundColor={color.value}
-                    />
-                    {color.name}
-                  </MenuItem>
-                ))}
-              </MenuList>
-            </Menu>
+            if (asset.data.originalfilename) {
+              name =
+                asset.data.originalfilename.length > 30
+                  ? asset.data.originalfilename.substring(0, 30) + '...'
+                  : asset.data.originalfilename;
+            }
 
-            {/* Eye icon to hide and unhide layer */}
-            <IconButton
-              icon={layer.visible ? <MdVisibility /> : <MdVisibilityOff />}
-              colorScheme={layer.visible ? 'green' : 'red'}
-              variant="solid"
-              size="xs"
-              onClick={() => {
-                toggleLayerVisibilty(layer.assetId);
-              }}
-              aria-label={''}
-            />
-            <Text color="black">{asset.data.originalfilename.substring(0, 20) + '...'}</Text>
-          </HStack>
-        );
-      })}
+            return (
+              <HStack spacing="2" key={layer.assetId} mb="1" justifyContent={'space-between'}>
+                <Box display="flex" alignContent={'center'} justifyContent={'left'}>
+                  <Checkbox
+                    isChecked={layer.visible}
+                    onChange={() => toggleLayerVisibilty(layer.assetId)}
+                    colorScheme={layer.color}
+                    size="md"
+                    mr="2"
+                    sx={{
+                      // target the square control
+                      '.chakra-checkbox__control': {
+                        borderColor: 'gray.800', // darker border
+                        borderWidth: '1px', // thicker if you like
+                      },
+                    }}
+                  />
+                  {/* Layer Name */}
+                  <Text color="black">{name}</Text>
+                </Box>
+
+                {/* Chakra Menu Button to select a color */}
+                <Box display="flex" alignItems="center" justifyContent="right" width="100%">
+                  {/* Opacity Select */}
+                  <Popover placement="top">
+                    <PopoverTrigger>
+                      <Button width="20px" color="gray.800" size="xs" mx="1">
+                        {(layer.opacity * 100).toFixed(0)}%
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent width="200px">
+                      <PopoverArrow />
+                      <PopoverCloseButton />
+                      <PopoverHeader>Opacity</PopoverHeader>
+                      <PopoverBody>
+                        {/* Chakra Slider to set opacity*/}
+                        <Slider
+                          // Ensure value is between 0 and 100 and shows no decimals
+                          defaultValue={layer.opacity * 100}
+                          aria-label="Opacity Slider"
+                          colorScheme={layer.color}
+                          min={0}
+                          max={100}
+                          step={1}
+                          width="100%"
+                          onChangeEnd={(val) => setLayerOpacity(layer.assetId, val / 100)}
+                        >
+                          <SliderTrack>
+                            <SliderFilledTrack />
+                          </SliderTrack>
+                          <SliderThumb />
+                        </Slider>
+                      </PopoverBody>
+                    </PopoverContent>
+                  </Popover>
+
+                  {!layerIsGeoTiff ? (
+                    <Menu>
+                      <MenuButton
+                        as={Button}
+                        size="xs"
+                        colorScheme={layer.color}
+                        mx="1"
+                        borderRadius="100%"
+                        border="solid 1px black"
+                      ></MenuButton>
+
+                      <MenuList>
+                        {/* MenuItems are not rendered unless Menu is open */}
+                        {colors.map((color) => (
+                          <MenuItem onClick={() => colorLayer(layer.assetId, color.value)} key={props.appId + color.value}>
+                            <Box w="16px" h="16px" bg={color.hex} mr="2" borderRadius="100%" border="solid 1px black" />
+                            {color.name}
+                          </MenuItem>
+                        ))}
+                      </MenuList>
+                    </Menu>
+                  ) : (
+                    <Menu>
+                      <MenuButton
+                        as={Button}
+                        size="xs"
+                        backgroundImage={layer.colorScale ? colorScales.find((c) => c.value === layer.colorScale)?.hex : greys}
+                        mx="1"
+                        borderRadius="100%"
+                        border="solid 1px black"
+                      ></MenuButton>
+                      <MenuList>
+                        {colorScales.map((scale) => (
+                          <MenuItem key={props.appId + scale.value} onClick={() => setLayerColorScale(layer.assetId, scale.value)}>
+                            <Box w="16px" h="16px" backgroundImage={scale.hex} mr="2" borderRadius="100%" border="solid 1px black" />
+
+                            {scale.name}
+                          </MenuItem>
+                        ))}
+                      </MenuList>
+                    </Menu>
+                  )}
+                </Box>
+              </HStack>
+            );
+          })}
+        </>
+      )}
     </Box>
   );
 }
