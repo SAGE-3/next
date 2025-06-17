@@ -71,6 +71,13 @@ export async function setupAppForFile(
     };
   } else {
     if (isGeoTiff(file.type)) {
+      const initialLayer = {
+        assetId: file.id,
+        visible: true,
+        color: 'red',
+        colorScale: 'turbo',
+        opacity: 0.5,
+      } as NonNullable<(typeof initialValues)['Map']['layers']>[0];
       return {
         title: file.originalfilename,
         roomId: roomId,
@@ -78,8 +85,8 @@ export async function setupAppForFile(
         position: { x: xDrop - 200, y: yDrop - 200, z: 0 },
         size: { width: 400, height: 400, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
-        type: 'MapGL',
-        state: { ...(initialValues['MapGL'] as AppState), assetid: file.id },
+        type: 'Map',
+        state: { ...(initialValues['Map'] as AppState), layers: [initialLayer] },
         raised: true,
         dragging: false,
         pinned: false,
@@ -178,6 +185,13 @@ export async function setupAppForFile(
           const metadata = await response.json();
           // Check if it is a GeoTiff
           if (metadata && metadata.GeoTiffVersion) {
+            const initialLayer = {
+              assetId: file.id,
+              visible: true,
+              color: 'red',
+              colorScale: 'turbo',
+              opacity: 0.5,
+            } as NonNullable<(typeof initialValues)['Map']['layers']>[0];
             return {
               title: file.originalfilename,
               roomId: roomId,
@@ -185,8 +199,8 @@ export async function setupAppForFile(
               position: { x: xDrop - 200, y: yDrop - 200, z: 0 },
               size: { width: 400, height: 400, depth: 0 },
               rotation: { x: 0, y: 0, z: 0 },
-              type: 'MapGL',
-              state: { ...(initialValues['MapGL'] as AppState), assetid: file.id },
+              type: 'Map',
+              state: { ...(initialValues['Map'] as AppState), layers: [initialLayer] },
               raised: true,
               dragging: false,
               pinned: false,
@@ -277,6 +291,13 @@ export async function setupAppForFile(
         pinned: false,
       };
     } else if (isGeoJSON(file.type)) {
+      const initialLayer = {
+        assetId: file.id,
+        visible: true,
+        color: 'red',
+        colorScale: 'turbo',
+        opacity: 0.5,
+      } as NonNullable<(typeof initialValues)['Map']['layers']>[0];
       return {
         title: file.originalfilename,
         roomId: roomId,
@@ -284,8 +305,8 @@ export async function setupAppForFile(
         position: { x: xDrop - 200, y: yDrop - 200, z: 0 },
         size: { width: 400, height: 400, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
-        type: 'MapGL',
-        state: { ...(initialValues['MapGL'] as AppState), assetid: file.id },
+        type: 'Map',
+        state: { ...(initialValues['Map'] as AppState), layers: [initialLayer] },
         raised: true,
         dragging: false,
         pinned: false,
