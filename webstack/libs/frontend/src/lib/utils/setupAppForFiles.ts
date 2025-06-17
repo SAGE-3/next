@@ -77,7 +77,7 @@ export async function setupAppForFile(
         visible: true,
         color: 'red',
         colorScale: 'turbo',
-        opacity: 1,
+        opacity: 0.5,
       } as NonNullable<(typeof initialValues)['Map']['layers']>[0];
       return {
         title: file.originalfilename,
@@ -191,7 +191,7 @@ export async function setupAppForFile(
               visible: true,
               color: 'red',
               colorScale: 'turbo',
-              opacity: 1,
+              opacity: 0.5,
             } as NonNullable<(typeof initialValues)['Map']['layers']>[0];
             return {
               title: file.originalfilename,
@@ -297,7 +297,7 @@ export async function setupAppForFile(
         visible: true,
         color: 'red',
         colorScale: 'turbo',
-        opacity: 1,
+        opacity: 0.5,
       } as NonNullable<(typeof initialValues)['Map']['layers']>[0];
       return {
         title: file.originalfilename,

@@ -113,7 +113,7 @@ async function openApplication(a: Asset, xDrop: number, yDrop: number, roomId: s
         visible: true,
         color: 'red',
         colorScale: 'turbo',
-        opacity: 1,
+        opacity: 0.5,
       } as NonNullable<(typeof initialValues)['Map']['layers']>[0];
       return setupApp(a.data.originalfilename, 'Map', xDrop, yDrop, roomId, boardId, { w: w, h: w }, { layers: [initialLayer] });
     } else if (isFileURL(fileType)) {
@@ -188,7 +188,7 @@ async function openApplication(a: Asset, xDrop: number, yDrop: number, roomId: s
               visible: true,
               color: 'red',
               colorScale: 'turbo',
-              opacity: 1,
+              opacity: 0.5,
             } as NonNullable<(typeof initialValues)['Map']['layers']>[0];
             return setupApp(a.data.originalfilename, 'Map', xDrop, yDrop, roomId, boardId, { w: w, h: w }, { layers: [initialLayer] });
           }
@@ -230,7 +230,7 @@ async function openApplication(a: Asset, xDrop: number, yDrop: number, roomId: s
         visible: true,
         color: 'red',
         colorScale: 'turbo',
-        opacity: 1,
+        opacity: 0.5,
       } as NonNullable<(typeof initialValues)['Map']['layers']>[0];
       return setupApp('', 'Map', xDrop, yDrop, roomId, boardId, { w: 800, h: 400 }, { layers: [initialLayer] });
     } else if (isMD(fileType)) {
