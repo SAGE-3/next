@@ -613,7 +613,7 @@ function ToolbarComponent(props: App): JSX.Element {
       </ButtonGroup>
 
       {/* Zoom Buttons */}
-      <ButtonGroup isAttached size="xs" colorScheme="teal">
+      {/* <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top" hasArrow label="Zoom In" openDelay={400}>
           <Button onClick={incZoom} isDisabled={s.zoom >= MAX_ZOOM}>
             <MdAdd fontSize="16px" />
@@ -624,7 +624,7 @@ function ToolbarComponent(props: App): JSX.Element {
             <MdRemove fontSize="16px" />
           </Button>
         </Tooltip>
-      </ButtonGroup>
+      </ButtonGroup> */}
 
       {/* Baselayer Toggles */}
       <ButtonGroup isAttached size="xs" colorScheme="teal">
