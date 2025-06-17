@@ -25,7 +25,6 @@ import {
   isFileURL,
   mimeToCode,
   isValid,
-  SAGEColors,
 } from '@sage3/shared';
 import { apiUrls } from '@sage3/frontend';
 import { ExtraImageType, ExtraPDFType, FileEntry, User } from '@sage3/shared/types';

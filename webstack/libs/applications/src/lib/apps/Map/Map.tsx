@@ -382,9 +382,6 @@ export const useStore = create<MapStore>((set) => ({
     })),
 }));
 
-// Map Contraints
-const MAX_ZOOM = 18;
-const MIN_ZOOM = 1;
 
 // The map app component
 function AppComponent(props: App): JSX.Element {
@@ -477,8 +474,6 @@ function AppComponent(props: App): JSX.Element {
         zoom: s.zoom,
         duration: 0,
       });
-
-      // Update the title of the app
     }
   }, [s.bearing, s.pitch, s.location[0], s.location[1], s.zoom]);
 

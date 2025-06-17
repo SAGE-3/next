@@ -22,8 +22,7 @@ const Layer = z.object({
 export type LayerType = z.infer<typeof Layer>;
 
 /**
- * SAGE3 application: MapGL
- * created by: Luc Renambot
+ * SAGE3 application: Map
  */
 
 export const schema = z.object({
