@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022.
+ * Copyright (c) SAGE3 Development Team 2025.
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  * Distributed under the terms of the SAGE3 License.
  */
@@ -41,8 +41,9 @@ import {
   SliderTrack,
   SliderFilledTrack,
   SliderThumb,
+  Text,
 } from '@chakra-ui/react';
-import { MdAdd, MdRemove, MdMap, MdTerrain, MdArrowDropUp, MdArrowDropDown } from 'react-icons/md';
+import { MdAdd, MdMap, MdTerrain, MdArrowDropUp, MdArrowDropDown } from 'react-icons/md';
 import maplibregl, { MapLayerEventType } from 'maplibre-gl';
 import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
 import { fromUrl, TypedArray } from 'geotiff';
@@ -63,6 +64,7 @@ import { getHexColor, SAGEColors, colors } from '@sage3/shared';
 
 import './maplibre-gl.css';
 
+// Maplibre and MapTiler configuration
 const mapTilerAPI = 'elzgvVROErSfCRbrVabp';
 const baselayers = {
   Satellite: `https://api.maptiler.com/maps/hybrid/style.json?key=${mapTilerAPI}`,
@@ -70,14 +72,15 @@ const baselayers = {
 };
 const esriKey = 'AAPK74760e71edd04d12ac33fd375e85ba0d4CL8Ho3haHz1cOyUgnYG4UUEW6NG0xj2j1qsmVBAZNupoD44ZiSJ4DP36ksP-t3B';
 
+// Map Event types to track registered listeners
 type MapEventListener = {
   event: keyof MapLayerEventType;
   layerId: string;
   handler: (e: any) => void;
 };
-
 const registeredEventListeners: Map<maplibregl.Map, MapEventListener[]> = new Map();
 
+// Function to add event listeners
 function registerMapEvent(map: maplibregl.Map, event: keyof MapLayerEventType, layerId: string, handler: (e: any) => void) {
   map.on(event, layerId, handler);
 
@@ -88,14 +91,16 @@ function registerMapEvent(map: maplibregl.Map, event: keyof MapLayerEventType, l
   registeredEventListeners.get(map)!.push({ event, layerId, handler });
 }
 
+// Get a static asset URL
 function getStaticAssetUrl(filename: string): string {
   return apiUrls.assets.getAssetById(filename);
 }
 
+// Functon to clear all layers and sources from the map
 function clearAllLayersAndSources(map: maplibregl.Map) {
   const style = map.getStyle();
 
-  // 1️⃣ Remove **every** layer
+  // Remove **every** layer
   (style.layers || []).forEach(({ id }) => {
     if (map.getLayer(id)) {
       try {
@@ -106,7 +111,7 @@ function clearAllLayersAndSources(map: maplibregl.Map) {
     }
   });
 
-  // 2️⃣ Remove **every** source
+  // Remove **every** source
   Object.keys(style.sources || {}).forEach((srcId) => {
     if (map.getSource(srcId)) {
       try {
@@ -131,6 +136,13 @@ function clearAllLayersAndSources(map: maplibregl.Map) {
   }
 }
 
+/**
+ * Load layers onto the map.
+ * @param map - The map instance to load layers onto.
+ * @param assets - The assets to be used for the layers.
+ * @param layers - The layers to be added to the map.
+ * @param basemap - The base map type to use.
+ */
 async function loadLayersOnMap(
   map: maplibregl.Map,
   assets: Asset[],
@@ -185,6 +197,7 @@ async function loadLayersOnMap(
   map.setStyle(baselayers[basemap]);
 }
 
+// Add a GeoTIFF layer to the map
 async function addGeoTiffToMap(map: maplibregl.Map, layer: LayerType, asset: Asset) {
   const layerId = layer.assetId;
   const sourceName = `${layerId}-tiff-source`;
@@ -256,6 +269,7 @@ async function addGeoTiffToMap(map: maplibregl.Map, layer: LayerType, asset: Ass
   }
 }
 
+//  Add a GeoJSON layer to the map
 async function addGeoJsonToMap(map: maplibregl.Map, layer: LayerType, asset: Asset) {
   const layerId = layer.assetId;
   if (map.getSource(layerId)) {
@@ -368,9 +382,11 @@ export const useStore = create<MapStore>((set) => ({
     })),
 }));
 
+// Map Contraints
 const MAX_ZOOM = 18;
 const MIN_ZOOM = 1;
 
+// The map app component
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
@@ -441,9 +457,7 @@ function AppComponent(props: App): JSX.Element {
     if (!mapInstance) return;
     refreshLayers();
   }, [s.baseLayer]);
-  /**----------------------------------------------------------
-   * 7.8 When layers change, re-render layers
-   *----------------------------------------------------------*/
+
   useEffect(() => {
     const mapInstance = mapRef.current;
     if (!mapInstance) return;
@@ -468,9 +482,6 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [s.bearing, s.pitch, s.location[0], s.location[1], s.zoom]);
 
-  /**----------------------------------------------------------
-   * 7.9 Handle map resize when the app window changes size
-   *----------------------------------------------------------*/
   useEffect(() => {
     const mapInstance = mapRef.current;
     if (!mapInstance) return;
@@ -488,10 +499,6 @@ function AppComponent(props: App): JSX.Element {
   );
 }
 
-/**----------------------------------------------------------
- * 8. ToolbarComponent: Renders address search, asset dropdown,
- *    and “Add Layer” button (no layer list here anymore).
- *----------------------------------------------------------*/
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
@@ -538,19 +545,6 @@ function ToolbarComponent(props: App): JSX.Element {
     });
   };
 
-  /** Zoom / baselayer handlers **/
-  const incZoom = () => {
-    if (!map) return;
-    const target = Math.min(s.zoom + 1, MAX_ZOOM);
-    map.zoomTo(target);
-    updateState(props._id, { zoom: target });
-  };
-  const decZoom = () => {
-    if (!map) return;
-    const target = Math.max(s.zoom - 1, MIN_ZOOM);
-    map.zoomTo(target);
-    updateState(props._id, { zoom: target });
-  };
   const changeToSatellite = () => updateState(props._id, { baseLayer: 'Satellite' });
   const changeToStreetMap = () => updateState(props._id, { baseLayer: 'OpenStreetMap' });
 
@@ -611,20 +605,6 @@ function ToolbarComponent(props: App): JSX.Element {
           </InputGroup>
         </form>
       </ButtonGroup>
-
-      {/* Zoom Buttons */}
-      {/* <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top" hasArrow label="Zoom In" openDelay={400}>
-          <Button onClick={incZoom} isDisabled={s.zoom >= MAX_ZOOM}>
-            <MdAdd fontSize="16px" />
-          </Button>
-        </Tooltip>
-        <Tooltip placement="top" hasArrow label="Zoom Out" openDelay={400}>
-          <Button onClick={decZoom} isDisabled={s.zoom <= MIN_ZOOM}>
-            <MdRemove fontSize="16px" />
-          </Button>
-        </Tooltip>
-      </ButtonGroup> */}
 
       {/* Baselayer Toggles */}
       <ButtonGroup isAttached size="xs" colorScheme="teal">
@@ -719,8 +699,6 @@ function AddLayerModal({
     </Box>
   );
 }
-
-import { Text } from '@chakra-ui/react';
 
 function LegendOverlay(props: { layers: LayerType[]; appId: string }) {
   const assets = useAssetStore((state) => state.assets);
