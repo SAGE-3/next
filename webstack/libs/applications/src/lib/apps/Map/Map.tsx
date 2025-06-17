@@ -43,7 +43,7 @@ import {
   SliderThumb,
 } from '@chakra-ui/react';
 import { MdAdd, MdRemove, MdMap, MdTerrain, MdArrowDropUp, MdArrowDropDown } from 'react-icons/md';
-import maplibregl from 'maplibre-gl';
+import maplibregl, { MapLayerEventType } from 'maplibre-gl';
 import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
 import { fromUrl, TypedArray } from 'geotiff';
 // @ts-ignore
@@ -59,7 +59,7 @@ import { App } from '../../schema';
 import { AppWindow } from '../../components';
 import { state as AppState, LayerType } from './index';
 
-import { getHexColor, SAGEColors } from '@sage3/shared';
+import { getHexColor, SAGEColors, colors } from '@sage3/shared';
 
 import './maplibre-gl.css';
 
@@ -69,6 +69,24 @@ const baselayers = {
   OpenStreetMap: `https://api.maptiler.com/maps/streets/style.json?key=${mapTilerAPI}`,
 };
 const esriKey = 'AAPK74760e71edd04d12ac33fd375e85ba0d4CL8Ho3haHz1cOyUgnYG4UUEW6NG0xj2j1qsmVBAZNupoD44ZiSJ4DP36ksP-t3B';
+
+type MapEventListener = {
+  event: keyof MapLayerEventType;
+  layerId: string;
+  handler: (e: any) => void;
+};
+
+const registeredEventListeners: Map<maplibregl.Map, MapEventListener[]> = new Map();
+
+function registerMapEvent(map: maplibregl.Map, event: keyof MapLayerEventType, layerId: string, handler: (e: any) => void) {
+  map.on(event, layerId, handler);
+
+  if (!registeredEventListeners.has(map)) {
+    registeredEventListeners.set(map, []);
+  }
+
+  registeredEventListeners.get(map)!.push({ event, layerId, handler });
+}
 
 function getStaticAssetUrl(filename: string): string {
   return apiUrls.assets.getAssetById(filename);
@@ -98,6 +116,19 @@ function clearAllLayersAndSources(map: maplibregl.Map) {
       }
     }
   });
+
+  // Remove all click events
+  const listeners = registeredEventListeners.get(map);
+  if (listeners) {
+    for (const { event, layerId, handler } of listeners) {
+      try {
+        map.off(event, layerId, handler);
+      } catch (e) {
+        /* ignore */
+      }
+    }
+    registeredEventListeners.delete(map);
+  }
 }
 
 async function loadLayersOnMap(
@@ -115,21 +146,13 @@ async function loadLayersOnMap(
   // 1) Clear your old layers then swap in the new style
   clearAllLayersAndSources(map);
   map.once('styledata', async () => {
+    console.log('Style data loaded, adding layers...');
     // @ts-ignore: ProjectionSpecification in our version doesn’t list “name”
     map.setProjection({ name: 'mercator' });
 
     // 3) Now add your DEM + terrain
-    if (!map.getSource('dem-source')) {
-      map.addSource('dem-source', {
-        type: 'raster-dem',
-        url: `https://api.maptiler.com/tiles/terrain-rgb-v2/tiles.json?key=${mapTilerAPI}`,
-        tileSize: 512,
-        maxzoom: 14,
-      });
-      map.setTerrain({ source: 'dem-source', exaggeration: 1.2 });
-    }
 
-    // 5) Finally, re-add your GeoTIFF / GeoJSON layers + legend
+    // 5) Finally, re-add your GeoTIFF / GeoJSON layers
     await Promise.all(
       layers.map((layer) => {
         if (!layer.visible) {
@@ -143,6 +166,19 @@ async function loadLayersOnMap(
           : Promise.resolve();
       })
     );
+    // sleep for a bit to ensure all layers are added
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    if (map.getSource('dem-source')) {
+      map.removeSource('dem-source');
+    }
+    map.addSource('dem-source', {
+      type: 'raster-dem',
+      url: `https://api.maptiler.com/tiles/terrain-rgb-v2/tiles.json?key=${mapTilerAPI}`,
+      tileSize: 512,
+      maxzoom: 14,
+    });
+
+    map.setTerrain({ source: 'dem-source', exaggeration: 1.2 });
   });
 
   // 7) Kick off the style swap
@@ -281,6 +317,42 @@ async function addGeoJsonToMap(map: maplibregl.Map, layer: LayerType, asset: Ass
       'line-opacity': layer.opacity || 1.0,
     },
     filter: ['==', '$type', 'LineString'],
+  });
+
+  // When a click event occurs on a feature in the states layer, open a popup at the
+  // location of the click, with description HTML from its properties.
+  registerMapEvent(map, 'click', `${layerId}-fill`, (e) => {
+    const features = e.features;
+    if (!features || features.length === 0) {
+      return;
+    }
+    // show all features in the popup as a list
+
+    // get feature.properties keys
+    const featureList = features
+      .map((feature: any) => {
+        const properties = feature.properties || {};
+        return (
+          `<strong>Properties</strong><br/>` +
+          Object.entries(properties)
+            .map(([key, value]) => `${key}: ${value}`)
+            .join('<br/>')
+        );
+      })
+      .join('<hr/>');
+    const popupHTML = `<div style="color: black">${featureList}</div>`;
+
+    new maplibregl.Popup().setLngLat(e.lngLat).setHTML(popupHTML).addTo(map);
+  });
+
+  // Change the cursor to a pointer when the mouse is over the states layer.
+  registerMapEvent(map, 'mouseenter', `${layerId}-fill`, () => {
+    map.getCanvas().style.cursor = 'pointer';
+  });
+
+  // Change it back to a pointer when it leaves.
+  registerMapEvent(map, 'mouseleave', `${layerId}-fill`, () => {
+    map.getCanvas().style.cursor = '';
   });
 }
 
@@ -506,8 +578,19 @@ function ToolbarComponent(props: App): JSX.Element {
       });
       return;
     }
+    // Get a color for the new layer that isn't already used
+    const usedColors = s.layers.map((l) => l.color);
+    const availableColors = colors.filter((c) => !usedColors.includes(c));
+    if (availableColors.length === 0) {
+      availableColors.push('red'); // Fallback color
+    }
+    const selectedColor = availableColors[0]; // Use the first available color
+    const selectedColorScale = 'turbo'; // Default color scale
     updateState(props._id, {
-      layers: [...s.layers, { assetId: selectedAssetId, visible: true, color: 'red', colorScale: 'turbo', opacity: 1 }],
+      layers: [
+        ...s.layers,
+        { assetId: selectedAssetId, visible: true, color: selectedColor, colorScale: selectedColorScale, opacity: 0.5 },
+      ],
     });
   };
 
@@ -681,6 +764,12 @@ function LegendOverlay(props: { layers: LayerType[]; appId: string }) {
     useAppStore.getState().updateState(props.appId, { layers: updatedLayers });
   };
 
+  // Remove Layer
+  const removeLayer = (assetId: string) => {
+    const updatedLayers = props.layers.filter((layer) => layer.assetId !== assetId);
+    useAppStore.getState().updateState(props.appId, { layers: updatedLayers });
+  };
+
   const [minimized, setMinimized] = useState(false);
 
   const redHex = useHexColor('red');
@@ -787,7 +876,7 @@ function LegendOverlay(props: { layers: LayerType[]; appId: string }) {
                   <Checkbox
                     isChecked={layer.visible}
                     onChange={() => toggleLayerVisibilty(layer.assetId)}
-                    colorScheme={layer.color}
+                    colorScheme="teal"
                     size="md"
                     mr="2"
                     sx={{
@@ -805,9 +894,9 @@ function LegendOverlay(props: { layers: LayerType[]; appId: string }) {
                 {/* Chakra Menu Button to select a color */}
                 <Box display="flex" alignItems="center" justifyContent="right" width="100%">
                   {/* Opacity Select */}
-                  <Popover placement="top">
+                  <Popover placement="bottom">
                     <PopoverTrigger>
-                      <Button width="20px" color="gray.800" size="xs" mx="1">
+                      <Button color="gray.800" size="xs" mx="1" height="20px" width="40px">
                         {(layer.opacity * 100).toFixed(0)}%
                       </Button>
                     </PopoverTrigger>
@@ -821,7 +910,7 @@ function LegendOverlay(props: { layers: LayerType[]; appId: string }) {
                           // Ensure value is between 0 and 100 and shows no decimals
                           defaultValue={layer.opacity * 100}
                           aria-label="Opacity Slider"
-                          colorScheme={layer.color}
+                          colorScheme={'teal'}
                           min={0}
                           max={100}
                           step={1}
@@ -844,7 +933,7 @@ function LegendOverlay(props: { layers: LayerType[]; appId: string }) {
                         size="xs"
                         colorScheme={layer.color}
                         mx="1"
-                        borderRadius="100%"
+                        height="20px"
                         border="solid 1px black"
                       ></MenuButton>
 
@@ -865,8 +954,11 @@ function LegendOverlay(props: { layers: LayerType[]; appId: string }) {
                         size="xs"
                         backgroundImage={layer.colorScale ? colorScales.find((c) => c.value === layer.colorScale)?.hex : greys}
                         mx="1"
-                        borderRadius="100%"
+                        height="20px"
                         border="solid 1px black"
+                        _hover={{
+                          backgroundImage: layer.colorScale ? colorScales.find((c) => c.value === layer.colorScale)?.hex : greys,
+                        }}
                       ></MenuButton>
                       <MenuList>
                         {colorScales.map((scale) => (
@@ -879,6 +971,18 @@ function LegendOverlay(props: { layers: LayerType[]; appId: string }) {
                       </MenuList>
                     </Menu>
                   )}
+                  <Button
+                    size="xs"
+                    colorScheme="red"
+                    variant="ghost"
+                    color={redHex}
+                    height="20px"
+                    fontSize="12px"
+                    onClick={() => removeLayer(layer.assetId)}
+                    aria-label={`Remove Layer ${name}`}
+                  >
+                    X
+                  </Button>
                 </Box>
               </HStack>
             );
