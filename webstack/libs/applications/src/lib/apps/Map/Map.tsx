@@ -155,6 +155,11 @@ async function loadLayersOnMap(
     return;
   }
 
+  while (!map.isStyleLoaded()) {
+    console.warn('Waiting for map style to load...');
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+
   // 1) Clear your old layers then swap in the new style
   clearAllLayersAndSources(map);
   map.once('styledata', async () => {
@@ -203,6 +208,7 @@ async function addGeoTiffToMap(map: maplibregl.Map, layer: LayerType, asset: Ass
   const sourceName = `${layerId}-tiff-source`;
   const layerName = `${layerId}-tiff-layer`;
   const assetURL = getStaticAssetUrl(asset.data.file);
+
   if (map.getSource(sourceName)) {
     return;
   }
@@ -272,6 +278,7 @@ async function addGeoTiffToMap(map: maplibregl.Map, layer: LayerType, asset: Ass
 //  Add a GeoJSON layer to the map
 async function addGeoJsonToMap(map: maplibregl.Map, layer: LayerType, asset: Asset) {
   const layerId = layer.assetId;
+
   if (map.getSource(layerId)) {
     return;
   }
@@ -281,7 +288,10 @@ async function addGeoJsonToMap(map: maplibregl.Map, layer: LayerType, asset: Ass
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
   });
   const gjson = await response.json();
-
+  while (!map.isStyleLoaded()) {
+    console.warn('Waiting for map style to load...');
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
   map.addSource(layerId, {
     type: 'geojson',
     data: gjson,
