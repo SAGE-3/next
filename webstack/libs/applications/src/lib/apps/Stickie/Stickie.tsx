@@ -61,8 +61,8 @@ function AppComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
   const createApp = useAppStore((state) => state.create);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
-  const backgroundColor = useHexColor(`${s.color}${s.color === 'purple' ? '.200' : '.300'}`);
-  const scrollbarColor = useHexColor(s.color + '.400');
+  const backgroundColor = useHexColor(s.color + '.200');
+  const scrollbarColor = useHexColor(s.color + '.300');
 
   // Keep a reference to the input element
   const textbox = useRef<HTMLTextAreaElement>(null);
