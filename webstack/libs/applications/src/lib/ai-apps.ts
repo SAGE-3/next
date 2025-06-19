@@ -10,7 +10,7 @@ import { AppName } from './types';
 
 // List of AI enabled apps
 export const AI_ENABLED_APPS = [
-  'MapGL',
+  'Map',
   'Chat',
   'ImageViewer',
   'PDFViewer',
