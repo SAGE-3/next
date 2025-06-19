@@ -924,7 +924,7 @@ function AppComponent(props: App): JSX.Element {
       const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
 
       // Check for map
-      if (apps && apps[0].data.type === 'MapGL') {
+      if (apps && apps[0].data.type === 'Map') {
         if (roomId && boardId) {
           const now = await serverTime();
           const initialAnswer = {
