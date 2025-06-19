@@ -20,7 +20,7 @@ import { state as ImageViewerState, name as ImageViewerName } from './apps/Image
 import { state as JupyterLabState, name as JupyterLabName } from './apps/JupyterLab';
 import { state as LeafLetState, name as LeafLetName } from './apps/LeafLet';
 import { state as LinkerState, name as LinkerName } from './apps/Linker';
-import { state as MapGLState, name as MapGLName } from './apps/MapGL';
+import { state as MapState, name as MapName } from './apps/Map';
 import { state as NotepadState, name as NotepadName } from './apps/Notepad';
 import { state as PDFResultState, name as PDFResultName } from './apps/PDFResult';
 import { state as PDFViewerState, name as PDFViewerName } from './apps/PDFViewer';
@@ -39,7 +39,6 @@ import { state as VegaLiteViewerState, name as VegaLiteViewerName } from './apps
 import { state as VideoViewerState, name as VideoViewerName } from './apps/VideoViewer';
 import { state as WebpageLinkState, name as WebpageLinkName } from './apps/WebpageLink';
 import { state as WebviewState, name as WebviewName } from './apps/Webview';
-
 
 export type AppState =
   | {}
@@ -63,7 +62,7 @@ export type AppState =
   | JupyterLabState
   | LeafLetState
   | LinkerState
-  | MapGLState
+  | MapState
   | NotepadState
   | PDFResultState
   | PDFViewerState
@@ -83,5 +82,43 @@ export type AppState =
   | WebpageLinkState
   | WebviewState;
 
-
-export type AppName = typeof AIPaneName | typeof AssetLinkName | typeof BoardLinkName | typeof CSVViewerName | typeof CalculatorName | typeof ChartGeneratorName | typeof ChatName | typeof ClockName | typeof CobrowseName | typeof CodeEditorName | typeof CounterName | typeof DeepZoomImageName | typeof EChartsViewerName | typeof GLTFViewerName | typeof HCDPName | typeof IFrameName | typeof ImageViewerName | typeof JupyterLabName | typeof LeafLetName | typeof LinkerName | typeof MapGLName | typeof NotepadName | typeof PDFResultName | typeof PDFViewerName | typeof PluginAppName | typeof PollName | typeof RTCChatName | typeof SageCellName | typeof SeerName | typeof SensorOverviewName | typeof StickieName | typeof TLDrawName | typeof TimerName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebpageLinkName | typeof WebviewName;
+export type AppName =
+  | typeof AIPaneName
+  | typeof AssetLinkName
+  | typeof BoardLinkName
+  | typeof CSVViewerName
+  | typeof CalculatorName
+  | typeof ChartGeneratorName
+  | typeof ChatName
+  | typeof ClockName
+  | typeof CobrowseName
+  | typeof CodeEditorName
+  | typeof CounterName
+  | typeof DeepZoomImageName
+  | typeof EChartsViewerName
+  | typeof GLTFViewerName
+  | typeof HCDPName
+  | typeof IFrameName
+  | typeof ImageViewerName
+  | typeof JupyterLabName
+  | typeof LeafLetName
+  | typeof LinkerName
+  | typeof MapName
+  | typeof NotepadName
+  | typeof PDFResultName
+  | typeof PDFViewerName
+  | typeof PluginAppName
+  | typeof PollName
+  | typeof RTCChatName
+  | typeof SageCellName
+  | typeof SeerName
+  | typeof SensorOverviewName
+  | typeof StickieName
+  | typeof TLDrawName
+  | typeof TimerName
+  | typeof TwilioScreenshareName
+  | typeof VegaLiteName
+  | typeof VegaLiteViewerName
+  | typeof VideoViewerName
+  | typeof WebpageLinkName
+  | typeof WebviewName;

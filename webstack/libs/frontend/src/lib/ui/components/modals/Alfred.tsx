@@ -102,7 +102,7 @@ export function Alfred(props: props) {
 
   // User
   const { user, accessId } = useUser();
-  const { boardCursor } = useCursorBoardPosition();
+  const { getBoardCursor } = useCursorBoardPosition();
   const [, setUsername] = useState('');
 
   useEffect(() => {
@@ -206,6 +206,7 @@ export function Alfred(props: props) {
       if (!user) return;
 
       // Get the position of the cursor
+      const boardCursor = getBoardCursor();
       const cursor = { ...boardCursor, z: 0 };
       const pos = cursor || { x: 100, y: 100, z: 0 };
       const width = 400;
@@ -354,7 +355,7 @@ export function Alfred(props: props) {
         });
       }
     },
-    [user, apps, props.boardId, boardCursor, colorMode]
+    [user, apps, props.boardId, colorMode]
   );
 
   return (

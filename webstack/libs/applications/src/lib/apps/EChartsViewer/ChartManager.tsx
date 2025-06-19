@@ -82,6 +82,7 @@ export const ChartManager = (
     yAxisAttributes[0] = 'elevation';
     xAxisAttributes[0] = 'current temperature';
   }
+    console.log(stationMetadata)
 
   // This generates the data for charts, NOT the chart itself
   const { xAxisData, yAxisData } = createAxisData(stationMetadata, yAxisAttributes, xAxisAttributes);
@@ -226,10 +227,8 @@ function createMultiLineChart(
   yAxisData: (number | null)[][],
   xAxisData: string[]
 ) {
-  // Initialize series as an array
   const series: any[] = [];
 
-  // Create a series for each station
   Object.entries(data).forEach(([stationId, measurements], index) => {
     if (!Array.isArray(measurements) || measurements.length === 0) return;
 
@@ -240,11 +239,10 @@ function createMultiLineChart(
         width: 3,
       },
       data: yAxisData[index],
-      connectNulls: true, // This will connect points even if there are gaps
+      connectNulls: true,
     });
   });
 
-  // Assign the complete series array to options
   options.series = series;
 
   options.legend = {
@@ -505,7 +503,9 @@ const createAxisData = (data: StationData, yAxisAttributes: string[], xAxisAttri
     // Create a map of timestamp to value for this station
     const timestampMap = new Map<string, number>();
     measurements.forEach((measurement) => {
-      timestampMap.set(formatDate(new Date(measurement.timestamp)), parseFloat(measurement.value));
+      if (measurement.variable === yAxisAttributes[0]) {
+        timestampMap.set(formatDate(new Date(measurement.timestamp)), parseFloat(measurement.value));
+      }
     });
 
     // Create the data array for this station, matching the xAxisData timestamps

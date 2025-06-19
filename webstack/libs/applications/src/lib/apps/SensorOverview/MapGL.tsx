@@ -63,7 +63,13 @@ const baselayers = {
 };
 
 const MapGL = (
-  props: App & { isSelectingStations: boolean; isLoaded?: boolean; stationMetadata?: any; stationNameRef: any }
+  props: App & { 
+    isSelectingStations: boolean; 
+    isLoaded?: boolean; 
+    stationMetadata?: any; 
+    stationNameRef: any;
+    allStationsData: any[];
+  }
 ): JSX.Element => {
   const s = props.data.state as AppState;
   // const [map, setMap] = useState<maplibregl.Map>();
@@ -275,9 +281,13 @@ const MapGL = (
   useEffect(() => {
     if (map) {
       const updateMapSources = () => {
-        const selectedStations = stationDataRef.current.filter((stationData) => s.stationNames.includes(stationData.id));
+        const selectedStations = props.allStationsData.filter((station) => 
+          s.stationNames.includes(station.station_id)
+        );
 
-        const notSelectedStations = stationDataRef.current.filter((stationData) => !s.stationNames.includes(stationData.id));
+        const notSelectedStations = props.allStationsData.filter((station) => 
+          !s.stationNames.includes(station.station_id)
+        );
 
         // Update the 'selectedStations' source
         if (map.getSource('selectedStations')) {
@@ -288,7 +298,7 @@ const MapGL = (
               type: 'Feature',
               geometry: {
                 type: 'Point',
-                coordinates: [station.lon, station.lat],
+                coordinates: [station.lng, station.lat],
               },
               properties: {
                 stationInfo: station,
@@ -306,7 +316,7 @@ const MapGL = (
               type: 'Feature',
               geometry: {
                 type: 'Point',
-                coordinates: [station.lon, station.lat],
+                coordinates: [station.lng, station.lat],
               },
               properties: {
                 stationInfo: station,
@@ -318,9 +328,14 @@ const MapGL = (
 
       if (props.isSelectingStations) {
         map.on('load', () => {
-          const selectedStations = stationDataRef.current.filter((stationData) => s.stationNames.includes(stationData.id));
+          const selectedStations = props.allStationsData.filter((station) => 
+            s.stationNames.includes(station.station_id)
+          );
+          console.log(selectedStations)
+          const notSelectedStations = props.allStationsData.filter((station) => 
+            !s.stationNames.includes(station.station_id)
+          );
 
-          const notSelectedStations = stationDataRef.current.filter((stationData) => !s.stationNames.includes(stationData.id));
           // Add sources
           map.addSource('selectedStations', {
             type: 'geojson',
@@ -330,7 +345,7 @@ const MapGL = (
                 type: 'Feature',
                 geometry: {
                   type: 'Point',
-                  coordinates: [station.lon, station.lat],
+                  coordinates: [station.lng, station.lat],
                 },
                 properties: {
                   stationInfo: station,
@@ -347,7 +362,7 @@ const MapGL = (
                 type: 'Feature',
                 geometry: {
                   type: 'Point',
-                  coordinates: [station.lon, station.lat],
+                  coordinates: [station.lng, station.lat],
                 },
                 properties: {
                   stationInfo: station,
@@ -387,7 +402,7 @@ const MapGL = (
             // Create marker
             const el = document.createElement('div');
             el.className = 'marker';
-            el.id = `marker-${stationInfo.id}`;
+            el.id = `marker-${stationInfo.station_id}`;
             el.style.width = '23px';
             el.style.height = '23px';
             el.style.borderRadius = '50%';
@@ -396,26 +411,30 @@ const MapGL = (
             el.style.backgroundColor = '#CC4833';
             el.style.zIndex = '1000';
 
-            new maplibregl.Marker({ element: el }).setLngLat(e.features[0].geometry.coordinates).addTo(map);
+            new maplibregl.Marker({ element: el })
+              .setLngLat(e.features[0].geometry.coordinates)
+              .addTo(map);
 
             // Update state by adding the station to the selected list
-            if (!props.stationNameRef.current.includes(stationInfo.id)) {
-              props.stationNameRef.current.push(stationInfo.id);
+            if (!props.stationNameRef.current.includes(stationInfo.station_id)) {
+              props.stationNameRef.current.push(stationInfo.station_id);
               updateState(props._id, { stationNames: props.stationNameRef.current });
             }
           });
 
           map.on('click', 'selectedCircle', (e: any) => {
             const stationInfo = JSON.parse(e.features[0].properties.stationInfo);
-            const element = document.getElementById(`marker-${stationInfo.id}`);
+            console.log(stationInfo.station_id)
+            const element = document.getElementById(`marker-${stationInfo.station_id}`);
 
             if (element) {
-              // Remove marker from the map
               element.remove();
             }
 
             // Update state by removing the station from the selected list
-            const updatedStations = props.stationNameRef.current.filter((name: string) => name !== stationInfo.id);
+            const updatedStations = props.stationNameRef.current.filter(
+              (name: string) => name !== stationInfo.station_id
+            );
             props.stationNameRef.current = updatedStations;
             updateState(props._id, { stationNames: updatedStations });
           });
@@ -434,15 +453,14 @@ const MapGL = (
           document.body.appendChild(tooltip);
 
           const showTooltip = (e: any, data: any) => {
-            console.log(data);
             tooltip.style.display = 'block';
             tooltip.style.left = `${e.clientX + 5}px`;
             tooltip.style.top = `${e.clientY + 5}px`;
             tooltip.innerHTML = `
-            <strong>Name:</strong> ${data.name} (${data.id})<br/>
-            <strong>Coordinates:</strong> [${data.lon.toFixed(1)}, ${data.lat.toFixed(1)}]<br/>
-            <strong>Elevation:</strong> ${data.elevation.toFixed(1)}
-          `;
+              <strong>Name:</strong> ${data?.name || 'N/A'} (${data?.station_id || 'N/A'})<br/>
+              <strong>Coordinates:</strong> [${Number(data?.lng || 0).toFixed(1)}, ${Number(data?.lat || 0).toFixed(1)}]<br/>
+              <strong>Elevation:</strong> ${Number(data?.elevation || 0).toFixed(1)}
+            `;
           };
 
           const hideTooltip = () => {
@@ -452,7 +470,9 @@ const MapGL = (
           map.on('mouseenter', 'notSelectedCircle', (e: any) => {
             map.getCanvas().style.cursor = 'pointer';
             const stationInfo = JSON.parse(e.features[0].properties.stationInfo);
-            showTooltip(e.originalEvent, stationInfo);
+            if (stationInfo) {
+              showTooltip(e.originalEvent, stationInfo);
+            }
           });
 
           map.on('mouseleave', 'notSelectedCircle', () => {
@@ -463,7 +483,9 @@ const MapGL = (
           map.on('mouseenter', 'selectedCircle', (e: any) => {
             map.getCanvas().style.cursor = 'pointer';
             const stationInfo = JSON.parse(e.features[0].properties.stationInfo);
-            showTooltip(e.originalEvent, stationInfo);
+            if (stationInfo) {
+              showTooltip(e.originalEvent, stationInfo);
+            }
           });
 
           map.on('mouseleave', 'selectedCircle', () => {
@@ -473,9 +495,9 @@ const MapGL = (
         });
       }
 
-      updateMapSources(); // Ensure sources are updated when s.stationNames changes
+      updateMapSources();
     }
-  }, [map, props.isSelectingStations, s.stationNames]);
+  }, [map, props.isSelectingStations, s.stationNames, props.allStationsData]);
 
   return (
     <>

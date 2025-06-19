@@ -20,7 +20,6 @@ import {
   useCursorBoardPosition,
   setupApp,
   HelpModal,
-  useAssetStore,
 } from '@sage3/frontend';
 
 import { useDragAndDropBoard } from './DragAndDropBoard';
@@ -53,7 +52,7 @@ export function Background(props: BackgroundProps) {
 
   // User
   const { user } = useUser();
-  const { cursor, boardCursor } = useCursorBoardPosition(); // Causing ReRender
+  const { getCursor, getBoardCursor } = useCursorBoardPosition(); // Causing ReRender
 
   // UI Store
   const zoomInDelta = useUIStore((state) => state.zoomInDelta);
@@ -148,6 +147,7 @@ export function Background(props: BackgroundProps) {
     '-, =',
     (event: KeyboardEvent): void | boolean => {
       if (selectedAppId !== '') return;
+      const cursor = getCursor();
       if (event.key === '-') {
         zoomOutDelta(-10, cursor);
       } else if (event.key === '=') {
@@ -175,6 +175,7 @@ export function Background(props: BackgroundProps) {
     (event: KeyboardEvent): void | boolean => {
       event.stopPropagation();
       if (boardSynced) {
+        const boardCursor = getBoardCursor();
         const x = boardCursor.x;
         const y = boardCursor.y;
         throttleStickieCreationRef(x, y);

@@ -46,7 +46,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
   // User information
   const { user } = useUser();
   const { auth } = useAuth();
-  const { boardCursor: cursorPosition, cursor: mousePosition } = useCursorBoardPosition();
+  const { getBoardCursor, getCursor } = useCursorBoardPosition();
   // App Store
   const createApp = useAppStore((state) => state.create);
   // UI Store
@@ -95,8 +95,10 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
       }
 
       // Get the user cursor position
+      const cursorPosition = getBoardCursor();
       const xDrop = cursorPosition.x;
       const yDrop = cursorPosition.y;
+      const mousePosition = getCursor();
       setDropCursor({ x: mousePosition.x, y: mousePosition.y });
 
       // Get content of clipboard
@@ -190,9 +192,10 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
       // Remove function during cleanup to prevent multiple additions
       document.removeEventListener('paste', pasteHandlerBoard);
     };
-  }, [cursorPosition.x, cursorPosition.y, props.boardId, props.roomId, user, selectedApp, boardSynced]);
+  }, [props.boardId, props.roomId, user, selectedApp, boardSynced]);
 
   const createWeblink = () => {
+    const cursorPosition = getBoardCursor();
     createApp(
       setupApp(
         'WebpageLink',
@@ -208,6 +211,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
     popOnClose();
   };
   const createWebview = () => {
+    const cursorPosition = getBoardCursor();
     const final_url = processContentURL(validURL);
     let w = 800;
     let h = 800;

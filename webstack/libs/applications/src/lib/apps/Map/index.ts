@@ -6,11 +6,23 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { colors } from '@sage3/shared';
 import { z } from 'zod';
 
+const zColors = z.enum([...colors]);
+const colorScale = z.enum(['greys', 'inferno', 'viridis', 'turbo']);
+
+const Layer = z.object({
+  assetId: z.string(),
+  visible: z.boolean(),
+  color: zColors,
+  colorScale: colorScale,
+  opacity: z.number().min(0).max(1),
+});
+export type LayerType = z.infer<typeof Layer>;
+
 /**
- * SAGE3 application: MapGL
- * created by: Luc Renambot
+ * SAGE3 application: Map
  */
 
 export const schema = z.object({
@@ -19,9 +31,9 @@ export const schema = z.object({
   bearing: z.number(),
   pitch: z.number(),
   baseLayer: z.string(),
-  overlay: z.boolean(),
   assetid: z.string().optional(),
-  colorScale: z.string(),
+  // Remove single `assetid`; instead, keep an array of layers:
+  layers: z.array(Layer),
 });
 export type state = z.infer<typeof schema>;
 
@@ -31,9 +43,7 @@ export const init: Partial<state> = {
   bearing: 0,
   pitch: 0,
   baseLayer: 'OpenStreetMap',
-  overlay: true,
-  assetid: '',
-  colorScale: 'greys',
+  layers: [],
 };
 
-export const name = 'MapGL';
+export const name = 'Map';

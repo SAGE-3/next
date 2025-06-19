@@ -102,7 +102,7 @@ export function RowFile({ file, clickCB, dragCB, scale }: RowFileProps) {
   if (!boardId || !roomId) return <></>;
   // UI Store
   const boardPosition = useUIStore((state) => state.boardPosition);
-  const { boardCursor: cursorPosition } = useCursorBoardPosition();
+  const { getBoardCursor } = useCursorBoardPosition();
 
   // Abilities
   const canCreateApp = useAbility('create', 'apps');
@@ -262,6 +262,7 @@ export function RowFile({ file, clickCB, dragCB, scale }: RowFileProps) {
 
   // Add an image to the cursor during the drag
   const dragStart = (e: React.DragEvent<HTMLDivElement>) => {
+    const cursorPosition = getBoardCursor();
     if (dragImage) {
       e.dataTransfer.setDragImage(dragImage, cursorPosition.x, cursorPosition.y);
     }

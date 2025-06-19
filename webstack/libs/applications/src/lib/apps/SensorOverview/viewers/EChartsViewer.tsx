@@ -17,16 +17,25 @@ import {variable_dict} from '../data/variableConversion'
 
 import '../styling.css';
 
-const EChartsViewer = (props: {
+interface EChartsViewerProps {
   stationNames: string[];
+  stationFriendlyNames: string[];
   startDate: string;
   isLoaded: boolean;
   widget: any;
-
   timeSinceLastUpdate?: string;
-  stationMetadata?: any;
+  stationMetadata?: { [key: string]: Array<{
+    timestamp: string;
+    station_id: string;
+    variable: string;
+    value: string;
+    flag: number;
+  }> };
   size: { width: number; height: number; depth: number };
-}) => {
+  stationIdToName: { [key: string]: string };
+}
+
+const EChartsViewer = (props: EChartsViewerProps) => {
   // HTML element reference
   const chartRef = useRef<any>(null);
   const outboxRef = useRef<any>(null);
@@ -41,15 +50,12 @@ const EChartsViewer = (props: {
 
   useEffect(() => {
     let namesOfStations = '';
-    for (let i = 0; i < props.stationMetadata.length; i++) {
-      if (i === props.stationMetadata.length - 1) {
-        namesOfStations += props.stationMetadata[i].NAME;
-      } else {
-        namesOfStations += props.stationMetadata[i].NAME + ', ';
-      }
+    if (props.stationMetadata) {
+      const stationIds = Object.keys(props.stationMetadata);
+      namesOfStations = stationIds.join(', ');
     }
     setStationNames(namesOfStations);
-  }, [JSON.stringify(props.stationMetadata)]);
+  }, [props.stationMetadata]);
 
   // If the chartRef changes, update the chart instance
   useEffect(() => {
@@ -73,7 +79,7 @@ const EChartsViewer = (props: {
   // If any properties for visualization changes, update the chart options
   useEffect(() => {
     const tmpWidget = { ...props.widget };
-    function callToChartMangaer() {
+    function callToChartManager() {
       const options = ChartManager(
         tmpWidget.stationNames,
         tmpWidget.visualizationType,
@@ -81,17 +87,17 @@ const EChartsViewer = (props: {
         tmpWidget.xAxisNames,
         colorMode,
         props.startDate,
-        props.stationMetadata,
+        props.stationMetadata || {},
         props.widget.timePeriod,
         props.size,
         variable_dict
       );
-      console.log(options)
       setChartOptions(options);
     }
     if (props.isLoaded) {
-      callToChartMangaer();
+      callToChartManager();
     }
+    
   }, [JSON.stringify(props.stationNames), JSON.stringify(props.stationMetadata), props.isLoaded, colorMode, JSON.stringify(props.size), JSON.stringify(props.widget)]);
 
   return (
@@ -111,7 +117,11 @@ const EChartsViewer = (props: {
           <>
             <Box pb="2rem">
               <Text textAlign={'center'} fontSize={'80px'}>
-                {props.stationMetadata ? stationNames : 'No Station Selected'}
+                {props.stationMetadata ? 
+                  Object.keys(props.stationMetadata)
+                    .map(id => props.stationIdToName[id] || id)
+                    .join(', ') 
+                  : 'No Station Selected'}
               </Text>
             </Box>
             <div ref={chartRef} />

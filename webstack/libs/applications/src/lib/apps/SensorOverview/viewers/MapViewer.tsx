@@ -22,7 +22,7 @@ import center from '@turf/center';
 import { Asset } from '@sage3/shared/types';
 import { useAppStore, useAssetStore, apiUrls, useUIStore } from '@sage3/frontend';
 
-import { App } from '../../../schema';
+import { App, AppSchema } from '../../../schema';
 import { state as AppState } from '../index';
 // import { state as AppState } from './index';
 // import redMarker from './redMarker.png';
@@ -54,6 +54,20 @@ const baselayers = {
   Satellite: `https://api.maptiler.com/maps/hybrid/style.json?key=${mapTilerAPI}`,
   OpenStreetMap: `https://api.maptiler.com/maps/streets/style.json?key=${mapTilerAPI}`,
 };
+
+interface MapViewerProps {
+  _id: string;
+  _createdAt: number;
+  _updatedAt: number;
+  _updatedBy: string;
+  _createdBy: string;
+  data: AppSchema;
+  isSelectingStations: boolean;
+  isLoaded?: boolean;
+  stationData: StationDataType[];
+  stationMetadata: any;
+  stationFriendlyNames: string[];
+}
 
 const MapViewer = (
   props: App & { isSelectingStations: boolean; isLoaded?: boolean; stationData: StationDataType[]; stationMetadata: any }
