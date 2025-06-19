@@ -28,7 +28,6 @@ import {
 // Window Components
 import { App } from '../../schema';
 import { ProcessingBox, BlockInteraction, WindowTitle, WindowBorder } from './components';
-import { use } from 'passport';
 
 // Consraints on the app window size
 const APP_MIN_WIDTH = 200;
