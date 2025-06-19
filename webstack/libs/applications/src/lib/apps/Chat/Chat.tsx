@@ -330,7 +330,7 @@ function AppComponent(props: App): JSX.Element {
         setMode('web');
       } else if (apps && apps[0] && apps[0].data.type === 'Hawaii Mesonet') {
         setMode('Hawaii Mesonet');
-      } else if (apps && apps[0] && apps[0].data.type === 'MapGL') {
+      } else if (apps && apps[0] && apps[0].data.type === 'Map') {
         setMode('map');
       } else {
         setMode('text');
