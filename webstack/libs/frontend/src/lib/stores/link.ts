@@ -51,7 +51,7 @@ const LinkStore = create<LinkStoreState>()((set, get) => {
 
   // Create a new link
   const createLink = async (newLink: LinkSchema): Promise<Link | undefined> => {
-    if (!SAGE3Ability.canCurrentUser('create', 'apps')) return;
+    if (!SAGE3Ability.canCurrentUser('create', 'links')) return;
     const link = await SocketAPI.sendRESTMessage('/links', 'POST', newLink);
     if (!link.success) {
       console.error('Error creating link', link);
@@ -122,8 +122,11 @@ const LinkStore = create<LinkStoreState>()((set, get) => {
       }
     },
     subscribe: async (boardId: string) => {
-      if (!SAGE3Ability.canCurrentUser('read', 'links')) return;
+      if (!SAGE3Ability.canCurrentUser('read', 'links')) {
+        return;
+      }
       const res = await APIHttp.QUERY<Link>('/links', { boardId: boardId });
+      console.log('LinkStore: subscribe', res);
       if (res.success) {
         set({ links: res.data });
       } else {
