@@ -43,10 +43,11 @@ import {
   SliderThumb,
   Text,
 } from '@chakra-ui/react';
-import { MdAdd, MdMap, MdTerrain, MdArrowDropUp, MdArrowDropDown } from 'react-icons/md';
+import { MdAdd, MdMap, MdTerrain, MdArrowDropUp, MdArrowDropDown, MdCenterFocusStrong } from 'react-icons/md';
 import maplibregl, { MapLayerEventType } from 'maplibre-gl';
 import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
 import { fromUrl, TypedArray } from 'geotiff';
+import { bbox } from '@turf/bbox';
 // @ts-ignore
 import * as Plotty from 'plotty';
 
@@ -392,7 +393,6 @@ export const useStore = create<MapStore>((set) => ({
     })),
 }));
 
-
 // The map app component
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
@@ -707,6 +707,7 @@ function AddLayerModal({
 
 function LegendOverlay(props: { layers: LayerType[]; appId: string }) {
   const assets = useAssetStore((state) => state.assets);
+  const map = useStore((state) => state.map[props.appId]);
 
   const toggleLayerVisibilty = (assetId: string) => {
     const updatedLayers = props.layers.map((layer) => (layer.assetId === assetId ? { ...layer, visible: !layer.visible } : layer));
@@ -804,6 +805,64 @@ function LegendOverlay(props: { layers: LayerType[]; appId: string }) {
     { name: 'Turbo', value: 'turbo', hex: turbo },
   ];
 
+  // Center the view on the seleected layer when clicked
+  const centerOnLayer = async (assetId: string) => {
+    if (!map) return;
+    const asset = assets.find((a) => a._id === assetId);
+    if (!asset) {
+      console.warn(`Asset with ID ${assetId} not found or map is not initialized.`);
+      return;
+    }
+    if (isGeoTiff(asset.data.mimetype) || isTiff(asset.data.mimetype)) {
+      // For GeoTIFF, use the bounding box
+      const assetURL = getStaticAssetUrl(asset.data.file);
+
+      try {
+        const tiff = await fromUrl(assetURL);
+        const image = await tiff.getImage();
+        const [minX, minY, maxX, maxY] = image.getBoundingBox() as [number, number, number, number];
+
+        const centerLng = (minX + maxX) / 2;
+        const centerLat = (minY + maxY) / 2;
+        const center: maplibregl.LngLatLike = [centerLng, centerLat];
+
+        map.fitBounds(new maplibregl.LngLatBounds([minX, minY, maxX, maxY]), { duration: 0, maxZoom: 14, padding: 20 });
+        map.setCenter(center, { duration: 0 });
+        const newZoom = map.getZoom();
+
+        useAppStore.getState().updateState(props.appId, {
+          location: [centerLng, centerLat],
+          zoom: newZoom,
+          bearing: 0,
+          pitch: 0,
+        });
+      } catch (e) {
+        console.log(`Error loading GeoTIFF ${assetURL}:`, e);
+      }
+    } else if (asset.data.mimetype === 'application/geo+json') {
+      const assetURL = getStaticAssetUrl(asset.data.file);
+
+      const response = await fetch(assetURL);
+      const geojson = await response.json();
+
+      // Get the bounding box [minX, minY, maxX, maxY]
+      const [minX, minY, maxX, maxY] = bbox(geojson);
+      const centerLng = (minX + maxX) / 2;
+      const centerLat = (minY + maxY) / 2;
+      const center: maplibregl.LngLatLike = [centerLng, centerLat];
+      map.fitBounds(new maplibregl.LngLatBounds([minX, minY, maxX, maxY]), { duration: 0, maxZoom: 14, padding: 20 });
+      map.setCenter(center, { duration: 0 });
+      // Update the state with the new center and zoom
+      const newZoom = map.getZoom();
+      useAppStore.getState().updateState(props.appId, {
+        location: [centerLng, centerLat],
+        zoom: newZoom,
+        bearing: 0,
+        pitch: 0,
+      });
+    }
+  };
+
   return (
     <Box
       display="flex"
@@ -874,8 +933,19 @@ function LegendOverlay(props: { layers: LayerType[]; appId: string }) {
                   <Text color="black">{name}</Text>
                 </Box>
 
-                {/* Chakra Menu Button to select a color */}
                 <Box display="flex" alignItems="center" justifyContent="right" width="100%">
+                  <IconButton
+                    icon={<MdCenterFocusStrong />}
+                    size="xs"
+                    colorScheme="red"
+                    variant="ghost"
+                    color={redHex}
+                    onClick={() => centerOnLayer(layer.assetId)}
+                    aria-label={`Center Layer ${name}`}
+                  />
+
+                  {/* Layer Visibility Toggle */}
+
                   {/* Opacity Select */}
                   <Popover placement="bottom">
                     <PopoverTrigger>
