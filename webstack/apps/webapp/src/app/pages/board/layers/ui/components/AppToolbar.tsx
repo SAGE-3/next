@@ -167,7 +167,7 @@ export function AppToolbar(props: AppToolbarProps) {
   // Focus Mode
   const setFocusedAppId = useUIStore((state) => state.setFocusedAppId);
   // Cant focus on some apps
-  const doNotFocus = ['VideoViewer', 'Stickie', 'Screenshare'];
+  const doNotFocus = ['Map', 'VideoViewer', 'Stickie', 'Screenshare'];
 
   // Insight labels
   const [tags, setTags] = useState<string[]>([]);
