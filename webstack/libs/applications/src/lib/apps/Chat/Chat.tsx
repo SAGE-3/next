@@ -942,12 +942,22 @@ function AppComponent(props: App): JSX.Element {
           console.log('Map request', request);
           console.log('GeoJSON', apps[0].data.state);
           let ctx = '';
-          if (apps[0].data.state.assetid) {
-            const myasset = useAssetStore.getState().assets.find((a) => a._id === apps[0].data.state.assetid);
-            console.log('Map asset', myasset);
+          const layers = apps[0].data.state.layers || [];
+          if (layers.length > 0) {
+            const visibleLayers = layers.filter((l: any) => l.visible).map((l: any) => l.assetId);
+            if (visibleLayers.length === 0) {
+              toast({
+                title: 'No visible layers',
+                description: 'Please select a layer to query.',
+                status: 'warning',
+                duration: 4000,
+                isClosable: true,
+              });
+              return;
+            }
+            const myasset = useAssetStore.getState().assets.find((a) => a._id === visibleLayers[0]);
             if (myasset && isGeoJSON(myasset.data.mimetype)) {
               const newURL = apiUrls.assets.getAssetById(myasset.data.file);
-              console.log("🚀 > onContentMap > newURL:", newURL)
               // Get the GEOJSON data from the asset
               const response = await fetch(newURL, {
                 headers: {
@@ -956,7 +966,6 @@ function AppComponent(props: App): JSX.Element {
                 },
               });
               const geojson = await response.json();
-              console.log("🚀 > onContentMap > gjson:", geojson)
 
               ctx = `Please read the following GeoJSON data:
                 <text>
