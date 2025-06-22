@@ -627,10 +627,10 @@ export function AppWindow(props: WindowProps) {
           sx={
             primaryActionMode === 'grab'
               ? {
-                  '&:active': {
-                    cursor: 'grabbing',
-                  },
-                }
+                '&:active': {
+                  cursor: 'grabbing',
+                },
+              }
               : {}
           }
           userSelect={'none'}
