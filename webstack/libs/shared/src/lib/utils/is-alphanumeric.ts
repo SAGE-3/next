@@ -7,5 +7,5 @@
  */
 
 export function isAlphanumericWithSpacesAndForeign(str: string) {
-  return /^[\p{L}\p{N}\s]+$/u.test(str);
+  return /^[\p{L}\p{N}\s\-,_]+$/u.test(str);
 }
