@@ -1501,6 +1501,7 @@ export function HomePage() {
         <Box
           ref={homeRef}
           display="flex"
+          flex="1"
           flexDirection="column"
           alignItems="center"
           backgroundColor={sidebarBackgroundColor}
