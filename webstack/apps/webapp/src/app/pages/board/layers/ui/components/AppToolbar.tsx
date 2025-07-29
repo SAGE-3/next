@@ -261,7 +261,8 @@ export function AppToolbar(props: AppToolbarProps) {
         setAppToolbarPosition(appBottomPosition);
       }
     }
-  }, [app?.data.position, app?.data.size, scale, boardPosition.x, boardPosition.y, window.innerHeight, window.innerWidth]);
+  }, [scale, boardPosition.x, boardPosition.y, window.innerHeight, window.innerWidth]);
+  // app?.data.position, app?.data.size
 
   // Hooks for getAppTags()
   const [visibleTags, setVisibleTags] = useState<string[]>([]);
