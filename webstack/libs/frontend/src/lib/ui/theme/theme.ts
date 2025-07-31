@@ -74,16 +74,6 @@ const components = {
       colorScheme: 'primary',
     },
   },
-  Toast: {
-    baseStyle: {
-      container: {
-        bottom: '100px !important',
-      },
-    },
-    defaultProps: {
-      position: 'bottom',
-    },
-  },
   // Looking to change the color scheme?  Remember to change the Interactionbar.tsx's color scheme logic
   // Button: {
   //   variants: {
