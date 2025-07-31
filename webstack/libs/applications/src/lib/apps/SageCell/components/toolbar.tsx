@@ -149,13 +149,14 @@ export function ToolbarComponent(props: App): JSX.Element {
    * Download the stickie as a text file
    * @returns {void}
    */
-  const downloadPy = (): void => {
+  const downloadCode = (): void => {
     // Current date
     const dt = format(new Date(), 'yyyy-MM-dd-HH:mm:ss');
     // generate a URL containing the text of the note
     const txturl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(s.code);
+    const extension = s.language === 'python' ? '.py' : s.language === 'r' ? '.R' : '.jl';
     // Make a filename with username and date
-    const filename = 'sagecell-' + dt + '.py';
+    const filename = 'sagecell-' + dt + extension;
     // Go for download
     downloadFile(txturl, filename);
   };
@@ -341,7 +342,7 @@ export function ToolbarComponent(props: App): JSX.Element {
         </Tooltip>
 
         <Tooltip placement="top" hasArrow={true} label={'Download Code'} openDelay={400}>
-          <Button onClick={downloadPy} _hover={{ opacity: 0.7 }}>
+          <Button onClick={downloadCode} _hover={{ opacity: 0.7 }}>
             <MdFileDownload />
           </Button>
         </Tooltip>
