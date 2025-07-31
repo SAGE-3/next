@@ -68,6 +68,7 @@ export function isCode(mimeType: string): boolean {
     'application/javascript',
     'application/typescript',
     'application/r',
+    'application/julia',
   ];
   return formats.includes(mimeType);
 }
@@ -101,6 +102,8 @@ export function mimeToCode(code: string) {
       return 'typescript';
     case 'application/r':
       return 'r';
+    case 'application/julia':
+      return 'julia';
     default:
       return result;
   }
@@ -338,6 +341,17 @@ export function isPython(mimeType: string): boolean {
 }
 
 /**
+ * Test if a given mime type is a R file
+ *
+ * @export
+ * @param {string} mimeType
+ * @returns {boolean}
+ */
+export function isR(mimeType: string): boolean {
+  return mimeType === 'application/r' || mimeType === 'text/x-r-script';
+}
+
+/**
  * Test if a given mime type is a GLTF binary file
  *
  * @export
@@ -370,6 +384,7 @@ export function isValid(mimeType: string): boolean {
     isCSV(mimeType) ||
     isDZI(mimeType) ||
     isPython(mimeType) ||
+    isR(mimeType) ||
     isGLTF(mimeType) ||
     isCode(mimeType)
   );
