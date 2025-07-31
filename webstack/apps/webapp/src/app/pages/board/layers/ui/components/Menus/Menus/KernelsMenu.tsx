@@ -139,7 +139,7 @@ export function KernelsMenu(props: KernelsMenuProps) {
         msgId: '',
         history: [],
         streaming: false,
-        language: 'python',
+        language: kernelInfo.name === 'python3' ? 'python' : kernelInfo.name === 'ir' ? 'r' : 'julia',
         fontSize: 16,
         kernel: kernelInfo.kernel_id,
         session: '',
