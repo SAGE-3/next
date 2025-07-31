@@ -822,7 +822,11 @@ export function AppToolbar(props: AppToolbarProps) {
           )}
         >
           <>
+            <Box display="flex" flexDirection="row" alignItems="center" justifyContent="space-between" width="100%">
+              <Box display="flex" flexDirection="row" alignItems="center" justifyContent="left" width="100%">
             <Component key={app._id} {...app}></Component>
+            </Box>
+            <Box display="flex" flexDirection="row" alignItems="center" justifyContent="right" width="100%">
             {/* Application Information Popover */}
             <Popover trigger="hover">
               {({ isOpen, onClose }) => (
@@ -926,6 +930,8 @@ export function AppToolbar(props: AppToolbarProps) {
                 xOffSet={Math.max(0, (position.x - 150) / window.innerWidth)}
               />
             )}
+            </Box>
+            </Box>
           </>
         </ErrorBoundary>
       );
@@ -1034,10 +1040,11 @@ export function AppToolbar(props: AppToolbarProps) {
         transition="opacity 0.7s"
         display="flex"
         opacity={`${appDragging ? '0' : '1'}`}
+
       >
         <Box display="flex" flexDirection="column">
-          <Box display="flex" flexDirection="row">
-            <Text textAlign="left" mx={0} p={0} color={textColor} fontSize={14} fontWeight="bold" h={'auto'} userSelect={'none'}>
+          <Box display="flex" flexDirection="row" alignItems="center">
+            <Text textAlign="left" ml={1} mr={2} p={0} color={textColor} fontSize={14} fontWeight="bold" h={'auto'} userSelect={'none'}>
               {app?.data.type}
             </Text>
             <Box display={showTags ? 'flex' : 'none'} pl="1">

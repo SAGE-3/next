@@ -268,8 +268,9 @@ export function ToolbarComponent(props: App): JSX.Element {
             _hover={{ opacity: 0.7 }}
             size="xs"
             colorScheme="teal"
+            px={0}
           >
-            <MdPlayArrow />
+            <MdPlayArrow size="16px" />
           </Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={'Run All'} openDelay={400}>
@@ -279,8 +280,9 @@ export function ToolbarComponent(props: App): JSX.Element {
             _hover={{ opacity: 0.7 }}
             size="xs"
             colorScheme="teal"
+            px={0}
           >
-            <VscRunAll />
+            <VscRunAll size="16px" />
           </Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={'Run To Here'} openDelay={400}>
@@ -290,8 +292,9 @@ export function ToolbarComponent(props: App): JSX.Element {
             _hover={{ opacity: 0.7 }}
             size="xs"
             colorScheme="teal"
+            px={0}
           >
-            <VscRunAbove />
+            <VscRunAbove size="16px" />
           </Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={'Run From Here'} openDelay={400}>
@@ -301,48 +304,49 @@ export function ToolbarComponent(props: App): JSX.Element {
             _hover={{ opacity: 0.7 }}
             size="xs"
             colorScheme="teal"
+            px={0}
           >
-            <VscRunBelow />
+            <VscRunBelow size="16px" />
           </Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={'Stop'} openDelay={400}>
-          <Button isDisabled={!s.msgId || !canExecuteCode} onClick={setStopTrue} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal">
-            <MdStop />
+          <Button isDisabled={!s.msgId || !canExecuteCode} onClick={setStopTrue} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal" px={0}>
+            <MdStop size="16px" />
           </Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={'Click for help'} openDelay={400}>
-          <Button onClick={helpOnOpen} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal">
-            <MdHelp />
+          <Button onClick={helpOnOpen} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal" px={0}>
+            <MdHelp size="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>
 
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
-          <Button isDisabled={s.fontSize <= 8} onClick={decreaseFontSize} _hover={{ opacity: 0.7 }}>
-            <MdRemove />
+          <Button isDisabled={s.fontSize <= 8} onClick={decreaseFontSize} _hover={{ opacity: 0.7 }} size="xs" px={0}>
+            <MdRemove size="16px" />
           </Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={'Current Font Size'} openDelay={400}>
-          <Button _hover={{ opacity: 0.7 }}>{s.fontSize}</Button>
+          <Button _hover={{ opacity: 0.7 }} size="xs" px={0}>{s.fontSize}</Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
-          <Button isDisabled={s.fontSize > 42} onClick={increaseFontSize} _hover={{ opacity: 0.7 }}>
-            <MdAdd />
+          <Button isDisabled={s.fontSize > 42} onClick={increaseFontSize} _hover={{ opacity: 0.7 }} size="xs" px={0}>
+            <MdAdd size="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>
 
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top" hasArrow={true} label={'Save Code in Asset Manager'} openDelay={400}>
-          <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }} isDisabled={s.code.length === 0}>
-            <MdFileUpload />
+          <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }} isDisabled={s.code.length === 0} size="xs" px={0}>
+            <MdFileUpload size="16px" />
           </Button>
         </Tooltip>
 
         <Tooltip placement="top" hasArrow={true} label={'Download Code'} openDelay={400}>
-          <Button onClick={downloadPy} _hover={{ opacity: 0.7 }}>
-            <MdFileDownload />
+                <Button onClick={downloadPy} _hover={{ opacity: 0.7 }} size="xs" px={0}>
+            <MdFileDownload size="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>

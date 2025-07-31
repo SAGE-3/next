@@ -61,19 +61,19 @@ function ToolbarComponent(props: App): JSX.Element {
   return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Decrease Count'} openDelay={400}>
-          <Button onClick={handleSubClick} colorScheme="red">
-            <MdRemove />
+        <Tooltip placement="top" hasArrow={true} label={'Decrease Count'} openDelay={400}>
+          <Button onClick={handleSubClick}  size='xs' px={0}>
+            <MdRemove size="16px"/>
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Increase Count'} openDelay={400}>
-          <Button onClick={handleAddClick}>
-            <MdAdd />
+        <Tooltip placement="top" hasArrow={true} label={'Increase Count'} openDelay={400}>
+          <Button onClick={handleAddClick} size='xs' px={0}>
+            <MdAdd size="16px"/>
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Reset to Zero'} openDelay={400}>
-          <Button onClick={handleReset} colorScheme="blue">
-            <MdRefresh />
+        <Tooltip placement="top" hasArrow={true} label={'Reset to Zero'} openDelay={400}>
+          <Button onClick={handleReset}  size='xs' px={0}>
+            <MdRefresh size="16px"/>
           </Button>
         </Tooltip>
       </ButtonGroup>

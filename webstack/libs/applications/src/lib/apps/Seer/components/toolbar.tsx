@@ -245,20 +245,20 @@ export function ToolbarComponent(props: App): JSX.Element {
         </Button>
       )}
 
-      <Tooltip placement="top-start" hasArrow={true} label={'Refresh Kernel List'} openDelay={400}>
+      <Tooltip placement="top" hasArrow={true} label={'Refresh Kernel List'} openDelay={400}>
         <Button onClick={getKernelCollection} _hover={{ opacity: 0.7 }} size="xs" mx="1" colorScheme="teal">
           <MdRefresh />
         </Button>
       </Tooltip>
 
-      <Tooltip placement="top-start" hasArrow={true} label={'Click for help'} openDelay={400}>
+      <Tooltip placement="top" hasArrow={true} label={'Click for help'} openDelay={400}>
         <Button onClick={() => helpOnOpen()} _hover={{ opacity: 0.7 }} size="xs" mx="1" colorScheme="teal">
           <MdHelp />
         </Button>
       </Tooltip>
 
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
           <Button
             isDisabled={s.fontSize <= 8}
             onClick={() => updateState(props._id, { fontSize: Math.max(10, s.fontSize - 2) })}
@@ -267,7 +267,7 @@ export function ToolbarComponent(props: App): JSX.Element {
             <MdRemove />
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
           <Button
             isDisabled={s.fontSize > 42}
             onClick={() => updateState(props._id, { fontSize: Math.min(48, s.fontSize + 2) })}
@@ -278,7 +278,7 @@ export function ToolbarComponent(props: App): JSX.Element {
         </Tooltip>
       </ButtonGroup>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Download Code'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Download Code'} openDelay={400}>
           <Button onClick={downloadPy} _hover={{ opacity: 0.7 }}>
             <MdFileDownload />
           </Button>

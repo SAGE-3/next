@@ -260,7 +260,7 @@ function ToolbarComponent(props: App): JSX.Element {
 
   return (
     <ButtonGroup isAttached size="xs">
-      <Tooltip placement="top-start" hasArrow={true} label={'Start Streaming Content'} openDelay={400}>
+      <Tooltip placement="top" hasArrow={true} label={'Start Streaming Content'} openDelay={400}>
         <Button colorScheme="green" isDisabled={!mine} onClick={startStream}>
           Stream
         </Button>

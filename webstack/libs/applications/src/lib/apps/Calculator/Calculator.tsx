@@ -249,14 +249,14 @@ function ToolbarComponent(props: App): JSX.Element {
       </Drawer>
 
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'View History'} openDelay={400}>
-          <Button onClick={onOpen}>
-            <MdList />
+        <Tooltip placement="top" hasArrow={true} label={'View History'} openDelay={400}>
+          <Button onClick={onOpen} size='xs' p={0}>
+            <MdList fontSize="16px"/>
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Copy Result to Clipboard'} openDelay={400}>
-          <Button onClick={handleCopy}>
-            <MdCopyAll />
+        <Tooltip placement="top" hasArrow={true} label={'Copy Result to Clipboard'} openDelay={400}>
+          <Button onClick={handleCopy} size='xs' p={0}>
+            <MdCopyAll fontSize="16px"/>
           </Button>
         </Tooltip>
       </ButtonGroup>

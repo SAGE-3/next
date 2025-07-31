@@ -431,40 +431,40 @@ function ToolbarComponent(props: App): JSX.Element {
     <>
       {/* App State with server */}
       <ButtonGroup isAttached size="xs" colorScheme="teal" mr={1}>
-        <Tooltip placement="top-start" hasArrow={true} label={'Rewind 5 Seconds'} openDelay={400}>
-          <Button onClick={handleRewind} isDisabled={!videoRef}>
-            <MdFastRewind />
+        <Tooltip placement="top" hasArrow={true} label={'Rewind 5 Seconds'} openDelay={400}>
+          <Button onClick={handleRewind} isDisabled={!videoRef} size="xs" px={0}>
+            <MdFastRewind size="16px" />
           </Button>
         </Tooltip>
 
-        <Tooltip placement="top-start" hasArrow={true} label={'Play Video'} openDelay={400}>
-          <Button onClick={handlePlay} isDisabled={!videoRef}>
-            <MdPlayArrow />
+        <Tooltip placement="top" hasArrow={true} label={'Play Video'} openDelay={400}>
+          <Button onClick={handlePlay} isDisabled={!videoRef} size="xs" px={0}>
+            <MdPlayArrow size="16px" />
           </Button>
         </Tooltip>
 
-        <Tooltip placement="top-start" hasArrow={true} label={'Pause Video'} openDelay={400}>
-          <Button onClick={handlePause} isDisabled={!videoRef}>
-            <MdPause />
+        <Tooltip placement="top" hasArrow={true} label={'Pause Video'} openDelay={400}>
+          <Button onClick={handlePause} isDisabled={!videoRef} size="xs" px={0}>
+            <MdPause size="16px" />
           </Button>
         </Tooltip>
 
-        <Tooltip placement="top-start" hasArrow={true} label={'Forward 5 Seconds'} openDelay={400}>
-          <Button onClick={handleForward} isDisabled={!videoRef}>
-            <MdFastForward />
+        <Tooltip placement="top" hasArrow={true} label={'Forward 5 Seconds'} openDelay={400}>
+          <Button onClick={handleForward} isDisabled={!videoRef} size="xs" px={0}>
+            <MdFastForward size="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>
 
       <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
-        <Tooltip placement="top-start" hasArrow={true} label={'Loop'} openDelay={400}>
-          <Button onClick={handleLoop} isDisabled={!videoRef}>
-            {videoRef?.loop ? <MdLoop /> : <MdArrowRightAlt />}
+        <Tooltip placement="top" hasArrow={true} label={'Loop'} openDelay={400}>
+          <Button onClick={handleLoop} isDisabled={!videoRef} size="xs" px={0}>
+            {videoRef?.loop ? <MdLoop size="16px" /> : <MdArrowRightAlt size="16px" />}
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Sync on me'} openDelay={400}>
-          <Button onClick={handleSyncOnMe} isDisabled={!videoRef}>
-            <MdAccessTime />
+        <Tooltip placement="top" hasArrow={true} label={'Sync on me'} openDelay={400}>
+          <Button onClick={handleSyncOnMe} isDisabled={!videoRef} size="xs" px={0}>
+            <MdAccessTime size="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>
@@ -508,25 +508,25 @@ function ToolbarComponent(props: App): JSX.Element {
 
       {/* Local State Buttons - Only Changes the video state for the local user */}
       <ButtonGroup isAttached size="xs" colorScheme={'teal'} mx={1}>
-        <Tooltip placement="top-start" hasArrow={true} label={videoRef?.muted ? 'Unmute' : 'Mute'} openDelay={400}>
-          <Button onClick={handleMute} isDisabled={!videoRef}>
-            {videoRef?.muted ? <MdVolumeOff /> : <MdVolumeUp />}
+        <Tooltip placement="top" hasArrow={true} label={videoRef?.muted ? 'Unmute' : 'Mute'} openDelay={400}>
+          <Button onClick={handleMute} isDisabled={!videoRef} size="xs" px={0}>
+            {videoRef?.muted ? <MdVolumeOff size="16px" /> : <MdVolumeUp size="16px" />}
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Download Video'} openDelay={400}>
-          <Button onClick={handleDownload} isDisabled={!videoRef}>
-            <MdFileDownload />
+        <Tooltip placement="top" hasArrow={true} label={'Download Video'} openDelay={400}>
+          <Button onClick={handleDownload} isDisabled={!videoRef} size="xs" px={0}>
+            <MdFileDownload size="16px" />
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Screenshot'} openDelay={400}>
-          <Button onClick={handleScreenshot} isDisabled={!videoRef}>
-            <MdScreenshotMonitor />
+        <Tooltip placement="top" hasArrow={true} label={'Screenshot'} openDelay={400}>
+          <Button onClick={handleScreenshot} isDisabled={!videoRef} size="xs" px={0}>
+            <MdScreenshotMonitor size="16px" />
           </Button>
         </Tooltip>
-        <Popover placement="top-start" trigger="hover">
+        <Popover placement="top" trigger="hover">
           <PopoverTrigger>
-            <Button isDisabled={!videoRef}>
-              <MdInfoOutline />
+                <Button isDisabled={!videoRef} size="xs" px={0}>
+              <MdInfoOutline size="16px" />
             </Button>
           </PopoverTrigger>
           <PopoverContent fontSize={'sm'}>
@@ -653,39 +653,39 @@ const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
 
   return (
     <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
-      <Tooltip placement="top-start" hasArrow={true} label={'Rewind To Begining'} openDelay={400}>
-        <Button onClick={handleRewind}>
-          <MdFastRewind />
+      <Tooltip placement="top" hasArrow={true} label={'Rewind To Begining'} openDelay={400}>
+        <Button onClick={handleRewind} size="xs" px={0}>
+          <MdFastRewind size="16px" />
         </Button>
       </Tooltip>
 
-      <Tooltip placement="top-start" hasArrow={true} label={'Play Videos'} openDelay={400}>
-        <Button onClick={handlePlay}>
-          <MdPlayArrow />
+      <Tooltip placement="top" hasArrow={true} label={'Play Videos'} openDelay={400}>
+        <Button onClick={handlePlay} size="xs" px={0}>
+          <MdPlayArrow size="16px" />
         </Button>
       </Tooltip>
 
-      <Tooltip placement="top-start" hasArrow={true} label={'Pause Videos'} openDelay={400}>
-        <Button onClick={handleStop}>
-          <MdPause />
+      <Tooltip placement="top" hasArrow={true} label={'Pause Videos'} openDelay={400}>
+        <Button onClick={handleStop} size="xs" px={0}>
+          <MdPause size="16px" />
         </Button>
       </Tooltip>
 
-      <Tooltip placement="top-start" hasArrow={true} label={'Loop'} openDelay={400}>
-        <Button onClick={handleLoop}>
-          <MdLoop />
+      <Tooltip placement="top" hasArrow={true} label={'Loop'} openDelay={400}>
+        <Button onClick={handleLoop} size="xs" px={0}>
+          <MdLoop size="16px" />
         </Button>
       </Tooltip>
 
-      <Tooltip placement="top-start" hasArrow={true} label={'No Loop'} openDelay={400}>
-        <Button onClick={handleNoLoop}>
-          <MdArrowRightAlt />
+      <Tooltip placement="top" hasArrow={true} label={'No Loop'} openDelay={400}>
+        <Button onClick={handleNoLoop} size="xs" px={0}>
+          <MdArrowRightAlt size="16px" />
         </Button>
       </Tooltip>
 
-      <Tooltip placement="top-start" hasArrow={true} label={'Sync on me'} openDelay={400}>
-        <Button onClick={handleSyncOnMe}>
-          <MdAccessTime />
+      <Tooltip placement="top" hasArrow={true} label={'Sync on me'} openDelay={400}>
+        <Button onClick={handleSyncOnMe} size="xs" px={0}>
+          <MdAccessTime size="16px" />
         </Button>
       </Tooltip>
     </ButtonGroup>
