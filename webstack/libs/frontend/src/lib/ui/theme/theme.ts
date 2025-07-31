@@ -26,6 +26,9 @@ const styles = {
     body: {
       bg: mode('gray.50', '#323232')(props),
     },
+    '[id*="chakra-toast-manager-bottom"]': {
+       bottom: '44px !important',
+    },
   }),
 };
 
@@ -69,6 +72,16 @@ const components = {
     defaultProps: {
       variant: 'primary',
       colorScheme: 'primary',
+    },
+  },
+  Toast: {
+    baseStyle: {
+      container: {
+        bottom: '100px !important',
+      },
+    },
+    defaultProps: {
+      position: 'bottom',
     },
   },
   // Looking to change the color scheme?  Remember to change the Interactionbar.tsx's color scheme logic
