@@ -88,18 +88,6 @@ export function InteractionbarShortcuts() {
     '4',
     (event: KeyboardEvent): void | boolean => {
       event.stopPropagation();
-      setPrimaryActionMode('eraser');
-      setSelectedApp('');
-      setSelectedAppsIds([]);
-      clearLinkAppId();
-    },
-    { dependencies: [] }
-  );
-
-  useHotkeys(
-    '5',
-    (event: KeyboardEvent): void | boolean => {
-      event.stopPropagation();
       setPrimaryActionMode('linker');
       setSelectedApp('');
       setSelectedAppsIds([]);
@@ -107,6 +95,7 @@ export function InteractionbarShortcuts() {
     },
     { dependencies: [] }
   );
+
 
   return <></>;
 }

@@ -72,6 +72,9 @@ export function Whiteboard(props: WhiteboardProps) {
   const [lines, setLines] = useState<Y.Map<any>[]>([]);
   const rCurrentLine = useRef<Y.Map<any>>();
 
+  // Preview cursor state
+  const [cursorPosition, setCursorPosition] = useState<{ x: number; y: number } | null>(null);
+
   // Drag and Drop On Board
   const { dragProps, renderContent } = useDragAndDropBoard({ roomId: props.roomId, boardId: props.boardId });
 
@@ -215,6 +218,14 @@ export function Whiteboard(props: WhiteboardProps) {
   );
 
   const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
+    // Update cursor position for preview
+    if (primaryActionMode === 'pen') {
+      const point = getPoint(e.clientX, e.clientY);
+      setCursorPosition({ x: point[0], y: point[1] });
+    } else {
+      setCursorPosition(null);
+    }
+
     if (e.currentTarget.hasPointerCapture(e.pointerId) && e.pointerType !== 'touch') {
       draw(e.clientX, e.clientY);
     }
@@ -364,6 +375,20 @@ export function Whiteboard(props: WhiteboardProps) {
           {lines.map((line, i) => (
             <Line key={i} line={line} onClick={lineClicked} />
           ))}
+          
+          {/* Preview cursor */}
+          {cursorPosition && primaryActionMode === 'pen' && (
+            <circle
+              cx={cursorPosition.x}
+              cy={cursorPosition.y}
+              r={markerSize / 2}
+              fill="none"
+              stroke="#666666"
+              strokeWidth="1"
+              strokeOpacity="0.6"
+              strokeDasharray="2,2"
+            />
+          )}
         </g>
       </svg>
       {renderContent()}
