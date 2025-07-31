@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useParams } from 'react-router';
 import {
   Modal,
@@ -33,7 +33,7 @@ interface CreateKernelModalProps {
   onClose: () => void;
 }
 
-const availableKernelTypes = ['python3'];
+const availableKernelTypes = ['python3', 'ir', 'julia-1.10'];
 
 export function CreateKernelModal(props: CreateKernelModalProps): JSX.Element {
   // Params
@@ -137,7 +137,7 @@ export function CreateKernelModal(props: CreateKernelModalProps): JSX.Element {
             {kernelTypes.length > 0 ? (
               kernelTypes.filter(kernelTypeFilter).map((kernel) => (
                 <option key={kernel} value={kernel}>
-                  {kernel}
+                  &nbsp; {kernel === 'python3' ? 'Python' : kernel === 'ir' ? 'R' : 'Julia'} ({kernel})
                 </option>
               ))
             ) : (

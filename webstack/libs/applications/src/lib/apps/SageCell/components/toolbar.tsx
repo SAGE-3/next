@@ -248,12 +248,12 @@ export function ToolbarComponent(props: App): JSX.Element {
           isDisabled={(selected?.is_private && !access) || !canCreateKernels}
         >
           {
-            //show my kernels
+            // Show my kernels
             myKernels
-              .filter((el) => el.name === 'python3')
+              // .filter((el) => el.name === 'python3')
               .map((el) => (
                 <option value={el.kernel_id} key={el.kernel_id}>
-                  {el.alias} ({el.name === 'python3' ? 'Python' : el.name === 'r' ? 'R' : 'Julia'})
+                  {el.alias} ({el.name === 'python3' ? 'Python' : el.name === 'ir' ? 'R' : 'Julia'})
                 </option>
               ))
           }
@@ -631,12 +631,12 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
             </option>
           }
           {
-            //show my kernels
+            // Show my kernels
             myKernels
-              .filter((el) => el.name === 'python3')
+              // .filter((el) => el.name === 'python3')
               .map((el) => (
                 <option value={el.kernel_id} key={el.kernel_id}>
-                  {el.alias} ({el.name === 'python3' ? 'Python' : el.name === 'r' ? 'R' : 'Julia'})
+                  {el.alias} ({el.name === 'python3' ? 'Python' : el.name === 'ir' ? 'R' : 'Julia'})
                 </option>
               ))
           }
