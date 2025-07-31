@@ -11,6 +11,7 @@ import { useHexColor } from '@sage3/frontend';
 
 interface StatusBarProps {
   kernelName: string;
+  kernelLanguage: string;
   access: boolean;
   online: boolean;
   rank: number;
@@ -37,8 +38,9 @@ export const StatusBar = (props: StatusBarProps) => {
           </Badge>
         )}
 
-        <Tooltip label={'Rank in evaluation'} placement="top" hasArrow={true} openDelay={400} maxWidth={'fit-content'}>
-          <Text align={"center"} color="teal.500" fontSize={'lg'} fontWeight={'bold'}># {props.rank == 0 ? '' : props.rank}</Text>
+        <Tooltip label={'Current language'} placement="top" hasArrow={true} openDelay={400} maxWidth={'fit-content'}>
+          <Text align={"center"} color="teal.500" fontSize={'lg'} fontWeight={'bold'}
+            textTransform={'uppercase'}>{props.kernelLanguage}</Text>
         </Tooltip>
 
         {props.online ? ( // no kernel selected and no access
