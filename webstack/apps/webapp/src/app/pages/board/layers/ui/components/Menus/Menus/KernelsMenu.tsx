@@ -202,7 +202,7 @@ export function KernelsMenu(props: KernelsMenuProps) {
               <Box w="280px" whiteSpace={'nowrap'} textOverflow="ellipsis" overflow={'hidden'}>
                 {kernel.kernel_id}
               </Box>
-              <Box w="100px">{kernel.name}</Box>
+              <Box w="100px">{kernel.name === 'python3' ? 'Python' : kernel.name === 'ir' ? 'R' : 'Julia'}</Box>
               <Box w="100px">
                 <Tooltip placement="top" hasArrow={true} label={'Create SAGECell'} openDelay={400}>
                   <IconButton
