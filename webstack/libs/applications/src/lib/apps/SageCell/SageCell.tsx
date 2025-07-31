@@ -190,6 +190,15 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [access, apiStatus, kernels, s.kernel]);
 
+  // Watch the kernel changes to update the Editor language
+  useEffect(() => {
+    const selectedKernel = kernels.find((kernel) => kernel.kernel_id === s.kernel);
+    if (selectedKernel) {
+      const language = selectedKernel.name === 'python3' ? 'python' : selectedKernel.name === 'ir' ? 'r' : 'julia';
+      updateState(props._id, { language });
+    }
+  }, [s.kernel]);
+
   /**
    * Update local state if the online status changes
    * @param {boolean} online

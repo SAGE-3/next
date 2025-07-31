@@ -173,10 +173,6 @@ export function ToolbarComponent(props: App): JSX.Element {
 
   const handleSave = useCallback(
     (val: string) => {
-      // save cell code in asset manager
-      if (!val.endsWith('.py')) {
-        val += '.py';
-      }
       // Save the code in the asset manager
       if (roomId) {
         // Create a form to upload the file
@@ -357,7 +353,7 @@ export function ToolbarComponent(props: App): JSX.Element {
         onConfirm={handleSave}
         title="Save Code in Asset Manager"
         message="Select a file name:"
-        initiaValue={'sagecell-' + format(new Date(), 'yyyy-MM-dd-HH:mm:ss') + '.py'}
+        initiaValue={'sagecell-' + format(new Date(), 'yyyy-MM-dd-HH:mm:ss') + (s.language === 'python' ? '.py' : s.language === 'r' ? '.R' : '.jl')}
         cancelText="Cancel"
         confirmText="Save"
         confirmColor="green"
@@ -455,7 +451,7 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
   async function executeAppNoChecks(appid: string, userid: string) {
     // Get the code from the store
     const code = useAppStore.getState().apps.find((app) => app._id === appid)?.data.state.code;
-    // Get the kernel from the store, since function executed from monoaco editor
+    // Get the kernel from the store, since function executed from monaco editor
     const kernel = useStore.getState().kernel[appid];
     if (kernel && code) {
       const response = await useKernelStore.getState().executeCode(code, kernel, userid);
