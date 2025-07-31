@@ -149,13 +149,14 @@ export function ToolbarComponent(props: App): JSX.Element {
    * Download the stickie as a text file
    * @returns {void}
    */
-  const downloadPy = (): void => {
+  const downloadCode = (): void => {
     // Current date
     const dt = format(new Date(), 'yyyy-MM-dd-HH:mm:ss');
     // generate a URL containing the text of the note
     const txturl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(s.code);
+    const extension = s.language === 'python' ? '.py' : s.language === 'r' ? '.R' : '.jl';
     // Make a filename with username and date
-    const filename = 'sagecell-' + dt + '.py';
+    const filename = 'sagecell-' + dt + extension;
     // Go for download
     downloadFile(txturl, filename);
   };
@@ -172,10 +173,6 @@ export function ToolbarComponent(props: App): JSX.Element {
 
   const handleSave = useCallback(
     (val: string) => {
-      // save cell code in asset manager
-      if (!val.endsWith('.py')) {
-        val += '.py';
-      }
       // Save the code in the asset manager
       if (roomId) {
         // Create a form to upload the file
@@ -248,12 +245,12 @@ export function ToolbarComponent(props: App): JSX.Element {
           isDisabled={(selected?.is_private && !access) || !canCreateKernels}
         >
           {
-            //show my kernels
+            // Show my kernels
             myKernels
-              .filter((el) => el.name === 'python3')
+              // .filter((el) => el.name === 'python3')
               .map((el) => (
                 <option value={el.kernel_id} key={el.kernel_id}>
-                  {el.alias} ({el.name === 'python3' ? 'Python' : el.name === 'r' ? 'R' : 'Julia'})
+                  {el.alias} ({el.name === 'python3' ? 'Python' : el.name === 'ir' ? 'R' : 'Julia'})
                 </option>
               ))
           }
@@ -345,7 +342,7 @@ export function ToolbarComponent(props: App): JSX.Element {
         </Tooltip>
 
         <Tooltip placement="top" hasArrow={true} label={'Download Code'} openDelay={400}>
-                <Button onClick={downloadPy} _hover={{ opacity: 0.7 }} size="xs" px={0}>
+          <Button onClick={downloadCode} _hover={{ opacity: 0.7 }} size="xs" px={0}>
             <MdFileDownload size="16px" />
           </Button>
         </Tooltip>
@@ -360,7 +357,7 @@ export function ToolbarComponent(props: App): JSX.Element {
         onConfirm={handleSave}
         title="Save Code in Asset Manager"
         message="Select a file name:"
-        initiaValue={'sagecell-' + format(new Date(), 'yyyy-MM-dd-HH:mm:ss') + '.py'}
+        initiaValue={'sagecell-' + format(new Date(), 'yyyy-MM-dd-HH:mm:ss') + (s.language === 'python' ? '.py' : s.language === 'r' ? '.R' : '.jl')}
         cancelText="Cancel"
         confirmText="Save"
         confirmColor="green"
@@ -458,7 +455,7 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
   async function executeAppNoChecks(appid: string, userid: string) {
     // Get the code from the store
     const code = useAppStore.getState().apps.find((app) => app._id === appid)?.data.state.code;
-    // Get the kernel from the store, since function executed from monoaco editor
+    // Get the kernel from the store, since function executed from monaco editor
     const kernel = useStore.getState().kernel[appid];
     if (kernel && code) {
       const response = await useKernelStore.getState().executeCode(code, kernel, userid);
@@ -507,32 +504,6 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
     });
   };
 
-  // This function efficiently calculates the enclosing bounding box for a given set of rectangles.
-  function getBoundingBox(rectangles: Array<{ id: string; x: number; y: number; width: number; height: number }>) {
-    let minX = Infinity,
-      minY = Infinity,
-      maxX = -Infinity,
-      maxY = -Infinity;
-
-    rectangles.forEach(({ x, y, width, height }) => {
-      minX = Math.min(minX, x);
-      minY = Math.min(minY, y);
-      maxX = Math.max(maxX, x + width);
-      maxY = Math.max(maxY, y + height);
-    });
-    const width = maxX - minX;
-    const height = maxY - minY;
-    const boundingBox = {
-      x: minX,
-      y: minY,
-      width: width,
-      height: height,
-      orientation: height > 1.3 * width ? 'column' : width > 1.3 * height ? 'row' : 'squarish',
-    };
-
-    return boundingBox;
-  }
-
   // Calculate evaluation order
   const setEvaluationOrder = () => {
     // Get the sizes of the selected apps
@@ -548,22 +519,12 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
       cy: app.data.position.y + app.data.size.height / 2,
     }));
 
-    // Get the bounding box of the group and orientation
-    // const box = getBoundingBox(boxes);
-
-    // Sort rectangles based on orientation
-    // const sorted = [...boxes].sort((a, b) =>
-    //   box.orientation === "column" ? a.cy - b.cy :
-    //     box.orientation === "row" ? a.cx - b.cx :
-    //       0
-    // );
     const sorted = [...boxes].sort((a, b) =>
       // If box `a` and `b` overlap in y, sort by x
       // Otherwise, sort by y
       Math.max(a.y, b.y) < Math.min(a.y + a.height, b.y + b.height) ? a.x - b.x : a.y - b.y
     );
 
-    // if (box.orientation !== "squarish") {
     // Array of update to batch at once
     const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
     sorted.forEach((app, index) => {
@@ -571,7 +532,6 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
     });
     // Update all the apps at once
     updateStateBatch(ps);
-    // }
   };
 
   /**
@@ -635,12 +595,12 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
             </option>
           }
           {
-            //show my kernels
+            // Show my kernels
             myKernels
-              .filter((el) => el.name === 'python3')
+              // .filter((el) => el.name === 'python3')
               .map((el) => (
                 <option value={el.kernel_id} key={el.kernel_id}>
-                  {el.alias} ({el.name === 'python3' ? 'Python' : el.name === 'r' ? 'R' : 'Julia'})
+                  {el.alias} ({el.name === 'python3' ? 'Python' : el.name === 'ir' ? 'R' : 'Julia'})
                 </option>
               ))
           }

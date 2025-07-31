@@ -190,6 +190,15 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [access, apiStatus, kernels, s.kernel]);
 
+  // Watch the kernel changes to update the Editor language
+  useEffect(() => {
+    const selectedKernel = kernels.find((kernel) => kernel.kernel_id === s.kernel);
+    if (selectedKernel) {
+      const language = selectedKernel.name === 'python3' ? 'python' : selectedKernel.name === 'ir' ? 'r' : 'julia';
+      updateState(props._id, { language });
+    }
+  }, [s.kernel]);
+
   /**
    * Update local state if the online status changes
    * @param {boolean} online
@@ -944,7 +953,7 @@ function AppComponent(props: App): JSX.Element {
     <AppWindow app={props} hideBackgroundIcon={FaPython}>
       <>
         <Box className="sc" h={'calc(100% - 1px)'} w={'100%'} display="flex" flexDirection="column" backgroundColor={bgColor}>
-          <StatusBar kernelName={selectedKernelName} access={access} online={apiStatus} rank={props.data.state.rank} />
+          <StatusBar kernelName={selectedKernelName} kernelLanguage={s.language} access={access} online={apiStatus} rank={props.data.state.rank} />
           <Box
             w={'100%'}
             h={'100%'}
