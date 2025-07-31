@@ -68,8 +68,8 @@ function ToolbarComponent(props: App): JSX.Element {
 
   return (<>
     <ButtonGroup isAttached size="xs" colorScheme="teal">
-      <Tooltip placement="top-start" hasArrow={true} label={'Reload Page'} openDelay={400}>
-        <Button onClick={reloadFrame}>
+      <Tooltip placement="top" hasArrow={true} label={'Reload Page'} openDelay={400}>
+        <Button onClick={reloadFrame} size='xs' px={0}>
           <MdRefresh />
         </Button>
       </Tooltip>

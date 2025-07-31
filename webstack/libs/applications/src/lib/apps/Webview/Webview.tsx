@@ -513,21 +513,21 @@ function ToolbarComponent(props: App): JSX.Element {
       {clientIsElectron ? (
         <>
           <ButtonGroup isAttached size="xs" colorScheme="teal">
-            <Tooltip placement="top-start" hasArrow={true} label={'Go Back'} openDelay={400}>
-              <Button onClick={goBack}>
-                <MdArrowBack />
+            <Tooltip placement="top" hasArrow={true} label={'Go Back'} openDelay={400}>
+              <Button onClick={goBack} size="xs" px={0}>
+                <MdArrowBack size="16px" />
               </Button>
             </Tooltip>
 
-            <Tooltip placement="top-start" hasArrow={true} label={'Go Forward'} openDelay={400}>
-              <Button onClick={goForward}>
-                <MdArrowForward />
+            <Tooltip placement="top" hasArrow={true} label={'Go Forward'} openDelay={400}>
+              <Button onClick={goForward} size="xs" px={0}>
+                <MdArrowForward size="16px" />
               </Button>
             </Tooltip>
 
-            <Tooltip placement="top-start" hasArrow={true} label={'Reload Page'} openDelay={400}>
-              <Button onClick={() => view.reload()}>
-                <MdRefresh />
+            <Tooltip placement="top" hasArrow={true} label={'Reload Page'} openDelay={400}>
+              <Button onClick={() => view.reload()} size="xs" px={0}>
+                <MdRefresh size="16px" />
               </Button>
             </Tooltip>
           </ButtonGroup>
@@ -546,42 +546,42 @@ function ToolbarComponent(props: App): JSX.Element {
             </InputGroup>
           </form>
 
-          <Tooltip placement="top-start" hasArrow={true} label={'Go to Web Address'} openDelay={400}>
-            <Button onClick={changeUrl} size="xs" variant="solid" colorScheme="teal">
-              <MdOutlineSubdirectoryArrowLeft />
+          <Tooltip placement="top" hasArrow={true} label={'Go to Web Address'} openDelay={400}>
+            <Button onClick={changeUrl} size="xs" variant="solid" colorScheme="teal" px={0}>
+              <MdOutlineSubdirectoryArrowLeft size="16px" />
             </Button>
           </Tooltip>
 
           <ButtonGroup isAttached size="xs" colorScheme="teal">
-            <Tooltip placement="top-start" hasArrow={true} label={'Zoom In'} openDelay={400}>
-              <Button onClick={() => handleZoom('zoom-in')}>
-                <MdAdd />
+            <Tooltip placement="top" hasArrow={true} label={'Zoom In'} openDelay={400}>
+              <Button onClick={() => handleZoom('zoom-in')} size="xs" px={0}>
+                <MdAdd size="16px" />
               </Button>
             </Tooltip>
 
-            <Tooltip placement="top-start" hasArrow={true} label={'Zoom Out'} openDelay={400}>
-              <Button onClick={() => handleZoom('zoom-out')}>
-                <MdRemove />
+            <Tooltip placement="top" hasArrow={true} label={'Zoom Out'} openDelay={400}>
+              <Button onClick={() => handleZoom('zoom-out')} size="xs" px={0}>
+                <MdRemove size="16px" />
               </Button>
             </Tooltip>
 
-            <Tooltip placement="top-start" hasArrow={true} label={'Mute Webpage'} openDelay={400}>
-              <Button onClick={() => setMute(props._id, !mute)}>{mute ? <MdVolumeOff /> : <MdVolumeUp />}</Button>
+            <Tooltip placement="top" hasArrow={true} label={'Mute Webpage'} openDelay={400}>
+              <Button onClick={() => setMute(props._id, !mute)} size="xs" px={0}>{mute ? <MdVolumeOff size="16px" /> : <MdVolumeUp size="16px" />}</Button>
             </Tooltip>
 
-            <Tooltip placement="top-start" hasArrow={true} label={'Save URL in Asset Manager'} openDelay={400}>
-              <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }}>
-                <MdFileUpload />
+            <Tooltip placement="top" hasArrow={true} label={'Save URL in Asset Manager'} openDelay={400}>
+              <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }} size="xs" px={0}>
+                <MdFileUpload size="16px" />
               </Button>
             </Tooltip>
 
-            <Tooltip placement="top-start" hasArrow={true} label={'Copy URL'} openDelay={400}>
-              <Button onClick={handleCopy}>{<MdCopyAll />}</Button>
+            <Tooltip placement="top" hasArrow={true} label={'Copy URL'} openDelay={400}>
+              <Button onClick={handleCopy} size="xs" px={0}>{<MdCopyAll size="16px" />}</Button>
             </Tooltip>
 
-            <Tooltip placement="top-start" hasArrow={true} label={'Open in Desktop'} openDelay={400}>
-              <Button onClick={handleOpen}>
-                <MdOpenInNew />
+            <Tooltip placement="top" hasArrow={true} label={'Open in Desktop'} openDelay={400}>
+              <Button onClick={handleOpen} size="xs" px={0}>
+                <MdOpenInNew size="16px" />
               </Button>
             </Tooltip>
           </ButtonGroup>
@@ -600,12 +600,12 @@ function ToolbarComponent(props: App): JSX.Element {
         </>
       ) : (
         <>
-          <Tooltip placement="top-start" hasArrow={true} label={'Open page in new tab.'} openDelay={400}>
+          <Tooltip placement="top" hasArrow={true} label={'Open page in new tab.'} openDelay={400}>
             <Button onClick={handleOpen} size="xs" variant="solid" colorScheme="teal">
               Open
             </Button>
           </Tooltip>
-          <Tooltip placement="top-start" hasArrow={true} label={'Copy URL'} openDelay={400}>
+          <Tooltip placement="top" hasArrow={true} label={'Copy URL'} openDelay={400}>
             <Button onClick={handleCopy} size="xs" variant="solid" colorScheme="teal">
               Copy
             </Button>

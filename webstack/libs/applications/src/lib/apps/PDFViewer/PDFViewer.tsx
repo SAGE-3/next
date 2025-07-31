@@ -552,13 +552,13 @@ function ToolbarComponent(props: App): JSX.Element {
       {/* Page display controls */}
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top" hasArrow={true} label={'Remove Page'} openDelay={400}>
-          <Button isDisabled={s.displayPages <= 1} onClick={() => handleRemovePage()}>
+          <Button isDisabled={s.displayPages <= 1} onClick={() => handleRemovePage()} size='xs' p={0}>
             <MdRemove size="16px"/>
           </Button>
         </Tooltip>
 
         <Tooltip placement="top" hasArrow={true} label={'Add Page'} openDelay={400}>
-          <Button isDisabled={s.displayPages >= s.numPages} onClick={() => handleAddPage()}>
+          <Button isDisabled={s.displayPages >= s.numPages} onClick={() => handleAddPage()} size='xs' p={0}>
             <MdAdd size="16px"/>
           </Button>
         </Tooltip>
@@ -567,25 +567,25 @@ function ToolbarComponent(props: App): JSX.Element {
       {/* Primary navigation controls */}
       <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
         <Tooltip placement="top" hasArrow={true} label={'1st Page'} openDelay={400}>
-          <Button isDisabled={s.currentPage === 0} onClick={() => handleFirst()}>
+          <Button isDisabled={s.currentPage === 0} onClick={() => handleFirst()} size='xs' p={0}>
             <MdSkipPrevious size="16px"/>
           </Button>
         </Tooltip>
 
         <Tooltip placement="top" hasArrow={true} label={'Previous Page'} openDelay={400}>
-          <Button isDisabled={s.currentPage === 0} onClick={() => handlePrev()}>
+          <Button isDisabled={s.currentPage === 0} onClick={() => handlePrev()} size='xs' p={0}>
             <MdNavigateBefore size="16px"/>
           </Button>
         </Tooltip>
 
         <Tooltip placement="top" hasArrow={true} label={'Next Page'} openDelay={400}>
-          <Button isDisabled={s.currentPage >= Math.max(0, s.numPages - s.displayPages)} onClick={() => handleNext()}>
+          <Button isDisabled={s.currentPage >= Math.max(0, s.numPages - s.displayPages)} onClick={() => handleNext()} size='xs' p={0}>
             <MdNavigateNext size="16px"/>
           </Button>
         </Tooltip>
 
         <Tooltip placement="top" hasArrow={true} label={'Last Page'} openDelay={400}>
-          <Button isDisabled={s.currentPage >= Math.max(0, s.numPages - s.displayPages)} onClick={() => handleLast()}>
+          <Button isDisabled={s.currentPage >= Math.max(0, s.numPages - s.displayPages)} onClick={() => handleLast()} size='xs' p={0}>
             <MdSkipNext size="16px"/>
           </Button>
         </Tooltip>
@@ -594,13 +594,13 @@ function ToolbarComponent(props: App): JSX.Element {
       {/* Secondary navigation and actions */}
       <ButtonGroup isAttached size="xs" colorScheme="teal" mx={0}>
         <Tooltip placement="top" hasArrow={true} label={'Back 10 pages'} openDelay={400}>
-          <Button isDisabled={s.currentPage === 0} onClick={() => handlePrev(10)}>
+          <Button isDisabled={s.currentPage === 0} onClick={() => handlePrev(10)} size='xs' p={0}>
             <MdFastRewind size="16px"/>
           </Button>
         </Tooltip>
 
         <Tooltip placement="top" hasArrow={true} label={'Forward 10 pages'} openDelay={400}>
-          <Button isDisabled={s.currentPage >= Math.max(0, s.numPages - s.displayPages)} onClick={() => handleNext(10)}>
+          <Button isDisabled={s.currentPage >= Math.max(0, s.numPages - s.displayPages)} onClick={() => handleNext(10)} size='xs' p={0}>
             <MdFastForward size="16px"/>
           </Button>
         </Tooltip>
@@ -615,6 +615,8 @@ function ToolbarComponent(props: App): JSX.Element {
                 downloadFile(dl, filename);
               }
             }}
+            size='xs'
+            p={0}
           >
             <MdFileDownload size="16px"/>
           </Button>
@@ -702,13 +704,13 @@ const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
       {/* Batch page display controls */}
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top" hasArrow={true} label={'Remove Page'} openDelay={400}>
-          <Button onClick={() => handleRemovePage()}>
+          <Button onClick={() => handleRemovePage()} size='xs' p={0}>
             <MdRemove size="16px"/>
           </Button>
         </Tooltip>
 
         <Tooltip placement="top" hasArrow={true} label={'Add Page'} openDelay={400}>
-          <Button onClick={() => handleAddPage()}>
+          <Button onClick={() => handleAddPage()} size='xs' p={0}>
             <MdAdd size="16px"/>
           </Button>
         </Tooltip>
@@ -717,25 +719,25 @@ const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
       {/* Batch navigation controls */}
       <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
         <Tooltip placement="top" hasArrow={true} label={'1st Page'} openDelay={400}>
-          <Button onClick={() => handleFirstPage()}>
+          <Button onClick={() => handleFirstPage()} size='xs' p={0}>
             <MdSkipPrevious size="16px"/>
           </Button>
         </Tooltip>
 
         <Tooltip placement="top" hasArrow={true} label={'Previous Page'} openDelay={400}>
-          <Button onClick={() => handlePrev()}>
+          <Button onClick={() => handlePrev()} size='xs' p={0}>
             <MdNavigateBefore size="16px"/>
           </Button>
         </Tooltip>
 
         <Tooltip placement="top" hasArrow={true} label={'Next Page'} openDelay={400}>
-          <Button onClick={() => handleNext()}>
+          <Button onClick={() => handleNext()} size='xs' p={0}>
             <MdNavigateNext size="16px"/>
           </Button>
         </Tooltip>
 
         <Tooltip placement="top" hasArrow={true} label={'Last Page'} openDelay={400}>
-          <Button onClick={() => handleLastPage()}>
+          <Button onClick={() => handleLastPage()} size='xs' p={0}>
             <MdSkipNext size="16px"/>
           </Button>
         </Tooltip>

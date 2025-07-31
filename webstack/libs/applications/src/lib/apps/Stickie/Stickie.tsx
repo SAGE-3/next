@@ -366,47 +366,47 @@ function ToolbarComponent(props: App): JSX.Element {
   return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal" mr="1">
-        <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
-          <Button isDisabled={s.fontSize <= 8 || locked} onClick={() => handleDecreaseFont()}>
-            <MdRemove />
+        <Tooltip placement="top" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
+          <Button isDisabled={s.fontSize <= 8 || locked} onClick={() => handleDecreaseFont()} size="xs" px={0}>
+            <MdRemove size="16px" />
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Current Font Size'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Current Font Size'} openDelay={400}>
           <Box px={2} m={0} height={'24px'} lineHeight={'24px'} fontSize="12px" background={fontSizeBackground} color={fontSizeColor}>
             {s.fontSize}
           </Box>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
-          <Button isDisabled={s.fontSize > 128 || locked} onClick={() => handleIncreaseFont()}>
-            <MdAdd />
+        <Tooltip placement="top" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
+          <Button isDisabled={s.fontSize > 128 || locked} onClick={() => handleIncreaseFont()} size="xs" px={0}>
+            <MdAdd size="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>
       {yours && (
-        <Tooltip placement="top-start" hasArrow={true} label={`${locked ? 'Unlock' : 'Lock'} Stickie`} openDelay={400}>
-          <Button onClick={lockUnlock} colorScheme="teal" size="xs" mx={1}>
-            {locked ? <MdLock /> : <MdLockOpen />}
+        <Tooltip placement="top" hasArrow={true} label={`${locked ? 'Unlock' : 'Lock'} Stickie`} openDelay={400}>
+          <Button onClick={lockUnlock} colorScheme="teal" size="xs" mx={1} px={0}>
+            {locked ? <MdLock size="16px" /> : <MdLockOpen size="16px" />}
           </Button>
         </Tooltip>
       )}
       <ColorPicker onChange={handleColorChange} selectedColor={s.color as SAGEColors} size="xs" disabled={locked} />
 
       <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
-        <Tooltip placement="top-start" hasArrow={true} label={'Save in Asset Manager'} openDelay={400}>
-          <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }} isDisabled={s.text.length === 0}>
-            <MdFileUpload />
+        <Tooltip placement="top" hasArrow={true} label={'Save in Asset Manager'} openDelay={400}>
+          <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }} isDisabled={s.text.length === 0} size="xs" px={0}>
+            <MdFileUpload size="16px" />
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Download as Markdown'} openDelay={400}>
-          <Button onClick={downloadMd}>
-            <MdFileDownload />
+        <Tooltip placement="top" hasArrow={true} label={'Download as Markdown'} openDelay={400}>
+          <Button onClick={downloadMd} size="xs" px={0}>
+            <MdFileDownload size="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>
 
       {/* Extra Actions */}
       {/* <ButtonGroup isAttached size="xs" colorScheme="teal" mr={1}>
-        <Menu placement="top-start">
+        <Menu placement="top">
           <Tooltip hasArrow={true} label={'Actions'} openDelay={300}>
             <MenuButton as={Button} colorScheme="teal" aria-label="layout">
               <MdMenu />
@@ -435,7 +435,7 @@ function ToolbarComponent(props: App): JSX.Element {
 
       {/* Remote Action in Python */}
       {/* <ButtonGroup isAttached size="xs" colorScheme="orange" mr={0}>
-        <Menu placement="top-start">
+        <Menu placement="top">
           <Tooltip hasArrow={true} label={'Remote Actions'} openDelay={300}>
             <MenuButton as={Button} colorScheme="orange" aria-label="layout">
               <MdMenu />
@@ -567,31 +567,31 @@ const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
   return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
-        <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
-          <Button onClick={() => handleDecreaseFont()}>
-            <MdRemove />
+        <Tooltip placement="top" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
+          <Button onClick={() => handleDecreaseFont()} size="xs" px={0}>
+            <MdRemove size="16px" />
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Set Font Size'} openDelay={400}>
-          <Button onClick={() => handleSetFont()}>{Math.min(...props.apps.map((app) => app.data.state.fontSize))}</Button>
+        <Tooltip placement="top" hasArrow={true} label={'Set Font Size'} openDelay={400}>
+          <Button onClick={() => handleSetFont()} size="xs" px={0}>{Math.min(...props.apps.map((app) => app.data.state.fontSize))}</Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
-          <Button onClick={() => handleIncreaseFont()}>
-            <MdAdd />
+        <Tooltip placement="top" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
+          <Button onClick={() => handleIncreaseFont()} size="xs" px={0}>
+            <MdAdd size="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>
 
       <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
-        <Tooltip placement="top-start" hasArrow={true} label={'Lock Stickies'} openDelay={400}>
-          <Button onClick={() => handleLock()}>
-            <MdLock />
+        <Tooltip placement="top" hasArrow={true} label={'Lock Stickies'} openDelay={400}>
+          <Button onClick={() => handleLock()} size="xs" px={0}>
+            <MdLock size="16px" />
           </Button>
         </Tooltip>
 
-        <Tooltip placement="top-start" hasArrow={true} label={'Unlock Stickies'} openDelay={400}>
-          <Button onClick={() => handleUnlock()}>
-            <MdLockOpen />
+        <Tooltip placement="top" hasArrow={true} label={'Unlock Stickies'} openDelay={400}>
+                <Button onClick={() => handleUnlock()} size="xs" px={0}>
+            <MdLockOpen size="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>
