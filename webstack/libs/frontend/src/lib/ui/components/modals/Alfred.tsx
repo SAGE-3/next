@@ -45,6 +45,7 @@ import {
   MdInfoOutline,
   MdSettings,
   MdMic,
+  MdStop,
 } from 'react-icons/md';
 import { v5 as uuidv5 } from 'uuid';
 
@@ -398,11 +399,10 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
   const [listIndex, setListIndex] = useState(0);
   const [buttonList, setButtonList] = useState<JSX.Element[]>([]);
   // colors
-  const intelligenceColor = useColorModeValue('purple.500', 'purple.400');
+  const intelligenceColor = useColorModeValue('purple.500', 'purple.300');
   const { isOpen: editSettingsIsOpen, onOpen: editSettingsOnOpen, onClose: editSettingsOnClose } = useDisclosure();
   // Default mic color
   const [recording, setRecording] = useState(false);
-  const micColorRecording = useColorModeValue('green.400', 'green.600');
 
   // Select the file when clicked
   const handleChange = (event: React.FormEvent<HTMLInputElement>) => {
@@ -614,18 +614,27 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
     }
   };
 
+  const handleOnClose = () => {
+    if (recording) {
+      triggerVoice();
+    }
+    props.onClose();
+  };
+
   return (
     <>
       <Modal
         isOpen={props.isOpen}
-        onClose={props.onClose}
+        onClose={() => handleOnClose()}
         size="xl"
         initialFocusRef={initialRef}
         blockScrollOnMount={false}
         scrollBehavior={'inside'}
+        isCentered
+
       >
         <ModalOverlay />
-        <ModalContent maxH={'30vh'} top={'4rem'}>
+        <ModalContent maxH={'30vh'} top={'4rem'} minWidth="800px">
           <HStack>
             {/* Search box */}
             <InputGroup>
@@ -649,9 +658,9 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
 
             <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Voice to text - Click and speak'} openDelay={400}>
               <Button p={0} m={'8px 0px 8px 0px'} disabled={!('webkitSpeechRecognition' in window)} onClick={triggerVoice}
-                background={recording ? micColorRecording : 'gray.100'}
-                _hover={{ background: recording ? micColorRecording : 'gray.200' }}>
-                <MdMic size="24px" />
+              colorScheme={recording ? 'red' : 'gray'}>
+              
+               {recording ?<MdStop size="24px" />: <MdMic size="24px" />  }
               </Button>
             </Tooltip>
 
