@@ -154,7 +154,7 @@ function AppComponent(props: App): JSX.Element {
   // Colors for Dark theme and light theme
   // Chat Bubble Colors
   const myColor = useHexColor(`blue.300`);
-  const sageColor = useHexColor('purple.200');
+  const sageColor = "#bec6dc"
   const aiTypingColor = useHexColor('orange.300');
   const otherUserColor = useHexColor('gray.300');
   // Background, scrollbar, and Foreground Colors
