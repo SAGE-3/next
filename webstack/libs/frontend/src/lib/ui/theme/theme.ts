@@ -26,6 +26,9 @@ const styles = {
     body: {
       bg: mode('gray.50', '#323232')(props),
     },
+    '[id*="chakra-toast-manager-bottom"]': {
+       bottom: '44px !important',
+    },
   }),
 };
 

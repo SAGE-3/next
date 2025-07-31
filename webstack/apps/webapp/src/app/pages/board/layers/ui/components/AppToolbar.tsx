@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2025. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -261,7 +261,8 @@ export function AppToolbar(props: AppToolbarProps) {
         setAppToolbarPosition(appBottomPosition);
       }
     }
-  }, [app?.data.position, app?.data.size, scale, boardPosition.x, boardPosition.y, window.innerHeight, window.innerWidth]);
+  }, [scale, boardPosition.x, boardPosition.y, window.innerHeight, window.innerWidth]);
+  // app?.data.position, app?.data.size
 
   // Hooks for getAppTags()
   const [visibleTags, setVisibleTags] = useState<string[]>([]);
@@ -821,14 +822,18 @@ export function AppToolbar(props: AppToolbarProps) {
           )}
         >
           <>
+            <Box display="flex" flexDirection="row" alignItems="center" justifyContent="space-between" width="100%">
+              <Box display="flex" flexDirection="row" alignItems="center" justifyContent="left" width="100%">
             <Component key={app._id} {...app}></Component>
+            </Box>
+            <Box display="flex" flexDirection="row" alignItems="center" justifyContent="right" width="100%">
             {/* Application Information Popover */}
             <Popover trigger="hover">
               {({ isOpen, onClose }) => (
                 <>
                   <PopoverTrigger>
                     <Button backgroundColor={commonButtonColors} size="xs" mx="1" p={0}>
-                      <MdInfoOutline fontSize={'18px'} color={buttonTextColor} />
+                      <MdInfoOutline fontSize={'16px'} color={buttonTextColor} />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent fontSize={'sm'} width={'375px'}>
@@ -859,28 +864,30 @@ export function AppToolbar(props: AppToolbarProps) {
             {/* Hamburger */}
             <Menu placement="top-start">
 
-              <Tooltip placement="top" hasArrow={true} label={'Focus Mode'} openDelay={400} ml="1">
-                <Button onClick={onFocusMode} backgroundColor={commonButtonColors} size="xs" mr="1" p={0}
-                  isDisabled={!canPin || doNotFocus.includes(app.data.type)}>
-                  <MdCenterFocusStrong size="18px" color={buttonTextColor} />
-                </Button>
-              </Tooltip>
+              {/*
+                <Tooltip placement="top" hasArrow={true} label={'Focus Mode'} openDelay={400} ml="1">
+                  <Button onClick={onFocusMode} backgroundColor={commonButtonColors} size="xs" mr="1" p={0}
+                    isDisabled={!canPin || doNotFocus.includes(app.data.type)}>
+                    <MdCenterFocusStrong size="16px" color={buttonTextColor} />
+                  </Button>
+                </Tooltip>
+              */}
 
-              <Tooltip hasArrow={true} label={'Actions'} openDelay={300}>
+              <Tooltip hasArrow={true} label={'Actions'} openDelay={300} placement="top">
                 <MenuButton size="xs" as={Button} backgroundColor={commonButtonColors} mr="1" p={0} display="grid" placeItems="center">
-                  <MdMenu size="14px" color={buttonTextColor} />
+                  <MdMenu size="16px" color={buttonTextColor} />
                 </MenuButton>
               </Tooltip>
               <MenuList minWidth="150px" fontSize={'sm'} py="1px" m="0">
                 <MenuItem
-                  icon={app.data.pinned ? <MdPushPin size="18px" /> : <MdOutlinePushPin size="18px" />}
+                  icon={app.data.pinned ? <MdPushPin size="16px" /> : <MdOutlinePushPin size="16px" />}
                   onClick={togglePin}
                   isDisabled={!canPin}
                 >
                   {app.data.pinned ? 'Unpin Application' : 'Pin Application'}
                 </MenuItem>
                 <MenuItem
-                  icon={<MdCopyAll size="18px" />}
+                  icon={<MdCopyAll size="16px" />}
                   onClick={() => duplicate([app._id])}
                   isDisabled={!canDuplicateApp}
                   py="1px"
@@ -889,15 +896,15 @@ export function AppToolbar(props: AppToolbarProps) {
                   Duplicate Application
                 </MenuItem>
                 <MenuDivider />
-                <MenuItem icon={<MdTv size="18px" />} onClick={() => scaleApp()} py="1px" m="0">
+                <MenuItem icon={<MdTv size="16px" />} onClick={() => scaleApp()} py="1px" m="0">
                   {previousSize.app === app._id && previousSize.set ? 'Restore' : 'Present inside Viewport'}
                 </MenuItem>
-                <MenuItem icon={<MdZoomOutMap size="18px" />} onClick={() => moveToApp()} py="1px" m="0">
+                <MenuItem icon={<MdZoomOutMap size="16px" />} onClick={() => moveToApp()} py="1px" m="0">
                   {previousLocation.set && previousLocation.app === app._id ? 'Zoom Back' : 'Zoom to Application'}
                 </MenuItem>
                 <MenuDivider />
 
-                <MenuItem icon={<MdDeselect size="18px" />} onClick={() => setSelectedApp('')} py="1px" m="0">
+                <MenuItem icon={<MdDeselect size="16px" />} onClick={() => setSelectedApp('')} py="1px" m="0">
                   Deselect Application
                 </MenuItem>
               </MenuList>
@@ -905,7 +912,7 @@ export function AppToolbar(props: AppToolbarProps) {
 
             <Tooltip placement="top" hasArrow={true} label={'Delete Application'} openDelay={400} ml="1">
               <Button onClick={onDeleteOpen} colorScheme="red" size="xs" mr="1" p={0} isDisabled={!canDeleteApp}>
-                <HiOutlineTrash size="18px" />
+                <HiOutlineTrash size="16px" />
               </Button>
             </Tooltip>
 
@@ -923,6 +930,8 @@ export function AppToolbar(props: AppToolbarProps) {
                 xOffSet={Math.max(0, (position.x - 150) / window.innerWidth)}
               />
             )}
+            </Box>
+            </Box>
           </>
         </ErrorBoundary>
       );
@@ -931,7 +940,7 @@ export function AppToolbar(props: AppToolbarProps) {
       return (
         <Tooltip placement="top" hasArrow={true} label={'Close Application'} openDelay={400} ml="1">
           <Button onClick={() => app?._id && deleteApp(app._id)} backgroundColor={commonButtonColors} size="xs" mr="1" p={0}>
-            <HiOutlineTrash size="18px" color={buttonTextColor} />
+            <HiOutlineTrash size="16px" color={buttonTextColor} />
           </Button>
         </Tooltip>
       );
@@ -1031,10 +1040,11 @@ export function AppToolbar(props: AppToolbarProps) {
         transition="opacity 0.7s"
         display="flex"
         opacity={`${appDragging ? '0' : '1'}`}
+
       >
         <Box display="flex" flexDirection="column">
-          <Box display="flex" flexDirection="row">
-            <Text textAlign="left" mx={0} p={0} color={textColor} fontSize={14} fontWeight="bold" h={'auto'} userSelect={'none'}>
+          <Box display="flex" flexDirection="row" alignItems="center">
+            <Text textAlign="left" ml={1} mr={2} p={0} color={textColor} fontSize={14} fontWeight="bold" h={'auto'} userSelect={'none'}>
               {app?.data.type}
             </Text>
             <Box display={showTags ? 'flex' : 'none'} pl="1">

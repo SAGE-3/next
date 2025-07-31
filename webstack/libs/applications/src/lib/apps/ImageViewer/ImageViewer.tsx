@@ -200,7 +200,7 @@ function ToolbarComponent(props: App): JSX.Element {
   return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Download Image'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Download Image'} openDelay={400}>
           <Button
             onClick={() => {
               if (file) {
@@ -214,19 +214,23 @@ function ToolbarComponent(props: App): JSX.Element {
                 downloadFile(url, filename);
               }
             }}
+            size='xs'
+            px={0}
           >
-            <MdFileDownload />
+            <MdFileDownload size="16px"/>
           </Button>
         </Tooltip>
         <div style={{ display: s.boxes ? (Object.keys(s.boxes).length !== 0 ? 'flex' : 'none') : 'none' }}>
-          <Tooltip placement="top-start" hasArrow={true} label={'Annotations'} openDelay={400}>
+          <Tooltip placement="top" hasArrow={true} label={'Annotations'} openDelay={400}>
             <Button
               ml={1}
               onClick={() => {
                 updateState(props._id, { annotations: !s.annotations });
               }}
+              size='xs'
+              px={0}
             >
-              <HiPencilAlt />
+              <HiPencilAlt size="16px"/>
             </Button>
           </Tooltip>
         </div>
@@ -281,7 +285,7 @@ type YoloObject = {
 
 
       <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1} isDisabled={onlineModels.length == 0}>
-        <Menu placement="top-start">
+        <Menu placement="top">
           <Tooltip hasArrow={true} label={'Ai Model Selection'} openDelay={300}>
             <MenuButton as={Button} colorScheme="orange" width="100px" aria-label="layout">
               {selectedModel}
@@ -298,7 +302,7 @@ type YoloObject = {
       </ButtonGroup>
 
       <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1}>
-        <Menu placement="top-start">
+        <Menu placement="top">
           <Tooltip hasArrow={true} label={'Remote Actions'} openDelay={300}>
             <MenuButton as={Button} colorScheme="orange" aria-label="layout">
               <MdOutlineLightbulb />

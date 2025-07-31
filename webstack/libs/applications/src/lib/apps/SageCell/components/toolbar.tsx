@@ -265,8 +265,9 @@ export function ToolbarComponent(props: App): JSX.Element {
             _hover={{ opacity: 0.7 }}
             size="xs"
             colorScheme="teal"
+            px={0}
           >
-            <MdPlayArrow />
+            <MdPlayArrow size="16px" />
           </Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={'Run All'} openDelay={400}>
@@ -276,8 +277,9 @@ export function ToolbarComponent(props: App): JSX.Element {
             _hover={{ opacity: 0.7 }}
             size="xs"
             colorScheme="teal"
+            px={0}
           >
-            <VscRunAll />
+            <VscRunAll size="16px" />
           </Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={'Run To Here'} openDelay={400}>
@@ -287,8 +289,9 @@ export function ToolbarComponent(props: App): JSX.Element {
             _hover={{ opacity: 0.7 }}
             size="xs"
             colorScheme="teal"
+            px={0}
           >
-            <VscRunAbove />
+            <VscRunAbove size="16px" />
           </Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={'Run From Here'} openDelay={400}>
@@ -298,48 +301,49 @@ export function ToolbarComponent(props: App): JSX.Element {
             _hover={{ opacity: 0.7 }}
             size="xs"
             colorScheme="teal"
+            px={0}
           >
-            <VscRunBelow />
+            <VscRunBelow size="16px" />
           </Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={'Stop'} openDelay={400}>
-          <Button isDisabled={!s.msgId || !canExecuteCode} onClick={setStopTrue} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal">
-            <MdStop />
+          <Button isDisabled={!s.msgId || !canExecuteCode} onClick={setStopTrue} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal" px={0}>
+            <MdStop size="16px" />
           </Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={'Click for help'} openDelay={400}>
-          <Button onClick={helpOnOpen} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal">
-            <MdHelp />
+          <Button onClick={helpOnOpen} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal" px={0}>
+            <MdHelp size="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>
 
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
-          <Button isDisabled={s.fontSize <= 8} onClick={decreaseFontSize} _hover={{ opacity: 0.7 }}>
-            <MdRemove />
+          <Button isDisabled={s.fontSize <= 8} onClick={decreaseFontSize} _hover={{ opacity: 0.7 }} size="xs" px={0}>
+            <MdRemove size="16px" />
           </Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={'Current Font Size'} openDelay={400}>
-          <Button _hover={{ opacity: 0.7 }}>{s.fontSize}</Button>
+          <Button _hover={{ opacity: 0.7 }} size="xs" px={0}>{s.fontSize}</Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
-          <Button isDisabled={s.fontSize > 42} onClick={increaseFontSize} _hover={{ opacity: 0.7 }}>
-            <MdAdd />
+          <Button isDisabled={s.fontSize > 42} onClick={increaseFontSize} _hover={{ opacity: 0.7 }} size="xs" px={0}>
+            <MdAdd size="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>
 
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top" hasArrow={true} label={'Save Code in Asset Manager'} openDelay={400}>
-          <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }} isDisabled={s.code.length === 0}>
-            <MdFileUpload />
+          <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }} isDisabled={s.code.length === 0} size="xs" px={0}>
+            <MdFileUpload size="16px" />
           </Button>
         </Tooltip>
 
         <Tooltip placement="top" hasArrow={true} label={'Download Code'} openDelay={400}>
-          <Button onClick={downloadCode} _hover={{ opacity: 0.7 }}>
-            <MdFileDownload />
+          <Button onClick={downloadCode} _hover={{ opacity: 0.7 }} size="xs" px={0}>
+            <MdFileDownload size="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>
@@ -500,32 +504,6 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
     });
   };
 
-  // This function efficiently calculates the enclosing bounding box for a given set of rectangles.
-  function getBoundingBox(rectangles: Array<{ id: string; x: number; y: number; width: number; height: number }>) {
-    let minX = Infinity,
-      minY = Infinity,
-      maxX = -Infinity,
-      maxY = -Infinity;
-
-    rectangles.forEach(({ x, y, width, height }) => {
-      minX = Math.min(minX, x);
-      minY = Math.min(minY, y);
-      maxX = Math.max(maxX, x + width);
-      maxY = Math.max(maxY, y + height);
-    });
-    const width = maxX - minX;
-    const height = maxY - minY;
-    const boundingBox = {
-      x: minX,
-      y: minY,
-      width: width,
-      height: height,
-      orientation: height > 1.3 * width ? 'column' : width > 1.3 * height ? 'row' : 'squarish',
-    };
-
-    return boundingBox;
-  }
-
   // Calculate evaluation order
   const setEvaluationOrder = () => {
     // Get the sizes of the selected apps
@@ -541,22 +519,12 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
       cy: app.data.position.y + app.data.size.height / 2,
     }));
 
-    // Get the bounding box of the group and orientation
-    // const box = getBoundingBox(boxes);
-
-    // Sort rectangles based on orientation
-    // const sorted = [...boxes].sort((a, b) =>
-    //   box.orientation === "column" ? a.cy - b.cy :
-    //     box.orientation === "row" ? a.cx - b.cx :
-    //       0
-    // );
     const sorted = [...boxes].sort((a, b) =>
       // If box `a` and `b` overlap in y, sort by x
       // Otherwise, sort by y
       Math.max(a.y, b.y) < Math.min(a.y + a.height, b.y + b.height) ? a.x - b.x : a.y - b.y
     );
 
-    // if (box.orientation !== "squarish") {
     // Array of update to batch at once
     const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
     sorted.forEach((app, index) => {
@@ -564,7 +532,6 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
     });
     // Update all the apps at once
     updateStateBatch(ps);
-    // }
   };
 
   /**

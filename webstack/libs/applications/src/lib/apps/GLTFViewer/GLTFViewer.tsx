@@ -177,7 +177,7 @@ function ToolbarComponent(props: App): JSX.Element {
   return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Download Model'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Download Model'} openDelay={400}>
           <Button
             onClick={() => {
               if (file) {
@@ -187,8 +187,10 @@ function ToolbarComponent(props: App): JSX.Element {
                 downloadFile(dl, filename);
               }
             }}
+            size='xs'
+            px={0}
           >
-            <MdFileDownload />
+            <MdFileDownload size="16px"/>
           </Button>
         </Tooltip>
       </ButtonGroup>
