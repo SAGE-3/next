@@ -575,29 +575,21 @@ function AppComponent(props: App): JSX.Element {
           case 'stdout':
           case 'stderr':
             return <Ansi key={key}>{value as string}</Ansi>;
-          case 'text/html':
-            if (!value) return null; // hides other outputs if html is present
-            // remove extra \n from html
-            return <Box key={key} dangerouslySetInnerHTML={{ __html: value.replace(/\n/g, '') }} />;
-          case 'text/plain':
-            if (item['text/html']) return null;
-            return <Ansi key={key}>{value as string}</Ansi>;
           case 'image/png':
             return (
               <Image
                 key={key}
                 src={`data:image/png;base64,${value}`}
                 onDragStart={(e) => {
-                  // set the title in the drag transfer data
+                  // Set the title in the drag transfer data
+                  let title = "SAGEcell Output";
                   if (item['text/plain']) {
-                    const title = item['text/plain'];
-                    // remove the quotes from the title
-                    const data = JSON.stringify({
-                      title: title.slice(1, -1),
-                      sources: [props._id],
-                    });
-                    e.dataTransfer.setData('app_state', data);
+                    title = item['text/plain'];
+                    // Remove the quotes from the title
+                    title = title.replace(/[<>]/g, "");
                   }
+                  const data = JSON.stringify({ title, sources: [props._id] });
+                  e.dataTransfer.setData('app_state', data);
                 }}
               />
             );
@@ -607,18 +599,25 @@ function AppComponent(props: App): JSX.Element {
                 key={key}
                 src={`data:image/jpeg;base64,${value}`}
                 onDragStart={(e) => {
-                  // set the title in the drag transfer data
+                  // Set the title in the drag transfer data
+                  let title = "SAGEcell Output";
                   if (item['text/plain']) {
-                    const title = item['text/plain'];
-                    const data = JSON.stringify({
-                      title: title.slice(1, -1),
-                      sources: [props._id],
-                    });
-                    e.dataTransfer.setData('app_state', data);
+                    title = item['text/plain'];
+                    // Remove the quotes from the title
+                    title = title.replace(/[<>]/g, "");
                   }
+                  const data = JSON.stringify({ title, sources: [props._id] });
+                  e.dataTransfer.setData('app_state', data);
                 }}
               />
             );
+          case 'text/html':
+            if (!value) return null; // hides other outputs if html is present
+            // remove extra \n from html
+            return <Box key={key} dangerouslySetInnerHTML={{ __html: value.replace(/\n/g, '') }} />;
+          case 'text/plain':
+            if (item['text/html']) return null;
+            return <Ansi key={key}>{value as string}</Ansi>;
           case 'image/svg+xml':
             return <Box key={key} dangerouslySetInnerHTML={{ __html: value.replace(/\n/g, '') }} />;
           case 'text/markdown':
