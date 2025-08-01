@@ -27,6 +27,7 @@ export function OpenDesktopPage() {
   const imageUrl = '/assets/sage3_banner.webp';
 
   const [sage3url, setSage3Url] = useState<string>('');
+  const [contextSaved, setContextSaved] = useState<boolean>(false);
 
   const { toHome, toBoard } = useRouteNav();
   const joinRoomMembership = useRoomStore((state) => state.joinRoomMembership);
@@ -134,32 +135,35 @@ export function OpenDesktopPage() {
     const link = `${window.location.protocol}//${window.location.host}/#/board/${roomId}/${boardId}`;
     setSage3Url(link);
 
-    // Save board context for later retrieval
-    const boardContext = {
-      roomId,
-      boardId,
-      timestamp: Date.now(),
-      url: window.location.href
-    };
-    
-    try {
-      localStorage.setItem('sage3_pending_board', JSON.stringify(boardContext));
-      toast({
-        title: 'Board Context Saved',
-        description: 'Your board context has been saved. You will be redirected after login.',
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
-      });
-    } catch (error) {
-      console.warn('Could not save board context to localStorage:', error);
-      toast({
-        title: 'Warning',
-        description: 'Could not save board context. You may need to log in first.',
-        status: 'warning',
-        duration: 5000,
-        isClosable: true,
-      });
+    // Save board context only once per session
+    if (!contextSaved) {
+      const boardContext = {
+        roomId,
+        boardId,
+        timestamp: Date.now(),
+        url: window.location.href
+      };
+      
+      try {
+        localStorage.setItem('sage3_pending_board', JSON.stringify(boardContext));
+        setContextSaved(true);
+        toast({
+          title: 'Board Context Saved',
+          description: 'Your board context has been saved. You will be redirected after login.',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+      } catch (error) {
+        console.warn('Could not save board context to localStorage:', error);
+        toast({
+          title: 'Warning',
+          description: 'Could not save board context. You may need to log in first.',
+          status: 'warning',
+          duration: 5000,
+          isClosable: true,
+        });
+      }
     }
 
     // Handle Electron client routing
@@ -178,7 +182,7 @@ export function OpenDesktopPage() {
         }
       }
     }
-  }, [roomId, boardId, auth, user, authLoading, userLoading]);
+  }, [roomId, boardId, auth, user, authLoading, userLoading, contextSaved]);
 
   // Show loading while checking auth state (Electron client only)
   if (isElectron() && (authLoading || userLoading)) {
