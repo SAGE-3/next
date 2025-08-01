@@ -253,13 +253,13 @@ export function OpenDesktopPage() {
       <VStack spacing={3} flexShrink={0} width="100%" maxW="500px">
         <HStack spacing={4} justifyContent="center" wrap="wrap">
           <Link isExternal href="https://sage3.sagecommons.org/?page_id=358">
-            <Button variant="outline"  colorScheme="green"  size="sm" width="240px">
+            <Button variant="outline"  colorScheme="green"  size="md" width="240px">
               Download the SAGE3 Client
             </Button>
           </Link>
 
           <Link isExternal href="https://sage3.sagecommons.org/?page_id=921">
-            <Button variant="outline" colorScheme="green"  size="sm" width="240px">
+            <Button variant="outline" colorScheme="green"  size="md" width="240px">
               What is SAGE3?
             </Button>
           </Link>
@@ -270,10 +270,7 @@ export function OpenDesktopPage() {
         <Link href={sage3url}>
           <Button 
             variant="outline" 
-
-            size="md"
-
-
+            size="sm"
             transition="all 0.2s"
             mt={5}
           >
