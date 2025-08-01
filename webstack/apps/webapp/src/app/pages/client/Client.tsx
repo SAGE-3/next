@@ -97,8 +97,6 @@ export function OpenDesktopPage() {
 
     // Join room and navigate to board
     joinRoomMembership(roomId);
-
-    
     clearSavedBoardContext();
     toBoard(roomId, boardId);
   }
@@ -220,7 +218,6 @@ export function OpenDesktopPage() {
 
       {/* Main Action Section */}
       <VStack spacing={6} flexShrink={0} maxW="500px" width="100%">
-
         <Button 
           size="lg"
           height="70px"
@@ -242,24 +239,22 @@ export function OpenDesktopPage() {
         >
           Open the SAGE3 Client
           <Text fontSize="sm" color="gray.600" textAlign="center" maxW="350px">
-          For the best collaborative experience
-        </Text>
+            For the best collaborative experience
+          </Text>
         </Button>
-
-
       </VStack>
 
       {/* Links Section */}
       <VStack spacing={3} flexShrink={0} width="100%" maxW="500px">
         <HStack spacing={4} justifyContent="center" wrap="wrap">
           <Link isExternal href="https://sage3.sagecommons.org/?page_id=358">
-            <Button variant="outline"  colorScheme="green"  size="md" width="240px">
+            <Button variant="outline" colorScheme="green" size="md" width="240px">
               Download the SAGE3 Client
             </Button>
           </Link>
 
           <Link isExternal href="https://sage3.sagecommons.org/?page_id=921">
-            <Button variant="outline" colorScheme="green"  size="md" width="240px">
+            <Button variant="outline" colorScheme="green" size="md" width="240px">
               What is SAGE3?
             </Button>
           </Link>
