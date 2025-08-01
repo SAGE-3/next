@@ -262,13 +262,15 @@ export function Interactionbar(props: {
                       </MenuButton>
                       <MenuList>
                         <MenuItem onClick={() => setMarkerSize(1)}>1</MenuItem>
-                        <MenuItem onClick={() => setMarkerSize(2)}>2</MenuItem>
                         <MenuItem onClick={() => setMarkerSize(3)}>3</MenuItem>
                         <MenuItem onClick={() => setMarkerSize(5)}>5</MenuItem>
                         <MenuItem onClick={() => setMarkerSize(8)}>8</MenuItem>
                         <MenuItem onClick={() => setMarkerSize(12)}>12</MenuItem>
-                        <MenuItem onClick={() => setMarkerSize(16)}>16</MenuItem>
                         <MenuItem onClick={() => setMarkerSize(20)}>20</MenuItem>
+                        <MenuItem onClick={() => setMarkerSize(32)}>32</MenuItem>
+                        <MenuItem onClick={() => setMarkerSize(60)}>60</MenuItem>
+                        <MenuItem onClick={() => setMarkerSize(90)}>90</MenuItem>
+                        <MenuItem onClick={() => setMarkerSize(120)}>120</MenuItem>
                       </MenuList>
                     </Menu>
                   </Box>
