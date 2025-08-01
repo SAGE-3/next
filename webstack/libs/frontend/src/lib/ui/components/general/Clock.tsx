@@ -61,29 +61,6 @@ export function Clock(props: ClockProps) {
       {/* Edit User Settings  modal dialog */}
       {isBoard && <EditUserSettingsModal isOpen={editSettingsIsOpen} onClose={editSettingsOnClose} />}
 
-      {!isBoard && (
-        <Tooltip label={'Restart the guided tour'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
-          <IconButton
-            borderRadius="md"
-            h="auto"
-            p={0}
-            pb={'1px'}
-            mr="-1"
-            justifyContent="center"
-            aria-label={'Network status'}
-            icon={<MdHelpOutline size="22px" />}
-            background={'transparent'}
-            colorScheme="gray"
-            transition={'all 0.2s'}
-            opacity={0.75}
-            variant="ghost"
-            onClick={props.homeHelpClick}
-            isDisabled={false}
-            _hover={{ color: teal, opacity: 1, transform: 'scale(1.15)' }}
-          />
-        </Tooltip>
-      )}
-
       {isBoard && showUI && (
         <Text fontSize={'lg'} opacity={props.opacity ? props.opacity : 1.0} color={textColor} userSelect="none" whiteSpace="nowrap" mx={1}>
           {time}

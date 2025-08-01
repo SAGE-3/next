@@ -53,14 +53,12 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
   const boards = useBoardStore((state) => state.boards);
 
   const [name, setName] = useState<BoardSchema['name']>('');
-  const [description, setDescription] = useState<BoardSchema['description']>('');
   const [isProtected, setProtected] = useState(false);
   const [password, setPassword] = useState('');
   const [roomID, setRoomID] = useState('');
   const [color, setColor] = useState('red' as SAGEColors);
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value);
-  const handleDescription = (event: React.ChangeEvent<HTMLInputElement>) => setDescription(event.target.value);
   const handleColorChange = (color: SAGEColors) => setColor(color);
 
   // Pending create board sever reponse useState
@@ -82,7 +80,6 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
     setRoomID(generateReadableID());
     // Reset the form fields
     setName('');
-    setDescription('');
     setColor(randomSAGEColor());
     setProtected(false);
   }, [props.isOpen]);
@@ -100,7 +97,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
   };
 
   const create = async () => {
-    if (name && description && user) {
+    if (name  && user) {
       // remove leading and trailing space, and limit name length to 32
       const cleanedName = name.trim().substring(0, 31);
       // list of board names in the room
@@ -137,8 +134,8 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
         // Create the board
         const board = await createBoard({
           name: cleanedName,
-          description,
-          roomId: props.roomId,
+          description: 'description',
+                    roomId: props.roomId,
           ownerId: user._id,
           color: color,
           isPrivate: isProtected,
@@ -199,7 +196,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
       <ModalContent>
         <ModalHeader fontSize="3xl">Create a New Board</ModalHeader>
         <ModalBody>
-          <InputGroup>
+          <InputGroup mb="4">
             <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
             <Input
               ref={initialRef}
@@ -213,30 +210,8 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
               isRequired={true}
             />
           </InputGroup>
-          <InputGroup my={4}>
-            <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
-            <Input
-              type="text"
-              placeholder={'Board Description'}
-              _placeholder={{ opacity: 1, color: 'gray.600' }}
-              mr={0}
-              value={description}
-              onChange={handleDescription}
-              onKeyDown={onSubmit}
-              isRequired={true}
-            />
-          </InputGroup>
-
+          
           <ColorPicker selectedColor={color} onChange={handleColorChange}></ColorPicker>
-
-          <HStack>
-            <Tooltip placement="top" hasArrow={true} openDelay={400} label={'Use this ID to enter a board, instead of a URL'}>
-              <Text my={2}>Board ID:</Text>
-            </Tooltip>
-            <Text my={2} onDoubleClick={handleCopyId}>
-              {roomID}
-            </Text>
-          </HStack>
 
           <Checkbox mt={1} mr={4} onChange={checkProtected} defaultChecked={isProtected}>
             Board Protected with a Password
@@ -260,7 +235,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
           <Button
             colorScheme="green"
             onClick={() => create()}
-            isDisabled={!name || !description || (isProtected && !password) || pendingCreate}
+            isDisabled={!name  || (isProtected && !password) || pendingCreate}
           >
             Create
           </Button>

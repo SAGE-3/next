@@ -49,14 +49,12 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
   const joinRoomMembership = useRoomStore((state) => state.joinRoomMembership);
 
   const [name, setName] = useState<RoomSchema['name']>('');
-  const [description, setDescription] = useState<RoomSchema['description']>('');
   const [isListed, setIsListed] = useState(false); // default is not listed
   const [isProtected, setProtected] = useState(false);
   const [password, setPassword] = useState('');
   const [color, setColor] = useState('red' as SAGEColors);
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value);
-  const handleDescription = (event: React.ChangeEvent<HTMLInputElement>) => setDescription(event.target.value);
   const handleColorChange = (c: string) => setColor(c as SAGEColors);
 
   // Run on every open of the dialog
@@ -74,7 +72,6 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
     setPassword(makeid(6));
     // Reset the fields
     setName('');
-    setDescription('');
     setColor(randomSAGEColor());
   }, [props.isOpen]);
 
@@ -91,7 +88,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
   };
 
   const create = async () => {
-    if (name && description && user) {
+    if (name  && user) {
       // remove leading and trailing space, and limit name length to 32
       const cleanedName = name.trim().substring(0, 31);
       const roomNames = rooms.map((room) => room.data.name);
@@ -122,7 +119,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
         const key = uuidv5(password, config.namespace);
         const room = await createRoom({
           name: cleanedName,
-          description,
+          description: 'description',
           color: color,
           ownerId: user._id,
           isPrivate: isProtected,
@@ -161,7 +158,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
       <ModalContent>
         <ModalHeader fontSize="3xl">Create Room</ModalHeader>
         <ModalBody>
-          <InputGroup>
+          <InputGroup mb="4"  >
             <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
             <Input
               ref={initialRef}
@@ -171,19 +168,6 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
               mr={0}
               value={name}
               onChange={handleNameChange}
-              onKeyDown={onSubmit}
-              isRequired={true}
-            />
-          </InputGroup>
-          <InputGroup my={4}>
-            <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
-            <Input
-              type="text"
-              placeholder={'Room Description'}
-              _placeholder={{ opacity: 1, color: 'gray.600' }}
-              mr={0}
-              value={description}
-              onChange={handleDescription}
               onKeyDown={onSubmit}
               isRequired={true}
             />
@@ -213,7 +197,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
           </InputGroup>
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="green" onClick={() => create()} isDisabled={!name || !description}>
+          <Button colorScheme="green" onClick={() => create()} isDisabled={!name }>
             Create
           </Button>
         </ModalFooter>

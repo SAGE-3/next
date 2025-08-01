@@ -198,7 +198,7 @@ export function BoardCard(props: BoardCardProps) {
                 {props.board.data.name}
               </Box>
               <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="xs" color={subTextColor}>
-                {props.board.data.description}
+                {props.room.data.name}
               </Box>
             </Box>
           </Tooltip>
