@@ -27,6 +27,7 @@ import {
   isGeoJSON,
   isVideo,
   isPython,
+  isR,
   isGLTF,
   isGIF,
   isFileURL,
@@ -138,30 +139,6 @@ async function openApplication(a: Asset, xDrop: number, yDrop: number, roomId: s
         }
       }
       return null;
-    } else if (isCode(fileType)) {
-      const localurl = apiUrls.assets.getAssetById(a.data.file);
-      // Get the content of the file
-      const response = await fetch(localurl, {
-        headers: {
-          'Content-Type': 'text/plain',
-          Accept: 'text/plain',
-        },
-      });
-      // Get the content of the file
-      const text = await response.text();
-      // Get Language from mimetype
-      const lang = mimeToCode(a.data.mimetype);
-      // Create a note from the text
-      return setupApp(
-        'CodeEditor',
-        'CodeEditor',
-        xDrop,
-        yDrop,
-        roomId,
-        boardId,
-        { w: 850, h: 400 },
-        { content: text, language: lang, filename: a.data.originalfilename }
-      );
     } else if (isGIF(fileType)) {
       const extras = a.data.derived as ExtraImageType;
       const imw = w;
@@ -256,7 +233,43 @@ async function openApplication(a: Asset, xDrop: number, yDrop: number, roomId: s
       });
       const text = await response.text();
       // Create a note from the text
-      return setupApp('SageCell', 'SageCell', xDrop, yDrop, roomId, boardId, { w: 400, h: 400 }, { code: text });
+      return setupApp('SageCell', 'SageCell', xDrop, yDrop, roomId, boardId, { w: 400, h: 400 }, { code: text, language: 'python' });
+    } else if (isR(fileType)) {
+      const localurl = apiUrls.assets.getAssetById(a.data.file);
+      // Get the content of the file
+      const response = await fetch(localurl, {
+        headers: {
+          'Content-Type': 'text/plain',
+          Accept: 'text/plain',
+        },
+      });
+      const text = await response.text();
+      // Create a note from the text
+      return setupApp('SageCell', 'SageCell', xDrop, yDrop, roomId, boardId, { w: 400, h: 400 }, { code: text, language: 'r' });
+    } else if (isCode(fileType)) {
+      const localurl = apiUrls.assets.getAssetById(a.data.file);
+      // Get the content of the file
+      const response = await fetch(localurl, {
+        headers: {
+          'Content-Type': 'text/plain',
+          Accept: 'text/plain',
+        },
+      });
+      // Get the content of the file
+      const text = await response.text();
+      // Get Language from mimetype
+      const lang = mimeToCode(a.data.mimetype);
+      // Create a note from the text
+      return setupApp(
+        'CodeEditor',
+        'CodeEditor',
+        xDrop,
+        yDrop,
+        roomId,
+        boardId,
+        { w: 850, h: 400 },
+        { content: text, language: lang, filename: a.data.originalfilename }
+      );
     } else if (isJSON(fileType)) {
       const localurl = apiUrls.assets.getAssetById(a.data.file);
       // Get the content of the file

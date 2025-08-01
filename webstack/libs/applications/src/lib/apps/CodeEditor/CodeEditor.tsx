@@ -74,7 +74,8 @@ const languageExtensions = [
   { name: 'cpp', extension: 'cpp' },
   { name: 'c', extension: 'c' },
   { name: 'java', extension: 'java' },
-  { name: 'r', extension: 'r' },
+  { name: 'r', extension: 'R' },
+  { name: 'julia', extension: 'jl' },
 ].sort((a, b) => {
   return a.name.localeCompare(b.name);
 });
