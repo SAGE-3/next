@@ -36,14 +36,15 @@ export function ColorPicker(props: ColorPickerProps) {
   };
 
   // Color filter for users. Remove 'teal', 'cyan', and 'purple' from the colors array
-   const availableColors = colors.filter((color) => color !== 'teal' && color !== 'cyan' && color !== 'purple');
+  const availableColors = colors.filter((color) => color !== 'teal' && color !== 'cyan' && color !== 'purple');
 
   return (
-    <ButtonGroup isAttached size="xs" colorScheme="teal" style={{ ...props.style }}>
+    <ButtonGroup isAttached size="xs" colorScheme="teal" style={{ ...props.style }} display={'flex'}>
       {availableColors.map((color) => {
         const c = getColor(color);
         return (
           <Button
+            flex={1}
             key={c}
             value={c}
             bgColor={c}

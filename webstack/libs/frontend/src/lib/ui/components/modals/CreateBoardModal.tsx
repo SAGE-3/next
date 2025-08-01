@@ -206,7 +206,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
               type="text"
               placeholder={'Board Name'}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
-              mr={4}
+              mr={0}
               value={name}
               onChange={handleNameChange}
               onKeyDown={onSubmit}
@@ -219,7 +219,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
               type="text"
               placeholder={'Board Description'}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
-              mr={4}
+              mr={0}
               value={description}
               onChange={handleDescription}
               onKeyDown={onSubmit}

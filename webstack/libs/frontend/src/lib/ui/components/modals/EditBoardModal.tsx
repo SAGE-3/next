@@ -215,7 +215,7 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
               type="text"
               placeholder={props.board.data.name}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
-              mr={4}
+              mr={0}
               value={name}
               onChange={handleNameChange}
               onKeyDown={onSubmit}
@@ -229,7 +229,7 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
               type="text"
               placeholder={props.board.data.description}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
-              mr={4}
+              mr={0}
               value={description}
               onChange={handleDescriptionChange}
               onKeyDown={onSubmit}

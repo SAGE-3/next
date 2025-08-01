@@ -245,7 +245,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
               type="text"
               placeholder={name}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
-              mr={4}
+              mr={0}
               value={name}
               onChange={handleNameChange}
               onKeyDown={onSubmit}
@@ -258,7 +258,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
               type="text"
               placeholder={props.room.data.description}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
-              mr={4}
+              mr={0}
               value={description}
               onChange={handleDescriptionChange}
               onKeyDown={onSubmit}
