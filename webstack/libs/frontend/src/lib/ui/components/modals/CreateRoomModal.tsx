@@ -50,7 +50,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
 
   const [name, setName] = useState<RoomSchema['name']>('');
   const [description, setDescription] = useState<RoomSchema['description']>('');
-  const [isListed, setIsListed] = useState(true);
+  const [isListed, setIsListed] = useState(false); // default is not listed
   const [isProtected, setProtected] = useState(false);
   const [password, setPassword] = useState('');
   const [color, setColor] = useState('red' as SAGEColors);
@@ -92,8 +92,8 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
 
   const create = async () => {
     if (name && description && user) {
-      // remove leading and trailing space, and limit name length to 20
-      const cleanedName = name.trim().substring(0, 19);
+      // remove leading and trailing space, and limit name length to 32
+      const cleanedName = name.trim().substring(0, 31);
       const roomNames = rooms.map((room) => room.data.name);
 
       if (cleanedName.split(' ').join('').length === 0) {
@@ -112,7 +112,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
         });
       } else if (!isAlphanumericWithSpacesAndForeign(cleanedName)) {
         toast({
-          title: 'Name must only contain characters A-Z, 0-9, and spaces',
+          title: 'Name must only contain Unicode letters, numbers, comma, hyphen, underscore and spaces',
           status: 'error',
           duration: 3 * 1000,
           isClosable: true,
@@ -168,7 +168,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
               type="text"
               placeholder={'Room Name'}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
-              mr={4}
+              mr={0}
               value={name}
               onChange={handleNameChange}
               onKeyDown={onSubmit}
@@ -181,7 +181,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
               type="text"
               placeholder={'Room Description'}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
-              mr={4}
+              mr={0}
               value={description}
               onChange={handleDescription}
               onKeyDown={onSubmit}

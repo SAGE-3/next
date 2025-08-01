@@ -143,8 +143,8 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
   };
 
   function cleanNameCheckDoubles(name: string, roomId: string): string | null {
-    // Remove leading and trailing space, and limit name length to 20
-    const cleanedName = name.trim().substring(0, 20);
+    // Remove leading and trailing space, and limit name length to 32
+    const cleanedName = name.trim().substring(0, 31);
     // Get the names of all boards in the same room, excluding the current board
     const boardNames = boards.filter((r) => r.data.roomId === roomId && r._id !== props.board._id).map((board) => board.data.name);
     if (cleanedName.split(' ').join('').length === 0) {
@@ -165,7 +165,7 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
       return null;
     } else if (!isAlphanumericWithSpacesAndForeign(cleanedName)) {
       toast({
-        title: 'Name must only contain Unicode letters, numbers, and whitespace characters',
+        title: 'Name must only contain Unicode letters, numbers, comma, hyphen, underscore and spaces',
         status: 'error',
         duration: 3 * 1000,
         isClosable: true,
@@ -215,7 +215,7 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
               type="text"
               placeholder={props.board.data.name}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
-              mr={4}
+              mr={0}
               value={name}
               onChange={handleNameChange}
               onKeyDown={onSubmit}
@@ -229,7 +229,7 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
               type="text"
               placeholder={props.board.data.description}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
-              mr={4}
+              mr={0}
               value={description}
               onChange={handleDescriptionChange}
               onKeyDown={onSubmit}

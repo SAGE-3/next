@@ -101,8 +101,8 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
 
   const create = async () => {
     if (name && description && user) {
-      // remove leading and trailing space, and limit name length to 20
-      const cleanedName = name.trim().substring(0, 19);
+      // remove leading and trailing space, and limit name length to 32
+      const cleanedName = name.trim().substring(0, 31);
       // list of board names in the room
       const roomsBoards = boards.filter((board) => board.data.roomId === props.roomId);
       const boardNames = roomsBoards.map((board) => board.data.name);
@@ -124,7 +124,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
         });
       } else if (!isAlphanumericWithSpacesAndForeign(cleanedName)) {
         toast({
-          title: 'Name must only contain characters A-Z, 0-9, and spaces',
+          title: 'Name must only contain Unicode letters, numbers, comma, hyphen, underscore and spaces',
           status: 'error',
           duration: 3 * 1000,
           isClosable: true,
@@ -206,7 +206,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
               type="text"
               placeholder={'Board Name'}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
-              mr={4}
+              mr={0}
               value={name}
               onChange={handleNameChange}
               onKeyDown={onSubmit}
@@ -219,7 +219,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
               type="text"
               placeholder={'Board Description'}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
-              mr={4}
+              mr={0}
               value={description}
               onChange={handleDescription}
               onKeyDown={onSubmit}

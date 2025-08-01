@@ -153,8 +153,8 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
   };
 
   function cleanNameCheckDoubles(name: string): string | null {
-    // Remove leading and trailing space, and limit name length to 20
-    const cleanedName = name.trim().substring(0, 19);
+    // Remove leading and trailing space, and limit name length to 32
+    const cleanedName = name.trim().substring(0, 31);
     const roomNames = rooms.filter((r) => r._id !== props.room._id).map((room) => room.data.name);
     if (cleanedName.split(' ').join('').length === 0) {
       toast({
@@ -174,7 +174,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
       return null;
     } else if (!isAlphanumericWithSpacesAndForeign(cleanedName)) {
       toast({
-        title: 'Name must only contain Unicode letters, numbers, and whitespace characters',
+        title: 'Name must only contain Unicode letters, numbers, comma, hyphen, underscore and spaces',
         status: 'error',
         duration: 3 * 1000,
         isClosable: true,
@@ -245,7 +245,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
               type="text"
               placeholder={name}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
-              mr={4}
+              mr={0}
               value={name}
               onChange={handleNameChange}
               onKeyDown={onSubmit}
@@ -258,7 +258,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
               type="text"
               placeholder={props.room.data.description}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
-              mr={4}
+              mr={0}
               value={description}
               onChange={handleDescriptionChange}
               onKeyDown={onSubmit}
