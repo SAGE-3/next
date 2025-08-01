@@ -13,28 +13,73 @@ import { Button, ButtonGroup, IconButton, Box, useColorMode, Image, Text, VStack
 import { FcGoogle } from 'react-icons/fc';
 import { FaGhost, FaApple } from 'react-icons/fa';
 
-import { isElectron, useAuth, useRouteNav, GetServerInfo } from '@sage3/frontend';
+import { isElectron, useAuth, useRouteNav, GetServerInfo, useUser } from '@sage3/frontend';
 
 // Logos
 import cilogonLogo from '../../../assets/cilogon.png';
 
+/**
+ * Login page with authentication options and board context handling
+ */
 export function LoginPage() {
-  const { auth, googleLogin, appleLogin, ciLogin, guestLogin, spectatorLogin } = useAuth();
+  const { auth, googleLogin, appleLogin, ciLogin, guestLogin, spectatorLogin, loading: authLoading } = useAuth();
+  const { user, loading: userLoading } = useUser();
   const { toHome } = useRouteNav();
-  // Server name and list
+  
   const [serverName, setServerName] = useState<string>('');
-  // state to disable login buttons during server switch: default is enabled
   const [shouldDisable, setShouldDisable] = useState(false);
   const [logins, setLogins] = useState<string[]>([]);
-  // Logo URL
-  // const logoUrl = useColorModeValue('/assets/SAGE3LightMode.png', '/assets/SAGE3DarkMode.png');
+  
   const logoUrl = '/assets/sage3_banner.webp';
-  // Test for electron
   const thisIsElectron = isElectron();
 
-  // Retrieve the name of the server to display in the page
+  /**
+   * Gets returnTo URL from query parameters with validation
+   */
+  const getReturnToUrl = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const returnTo = urlParams.get('returnTo');
+    
+    // Validate returnTo URL to prevent open redirects
+    if (returnTo) {
+      if (returnTo.startsWith('/') && !returnTo.includes('://')) {
+        return returnTo;
+      }
+    }
+    return null;
+  };
+
+  /**
+   * Retrieves and validates saved board context from localStorage
+   */
+  const getSavedBoardContext = () => {
+    try {
+      const savedContext = localStorage.getItem('sage3_pending_board');
+      
+      if (savedContext) {
+        const context = JSON.parse(savedContext);
+        
+        // Check if context is not too old (24 hours)
+        const isRecent = Date.now() - context.timestamp < 24 * 60 * 60 * 1000;
+        
+        if (isRecent && context.roomId && context.boardId) {
+          return context;
+        } else {
+          // Remove old context
+          localStorage.removeItem('sage3_pending_board');
+        }
+      }
+    } catch (error) {
+      console.warn('Error reading saved board context:', error);
+      localStorage.removeItem('sage3_pending_board');
+    }
+    return null;
+  };
+
+  /**
+   * Initializes page and retrieves server information
+   */
   useEffect(() => {
-    // Update the document title
     document.title = 'SAGE3 - Login';
 
     GetServerInfo().then((conf) => {
@@ -43,31 +88,55 @@ export function LoginPage() {
     });
   }, []);
 
-  // Sending user back to the electron landing page
+  /**
+   * Sends user back to Electron landing page
+   */
   const goToLanding = () => {
-    // Disable login buttons
     setShouldDisable(true);
-    // Send message to electron to load the landing page
     window.electron.send('load-landing');
   };
 
-  // Button to download the client
+  /**
+   * Opens client download page
+   */
   const goToClientDownload = () => {
     window.open('https://sage3.sagecommons.org/', '_blank');
   };
 
-  // Make sure user is logged in or not
+  /**
+   * Handles authentication state changes and redirects
+   */
   const authNavCheck = useCallback(() => {
     if (auth) {
-      toHome();
+      // Only redirect if user has both auth AND account
+      if (auth && user) {
+        // Check for saved board context first
+        const savedContext = getSavedBoardContext();
+        if (savedContext) {
+          localStorage.removeItem('sage3_pending_board');
+          const redirectUrl = `/#/board/${savedContext.roomId}/${savedContext.boardId}`;
+          window.location.href = redirectUrl;
+          return;
+        }
+
+        // Fall back to returnTo URL parameter
+        const returnTo = getReturnToUrl();
+        if (returnTo) {
+          const redirectUrl = `/#${returnTo}`;
+          window.location.href = redirectUrl;
+        } else {
+          toHome();
+        }
+      } else if (auth && !user) {
+        // User authenticated but no account - preserve context for AccountPage
+      }
     }
-  }, [auth]);
+  }, [auth, user]);
 
   useEffect(() => {
     authNavCheck();
   }, [authNavCheck]);
 
-  //  Dark/light mode
   const { colorMode } = useColorMode();
 
   return (
@@ -100,11 +169,11 @@ export function LoginPage() {
           </Button>
         </Box>
       ) : (
-        <Box left="2" bottom="2" position="absolute">
-          <Button colorScheme="teal" size="sm" onClick={goToClientDownload}>
-            Download Client
-          </Button>
-        </Box>
+              <Box left="2" bottom="2" position="absolute">
+        <Button colorScheme="teal" size="sm" onClick={goToClientDownload}>
+          Download Client
+        </Button>
+      </Box>
       )}
 
       <Box width="300px">
