@@ -1,12 +1,12 @@
 /**
- * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2025. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import {
   Code,
   Box,
@@ -35,28 +35,25 @@ import { throttle } from 'throttle-debounce';
 import { MdFileDownload, MdRefresh, MdSearch } from 'react-icons/md';
 
 // Collection specific schemas
-import {
-  Board,
-  Asset,
-  User,
-  Room,
-  Message,
-  Presence,
-  Insight,
-  RoomSchema,
-  BoardSchema,
-  AssetSchema,
-  UserSchema,
-  PresenceSchema,
-  InsightSchema,
-  MessageSchema,
-} from '@sage3/shared/types';
-import { App, AppSchema } from '@sage3/applications/schema';
+import { Board, Asset, User, Room, Message, Presence, Insight, } from '@sage3/shared/types';
+import { App } from '@sage3/applications/schema';
 
 // Components
 import { humanFileSize } from '@sage3/shared';
 import { APIHttp, apiUrls, CollectionDocs, downloadFile, useRouteNav, useUser, AccountDeletion } from '@sage3/frontend';
 import { TableViewer } from './components';
+
+// Collection configuration for better organization
+const COLLECTIONS = {
+  rooms: { columns: ['_id', 'name', 'description', 'color'] as const },
+  boards: { columns: ['_id', 'name', 'description', 'isPrivate'] as const },
+  apps: { columns: ['_id', 'type', 'title', 'boardId'] as const },
+  assets: { columns: ['_id', 'originalfilename', 'mimetype', 'size'] as const },
+  users: { columns: ['_id', 'email', 'name', 'color', 'userType', 'userRole'] as const },
+  presence: { columns: ['_id', 'userId', 'roomId', 'boardId'] as const },
+  insight: { columns: ['_id', 'app_id', 'boardId', 'labels'] as const },
+  message: { columns: ['_id', 'type'] as const },
+} as const;
 
 export function AdminPage() {
   // SAGE3 Image
@@ -68,8 +65,10 @@ export function AdminPage() {
   const email = user?.data.email || '';
   const displayUserInfo = `${username} (${email})`;
 
-  // Collections
-  const [data, setData] = useState<any[]>([]);
+  // Collections - use separate state for each collection to enable lazy loading
+  const [collectionsData, setCollectionsData] = useState<Record<string, any[]>>({});
+  const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
+  const [errorStates, setErrorStates] = useState<Record<string, string>>({});
 
   // Pre element for displaying messages
   const preRef = useRef<HTMLPreElement>(null);
@@ -86,35 +85,47 @@ export function AdminPage() {
   // Chakra Toggle Color Mode
   const { toggleColorMode, colorMode } = useColorMode();
 
-  // Fetch Data
-  function fetchData<T extends CollectionDocs>(collection: string) {
-    APIHttp.GET<T>(`/${collection}`).then((d) => {
-      if (d.success && d.data) {
-        setData(d.data);
+  // Fetch Data with loading states
+  const fetchData = useCallback(async <T extends CollectionDocs>(collection: string) => {
+    setLoadingStates(prev => ({ ...prev, [collection]: true }));
+    setErrorStates(prev => ({ ...prev, [collection]: '' }));
+
+    try {
+      const response = await APIHttp.GET<T>(`/${collection}`);
+      if (response.success && response.data) {
+        setCollectionsData(prev => ({ ...prev, [collection]: response.data as any[] }));
+      } else {
+        setErrorStates(prev => ({ ...prev, [collection]: 'Failed to fetch data' }));
       }
-    });
-  }
+    } catch (error) {
+      setErrorStates(prev => ({ ...prev, [collection]: error instanceof Error ? error.message : 'Unknown error' }));
+    } finally {
+      setLoadingStates(prev => ({ ...prev, [collection]: false }));
+    }
+  }, []);
 
   // Tab Index
   const [tabIndex, setTabIndex] = useState(0);
-  const handleTabChange = (index: number) => {
+  const handleTabChange = useCallback((index: number) => {
     setTabIndex(index);
     setSearch('');
     setSearchValue('');
-    setData([]);
-    if (index === 0) fetchData<Room>('rooms');
-    if (index === 1) fetchData<Board>('boards');
-    if (index === 2) fetchData<App>('apps');
-    if (index === 3) fetchData<Asset>('assets');
-    if (index === 4) fetchData<User>('users');
-    if (index === 5) fetchData<Presence>('presence');
-    if (index === 6) fetchData<Insight>('insight');
-    if (index === 7) fetchData<Message>('message');
-  };
 
-  const handleRefreshData = () => {
-    handleTabChange(tabIndex);
-  };
+    // Get collection name from index
+    const collectionNames = Object.keys(COLLECTIONS);
+    const collectionName = collectionNames[index];
+
+    // Only fetch if not already loaded
+    if (!collectionsData[collectionName] && !loadingStates[collectionName]) {
+      fetchData(collectionName);
+    }
+  }, [collectionsData, loadingStates, fetchData]);
+
+  const handleRefreshData = useCallback(() => {
+    const collectionNames = Object.keys(COLLECTIONS);
+    const collectionName = collectionNames[tabIndex];
+    fetchData(collectionName);
+  }, [tabIndex, fetchData]);
 
   // Add log messages to the output log
   const processLogMessage = (ev: MessageEvent<any>) => {
@@ -159,13 +170,15 @@ export function AdminPage() {
   }, []);
 
   // Delete an item
-  const deleteItem = (id: string, collection: string) => {
+  const deleteItem = useCallback((id: string, collection: string) => {
     APIHttp.DELETE(`/${collection}/` + id).then((resp) => {
       if (resp.success) {
         toast({ title: 'Item Deleted', status: 'info', duration: 2000, isClosable: true });
+        // Refresh the current collection
+        handleRefreshData();
       }
     });
-  };
+  }, [toast, handleRefreshData]);
 
   // Search of the data
   const [search, setSearch] = useState('');
@@ -185,8 +198,11 @@ export function AdminPage() {
   // Account Deletion Modal Disclosure
   const { isOpen: accountDelIsOpen, onOpen: accountDelOnOpen, onClose: accountDelOnClose } = useDisclosure();
   const [accountDelUser, setAccountDelUser] = useState<User | null>(null);
-  const handleAccountDeletion = (userId: string) => {
-    const user = (data as User[]).find((u) => u._id === userId);
+  const handleAccountDeletion = useCallback((userId: string) => {
+    const collectionNames = Object.keys(COLLECTIONS);
+    const collectionName = collectionNames[tabIndex];
+    const data = collectionsData[collectionName] as User[];
+    const user = data?.find((u) => u._id === userId);
     if (!user) {
       // toast to inform user that the user was not found
       toast({ title: 'User not found', status: 'error', duration: 2000, isClosable: true });
@@ -194,12 +210,16 @@ export function AdminPage() {
     }
     setAccountDelUser(user);
     accountDelOnOpen();
-  };
+  }, [collectionsData, tabIndex, toast, accountDelOnOpen]);
 
   // Handle download the data
-  const handleDownloadData = () => {
+  const handleDownloadData = useCallback(() => {
+    const collectionNames = Object.keys(COLLECTIONS);
+    const collectionName = collectionNames[tabIndex];
+    const data = collectionsData[collectionName];
+
     // Check if there is data to download
-    if (data.length === 0) {
+    if (!data || data.length === 0) {
       toast({ title: 'No data to download', status: 'info', duration: 2000, isClosable: true });
       return;
     }
@@ -209,13 +229,14 @@ export function AdminPage() {
     const a = document.createElement('a');
     a.href = url;
     const date = new Date();
-    a.download = `sage3_data_${date.toISOString()}.json`;
+    a.download = `sage3_${collectionName}_${date.toISOString()}.json`;
     a.click();
-  };
+  }, [collectionsData, tabIndex, toast]);
 
   // Handle download asset
-  const handleDownloadAsset = async (id: string) => {
-    const asset = (data as Asset[]).find((a) => a._id === id);
+  const handleDownloadAsset = useCallback(async (id: string) => {
+    const data = collectionsData.assets as Asset[];
+    const asset = data?.find((a) => a._id === id);
     if (!asset) {
       toast({ title: 'Asset not found', status: 'error', duration: 2000, isClosable: true });
       return;
@@ -223,6 +244,115 @@ export function AdminPage() {
     const filename = asset.data.originalfilename;
     const fileURL = apiUrls.assets.getAssetById(asset.data.file);
     downloadFile(fileURL, filename);
+  }, [collectionsData, toast]);
+
+  // Get current collection data and loading state
+  const currentCollectionName = useMemo(() => {
+    const collectionNames = Object.keys(COLLECTIONS);
+    return collectionNames[tabIndex];
+  }, [tabIndex]);
+
+  const currentData = useMemo(() => {
+    return collectionsData[currentCollectionName] || [];
+  }, [collectionsData, currentCollectionName]);
+
+  const isLoading = useMemo(() => {
+    return loadingStates[currentCollectionName] || false;
+  }, [loadingStates, currentCollectionName]);
+
+  const error = useMemo(() => {
+    return errorStates[currentCollectionName] || '';
+  }, [errorStates, currentCollectionName]);
+
+  // Get current collection configuration
+  const collectionConfig = COLLECTIONS[currentCollectionName as keyof typeof COLLECTIONS];
+
+  // Prepare table props based on current collection
+  const getTableProps = () => {
+    if (!collectionConfig) {
+      return {
+        heading: 'No Data',
+        data: [],
+        search: searchValue,
+        columns: [],
+        actions: []
+      };
+    }
+
+    const baseProps = {
+      search: searchValue,
+      columns: collectionConfig.columns as any,
+    };
+
+    switch (currentCollectionName) {
+      case 'rooms':
+        return {
+          ...baseProps,
+          heading: 'Rooms',
+          data: currentData as Room[],
+          actions: [{ label: 'Delete', color: 'red' as const, onClick: (id: string) => deleteItem(id, 'rooms') }],
+        };
+      case 'boards':
+        return {
+          ...baseProps,
+          heading: 'Boards',
+          data: currentData as Board[],
+          actions: [{ label: 'Delete', color: 'red' as const, onClick: (id: string) => deleteItem(id, 'boards') }],
+        };
+      case 'apps':
+        return {
+          ...baseProps,
+          heading: 'Apps',
+          data: currentData as App[],
+          actions: [{ label: 'Delete', color: 'red' as const, onClick: (id: string) => deleteItem(id, 'apps') }],
+        };
+      case 'assets':
+        return {
+          ...baseProps,
+          heading: 'Assets',
+          data: currentData as Asset[],
+          formatColumns: { size: (value: any) => humanFileSize(value) },
+          actions: [
+            { label: 'Download Asset', color: 'blue' as const, onClick: (id: string) => handleDownloadAsset(id) },
+            { label: 'Delete', color: 'red' as const, onClick: (id: string) => deleteItem(id, 'assets') },
+          ],
+        };
+      case 'users':
+        return {
+          ...baseProps,
+          heading: 'Users',
+          data: currentData as User[],
+          actions: [{ label: 'Delete', color: 'red' as const, onClick: (id: string) => handleAccountDeletion(id) }],
+        };
+      case 'presence':
+        return {
+          ...baseProps,
+          heading: 'Presences',
+          data: currentData as Presence[],
+          actions: [{ label: 'Delete', color: 'red' as const, onClick: (id: string) => deleteItem(id, 'presence') }],
+        };
+      case 'insight':
+        return {
+          ...baseProps,
+          heading: 'Insights',
+          data: currentData as Insight[],
+          actions: [{ label: 'Delete', color: 'red' as const, onClick: (id: string) => deleteItem(id, 'insight') }],
+        };
+      case 'message':
+        return {
+          ...baseProps,
+          heading: 'Messages',
+          data: currentData as Message[],
+          actions: [{ label: 'Delete', color: 'red' as const, onClick: (id: string) => deleteItem(id, 'message') }],
+        };
+      default:
+        return {
+          ...baseProps,
+          heading: 'No Data',
+          data: [],
+          actions: []
+        };
+    }
   };
 
   return (
@@ -261,7 +391,7 @@ export function AdminPage() {
               <Tab>Messages</Tab>
               <Tab>Logs</Tab>
             </TabList>
-            <Text mt="3">Total Number of Elements: {data.length}</Text>
+            <Text mt="3">Total Number of Elements: {currentData.length}</Text>
             {/* Search Input */}
             <Box display="flex" justifyContent={'space-between'} alignItems={'center'}>
               <InputGroup my="3" colorScheme="teal">
@@ -271,8 +401,15 @@ export function AdminPage() {
                 <Input value={search} onChange={(e) => handleSearchChange(e)} placeholder="Search" width="500px" />
               </InputGroup>
               <Box display="flex" gap="2">
-                <Tooltip label="Download Data" aria-label="Refresh Data" placement="top" hasArrow>
-                  <IconButton colorScheme="teal" icon={<MdRefresh />} variant={'outline'} onClick={handleRefreshData} aria-label={''} />
+                <Tooltip label="Refresh Data" aria-label="Refresh Data" placement="top" hasArrow>
+                  <IconButton
+                    colorScheme="teal"
+                    icon={<MdRefresh />}
+                    variant={'outline'}
+                    onClick={handleRefreshData}
+                    aria-label={''}
+                    isLoading={isLoading}
+                  />
                 </Tooltip>
                 <Tooltip label="Download Data" aria-label="Download Data" placement="top" hasArrow>
                   <IconButton
@@ -288,80 +425,28 @@ export function AdminPage() {
 
             <TabPanels flex="1" overflow="hidden" height="100%">
               <TabPanel p={0} height="100%">
-                {TableViewer<RoomSchema>({
-                  heading: 'Rooms',
-                  data: data as Room[],
-                  search: searchValue,
-                  columns: ['_id', 'name', 'description', 'color'],
-                  actions: [{ label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'rooms') }],
-                })}
+                <TableViewer {...getTableProps() as any} isLoading={isLoading} error={error} />
               </TabPanel>
               <TabPanel p={0} height="100%">
-                {TableViewer<BoardSchema>({
-                  heading: 'Boards',
-                  data: data as Board[],
-                  search: searchValue,
-                  columns: ['_id', 'name', 'description', 'isPrivate'],
-                  actions: [{ label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'boards') }],
-                })}
+                <TableViewer {...getTableProps() as any} isLoading={isLoading} error={error} />
               </TabPanel>
               <TabPanel p={0} height="100%">
-                {TableViewer<AppSchema>({
-                  heading: 'Apps',
-                  data: data as App[],
-                  search: searchValue,
-                  columns: ['_id', 'type', 'title', 'boardId'],
-                  actions: [{ label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'apps') }],
-                })}
+                <TableViewer {...getTableProps() as any} isLoading={isLoading} error={error} />
               </TabPanel>
               <TabPanel p={0} height="100%">
-                {TableViewer<AssetSchema>({
-                  heading: 'Assets',
-                  data: data as Asset[],
-                  search: searchValue,
-                  columns: ['_id', 'originalfilename', 'mimetype', 'size'],
-                  formatColumns: { size: (value) => humanFileSize(value) },
-                  actions: [
-                    { label: 'Download Asset', color: 'blue', onClick: (id) => handleDownloadAsset(id) },
-                    { label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'assets') },
-                  ],
-                })}
+                <TableViewer {...getTableProps() as any} isLoading={isLoading} error={error} />
               </TabPanel>
               <TabPanel p={0} height="100%">
-                {TableViewer<UserSchema>({
-                  heading: 'Users',
-                  data: data as User[],
-                  search: searchValue,
-                  columns: ['_id', 'email', 'name', 'color', 'userType', 'userRole'],
-                  actions: [{ label: 'Delete', color: 'red', onClick: (id) => handleAccountDeletion(id) }],
-                })}
+                <TableViewer {...getTableProps() as any} isLoading={isLoading} error={error} />
               </TabPanel>
               <TabPanel p={0} height="100%">
-                {TableViewer<PresenceSchema>({
-                  heading: 'Presences',
-                  data: data as Presence[],
-                  search: searchValue,
-                  columns: ['_id', 'userId', 'roomId', 'boardId'],
-                  actions: [{ label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'presence') }],
-                })}
+                <TableViewer {...getTableProps() as any} isLoading={isLoading} error={error} />
               </TabPanel>
               <TabPanel p={0} height="100%">
-                {TableViewer<InsightSchema>({
-                  heading: 'Insights',
-                  data: data as Insight[],
-                  search: searchValue,
-                  columns: ['_id', 'app_id', 'boardId', 'labels'],
-                  actions: [{ label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'insight') }],
-                })}
+                <TableViewer {...getTableProps() as any} isLoading={isLoading} error={error} />
               </TabPanel>
               <TabPanel p={0} height="100%">
-                {TableViewer<MessageSchema>({
-                  heading: 'Messages',
-                  data: data as Message[],
-                  search: searchValue,
-                  columns: ['_id', 'type'],
-                  actions: [{ label: 'Delete', color: 'red', onClick: (id) => deleteItem(id, 'message') }],
-                })}
+                <TableViewer {...getTableProps() as any} isLoading={isLoading} error={error} />
               </TabPanel>
               <TabPanel p={0} height="100%">
                 <Heading>Logs</Heading>
