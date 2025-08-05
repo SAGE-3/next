@@ -54,7 +54,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   // The fabled isMac const
   const isMac = useMemo(() => /(Mac|iPhone|iPod|iPad)/i.test(navigator.userAgent), []);
 
-  const movementTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const movementTimeoutRef = useRef<number | null>(null);
   const movementZoomSafetyTimeoutRef = useRef<number | null>(null);
 
   /////////////////////////////////
@@ -73,14 +73,14 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   // Forward local position and scale to uiStore
   useEffect(() => {
     if (movementTimeoutRef.current !== null) {
-      clearTimeout(movementTimeoutRef.current);
+      window.clearTimeout(movementTimeoutRef.current);
     }
     if (movementZoomSafetyTimeoutRef.current !== null) {
       window.clearTimeout(movementZoomSafetyTimeoutRef.current);
     }
     setLocalSynced(false);
 
-    movementTimeoutRef.current = setTimeout(() => {
+    movementTimeoutRef.current = window.setTimeout(() => {
       setBoardPosition({ x: localBoardPosition.x, y: localBoardPosition.y });
       setScale(localBoardPosition.scale);
 

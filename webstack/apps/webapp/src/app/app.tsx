@@ -68,13 +68,13 @@ export function App() {
 
   // Auto-reconnect logic
   useEffect(() => {
-    let interval: NodeJS.Timeout | undefined;
+    let interval: number | undefined;
     if (status) {
       if (interval) {
         clearInterval(interval);
       }
     } else {
-      interval = setInterval(() => {
+      interval = window.setInterval(() => {
         checkServer(window.location.origin).then((status) => {
           if (status) {
             window.location.reload();
@@ -247,7 +247,7 @@ export const ProtectedAdminRoute = (props: RouteProps): JSX.Element => {
 const useConnectStatus = () => {
   const [connected, setConnection] = useState(true);
   const [socket, setSocket] = useState<WebSocket | null>(null);
-  
+
   useEffect(() => {
     async function setup() {
       const socket = await SocketAPI.getSocket();
@@ -269,7 +269,7 @@ const useConnectStatus = () => {
       }
     };
   }, [socket]);
-  
+
   return connected;
 };
 
