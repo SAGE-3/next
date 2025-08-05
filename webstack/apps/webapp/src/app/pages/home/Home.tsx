@@ -170,6 +170,8 @@ export function HomePage() {
   const searchBarColor = useHexColor(searchBarColorValue);
   const searchPlaceholderColorValue = useColorModeValue('gray.400', 'gray.100');
   const searchPlaceholderColor = useHexColor(searchPlaceholderColorValue);
+  const searchBgColorValue = useColorModeValue('gray.50', 'gray.800');
+  const searchBgColor = useHexColor(searchBgColorValue);
 
   // Styling
   const buttonRadius = 'xl';
@@ -1170,6 +1172,10 @@ export function HomePage() {
           py="2"
           minWidth="600px"
         >
+                      {/* The clock Top Right */}
+                      <Box alignSelf="end" mr="2" ref={clockRef} w="fit-content">
+              <Clock isBoard={false} />
+            </Box>
           <Box
             display="flex"
             flexDir="column"
@@ -1188,12 +1194,9 @@ export function HomePage() {
               },
             }}
             w="full"
-            maxW="1600px"
+            maxW="2400px"
           >
-            {/* The clock Top Right */}
-            <Box alignSelf="end" ref={clockRef} w="fit-content">
-              <Clock isBoard={false} />
-            </Box>
+
 
             <Text fontSize="xx-large" fontWeight="bold" alignSelf="center">
               Good {getTimeBasedGreeting()}, {user?.data.name.split(' ')[0]}
@@ -1232,7 +1235,7 @@ export function HomePage() {
               <Box
                 hidden={!(searchSage.length > 0) || !isSearchSageFocused}
                 ref={searchSageRef}
-                bg={searchBarColor}
+                bg={searchBgColor}
                 position="absolute"
                 h="400px"
                 w="full"
@@ -1256,7 +1259,7 @@ export function HomePage() {
                       width: '5px',
                     },
                     '&::-webkit-scrollbar-thumb': {
-                      background: scrollBarColor,
+                      background: 'scrollBarColor',
                       borderRadius: '48px',
                     },
                   }}
@@ -1269,22 +1272,31 @@ export function HomePage() {
                   {/* If it doesn't start with https:// or http:// and filtered roomsAndBoards have more than 1 item */}
                   {roomAndBoards &&
                     roomAndBoards.filter(sageSearchFilter).length > 0 &&
-                    (!searchSage.startsWith('https://') || !searchSage.startsWith('http://')) &&
-                    roomAndBoards.filter(sageSearchFilter).map((item: Room | (Board & { roomName: string })) => {
-                      // If it's a board, get the room ID
-                      if ((item as Board & { roomName: string }).data.roomId) {
-                        return <SearchRow.Board key={item._id} board={item as Board & { roomName: string }} />;
-                      }
-                      return (
-                        <SearchRow.Room
-                          key={item._id}
-                          room={item as Room}
-                          clickHandler={() => {
-                            handleRoomClick(item as Room);
-                          }}
-                        />
-                      );
-                    })}
+                    (!searchSage.startsWith('https://') || !searchSage.startsWith('http://')) && (
+                      (() => {
+                        // Separate boards and rooms
+                        const filteredItems = roomAndBoards.filter(sageSearchFilter);
+                        const boards = filteredItems.filter((item): item is Board & { roomName: string } => 
+                          (item as Board & { roomName: string }).data.roomId !== undefined
+                        );
+                        const rooms = filteredItems.filter((item): item is Room => 
+                          (item as Board & { roomName: string }).data.roomId === undefined
+                        );
+
+                        return (
+                          <SearchRow.Grouped
+                            boards={boards}
+                            rooms={rooms}
+                            onBoardClick={(board) => {
+                              handleBoardClick(board);
+                            }}
+                            onRoomClick={(room) => {
+                              handleRoomClick(room);
+                            }}
+                          />
+                        );
+                      })()
+                    )}
 
                   {/* If there are no roomAndBoards and it's not a valid URL*/}
                   {roomAndBoards && roomAndBoards.filter(sageSearchFilter).length === 0 && !isValidURL() && 'No items match your search'}
