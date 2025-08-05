@@ -800,7 +800,7 @@ export function HomePage() {
                       icon={<MdSearch fontSize="24px" />}
                     />
                   </Tooltip>
-                  <Tooltip hasArrow placement="top" label="Create new Room" closeDelay={200}>
+                  <Tooltip hasArrow placement="top" label="Create New Room" closeDelay={200}>
                     <IconButton
                       aria-label="Create Room"
                       onFocus={(e) => e.preventDefault()}
