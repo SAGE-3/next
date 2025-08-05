@@ -13,6 +13,9 @@ export const apiUrls = {
   config: {
     getConfig: '/api/configuration',
   },
+  apps: {
+    preview: '/api/apps/preview',
+  },
   assets: {
     getAssets: '/api/assets',
     getAssetById: (id: string) => `/api/assets/static/${id}`,
@@ -46,20 +49,6 @@ export const apiUrls = {
     nlp: '/api/nlp',
   },
   ai: {
-    chat: {
-      status: '/api/ai/chat_status',
-      query: '/api/ai/chat_query',
-      ask: '/api/ai/chat',
-    },
-    code: {
-      status: '/api/ai/code_status',
-      query: '/api/ai/code_query',
-    },
-    image: {
-      status: '/api/ai/image_status',
-      labels: '/api/ai/image_to_labels',
-      image: '/api/ai/image_to_image',
-    },
     agents: {
       base: '/api/agents',
       status: '/api/agents/status',

@@ -56,11 +56,15 @@ interface UIState {
   setSavedSelectedAppsIds: () => void;
   clearSavedSelectedAppsIds: () => void;
 
-  //Tags
+  // Focused application
+  focusedAppId: string;
+  setFocusedAppId: (appId: string) => void;
+
+  // Tags
   selectedTag: string;
   setSelectedTag: (value: string) => void;
 
-  // whiteboard
+  // Whiteboard
   clearMarkers: boolean;
   clearAllMarkers: boolean;
   undoLastMarker: boolean;
@@ -149,6 +153,9 @@ export const useUIStore = create<UIState>()((set, get) => ({
   undoLastMarker: false,
   roomlistShowFavorites: true,
   selectedAppId: '',
+
+  focusedAppId: '',
+  setFocusedAppId: (appId: string) => set((state) => ({ ...state, focusedAppId: appId })),
 
   rndSafeForAction: true,
   setRndSafeForAction: (isSafe: boolean) => set((state) => ({ ...state, rndSafeForAction: isSafe })),

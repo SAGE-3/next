@@ -49,7 +49,7 @@
     "url": "http://sage3-server-status.cis230038.projects.jetstream-cloud.org:3000/feedback"
   },
 
- // External Services
+  // External Services
   "services": {
     "twilio": {
       // Your Account SID from www.twilio.com/console
@@ -62,29 +62,45 @@
     "openai": {
       // API Key
       "apiKey": "",
-      // Model name: gpt-3.5-turbo, gpt-4, gpt-4o-mini, ...
-      // "model": "gpt-3.5-turbo"
+      // Model name: gpt-4o-mini, gpt-4, gpt-3.5-turbo, davinci, ...
       "model": "gpt-4o-mini"
     },
     "llama": {
-      // "url": "https://arcade.evl.uic.edu/llama",
-      // "model": "llama3",
-      // "max_tokens": 2048,
-      // "apiKey": ""
       "url": "https://arcade.evl.uic.edu/llama32-11B-vision",
       "model": "meta/llama-3.2-11b-vision-instruct",
       "apiKey": "",
       "max_tokens": 1000
     },
-    "codellama": {
-      "url": "https://arcade.evl.uic.edu/llama31_8bf",
-      "model": "meta/llama-3.1-8b-instruct",
-      "apiKey": "",
-      "max_tokens": 1000
-    },
-    "yolo": {
-      "url": "https://arcade.evl.uic.edu/yolov8",
-      "apiKey": ""
+    "azure": {
+      "text": {
+        "url": "https://dev-sage3-us2.openai.azure.com",
+        "model": "gpt-4.1-mini",
+        "api_version": "2024-12-01-preview"
+      },
+      "embedding": {
+        "url": "https://dev-sage3-us2.openai.azure.com/",
+        "model": "text-embedding-3-small",
+        "apiKey": "",
+        "api_version": "2024-12-01-preview"
+      },
+      "transcription": {
+        "url": "https://dev-sage3-us2.openai.azure.com/openai/deployments/gpt-4o-mini-transcribe/audio/transcriptions",
+        "model": "gpt-4o-mini-transcribe",
+        "apiKey": "",
+        "api_version": "2025-03-01-preview"
+      },
+      "reasoning": {
+        "url": "https://dev-sage3-us2.openai.azure.com/",
+        "model": "o4-mini",
+        "apiKey": "",
+        "api_version": "2024-12-01-preview"
+      },
+      "vision": {
+        "url": "https://dev-sage3-us2.openai.azure.com",
+        "model": "gpt-4.1-mini",
+        "apiKey": "",
+        "api_version": "2024-12-01-preview"
+      }
     }
   },
 
@@ -96,7 +112,7 @@
     "apps": [
       "Chat",
       "ChartMaker",
-      "MapGL",
+      "Map",
       "Notepad",
       "Poll",
       "SageCell",

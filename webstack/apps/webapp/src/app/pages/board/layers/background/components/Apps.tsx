@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useParams } from 'react-router';
 import { throttle } from 'throttle-debounce';
@@ -23,6 +23,7 @@ import {
   useThrottleScale,
   useThrottleApps,
   useUIStore,
+  useUserSettings,
 } from '@sage3/frontend';
 
 import { initialValues } from '@sage3/applications/initialValues';
@@ -56,7 +57,7 @@ export function Apps() {
   const boardSynced = useUIStore((state) => state.boardSynced);
 
   // Cursor Position
-  const { boardCursor } = useCursorBoardPosition();
+  const { getBoardCursor } = useCursorBoardPosition();
 
   // Display some notifications
   const toast = useToast();
@@ -78,9 +79,13 @@ export function Apps() {
   useHotkeys(
     'ctrl+d,cmd+d',
     (evt) => {
+      const boardCursor = getBoardCursor();
       if (lassoApps.length > 0) {
         // filter out the pinned apps
-        const tobedeleted = apps.filter((el) => lassoApps.includes(el._id)).filter((el) => !el.data.pinned).map((el) => el._id);
+        const tobedeleted = apps
+          .filter((el) => lassoApps.includes(el._id))
+          .filter((el) => !el.data.pinned)
+          .map((el) => el._id);
         // If there are selected apps, delete them
         deleteApp(tobedeleted);
         setSelectedApps([]);
@@ -122,12 +127,16 @@ export function Apps() {
     { dependencies: [JSON.stringify(apps)] }
   );
 
+  const { settings, toggleShowUI } = useUserSettings();
+  const showUI = settings.showUI;
+
   // Copy an application into the clipboard
   useHotkeys(
     'c',
     (evt) => {
       evt.preventDefault();
       evt.stopPropagation();
+      const boardCursor = getBoardCursor();
       if (boardCursor && apps.length > 0) {
         const cx = boardCursor.x;
         const cy = boardCursor.y;
@@ -179,7 +188,7 @@ export function Apps() {
             });
           if (!found) {
             // No app under the cursor - clear the clipboard
-            navigator.clipboard.writeText("");
+            navigator.clipboard.writeText('');
           }
         }
       }
@@ -245,6 +254,8 @@ export function Apps() {
   useHotkeys(
     'v',
     (evt) => {
+      const boardCursor = getBoardCursor();
+
       if (boardSynced) {
         evt.preventDefault();
         evt.stopPropagation();
@@ -265,6 +276,8 @@ export function Apps() {
   useHotkeys(
     'z',
     (evt) => {
+      const boardCursor = getBoardCursor();
+
       if (boardCursor && apps.length > 0 && !appDragging) {
         const cx = boardCursor.x;
         const cy = boardCursor.y;
@@ -311,14 +324,50 @@ export function Apps() {
     }
   );
 
-  return (
-    <>
-      {/* Apps array */}
-      {apps.map((app) => {
-        return <AppRenderMemo key={app._id} app={app} />;
-      })}
-    </>
-  );
+  // Focus to app when pressing f over an app
+  // useHotkeys(
+  //   'f',
+  //   (evt) => {
+  //     const boardCursor = getBoardCursor();
+  //     if (boardCursor && apps.length > 0 && !appDragging) {
+  //       const cx = boardCursor.x;
+  //       const cy = boardCursor.y;
+  //       let found = false;
+  //       // Sort the apps by the last time they were updated to order them correctly
+  //       apps
+  //         .slice()
+  //         .sort((a, b) => b._updatedAt - a._updatedAt)
+  //         .forEach((el) => {
+  //           if (found) return;
+  //           if (el.data.dragging) return;
+  //           const x1 = el.data.position.x;
+  //           const y1 = el.data.position.y;
+  //           const x2 = x1 + el.data.size.width;
+  //           const y2 = y1 + el.data.size.height;
+  //           // If the cursor is inside the app, focus it.
+  //           if (cx >= x1 && cx <= x2 && cy >= y1 && cy <= y2) {
+  //             found = true;
+  //             const notAllowedTypes = ['Map', 'VideoViewer', 'Stickie', 'Screenshare'];
+  //             if (!notAllowedTypes.includes(el.data.type)) {
+  //               useUIStore.getState().setFocusedAppId(el._id);
+  //               useUIStore.getState().setSelectedApp('');
+  //               if (showUI) {
+  //                 toggleShowUI();
+  //               }
+  //             }
+  //           }
+  //         });
+  //     }
+  //   },
+  //   {
+  //     dependencies: [previousLocation.set, appDragging, scale, boardPosition.x, boardPosition.y, JSON.stringify(apps)],
+  //   }
+  // );
+
+  // only re-compute this when `apps` changes
+  const appElements = useMemo(() => apps.map((app) => <AppRenderMemo key={app._id} app={app} />), [apps]);
+
+  return <>{appElements}</>;
 }
 
 function AppRender(props: { app: App }) {

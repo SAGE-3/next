@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2025. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate, RouteProps, useParams } from 'react-router-dom';
 
 // Chakra UI
-import { Box, Button, ChakraProvider, CircularProgress, Spinner, Text, useToast } from '@chakra-ui/react';
+import { Box, Button, ChakraProvider, CircularProgress, Text, useToast } from '@chakra-ui/react';
 
 // SAGE3
 import {
@@ -20,7 +20,6 @@ import {
   useUser,
   AuthProvider,
   useAuth,
-  CheckUrlForBoardId,
   SocketAPI,
   useHexColor,
   useData,
@@ -31,18 +30,13 @@ import {
   APIHttp,
 } from '@sage3/frontend';
 import { Board, OpenConfiguration } from '@sage3/shared/types';
+
 // Pages
 import { LoginPage, HomePage, BoardPage, AccountPage, AdminPage, OpenDesktopPage } from './pages';
-import e from 'express';
 
 /**
- * Tries to connect for a length of time, then gives up.
- *
- * @param {string} url
- * @param {number} timeout
- * @returns
+ * Checks URL connectivity with timeout
  */
-
 async function checkURL(url: string, timeout: number) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
@@ -53,37 +47,34 @@ async function checkURL(url: string, timeout: number) {
   return response;
 }
 
+/**
+ * Checks server connectivity
+ */
 async function checkServer(url: string) {
   try {
-    // tries for 2 seconds
     const response = await checkURL(url, 2000);
     return true;
   } catch (error) {
-    // Timeouts
     return false;
   }
 }
 
 /**
- * Main application component
- *
- * @export
- * @returns
+ * Main application component with routing and connection handling
  */
 export function App() {
   const status = useConnectStatus();
   const color = useHexColor('red');
 
-  // Try to reconnect to the server
+  // Auto-reconnect logic
   useEffect(() => {
-    let interval;
+    let interval: number | undefined;
     if (status) {
       if (interval) {
         clearInterval(interval);
       }
     } else {
-      interval = setInterval(() => {
-        // tries every 5 seconds
+      interval = window.setInterval(() => {
         checkServer(window.location.origin).then((status) => {
           if (status) {
             window.location.reload();
@@ -172,6 +163,9 @@ export function App() {
                       </ProtectedAuthRoute>
                     }
                   />
+
+                  {/* Catch-all route for invalid URLs */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               ) : (
                 <Box display="flex" flexDir="column" alignItems="center" textAlign={'center'} justifyContent="center" height="100%">
@@ -200,9 +194,7 @@ export function App() {
 export default App;
 
 /**
- * Private route for authenticated users
- * @param props RouteProps
- * @returns JSX.React.ReactNode
+ * Route protection for authenticated users
  */
 export const ProtectedAuthRoute = (props: RouteProps): JSX.Element => {
   const { auth, loading } = useAuth();
@@ -214,9 +206,7 @@ export const ProtectedAuthRoute = (props: RouteProps): JSX.Element => {
 };
 
 /**
- * Private route for authenticated users and user account created
- * @param props RouteProps
- * @returns JSX.React.ReactNode
+ * Route protection for users with accounts
  */
 export const ProtectedUserRoute = (props: RouteProps): JSX.Element => {
   const { user, loading } = useUser();
@@ -227,6 +217,9 @@ export const ProtectedUserRoute = (props: RouteProps): JSX.Element => {
   }
 };
 
+/**
+ * Route protection for admin users
+ */
 export const ProtectedAdminRoute = (props: RouteProps): JSX.Element => {
   const { user, loading } = useUser();
   const { auth } = useAuth();
@@ -238,20 +231,23 @@ export const ProtectedAdminRoute = (props: RouteProps): JSX.Element => {
     return LoadingSpinner();
   } else {
     const config = data as OpenConfiguration;
-    // in dev mode, everybody can access the route
+    // In dev mode, everyone can access admin routes
     if (!config.production) {
       return <> {props.children}</>;
     } else {
-      // in production, checking that the user is logged properly...not a guest or spectator. And email is in the admin list.
+      // In production, check user role and admin list
       return isSignedInUser && config.admins.includes(user?.data.email) ? <> {props.children}</> : <Navigate to="/#/home" replace />;
     }
   }
 };
 
-// Check the connection status using the API socket.
+/**
+ * Checks WebSocket connection status
+ */
 const useConnectStatus = () => {
   const [connected, setConnection] = useState(true);
   const [socket, setSocket] = useState<WebSocket | null>(null);
+
   useEffect(() => {
     async function setup() {
       const socket = await SocketAPI.getSocket();
@@ -273,20 +269,18 @@ const useConnectStatus = () => {
       }
     };
   }, [socket]);
+
   return connected;
 };
 
-// A Route check to confirm a board exists
+/**
+ * Route component that verifies board exists before rendering
+ */
 export const CheckBoardExistsRoute = (props: RouteProps): JSX.Element => {
   const { boardId, roomId } = useParams();
-
-  // Status of the check, 'pending' means it is still checking, 'exists' means the board exists, 'not-exists' means the board does not exist
   const [status, setStatus] = useState<'pending' | 'exists' | 'not-exists'>('pending');
-
-  // Toast for when the board does not exist
   const toast = useToast();
 
-  // UseEffect to check if the board exists
   useEffect(() => {
     async function checkBoard() {
       const response = await APIHttp.GET<Board>(`/boards/${boardId}`);
@@ -306,7 +300,6 @@ export const CheckBoardExistsRoute = (props: RouteProps): JSX.Element => {
     checkBoard();
   }, []);
 
-  // If status is pending, show modal that it is checking
   if (status === 'pending') {
     return LoadingSpinner();
   } else {
@@ -314,7 +307,9 @@ export const CheckBoardExistsRoute = (props: RouteProps): JSX.Element => {
   }
 };
 
-// Render a spinning chakra loading icon in the center of the page
+/**
+ * Loading spinner component
+ */
 export const LoadingSpinner = () => {
   const teal = useHexColor('teal');
   return (

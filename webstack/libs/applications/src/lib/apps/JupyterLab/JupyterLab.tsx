@@ -283,25 +283,25 @@ function ToolbarComponent(props: App): JSX.Element {
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
 
-        <Tooltip placement="top-start" hasArrow={true} label={'Zoom Out'} openDelay={400}>
-          <Button onClick={() => handleZoom('zoom-out')}>
-            <MdRemove />
+        <Tooltip placement="top" hasArrow={true} label={'Zoom Out'} openDelay={400}>
+          <Button onClick={() => handleZoom('zoom-out')} size='xs' px={0}>
+            <MdRemove size="16px"/>
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Zoom In'} openDelay={400}>
-          <Button onClick={() => handleZoom('zoom-in')}>
-            <MdAdd />
+        <Tooltip placement="top" hasArrow={true} label={'Zoom In'} openDelay={400}>
+          <Button onClick={() => handleZoom('zoom-in')} size='xs' px={0}>
+            <MdAdd size="16px"/>
           </Button>
         </Tooltip>
 
-        <Tooltip placement="top-start" hasArrow={true} label={'Download Notebook'} openDelay={400}>
-          <Button onClick={downloadNotebook}>
-            <MdFileDownload />
+        <Tooltip placement="top" hasArrow={true} label={'Download Notebook'} openDelay={400}>
+          <Button onClick={downloadNotebook} size='xs' px={0}>
+            <MdFileDownload size="16px"/>
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Open in Desktop'} openDelay={400}>
-          <Button onClick={handleOpen}>
-            <MdOpenInNew />
+        <Tooltip placement="top" hasArrow={true} label={'Open in Desktop'} openDelay={400}>
+          <Button onClick={handleOpen} size='xs' px={0}>
+            <MdOpenInNew size="16px"/>
           </Button>
         </Tooltip>
       </ButtonGroup>

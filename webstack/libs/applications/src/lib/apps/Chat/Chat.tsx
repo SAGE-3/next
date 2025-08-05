@@ -29,8 +29,24 @@ import {
   ListItem,
   Textarea,
   useDisclosure,
+  Table,
+  Tr,
+  Td,
+  Th,
+  Thead,
+  Tbody,
 } from '@chakra-ui/react';
-import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle, MdFileDownload, MdChat, MdSettings } from 'react-icons/md';
+import {
+  MdSend,
+  MdExpandCircleDown,
+  MdStopCircle,
+  MdChangeCircle,
+  MdFileDownload,
+  MdChat,
+  MdSettings,
+  MdOpenInNew,
+} from 'react-icons/md';
+import { BsCopy, BsCheck } from 'react-icons/bs';
 import { HiCommandLine } from 'react-icons/hi2';
 
 // Date management
@@ -48,40 +64,77 @@ import {
   serverTime,
   downloadFile,
   useUsersStore,
-  AiAPI,
   useUserSettings,
   useUIStore,
   EditUserSettingsModal,
   useLinkStore,
+  useAssetStore,
+  apiUrls,
 } from '@sage3/frontend';
-import { genId, AskRequest, ImageQuery, PDFQuery, CodeRequest, WebQuery, WebScreenshot } from '@sage3/shared';
+import { genId, AskRequest, ImageQuery, PDFQuery, CodeRequest, WebQuery, WebScreenshot, isGeoJSON } from '@sage3/shared';
 
 import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
 
-import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot } from './tRPC';
+import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot, callMesonet } from './tRPC';
 
-const OrderedList: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => (
+// Override the default markdown options for lists
+const MdOrderedList: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => (
   <ol style={{ paddingLeft: '24px' }} {...props}>
     {children}
   </ol>
 );
 
-const UnorderedList: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => (
+const MdUnorderedList: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => (
   <ul style={{ paddingLeft: '24px' }} {...props}>
     {children}
   </ul>
 );
 
-type OperationMode = 'chat' | 'text' | 'image' | 'web' | 'pdf' | 'code';
+const MdCode: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => {
+  // @ts-ignore
+  const lang = props.className ? props.className.replace('lang-', '') : 'text';
+  const [copied, setCopied] = useState(false);
+  return <Table variant="unstyled" size="sm" style={{
+    borderSpacing: 0,
+    borderCollapse: 'separate',
+    borderRadius: '10px 10px 10px 10px',
+    border: '1px solid black'
+  }}>
+    <Thead>
+      <Tr backgroundColor="#e5e5e5">
+        <Th style={{ borderRadius: '10px 10px 0 0' }} textTransform={'capitalize'} fontWeight={'normal'}>
+          <Box display={"flex"} justifyContent={'space-between'}>
+            <span><b>{lang}</b></span>
+            <Box display={"flex"} alignItems={'center'} userSelect={'none'} _hover={{ cursor: 'pointer' }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setCopied(true);
+                // Copy the code to clipboard
+                navigator.clipboard.writeText(children as string);
+              }}>
+              {copied ? <BsCheck /> : <BsCopy />} <span> {copied ? 'Copied' : 'Copy'} </span>
+            </Box>
+          </Box>
+        </Th>
+      </Tr>
+    </Thead>
+    <Tbody>
+      <Tr>
+        <Td style={{ padding: 0 }} colSpan={1}>
+          <pre style={{ fontSize: 'smaller', paddingLeft: '24px', backgroundColor: '#fafafa', borderRadius: '0 0 10px 10px' }} {...props}>
+            <code {...props} style={{ userSelect: "text" }}>
+              {children}
+            </code>
+          </pre>
+        </Td>
+      </Tr>
+    </Tbody>
+  </Table >
+};
 
-// AI model information from the backend
-interface modelInfo {
-  name: string;
-  model: string;
-  maxTokens: number;
-}
+type OperationMode = 'chat' | 'text' | 'image' | 'web' | 'pdf' | 'code' | 'map' | 'Hawaii Mesonet';
 
 /* App component for Chat */
 
@@ -96,11 +149,12 @@ function AppComponent(props: App): JSX.Element {
   const [sourceApps, setSouceApps] = useState<string[]>([]);
 
   const links = useLinkStore((state) => state.links);
+  const addLink = useLinkStore((state) => state.addLink);
 
   // Colors for Dark theme and light theme
   // Chat Bubble Colors
   const myColor = useHexColor(`blue.300`);
-  const sageColor = useHexColor('purple.200');
+  const sageColor = "#bec6dc"
   const aiTypingColor = useHexColor('orange.300');
   const otherUserColor = useHexColor('gray.300');
   // Background, scrollbar, and Foreground Colors
@@ -114,12 +168,14 @@ function AppComponent(props: App): JSX.Element {
 
   const { isOpen: editSettingsIsOpen, onOpen: editSettingsOnOpen, onClose: editSettingsOnClose } = useDisclosure();
 
+  // Is the app in focus mode?
+  const isFocused = useUIStore((state) => state.focusedAppId === props._id);
+
   // App state management
   const updateState = useAppStore((state) => state.updateState);
   // Get presences of users
   const users = useUsersStore((state) => state.users);
   // Model Preferences
-  const [onlineModels, setOnlineModels] = useState<modelInfo[]>([]);
   const { settings } = useUserSettings();
   const [selectedModel, setSelectedModel] = useState(settings.aiModel);
 
@@ -182,12 +238,24 @@ function AppComponent(props: App): JSX.Element {
     } else if (mode === 'web') {
       // Code
       onContentWeb(text);
+    } else if (mode === 'map') {
+      // Map
+      onContentMap(text);
+    } else if (mode === 'Hawaii Mesonet') {
+      // Code
+      onContentMesonet(text);
     } else {
       await newMessage(text);
     }
   };
-
   const onSubmit = (e: React.KeyboardEvent) => {
+    if (e.code === 'Escape') {
+      // Deselect the text area
+      inputRef.current?.blur();
+      // Deselect the app
+      useUIStore.getState().setSelectedApp('');
+      return;
+    }
     // Keyboard instead of pressing the button
     if (e.key === 'Enter') {
       if (e.shiftKey) {
@@ -260,6 +328,10 @@ function AppComponent(props: App): JSX.Element {
         setMode('code');
       } else if (apps && apps[0] && apps[0].data.type === 'Webview') {
         setMode('web');
+      } else if (apps && apps[0] && apps[0].data.type === 'Hawaii Mesonet') {
+        setMode('Hawaii Mesonet');
+      } else if (apps && apps[0] && apps[0].data.type === 'Map') {
+        setMode('map');
       } else {
         setMode('text');
       }
@@ -345,6 +417,10 @@ function AppComponent(props: App): JSX.Element {
               },
             ],
           });
+          // Check if there are actions to be taken
+          if (response.actions && response.actions.length > 0) {
+            setActions(response.actions);
+          }
         }
       }
     }
@@ -415,7 +491,7 @@ function AppComponent(props: App): JSX.Element {
         ${newctx}
         </document>
         After reading through the document, identify the main topics, themes, and key concepts that are covered.
-        Provide all your answers in a few sentences using the Markdown syntax`;
+        Provide all your answers in a few sentences.`;
       newMessage(ctx);
       setInput('');
     }
@@ -520,9 +596,133 @@ function AppComponent(props: App): JSX.Element {
     }
   };
 
+  const onMesonetSummary = async () => {
+    return onContentMesonet('Summarize the key weather patterns from the Mesonet dataset.');
+  };
+  const onMesonetTrends = async () => {
+    return onContentMesonet('Identify key trends in the Mesonet weather data.');
+  };
+  const onMesonetComparison = async () => {
+    return onContentMesonet('Compare weather conditions between different Mesonet stations.');
+  };
+  const onMesonetForecast = async () => {
+    return onContentMesonet('Provide insights based on past data to predict future weather trends.');
+  };
+  const onMesonetExtremes = async () => {
+    return onContentMesonet('Find the extreme values (highest and lowest) recorded in the dataset.');
+  };
+
+  const onContentMesonet = async (prompt: string) => {
+    if (!user) return;
+    if (selectedModel == 'llama') {
+      toast({
+        title: 'Mesonet Feature not available for llama model',
+        description: 'Please switch SAGE Intelligence to OpenAI in User Settings.',
+        status: 'error',
+        duration: 4000,
+        isClosable: true,
+      });
+      return;
+    }
+    if (sourceApps && sourceApps.length >= 1) {
+      const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
+      if (apps && apps[0].data.type === 'Hawaii Mesonet') {
+        const url = apps[0].data.state.url;
+        if (roomId && boardId) {
+          const now = await serverTime();
+          const isoNow = new Date();
+          const isoString = isoNow.toISOString();
+          const initialAnswer = {
+            id: genId(),
+            userId: user._id,
+            creationId: '',
+            creationDate: now.epoch,
+            userName: 'SAGE',
+            query: prompt,
+            response: 'Working on it...',
+          };
+          updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
+
+          const q = {
+            ctx: {
+              previousQ: previousQuestion,
+              previousA: previousAnswer,
+              pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+              roomId,
+              boardId,
+            },
+            q: prompt,
+            url: url,
+            user: username,
+            currentTime: isoString,
+          };
+          setProcessing(true);
+          setActions([]);
+          const response = await callMesonet(q);
+          setProcessing(false);
+
+          if ('message' in response) {
+            toast({
+              title: 'Error',
+              description: response.message || 'Error sending query to the agent. Please try again.',
+              status: 'error',
+              duration: 4000,
+              isClosable: true,
+            });
+          } else {
+            setStreamText('');
+            ctrlRef.current = null;
+            setPreviousAnswer(response.summary);
+            // Update the Mesonet app's state with the selected stations
+            // if (response.stations && response.stations.length > 0) {
+            //   const mesonetApp = apps[0];
+            //   updateState(mesonetApp._id, {
+            //     ...mesonetApp.data.state,
+            //     stationNames: response.stations,
+
+            //     widget: {
+            //       ...mesonetApp.data.state.widget,
+            //       yAxisNames: response.attributes,
+            //     },
+            //   });
+            // }
+
+            updateState(props._id, {
+              ...s,
+              previousQ: 'Describe the content',
+              previousA: response.summary,
+              messages: [
+                ...s.messages,
+                {
+                  id: genId(),
+                  userId: user._id,
+                  creationId: '',
+                  creationDate: now.epoch + 1,
+                  userName: 'SAGE',
+                  query: initialAnswer.query,
+                  response: response.summary,
+                },
+              ],
+            });
+            if (response.actions) {
+              setActions(response.actions);
+            }
+          }
+        }
+      }
+    }
+  };
+
+  const mesonetPrompts: { title: string; action: () => void; prompt: string }[] = [
+    // { title: 'Summarize Mesonet Data', action: onMesonetSummary, prompt: 'Summarize key weather patterns from the Mesonet dataset.' },
+    // { title: 'Find Trends', action: onMesonetTrends, prompt: 'Identify key trends in the Mesonet weather data.' },
+    // { title: 'Compare Locations', action: onMesonetComparison, prompt: 'Compare weather conditions between different Mesonet stations.' },
+    // { title: 'Generate Forecast Insights', action: onMesonetForecast, prompt: 'Provide insights based on past data to predict trends.' },
+    // { title: 'Find Extremes', action: onMesonetExtremes, prompt: 'Find the extreme values (highest and lowest) recorded in the dataset.' },
+  ];
+
   const onContentPDF = async (prompt: string) => {
     if (!user) return;
-    console.log('sources', sourceApps);
 
     const isQuestion = prompt.toUpperCase().startsWith('@S');
     const name = isQuestion ? 'SAGE' : user?.data.name;
@@ -561,6 +761,7 @@ function AppComponent(props: App): JSX.Element {
               q: request,
               user: username,
               assetids: assetids,
+              model: selectedModel || 'openai',
             };
             setProcessing(true);
             setActions([]);
@@ -715,6 +916,134 @@ function AppComponent(props: App): JSX.Element {
     }
   };
 
+  // Generic code to handle the map content
+  const onContentMap = async (prompt: string) => {
+    if (!user) return;
+    if (sourceApps.length > 0) {
+      // Update the context with the stickies
+      const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
+
+      // Check for map
+      if (apps && apps[0].data.type === 'Map') {
+        if (roomId && boardId) {
+          const now = await serverTime();
+          const initialAnswer = {
+            id: genId(),
+            userId: user._id,
+            creationId: '',
+            creationDate: now.epoch,
+            userName: 'SAGE',
+            query: prompt,
+            response: 'Working on it...',
+          };
+          updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
+
+          const request = prompt.slice(2);
+          console.log('Map request', request);
+          console.log('GeoJSON', apps[0].data.state);
+          let ctx = '';
+          const layers = apps[0].data.state.layers || [];
+          if (layers.length > 0) {
+            const visibleLayers = layers.filter((l: any) => l.visible).map((l: any) => l.assetId);
+            if (visibleLayers.length === 0) {
+              toast({
+                title: 'No visible layers',
+                description: 'Please select a layer to query.',
+                status: 'warning',
+                duration: 4000,
+                isClosable: true,
+              });
+              return;
+            }
+            const myasset = useAssetStore.getState().assets.find((a) => a._id === visibleLayers[0]);
+            if (myasset && isGeoJSON(myasset.data.mimetype)) {
+              const newURL = apiUrls.assets.getAssetById(myasset.data.file);
+              // Get the GEOJSON data from the asset
+              const response = await fetch(newURL, {
+                headers: {
+                  'Content-Type': 'application/json',
+                  Accept: 'application/json',
+                },
+              });
+              const geojson = await response.json();
+
+              ctx = `Please read the following GeoJSON data:
+                <text>
+                ${JSON.stringify(geojson, null, 2)}
+                </text>
+                ${request}`;
+            }
+          } else {
+            ctx = `Please check the following map centered on the coordinates:
+              <data>
+              Lng ${apps[0].data.state.location[0]}, Lat ${apps[0].data.state.location[1]}
+              </data>
+              ${request}`;
+          }
+
+          // Build the query
+          const q: AskRequest = {
+            ctx: {
+              previousQ: previousQuestion,
+              previousA: previousAnswer,
+              pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+              roomId,
+              boardId,
+            },
+
+            user: username,
+            id: genId(),
+            model: selectedModel || 'llama',
+            location: location,
+            q: s.context ? ctx : request,
+          };
+          setProcessing(true);
+          setActions([]);
+          // Invoke the agent
+          const response = await callAsk(q);
+          setProcessing(false);
+
+          if ('message' in response) {
+            toast({
+              title: 'Error',
+              description: response.message || 'Error sending query to the agent. Please try again.',
+              status: 'error',
+              duration: 4000,
+              isClosable: true,
+            });
+          } else {
+            // Clear the stream text
+            setStreamText('');
+            ctrlRef.current = null;
+            setPreviousAnswer(response.r);
+            // Add messages
+            updateState(props._id, {
+              ...s,
+              previousQ: 'Describe the content',
+              previousA: response.r,
+              messages: [
+                ...s.messages,
+                initialAnswer,
+                {
+                  id: genId(),
+                  userId: user._id,
+                  creationId: '',
+                  creationDate: now.epoch + 1,
+                  userName: 'SAGE',
+                  query: '',
+                  response: response.r,
+                },
+              ],
+            });
+            if (response.actions) {
+              setActions(response.actions);
+            }
+          }
+        }
+      }
+    }
+  };
+
   // Get a screenshot of the web content
   const onContentWebScreenshot = async () => {
     if (!user) return;
@@ -804,9 +1133,9 @@ function AppComponent(props: App): JSX.Element {
     {
       title: 'Generate Keywords',
       action: onContentWeb,
-      prompt: 'Extract 3-5 keywords that best capture the essence and subject matter of the text.',
+      prompt: 'Return a list of 3-5 keywords that best capture the essence and subject matter of the text.',
     },
-    { title: 'Find Facts', action: onContentWeb, prompt: 'Provide two or three interesting facts from the text.' },
+    { title: 'Find Facts', action: onContentWeb, prompt: 'Provide a list of two or three interesting facts from the text.' },
     { title: 'Screenshot', action: onContentWebScreenshot, prompt: 'Take a screenshot' },
   ];
 
@@ -901,7 +1230,7 @@ function AppComponent(props: App): JSX.Element {
         ${s.context}
         </document>
         After reading through the document, identify the pros and cons.
-        Provide all your answers in a few sentences using the Markdown syntax`;
+        Provide all your answers in a few sentences.`;
       newMessage(ctx);
       setInput('');
     }
@@ -914,7 +1243,7 @@ function AppComponent(props: App): JSX.Element {
         ${s.context}
         </document>
         Extract 3-5 keywords that best capture the essence and subject matter of the document. These keywords should concisely represent the most important and central ideas conveyed by the text.
-        Provide all your answers using a list in Markdown syntax`;
+        Provide all your answers using a list.`;
       newMessage(ctx);
       setInput('');
     }
@@ -926,7 +1255,7 @@ function AppComponent(props: App): JSX.Element {
         <document>
         ${s.context}
         </document>
-        Provide a short opinion on the document using the Markdown syntax`;
+        Provide a short opinion on the document.`;
       newMessage(ctx);
       setInput('');
     }
@@ -938,7 +1267,7 @@ function AppComponent(props: App): JSX.Element {
         <document>
         ${s.context}
         </document>
-        Provide two or three interesting facts from the document, using a list in Markdown syntax`;
+        List two or three interesting facts from the document.`;
       newMessage(ctx);
       setInput('');
     }
@@ -1104,13 +1433,6 @@ function AppComponent(props: App): JSX.Element {
   };
 
   useEffect(() => {
-    async function fetchStatus() {
-      const response = await AiAPI.chat.status();
-      const models = response.onlineModels as modelInfo[];
-      setOnlineModels(models);
-    }
-    fetchStatus();
-
     // Scroll to bottom of chat box immediately
     chatBox.current?.scrollTo({
       top: chatBox.current?.scrollHeight,
@@ -1132,12 +1454,9 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     if (settings.aiModel) {
-      const model = onlineModels.find((m) => m.name === settings.aiModel);
-      if (model) {
-        setSelectedModel(model.name as 'openai' | 'llama');
-      }
+      setSelectedModel(settings.aiModel);
     }
-  }, [settings.aiModel, onlineModels]);
+  }, [settings.aiModel]);
 
   // Wait for new messages to scroll to the bottom
   useEffect(() => {
@@ -1157,7 +1476,7 @@ function AppComponent(props: App): JSX.Element {
       const pos = action.data.position;
       const state = action.state;
       // Create the app
-      createApp({
+      const res = await createApp({
         title: type,
         roomId: roomId!,
         boardId: boardId!,
@@ -1170,6 +1489,11 @@ function AppComponent(props: App): JSX.Element {
         dragging: false,
         pinned: false,
       });
+      if (res.success === true) {
+        const sourceId = props._id;
+        const targetId = res.data._id;
+        addLink(sourceId, targetId, props.data.boardId, 'provenance');
+      }
       toast({
         title: 'Info',
         description: 'Action applied.',
@@ -1177,6 +1501,7 @@ function AppComponent(props: App): JSX.Element {
         duration: 3000,
         isClosable: true,
       });
+      addLink;
     } else {
       console.log('Action> not valid');
     }
@@ -1214,6 +1539,11 @@ function AppComponent(props: App): JSX.Element {
             const diff = now - previousTime - 30 * 60 * 1000; // minus 30 minutes
             const when = diff > 0 ? formatDistance(previousTime, now, { addSuffix: true }) : '';
             const last = index === sortedMessages.length - 1;
+
+            // Remove single backticks and replace with double asterisks for bold
+            const response = message.response.replace(/`([^`\n]+)`/g, (match, p1) => {
+              return `**${p1}**`;
+            });
 
             return (
               <Fragment key={index}>
@@ -1257,7 +1587,7 @@ function AppComponent(props: App): JSX.Element {
                           py={1}
                           m={3}
                           maxWidth="70%"
-                          userSelect={'none'}
+                          userSelect={isFocused ? 'text' : 'none'}
                           onDoubleClick={() => {
                             if (navigator.clipboard) {
                               // Copy into clipboard
@@ -1272,7 +1602,7 @@ function AppComponent(props: App): JSX.Element {
                               });
                             }
                           }}
-                          draggable={true}
+                          draggable={!isFocused}
                           // Store the query into the drag/drop events to create stickies
                           onDragStart={(e) => {
                             e.dataTransfer.clearData();
@@ -1348,7 +1678,7 @@ function AppComponent(props: App): JSX.Element {
                         >
                           <Box
                             // pl={3}
-                            draggable={true}
+                            draggable={!isFocused}
                             onDragStart={(e) => {
                               // Store the response into the drag/drop events to create stickies
                               e.dataTransfer.clearData();
@@ -1369,16 +1699,19 @@ function AppComponent(props: App): JSX.Element {
                                 options={{
                                   overrides: {
                                     ol: {
-                                      component: OrderedList,
+                                      component: MdOrderedList,
                                     },
                                     ul: {
-                                      component: UnorderedList,
+                                      component: MdUnorderedList,
+                                    },
+                                    code: {
+                                      component: MdCode,
                                     },
                                   },
                                 }}
-                                style={{ userSelect: 'none' }}
+                                style={{ userSelect: isFocused ? 'text' : 'none' }}
                               >
-                                {message.response}
+                                {response}
                               </Markdown>
                             </Box>
                           </Box>
@@ -1422,33 +1755,40 @@ function AppComponent(props: App): JSX.Element {
           <Box display={'flex'} justifyContent={'left'}>
             {actions && (
               <List>
-                {actions.map((action, index) => (
-                  <Box
-                    color="black"
-                    rounded={'md'}
-                    boxShadow="md"
-                    fontFamily="Arial"
-                    textAlign={'left'}
-                    bg={textColor}
-                    p={1}
-                    m={3}
-                    // maxWidth="80%"
-                    userSelect={'none'}
-                    _hover={{ background: 'purple.300' }}
-                    background={'purple.200'}
-                    // onDoubleClick={applyAction(action)}
-                    onClick={applyAction(action)}
-                    key={'list-' + index}
-                  >
-                    <Tooltip label="Click to show result on the board" aria-label="A tooltip">
-                      <ListItem key={index}>
-                        <ListIcon as={MdSettings} color="green.500" />
-                        Show result on the board
-                        {/* Show result {index + 1} on the board: {action.type} {action.app} */}
-                      </ListItem>
-                    </Tooltip>
-                  </Box>
-                ))}
+                {actions.map((action, index) => {
+                  let propName = undefined;
+                  let chartType = undefined;
+                  try {
+                    propName = action.state.widget.yAxisNames[0];
+                    chartType = action.state.widget.visualizationType;
+                  } catch (e) {
+                    // console.log('ChatApp Exception> No property Name found.');
+                  }
+                  return (
+                    <Box
+                      color="black"
+                      rounded={'md'}
+                      boxShadow="md"
+                      fontFamily="Arial"
+                      textAlign={'left'}
+                      bg={textColor}
+                      p={1}
+                      m={3}
+                      userSelect={'none'}
+                      _hover={{ background: 'purple.300' }}
+                      background={'purple.200'}
+                      onClick={applyAction(action)}
+                      key={'list-' + index}
+                    >
+                      <Tooltip label="Click to show result on the board" aria-label="A tooltip">
+                        <ListItem key={index}>
+                          <ListIcon as={MdOpenInNew} color="white" fontWeight={'bold'} />
+                          {chartType === 'map' ? 'Show Map' : 'Show ' + (propName || action.app)} on the board
+                        </ListItem>
+                      </Tooltip>
+                    </Box>
+                  );
+                })}
               </List>
             )}
           </Box>
@@ -1511,6 +1851,32 @@ function AppComponent(props: App): JSX.Element {
         </HStack>
 
         {mode !== 'chat' && <hr />}
+
+        {mode === 'Hawaii Mesonet' && (
+          <HStack>
+            {mesonetPrompts.map((p, i) => (
+              <Tooltip key={'tip' + i} fontSize={'xs'} placement="top" hasArrow={true} label={p.prompt} openDelay={400}>
+                <Button
+                  key={'button' + i}
+                  aria-label="stop"
+                  size={'xs'}
+                  p={0}
+                  m={0}
+                  colorScheme={'blue'}
+                  variant="ghost"
+                  textAlign={'left'}
+                  onClick={() => p.action()}
+                  width="34%"
+                >
+                  <HiCommandLine fontSize={'24px'} />
+                  <Text key={'text' + i} ml={'2'}>
+                    {p.title}
+                  </Text>
+                </Button>
+              </Tooltip>
+            ))}
+          </HStack>
+        )}
 
         {/* AI Prompts */}
         {mode === 'text' && (
@@ -1912,9 +2278,9 @@ function ToolbarComponent(props: App): JSX.Element {
   return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
-        <Tooltip placement="top-start" hasArrow={true} label={'Download Transcript'} openDelay={400}>
-          <Button onClick={downloadTxt}>
-            <MdFileDownload />
+        <Tooltip placement="top" hasArrow={true} label={'Download Transcript'} openDelay={400}>
+          <Button onClick={downloadTxt} size='xs' px={0}>
+            <MdFileDownload fontSize="16px"/>
           </Button>
         </Tooltip>
       </ButtonGroup>

@@ -40,9 +40,20 @@ Pillow
 
 # Web scrapping
 playwright
+html2text
 
 # PDF
 pymupdf4llm
 
 # ChromaDB AI vector DB
 chromadb==0.5.16
+
+#Mesonet
+pandas
+matplotlib
+seaborn
+
+# Logging
+fluent-logger
+
+

@@ -297,20 +297,20 @@ function ToolbarComponent(props: App): JSX.Element {
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal" mr="1">
         <Tooltip placement="top" hasArrow={true} label={'Bold'} openDelay={400}>
-          <Button onClick={() => formatText('bold')}>B</Button>
+          <Button onClick={() => formatText('bold')} size='xs' px={0}>B</Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={'Italic'} openDelay={400}>
-          <Button onClick={() => formatText('italic')}>
+          <Button onClick={() => formatText('italic')} size='xs' px={0}>
             <i>I</i>
           </Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={'Underline'} openDelay={400}>
-          <Button onClick={() => formatText('underline')}>
+          <Button onClick={() => formatText('underline')} size='xs' px={0}>
             <u>U</u>
           </Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={'Strike'} openDelay={400}>
-          <Button onClick={() => formatText('strike')}>
+          <Button onClick={() => formatText('strike')} size='xs'>
             <s>S</s>
           </Button>
         </Tooltip>
@@ -318,7 +318,7 @@ function ToolbarComponent(props: App): JSX.Element {
 
       <Menu>
         <Tooltip placement="top" hasArrow={true} label={'Font Size'} openDelay={400}>
-          <MenuButton as={Button} size="xs" colorScheme="teal" mx="1">
+          <MenuButton as={Button} size="xs" colorScheme="teal" mx="1" >
             Size
           </MenuButton>
         </Tooltip>
@@ -332,7 +332,7 @@ function ToolbarComponent(props: App): JSX.Element {
 
       <Menu>
         <Tooltip placement="top" hasArrow={true} label={'Font Color'} openDelay={400}>
-          <MenuButton as={Button} size="xs" colorScheme="teal" mx="1">
+          <MenuButton as={Button} size="xs" colorScheme="teal" mx="1" >
             Color
           </MenuButton>
         </Tooltip>
@@ -368,50 +368,50 @@ function ToolbarComponent(props: App): JSX.Element {
 
       <ButtonGroup isAttached size="xs" colorScheme="teal" mx="1">
         <Tooltip placement="top" hasArrow={true} label={'Align Left'} openDelay={400}>
-          <Button onClick={() => formatLineAlign('')}>
-            <MdFormatAlignLeft />
+          <Button onClick={() => formatLineAlign('')} size='xs' px={0}>
+            <MdFormatAlignLeft size="16px" />
           </Button>
         </Tooltip>
 
         <Tooltip placement="top" hasArrow={true} label={'Align Center'} openDelay={400}>
-          <Button onClick={() => formatLineAlign('center')}>
-            <MdFormatAlignCenter />
+          <Button onClick={() => formatLineAlign('center')} size='xs' px={0}>
+            <MdFormatAlignCenter size="16px" />
           </Button>
         </Tooltip>
 
         <Tooltip placement="top" hasArrow={true} label={'Align Right'} openDelay={400}>
-          <Button onClick={() => formatLineAlign('right')}>
-            <MdFormatAlignRight />
+          <Button onClick={() => formatLineAlign('right')} size='xs' px={0}>
+            <MdFormatAlignRight size="16px" />
           </Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={'Justify'} openDelay={400}>
-          <Button onClick={() => formatLineAlign('justify')}>
-            <MdFormatAlignJustify />
+          <Button onClick={() => formatLineAlign('justify')} size='xs' px={0}>
+            <MdFormatAlignJustify size="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>
 
       <ButtonGroup isAttached size="xs" colorScheme="teal" mx="1">
         <Tooltip placement="top" hasArrow={true} label={'Bullet List'} openDelay={400}>
-          <Button onClick={() => formatLineList('bullet')}>
-            <MdOutlineList />
+          <Button onClick={() => formatLineList('bullet')} size="xs" px={0}>
+            <MdOutlineList size="16px" />
           </Button>
         </Tooltip>
 
         <Tooltip placement="top" hasArrow={true} label={'Numbered List'} openDelay={400}>
-          <Button onClick={() => formatLineList('ordered')}>
-            <MdOutlineFormatListNumbered />
+          <Button onClick={() => formatLineList('ordered')} size='xs' px={0}>
+            <MdOutlineFormatListNumbered size="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>
       <Tooltip placement="top" hasArrow={true} label={'Download as HTML'} openDelay={400}>
-        <Button onClick={downloadHTML} size="xs" colorScheme="teal" mx="1">
-          <MdFileDownload />
+        <Button onClick={downloadHTML} size="xs" colorScheme="teal" mx="1" px={0}>
+          <MdFileDownload size="16px" />
         </Button>
       </Tooltip>
       <Tooltip placement="top" hasArrow={true} label={'Attempt to reconnect the Notepad'} openDelay={400}>
-        <Button onClick={() => setReinit(props._id, !reinit)} size="xs" colorScheme="teal" mx="1">
-          <MdRefresh />
+            <Button onClick={() => setReinit(props._id, !reinit)} size="xs" colorScheme="teal" mx="1" px={0}>
+          <MdRefresh size="16px" />
         </Button>
       </Tooltip>
     </>

@@ -12,6 +12,8 @@ import { Button, ButtonGroup } from '@chakra-ui/react';
 import { SAGEColors, colors } from '@sage3/shared';
 import { useHexColor as getColor } from '../../../hooks';
 
+
+
 type ColorPickerProps = {
   selectedColor: SAGEColors;
   onChange: (newColor: SAGEColors) => void;
@@ -33,12 +35,16 @@ export function ColorPicker(props: ColorPickerProps) {
     props.onChange(color);
   };
 
+  // Color filter for users. Remove 'teal', 'cyan', and 'purple' from the colors array
+  const availableColors = colors.filter((color) => color !== 'teal' && color !== 'cyan' && color !== 'purple');
+
   return (
-    <ButtonGroup isAttached size="xs" colorScheme="teal" style={{ ...props.style }}>
-      {colors.map((color) => {
+    <ButtonGroup isAttached size="xs" colorScheme="teal" style={{ ...props.style }} display={'flex'}>
+      {availableColors.map((color) => {
         const c = getColor(color);
         return (
           <Button
+            flex={1}
             key={c}
             value={c}
             bgColor={c}

@@ -90,12 +90,14 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
   const config = useConfigStore((state) => state.config);
   const [llama, setLlama] = useState<ServerConfiguration['services']['llama']>();
   const [openai, setOpenai] = useState<ServerConfiguration['services']['openai']>();
+  const [azure, setAzure] = useState<ServerConfiguration['services']['azure']>();
   const [selectedModel, setSelectedModel] = useState(userSettings.aiModel);
 
   useEffect(() => {
     if (config) {
       setLlama(config.llama);
       setOpenai(config.openai);
+      setAzure(config.azure);
     }
   }, [config]);
 
@@ -105,8 +107,8 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
       // If value previously set, use it
       setSelectedModel(userSettings.aiModel);
     } else {
-      // Otherwise, use openai if available, else llama
-      const val = openai?.apiKey ? 'openai' : 'llama';
+      // Otherwise, use azure as default
+      const val = 'azure';
       setSelectedModel(val);
       setAIModel(val);
     }
@@ -241,6 +243,9 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
                         <Radio value="openai" isDisabled={!openai?.apiKey}>
                           <b>OpenAI</b>: {openai?.model} - {openai?.apiKey ? openai?.apiKey.substring(0, 3) + '•'.repeat(10) : 'n/a'}
                         </Radio>
+                        <Radio value="azure" isDisabled={!azure?.text.apiKey}>
+                          <b>Azure</b>: {azure?.text.model} - {azure?.text.apiKey ? azure?.text.apiKey.substring(0, 3) + '•'.repeat(10) : 'n/a'}
+                        </Radio>
                       </Stack>
                     </RadioGroup>
                   </VStack>
@@ -249,9 +254,12 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
             </TabPanels>
           </Tabs>
         </ModalBody>
-        <ModalFooter display="flex" justifyContent={'left'}>
-          <Button colorScheme="teal" size="sm" width="100%" onClick={restoreDefaultSettings} ref={initialRef}>
+        <ModalFooter display="flex" justifyContent={'space-between'}>
+          <Button colorScheme="teal" size="sm" onClick={restoreDefaultSettings}>
             Restore Default Settings
+          </Button>
+          <Button colorScheme="green" size="sm" width="80px" onClick={props.onClose} ref={initialRef}>
+            OK
           </Button>
         </ModalFooter>
       </ModalContent>

@@ -510,43 +510,43 @@ function ToolbarComponent(props: App): JSX.Element {
       </Drawer>
 
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Open in SAGE3'} openDelay={400}>
-          <Button onClick={openInSAGE3}>
-            <MdWeb />
+        <Tooltip placement="top" hasArrow={true} label={'Open in SAGE3'} openDelay={400}>
+          <Button onClick={openInSAGE3} size="xs" px={0}>
+            <MdWeb size="16px" />
           </Button>
         </Tooltip>
 
-        <Tooltip placement="top-start" hasArrow={true} label={'Stream webview'} openDelay={400}>
-          <Button onClick={openSidebar} ref={btnRef} isDisabled={!isElectron() || streaming}>
-            <MdViewSidebar />
+        <Tooltip placement="top" hasArrow={true} label={'Stream webview'} openDelay={400}>
+          <Button onClick={openSidebar} ref={btnRef} isDisabled={!isElectron() || streaming} size="xs" px={0}>
+            <MdViewSidebar size="16px" />
           </Button>
         </Tooltip>
 
-        <Tooltip placement="top-start" hasArrow={true} label={'Open in Desktop'} openDelay={400}>
-          <Button onClick={openUrl}>
-            <MdDesktopMac />
+        <Tooltip placement="top" hasArrow={true} label={'Open in Desktop'} openDelay={400}>
+          <Button onClick={openUrl} size="xs" px={0}>
+            <MdDesktopMac size="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>
 
       <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
-        <Tooltip placement="top-start" hasArrow={true} label={'Copy URL to Clipboard'} openDelay={400}>
-          <Button onClick={copyUrl}>
-            <MdCopyAll />
+        <Tooltip placement="top" hasArrow={true} label={'Copy URL to Clipboard'} openDelay={400}>
+          <Button onClick={copyUrl} size="xs" px={0}>
+            <MdCopyAll size="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>
 
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Save URL in Asset Manager'} openDelay={400}>
-          <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }}>
-            <MdFileUpload />
+        <Tooltip placement="top" hasArrow={true} label={'Save URL in Asset Manager'} openDelay={400}>
+          <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }} size="xs" px={0}>
+            <MdFileUpload size="16px" />
           </Button>
         </Tooltip>
 
-        <Tooltip placement="top-start" hasArrow={true} label={'Download Link'} openDelay={400}>
-          <Button onClick={downloadURL} _hover={{ opacity: 0.7 }}>
-            <MdFileDownload />
+        <Tooltip placement="top" hasArrow={true} label={'Download Link'} openDelay={400}>
+            <Button onClick={downloadURL} _hover={{ opacity: 0.7 }} size="xs" px={0}>
+            <MdFileDownload size="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>

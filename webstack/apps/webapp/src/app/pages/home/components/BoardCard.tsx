@@ -21,8 +21,8 @@ import {
   useOutsideClick,
 } from '@chakra-ui/react';
 
-import { MdStar, MdStarOutline } from 'react-icons/md';
 import { BsThreeDotsVertical } from 'react-icons/bs';
+import { MdStar, MdStarOutline } from 'react-icons/md';
 
 import { Board, PresencePartial, Room } from '@sage3/shared/types';
 import { EnterBoardModal, useHexColor, useUser, copyBoardUrlToClipboard, EditBoardModal, BoardInformationModal } from '@sage3/frontend';
@@ -166,9 +166,6 @@ export function BoardCard(props: BoardCardProps) {
                   usersPresent={props.usersPresent}
                   maxUsersDisplayed={5}
                   anonymousNames={props.board.data.isPrivate}
-                  overflow="hidden"
-                  width={150}
-                  height={20}
                 />
               </Box>
             </Box>
@@ -201,7 +198,7 @@ export function BoardCard(props: BoardCardProps) {
                 {props.board.data.name}
               </Box>
               <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="xs" color={subTextColor}>
-                {props.board.data.description}
+                {props.room.data.name}
               </Box>
             </Box>
           </Tooltip>

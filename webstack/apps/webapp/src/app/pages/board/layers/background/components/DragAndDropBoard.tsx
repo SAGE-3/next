@@ -153,7 +153,7 @@ export const useDragAndDropBoard = (props: useDragAndDropBoardProps) => {
 
           const pastedText = event.dataTransfer.getData('Url');
           if (pastedText) {
-            if (pastedText.startsWith('data:image/png;base64')) {
+            if (pastedText.startsWith('data:image/png;base64') || pastedText.startsWith('data:image/jpeg;base64')) {
               const appState = event.dataTransfer.getData('app_state');
               if (!appState) return;
               const parsedState = JSON.parse(appState);

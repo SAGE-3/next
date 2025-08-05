@@ -27,6 +27,7 @@ import {
   isGeoJSON,
   isVideo,
   isPython,
+  isR,
   isGLTF,
   isGIF,
   isFileURL,
@@ -108,7 +109,14 @@ async function openApplication(a: Asset, xDrop: number, yDrop: number, roomId: s
   } else {
     // Check all the supported file types
     if (isGeoTiff(fileType)) {
-      return setupApp(a.data.originalfilename, 'MapGL', xDrop, yDrop, roomId, boardId, { w: w, h: w }, { assetid: fileID });
+      const initialLayer = {
+        assetId: fileID,
+        visible: true,
+        color: 'red',
+        colorScale: 'turbo',
+        opacity: 0.5,
+      } as NonNullable<(typeof initialValues)['Map']['layers']>[0];
+      return setupApp(a.data.originalfilename, 'Map', xDrop, yDrop, roomId, boardId, { w: w, h: w }, { layers: [initialLayer] });
     } else if (isFileURL(fileType)) {
       const localurl = apiUrls.assets.getAssetById(a.data.file);
       // Get the content of the file
@@ -131,30 +139,6 @@ async function openApplication(a: Asset, xDrop: number, yDrop: number, roomId: s
         }
       }
       return null;
-    } else if (isCode(fileType)) {
-      const localurl = apiUrls.assets.getAssetById(a.data.file);
-      // Get the content of the file
-      const response = await fetch(localurl, {
-        headers: {
-          'Content-Type': 'text/plain',
-          Accept: 'text/plain',
-        },
-      });
-      // Get the content of the file
-      const text = await response.text();
-      // Get Language from mimetype
-      const lang = mimeToCode(a.data.mimetype);
-      // Create a note from the text
-      return setupApp(
-        'CodeEditor',
-        'CodeEditor',
-        xDrop,
-        yDrop,
-        roomId,
-        boardId,
-        { w: 850, h: 400 },
-        { content: text, language: lang, filename: a.data.originalfilename }
-      );
     } else if (isGIF(fileType)) {
       const extras = a.data.derived as ExtraImageType;
       const imw = w;
@@ -176,7 +160,14 @@ async function openApplication(a: Asset, xDrop: number, yDrop: number, roomId: s
           const metadata = await response.json();
           // Check if it is a GeoTiff
           if (metadata && metadata.GeoTiffVersion) {
-            return setupApp(a.data.originalfilename, 'MapGL', xDrop, yDrop, roomId, boardId, { w: w, h: w }, { assetid: fileID });
+            const initialLayer = {
+              assetId: fileID,
+              visible: true,
+              color: 'red',
+              colorScale: 'turbo',
+              opacity: 0.5,
+            } as NonNullable<(typeof initialValues)['Map']['layers']>[0];
+            return setupApp(a.data.originalfilename, 'Map', xDrop, yDrop, roomId, boardId, { w: w, h: w }, { layers: [initialLayer] });
           }
         }
       }
@@ -211,7 +202,14 @@ async function openApplication(a: Asset, xDrop: number, yDrop: number, roomId: s
     } else if (isGLTF(fileType)) {
       return setupApp('', 'GLTFViewer', xDrop, yDrop, roomId, boardId, { w: 600, h: 600 }, { assetid: fileID });
     } else if (isGeoJSON(fileType)) {
-      return setupApp('', 'MapGL', xDrop, yDrop, roomId, boardId, { w: 800, h: 400 }, { assetid: fileID });
+      const initialLayer = {
+        assetId: fileID,
+        visible: true,
+        color: 'red',
+        colorScale: 'turbo',
+        opacity: 0.5,
+      } as NonNullable<(typeof initialValues)['Map']['layers']>[0];
+      return setupApp('', 'Map', xDrop, yDrop, roomId, boardId, { w: 800, h: 400 }, { layers: [initialLayer] });
     } else if (isMD(fileType)) {
       const localurl = apiUrls.assets.getAssetById(a.data.file);
       // Get the content of the file
@@ -235,7 +233,43 @@ async function openApplication(a: Asset, xDrop: number, yDrop: number, roomId: s
       });
       const text = await response.text();
       // Create a note from the text
-      return setupApp('SageCell', 'SageCell', xDrop, yDrop, roomId, boardId, { w: 400, h: 400 }, { code: text });
+      return setupApp('SageCell', 'SageCell', xDrop, yDrop, roomId, boardId, { w: 400, h: 400 }, { code: text, language: 'python' });
+    } else if (isR(fileType)) {
+      const localurl = apiUrls.assets.getAssetById(a.data.file);
+      // Get the content of the file
+      const response = await fetch(localurl, {
+        headers: {
+          'Content-Type': 'text/plain',
+          Accept: 'text/plain',
+        },
+      });
+      const text = await response.text();
+      // Create a note from the text
+      return setupApp('SageCell', 'SageCell', xDrop, yDrop, roomId, boardId, { w: 400, h: 400 }, { code: text, language: 'r' });
+    } else if (isCode(fileType)) {
+      const localurl = apiUrls.assets.getAssetById(a.data.file);
+      // Get the content of the file
+      const response = await fetch(localurl, {
+        headers: {
+          'Content-Type': 'text/plain',
+          Accept: 'text/plain',
+        },
+      });
+      // Get the content of the file
+      const text = await response.text();
+      // Get Language from mimetype
+      const lang = mimeToCode(a.data.mimetype);
+      // Create a note from the text
+      return setupApp(
+        'CodeEditor',
+        'CodeEditor',
+        xDrop,
+        yDrop,
+        roomId,
+        boardId,
+        { w: 850, h: 400 },
+        { content: text, language: lang, filename: a.data.originalfilename }
+      );
     } else if (isJSON(fileType)) {
       const localurl = apiUrls.assets.getAssetById(a.data.file);
       // Get the content of the file

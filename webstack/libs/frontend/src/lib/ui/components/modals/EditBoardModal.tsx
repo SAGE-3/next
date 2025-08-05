@@ -28,8 +28,8 @@ import { v5 as uuidv5 } from 'uuid';
 import { MdPerson, MdLock } from 'react-icons/md';
 
 import { Board, BoardSchema } from '@sage3/shared/types';
-import { useBoardStore, useAppStore, useConfigStore, ConfirmModal } from '@sage3/frontend';
 import { isAlphanumericWithSpacesAndForeign, SAGEColors } from '@sage3/shared';
+import { useBoardStore, useAppStore, useConfigStore, ConfirmModal } from '@sage3/frontend';
 import { ColorPicker } from '../general';
 
 interface EditBoardModalProps {
@@ -44,11 +44,9 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
   const config = useConfigStore((state) => state.config);
 
   const [name, setName] = useState<BoardSchema['name']>(props.board.data.name);
-  const [description, setEmail] = useState<BoardSchema['description']>(props.board.data.description);
   const [color, setColor] = useState<BoardSchema['color']>(props.board.data.color);
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value);
-  const handleDescriptionChange = (event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value);
   const handleColorChange = (color: string) => setColor(color);
 
   // Board Store
@@ -73,7 +71,6 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
 
   useEffect(() => {
     setName(props.board.data.name);
-    setEmail(props.board.data.description);
     setColor(props.board.data.color);
     setProtected(props.board.data.isPrivate);
     setPassword('');
@@ -108,10 +105,6 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
         return;
       }
     }
-    if (description !== props.board.data.description) {
-      updateBoard(props.board._id, { description });
-      updated = true;
-    }
     if (color !== props.board.data.color) {
       updateBoard(props.board._id, { color });
       updated = true;
@@ -143,8 +136,8 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
   };
 
   function cleanNameCheckDoubles(name: string, roomId: string): string | null {
-    // Remove leading and trailing space, and limit name length to 20
-    const cleanedName = name.trim().substring(0, 20);
+    // Remove leading and trailing space, and limit name length to 32
+    const cleanedName = name.trim().substring(0, 31);
     // Get the names of all boards in the same room, excluding the current board
     const boardNames = boards.filter((r) => r.data.roomId === roomId && r._id !== props.board._id).map((board) => board.data.name);
     if (cleanedName.split(' ').join('').length === 0) {
@@ -165,7 +158,7 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
       return null;
     } else if (!isAlphanumericWithSpacesAndForeign(cleanedName)) {
       toast({
-        title: 'Name must only contain Unicode letters, numbers, and whitespace characters',
+        title: 'Name must only contain Unicode letters, numbers, comma, hyphen, underscore and spaces',
         status: 'error',
         duration: 3 * 1000,
         isClosable: true,
@@ -208,32 +201,19 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
       <ModalContent>
         <ModalHeader fontSize="3xl">Edit Board: {props.board.data.name}</ModalHeader>
         <ModalBody>
-          <InputGroup mb={2}>
+          <InputGroup mb={4}>
             <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
             <Input
               ref={initialRef}
               type="text"
               placeholder={props.board.data.name}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
-              mr={4}
+              mr={0}
               value={name}
               onChange={handleNameChange}
               onKeyDown={onSubmit}
               isRequired={true}
               maxLength={20}
-            />
-          </InputGroup>
-          <InputGroup my={4}>
-            <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
-            <Input
-              type="text"
-              placeholder={props.board.data.description}
-              _placeholder={{ opacity: 1, color: 'gray.600' }}
-              mr={4}
-              value={description}
-              onChange={handleDescriptionChange}
-              onKeyDown={onSubmit}
-              isRequired={true}
             />
           </InputGroup>
 
@@ -262,7 +242,7 @@ export function EditBoardModal(props: EditBoardModalProps): JSX.Element {
             <Button colorScheme="red" onClick={delConfirmOnOpen} mx="2">
               Delete
             </Button>
-            <Button colorScheme="green" onClick={handleSubmit} isDisabled={!name || !description || !valid}>
+            <Button colorScheme="green" onClick={handleSubmit} isDisabled={!name || !valid}>
               Update
             </Button>
           </Box>

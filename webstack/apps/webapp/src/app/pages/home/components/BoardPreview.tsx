@@ -10,9 +10,9 @@ import { useState, useEffect, useRef } from 'react';
 import { Box, Text, Icon, useColorModeValue } from '@chakra-ui/react';
 import { MdLock } from 'react-icons/md';
 
-import { APIHttp, useHexColor } from '@sage3/frontend';
+import { apiUrls, useHexColor } from '@sage3/frontend';
 import { Board, Position, Size } from '@sage3/shared/types';
-import { App, AppName } from '@sage3/applications/schema';
+import { AppName } from '@sage3/applications/schema';
 
 // Type for app info
 type AppInfo = { position: Position; size: Size; type: AppName; id: string };
@@ -44,17 +44,21 @@ const getAppInfo = async (boardId: string): Promise<AppInfo[]> => {
 };
 
 const updateAppInfo = async (boardId: string): Promise<AppInfo[]> => {
-  const res = await APIHttp.QUERY<App>('/apps', { boardId });
-  if (res.success && res.data) {
-    const apps = res.data;
-    const appArray = [] as AppInfo[];
-    apps.forEach((app) => {
-      const aInfo = { position: app.data.position, size: app.data.size, type: app.data.type, id: app._id };
-      appArray.push(aInfo);
-    });
-    return appArray;
+  const response = await fetch(apiUrls.apps.preview, {
+    body: JSON.stringify({ boardId: boardId }),
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+  });
+  const docs = await response.json();
+  if (docs.success && docs.data) {
+    return docs.data;
+  } else {
+    return [];
   }
-  return [];
 };
 
 export function BoardPreview(props: { board: Board; width: number; height: number; isSelected?: boolean }): JSX.Element {

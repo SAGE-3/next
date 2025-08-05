@@ -115,7 +115,7 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
                 type="string"
                 placeholder={'Enter a username'}
                 _placeholder={{ opacity: 1, color: 'gray.600' }}
-                mr={4}
+                mr={0}
                 value={name}
                 onChange={handleNameChange}
                 onKeyDown={onSubmit}
@@ -166,6 +166,6 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
           </Button>
         </ModalFooter>
       </ModalContent>
-    </Modal>
+    </Modal >
   );
 }

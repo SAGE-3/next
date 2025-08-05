@@ -11,7 +11,7 @@ from foresight.smartbits.smartbit import SmartBit
 from foresight.smartbits.smartbit import TrackedBaseModel
 
 
-class MapGLState(TrackedBaseModel):
+class MapState(TrackedBaseModel):
     location: List[int]
     zoom: float
     bearing: float
@@ -22,14 +22,14 @@ class MapGLState(TrackedBaseModel):
     assetid: Optional[str]
 
 
-class MapGL(SmartBit):
+class Map(SmartBit):
     # the key that is assigned to this in state is
-    state: MapGLState
+    state: MapState
 
     # _some_private_info: dict = PrivateAttr()
     def __init__(self, **kwargs):
         # THIS ALWAYS NEEDS TO HAPPEN FIRST!!
-        super(MapGL, self).__init__(**kwargs)
+        super(Map, self).__init__(**kwargs)
 
     def clean_up(self):
         pass

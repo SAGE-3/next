@@ -3,6 +3,10 @@ import logging, asyncio
 from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 
+# logging AI prompts
+from fluent import sender
+from libs.ai_logging import initFluent
+
 from libs.localtypes import (
     ImageQuery,
     Question,
@@ -10,6 +14,7 @@ from libs.localtypes import (
     PDFQuery,
     CodeRequest,
     WebScreenshot,
+    MesonetQuery,
 )
 
 # Web API
@@ -26,23 +31,29 @@ from foresight.Sage3Sugar.pysage3 import PySage3
 # SAGE3 handle
 ps3 = PySage3(conf, prod_type)
 
+# Fluentd logging
+initFluent(ps3)
+
 # AI
 from langchain.globals import set_debug, set_verbose
 
 # Modules
 from app.chat import ChatAgent
-from app.summary import SummaryAgent
+
+# from app.summary import SummaryAgent
 from app.web import WebAgent
 from app.image import ImageAgent
 from app.pdf import PDFAgent
 from app.code import CodeAgent
+from app.mesonet import MesonetAgent
 
 
 # Instantiate each module's class
 chatAG = ChatAgent(logger, ps3)
 codeAG = CodeAgent(logger, ps3)
-summaryAG = SummaryAgent(logger, ps3)
+# summaryAG = SummaryAgent(logger, ps3)
 imageAG = ImageAgent(logger, ps3)
+mesonetAG = MesonetAgent(logger, ps3)
 pdfAG = PDFAgent(logger, ps3)
 webAG = WebAgent(logger, ps3)
 asyncio.ensure_future(webAG.init())
@@ -143,6 +154,26 @@ async def image(qq: ImageQuery):
         # do the work
         # val = await imageAG.process(qq)
         val = await asyncio.wait_for(imageAG.process(qq), timeout=30)
+        return val
+    except asyncio.TimeoutError as e:
+        print("Timeout error")
+        # Get the error message
+        text = str(e)
+        raise HTTPException(status_code=408, detail=text)
+    except HTTPException as e:
+        # Get the error message
+        text = e.detail
+        raise HTTPException(status_code=500, detail=text)
+
+
+@app.post("/mesonet")
+async def mesonet(qq: MesonetQuery):
+    print(qq)
+    print("Received mesonet ")
+    try:
+        # do the work
+        val = await mesonetAG.process(qq)
+        # val = await asyncio.wait_for(processAG.process(qq), timeout=30)
         return val
     except asyncio.TimeoutError as e:
         print("Timeout error")

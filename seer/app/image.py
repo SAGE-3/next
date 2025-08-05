@@ -21,19 +21,32 @@ from typing import List
 from foresight.Sage3Sugar.pysage3 import PySage3
 
 # AI
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
-from langchain_core.messages import HumanMessage, SystemMessage, BaseMessage
+from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, BaseMessage
 
 from langchain_nvidia_ai_endpoints import ChatNVIDIA
-from langchain_openai import ChatOpenAI
+from langchain_openai import ChatOpenAI, AzureChatOpenAI
 
 # Typing for RPC
 from libs.localtypes import ImageQuery, ImageAnswer
 from libs.utils import getModelsInfo, getImageFile, scaleImage, isURL, isDataURL
 
+# AI logging
+from libs.ai_logging import ai_logger, LoggingLLMHandler
+
+# Handler in Langchain to log the AI prompt
+ai_handler = LoggingLLMHandler("image")
+
 # Downsized image size for processing by LLMs
 ImageSize = 600
+
+sys_template_str = """You are a helpful and succinct assistant, providing informative answers.
+  Always format your responses using valid Markdown syntax. Use appropriate elements like:
+  •	# for headings
+  •	**bold** or _italic_ for emphasis
+  •	`inline code` and code blocks (...) for code
+  •	Bullet lists, numbered lists, and links as needed
+  If you include code, always wrap it in fenced code blocks with the correct language tag (e.g., ```python). Default to Python if no language is specified. If asked to create plots, please use Matplotlib. .
+  If you don't know the answer, say "I don't know" and suggest to search the web."""
 
 
 class ImageAgent:
@@ -48,6 +61,7 @@ class ImageAgent:
         models = getModelsInfo(ps3)
         llama = models["llama"]
         openai = models["openai"]
+        azure = models["azure"]
         # Llama model
         self.server = llama["url"]
         self.model = llama["model"]
@@ -70,6 +84,31 @@ class ImageAgent:
                 streaming=False,
             )
 
+        # Azure OpenAI model
+        if azure["vision"]["apiKey"] and azure["vision"]["model"]:
+            model = azure["vision"]["model"]
+            endpoint = azure["vision"]["url"]
+            credential = azure["vision"]["apiKey"]
+            api_version = azure["vision"]["api_version"]
+
+            self.llm_azure = AzureChatOpenAI(
+                azure_deployment=model,
+                api_version=api_version,
+                azure_endpoint=endpoint,
+                azure_ad_token=credential,
+                model=model,
+            )
+
+        ai_logger.emit(
+            "init",
+            {
+                "agent": "image",
+                "openai": openai["apiKey"] is not None,
+                "llama": llama["url"] is not None,
+                "azure": azure["text"]["apiKey"] is not None,
+            },
+        )
+
     async def process(self, qq: ImageQuery):
         self.logger.info("Got image> from " + qq.user + ": " + qq.q + " - " + qq.model)
         description = "No description available."
@@ -91,40 +130,13 @@ class ImageAgent:
             # Convert the image to base64
             image_base64 = base64.b64encode(image_bytes).decode("utf-8")
 
+            # Save the ai name anmd prompt for the logs
+            ai_handler.setAI(qq.model)
+            ai_handler.setPrompt(qq.q)
+
             if qq.model == "llama":
-                data = {
-                    "model": self.model,
-                    "messages": [
-                        {
-                            "role": "assistant",
-                            "content": "You are a helpful assistant, providing detailed  answers to the user, using the Markdown format.",
-                        },
-                        {
-                            "role": "user",
-                            "content": [
-                                {"type": "text", "text": qq.q},
-                                {
-                                    "type": "image_url",
-                                    "image_url": {
-                                        "url": f"data:image/jpeg;base64,{image_base64}"
-                                    },
-                                    "detail": "high",
-                                },
-                            ],
-                        },
-                    ],
-                }
-                url = self.server + "/v1/chat/completions"
-                response = self.httpx_client.post(url, json=data)
-                if response.status_code == 200:
-                    description = response.json()["choices"][0]["message"]["content"]
-            elif qq.model == "openai":
                 messages: List[BaseMessage] = []
-                messages.append(
-                    SystemMessage(
-                        content="You are a helpful assistant, providing detailed  answers to the user, using the Markdown format."
-                    )
-                )
+                messages.append(AIMessage(content=sys_template_str))
                 messages.append(
                     HumanMessage(
                         content=[
@@ -138,7 +150,52 @@ class ImageAgent:
                         ]
                     )
                 )
-                response = await self.llm_openai.ainvoke(messages)
+                response = await self.llm_llama.ainvoke(
+                    messages,
+                    config={"callbacks": [ai_handler]},
+                )
+                description = str(response.content)
+            elif qq.model == "openai":
+                messages: List[BaseMessage] = []
+                messages.append(SystemMessage(content=sys_template_str))
+                messages.append(
+                    HumanMessage(
+                        content=[
+                            {"type": "text", "text": qq.q},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/png;base64,{image_base64}"
+                                },
+                            },
+                        ]
+                    )
+                )
+                response = await self.llm_openai.ainvoke(
+                    messages,
+                    config={"callbacks": [ai_handler]},
+                )
+                description = str(response.content)
+            elif qq.model == "azure":
+                messages: List[BaseMessage] = []
+                messages.append(SystemMessage(content=sys_template_str))
+                messages.append(
+                    HumanMessage(
+                        content=[
+                            {"type": "text", "text": qq.q},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/png;base64,{image_base64}"
+                                },
+                            },
+                        ]
+                    )
+                )
+                response = await self.llm_azure.ainvoke(
+                    messages,
+                    config={"callbacks": [ai_handler]},
+                )
                 description = str(response.content)
         else:
             description = "Failed to get image."
