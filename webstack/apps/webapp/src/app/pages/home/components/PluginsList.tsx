@@ -23,7 +23,7 @@ import {
 } from '@chakra-ui/react';
 
 import { HiTrash } from 'react-icons/hi';
-import { MdAdd, MdPerson, MdSearch } from 'react-icons/md';
+import { MdAdd, MdPerson, MdPersonOff, MdSearch } from 'react-icons/md';
 
 import { fuzzySearch } from '@sage3/shared';
 import { Plugin, Room } from '@sage3/shared/types';
@@ -69,6 +69,10 @@ export function PluginsList(props: PluginsListProps): JSX.Element {
   // Scrollbar Style
   const scrollBarValue = useColorModeValue('gray.300', '#666666');
   const scrollBarColor = useHexColor(scrollBarValue);
+  const searchPlaceholderColorValue = useColorModeValue('gray.400', 'gray.100');
+  const searchPlaceholderColor = useHexColor(searchPlaceholderColorValue);
+  const searchBarColorValue = useColorModeValue('gray.100', '#2c2c2c');
+  const searchBarColor = useHexColor(searchBarColorValue);
 
   function filterPlugins(plugin: Plugin) {
     const hasRoomId = plugin.data.roomId;
@@ -117,12 +121,12 @@ export function PluginsList(props: PluginsListProps): JSX.Element {
         <Box display="flex" justifyContent="start" alignItems="center" width="100%" gap="2" mb="3" px="2">
           <Tooltip label="Add Plugin" aria-label="upload plugin" placement="top" hasArrow>
             <IconButton
-              size="md"
-              variant={'outline'}
-              colorScheme={'teal'}
+              size="sm"
+              bg="none"
               aria-label="plugin-upload"
               fontSize="xl"
-              icon={<MdAdd />}
+              icon={<MdAdd fontSize="24px" />}
+              _hover={{ transform: 'scale(1.1)', bg: 'none' }}
               isDisabled={!canUploadPlugin}
               onClick={uploadOnOpen}
             ></IconButton>
@@ -132,16 +136,25 @@ export function PluginsList(props: PluginsListProps): JSX.Element {
             <InputLeftElement pointerEvents="none">
               <MdSearch />
             </InputLeftElement>
-            <Input placeholder="Search Plugins" value={pluginsSearch} onChange={(e) => setPluginsSearch(e.target.value)} />
+            <Input 
+              placeholder="Search Plugins" 
+              value={pluginsSearch} 
+              onChange={(e) => setPluginsSearch(e.target.value)}
+              roundedTop="2xl"
+              _focusVisible={{ bg: searchBarColor, outline: 'none', transition: 'none' }}
+              bg="inherit"
+              roundedBottom="2xl"
+              _placeholder={{ opacity: 0.7, color: searchPlaceholderColor }}
+            />
           </InputGroup>
           <Tooltip label="Filter Yours" aria-label="filter your plugins" placement="top" hasArrow>
             <IconButton
-              size="md"
-              variant="outline"
-              colorScheme={showOnlyYours ? 'teal' : 'gray'}
+              size="sm"
+              bg="none"
               aria-label="filter-yours"
               fontSize="xl"
-              icon={<MdPerson />}
+              icon={showOnlyYours ? <MdPerson fontSize="24px" /> : <MdPersonOff fontSize="24px" />}
+              _hover={{ transform: 'scale(1.1)', bg: 'none' }}
               onClick={handleShowOnlyYours}
             ></IconButton>
           </Tooltip>

@@ -23,7 +23,7 @@ import {
   Box,
   useColorModeValue,
 } from '@chakra-ui/react';
-import { MdGroups } from 'react-icons/md';
+import { LuPartyPopper } from 'react-icons/lu';
 
 import { useHexColor, useRouteNav, useUser, useUsersStore } from '@sage3/frontend';
 import { PartyHub, PartyInstance, usePartyStore } from './components';
@@ -122,9 +122,9 @@ export function PartyButton(props: PartyIconProps): JSX.Element {
   ) : (
     <Flex align="center" gap={2}>
       <Text fontSize="2xl" fontWeight="bold">
-        <MdGroups />
+        <LuPartyPopper fontSize="24px" />
       </Text>
-      <Text>Party Hub</Text>
+      <Text>Party</Text>
     </Flex>
   );
 
@@ -137,7 +137,7 @@ export function PartyButton(props: PartyIconProps): JSX.Element {
             size={iconSize}
             fontSize={fontSize}
             colorScheme={iconColor}
-            icon={<MdGroups />}
+            icon={<LuPartyPopper fontSize="24px" />}
             aria-label="Party"
           />
           {currentParty && (
