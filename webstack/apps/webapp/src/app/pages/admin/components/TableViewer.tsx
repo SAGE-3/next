@@ -6,15 +6,16 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { 
-  Thead, 
-  Tr, 
-  Th, 
-  Tbody, 
-  Td, 
-  Button, 
-  Table, 
-  Box, 
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import {
+  Thead,
+  Tr,
+  Th,
+  Tbody,
+  Td,
+  Button,
+  Table,
+  Box,
   useColorModeValue,
   Flex,
   Text,
@@ -23,7 +24,7 @@ import {
   Spinner,
   Center
 } from '@chakra-ui/react';
-import { useState, useMemo, useCallback, useEffect } from 'react';
+
 import { throttle } from 'throttle-debounce';
 
 import { SAGEColors, fuzzySearch } from '@sage3/shared';
@@ -114,7 +115,7 @@ export function TableViewer<T>(props: TableViewerProps<T>): JSX.Element {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(50);
-  
+
   // Virtualization state
   const [scrollTop, setScrollTop] = useState(0);
   const [containerHeight, setContainerHeight] = useState(0);
@@ -125,7 +126,7 @@ export function TableViewer<T>(props: TableViewerProps<T>): JSX.Element {
   // Memoized filtered data for better performance
   const filteredData = useMemo(() => {
     if (!props.search.trim()) return data;
-    
+
     return data.filter((item: TableDataType<T>) => {
       // Get all the values from the selected columns and concat into one string
       let values: Array<string | number | boolean> = [];
@@ -172,7 +173,7 @@ export function TableViewer<T>(props: TableViewerProps<T>): JSX.Element {
   useEffect(() => {
     setScrollTop(0);
     setCurrentPage(1);
-    
+
     // Force container height recalculation after a short delay
     setTimeout(() => {
       setContainerHeight(0); // Reset to trigger recalculation
@@ -218,7 +219,7 @@ export function TableViewer<T>(props: TableViewerProps<T>): JSX.Element {
     if (el && el.clientHeight !== undefined) {
       // Immediate measurement
       setContainerHeight(el.clientHeight);
-      
+
       // Multiple delayed measurements to ensure proper calculation
       [50, 100, 200].forEach(delay => {
         setTimeout(() => {
@@ -236,16 +237,16 @@ export function TableViewer<T>(props: TableViewerProps<T>): JSX.Element {
     if (paginatedData.length === 0) {
       return { startIndex: 0, endIndex: 0 };
     }
-    
+
     // If container height is not available yet, show first few rows
     if (!containerHeight || containerHeight <= 0) {
       const fallbackVisibleRows = Math.min(20, paginatedData.length); // Show more rows as fallback
-      return { 
-        startIndex: 0, 
+      return {
+        startIndex: 0,
         endIndex: fallbackVisibleRows
       };
     }
-    
+
     // Normal virtualization calculation
     const start = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - BUFFER_SIZE);
     const visibleRows = Math.ceil(containerHeight / ROW_HEIGHT);
@@ -253,19 +254,19 @@ export function TableViewer<T>(props: TableViewerProps<T>): JSX.Element {
       paginatedData.length,
       start + visibleRows + (BUFFER_SIZE * 2)
     );
-    
+
     // Ensure we have a reasonable number of visible rows
     const finalEnd = Math.max(start, end);
     const minVisibleRows = Math.min(visibleRows, paginatedData.length);
-    
+
     // If we're showing too few rows, expand the range
     if (finalEnd - start < minVisibleRows && finalEnd < paginatedData.length) {
-      return { 
-        startIndex: start, 
+      return {
+        startIndex: start,
         endIndex: Math.min(paginatedData.length, start + minVisibleRows + BUFFER_SIZE)
       };
     }
-    
+
     return { startIndex: start, endIndex: finalEnd };
   }, [scrollTop, containerHeight, paginatedData.length]);
 
@@ -291,7 +292,7 @@ export function TableViewer<T>(props: TableViewerProps<T>): JSX.Element {
   const TableBody = (data: TableDataType<T>[], columns: (keyof T | keyof SBDoc)[]) => {
     // Calculate expected visible rows based on container height
     const expectedVisibleRows = containerHeight > 0 ? Math.ceil(containerHeight / ROW_HEIGHT) : 10;
-    
+
     // Fallback to non-virtualized rendering if virtualization seems incorrect
     const shouldUseFallback = data.length > 0 && (
       (startIndex === 0 && endIndex === 0) || // No virtualization bounds
@@ -299,35 +300,35 @@ export function TableViewer<T>(props: TableViewerProps<T>): JSX.Element {
       (endIndex > data.length) || // Invalid bounds
       (data.length <= 50) // Small datasets - just show all data
     );
-    
+
     const visibleData = shouldUseFallback ? data : data.slice(startIndex, endIndex);
-    
+
     // Debug logging for troubleshooting
-    if (data.length > 0 && visibleData.length === 0) {
-      console.warn('TableViewer: No visible data rendered', {
-        dataLength: data.length,
-        startIndex,
-        endIndex,
-        containerHeight,
-        scrollTop,
-        paginatedDataLength: paginatedData.length,
-        shouldUseFallback,
-        expectedVisibleRows
-      });
-    }
-    
+    // if (data.length > 0 && visibleData.length === 0) {
+    //   console.warn('TableViewer: No visible data rendered', {
+    //     dataLength: data.length,
+    //     startIndex,
+    //     endIndex,
+    //     containerHeight,
+    //     scrollTop,
+    //     paginatedDataLength: paginatedData.length,
+    //     shouldUseFallback,
+    //     expectedVisibleRows
+    //   });
+    // }
+
     // Additional debug logging for partial rendering
-    if (data.length > 0 && visibleData.length > 0 && visibleData.length < data.length && !shouldUseFallback) {
-      console.warn('TableViewer: Partial data rendered', {
-        dataLength: data.length,
-        visibleDataLength: visibleData.length,
-        startIndex,
-        endIndex,
-        containerHeight,
-        expectedVisibleRows
-      });
-    }
-    
+    // if (data.length > 0 && visibleData.length > 0 && visibleData.length < data.length && !shouldUseFallback) {
+    //   console.warn('TableViewer: Partial data rendered', {
+    //     dataLength: data.length,
+    //     visibleDataLength: visibleData.length,
+    //     startIndex,
+    //     endIndex,
+    //     containerHeight,
+    //     expectedVisibleRows
+    //   });
+    // }
+
     return (
       <Tbody>
         {/* Top spacer row for virtualization - only if not using fallback */}
@@ -336,7 +337,7 @@ export function TableViewer<T>(props: TableViewerProps<T>): JSX.Element {
             <Td colSpan={columns.length + (props.actions ? 1 : 0)} height={`${startIndex * ROW_HEIGHT}px`} p={0} border="none"></Td>
           </Tr>
         )}
-        
+
         {visibleData.map((item: any, i) => {
           const actualIndex = startIndex + i;
           return (
@@ -383,7 +384,7 @@ export function TableViewer<T>(props: TableViewerProps<T>): JSX.Element {
             </Tr>
           );
         })}
-        
+
         {/* Bottom spacer row for virtualization - only if not using fallback */}
         {!shouldUseFallback && endIndex < data.length && (
           <Tr>
@@ -401,10 +402,10 @@ export function TableViewer<T>(props: TableViewerProps<T>): JSX.Element {
         <Text fontSize="sm">
           Showing {((currentPage - 1) * pageSize) + 1} to {Math.min(currentPage * pageSize, filteredData.length)} of {filteredData.length} results
         </Text>
-        <Select 
-          size="sm" 
-          width="100px" 
-          value={pageSize} 
+        <Select
+          size="sm"
+          width="100px"
+          value={pageSize}
           onChange={(e) => {
             setPageSize(Number(e.target.value));
             setCurrentPage(1);
@@ -416,18 +417,18 @@ export function TableViewer<T>(props: TableViewerProps<T>): JSX.Element {
           <option value={200}>200</option>
         </Select>
       </HStack>
-      
+
       <HStack spacing={2}>
-        <Button 
-          size="sm" 
-          onClick={() => setCurrentPage(1)} 
+        <Button
+          size="sm"
+          onClick={() => setCurrentPage(1)}
           isDisabled={currentPage === 1}
         >
           First
         </Button>
-        <Button 
-          size="sm" 
-          onClick={() => setCurrentPage(currentPage - 1)} 
+        <Button
+          size="sm"
+          onClick={() => setCurrentPage(currentPage - 1)}
           isDisabled={currentPage === 1}
         >
           Previous
@@ -435,16 +436,16 @@ export function TableViewer<T>(props: TableViewerProps<T>): JSX.Element {
         <Text fontSize="sm">
           Page {currentPage} of {totalPages}
         </Text>
-        <Button 
-          size="sm" 
-          onClick={() => setCurrentPage(currentPage + 1)} 
+        <Button
+          size="sm"
+          onClick={() => setCurrentPage(currentPage + 1)}
           isDisabled={currentPage === totalPages}
         >
           Next
         </Button>
-        <Button 
-          size="sm" 
-          onClick={() => setCurrentPage(totalPages)} 
+        <Button
+          size="sm"
+          onClick={() => setCurrentPage(totalPages)}
           isDisabled={currentPage === totalPages}
         >
           Last
@@ -457,10 +458,10 @@ export function TableViewer<T>(props: TableViewerProps<T>): JSX.Element {
   return (
     <Box height="calc(100vh - 16px - 32px - 30px - 42px - 72px - 64px)" display="flex" flexDirection="column">
       {/* Table with virtualization */}
-      <Box 
-        flex="1" 
-        overflowY="auto" 
-        onScroll={handleScroll} 
+      <Box
+        flex="1"
+        overflowY="auto"
+        onScroll={handleScroll}
         ref={handleContainerRef}
         style={{
           willChange: 'scroll-position',
@@ -472,7 +473,7 @@ export function TableViewer<T>(props: TableViewerProps<T>): JSX.Element {
           {TableBody(paginatedData, columns)}
         </Table>
       </Box>
-      
+
       {/* Pagination controls */}
       {filteredData.length > 25 && <PaginationControls />}
     </Box>

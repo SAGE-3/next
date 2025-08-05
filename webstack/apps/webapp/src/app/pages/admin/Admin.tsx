@@ -29,31 +29,14 @@ import {
   Text,
   IconButton,
   Tooltip,
-  Spinner,
-  Center,
 } from '@chakra-ui/react';
 
 import { throttle } from 'throttle-debounce';
 import { MdFileDownload, MdRefresh, MdSearch } from 'react-icons/md';
 
 // Collection specific schemas
-import {
-  Board,
-  Asset,
-  User,
-  Room,
-  Message,
-  Presence,
-  Insight,
-  RoomSchema,
-  BoardSchema,
-  AssetSchema,
-  UserSchema,
-  PresenceSchema,
-  InsightSchema,
-  MessageSchema,
-} from '@sage3/shared/types';
-import { App, AppSchema } from '@sage3/applications/schema';
+import { Board, Asset, User, Room, Message, Presence, Insight, } from '@sage3/shared/types';
+import { App } from '@sage3/applications/schema';
 
 // Components
 import { humanFileSize } from '@sage3/shared';
@@ -106,7 +89,7 @@ export function AdminPage() {
   const fetchData = useCallback(async <T extends CollectionDocs>(collection: string) => {
     setLoadingStates(prev => ({ ...prev, [collection]: true }));
     setErrorStates(prev => ({ ...prev, [collection]: '' }));
-    
+
     try {
       const response = await APIHttp.GET<T>(`/${collection}`);
       if (response.success && response.data) {
@@ -127,11 +110,11 @@ export function AdminPage() {
     setTabIndex(index);
     setSearch('');
     setSearchValue('');
-    
+
     // Get collection name from index
     const collectionNames = Object.keys(COLLECTIONS);
     const collectionName = collectionNames[index];
-    
+
     // Only fetch if not already loaded
     if (!collectionsData[collectionName] && !loadingStates[collectionName]) {
       fetchData(collectionName);
@@ -234,7 +217,7 @@ export function AdminPage() {
     const collectionNames = Object.keys(COLLECTIONS);
     const collectionName = collectionNames[tabIndex];
     const data = collectionsData[collectionName];
-    
+
     // Check if there is data to download
     if (!data || data.length === 0) {
       toast({ title: 'No data to download', status: 'info', duration: 2000, isClosable: true });
@@ -283,7 +266,7 @@ export function AdminPage() {
 
   // Get current collection configuration
   const collectionConfig = COLLECTIONS[currentCollectionName as keyof typeof COLLECTIONS];
-  
+
   // Prepare table props based on current collection
   const getTableProps = () => {
     if (!collectionConfig) {
@@ -302,66 +285,66 @@ export function AdminPage() {
     };
 
     switch (currentCollectionName) {
-              case 'rooms':
-          return {
-            ...baseProps,
-            heading: 'Rooms',
-            data: currentData as Room[],
-            actions: [{ label: 'Delete', color: 'red' as const, onClick: (id: string) => deleteItem(id, 'rooms') }],
-          };
-              case 'boards':
-          return {
-            ...baseProps,
-            heading: 'Boards',
-            data: currentData as Board[],
-            actions: [{ label: 'Delete', color: 'red' as const, onClick: (id: string) => deleteItem(id, 'boards') }],
-          };
-        case 'apps':
-          return {
-            ...baseProps,
-            heading: 'Apps',
-            data: currentData as App[],
-            actions: [{ label: 'Delete', color: 'red' as const, onClick: (id: string) => deleteItem(id, 'apps') }],
-          };
-        case 'assets':
-          return {
-            ...baseProps,
-            heading: 'Assets',
-            data: currentData as Asset[],
-            formatColumns: { size: (value: any) => humanFileSize(value) },
-            actions: [
-              { label: 'Download Asset', color: 'blue' as const, onClick: (id: string) => handleDownloadAsset(id) },
-              { label: 'Delete', color: 'red' as const, onClick: (id: string) => deleteItem(id, 'assets') },
-            ],
-          };
-        case 'users':
-          return {
-            ...baseProps,
-            heading: 'Users',
-            data: currentData as User[],
-            actions: [{ label: 'Delete', color: 'red' as const, onClick: (id: string) => handleAccountDeletion(id) }],
-          };
-        case 'presence':
-          return {
-            ...baseProps,
-            heading: 'Presences',
-            data: currentData as Presence[],
-            actions: [{ label: 'Delete', color: 'red' as const, onClick: (id: string) => deleteItem(id, 'presence') }],
-          };
-        case 'insight':
-          return {
-            ...baseProps,
-            heading: 'Insights',
-            data: currentData as Insight[],
-            actions: [{ label: 'Delete', color: 'red' as const, onClick: (id: string) => deleteItem(id, 'insight') }],
-          };
-        case 'message':
-          return {
-            ...baseProps,
-            heading: 'Messages',
-            data: currentData as Message[],
-            actions: [{ label: 'Delete', color: 'red' as const, onClick: (id: string) => deleteItem(id, 'message') }],
-          };
+      case 'rooms':
+        return {
+          ...baseProps,
+          heading: 'Rooms',
+          data: currentData as Room[],
+          actions: [{ label: 'Delete', color: 'red' as const, onClick: (id: string) => deleteItem(id, 'rooms') }],
+        };
+      case 'boards':
+        return {
+          ...baseProps,
+          heading: 'Boards',
+          data: currentData as Board[],
+          actions: [{ label: 'Delete', color: 'red' as const, onClick: (id: string) => deleteItem(id, 'boards') }],
+        };
+      case 'apps':
+        return {
+          ...baseProps,
+          heading: 'Apps',
+          data: currentData as App[],
+          actions: [{ label: 'Delete', color: 'red' as const, onClick: (id: string) => deleteItem(id, 'apps') }],
+        };
+      case 'assets':
+        return {
+          ...baseProps,
+          heading: 'Assets',
+          data: currentData as Asset[],
+          formatColumns: { size: (value: any) => humanFileSize(value) },
+          actions: [
+            { label: 'Download Asset', color: 'blue' as const, onClick: (id: string) => handleDownloadAsset(id) },
+            { label: 'Delete', color: 'red' as const, onClick: (id: string) => deleteItem(id, 'assets') },
+          ],
+        };
+      case 'users':
+        return {
+          ...baseProps,
+          heading: 'Users',
+          data: currentData as User[],
+          actions: [{ label: 'Delete', color: 'red' as const, onClick: (id: string) => handleAccountDeletion(id) }],
+        };
+      case 'presence':
+        return {
+          ...baseProps,
+          heading: 'Presences',
+          data: currentData as Presence[],
+          actions: [{ label: 'Delete', color: 'red' as const, onClick: (id: string) => deleteItem(id, 'presence') }],
+        };
+      case 'insight':
+        return {
+          ...baseProps,
+          heading: 'Insights',
+          data: currentData as Insight[],
+          actions: [{ label: 'Delete', color: 'red' as const, onClick: (id: string) => deleteItem(id, 'insight') }],
+        };
+      case 'message':
+        return {
+          ...baseProps,
+          heading: 'Messages',
+          data: currentData as Message[],
+          actions: [{ label: 'Delete', color: 'red' as const, onClick: (id: string) => deleteItem(id, 'message') }],
+        };
       default:
         return {
           ...baseProps,
@@ -419,11 +402,11 @@ export function AdminPage() {
               </InputGroup>
               <Box display="flex" gap="2">
                 <Tooltip label="Refresh Data" aria-label="Refresh Data" placement="top" hasArrow>
-                  <IconButton 
-                    colorScheme="teal" 
-                    icon={<MdRefresh />} 
-                    variant={'outline'} 
-                    onClick={handleRefreshData} 
+                  <IconButton
+                    colorScheme="teal"
+                    icon={<MdRefresh />}
+                    variant={'outline'}
+                    onClick={handleRefreshData}
                     aria-label={''}
                     isLoading={isLoading}
                   />
