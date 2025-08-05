@@ -21,9 +21,6 @@ import {
   useToast,
   Button,
   Checkbox,
-  Text,
-  Tooltip,
-  HStack,
 } from '@chakra-ui/react';
 
 import { v5 as uuidv5 } from 'uuid';
@@ -97,7 +94,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
   };
 
   const create = async () => {
-    if (name  && user) {
+    if (name && user) {
       // remove leading and trailing space, and limit name length to 32
       const cleanedName = name.trim().substring(0, 31);
       // list of board names in the room
@@ -135,7 +132,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
         const board = await createBoard({
           name: cleanedName,
           description: 'description',
-                    roomId: props.roomId,
+          roomId: props.roomId,
           ownerId: user._id,
           color: color,
           isPrivate: isProtected,
@@ -210,7 +207,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
               isRequired={true}
             />
           </InputGroup>
-          
+
           <ColorPicker selectedColor={color} onChange={handleColorChange}></ColorPicker>
 
           <Checkbox mt={1} mr={4} onChange={checkProtected} defaultChecked={isProtected}>
@@ -235,7 +232,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
           <Button
             colorScheme="green"
             onClick={() => create()}
-            isDisabled={!name  || (isProtected && !password) || pendingCreate}
+            isDisabled={!name || (isProtected && !password) || pendingCreate}
           >
             Create
           </Button>

@@ -6,10 +6,9 @@
  * the file LICENSE, distributed as part of this software.
  */
 import { CSSProperties, useEffect, useState } from 'react';
-import { Box, Text, useColorModeValue, Tooltip, IconButton, useDisclosure } from '@chakra-ui/react';
-import { MdHelpOutline } from 'react-icons/md';
+import { Box, Text, useColorModeValue, useDisclosure } from '@chakra-ui/react';
 
-import { useHexColor, EditUserSettingsModal, useUserSettings } from '@sage3/frontend';
+import { EditUserSettingsModal, useUserSettings } from '@sage3/frontend';
 
 type ClockProps = {
   style?: CSSProperties;
@@ -30,9 +29,6 @@ export function Clock(props: ClockProps) {
 
   // Colors
   const textColor = useColorModeValue('gray.800', 'gray.50');
-  // const backgroundColor = useColorModeValue('#ffffff69', '#22222269');
-  const tealColorMode = useColorModeValue('teal.500', 'teal.200');
-  const teal = useHexColor(tealColorMode);
 
   // Presence settings modal
   const { isOpen: editSettingsIsOpen, onClose: editSettingsOnClose } = useDisclosure();

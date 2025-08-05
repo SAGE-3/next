@@ -136,9 +136,9 @@ export function PluginsList(props: PluginsListProps): JSX.Element {
             <InputLeftElement pointerEvents="none">
               <MdSearch />
             </InputLeftElement>
-            <Input 
-              placeholder="Search Plugins" 
-              value={pluginsSearch} 
+            <Input
+              placeholder="Search Plugins"
+              value={pluginsSearch}
               onChange={(e) => setPluginsSearch(e.target.value)}
               roundedTop="2xl"
               _focusVisible={{ bg: searchBarColor, outline: 'none', transition: 'none' }}

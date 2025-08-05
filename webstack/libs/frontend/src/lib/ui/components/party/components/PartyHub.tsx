@@ -139,7 +139,7 @@ export function PartyHub(): JSX.Element {
             </Tooltip>
           </Box>
           <Tooltip label="Create a new party" placement="top" hasArrow>
-            <IconButton size="sm" icon={<MdAdd fontSize="24px" />} aria-label="Create Party" onClick={createParty}  variant={'ghost'} />
+            <IconButton size="sm" icon={<MdAdd fontSize="24px" />} aria-label="Create Party" onClick={createParty} variant={'ghost'} />
           </Tooltip>
         </HStack>
       </Flex>

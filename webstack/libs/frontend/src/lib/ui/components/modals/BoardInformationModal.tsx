@@ -7,7 +7,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, Text, Button, Box } from '@chakra-ui/react';
+import { Modal, ModalOverlay, ModalContent, ModalHeader, ModalFooter, ModalBody, Button, Box } from '@chakra-ui/react';
 
 import { Board, Room } from '@sage3/shared/types';
 import { useUsersStore } from '@sage3/frontend';

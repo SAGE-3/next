@@ -88,7 +88,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
   };
 
   const create = async () => {
-    if (name  && user) {
+    if (name && user) {
       // remove leading and trailing space, and limit name length to 32
       const cleanedName = name.trim().substring(0, 31);
       const roomNames = rooms.map((room) => room.data.name);
@@ -197,7 +197,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
           </InputGroup>
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="green" onClick={() => create()} isDisabled={!name }>
+          <Button colorScheme="green" onClick={() => create()} isDisabled={!name}>
             Create
           </Button>
         </ModalFooter>

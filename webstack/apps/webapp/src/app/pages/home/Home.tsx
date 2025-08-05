@@ -39,8 +39,6 @@ import {
   useOutsideClick,
 } from '@chakra-ui/react';
 
-
-
 // Icons
 import { MdAdd, MdHome, MdSearch, MdGridView, MdList, MdLock, MdPeople, MdFolder, MdDashboard, MdMenu, MdSettings, MdExitToApp } from 'react-icons/md';
 import { HiPuzzle } from 'react-icons/hi';
@@ -916,7 +914,7 @@ export function HomePage() {
                   size="lg"
                   _hover={{ transform: 'scale(1.1)', bg: 'none' }}
                   _focus={{ bg: 'none' }}
-                  />
+                />
                 <MenuList>
                   <Box p="3" pt="0" borderBottom="1px solid" borderColor={useColorModeValue('gray.200', 'gray.600')}>
                     <Text fontSize="sm" fontWeight="bold" mb="1" mt="0">Room Details</Text>
@@ -1172,10 +1170,10 @@ export function HomePage() {
           py="2"
           minWidth="600px"
         >
-                      {/* The clock Top Right */}
-                      <Box alignSelf="end" mr="2" ref={clockRef} w="fit-content">
-              <Clock isBoard={false} />
-            </Box>
+          {/* The clock Top Right */}
+          <Box alignSelf="end" mr="2" ref={clockRef} w="fit-content">
+            <Clock isBoard={false} />
+          </Box>
           <Box
             display="flex"
             flexDir="column"
@@ -1276,10 +1274,10 @@ export function HomePage() {
                       (() => {
                         // Separate boards and rooms
                         const filteredItems = roomAndBoards.filter(sageSearchFilter);
-                        const boards = filteredItems.filter((item): item is Board & { roomName: string } => 
+                        const boards = filteredItems.filter((item): item is Board & { roomName: string } =>
                           (item as Board & { roomName: string }).data.roomId !== undefined
                         );
-                        const rooms = filteredItems.filter((item): item is Room => 
+                        const rooms = filteredItems.filter((item): item is Room =>
                           (item as Board & { roomName: string }).data.roomId === undefined
                         );
 

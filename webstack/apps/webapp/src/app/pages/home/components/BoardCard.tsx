@@ -21,8 +21,8 @@ import {
   useOutsideClick,
 } from '@chakra-ui/react';
 
-import { MdStar, MdStarOutline } from 'react-icons/md';
 import { BsThreeDotsVertical } from 'react-icons/bs';
+import { MdStar, MdStarOutline } from 'react-icons/md';
 
 import { Board, PresencePartial, Room } from '@sage3/shared/types';
 import { EnterBoardModal, useHexColor, useUser, copyBoardUrlToClipboard, EditBoardModal, BoardInformationModal } from '@sage3/frontend';

@@ -23,15 +23,14 @@ import {
   useDisclosure,
   useToast,
 } from '@chakra-ui/react';
+
 import { v5 as uuidv5 } from 'uuid';
 import { MdPerson, MdLock } from 'react-icons/md';
 
-import { Room, RoomSchema } from '@sage3/shared/types';
-import { useRoomStore, useBoardStore, useAppStore, useConfigStore, ConfirmModal } from '@sage3/frontend';
+import { useRoomStore, useBoardStore, useAppStore, useConfigStore, ConfirmModal, useRouteNav } from '@sage3/frontend';
 import { isAlphanumericWithSpacesAndForeign, SAGEColors } from '@sage3/shared';
+import { Room, RoomSchema } from '@sage3/shared/types';
 import { ColorPicker } from '../general';
-
-import { useRouteNav } from '@sage3/frontend';
 
 interface EditRoomModalProps {
   isOpen: boolean;
@@ -245,7 +244,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
               isRequired={true}
             />
           </InputGroup>
-         
+
 
           <ColorPicker selectedColor={color} onChange={handleColorChange}></ColorPicker>
 
@@ -275,7 +274,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
             <Button colorScheme="red" onClick={delConfirmOnOpen} mx="2">
               Delete
             </Button>
-            <Button colorScheme="green" onClick={handleSubmit} isDisabled={!name  || !valid}>
+            <Button colorScheme="green" onClick={handleSubmit} isDisabled={!name || !valid}>
               Update
             </Button>
           </Box>

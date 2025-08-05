@@ -22,6 +22,7 @@ import {
   Tooltip,
   useDisclosure,
 } from '@chakra-ui/react';
+
 import { Editor } from '@monaco-editor/react';
 
 import { HiTrash } from 'react-icons/hi';
@@ -172,9 +173,9 @@ export function AssetList(props: { room: Room }) {
             <InputLeftElement pointerEvents="none">
               <MdSearch />
             </InputLeftElement>
-            <Input 
-              placeholder="Search Assets" 
-              value={assetSearch} 
+            <Input
+              placeholder="Search Assets"
+              value={assetSearch}
               onChange={(e) => setAssetSearch(e.target.value)}
               roundedTop="2xl"
               _focusVisible={{ bg: searchBarColor, outline: 'none', transition: 'none' }}

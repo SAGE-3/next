@@ -28,8 +28,8 @@ import { v5 as uuidv5 } from 'uuid';
 import { MdPerson, MdLock } from 'react-icons/md';
 
 import { Board, BoardSchema } from '@sage3/shared/types';
-import { useBoardStore, useAppStore, useConfigStore, ConfirmModal } from '@sage3/frontend';
 import { isAlphanumericWithSpacesAndForeign, SAGEColors } from '@sage3/shared';
+import { useBoardStore, useAppStore, useConfigStore, ConfirmModal } from '@sage3/frontend';
 import { ColorPicker } from '../general';
 
 interface EditBoardModalProps {

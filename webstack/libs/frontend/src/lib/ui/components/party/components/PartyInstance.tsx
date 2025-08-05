@@ -105,10 +105,10 @@ export function PartyInstance(): JSX.Element {
         <HStack justify="space-between" align="center">
           <HStack flex="1" justify="flex-start">
             <Tooltip label="Board Name" placement="top" hasArrow>
-              <Text 
-                noOfLines={1} 
-                overflow="hidden" 
-                textOverflow="ellipsis" 
+              <Text
+                noOfLines={1}
+                overflow="hidden"
+                textOverflow="ellipsis"
                 whiteSpace="nowrap"
                 maxWidth="100%"
               >
@@ -307,12 +307,12 @@ function PartyChats(): JSX.Element {
           const formattedTime = isToday
             ? time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             : time.toLocaleDateString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-              });
+              hour: '2-digit',
+              minute: '2-digit',
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+            });
 
           return (
             <Flex key={chat.id} direction={yours ? 'row-reverse' : 'row'}>

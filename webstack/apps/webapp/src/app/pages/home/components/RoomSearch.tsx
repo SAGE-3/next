@@ -86,15 +86,15 @@ export function RoomSearchModal(props: RoomSearchModalProps): JSX.Element {
   return (
     <Modal isOpen={props.isOpen} onClose={onClose} isCentered size="xl">
       <ModalOverlay bg="blackAlpha.300" backdropFilter="blur(10px)" />
-      <ModalContent 
+      <ModalContent
         bg={useColorModeValue('white', 'gray.800')}
         borderRadius="xl"
         boxShadow="xl"
         border="1px solid"
         borderColor={useColorModeValue('gray.200', 'gray.700')}
       >
-        <ModalHeader 
-          fontSize="2xl" 
+        <ModalHeader
+          fontSize="2xl"
           fontWeight="bold"
           borderBottom="1px solid"
           borderColor={useColorModeValue('gray.200', 'gray.700')}
@@ -126,7 +126,7 @@ export function RoomSearchModal(props: RoomSearchModalProps): JSX.Element {
               }}
             />
           </InputGroup>
-          
+
           {searchTerm.length === 0 ? (
             <Box
               display="flex"
@@ -172,39 +172,39 @@ export function RoomSearchModal(props: RoomSearchModalProps): JSX.Element {
                 .filter((room: Room) => room.data.isListed || (!room.data.isListed && room.data.ownerId === user?._id))
                 .filter(searchRooms)
                 .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                              .map((room) => (
-                <RoomRow key={room._id} room={room} users={props.users} />
-              ))}
+                .map((room) => (
+                  <RoomRow key={room._id} room={room} users={props.users} />
+                ))}
               {rooms
                 .filter((room: Room) => room.data.isListed || (!room.data.isListed && room.data.ownerId === user?._id))
                 .filter(searchRooms)
                 .length === 0 && (
-                <Box
-                  display="flex"
-                  flexDir="column"
-                  alignItems="center"
-                  justifyContent="center"
-                  height="40vh"
-                  color={useColorModeValue('gray.500', 'gray.400')}
-                >
-                  <MdSearch size={32} />
-                  <Box mt={3} fontSize="md" fontWeight="medium">
-                    No rooms found
+                  <Box
+                    display="flex"
+                    flexDir="column"
+                    alignItems="center"
+                    justifyContent="center"
+                    height="40vh"
+                    color={useColorModeValue('gray.500', 'gray.400')}
+                  >
+                    <MdSearch size={32} />
+                    <Box mt={3} fontSize="md" fontWeight="medium">
+                      No rooms found
+                    </Box>
+                    <Box mt={1} fontSize="sm" textAlign="center">
+                      Try adjusting your search terms
+                    </Box>
                   </Box>
-                  <Box mt={1} fontSize="sm" textAlign="center">
-                    Try adjusting your search terms
-                  </Box>
-                </Box>
-              )}
+                )}
             </Box>
           )}
         </ModalBody>
-        <ModalFooter 
+        <ModalFooter
           borderTop="1px solid"
           borderColor={useColorModeValue('gray.200', 'gray.700')}
           pt={4}
         >
-          <Button 
+          <Button
             onClick={onClose}
             colorScheme="teal"
             size="md"
@@ -296,21 +296,21 @@ function RoomRow(props: RoomRowProps) {
         cursor="pointer"
       >
         <Box display="flex" flexDir="column" flex="1" minW="0">
-          <Box 
-            overflow="hidden" 
-            textOverflow="ellipsis" 
-            whiteSpace="nowrap" 
-            fontSize="lg" 
+          <Box
+            overflow="hidden"
+            textOverflow="ellipsis"
+            whiteSpace="nowrap"
+            fontSize="lg"
             fontWeight="bold"
             color={useColorModeValue('gray.800', 'white')}
             mb="1"
           >
             {props.room.data.name}
           </Box>
-          <Box 
-            overflow="hidden" 
-            textOverflow="ellipsis" 
-            whiteSpace="nowrap" 
+          <Box
+            overflow="hidden"
+            textOverflow="ellipsis"
+            whiteSpace="nowrap"
             fontSize="sm"
             color={useColorModeValue('gray.600', 'gray.300')}
           >
@@ -319,11 +319,11 @@ function RoomRow(props: RoomRowProps) {
         </Box>
         <Box display="flex" alignItems="center" ml="4">
           {isOwner || isMember ? (
-            <Tag 
-              size="md" 
+            <Tag
+              size="md"
               px="3"
               py="1"
-              colorScheme={isOwner ? 'green' : 'yellow'} 
+              colorScheme={isOwner ? 'green' : 'yellow'}
               borderRadius="full"
               fontWeight="medium"
             >
@@ -432,8 +432,8 @@ export function PasswordJoinRoomModal(props: PasswordModalProps): JSX.Element {
         border="1px solid"
         borderColor={useColorModeValue('gray.200', 'gray.700')}
       >
-        <ModalHeader 
-          fontSize="xl" 
+        <ModalHeader
+          fontSize="xl"
           fontWeight="bold"
           borderBottom="1px solid"
           borderColor={useColorModeValue('gray.200', 'gray.700')}
@@ -449,8 +449,8 @@ export function PasswordJoinRoomModal(props: PasswordModalProps): JSX.Element {
             Enter the password to join this room
           </Box>
           <InputGroup>
-            <InputLeftAddon 
-              children="Password" 
+            <InputLeftAddon
+              children="Password"
               bg={useColorModeValue('gray.100', 'gray.600')}
               borderColor={useColorModeValue('gray.200', 'gray.600')}
             />
@@ -472,21 +472,21 @@ export function PasswordJoinRoomModal(props: PasswordModalProps): JSX.Element {
             />
           </InputGroup>
         </ModalBody>
-        <ModalFooter 
+        <ModalFooter
           borderTop="1px solid"
           borderColor={useColorModeValue('gray.200', 'gray.700')}
           pt={4}
         >
-          <Button 
-            colorScheme="gray" 
-            mr={3} 
+          <Button
+            colorScheme="gray"
+            mr={3}
             onClick={props.onClose}
             variant="outline"
           >
             Cancel
           </Button>
-          <Button 
-            colorScheme="teal" 
+          <Button
+            colorScheme="teal"
             onClick={compareKey}
             isDisabled={!privateText.trim()}
           >

@@ -6,11 +6,11 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { useState } from 'react';
 import {
   useColorModeValue,
   IconButton,
   Box,
-  Text,
   Tooltip,
   useDisclosure,
   useToast,
@@ -20,11 +20,12 @@ import {
   VStack,
   Icon,
 } from '@chakra-ui/react';
-import { ConfirmModal, useHexColor, usePresenceStore, useRoomStore, useUser, useUsersStore } from '@sage3/frontend';
+
+import { MdClose, MdPerson, MdPersonOff, MdSearch } from 'react-icons/md';
+
 import { fuzzySearch } from '@sage3/shared';
 import { Room, User } from '@sage3/shared/types';
-import { useState } from 'react';
-import { MdAdd, MdClose, MdPerson, MdPersonOff, MdSearch } from 'react-icons/md';
+import { ConfirmModal, useHexColor, usePresenceStore, useRoomStore, useUser, useUsersStore } from '@sage3/frontend';
 
 // Compare filenames case independent
 function sortMembers(a: User, b: User) {
