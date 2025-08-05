@@ -76,16 +76,16 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
         if (auth.provider === 'guest' || auth.provider === 'spectator') {
           // Automatically create a guest/spectator user account
           const tempUser = {
-            name: auth.provider === 'guest' ? `Guest ${auth.id.slice(0, 8)}` : `Spectator ${auth.id.slice(0, 8)}`,
+            name: auth.provider === 'guest' ? `Guest #${auth.id.slice(0, 6)}` : `Spectator #${auth.id.slice(0, 6)}`,
             email: auth.email || auth.displayName || '',
-            color: 'blue' as any,
+            color: 'blue',
             userRole: auth.provider,
             userType: 'client',
             profilePicture: '',
             savedBoards: [],
             recentBoards: [],
           } as UserSchema;
-          
+
           try {
             const createResponse = await APIHttp.POST<User>('/users/create', tempUser);
             if (createResponse.data) {
