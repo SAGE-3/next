@@ -6,11 +6,11 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { useState } from 'react';
 import {
   useColorModeValue,
   IconButton,
   Box,
-  Text,
   Tooltip,
   useDisclosure,
   useToast,
@@ -20,11 +20,12 @@ import {
   VStack,
   Icon,
 } from '@chakra-ui/react';
-import { ConfirmModal, useHexColor, usePresenceStore, useRoomStore, useUser, useUsersStore } from '@sage3/frontend';
+
+import { MdClose, MdPerson, MdPersonOff, MdSearch } from 'react-icons/md';
+
 import { fuzzySearch } from '@sage3/shared';
 import { Room, User } from '@sage3/shared/types';
-import { useState } from 'react';
-import { MdAdd, MdClose, MdPerson, MdSearch } from 'react-icons/md';
+import { ConfirmModal, useHexColor, usePresenceStore, useRoomStore, useUser, useUsersStore } from '@sage3/frontend';
 
 // Compare filenames case independent
 function sortMembers(a: User, b: User) {
@@ -48,6 +49,9 @@ export function MembersList(props: { room: Room }) {
   // Style Scrollbar
   const scrollBarValue = useColorModeValue('gray.300', '#666666');
   const scrollBarColor = useHexColor(scrollBarValue);
+  const searchPlaceholderColorValue = useColorModeValue('gray.400', 'gray.100');
+  const searchPlaceholderColor = useHexColor(searchPlaceholderColorValue); const searchBarColorValue = useColorModeValue('gray.100', '#2c2c2c');
+  const searchBarColor = useHexColor(searchBarColorValue);
 
   const membersFilter = (u: User): boolean => {
     if (showOnline) {
@@ -72,17 +76,20 @@ export function MembersList(props: { room: Room }) {
             <InputLeftElement pointerEvents="none">
               <MdSearch />
             </InputLeftElement>
-            <Input placeholder="Search Members" value={membersSearch} onChange={(e) => setMembersSearch(e.target.value)} />
+            <Input placeholder="Search Members" value={membersSearch} roundedTop="2xl"
+              _focusVisible={{ bg: searchBarColor, outline: 'none', transition: 'none' }}
+              bg="inherit"
+              roundedBottom="2xl" onChange={(e) => setMembersSearch(e.target.value)} _placeholder={{ opacity: 0.7, color: searchPlaceholderColor }} />
           </InputGroup>
           {/* Filter Yours */}
           <Tooltip label="Filter Online" aria-label="filter online users" placement="top" hasArrow>
             <IconButton
-              size="md"
-              variant="outline"
-              colorScheme={showOnline ? 'teal' : 'gray'}
+              size="sm"
+              bg="none"
               aria-label="filter-yours"
               fontSize="xl"
-              icon={<MdPerson />}
+              icon={showOnline ? <MdPerson fontSize="24px" /> : <MdPersonOff fontSize="24px" />}
+              _hover={{ transform: 'scale(1.1)', bg: 'none' }}
               onClick={() => setShowOnline(!showOnline)}
             ></IconButton>
           </Tooltip>

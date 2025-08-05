@@ -129,10 +129,9 @@ export function PartyHub(): JSX.Element {
             <Tooltip label="Join Party" placement="top" hasArrow>
               <IconButton
                 size="sm"
-                icon={<MdArrowForward />}
+                icon={<MdArrowForward fontSize="24px" />}
                 aria-label="Send Message "
                 onClick={handleJoinPartyById}
-                colorScheme="teal"
                 variant={'ghost'}
                 fontSize="lg"
                 isDisabled={partyId.length <= 0}
@@ -140,7 +139,7 @@ export function PartyHub(): JSX.Element {
             </Tooltip>
           </Box>
           <Tooltip label="Create a new party" placement="top" hasArrow>
-            <IconButton size="sm" icon={<MdAdd />} aria-label="Create Party" onClick={createParty} colorScheme="teal" variant={'ghost'} />
+            <IconButton size="sm" icon={<MdAdd fontSize="24px" />} aria-label="Create Party" onClick={createParty} variant={'ghost'} />
           </Tooltip>
         </HStack>
       </Flex>

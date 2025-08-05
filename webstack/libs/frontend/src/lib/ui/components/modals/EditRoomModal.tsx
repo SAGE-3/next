@@ -23,15 +23,14 @@ import {
   useDisclosure,
   useToast,
 } from '@chakra-ui/react';
+
 import { v5 as uuidv5 } from 'uuid';
 import { MdPerson, MdLock } from 'react-icons/md';
 
-import { Room, RoomSchema } from '@sage3/shared/types';
-import { useRoomStore, useBoardStore, useAppStore, useConfigStore, ConfirmModal } from '@sage3/frontend';
+import { useRoomStore, useBoardStore, useAppStore, useConfigStore, ConfirmModal, useRouteNav } from '@sage3/frontend';
 import { isAlphanumericWithSpacesAndForeign, SAGEColors } from '@sage3/shared';
+import { Room, RoomSchema } from '@sage3/shared/types';
 import { ColorPicker } from '../general';
-
-import { useRouteNav } from '@sage3/frontend';
 
 interface EditRoomModalProps {
   isOpen: boolean;
@@ -46,11 +45,9 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
   const config = useConfigStore((state) => state.config);
 
   const [name, setName] = useState<RoomSchema['name']>(props.room.data.name);
-  const [description, setEmail] = useState<RoomSchema['description']>(props.room.data.description);
   const [color, setColor] = useState(props.room.data.color as SAGEColors);
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value);
-  const handleDescriptionChange = (event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value);
   const handleColorChange = (c: string) => setColor(c as SAGEColors);
 
   // Rooms
@@ -80,7 +77,6 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
 
   useEffect(() => {
     setName(props.room.data.name);
-    setEmail(props.room.data.description);
     setColor(props.room.data.color as SAGEColors);
     setIsListed(props.room.data.isListed);
     setProtected(props.room.data.isPrivate);
@@ -103,15 +99,11 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
     if (name !== props.room.data.name) {
       const cleanedName = cleanNameCheckDoubles(name);
       if (cleanedName) {
-        updateRoom(props.room._id, { name: cleanedName, description, color, isListed });
+        updateRoom(props.room._id, { name: cleanedName, color, isListed });
         updated = true;
       } else {
         return;
       }
-    }
-    if (description !== props.room.data.description) {
-      updateRoom(props.room._id, { description });
-      updated = true;
     }
     if (color !== props.room.data.color) {
       updateRoom(props.room._id, { color });
@@ -238,7 +230,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
       <ModalContent>
         <ModalHeader fontSize="3xl">Edit Room: {props.room.data.name}</ModalHeader>
         <ModalBody>
-          <InputGroup mb={2}>
+          <InputGroup mb={4}>
             <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
             <Input
               ref={initialRef}
@@ -252,19 +244,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
               isRequired={true}
             />
           </InputGroup>
-          <InputGroup my={4}>
-            <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
-            <Input
-              type="text"
-              placeholder={props.room.data.description}
-              _placeholder={{ opacity: 1, color: 'gray.600' }}
-              mr={0}
-              value={description}
-              onChange={handleDescriptionChange}
-              onKeyDown={onSubmit}
-              isRequired={true}
-            />
-          </InputGroup>
+
 
           <ColorPicker selectedColor={color} onChange={handleColorChange}></ColorPicker>
 
@@ -294,7 +274,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
             <Button colorScheme="red" onClick={delConfirmOnOpen} mx="2">
               Delete
             </Button>
-            <Button colorScheme="green" onClick={handleSubmit} isDisabled={!name || !description || !valid}>
+            <Button colorScheme="green" onClick={handleSubmit} isDisabled={!name || !valid}>
               Update
             </Button>
           </Box>
