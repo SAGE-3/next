@@ -443,9 +443,7 @@ export function useFiles(): UseFiles {
           if (res) {
             batch.push(...res);
             xpos += res[0].size.width + 10;
-            console.log('Files> openApps - created app for asset', up);
           } else {
-            console.log('Files> openApps - Could not find asset', up);
             toast({
               title: 'Error',
               description: 'Could not find asset ' + up,
