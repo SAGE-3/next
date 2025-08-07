@@ -1301,6 +1301,7 @@ export function HomePage() {
                 </Box>
               </Box>
             </Box>
+
             <VStack spacing="6" mt="4">
               {/* Recent Boards Section */}
               <Box width="100%">
@@ -1364,6 +1365,67 @@ export function HomePage() {
                   ) : (
                     <Text p="3" px="6">
                       No recent boards.
+                    </Text>
+                  )}
+                </Box>
+              </Box>
+
+              {/* Starred Boards Section */}
+              <Box width="100%">
+                <Text fontWeight="bold" mb="2" ref={starredBoardsRef}>
+                  Starred Boards
+                </Text>
+                <Box
+                  background={homeSectionColor}
+                  borderRadius={cardRadius}
+                  px="3"
+                  py="3"
+                  overflow="hidden"
+                  height="240px"
+                  display="flex"
+                  alignItems="center"
+                >
+                  {boards.filter(boardStarredFilter).length > 0 ? (
+                    <HStack
+                      gap="3"
+                      width="100%"
+                      overflowX="auto"
+                      overflowY="hidden"
+                      height="240px"
+                      px="2"
+                      css={{
+                        '&::-webkit-scrollbar': {
+                          background: 'transparent',
+                          height: '10px',
+                        },
+                        '&::-webkit-scrollbar-thumb': {
+                          background: scrollBarColor,
+                          borderRadius: '48px',
+                        },
+                      }}
+                    >
+                      {boards
+                        .filter(boardStarredFilter)
+                        .sort((a, b) => a.data.name.localeCompare(b.data.name))
+                        .map((board) => {
+                          const room = rooms.find((room) => board.data.roomId === room._id);
+                          if (!room) return null;
+                          return (
+                            <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
+                              <BoardCard
+                                board={board}
+                                room={room}
+                                onClick={() => handleBoardClick(board)}
+                                selected={selectedBoard ? selectedBoard._id === board._id : false}
+                                usersPresent={partialPrescences.filter((p) => p.data.boardId === board._id)}
+                              />
+                            </Box>
+                          );
+                        })}
+                    </HStack>
+                  ) : (
+                    <Text p="3" px="6">
+                      No favorite boards.
                     </Text>
                   )}
                 </Box>
@@ -1436,66 +1498,6 @@ export function HomePage() {
                 </Box>
               </Box>
 
-              {/* Starred Boards Section */}
-              <Box width="100%">
-                <Text fontWeight="bold" mb="2" ref={starredBoardsRef}>
-                  Starred Boards
-                </Text>
-                <Box
-                  background={homeSectionColor}
-                  borderRadius={cardRadius}
-                  px="3"
-                  py="3"
-                  overflow="hidden"
-                  height="240px"
-                  display="flex"
-                  alignItems="center"
-                >
-                  {boards.filter(boardStarredFilter).length > 0 ? (
-                    <HStack
-                      gap="3"
-                      width="100%"
-                      overflowX="auto"
-                      overflowY="hidden"
-                      height="240px"
-                      px="2"
-                      css={{
-                        '&::-webkit-scrollbar': {
-                          background: 'transparent',
-                          height: '10px',
-                        },
-                        '&::-webkit-scrollbar-thumb': {
-                          background: scrollBarColor,
-                          borderRadius: '48px',
-                        },
-                      }}
-                    >
-                      {boards
-                        .filter(boardStarredFilter)
-                        .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                        .map((board) => {
-                          const room = rooms.find((room) => board.data.roomId === room._id);
-                          if (!room) return null;
-                          return (
-                            <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
-                              <BoardCard
-                                board={board}
-                                room={room}
-                                onClick={() => handleBoardClick(board)}
-                                selected={selectedBoard ? selectedBoard._id === board._id : false}
-                                usersPresent={partialPrescences.filter((p) => p.data.boardId === board._id)}
-                              />
-                            </Box>
-                          );
-                        })}
-                    </HStack>
-                  ) : (
-                    <Text p="3" px="6">
-                      No favorite boards.
-                    </Text>
-                  )}
-                </Box>
-              </Box>
             </VStack>
           </Box>
         </Box>
