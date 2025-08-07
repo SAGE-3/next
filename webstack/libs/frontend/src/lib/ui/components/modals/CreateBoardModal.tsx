@@ -210,10 +210,10 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
 
           <ColorPicker selectedColor={color} onChange={handleColorChange}></ColorPicker>
 
-          <Checkbox mt={1} mr={4} onChange={checkProtected} defaultChecked={isProtected}>
+          <Checkbox mt={4} mr={4} onChange={checkProtected} defaultChecked={isProtected}>
             Board Protected with a Password
           </Checkbox>
-          <InputGroup mt={2}>
+          <InputGroup mt={4}>
             <InputLeftElement pointerEvents="none" children={<MdLock size={'24px'} />} />
             <Input
               type="text"
