@@ -42,7 +42,7 @@ import { debounce } from 'throttle-debounce';
 
 // Store between the app and the toolbar
 import { create } from 'zustand';
-import { Delta } from 'quill/core';
+import { Global } from '@emotion/react';
 
 const formats = [
   'background',
@@ -102,6 +102,13 @@ function AppComponent(props: App): JSX.Element {
 
   // Background Color mode value
   const bgColorMode = useColorModeValue('#e5e5e5', 'gray.700');
+  const placeHolderFontColor = useColorModeValue('black', 'white');
+
+  // Scrollbar colors
+  const trackColor = useColorModeValue('#e5e5e5', 'gray.700');
+  const thumbColor = useColorModeValue('gray.200', 'gray.600');
+  const trackColorHex = useHexColor(trackColor);
+  const thumbColorHex = useHexColor(thumbColor);
 
   // Debounce Updates
   const debounceUpdate = debounce(1000, (quillEditor: Quill) => {
@@ -174,6 +181,28 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props}>
       <Box w="100%" h="100%" background={bgColorMode}>
+        <Global
+          styles={{
+            '.ql-editor.ql-blank::before': {
+              color: placeHolderFontColor,
+            },
+            '.ql-editor::-webkit-scrollbar': {
+              width: '24px',
+              scrollbarGutter: 'stable',
+            },
+            '.ql-editor::-webkit-scrollbar-track': {
+              background: trackColorHex,
+              cursor: 'pointer',
+              borderRadius: '8px',
+            },
+            '.ql-editor::-webkit-scrollbar-thumb': {
+              backgroundColor: thumbColorHex,
+              borderRadius: '8px',
+              border: `2px solid ${trackColorHex}`,
+              cursor: 'pointer',
+            },
+          }}
+        />
         <div ref={toolbarRef} hidden style={{ display: 'none' }}></div>
         <div ref={quillRef} style={{ width: '100%', height: '100%', backgroundColor: '' }}></div>
       </Box>
