@@ -40,9 +40,8 @@ import {
 } from '@chakra-ui/react';
 
 // Icons
-import { MdAdd, MdHome, MdSearch, MdGridView, MdList, MdLock, MdPeople, MdFolder, MdDashboard, MdMenu, MdSettings, MdExitToApp } from 'react-icons/md';
+import { MdAdd, MdHome, MdSearch, MdGridView, MdList, MdPeople, MdFolder, MdDashboard, MdSettings, MdExitToApp, MdMenu } from 'react-icons/md';
 import { HiPuzzle } from 'react-icons/hi';
-import { PiStackPlusFill } from 'react-icons/pi';
 import { LuChevronsUpDown } from 'react-icons/lu';
 
 // SAGE Imports
@@ -896,10 +895,7 @@ export function HomePage() {
           height="100%"
           borderRadius={cardRadius}
           marginLeft="3"
-          pt={1}
-          pr={4}
-          pb={4}
-          pl={6}
+          p={[1, 4, 4, 6]} // top right bottom left
         >
           <Box width="100%" position="relative">
             {/* Room Information */}
@@ -909,10 +905,10 @@ export function HomePage() {
                   as={IconButton}
                   aria-label="Room options"
                   bg="none"
-                  icon={<Icon as={MdMenu} fontSize="2xl" />}
+                  icon={<MdMenu fontSize="32px" />}
                   variant="ghost"
                   size="lg"
-                  _hover={{ transform: 'scale(1.1)', bg: 'none' }}
+                  _hover={{ transform: 'scale(1.2)', bg: 'none' }}
                   _focus={{ bg: 'none' }}
                 />
                 <MenuList>
@@ -940,7 +936,7 @@ export function HomePage() {
                     placement="right"
                   >
                     <MenuItem
-                      icon={<Icon as={MdSettings} />}
+                      icon={<Icon as={MdSettings} fontSize="18px" />}
                       isDisabled={selectedRoom.data.ownerId !== userId}
                       onClick={editRoomModalOnOpen}
                     >
@@ -954,7 +950,7 @@ export function HomePage() {
                     placement="right"
                   >
                     <MenuItem
-                      icon={<Icon as={MdExitToApp} />}
+                      icon={<Icon as={MdExitToApp} fontSize="18px" />}
                       onClick={() => {
                         leaveRoomModalOnOpen();
                       }}
@@ -967,7 +963,7 @@ export function HomePage() {
                   </Tooltip>
                 </MenuList>
               </Menu>
-              <Text fontSize="5xl" fontWeight="bold">
+              <Text fontSize="4xl" fontWeight="bold">
                 {selectedRoom.data.name}
               </Text>
             </HStack>
