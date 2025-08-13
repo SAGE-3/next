@@ -1,5 +1,7 @@
 # python modules
-import logging, asyncio
+import logging
+import asyncio
+from typing import Dict, Any
 from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 
@@ -18,7 +20,9 @@ from libs.localtypes import (
 )
 
 # Web API
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request, status
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 import uvicorn
 
 load_dotenv()  # take environment variables from .env.
@@ -47,181 +51,227 @@ from app.pdf import PDFAgent
 from app.code import CodeAgent
 from app.mesonet import MesonetAgent
 
+# New multimodal components
+from core import MultimodalAgent, MultimodalQuery, LLMResponse
 
-# Instantiate each module's class
-chatAG = ChatAgent(logger, ps3)
-codeAG = CodeAgent(logger, ps3)
-# summaryAG = SummaryAgent(logger, ps3)
-imageAG = ImageAgent(logger, ps3)
-mesonetAG = MesonetAgent(logger, ps3)
-pdfAG = PDFAgent(logger, ps3)
-webAG = WebAgent(logger, ps3)
-asyncio.ensure_future(webAG.init())
-
-# set to debug the queries into langchain
-# set_debug(True)
-# set_verbose(True)
+# Global agent instances
+agents: Dict[str, Any] = {}
 
 
-# Tasks
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan manager for startup and shutdown"""
+    # Initialize agents
+    logger.info("Initializing agents...")
+    agents["chat"] = ChatAgent(logger, ps3)
+    agents["code"] = CodeAgent(logger, ps3)
+    agents["image"] = ImageAgent(logger, ps3)
+    agents["mesonet"] = MesonetAgent(logger, ps3)
+    agents["pdf"] = PDFAgent(logger, ps3)
+    agents["web"] = WebAgent(logger, ps3)
 
+    # Initialize multimodal agent
+    agents["multimodal"] = MultimodalAgent(logger, ps3)
 
-# Function to be run periodically
-# async def my_periodic_task():
-#     while True:
-#         print("Task is running: number of assets ->", len(ps3.assets))
-#         await asyncio.sleep(3)
+    # Initialize web agent
+    await asyncio.ensure_future(agents["web"].init())
+    logger.info("All agents initialized successfully")
 
+    yield  # Application runs here
 
-# @asynccontextmanager
-# async def lifespan(app: FastAPI):
-#     # Start the periodic task
-#     task = asyncio.create_task(my_periodic_task())
-#     yield  # Application runs here
-#     # Cleanup on shutdown
-#     task.cancel()
-#     try:
-#         await task
-#     except asyncio.CancelledError:
-#         print("Periodic task cancelled")
+    # Cleanup on shutdown
+    logger.info("Shutting down application...")
+    # Add any cleanup logic here if needed
 
 
 # Web server
 app = FastAPI(
-    # lifespan=lifespan,
+    lifespan=lifespan,
     title="Seer",
     description="A LangChain proxy for SAGE3.",
     version="0.1.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+)
+
+# CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Configure this properly for production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
-#
+# Global exception handler
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Global exception handler for unhandled exceptions"""
+    logger.error(f"Unhandled exception: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={"detail": "Internal server error", "success": False},
+    )
+
+
+# Common error handler for agent processing
+async def handle_agent_error(agent_name: str, exc: Exception) -> Dict[str, Any]:
+    """Common error handler for agent processing errors"""
+    if isinstance(exc, HTTPException):
+        logger.error(f"{agent_name} agent HTTP error: {exc.detail}")
+        raise exc
+    else:
+        logger.error(f"{agent_name} agent error: {str(exc)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error processing {agent_name} request: {str(exc)}",
+        )
+
+
 # API routes
-#
 
 
-# STATUS
 @app.get("/status")
-def read_root():
-    logger.info("Status check")
-    return {"success": True}
+async def read_root():
+    """Health check endpoint"""
+    logger.info("Status check requested")
+    return {
+        "success": True,
+        "status": "healthy",
+        "agents": list(agents.keys()),
+        "sage3_connected": ps3 is not None,
+    }
 
 
-# CHAT QUESTION
+@app.get("/health")
+async def health_check():
+    """Detailed health check endpoint"""
+    health_status = {
+        "success": True,
+        "status": "healthy",
+        "agents": {},
+        "sage3_connection": ps3 is not None,
+        "timestamp": asyncio.get_event_loop().time(),
+    }
+
+    # Check each agent's health
+    for name, agent in agents.items():
+        try:
+            # Add agent-specific health checks here if available
+            health_status["agents"][name] = "healthy"
+        except Exception as e:
+            health_status["agents"][name] = f"unhealthy: {str(e)}"
+            health_status["success"] = False
+
+    return health_status
+
+
 @app.post("/ask")
 async def ask_question(qq: Question):
+    """Process chat questions"""
     try:
-        # do the work
-        val = await chatAG.process(qq)
+        val = await agents["chat"].process(qq)
         return val
-
-    except HTTPException as e:
-        # Get the error message
-        text = e.detail
-        raise HTTPException(status_code=500, detail=text)
+    except Exception as e:
+        await handle_agent_error("chat", e)
 
 
-# CODE QUESTION
 @app.post("/code")
 async def code_question(qq: CodeRequest):
+    """Process code generation requests"""
     try:
-        # do the work
-        val = await codeAG.process(qq)
+        val = await agents["code"].process(qq)
         return val
-
-    except HTTPException as e:
-        # Get the error message
-        text = e.detail
-        raise HTTPException(status_code=500, detail=text)
-
-
-# SUMMARY FUNCTION
-@app.post("/summary")
-async def summary(qq: Question):
-    try:
-        # do the work
-        val = await summaryAG.process(qq)
-        return val
-    except HTTPException as e:
-        # Get the error message
-        text = e.detail
-        raise HTTPException(status_code=500, detail=text)
+    except Exception as e:
+        await handle_agent_error("code", e)
 
 
 @app.post("/image")
 async def image(qq: ImageQuery):
+    """Process image analysis requests"""
     try:
-        # do the work
-        # val = await imageAG.process(qq)
-        val = await asyncio.wait_for(imageAG.process(qq), timeout=30)
+        val = await asyncio.wait_for(agents["image"].process(qq), timeout=30)
         return val
-    except asyncio.TimeoutError as e:
-        print("Timeout error")
-        # Get the error message
-        text = str(e)
-        raise HTTPException(status_code=408, detail=text)
-    except HTTPException as e:
-        # Get the error message
-        text = e.detail
-        raise HTTPException(status_code=500, detail=text)
+    except asyncio.TimeoutError:
+        logger.error("Image processing timeout")
+        raise HTTPException(
+            status_code=status.HTTP_408_REQUEST_TIMEOUT,
+            detail="Image processing request timed out",
+        )
+    except Exception as e:
+        await handle_agent_error("image", e)
 
 
 @app.post("/mesonet")
 async def mesonet(qq: MesonetQuery):
-    print(qq)
-    print("Received mesonet ")
+    """Process mesonet data requests"""
+    logger.info(f"Received mesonet request: {qq.q}")
     try:
-        # do the work
-        val = await mesonetAG.process(qq)
-        # val = await asyncio.wait_for(processAG.process(qq), timeout=30)
+        val = await agents["mesonet"].process(qq)
         return val
-    except asyncio.TimeoutError as e:
-        print("Timeout error")
-        # Get the error message
-        text = str(e)
-        raise HTTPException(status_code=408, detail=text)
-    except HTTPException as e:
-        # Get the error message
-        text = e.detail
-        raise HTTPException(status_code=500, detail=text)
+    except asyncio.TimeoutError:
+        logger.error("Mesonet processing timeout")
+        raise HTTPException(
+            status_code=status.HTTP_408_REQUEST_TIMEOUT,
+            detail="Mesonet processing request timed out",
+        )
+    except Exception as e:
+        await handle_agent_error("mesonet", e)
 
 
 @app.post("/pdf")
 async def pdf(qq: PDFQuery):
+    """Process PDF analysis requests"""
     try:
-        # do the work
-        val = await pdfAG.process(qq)
+        val = await agents["pdf"].process(qq)
         return val
-    except HTTPException as e:
-        # Get the error message
-        text = e.detail
-        raise HTTPException(status_code=500, detail=text)
+    except Exception as e:
+        await handle_agent_error("pdf", e)
 
 
-# WEB1 FUNCTION
 @app.post("/web")
 async def webquery(qq: WebQuery):
+    """Process web scraping requests"""
     try:
-        # do the work
-        val = await webAG.process(qq)
+        val = await agents["web"].process(qq)
         return val
-    except HTTPException as e:
-        # Get the error message
-        text = e.detail
-        raise HTTPException(status_code=500, detail=text)
+    except Exception as e:
+        await handle_agent_error("web", e)
 
 
-# WEB2 FUNCTION
 @app.post("/webshot")
 async def webshot(qq: WebScreenshot):
+    """Process web screenshot requests"""
     try:
-        # do the work
-        val = await webAG.process_screenshot(qq)
+        val = await agents["web"].process_screenshot(qq)
         return val
-    except HTTPException as e:
-        # Get the error message
-        text = e.detail
-        raise HTTPException(status_code=500, detail=text)
+    except Exception as e:
+        await handle_agent_error("web", e)
+
+
+@app.post("/multimodal")
+async def multimodal_query(qq: MultimodalQuery):
+    """Process multimodal queries combining text, images, PDFs, and code"""
+    try:
+        response = await agents["multimodal"].process_query(qq)
+        return response
+    except Exception as e:
+        await handle_agent_error("multimodal", e)
+
+
+@app.get("/multimodal/stats")
+async def get_multimodal_stats():
+    """Get multimodal system statistics"""
+    try:
+        stats = await agents["multimodal"].get_stats()
+        return {"success": True, "stats": stats}
+    except Exception as e:
+        logger.error(f"Failed to get multimodal stats: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get multimodal stats: {str(e)}",
+        )
 
 
 if __name__ == "__main__":
