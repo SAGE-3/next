@@ -9,7 +9,7 @@
 import { z } from 'zod';
 
 /**
- * SAGE3 application: TLDraw
+ * SAGE3 application: Drawing
  * created by: SAGE3 Team
  */
 
@@ -25,4 +25,4 @@ export const init: Partial<state> = {
   follow: '',
 };
 
-export const name = 'TLDraw';
+export const name = 'Drawing';
