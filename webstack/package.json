@@ -37,6 +37,7 @@
     "@microsoft/fetch-event-source": "^2.0.1",
     "@monaco-editor/react": "^4.7.0",
     "@react-three/fiber": "^8.14.1",
+    "@remotion/media-parser": "^4.0.339",
     "@turf/bbox": "^7.2.0",
     "@turf/center": "^7.2.0",
     "ansi-to-react": "^6.1.6",
