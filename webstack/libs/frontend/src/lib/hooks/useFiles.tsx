@@ -12,6 +12,8 @@ import { ToastId, useToast } from '@chakra-ui/react';
 import axios, { AxiosProgressEvent, AxiosError } from 'axios';
 // Date manipulation (for filename)
 import { format as dateFormat } from 'date-fns/format';
+// Video metadata
+import { parseMedia } from "@remotion/media-parser";
 
 // File information
 import {
@@ -43,6 +45,38 @@ import { Asset, ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 import { apiUrls } from '../config';
 import { useUser } from '../providers';
 import { useAssetStore, useAppStore, useUIStore } from '../stores';
+
+/**
+ * Extracts media metadata from a file using @remotion/media-parser.
+ *
+ * @param {File} file - The file to parse.
+ * @returns {Promise<any>} - Parsed media metadata.
+ */
+async function fetchMediaMetadata(file: File) {
+  if (file) {
+    const result = await parseMedia({
+      src: file,
+      fields: {
+        durationInSeconds: true,
+        dimensions: true,
+        name: true,
+        container: true,
+        size: true,
+        fps: true,
+        videoCodec: true,
+        audioCodec: true,
+        metadata: true,
+      },
+    });
+    if (result) {
+      console.log("Video metadata:", result);
+    }
+    return result
+  } else {
+    console.log("Failed to parse media metadata");
+    return null;
+  }
+}
 
 /**
  * Setup data structure to open an application
@@ -481,6 +515,22 @@ export function useFiles(): UseFiles {
       for (let i = 0; i < fileListLength; i++) {
         // check the mime type we got from the browser, and check with mime lib. if needed
         const filetype = input[i].type || getMime(input[i].name) || 'application/octet-stream';
+
+        // Get video metadata
+        if (isVideo(filetype)) {
+          const meta = await fetchMediaMetadata(input[i]);
+          if (meta?.container !== "mp4" || meta?.videoCodec === null) {
+            toast({
+              title: 'Unsupported video format',
+              description: 'Only MP4 videos are supported',
+              status: 'error',
+              duration: 6000,
+              isClosable: true,
+            });
+            continue;
+          }
+        }
+
         if (!isValid(filetype)) {
           toast({
             title: 'Unknown file type',
@@ -491,7 +541,7 @@ export function useFiles(): UseFiles {
           });
         }
         if (isPDF(filetype) && input[i].size > 100 * 1024 * 1024) {
-          // 100MB
+          // PDF 100MB
           toast({
             title: 'File too large',
             description: 'PDF files must be smaller than 100MB - Flatten or Optimize your PDF',
@@ -499,6 +549,17 @@ export function useFiles(): UseFiles {
             duration: 6000,
             isClosable: true,
           });
+          continue;
+        } else if (isVideo(filetype) && input[i].size > 4 * 1024 * 1024 * 1024) {
+          // Video files can be up to 4GB
+          toast({
+            title: 'File too large',
+            description: 'Video files must be smaller than 4GB - Please compress your video',
+            status: 'error',
+            duration: 6000,
+            isClosable: true,
+          });
+          continue;
         } else {
           let item;
           // Rename file for called image.png coming from the clipboard

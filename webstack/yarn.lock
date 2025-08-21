@@ -3411,6 +3411,11 @@
   resolved "https://registry.yarnpkg.com/@remix-run/router/-/router-1.23.0.tgz#35390d0e7779626c026b11376da6789eb8389242"
   integrity sha512-O3rHJzAQKamUz1fvE0Qaw0xSFqsA/yafi2iqeE0pvdFtCO1viYx8QL6f3Ln/aCCTLxs68SLf0KPM9eSeM8yBnA==
 
+"@remotion/media-parser@^4.0.339":
+  version "4.0.339"
+  resolved "https://registry.yarnpkg.com/@remotion/media-parser/-/media-parser-4.0.339.tgz#df38bcd3b1e2879aa0f40628874aebad5e1110df"
+  integrity sha512-AHziQLJa1qEPO8gJHNrYggKFrD+i6jhn0xLDdTCAYRoQwmmF2WKiSFlHw1cU5n7UT5wD4rWMFQ5syQ/6W9Ht1g==
+
 "@rollup/plugin-babel@^5.3.0":
   version "5.3.1"
   resolved "https://registry.yarnpkg.com/@rollup/plugin-babel/-/plugin-babel-5.3.1.tgz#04bc0608f4aa4b2e4b1aebf284344d0f68fda283"
