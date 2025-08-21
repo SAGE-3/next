@@ -432,13 +432,13 @@ export function UILayer(props: UILayerProps) {
         </Box>
         <Divider orientation="vertical" mx="2" />
         <ButtonGroup isAttached size="xs" gap="0" mr="1">
-          <Tooltip label={'Zoom In'}>
+        <Tooltip label={'Zoom Out'}>
             <IconButton
               size="sm"
-              icon={<MdAdd />}
+              icon={<MdRemove />}
               fontSize="lg"
               aria-label={'input-type'}
-              onClick={() => zoomIn(10)}
+              onClick={() => zoomOut(10)}
               sx={{
                 _dark: {
                   bg: 'gray.600', // 'inherit' didnt seem to work
@@ -452,8 +452,8 @@ export function UILayer(props: UILayerProps) {
               aria-label={'input-type'}
               px="1"
               onClick={resetZoom}
-              minWidth="45px"
-              maxWidth="45px"
+              minWidth="50px"
+              maxWidth="50px"
               sx={{
                 _dark: {
                   bg: 'gray.600', // 'inherit' didnt seem to work
@@ -462,13 +462,14 @@ export function UILayer(props: UILayerProps) {
               icon={<Text>{(scale * 100).toFixed(0)}%</Text>}
             ></IconButton>
           </Tooltip>
-          <Tooltip label={'Zoom Out'}>
+
+          <Tooltip label={'Zoom In'}>
             <IconButton
               size="sm"
-              icon={<MdRemove />}
+              icon={<MdAdd />}
               fontSize="lg"
               aria-label={'input-type'}
-              onClick={() => zoomOut(10)}
+              onClick={() => zoomIn(10)}
               sx={{
                 _dark: {
                   bg: 'gray.600', // 'inherit' didnt seem to work

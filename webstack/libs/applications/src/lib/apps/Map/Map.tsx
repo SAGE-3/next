@@ -614,20 +614,20 @@ function ToolbarComponent(props: App): JSX.Element {
       {/* Baselayer Toggles */}
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top" hasArrow label="Street Map" openDelay={400}>
-          <Button onClick={changeToStreetMap}>
-            <MdMap fontSize="20px" />
+          <Button onClick={changeToStreetMap} size='xs' px={0}>
+            <MdMap size="16px" />
           </Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow label="Satellite Map" openDelay={400}>
-          <Button onClick={changeToSatellite}>
-            <MdTerrain fontSize="20px" />
+          <Button onClick={changeToSatellite} size="xs" px={0}>
+            <MdTerrain size="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>
 
       {/* Asset Dropdown + Add Layer Button */}
       <HStack spacing={2}>
-        <Button size="xs" colorScheme="teal" onClick={onOpen} leftIcon={<MdAdd />} isDisabled={!mapAssets.length}>
+        <Button size="xs" colorScheme="teal" onClick={onOpen} leftIcon={<MdAdd size="16px" />} isDisabled={!mapAssets.length} >
           Add Layer
         </Button>
       </HStack>

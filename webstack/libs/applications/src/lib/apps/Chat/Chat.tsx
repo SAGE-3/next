@@ -154,7 +154,7 @@ function AppComponent(props: App): JSX.Element {
   // Colors for Dark theme and light theme
   // Chat Bubble Colors
   const myColor = useHexColor(`blue.300`);
-  const sageColor = useHexColor('purple.200');
+  const sageColor = "#bec6dc"
   const aiTypingColor = useHexColor('orange.300');
   const otherUserColor = useHexColor('gray.300');
   // Background, scrollbar, and Foreground Colors
@@ -2278,9 +2278,9 @@ function ToolbarComponent(props: App): JSX.Element {
   return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
-        <Tooltip placement="top-start" hasArrow={true} label={'Download Transcript'} openDelay={400}>
-          <Button onClick={downloadTxt}>
-            <MdFileDownload />
+        <Tooltip placement="top" hasArrow={true} label={'Download Transcript'} openDelay={400}>
+          <Button onClick={downloadTxt} size='xs' px={0}>
+            <MdFileDownload fontSize="16px"/>
           </Button>
         </Tooltip>
       </ButtonGroup>

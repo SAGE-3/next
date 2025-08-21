@@ -22,6 +22,7 @@ import {
   Tooltip,
   useDisclosure,
 } from '@chakra-ui/react';
+
 import { Editor } from '@monaco-editor/react';
 
 import { HiTrash } from 'react-icons/hi';
@@ -38,6 +39,7 @@ import {
   MdOutlineMap,
   MdOutlinePictureAsPdf,
   MdPerson,
+  MdPersonOff,
   MdSearch,
 } from 'react-icons/md';
 
@@ -99,6 +101,10 @@ export function AssetList(props: { room: Room }) {
   // Style Scrollbar
   const scrollBarValue = useColorModeValue('gray.300', '#666666');
   const scrollBarColor = useHexColor(scrollBarValue);
+  const searchPlaceholderColorValue = useColorModeValue('gray.400', 'gray.100');
+  const searchPlaceholderColor = useHexColor(searchPlaceholderColorValue);
+  const searchBarColorValue = useColorModeValue('gray.100', '#2c2c2c');
+  const searchBarColor = useHexColor(searchBarColorValue);
 
   // User Info
   const users = useUsersStore((state) => state.users);
@@ -153,12 +159,12 @@ export function AssetList(props: { room: Room }) {
           {/* Upload Button */}
           <Tooltip label="Add Asset" aria-label="upload asset" placement="top" hasArrow>
             <IconButton
-              size="md"
-              variant={'outline'}
-              colorScheme={'teal'}
+              size="sm"
+              bg="none"
               aria-label="asset-upload"
               fontSize="xl"
-              icon={<MdAdd />}
+              icon={<MdAdd fontSize="24px" />}
+              _hover={{ transform: 'scale(1.1)', bg: 'none' }}
               onClick={uploadOnOpen}
             ></IconButton>
           </Tooltip>
@@ -167,17 +173,26 @@ export function AssetList(props: { room: Room }) {
             <InputLeftElement pointerEvents="none">
               <MdSearch />
             </InputLeftElement>
-            <Input placeholder="Search Assets" value={assetSearch} onChange={(e) => setAssetSearch(e.target.value)} />
+            <Input
+              placeholder="Search Assets"
+              value={assetSearch}
+              onChange={(e) => setAssetSearch(e.target.value)}
+              roundedTop="2xl"
+              _focusVisible={{ bg: searchBarColor, outline: 'none', transition: 'none' }}
+              bg="inherit"
+              roundedBottom="2xl"
+              _placeholder={{ opacity: 0.7, color: searchPlaceholderColor }}
+            />
           </InputGroup>
           {/* Filter Yours */}
           <Tooltip label="Filter Yours" aria-label="filter your assets" placement="top" hasArrow>
             <IconButton
-              size="md"
-              variant="outline"
-              colorScheme={showOnlyYours ? 'teal' : 'gray'}
+              size="sm"
+              bg="none"
               aria-label="filter-yours"
               fontSize="xl"
-              icon={<MdPerson />}
+              icon={showOnlyYours ? <MdPerson fontSize="24px" /> : <MdPersonOff fontSize="24px" />}
+              _hover={{ transform: 'scale(1.1)', bg: 'none' }}
               onClick={handleShowOnlyYours}
             ></IconButton>
           </Tooltip>

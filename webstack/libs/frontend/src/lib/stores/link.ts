@@ -126,7 +126,6 @@ const LinkStore = create<LinkStoreState>()((set, get) => {
         return;
       }
       const res = await APIHttp.QUERY<Link>('/links', { boardId: boardId });
-      console.log('LinkStore: subscribe', res);
       if (res.success) {
         set({ links: res.data });
       } else {

@@ -119,7 +119,7 @@ async function sharpProcessing(job: any): Promise<ExtraImageType> {
       sharpStream
         .rotate() // take into account EXIF orientation
         .metadata()
-        .then((metadata) => {
+        .then((metadata: any) => {
           const ww = metadata.width || 100;
           const hh = metadata.height || 100;
           const aspectRatio = ww / hh;
@@ -148,7 +148,7 @@ async function sharpProcessing(job: any): Promise<ExtraImageType> {
                 .clone()
                 .resize({ width })
                 .webp({ quality })
-                .toFile(path.join(directory, `${filenameWithoutExt}-${width}.webp`))
+                .toFile(path.join(directory, `${filenameWithoutExt}-${width}.webp`)),
             ),
             // full size image JPEG
             sharpStream
@@ -193,7 +193,7 @@ async function sharpProcessing(job: any): Promise<ExtraImageType> {
               reject(err);
             });
         })
-        .catch((err) => {
+        .catch((err: any) => {
           console.error('ImageLoader> Error processing', err);
           reject(err);
         });

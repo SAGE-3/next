@@ -105,7 +105,15 @@ export function PartyInstance(): JSX.Element {
         <HStack justify="space-between" align="center">
           <HStack flex="1" justify="flex-start">
             <Tooltip label="Board Name" placement="top" hasArrow>
-              <Text>{board ? board.data.name : 'No Board'}</Text>
+              <Text
+                noOfLines={1}
+                overflow="hidden"
+                textOverflow="ellipsis"
+                whiteSpace="nowrap"
+                maxWidth="100%"
+              >
+                {board ? board.data.name : 'No Board'}
+              </Text>
             </Tooltip>
           </HStack>
 
@@ -113,8 +121,7 @@ export function PartyInstance(): JSX.Element {
             <Tooltip label={`Copy Party Sharable Id`} placement="top" hasArrow>
               <IconButton
                 size="sm"
-                icon={<MdCopyAll />}
-                colorScheme={'teal'}
+                icon={<MdCopyAll fontSize="24px" />}
                 aria-label="Copy Party Sharable Id"
                 onClick={copyPartyShareableId}
                 gap="1"
@@ -123,11 +130,11 @@ export function PartyInstance(): JSX.Element {
             </Tooltip>
 
             {isOwner && (
-              <Tooltip label={`${currentParty.private ? 'Private' : 'Public'}`} placement="top" hasArrow>
+              <Tooltip label={`${currentParty.private ? 'Make Party Public' : 'Make Party Private'}`} placement="top" hasArrow>
                 <IconButton
                   size="sm"
-                  icon={currentParty.private ? <MdLock /> : <MdLockOutline />}
-                  colorScheme={currentParty.private ? 'red' : 'green'}
+                  icon={currentParty.private ? <MdLock fontSize="24px" /> : <MdLockOutline fontSize="24px" />}
+                  colorScheme={currentParty.private ? 'red' : 'gray'}
                   aria-label="Set Party Privacy"
                   onClick={togglePartyPrivate}
                   gap="1"
@@ -139,7 +146,7 @@ export function PartyInstance(): JSX.Element {
               <Tooltip label="Disband Party" placement="top" hasArrow>
                 <IconButton
                   size="sm"
-                  icon={<MdClose />}
+                  icon={<MdClose fontSize="24px" />}
                   aria-label="Clear Chats"
                   onClick={disbandParty}
                   colorScheme="red"
@@ -300,12 +307,12 @@ function PartyChats(): JSX.Element {
           const formattedTime = isToday
             ? time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             : time.toLocaleDateString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-              });
+              hour: '2-digit',
+              minute: '2-digit',
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+            });
 
           return (
             <Flex key={chat.id} direction={yours ? 'row-reverse' : 'row'}>
@@ -349,10 +356,10 @@ function PartyChats(): JSX.Element {
         <Tooltip label="Send Message" placement="top" hasArrow>
           <IconButton
             size="sm"
-            icon={<MdSend />}
+            icon={<MdSend fontSize="24px" />}
             aria-label="Send Message "
             onClick={handleSendMessage}
-            colorScheme="teal"
+
             variant={'ghost'}
           />
         </Tooltip>
@@ -360,7 +367,7 @@ function PartyChats(): JSX.Element {
           <Tooltip label="Clear Chat" placement="top" hasArrow>
             <IconButton
               size="sm"
-              icon={<MdDelete />}
+              icon={<MdDelete fontSize="24px" />}
               aria-label="Clear Chats"
               onClick={handleClearChat}
               colorScheme="red"

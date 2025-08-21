@@ -9,7 +9,7 @@ import { useEffect, useCallback, useState } from 'react';
 import { ButtonGroup, Button, Tooltip, Box } from '@chakra-ui/react';
 // Data store
 import { create } from 'zustand';
-// TLDraw
+// Drawing
 import { Tldraw, TLUiComponents, Editor, exportToBlob } from 'tldraw';
 import { throttle } from 'throttle-debounce';
 
@@ -40,7 +40,7 @@ const useStore = create<DrawStore>()((set) => ({
 }));
 
 
-/* App component for TLDraw */
+/* App component for Drawing */
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const saveEditor = useStore((state) => state.saveEditor);
@@ -158,7 +158,7 @@ function AppComponent(props: App): JSX.Element {
   );
 }
 
-/* App toolbar component for the app TLDraw */
+/* App toolbar component for the app Drawing */
 const ToolbarComponent = (props: App) => {
   const s = props.data.state as AppState;
   const ed: Editor = useStore((state) => state.ed[props._id]);
@@ -180,7 +180,7 @@ const ToolbarComponent = (props: App) => {
     getImageDimensionsFromBase64(b64Data).then((size) => {
       const xdrop = props.data.position.x + props.data.size.width + 20;
       const ydrop = props.data.position.y;
-      createApp(setupApp('TLDraw.png', 'ImageViewer', xdrop, ydrop, props.data.roomId, props.data.boardId,
+      createApp(setupApp('Drawing.png', 'ImageViewer', xdrop, ydrop, props.data.roomId, props.data.boardId,
         { w: size.w, h: size.h }, { assetid: b64Data }));
     });
   };
@@ -212,36 +212,36 @@ const ToolbarComponent = (props: App) => {
   return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal" mr="1">
-        <Tooltip placement="top-start" hasArrow={true} label={'Undo'} openDelay={400}>
-          <Button onClick={() => handleUndo()}>
-            <MdUndo />
+        <Tooltip placement="top" hasArrow={true} label={'Undo'} openDelay={400}>
+          <Button onClick={() => handleUndo()} size="xs" px={0}>
+            <MdUndo size="16px" />
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Redo'} openDelay={400}>
-          <Button onClick={() => handleRedo()}>
-            <MdRedo />
+        <Tooltip placement="top" hasArrow={true} label={'Redo'} openDelay={400}>
+          <Button onClick={() => handleRedo()} size="xs" px={0}>
+            <MdRedo size="16px" />
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Zoom to Fit'} openDelay={400}>
-          <Button onClick={() => handleFit()}>
-            <MdZoomInMap />
+        <Tooltip placement="top" hasArrow={true} label={'Zoom to Fit'} openDelay={400}>
+          <Button onClick={() => handleFit()} size="xs" px={0}>
+            <MdZoomInMap size="16px" />
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Zoom to 100%'} openDelay={400}>
-          <Button onClick={() => handleHundred()}>
-            <MdZoomOutMap />
+        <Tooltip placement="top" hasArrow={true} label={'Zoom to 100%'} openDelay={400}>
+          <Button onClick={() => handleHundred()} size="xs" px={0}>
+            <MdZoomOutMap size="16px" />
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Follow Me'} openDelay={400}>
-          <Button onClick={() => handleFollow()}>
-            <RiUserFollowFill />
+        <Tooltip placement="top" hasArrow={true} label={'Follow Me'} openDelay={400}>
+          <Button onClick={() => handleFollow()} size="xs" px={0}>
+            <RiUserFollowFill size="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>
       <ButtonGroup isAttached size="xs" colorScheme="teal" mr="1">
-        <Tooltip placement="top-start" hasArrow={true} label={'Export Image to Board'} openDelay={400}>
-          <Button onClick={() => handleExport()}>
-            <MdSaveAlt />
+        <Tooltip placement="top" hasArrow={true} label={'Export Image to Board'} openDelay={400}>
+          <Button onClick={() => handleExport()} size="xs" px={0}>
+            <MdSaveAlt size="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>

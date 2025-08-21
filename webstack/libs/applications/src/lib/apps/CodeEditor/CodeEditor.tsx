@@ -74,7 +74,8 @@ const languageExtensions = [
   { name: 'cpp', extension: 'cpp' },
   { name: 'c', extension: 'c' },
   { name: 'java', extension: 'java' },
-  { name: 'r', extension: 'r' },
+  { name: 'r', extension: 'R' },
+  { name: 'julia', extension: 'jl' },
 ].sort((a, b) => {
   return a.name.localeCompare(b.name);
 });
@@ -395,7 +396,7 @@ function ToolbarComponent(props: App): JSX.Element {
       />
 
       <ButtonGroup isAttached size="xs" ml={1} minWidth="100px">
-        <Menu placement="top-start">
+        <Menu placement="top">
           <Tooltip hasArrow={true} label={'Language'} openDelay={300}>
             <MenuButton as={Button} colorScheme="teal" aria-label="layout" minWidth="100px">
               {s.language}
@@ -412,48 +413,48 @@ function ToolbarComponent(props: App): JSX.Element {
       </ButtonGroup>
 
       <ButtonGroup isAttached size="xs" colorScheme="teal" ml={1}>
-        <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
-          <Button isDisabled={s.fontSize <= 6} onClick={() => handleDecreaseFont()}>
-            <MdRemove />
+        <Tooltip placement="top" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
+          <Button isDisabled={s.fontSize <= 6} onClick={() => handleDecreaseFont()} size='xs' px={0}>
+            <MdRemove size="16px"/>
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Current Font Size'} openDelay={400}>
-          <Box px={2} m={0} height={'24px'} lineHeight={'24px'} fontSize="12px" background={fontSizeBackground} color={fontSizeColor}>
+        <Tooltip placement="top" hasArrow={true} label={'Current Font Size'} openDelay={400}>
+          <Box px={2} m={0} height={'24px'} lineHeight={'24px'} fontSize="16px" background={fontSizeBackground} color={fontSizeColor}>
             {s.fontSize}
           </Box>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
-          <Button isDisabled={s.fontSize >= 86} onClick={() => handleIncreaseFont()}>
-            <MdAdd />
+        <Tooltip placement="top" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
+          <Button isDisabled={s.fontSize >= 86} onClick={() => handleIncreaseFont()} size='xs' px={0}>
+            <MdAdd size="16px"/>
           </Button>
         </Tooltip>
       </ButtonGroup>
 
       <ButtonGroup isAttached size="xs" colorScheme="teal" ml={1}>
         <Tooltip placement="top" hasArrow={true} label={s.readonly ? 'Read only' : 'Edit'} openDelay={400}>
-          <Button onClick={handleReadonly} size="xs" p="0" mx="2px" colorScheme={'teal'}>
-            {s.readonly ? <MdLock /> : <MdLockOpen />}
+          <Button onClick={handleReadonly}   mx="2px" colorScheme={'teal'} size='xs' px={0}>
+            {s.readonly ? <MdLock size="16px"/> : <MdLockOpen size="16px"/>}
           </Button>
         </Tooltip>
       </ButtonGroup>
       <ButtonGroup isAttached size="xs" colorScheme="teal" ml={1}>
-        <Tooltip placement="top-start" hasArrow={true} label={'Save Code in Asset Manager'} openDelay={400}>
-          <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }} isDisabled={s.content.length === 0}>
-            <MdFileUpload />
+        <Tooltip placement="top" hasArrow={true} label={'Save Code in Asset Manager'} openDelay={400}>
+          <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }} isDisabled={s.content.length === 0} size='xs' px={0}>
+            <MdFileUpload size="16px"/>
           </Button>
         </Tooltip>
 
-        <Tooltip placement="top-start" hasArrow={true} label={'Download Code'} openDelay={400}>
-          <Button onClick={downloadCode} _hover={{ opacity: 0.7 }}>
-            <MdFileDownload />
+        <Tooltip placement="top" hasArrow={true} label={'Download Code'} openDelay={400}>
+          <Button onClick={downloadCode} _hover={{ opacity: 0.7 }} size='xs' px={0}>
+            <MdFileDownload size="16px"/>
           </Button>
         </Tooltip>
       </ButtonGroup>
       {(s.language === 'markdown' || s.language === 'html') && (
         <ButtonGroup isAttached size="xs" colorScheme="teal" ml={1}>
-          <Tooltip placement="top-start" hasArrow={true} label={'Preview Content'} openDelay={400}>
-            <Button onClick={previewContent} _hover={{ opacity: 0.7 }}>
-              <MdSlideshow size="18px" />
+          <Tooltip placement="top" hasArrow={true} label={'Preview Content'} openDelay={400}>
+            <Button onClick={previewContent} _hover={{ opacity: 0.7 }} size='xs' px={0}>
+              <MdSlideshow size="16px" />
             </Button>
           </Tooltip>
         </ButtonGroup>
@@ -469,205 +470,3 @@ function ToolbarComponent(props: App): JSX.Element {
 const GroupedToolbarComponent = () => { return null; };
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
-
-/*
-import {  Range } from 'monaco-editor';
-import { AiQueryRequest } from '@sage3/shared';
-import { generateRequest, generateSystemPrompt } from './ai-request-generator';
-
-  async function refactor() {
-    if (!editor) return;
-    const selection = editor.getSelection();
-    // Get the line before the selection
-    if (!selection) return;
-    const selectionText = editor.getModel()?.getValueInRange(selection);
-    if (!selectionText) return;
-    const queryRequest = {
-      prompt: generateSystemPrompt(s.language, selectionText, 'refactor'),
-      input: generateRequest(s.language, selectionText, 'refactor'),
-      model: selectedModel,
-    } as AiQueryRequest;
-    const result = await AiAPI.code.query(queryRequest);
-    if (result.success && result.output) {
-      // Create new range with the same start and end line
-      editor.executeEdits('handleHighlight', [{ range: selection, text: result.output }]);
-    } else {
-      toast({
-        title: 'Refactor Code',
-        description: 'Refactor failed: ' + result.error_message,
-        status: 'warning',
-        duration: 4000,
-        isClosable: true,
-      });
-    }
-  }
-
-  // Explain the code
-  async function explain() {
-    if (!roomId || !boardId) return;
-    if (!editor) return;
-    const selection = editor.getSelection();
-    // Get the line before the selection
-    if (!selection) return;
-    const selectionText = editor.getModel()?.getValueInRange(selection);
-    if (!selectionText) return;
-    const queryRequest = {
-      prompt: generateSystemPrompt(s.language, selectionText, 'explain'),
-      input: generateRequest(s.language, selectionText, 'explain'),
-      model: selectedModel,
-    } as AiQueryRequest;
-    const result = await AiAPI.code.query(queryRequest);
-    if (result.success && result.output) {
-      const w = props.data.size.width;
-      const h = props.data.size.height;
-      const x = props.data.position.x + w + 20;
-      const y = props.data.position.y;
-      createApp(
-        setupApp('Explain Code', 'Stickie', x, y, roomId, boardId, { w, h }, { text: result.output, fontSize: 24, color: 'yellow' })
-      );
-    } else {
-      toast({
-        title: 'Explain Code',
-        description: 'Explain failed: ' + result.error_message,
-        status: 'warning',
-        duration: 4000,
-        isClosable: true,
-      });
-    }
-  }
-
-  // Comment the code
-  async function comment() {
-    if (!editor) return;
-    const selection = editor.getSelection();
-    // Get the line before the selection
-    if (!selection) return;
-    const selectionText = editor.getModel()?.getValueInRange(selection);
-    if (!selectionText) return;
-    const queryRequest = {
-      prompt: generateSystemPrompt(s.language, selectionText, 'comment'),
-      input: generateRequest(s.language, selectionText, 'comment'),
-      model: selectedModel,
-    } as AiQueryRequest;
-    const result = await AiAPI.code.query(queryRequest);
-    if (result.success && result.output) {
-      // Remove all instances of ``` from generated text
-      const cleanedText = result.output.replace(/```.* /g, '');
-      editor.executeEdits('handleHighlight', [{ range: selection, text: cleanedText.trim() }]);
-    }
-  }
-
-// Generate code
-async function generate() {
-  if (!editor) return;
-  const selection = editor.getSelection();
-  if (!selection) return;
-  let selectionText;
-  if (selection.isEmpty()) {
-    // Get the whole document
-    selectionText = editor.getModel()?.getValue();
-  } else {
-    // Get the selected text
-    selectionText = editor.getModel()?.getValueInRange(selection);
-    // Comment out the selected text
-    editor.trigger('comment', 'editor.action.commentLine', null);
-  }
-  if (!selectionText) return;
-  const queryRequest = {
-    prompt: generateSystemPrompt(s.language, selectionText, 'generate'),
-    input: generateRequest(s.language, selectionText, 'generate'),
-    model: selectedModel,
-  } as AiQueryRequest;
-  const result = await AiAPI.code.query(queryRequest);
-  if (result.success && result.output) {
-    // Remove all instances of ``` from generated text
-    const cleanedText = result.output.replace(/```.* /g, '');
-// Get the current cursor position
-const position = editor.getPosition();
-if (!position) return;
-if (selection.isEmpty()) {
-  // Add the code after the current cursor position
-  // Create a new position right after the current cursor position
-  const newPosition = {
-    lineNumber: position.lineNumber,
-    column: position.column,
-  };
-  // The text to append
-  const textToAppend = '\n' + cleanedText.trim();
-  // Execute the edit to insert the text
-  editor.executeEdits('my-source', [
-    {
-      range: new Range(newPosition.lineNumber, newPosition.column, newPosition.lineNumber, newPosition.column),
-      text: textToAppend,
-      forceMoveMarkers: true,
-    },
-  ]);
-} else {
-  // editor.executeEdits('handleHighlight', [{ range: selection, text: cleanedText.trim() }]);
-  // Create a new position right after the current cursor position
-  const newPosition = {
-    lineNumber: position.lineNumber + 1,
-    column: position.column,
-  };
-  // Execute the edit to insert the text
-  editor.executeEdits('my-source', [
-    {
-      range: new Range(newPosition.lineNumber, newPosition.column, newPosition.lineNumber, newPosition.column),
-      text: cleanedText.trim(),
-      forceMoveMarkers: true,
-    },
-  ]);
-}
-  }
-}
-
-// Online Models
-const [onlineModels, setOnlineModels] = useState<string[]>([]);
-const [selectedModel, setSelectedModel] = useState<string>('');
-
-// Check if the AI is online
-useEffect(() => {
-  async function fetchStatus() {
-    const response = await AiAPI.code.status();
-    setOnlineModels(response.onlineModels);
-    if (response.onlineModels.length > 0) setSelectedModel(response.onlineModels[0]);
-    else setSelectedModel('');
-  }
-  fetchStatus();
-}, []);
-
-
-  <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1} isDisabled={onlineModels.length == 0}>
-        <Menu placement="top-start">
-          <Tooltip hasArrow={true} label={'Ai Model Selection'} openDelay={300}>
-            <MenuButton as={Button} colorScheme="orange" width="100px" aria-label="layout">
-              {selectedModel}
-            </MenuButton>
-          </Tooltip>
-          <MenuList minWidth="150px" fontSize={'sm'}>
-            {onlineModels.map((model) => (
-              <MenuItem key={model} onClick={() => handleModelChange(model)}>
-                {model}
-              </MenuItem>
-            ))}
-          </MenuList>
-        </Menu>
-      </ButtonGroup>
-
-      <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1} isDisabled={selectedModel === ''}>
-        <Menu placement="top-start">
-          <Tooltip hasArrow={true} label={'Remote Actions'} openDelay={300}>
-            <MenuButton as={Button} colorScheme="orange" aria-label="layout">
-              <MdOutlineLightbulb />
-            </MenuButton>
-          </Tooltip>
-          <MenuList minWidth="150px" fontSize={'sm'}>
-            <MenuItem onClick={explain}>Explain</MenuItem>
-            <MenuItem onClick={refactor}>Refactor</MenuItem>
-            <MenuItem onClick={comment}>Comment</MenuItem>
-            <MenuItem onClick={generate}>Generate</MenuItem>
-          </MenuList>
-        </Menu>
-      </ButtonGroup>
-
-  */

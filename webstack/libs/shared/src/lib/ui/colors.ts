@@ -6,6 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+
 export const colors = ['red', 'orange', 'yellow', 'green', 'teal', 'blue', 'cyan', 'purple', 'pink'] as const;
 
 export type SAGEColors = (typeof colors)[number];
@@ -37,7 +38,7 @@ export function getHexColor(color: SAGEColors): string {
     case 'cyan':
       return '#00b5d8';
     case 'purple':
-      return '#805ad5';
+      return '#bec6dc';
     case 'pink':
       return '#d53f8c';
     default:

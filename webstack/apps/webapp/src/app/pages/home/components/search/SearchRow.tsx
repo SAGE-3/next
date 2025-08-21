@@ -7,7 +7,7 @@
  */
 
 import { ReactNode, useState } from 'react';
-import { Box, Divider, HStack, Text, useDisclosure, useToast } from '@chakra-ui/react';
+import { Box, Divider, HStack, Text, useDisclosure, useToast, VStack, useColorModeValue } from '@chakra-ui/react';
 
 import { PiStackFill } from 'react-icons/pi';
 import { MdDashboard, MdExitToApp } from 'react-icons/md';
@@ -29,8 +29,96 @@ interface SearchRowUrlProps extends SearchRowChildrenProps {
   urlInfo: { board: Board | null; isExternal: Boolean; error: Boolean; url: string | null };
 }
 
+interface SearchRowGroupProps {
+  boards: (Board & { roomName?: string })[];
+  rooms: Room[];
+  onBoardClick: (board: Board & { roomName?: string }) => void;
+  onRoomClick: (room: Room) => void;
+}
+
 const SearchRow = ({ children }: SearchRowProps) => {
   return <>{children}</>;
+};
+
+// New grouped component that shows boards and rooms in sections
+SearchRow.Grouped = ({ boards, rooms, onBoardClick, onRoomClick }: SearchRowGroupProps) => {
+  // Color mode values
+  const headerColor = useColorModeValue('gray.600', 'gray.300');
+  const hoverBg = useColorModeValue('gray.100', 'gray.700');
+  const mainTextColor = useColorModeValue('gray.800', 'white');
+  const secondaryTextColor = useColorModeValue('gray.600', 'gray.400');
+  const dividerColor = useColorModeValue('gray.200', 'gray.600');
+
+  return (
+    <HStack spacing="4" align="flex-start" w="100%">
+      {/* Boards Column */}
+      <Box flex="1">
+        <HStack mb="3" px="2">
+          <Text fontWeight="bold" fontSize="xl" color={headerColor}>
+            Boards ({boards.length})
+          </Text>
+        </HStack>
+        <VStack spacing="0" align="stretch">
+          {boards.map((board, index) => (
+            <Box key={board._id}>
+              <HStack
+                w="100%"
+                p="2"
+                role="button"
+                onClick={() => onBoardClick(board)}
+                _hover={{ cursor: 'pointer', background: hoverBg, borderRadius: 'lg' }}
+                transition="ease-in 200ms"
+              >
+                <Box overflow="hidden" display="flex" gap="4" alignItems="center" w="100%">
+                  <Box flex="1">
+                    <Text textOverflow="ellipsis" whiteSpace="nowrap" fontWeight="bold" color={mainTextColor}>
+                      {board.data.name}
+                    </Text>
+                    <Text textOverflow="ellipsis" whiteSpace="nowrap" fontSize="small" color={secondaryTextColor}>
+                      {board.roomName}
+                    </Text>
+                  </Box>
+                </Box>
+              </HStack>
+              {index < boards.length - 1 && <Divider borderColor={dividerColor} />}
+            </Box>
+          ))}
+        </VStack>
+      </Box>
+
+      {/* Rooms Column */}
+      <Box flex="1">
+        <HStack mb="3" px="2">
+          <Text fontWeight="bold" fontSize="xl" color={headerColor}>
+            Rooms ({rooms.length})
+          </Text>
+        </HStack>
+        <VStack spacing="0" align="stretch">
+          {rooms.map((room, index) => (
+            <Box key={room._id}>
+              <HStack
+                w="100%"
+                p="2"
+                role="button"
+                onClick={() => onRoomClick(room)}
+                _hover={{ cursor: 'pointer', background: hoverBg, borderRadius: 'lg' }}
+                transition="ease-in 200ms"
+              >
+                <Box overflow="hidden" display="flex" gap="4" alignItems="center" w="100%">
+                  <Box flex="1">
+                    <Text textOverflow="ellipsis" whiteSpace="nowrap" fontWeight="bold" color={mainTextColor}>
+                      {room.data.name}
+                    </Text>
+                  </Box>
+                </Box>
+              </HStack>
+              {index < rooms.length - 1 && <Divider borderColor={dividerColor} />}
+            </Box>
+          ))}
+        </VStack>
+      </Box>
+    </HStack>
+  );
 };
 
 SearchRow.Board = ({ board }: SearchRowChildrenProps) => {
