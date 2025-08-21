@@ -12,6 +12,7 @@ import { name as CobrowseName, init as defaultCobrowse } from './apps/Cobrowse';
 import { name as CodeEditorName, init as defaultCodeEditor } from './apps/CodeEditor';
 import { name as CounterName, init as defaultCounter } from './apps/Counter';
 import { name as DeepZoomImageName, init as defaultDeepZoomImage } from './apps/DeepZoomImage';
+import { name as DrawingName, init as defaultDrawing } from './apps/Drawing';
 import { name as EChartsViewerName, init as defaultEChartsViewer } from './apps/EChartsViewer';
 import { name as GLTFViewerName, init as defaultGLTFViewer } from './apps/GLTFViewer';
 import { name as HCDPName, init as defaultHCDP } from './apps/HCDP';
@@ -31,7 +32,6 @@ import { name as SageCellName, init as defaultSageCell } from './apps/SageCell';
 import { name as SeerName, init as defaultSeer } from './apps/Seer';
 import { name as SensorOverviewName, init as defaultSensorOverview } from './apps/SensorOverview';
 import { name as StickieName, init as defaultStickie } from './apps/Stickie';
-import { name as TLDrawName, init as defaultTLDraw } from './apps/TLDraw';
 import { name as TimerName, init as defaultTimer } from './apps/Timer';
 import { name as TwilioScreenshareName, init as defaultTwilioScreenshare } from './apps/TwilioScreenshare';
 import { name as VegaLiteName, init as defaultVegaLite } from './apps/VegaLite';
@@ -53,6 +53,7 @@ export const initialValues = {
   [CodeEditorName]: defaultCodeEditor,
   [CounterName]: defaultCounter,
   [DeepZoomImageName]: defaultDeepZoomImage,
+  [DrawingName]: defaultDrawing,
   [EChartsViewerName]: defaultEChartsViewer,
   [GLTFViewerName]: defaultGLTFViewer,
   [HCDPName]: defaultHCDP,
@@ -72,7 +73,6 @@ export const initialValues = {
   [SeerName]: defaultSeer,
   [SensorOverviewName]: defaultSensorOverview,
   [StickieName]: defaultStickie,
-  [TLDrawName]: defaultTLDraw,
   [TimerName]: defaultTimer,
   [TwilioScreenshareName]: defaultTwilioScreenshare,
   [VegaLiteName]: defaultVegaLite,
@@ -81,3 +81,4 @@ export const initialValues = {
   [WebpageLinkName]: defaultWebpageLink,
   [WebviewName]: defaultWebview,
 };
+

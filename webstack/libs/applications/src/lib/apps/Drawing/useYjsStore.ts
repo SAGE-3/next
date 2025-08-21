@@ -88,8 +88,8 @@ export function useYjsStore({
               });
             });
           },
-          { source: 'user', scope: 'document' } // only sync user's document changes
-        )
+          { source: 'user', scope: 'document' }, // only sync user's document changes
+        ),
       );
 
       // Sync the yjs doc changes to the store
@@ -100,7 +100,7 @@ export function useYjsStore({
           | { action: 'update'; oldValue: TLRecord; newValue: TLRecord }
           | { action: 'add'; newValue: TLRecord }
         >,
-        transaction: Y.Transaction
+        transaction: Y.Transaction,
       ) => {
         if (transaction.local) return;
 
@@ -164,7 +164,7 @@ export function useYjsStore({
           requestAnimationFrame(() => {
             room.awareness.setLocalStateField('presence', presence);
           });
-        })
+        }),
       );
 
       // Sync yjs awareness changes to the store
@@ -209,7 +209,7 @@ export function useYjsStore({
         const newMigrations = store.schema.getMigrationsSince(theirSchema);
 
         if (!newMigrations.ok || newMigrations.value.length > 0) {
-          console.error('TLDraw> Need to refresh');
+          console.error('Drawing> Need to refresh');
           // window.alert('The schema has been updated. Please refresh the page.');
           yDoc.destroy();
         }
@@ -239,7 +239,7 @@ export function useYjsStore({
         });
         if (migrationResult.type === 'error') {
           // if the schema is newer than ours, the user must refresh
-          console.error('TLDraw> Need to refresh', migrationResult.reason);
+          console.error('Drawing> Need to refresh', migrationResult.reason);
           // window.alert('The schema has been updated. Please refresh the page.');
           return;
         }

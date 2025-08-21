@@ -9,7 +9,7 @@ import { useEffect, useCallback, useState } from 'react';
 import { ButtonGroup, Button, Tooltip, Box } from '@chakra-ui/react';
 // Data store
 import { create } from 'zustand';
-// TLDraw
+// Drawing
 import { Tldraw, TLUiComponents, Editor, exportToBlob } from 'tldraw';
 import { throttle } from 'throttle-debounce';
 
@@ -40,7 +40,7 @@ const useStore = create<DrawStore>()((set) => ({
 }));
 
 
-/* App component for TLDraw */
+/* App component for Drawing */
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const saveEditor = useStore((state) => state.saveEditor);
@@ -158,7 +158,7 @@ function AppComponent(props: App): JSX.Element {
   );
 }
 
-/* App toolbar component for the app TLDraw */
+/* App toolbar component for the app Drawing */
 const ToolbarComponent = (props: App) => {
   const s = props.data.state as AppState;
   const ed: Editor = useStore((state) => state.ed[props._id]);
@@ -180,7 +180,7 @@ const ToolbarComponent = (props: App) => {
     getImageDimensionsFromBase64(b64Data).then((size) => {
       const xdrop = props.data.position.x + props.data.size.width + 20;
       const ydrop = props.data.position.y;
-      createApp(setupApp('TLDraw.png', 'ImageViewer', xdrop, ydrop, props.data.roomId, props.data.boardId,
+      createApp(setupApp('Drawing.png', 'ImageViewer', xdrop, ydrop, props.data.roomId, props.data.boardId,
         { w: size.w, h: size.h }, { assetid: b64Data }));
     });
   };

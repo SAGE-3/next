@@ -12,6 +12,7 @@ import { name as CobrowseName } from './apps/Cobrowse';
 import { name as CodeEditorName } from './apps/CodeEditor';
 import { name as CounterName } from './apps/Counter';
 import { name as DeepZoomImageName } from './apps/DeepZoomImage';
+import { name as DrawingName } from './apps/Drawing';
 import { name as EChartsViewerName } from './apps/EChartsViewer';
 import { name as GLTFViewerName } from './apps/GLTFViewer';
 import { name as HCDPName } from './apps/HCDP';
@@ -31,7 +32,6 @@ import { name as SageCellName } from './apps/SageCell';
 import { name as SeerName } from './apps/Seer';
 import { name as SensorOverviewName } from './apps/SensorOverview';
 import { name as StickieName } from './apps/Stickie';
-import { name as TLDrawName } from './apps/TLDraw';
 import { name as TimerName } from './apps/Timer';
 import { name as TwilioScreenshareName } from './apps/TwilioScreenshare';
 import { name as VegaLiteName } from './apps/VegaLite';
@@ -55,6 +55,7 @@ import Cobrowse from './apps/Cobrowse/Cobrowse';
 import CodeEditor from './apps/CodeEditor/CodeEditor';
 import Counter from './apps/Counter/Counter';
 import DeepZoomImage from './apps/DeepZoomImage/DeepZoomImage';
+import Drawing from './apps/Drawing/Drawing';
 import EChartsViewer from './apps/EChartsViewer/EChartsViewer';
 import GLTFViewer from './apps/GLTFViewer/GLTFViewer';
 import HCDP from './apps/HCDP/HCDP';
@@ -74,7 +75,6 @@ import SageCell from './apps/SageCell/SageCell';
 import Seer from './apps/Seer/Seer';
 import SensorOverview from './apps/SensorOverview/SensorOverview';
 import Stickie from './apps/Stickie/Stickie';
-import TLDraw from './apps/TLDraw/TLDraw';
 import Timer from './apps/Timer/Timer';
 import TwilioScreenshare from './apps/TwilioScreenshare/TwilioScreenshare';
 import VegaLite from './apps/VegaLite/VegaLite';
@@ -143,6 +143,11 @@ export const Applications = {
     AppComponent: React.memo(DeepZoomImage.AppComponent),
     ToolbarComponent: DeepZoomImage.ToolbarComponent,
     GroupedToolbarComponent: DeepZoomImage.GroupedToolbarComponent,
+  },
+  [DrawingName]: {
+    AppComponent: React.memo(Drawing.AppComponent),
+    ToolbarComponent: Drawing.ToolbarComponent,
+    GroupedToolbarComponent: Drawing.GroupedToolbarComponent,
   },
   [EChartsViewerName]: {
     AppComponent: React.memo(EChartsViewer.AppComponent),
@@ -238,11 +243,6 @@ export const Applications = {
     AppComponent: React.memo(Stickie.AppComponent),
     ToolbarComponent: Stickie.ToolbarComponent,
     GroupedToolbarComponent: Stickie.GroupedToolbarComponent,
-  },
-  [TLDrawName]: {
-    AppComponent: React.memo(TLDraw.AppComponent),
-    ToolbarComponent: TLDraw.ToolbarComponent,
-    GroupedToolbarComponent: TLDraw.GroupedToolbarComponent,
   },
   [TimerName]: {
     AppComponent: React.memo(Timer.AppComponent),
