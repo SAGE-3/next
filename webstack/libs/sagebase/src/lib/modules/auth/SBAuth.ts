@@ -35,6 +35,7 @@ export type SBAuthConfig = {
   sessionMaxAge: number;
   sessionSecret: string;
   strategies: ('google' | 'apple' | 'cilogon' | 'guest' | 'jwt' | 'spectator')[];
+  production: boolean;
   googleConfig?: SBAuthGoogleConfig;
   appleConfig?: SBAuthAppleConfig;
   jwtConfig?: SBAuthJWTConfig;
@@ -55,6 +56,72 @@ export class SBAuth {
 
   private _sessionParser!: any;
 
+  /**
+   * Creates a generalized OAuth callback handler with enhanced error logging and security validation
+   * @param providerName Human-readable provider name (e.g., 'google', 'cilogon', 'apple')
+   * @param strategyName Passport strategy name (e.g., 'google', 'openidconnect', 'apple')
+   * @returns Express middleware function for handling OAuth callbacks
+   */
+  private createOAuthCallbackHandler(providerName: string, strategyName: string) {
+    return (req: Request, res: Response, next: NextFunction) => {
+      // Log OAuth callback details for debugging
+      console.log(`${providerName}> OAuth callback received:`, {
+        query: req.query,
+        hasState: !!req.query.state,
+        hasCode: !!req.query.code,
+        hasError: !!req.query.error,
+        sessionId: req.sessionID,
+        timestamp: new Date().toISOString()
+      });
+
+      // Check for OAuth error in query parameters
+      if (req.query.error) {
+        console.error(`${providerName}> OAuth provider returned error:`, req.query.error, req.query.error_description);
+        return res.redirect(`/login?error=${providerName}_oauth_error&details=` + encodeURIComponent(req.query.error_description as string || req.query.error as string));
+      }
+
+      passport.authenticate(strategyName, (err: any, user: any, info: any) => {
+        if (err) {
+          console.error(`${providerName}> Authentication error:`, err);
+          return res.redirect(`/login?error=${providerName}_error&details=` + encodeURIComponent(err.message || 'Unknown error'));
+        }
+        
+        if (!user) {
+          console.error(`${providerName}> Authentication failed - no user returned:`, info);
+          const details = info?.message || info?.reason || 'No user data received';
+          return res.redirect(`/login?error=${providerName}_no_user&details=` + encodeURIComponent(details));
+        }
+        
+        // Log successful authentication with more details
+        console.log(`${providerName}> Successful authentication:`, {
+          userId: user.id,
+          email: user.email || user.displayName || 'no-email',
+          provider: user.provider,
+          sessionId: req.sessionID,
+          userAgent: req.get('User-Agent'),
+          timestamp: new Date().toISOString()
+        });
+        
+        // Establish user session
+        req.logIn(user, (loginErr: any) => {
+          if (loginErr) {
+            console.error(`${providerName}> Session login error:`, loginErr);
+            return res.redirect(`/login?error=${providerName}_login_failed&details=` + encodeURIComponent(loginErr.message || 'Session creation failed'));
+          }
+          
+          console.log(`${providerName}> Session established successfully:`, {
+            userId: user.id,
+            email: user.email || user.displayName || 'no-email',
+            sessionId: req.sessionID,
+            timestamp: new Date().toISOString()
+          });
+          
+          return res.redirect('/');
+        });
+      })(req, res, next);
+    };
+  }
+
   public async init(redisclient: RedisClientType, prefix: string, config: SBAuthConfig, express: Express): Promise<SBAuth> {
     // Get a REDIS client
     this._redisClient = redisclient.duplicate();
@@ -72,9 +139,10 @@ export class SBAuth {
       resave: false,
       saveUninitialized: false,
       cookie: {
-        secure: false, // if true only transmit cookie over https
+        secure: config.production, // if true only transmit cookie over https
         httpOnly: true, // if true prevent client side JS from reading the cookie
         maxAge: config.sessionMaxAge, // session max age in miliseconds
+        sameSite: 'lax',
       },
     });
     // Setup the express session parser
@@ -96,9 +164,13 @@ export class SBAuth {
         if (passportGoogleSetup(config.googleConfig)) {
           express.get(
             config.googleConfig.routeEndpoint,
-            passport.authenticate('google', { prompt: 'select_account', scope: ['profile', 'email'] })
+            passport.authenticate('google', { 
+              prompt: 'select_account', 
+              scope: ['profile', 'email']
+              // Note: State parameter validation handled by passport strategy
+            })
           );
-          express.get(config.googleConfig.callbackURL, passport.authenticate('google', { successRedirect: '/', failureRedirect: '/' }));
+          express.get(config.googleConfig.callbackURL, this.createOAuthCallbackHandler('google', 'google'));
         }
       }
 
@@ -106,7 +178,7 @@ export class SBAuth {
       if (config.strategies.includes('apple') && config.appleConfig) {
         if (passportAppleSetup(config.appleConfig)) {
           express.get(config.appleConfig.routeEndpoint, passport.authenticate('apple'));
-          express.post(config.appleConfig.callbackURL, passport.authenticate('apple', { successRedirect: '/', failureRedirect: '/' }));
+          express.post(config.appleConfig.callbackURL, this.createOAuthCallbackHandler('apple', 'apple'));
         }
       }
 
@@ -142,11 +214,15 @@ export class SBAuth {
         if (ready) {
           express.get(
             config.cilogonConfig.routeEndpoint,
-            passport.authenticate('openidconnect', { prompt: 'consent', scope: ['openid', 'email', 'profile'] })
+            passport.authenticate('openidconnect', { 
+              prompt: 'consent', 
+              scope: ['openid', 'email', 'profile']
+              // Note: State parameter validation handled by OpenID Connect strategy
+            })
           );
           express.get(
             config.cilogonConfig.callbackURL,
-            passport.authenticate('openidconnect', { successRedirect: '/', failureRedirect: '/' })
+            this.createOAuthCallbackHandler('cilogon', 'openidconnect')
           );
         }
       }
