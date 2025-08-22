@@ -85,5 +85,17 @@ export function useRouteNav() {
     navigate(`/admin`);
   }
 
-  return { toHome, toBoard, toLogin, toAdmin, toQuickAccess, back, forward, canGoBack, canGoForward };
+  function toCreateUser(returnTo?: string) {
+    if (returnTo) {
+      navigate(`/createuser?returnTo=${encodeURIComponent(returnTo)}`);
+    } else {
+      navigate(`/createuser`);
+    }
+  }
+
+  function toPath(path: string) {
+    navigate(path);
+  }
+
+  return { toHome, toBoard, toLogin, toAdmin, toCreateUser, toPath, toQuickAccess, back, forward, canGoBack, canGoForward };
 }
