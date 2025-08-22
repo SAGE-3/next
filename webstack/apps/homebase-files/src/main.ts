@@ -103,6 +103,7 @@ async function startServer() {
     redisUrl: config.redis.url || 'redis://localhost:6379',
     authConfig: {
       ...config.auth,
+      production: config.production,
     },
   };
   await SAGEBase.init(sbConfig, app);
