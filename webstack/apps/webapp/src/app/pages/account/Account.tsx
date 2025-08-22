@@ -8,7 +8,7 @@
 
 import { useEffect } from 'react';
 
-import { CreateUserModal, useRouteNav, useUser } from '@sage3/frontend';
+import { CreateUserModal, useRouteNav, useUser, useAuth } from '@sage3/frontend';
 import { UserSchema } from '@sage3/shared/types';
 
 /**
@@ -16,7 +16,8 @@ import { UserSchema } from '@sage3/shared/types';
  * Handles board context preservation and redirects
  */
 export function AccountPage() {
-  const { user, create } = useUser();
+  const { user, create, loading: userLoading } = useUser();
+  const { auth } = useAuth();
   const { toHome, toPath } = useRouteNav();
 
   /**
@@ -69,10 +70,25 @@ export function AccountPage() {
   };
 
   /**
-   * Handles user account creation and redirects
+   * Handles user account creation and redirects - with proper error handling
    */
   useEffect(() => {
+    console.log('Account Page: State check:', {
+      auth: auth ? { id: auth.id, provider: auth.provider, email: auth.email } : null,
+      user: user ? { id: user._id, email: user.data.email } : null,
+      userLoading,
+      timestamp: new Date().toISOString()
+    });
+
+    // Wait for user loading to complete
+    if (userLoading) {
+      console.log('Account Page: User still loading, waiting...');
+      return;
+    }
+
     if (user) {
+      console.log('Account Page: User account found, proceeding with redirect');
+      
       // Check for saved board context first
       const savedContext = getSavedBoardContext();
       if (savedContext) {
@@ -90,12 +106,21 @@ export function AccountPage() {
       // Fall back to returnTo URL parameter
       const returnTo = getReturnToUrl();
       if (returnTo) {
+        console.log('Account Page: Found returnTo parameter, redirecting to:', returnTo);
         toPath(returnTo);
       } else {
+        console.log('Account Page: No returnTo or board context, going to home');
         toHome();
       }
+    } else if (auth && !user && !userLoading) {
+      // Auth exists but no user and loading is complete - show account creation form
+      console.log('Account Page: Authentication present but no user account found, showing creation form');
+      // The CreateUserModal will be shown by the return statement below
+    } else if (!auth) {
+      console.log('Account Page: No authentication found, redirecting to login');
+      window.location.href = '/login';
     }
-  }, [user, toHome, toPath]);
+  }, [auth, user, userLoading, toHome, toPath]);
 
   /**
    * Creates a new user account
