@@ -13,7 +13,7 @@ import { Button, ButtonGroup, IconButton, Box, useColorMode, Image, Text, VStack
 import { FcGoogle } from 'react-icons/fc';
 import { FaGhost, FaApple } from 'react-icons/fa';
 
-import { isElectron, useAuth, useRouteNav, GetServerInfo, useUser } from '@sage3/frontend';
+import { isElectron, useAuth, useRouteNav, GetServerInfo } from '@sage3/frontend';
 
 // Logos
 import cilogonLogo from '../../../assets/cilogon.png';
@@ -23,22 +23,15 @@ import cilogonLogo from '../../../assets/cilogon.png';
  */
 export function LoginPage() {
   const { auth, googleLogin, appleLogin, ciLogin, guestLogin, spectatorLogin, loading: authLoading } = useAuth();
-  const { user, loading: userLoading } = useUser();
-  const { toHome, toCreateUser, toPath } = useRouteNav();
+  const { toCreateUser } = useRouteNav();
   const toast = useToast();
   
   const [serverName, setServerName] = useState<string>('');
   const [shouldDisable, setShouldDisable] = useState(false);
   const [logins, setLogins] = useState<string[]>([]);
-  const [authStartTime, setAuthStartTime] = useState<number | null>(null);
-  const [retryCount, setRetryCount] = useState<{[key: string]: number}>({});
   
   const logoUrl = '/assets/sage3_banner.webp';
   const thisIsElectron = isElectron();
-
-  // Configuration for user loading timeout and retry logic
-  const USER_FETCH_TIMEOUT_MS = 10000; // 10 seconds
-  const MAX_RETRY_ATTEMPTS = 3;
 
   /**
    * Gets returnTo URL from query parameters with validation
@@ -254,112 +247,47 @@ export function LoginPage() {
   };
 
   /**
-   * Handles authentication state changes and redirects with improved race condition handling
+   * Handles authentication state changes - ONLY checks for auth, not user accounts
    */
   const authNavCheck = useCallback(() => {
-    const currentTime = Date.now();
-    
-    // Track when auth first appears
-    if (auth && !authStartTime) {
-      setAuthStartTime(currentTime);
-      console.log('Auth Timing: Authentication detected, starting user fetch timer');
-    }
-    
-    // Calculate how long we've been waiting for user
-    const waitTime = authStartTime ? currentTime - authStartTime : 0;
-    const hasTimedOut = waitTime > USER_FETCH_TIMEOUT_MS;
-    
     // Log authentication state for debugging
     console.log('Auth State Check:', {
       auth: auth ? { id: auth.id, provider: auth.provider, email: auth.email } : null,
-      user: user ? { id: user._id, email: user.data.email, name: user.data.name } : null,
       authLoading,
-      userLoading,
-      waitTime: `${waitTime}ms`,
-      hasTimedOut,
       timestamp: new Date().toISOString()
     });
 
-    // Don't make decisions while still loading
+    // Don't make decisions while still loading auth
     if (authLoading) {
       console.log('Auth Check: Still loading auth state, waiting...');
       return;
     }
 
     if (auth) {
-      if (userLoading && !hasTimedOut) {
-        console.log(`Auth Check: Auth present but user still loading, waiting... (${waitTime}ms/${USER_FETCH_TIMEOUT_MS}ms)`);
-        return;
+      console.log('Auth Success: Authentication present, redirecting to account creation/validation');
+      
+      // Check for saved board context first to preserve it
+      const savedContext = getSavedBoardContext();
+      if (savedContext) {
+        console.log('Auth Success: Found saved board context, preserving for account page');
+        // Keep the context - don't remove it here, let account page handle it
       }
 
-      // Both auth and user are ready - safe to redirect
-      if (auth && user) {
-        console.log('Auth Success: Redirecting authenticated user with account');
-        
-        // Check for saved board context first
-        const savedContext = getSavedBoardContext();
-        if (savedContext) {
-          console.log('Auth Success: Found saved board context, redirecting to board:', savedContext);
-          console.log('Board Context: Clearing saved context after successful redirect');
-          localStorage.removeItem('sage3_pending_board');
-          toPath(`/board/${savedContext.roomId}/${savedContext.boardId}`);
-          return;
-        }
-
-        // Fall back to returnTo URL parameter
-        const returnTo = getReturnToUrl();
-        if (returnTo) {
-          console.log('Auth Success: Found returnTo parameter, redirecting to:', returnTo);
-          toPath(returnTo);
-        } else {
-          console.log('Auth Success: No saved context or returnTo, going to home');
-          toHome();
-        }
-      } else if (auth && !user && (!userLoading || hasTimedOut)) {
-        // Auth exists but no user after loading completed or timeout reached
-        // BUT: Give a brief grace period for userLoading to start (auth just appeared)
-        const GRACE_PERIOD_MS = 1000; // 1 second grace period for userLoading to start
-        const isInGracePeriod = waitTime < GRACE_PERIOD_MS;
-        
-        if (isInGracePeriod && !userLoading) {
-          console.log(`Auth Grace: Auth just appeared, waiting for user fetch to start (${waitTime}ms/${GRACE_PERIOD_MS}ms grace period)`);
-          return; // Wait a bit longer for userLoading to become true
-        }
-        
-        if (hasTimedOut) {
-          console.log(`Auth Timeout: User fetch timed out after ${waitTime}ms, proceeding with fallback logic`);
-        } else {
-          console.log('Auth Issue: Authentication present but user account missing after loading');
-        }
-        
-        // Check if this is a guest or spectator that should auto-create
-        if (auth.provider === 'guest' || auth.provider === 'spectator') {
-          if (hasTimedOut) {
-            console.log('Auth Timeout: Guest/spectator user creation timed out, this might indicate a server issue');
-          } else {
-            console.log('Auth Issue: Guest/spectator user should auto-create, this might be a timing issue');
-          }
-        } else {
-          console.log('Auth Issue: Regular OAuth user missing account, redirecting to account creation');
-          // For OAuth users, redirect to account creation page
-          toCreateUser();
-        }
-      } else if (auth && !user && (userLoading || (!userLoading && waitTime < 1000)) && !hasTimedOut) {
-        console.log(`Auth Partial: User authenticated, waiting for user account loading to complete (${waitTime}ms/${USER_FETCH_TIMEOUT_MS}ms)`);
-        // Normal state - wait for user loading to complete
+      // Check for returnTo URL parameter
+      const returnTo = getReturnToUrl();
+      if (returnTo) {
+        console.log('Auth Success: Found returnTo parameter, passing to account creation');
+        toCreateUser(returnTo);
+      } else {
+        console.log('Auth Success: No returnTo, going to account creation page');
+        toCreateUser();
       }
     } else if (!auth && !authLoading) {
-      // No auth after loading completed - reset timer and normal unauthenticated state
-      if (authStartTime) {
-        setAuthStartTime(null);
-        console.log('Auth Check: No authentication present, timer reset');
-      } else {
-        console.log('Auth Check: No authentication present (normal unauthenticated state)');
-      }
+      console.log('Auth Check: No authentication present (normal unauthenticated state)');
     } else {
       console.log('Auth Check: Auth loading in progress');
     }
-  }, [auth, user, authLoading, userLoading, authStartTime, toHome, toCreateUser, toPath]);
+  }, [auth, authLoading, toCreateUser]);
 
   useEffect(() => {
     authNavCheck();
