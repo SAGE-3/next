@@ -344,8 +344,8 @@ export function Alfred(props: props) {
             ...(initialValues['Chat'] as AppState),
             firstQuestion: term,
             messages: [question],
-            previousQ: '',
-            previousA: '',
+            previousQ: [],
+            previousA: [],
             context: '',
             token: '',
             sources: [],
@@ -658,9 +658,9 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
 
             <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Voice to text - Click and speak'} openDelay={400}>
               <Button p={0} m={'8px 0px 8px 0px'} disabled={!('webkitSpeechRecognition' in window)} onClick={triggerVoice}
-              colorScheme={recording ? 'red' : 'gray'}>
-              
-               {recording ?<MdStop size="24px" />: <MdMic size="24px" />  }
+                colorScheme={recording ? 'red' : 'gray'}>
+
+                {recording ? <MdStop size="24px" /> : <MdMic size="24px" />}
               </Button>
             </Tooltip>
 

@@ -157,9 +157,14 @@ class ChatAgent:
 
         # Ask the question
         if qq.model == "llama" and self.session_llama:
+            # Convert previousQ and previousA arrays to message tuples
+            history = []
+            for q, a in zip(qq.ctx.previousQ, qq.ctx.previousA):
+                history.append(("human", q))
+                history.append(("ai", a))
             response = await self.session_llama.ainvoke(
                 {
-                    "history": [("human", qq.ctx.previousQ), ("ai", qq.ctx.previousA)],
+                    "history": history,
                     "question": qq.q,
                     "username": qq.user,
                     "location": qq.location,
@@ -168,9 +173,13 @@ class ChatAgent:
                 config={"callbacks": [ai_handler]},
             )
         elif qq.model == "openai" and self.session_openai:
+            history = []
+            for q, a in zip(qq.ctx.previousQ, qq.ctx.previousA):
+                history.append(("human", q))
+                history.append(("ai", a))
             response = await self.session_openai.ainvoke(
                 {
-                    "history": [("human", qq.ctx.previousQ), ("ai", qq.ctx.previousA)],
+                    "history": history,
                     "question": qq.q,
                     "username": qq.user,
                     "location": qq.location,
@@ -179,9 +188,13 @@ class ChatAgent:
                 config={"callbacks": [ai_handler]},
             )
         elif qq.model == "azure" and self.session_azure:
+            history = []
+            for q, a in zip(qq.ctx.previousQ, qq.ctx.previousA):
+                history.append(("human", q))
+                history.append(("ai", a))
             response = await self.session_azure.ainvoke(
                 {
-                    "history": [("human", qq.ctx.previousQ), ("ai", qq.ctx.previousA)],
+                    "history": history,
                     "question": qq.q,
                     "username": qq.user,
                     "location": qq.location,

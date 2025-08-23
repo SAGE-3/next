@@ -189,8 +189,8 @@ function AppComponent(props: App): JSX.Element {
   const [scrolled, setScrolled] = useState(false);
   const [newMessages, setNewMessages] = useState(false);
 
-  const [previousQuestion, setPreviousQuestion] = useState<string>(s.previousQ);
-  const [previousAnswer, setPreviousAnswer] = useState<string>(s.previousA);
+  const [previousQuestion, setPreviousQuestion] = useState(s.previousQ);
+  const [previousAnswer, setPreviousAnswer] = useState(s.previousA);
   const [status] = useState<string>('AI can make mistakes. User caution is advised.');
   const [actions, setActions] = useState<any[]>([]);
   const [mode, setMode] = useState<OperationMode>('chat');
@@ -314,6 +314,7 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     if (s.firstQuestion) {
       newMessage('@S ' + s.firstQuestion);
+      setPreviousQuestion((prevItems) => [...prevItems, s.firstQuestion]);
     }
   }, [s.firstQuestion]);
 
@@ -397,12 +398,12 @@ function AppComponent(props: App): JSX.Element {
           // Clear the stream text
           setStreamText('');
           ctrlRef.current = null;
-          setPreviousAnswer(new_text);
+          setPreviousAnswer((prevItems) => [...prevItems, new_text]);
           // Add messages
           updateState(props._id, {
             ...s,
-            previousQ: request,
-            previousA: new_text,
+            previousQ: [...s.previousQ, request],
+            previousA: [...s.previousA, new_text],
             messages: [
               ...s.messages,
               initialAnswer,
@@ -465,9 +466,9 @@ function AppComponent(props: App): JSX.Element {
 
   // Reset the chat: clear previous question and answer, and all the messages
   const resetSAGE = () => {
-    setPreviousQuestion('');
-    setPreviousAnswer('');
-    updateState(props._id, { ...s, previousA: '', previousQ: '', messages: initialState.messages });
+    setPreviousQuestion([]);
+    setPreviousAnswer([]);
+    updateState(props._id, { ...s, previousA: [], previousQ: [], messages: initialState.messages });
     setProcessing(false);
     setActions([]);
   };
@@ -567,12 +568,12 @@ function AppComponent(props: App): JSX.Element {
             // Clear the stream text
             setStreamText('');
             ctrlRef.current = null;
-            setPreviousAnswer(response.r);
+            setPreviousAnswer(prevItems => [...prevItems, response.r]);
             // Add messages
             updateState(props._id, {
               ...s,
-              previousQ: 'Describe the content',
-              previousA: response.r,
+              previousQ: [...s.previousQ, 'Describe the content'],
+              previousA: [...s.previousA, response.r],
               messages: [
                 ...s.messages,
                 initialAnswer,
@@ -672,7 +673,7 @@ function AppComponent(props: App): JSX.Element {
           } else {
             setStreamText('');
             ctrlRef.current = null;
-            setPreviousAnswer(response.summary);
+            setPreviousAnswer(prevItems => [...prevItems, response.summary]);
             // Update the Mesonet app's state with the selected stations
             // if (response.stations && response.stations.length > 0) {
             //   const mesonetApp = apps[0];
@@ -689,8 +690,8 @@ function AppComponent(props: App): JSX.Element {
 
             updateState(props._id, {
               ...s,
-              previousQ: 'Describe the content',
-              previousA: response.summary,
+              previousQ: [...previousQuestion, 'Describe the content'],
+              previousA: [...previousAnswer, response.summary],
               messages: [
                 ...s.messages,
                 {
@@ -772,11 +773,11 @@ function AppComponent(props: App): JSX.Element {
             if ('message' in response) {
               const errorMessage = 'There has been an error, please try again or report it through the menu.';
               setStreamText('');
-              setPreviousAnswer(errorMessage);
+              setPreviousAnswer(prevItems => [...prevItems, errorMessage]);
               updateState(props._id, {
                 ...s,
-                previousQ: q.q,
-                previousA: errorMessage,
+                previousQ: [...s.previousQ, q.q],
+                previousA: [...s.previousA, errorMessage],
                 messages: [
                   ...s.messages,
                   initialAnswer,
@@ -802,12 +803,12 @@ function AppComponent(props: App): JSX.Element {
               // Clear the stream text
               setStreamText('');
               ctrlRef.current = null;
-              setPreviousAnswer(response.r);
+              setPreviousAnswer(prevItems => [...prevItems, response.r]);
               // Add messages
               updateState(props._id, {
                 ...s,
-                previousQ: 'Describe the content',
-                previousA: response.r,
+                previousQ: [...s.previousQ, 'Describe the content'],
+                previousA: [...s.previousA, response.r],
                 messages: [
                   ...s.messages,
                   initialAnswer,
@@ -887,12 +888,12 @@ function AppComponent(props: App): JSX.Element {
             // Clear the stream text
             setStreamText('');
             ctrlRef.current = null;
-            setPreviousAnswer(response.r);
+            setPreviousAnswer(prevItems => [...prevItems, response.r]);
             // Add messages
             updateState(props._id, {
               ...s,
-              previousQ: 'Describe the content',
-              previousA: response.r,
+              previousQ: [...s.previousQ, 'Describe the content'],
+              previousA: [...s.previousA, response.r],
               messages: [
                 ...s.messages,
                 initialAnswer,
@@ -1015,12 +1016,12 @@ function AppComponent(props: App): JSX.Element {
             // Clear the stream text
             setStreamText('');
             ctrlRef.current = null;
-            setPreviousAnswer(response.r);
+            setPreviousAnswer(prevItems => [...prevItems, response.r]);
             // Add messages
             updateState(props._id, {
               ...s,
-              previousQ: 'Describe the content',
-              previousA: response.r,
+              previousQ: [...s.previousQ, 'Describe the content'],
+              previousA: [...s.previousA, response.r],
               messages: [
                 ...s.messages,
                 initialAnswer,
@@ -1096,12 +1097,12 @@ function AppComponent(props: App): JSX.Element {
             // Clear the stream text
             setStreamText('');
             ctrlRef.current = null;
-            setPreviousAnswer(response.r);
+            setPreviousAnswer(prevItems => [...prevItems, response.r]);
             // Add messages
             updateState(props._id, {
               ...s,
-              previousQ: 'Describe the content',
-              previousA: response.r,
+              previousQ: [...s.previousQ, 'Describe the content'],
+              previousA: [...s.previousA, response.r],
               messages: [
                 ...s.messages,
                 initialAnswer,
@@ -1194,12 +1195,12 @@ function AppComponent(props: App): JSX.Element {
           // Clear the stream text
           setStreamText('');
           ctrlRef.current = null;
-          setPreviousAnswer(new_text);
+          setPreviousAnswer(prevItems => [...prevItems, new_text]);
           // Add messages
           updateState(props._id, {
             ...s,
-            previousQ: request,
-            previousA: new_text,
+            previousQ: [...s.previousQ, request],
+            previousA: [...s.previousA, new_text],
             messages: [
               ...s.messages,
               initialAnswer,
@@ -2280,7 +2281,7 @@ function ToolbarComponent(props: App): JSX.Element {
       <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
         <Tooltip placement="top" hasArrow={true} label={'Download Transcript'} openDelay={400}>
           <Button onClick={downloadTxt} size='xs' px={0}>
-            <MdFileDownload fontSize="16px"/>
+            <MdFileDownload fontSize="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>
