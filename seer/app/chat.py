@@ -271,7 +271,6 @@ class ChatAgent:
                     }
                 )
             actions.append(act)
-        print("Actions: ", len(actions))
 
         # Build the answer object
         val = Answer(
