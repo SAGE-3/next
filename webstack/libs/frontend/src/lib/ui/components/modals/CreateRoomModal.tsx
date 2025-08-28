@@ -49,12 +49,14 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
   const joinRoomMembership = useRoomStore((state) => state.joinRoomMembership);
 
   const [name, setName] = useState<RoomSchema['name']>('');
+  const [description, setDescription] = useState<RoomSchema['description']>('');
   const [isListed, setIsListed] = useState(false); // default is not listed
   const [isProtected, setProtected] = useState(false);
   const [password, setPassword] = useState('');
   const [color, setColor] = useState('red' as SAGEColors);
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value);
+  const handleDescription = (event: React.ChangeEvent<HTMLInputElement>) => setDescription(event.target.value);
   const handleColorChange = (c: string) => setColor(c as SAGEColors);
 
   // Run on every open of the dialog
@@ -72,6 +74,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
     setPassword(makeid(6));
     // Reset the fields
     setName('');
+    setDescription('');
     setColor(randomSAGEColor());
   }, [props.isOpen]);
 
@@ -119,7 +122,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
         const key = uuidv5(password, config.namespace);
         const room = await createRoom({
           name: cleanedName,
-          description: 'description',
+          description: description || '',
           color: color,
           ownerId: user._id,
           isPrivate: isProtected,
@@ -164,12 +167,25 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
               ref={initialRef}
               type="text"
               placeholder={'Room Name'}
-              _placeholder={{ opacity: 1, color: 'gray.600' }}
+              _placeholder={{ opacity: 1, color: 'gray.400' }}
               mr={0}
               value={name}
               onChange={handleNameChange}
               onKeyDown={onSubmit}
               isRequired={true}
+            />
+          </InputGroup>
+          <InputGroup my={4}>
+            <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
+            <Input
+              type="text"
+              placeholder={'Room Description (optional)'}
+              _placeholder={{ opacity: 1, color: 'gray.400' }}
+              mr={0}
+              value={description}
+              onChange={handleDescription}
+              onKeyDown={onSubmit}
+              isRequired={false}
             />
           </InputGroup>
 

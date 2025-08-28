@@ -838,7 +838,7 @@ export function HomePage() {
                           openDelay={400}
                           hasArrow
                           placement="top"
-                          label={`Description ${room.data.description}`}
+                          label={room.data.description ? room.data.description : ""}
                           closeOnScroll
                         >
                           <Box

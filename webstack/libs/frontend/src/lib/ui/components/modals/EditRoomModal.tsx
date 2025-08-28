@@ -45,9 +45,11 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
   const config = useConfigStore((state) => state.config);
 
   const [name, setName] = useState<RoomSchema['name']>(props.room.data.name);
+  const [description, setDescription] = useState<RoomSchema['description']>(props.room.data.description);
   const [color, setColor] = useState(props.room.data.color as SAGEColors);
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value);
+  const handleDescriptionChange = (event: React.ChangeEvent<HTMLInputElement>) => setDescription(event.target.value);
   const handleColorChange = (c: string) => setColor(c as SAGEColors);
 
   // Rooms
@@ -77,6 +79,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
 
   useEffect(() => {
     setName(props.room.data.name);
+    setDescription(props.room.data.description);
     setColor(props.room.data.color as SAGEColors);
     setIsListed(props.room.data.isListed);
     setProtected(props.room.data.isPrivate);
@@ -99,11 +102,15 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
     if (name !== props.room.data.name) {
       const cleanedName = cleanNameCheckDoubles(name);
       if (cleanedName) {
-        updateRoom(props.room._id, { name: cleanedName, color, isListed });
+        updateRoom(props.room._id, { name: cleanedName, description: description, color, isListed });
         updated = true;
       } else {
         return;
       }
+    }
+    if (description != props.room.data.description) {
+      updateRoom(props.room._id, { description: description });
+      updated = true;
     }
     if (color !== props.room.data.color) {
       updateRoom(props.room._id, { color });
@@ -117,7 +124,6 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
     if (passwordChanged) {
       if (!isProtected) {
         updated = true;
-
         updateRoom(props.room._id, { privatePin: '', isPrivate: false });
       } else {
         if (password === '') {
@@ -125,7 +131,6 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
           updateRoom(props.room._id, { privatePin: '', isPrivate: false });
         } else {
           updated = true;
-
           // hash the PIN: the namespace comes from the server configuration
           const key = uuidv5(password, config.namespace);
           updateRoom(props.room._id, { privatePin: key, isPrivate: true });
@@ -140,6 +145,9 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
         status: 'success',
         duration: 3000,
       });
+      props.onClose();
+    } else {
+      // Just close the modal
       props.onClose();
     }
   };
@@ -235,7 +243,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
             <Input
               ref={initialRef}
               type="text"
-              placeholder={name}
+              placeholder={'Room Name'}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
               mr={0}
               value={name}
@@ -244,7 +252,19 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
               isRequired={true}
             />
           </InputGroup>
-
+          <InputGroup my={4}>
+            <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
+            <Input
+              type="text"
+              placeholder={'Room Description (optional)'}
+              _placeholder={{ opacity: 1, color: 'gray.600' }}
+              mr={0}
+              value={description}
+              onChange={handleDescriptionChange}
+              onKeyDown={onSubmit}
+              isRequired={false}
+            />
+          </InputGroup>
 
           <ColorPicker selectedColor={color} onChange={handleColorChange}></ColorPicker>
 
