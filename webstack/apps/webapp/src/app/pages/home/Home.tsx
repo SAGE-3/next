@@ -587,6 +587,15 @@ export function HomePage() {
       if (selectedBoard && !boards.find((board) => board._id === selectedBoard._id)) {
         setSelectedBoard(undefined);
       }
+    } else {
+      // Update the current room if it was modified
+      if (roomId && roomsFetched && user) {
+        const room = rooms.find((r) => r._id === roomId);
+        if (room) {
+          setSelectedRoom(room);
+          setSelectedBoard(undefined);
+        }
+      }
     }
   }, [JSON.stringify(rooms), JSON.stringify(boards)]);
 
