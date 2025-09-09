@@ -1,154 +1,49 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" baseProfile="full" width="100%" height="100%"  viewBox="0 0 200 200">
+<?xml version="1.0" encoding="UTF-8"?>
+<svg
+  id="digitalClock"
+  xmlns="http://www.w3.org/2000/svg"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  viewBox="0 0 320 160"
+  width="320" height="160"
+>
   <defs>
-    <symbol id="hourStrokeSwiss">
-      <path d="M96.25 0h7.5v25h-7.5z"/>
-    </symbol>
-    <symbol id="minuteStrokeSwiss">
-      <path d="M98.5 0h3v7.5h-3z"/>
-    </symbol>
-    <symbol id="fiveMinutesStrokesSwiss">
-      <use xlink:href="#hourStrokeSwiss"/>
-      <use xlink:href="#minuteStrokeSwiss" transform="rotate(6 100 100)"/>
-      <use xlink:href="#minuteStrokeSwiss" transform="rotate(12 100 100)"/>
-      <use xlink:href="#minuteStrokeSwiss" transform="rotate(18 100 100)"/>
-      <use xlink:href="#minuteStrokeSwiss" transform="rotate(24 100 100)"/>
-    </symbol>
-    <symbol id="quarterStrokesSwiss">
-      <use xlink:href="#fiveMinutesStrokesSwiss"/>
-      <use xlink:href="#fiveMinutesStrokesSwiss" transform="rotate(30 100 100)"/>
-      <use xlink:href="#fiveMinutesStrokesSwiss" transform="rotate(60 100 100)"/>
-    </symbol>
-    <symbol id="hourStrokeAustria">
-      <path d="M104 0h-8l1 22h6z"/>
-    </symbol>
-    <symbol id="minuteStrokeAustria">
-      <path d="M98.8 0h2.4v7.5h-2.4z"/>
-    </symbol>
-    <symbol id="fiveMinutesStrokesAustria">
-      <use xlink:href="#hourStrokeAustria"/>
-      <use xlink:href="#minuteStrokeAustria" transform="rotate(6 100 100)"/>
-      <use xlink:href="#minuteStrokeAustria" transform="rotate(12 100 100)"/>
-      <use xlink:href="#minuteStrokeAustria" transform="rotate(18 100 100)"/>
-      <use xlink:href="#minuteStrokeAustria" transform="rotate(24 100 100)"/>
-    </symbol>
-    <symbol id="quarterStrokesAustria">
-      <use xlink:href="#fiveMinutesStrokesAustria"/>
-      <use xlink:href="#fiveMinutesStrokesAustria" transform="rotate(30 100 100)"/>
-      <use xlink:href="#fiveMinutesStrokesAustria" transform="rotate(60 100 100)"/>
-    </symbol>
-    <symbol id="threeHourStrokePoints">
-      <circle cx="100" cy="9" r="9"/>
-    </symbol>
-    <symbol id="hourStrokePoints">
-      <circle cx="100" cy="6" r="6"/>
-    </symbol>
-    <symbol id="quarterStrokesPoints">
-      <use xlink:href="#threeHourStrokePoints"/>
-      <use xlink:href="#hourStrokePoints" transform="rotate(30 100 100)"/>
-      <use xlink:href="#hourStrokePoints" transform="rotate(60 100 100)"/>
-    </symbol>
-    <symbol id="threeHourStrokeDIN41091.1">
-      <path d="M95.8 0h8.4v30h-8.4z"/>
-    </symbol>
-    <symbol id="hourStrokeDIN41091.1">
-      <path d="M95.8 0h8.4v24h-8.4z"/>
-    </symbol>
-    <symbol id="minuteStrokeDIN41091.1">
-      <path d="M98.2 0h3.6v8h-3.6z"/>
-    </symbol>
-    <symbol id="quarterStrokesDIN41091.1">
-      <use xlink:href="#threeHourStrokeDIN41091.1"/>
-      <use xlink:href="#minuteStrokeDIN41091.1" transform="rotate(6 100 100)"/>
-      <use xlink:href="#minuteStrokeDIN41091.1" transform="rotate(12 100 100)"/>
-      <use xlink:href="#minuteStrokeDIN41091.1" transform="rotate(18 100 100)"/>
-      <use xlink:href="#minuteStrokeDIN41091.1" transform="rotate(24 100 100)"/>
-      <use xlink:href="#hourStrokeDIN41091.1" transform="rotate(30 100 100)"/>
-      <use xlink:href="#minuteStrokeDIN41091.1" transform="rotate(36 100 100)"/>
-      <use xlink:href="#minuteStrokeDIN41091.1" transform="rotate(42 100 100)"/>
-      <use xlink:href="#minuteStrokeDIN41091.1" transform="rotate(48 100 100)"/>
-      <use xlink:href="#minuteStrokeDIN41091.1" transform="rotate(54 100 100)"/>
-      <use xlink:href="#hourStrokeDIN41091.1" transform="rotate(60 100 100)"/>
-      <use xlink:href="#minuteStrokeDIN41091.1" transform="rotate(66 100 100)"/>
-      <use xlink:href="#minuteStrokeDIN41091.1" transform="rotate(72 100 100)"/>
-      <use xlink:href="#minuteStrokeDIN41091.1" transform="rotate(78 100 100)"/>
-      <use xlink:href="#minuteStrokeDIN41091.1" transform="rotate(84 100 100)"/>
-    </symbol>
-    <symbol id="threeHourStrokeDIN41091.3">
-      <path d="M94 0h12v30H94z"/>
-    </symbol>
-    <symbol id="hourStrokeDIN41091.3">
-      <path d="M95 0h10v26H95z"/>
-    </symbol>
-    <symbol id="quarterStrokesDIN41091.3">
-      <use xlink:href="#threeHourStrokeDIN41091.3"/>
-      <use xlink:href="#hourStrokeDIN41091.3" transform="rotate(30 100 100)"/>
-      <use xlink:href="#hourStrokeDIN41091.3" transform="rotate(60 100 100)"/>
-    </symbol>
-    <symbol id="hourStrokeDIN41091.4">
-      <path d="M97 0h6v7h-6z"/>
-    </symbol>
-    <symbol id="minuteStrokeDIN41091.4">
-      <path d="M98.75 0h2.5v7h-2.5z"/>
-    </symbol>
-    <symbol id="fiveMinutesStrokesDIN41091.4">
-      <use xlink:href="#hourStrokeDIN41091.4"/>
-      <use xlink:href="#minuteStrokeDIN41091.4" transform="rotate(6 100 100)"/>
-      <use xlink:href="#minuteStrokeDIN41091.4" transform="rotate(12 100 100)"/>
-      <use xlink:href="#minuteStrokeDIN41091.4" transform="rotate(18 100 100)"/>
-      <use xlink:href="#minuteStrokeDIN41091.4" transform="rotate(24 100 100)"/>
-    </symbol>
-    <symbol id="quarterStrokesDIN41091.4">
-      <use xlink:href="#fiveMinutesStrokesDIN41091.4"/>
-      <use xlink:href="#fiveMinutesStrokesDIN41091.4" transform="rotate(30 100 100)"/>
-      <use xlink:href="#fiveMinutesStrokesDIN41091.4" transform="rotate(60 100 100)"/>
-    </symbol>
-    <clipPath id="dialCircle">
-      <circle cx="100" cy="100" r="100"/>
-    </clipPath>
+    <!-- Optional: add symbols or clip paths if needed later -->
   </defs>
-  <g id="clock" clip-path="url(#dialCircle)" visibility="visible">
-    <g style="fill:#fff;stroke:#fff">
-      <circle cx="100" cy="100" r="100" style="stroke:none" id="background"/>
+
+  <!-- Clock container -->
+  <g id="clock" visibility="visible">
+
+    <!-- Background -->
+    <g id="backgroundGroup">
+      <rect x="0" y="0" width="320" height="160" rx="16" ry="16" fill="#111" id="background"/>
+      <rect x="6" y="6" width="308" height="148" rx="14" ry="14"
+            fill="none" stroke="#2a2a2a" stroke-width="2" id="frame"/>
     </g>
-    <g id="dial" style="fill:#282828;stroke:#282828">
-      <g id="dialDIN41091.4" visibility="visible">
-        <use xlink:href="#quarterStrokesDIN41091.4" style="stroke:none"/>
-        <use xlink:href="#quarterStrokesDIN41091.4" style="stroke:none" transform="rotate(90 100 100)"/>
-        <use xlink:href="#quarterStrokesDIN41091.4" style="stroke:none" transform="rotate(180 100 100)"/>
-        <use xlink:href="#quarterStrokesDIN41091.4" style="stroke:none" transform="rotate(270 100 100)"/>
-        <g text-anchor="middle" letter-spacing="-2" font-family="sans-serif" font-size="24" style="stroke:none">
-          <text x="100" y="30">12</text>
-          <text x="143" y="41">1</text>
-          <text x="171" y="70">2</text>
-          <text x="182" y="109">3</text>
-          <text x="171" y="147">4</text>
-          <text x="142" y="176">5</text>
-          <text x="100" y="188">6</text>
-          <text x="60" y="176">7</text>
-          <text x="30" y="147">8</text>
-          <text x="18" y="109">9</text>
-          <text x="34" y="70">10</text>
-          <text x="61" y="41">11</text>
-        </g>
-      </g>
+
+    <!-- Timezone (moved above the time) -->
+    <text id="timezone"
+          x="160" y="35"
+          font-family="SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace"
+          font-size="14" fill="#999" text-anchor="middle">   
+    </text>
+
+    <!-- Time -->
+    <g id="timeGroup" font-family="SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace"
+       font-size="72" font-weight="600" text-anchor="middle" dominant-baseline="middle"
+       fill="#e7e7e7">
+      <text id="hour" x="100" y="90"></text>
+      <text id="colon" x="150" y="90">:</text>
+      <text id="minutes" x="200" y="90"></text>
+      <!-- AM/PM indicator -->
+      <text id="ampm" x="265" y="90" font-size="28" font-weight="400" fill="#ccc">am</text>
     </g>
-    <g id="hourHand" style="fill:#141414;stroke:#141414">
-      <path style="stroke:none" d="m94 46 6-6 6 6v72H94z" id="hourHandDIN41092.3" visibility="visible"/>
-    </g>
-    <g id="minuteHand" style="fill:#141414;stroke:#141414">
-      <path style="stroke:none" d="M95.5 11.5 100 7l4.5 4.5V122h-9z" id="minuteHandDIN41092.3" visibility="visible"/>
-    </g>
-    <g id="secondHand" style="fill:#a03228;stroke:#a03228">
-      <g id="secondHandDIN41071.2" visibility="visible">
-        <path style="stroke:none" d="m98.8 11 1.2-1.2 1.2 1.2.4 31h-3.2zm-.7 47h3.8l.6 64h-5z"/>
-        <circle cx="100" cy="50" r="8.5" style="fill:none;stroke-width:6.5"/>
-      </g>
-    </g>
-    <g id="axisCover" style="fill:#141414;stroke:#141414">
-      <circle id="axisCoverCircle" cx="100" cy="100" r="10" style="stroke:none"/>
-    </g>
-    <g id="provaG">
-      <text id="prova" x="0" y="0" font-family="sans-serif" font-size="20" fill="red">Hello!</text>
-    </g>
+
+    <!-- Date -->
+    <text id="date"
+          x="160" y="145"
+          font-family="SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace"
+          font-size="20" fill="#bfbfbf" text-anchor="middle">
+      Aug 28, 2025
+    </text>
   </g>
 </svg>

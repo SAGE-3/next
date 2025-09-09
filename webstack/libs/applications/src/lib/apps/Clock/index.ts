@@ -16,12 +16,17 @@ import { z } from 'zod';
 export const schema = z.object({
   file: z.string(),
   city: z.string(),
+  timeZone: z.string(),
+  //state for 24 hour time
+  is24Hour: z.boolean()
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  file: 'file.svg',
-  city: 'Chicago',
+  file: '',
+  city: '',
+  timeZone: '',
+  is24Hour: false
 };
 
 export const name = 'Clock';
