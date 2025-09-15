@@ -37,7 +37,7 @@ export function LinksArrows(props: { links: Link[] }) {
 
   const scale = useUIStore((state) => state.scale);
   // Default Theme
-  const strokeColor = useColorModeValue('gray.500', 'gray.500');
+  const strokeColor = useColorModeValue('gray.700', 'gray.200');
 
   // Linker Interaction Mode
   const removeLink = useLinkStore((state) => state.removeLinks);
