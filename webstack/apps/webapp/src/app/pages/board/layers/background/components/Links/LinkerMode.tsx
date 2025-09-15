@@ -143,7 +143,7 @@ export function LinkerMode() {
             width={size.width}
             height={size.height}
             stroke={color}
-            strokeWidth={2 / scale}
+            strokeWidth={Math.max(1, 1.5 / scale)}
             fill={fill}
             onClick={(e) => handleClick(e, id)}
             style={{ pointerEvents: 'auto' }}

@@ -18,12 +18,12 @@ type Box = {
 };
 
 // Create an arrow from a box to the cursor position
-export function BoxToCursorArrow(box: Box, posX: number, posY: number, strokeColor: string, arrowColor: string) {
+export function BoxToCursorArrow(box: Box, posX: number, posY: number, strokeColor: string, arrowColor: string, scale: number = 1) {
   const cursorBox = {
     position: { x: posX, y: posY, z: 0 },
     size: { width: 1, height: 1, depth: 0 },
   };
-  return createArrow(box, cursorBox, `cursor-arrow`, strokeColor, 'solid', arrowColor);
+  return createArrow(box, cursorBox, `cursor-arrow`, strokeColor, 'solid', arrowColor, scale);
 }
 
 /**
@@ -49,9 +49,10 @@ export function BoxToBoxArrow(
   strokeType: 'dashed' | 'solid' = 'dashed',
   arrowColor: string,
   scale: number,
-  onClick?: () => any
+  onClick?: () => any,
+  bowOffset: number = 0
 ) {
-  return createArrow(sourceBox, targetBox, key, strokeColor, strokeType, arrowColor, scale, onClick);
+  return createArrow(sourceBox, targetBox, key, strokeColor, strokeType, arrowColor, scale, onClick, bowOffset);
 }
 
 function createArrow(
@@ -62,7 +63,8 @@ function createArrow(
   strokeType: 'dashed' | 'solid' = 'dashed',
   arrowColor: string,
   scale: number = 1,
-  onClick?: () => any
+  onClick?: () => any,
+  bowOffset: number = 0
 ) {
   const p0x = Math.round(box1.position.x);
   const p0y = Math.round(box1.position.y);
@@ -76,7 +78,7 @@ function createArrow(
   const arrow = getBoxToBoxArrow(p0x, p0y, s0w, s0h, p1x, p1y, s1w, s1h, {
     padStart: 0, // leave at 0 - otherwise bug in lib
     padEnd: 0, // leave at 0 - otherwise bug in lib
-    bow: 0.0,
+    bow: 0.1 + bowOffset,
     straights: true,
     stretch: 0.5,
     stretchMin: 0,
@@ -114,8 +116,8 @@ function createArrow(
         d={`M${sx},${sy} Q${cx},${cy} ${ex},${ey}`}
         fill="none"
         stroke={strokeColorHex}
-        strokeWidth={4 / scale}
-        strokeDasharray={strokeType === 'dashed' ? `${30},${40}` : '0'}
+        strokeWidth={8}
+        strokeDasharray={strokeType === 'dashed' ? `45,50` : '0'}
       />
       {/* {animated &&
         Array.from({ length: arrowCount }).map((_, index) => (
@@ -126,16 +128,14 @@ function createArrow(
           </polygon>
         ))} */}
 
-      {/* start of the arrow */}
-      <circle cx={sx} cy={sy} r={10 / scale} stroke={arrowColorHex} strokeWidth={2} fill={arrowColorHex} />
 
       {/* end of the arrow */}
       <polygon
-        points="-72,-36 -10,0 -72,36 -55,0"
-        transform={`translate(${ex},${ey}) scale(${1 / scale}) rotate(${angleDegrees}) scale(0.3)`}
-        stroke={arrowColorHex}
-        strokeWidth={2}
-        fill={arrowColorHex}
+        points="-50,-36 0,0 -50,36 -50,0"
+        transform={`translate(${ex},${ey})  rotate(${angleDegrees}) scale(${.5})`}
+        stroke={strokeColorHex}
+        strokeWidth={Math.max(1, 1.5 / scale)}
+        fill={strokeColorHex}
         style={
           isInteractable
             ? { pointerEvents: 'auto', touchAction: 'auto', cursor: 'pointer' }
@@ -148,13 +148,13 @@ function createArrow(
         <g
           style={{ pointerEvents: 'auto', touchAction: 'auto', cursor: 'pointer' }}
           onClick={onClick}
-          transform={`translate(${midX}, ${midY}) scale(${1 / scale}) translate(${-midX}, ${-midY})`}
+          transform={`translate(${midX}, ${midY}) scale(${Math.max(0.5, 1 / scale)}) translate(${-midX}, ${-midY})`}
         >
           {/* Background circle */}
-          <circle cx={midX} cy={midY} r={14} fill="white" stroke={deleteColorHex} strokeWidth={2} />
+          <circle cx={midX} cy={midY} r={12} fill="white" stroke={deleteColorHex} strokeWidth={2} />
           {/* X lines */}
-          <line x1={midX - 6} y1={midY - 6} x2={midX + 6} y2={midY + 6} stroke={deleteColorHex} strokeWidth={4} strokeLinecap="round" />
-          <line x1={midX + 6} y1={midY - 6} x2={midX - 6} y2={midY + 6} stroke={deleteColorHex} strokeWidth={4} strokeLinecap="round" />
+          <line x1={midX - 5} y1={midY - 5} x2={midX + 5} y2={midY + 5} stroke={deleteColorHex} strokeWidth={3} strokeLinecap="round" />
+          <line x1={midX + 5} y1={midY - 5} x2={midX - 5} y2={midY + 5} stroke={deleteColorHex} strokeWidth={3} strokeLinecap="round" />
         </g>
       )}
     </g>
