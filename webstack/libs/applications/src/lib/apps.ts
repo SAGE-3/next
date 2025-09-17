@@ -265,7 +265,10 @@ export const Applications = {
     ToolbarComponent: TwilioScreenshare.ToolbarComponent,
     GroupedToolbarComponent: TwilioScreenshare.GroupedToolbarComponent,
   },
-  [VNCName]: { AppComponent: React.memo(VNC.AppComponent), ToolbarComponent: VNC.ToolbarComponent, GroupedToolbarComponent: VNC.GroupedToolbarComponent },
+  [VNCName]: { AppComponent: React.memo(VNC.AppComponent),
+    ToolbarComponent: VNC.ToolbarComponent,
+    GroupedToolbarComponent: VNC.GroupedToolbarComponent
+  },
   [VegaLiteName]: {
     AppComponent: React.memo(VegaLite.AppComponent),
     ToolbarComponent: VegaLite.ToolbarComponent,
