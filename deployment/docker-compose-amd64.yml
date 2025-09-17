@@ -233,13 +233,13 @@ services:
       - "traefik.http.routers.vm.middlewares=vm-stripprefix,cors"
       - "traefik.http.routers.vm.service=vm"
       # Stream route (port 4033)
-      - "traefik.http.routers.stream.rule=PathPrefix(`/stream`)"
+      - "traefik.http.routers.stream.rule=PathPrefix(`/api/vmstream`)"
       - "traefik.http.routers.stream.priority=8"
       - "traefik.http.services.stream.loadbalancer.server.port=4033"
       - "traefik.http.services.stream.loadbalancer.passhostheader=true"
-      - traefik.http.routers.vm.middlewares=vm-rewrite
-      - traefik.http.middlewares.vm-rewrite.replacepathregex.regex=^/api/vmstream(.*)
-      - traefik.http.middlewares.vm-rewrite.replacepathregex.replacement=/stream$$1
+      - traefik.http.routers.stream.middlewares=stream-rewrite
+      - traefik.http.middlewares.stream-rewrite.replacepathregex.regex=^/api/vmstream(.*)
+      - traefik.http.middlewares.stream-rewrite.replacepathregex.replacement=/stream$$1
       - "traefik.http.routers.stream.middlewares=stream-stripprefix,cors"
       - "traefik.http.routers.stream.service=stream"
     environment:
