@@ -6,8 +6,9 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { isElectron } from 'libs/applications/src/lib/apps/Cobrowse/util';
 import { useCallback, createContext, useContext, useState, useEffect } from 'react';
+
+import { isElectron } from 'libs/applications/src/lib/apps/Cobrowse/util';
 
 /**
  * Represents the user preferences for the application.
@@ -17,23 +18,23 @@ import { useCallback, createContext, useContext, useState, useEffect } from 'rea
  * @property {boolean} showCursors - Indicates whether cursors should be displayed.
  * @property {boolean} showViewports - Indicates whether viewports should be displayed.
  * @property {boolean} showAppTitles - Indicates whether application titles should be displayed.
- * @property {'none'| 'selected' | 'all'} showProvenance - Indicates whether provenance information should be displayed (arrows).
+ * @property {'none'| 'selected' | 'all'} showLinks - Indicates whether provenance information should be displayed (arrows).
  * @property {boolean} showUI - Indicates whether the user interface should be displayed.
  * @property {boolean} showTags - Indicates whether tags should be displayed.
  * @property {'grid' | 'list'} selectedBoardListView - The view mode for the board list, either 'grid' or 'list'.
- * @property {'lasso' | 'grab' | 'pen' | 'eraser'} primaryActionMode - The primary action mode, which can be 'lasso', 'grab', 'pen', or 'eraser'.
+ * @property {'lasso' | 'grab' | 'pen' | 'eraser' | 'linker'} primaryActionMode - The primary action mode, which can be 'lasso', 'grab', 'pen', or 'eraser'.
  * @property {'llama' | 'openai'} aiModel - The AI model to be used, either 'llama' or 'openai'.
  */
 type UserSettings = {
   showCursors: boolean;
   showViewports: boolean;
   showAppTitles: boolean;
-  showProvenance: 'none' | 'selected' | 'all';
+  showLinks: 'none' | 'selected' | 'selected-path' | 'all';
   showUI: boolean;
   showTags: boolean;
   selectedBoardListView: 'grid' | 'list';
-  primaryActionMode: 'lasso' | 'grab' | 'pen' | 'eraser';
-  aiModel: 'llama' | 'openai';
+  primaryActionMode: 'lasso' | 'grab' | 'pen' | 'eraser' | 'linker';
+  aiModel: 'llama' | 'openai' | 'azure';
   uiScale: 'xs' | 's' | 'md' | 'lg' | 'xl';
 };
 
@@ -49,7 +50,7 @@ const defaultSettings: UserSettings = {
   showCursors: true,
   showViewports: true,
   showAppTitles: false,
-  showProvenance: 'selected',
+  showLinks: 'selected',
   showUI: true,
   showTags: false,
   selectedBoardListView: 'grid',
@@ -65,7 +66,7 @@ type UserSettingsContextType = {
   toggleShowCursors: () => void;
   toggleShowViewports: () => void;
   toggleShowAppTitles: () => void;
-  toggleProvenance: (value: UserSettings['showProvenance']) => void;
+  setShowLinks: (value: UserSettings['showLinks']) => void;
   toggleShowUI: () => void;
   toggleShowTags: () => void;
   setBoardListView: (value: UserSettings['selectedBoardListView']) => void;
@@ -81,7 +82,7 @@ const UserSettingsContext = createContext<UserSettingsContextType>({
   toggleShowCursors: () => { },
   toggleShowViewports: () => { },
   toggleShowAppTitles: () => { },
-  toggleProvenance: (value: UserSettings['showProvenance']) => { },
+  setShowLinks: (value: UserSettings['showLinks']) => { },
   toggleShowUI: () => { },
   toggleShowTags: () => { },
   setBoardListView: (value: UserSettings['selectedBoardListView']) => { },
@@ -175,11 +176,11 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
     });
   }, [setSettings]);
 
-  const toggleProvenance = useCallback(
-    (value: UserSettings['showProvenance']) => {
+  const setShowLinks = useCallback(
+    (value: UserSettings['showLinks']) => {
       setSettings((prev) => {
         const newSettings = { ...prev };
-        newSettings.showProvenance = value;
+        newSettings.showLinks = value;
         setUserSettings(newSettings);
         return newSettings;
       });
@@ -268,7 +269,7 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
         toggleShowViewports,
         toggleShowAppTitles,
         toggleShowUI,
-        toggleProvenance,
+        setShowLinks,
         toggleShowTags,
         setBoardListView,
         setPrimaryActionMode,

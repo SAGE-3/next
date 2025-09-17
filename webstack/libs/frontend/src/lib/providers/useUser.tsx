@@ -52,6 +52,7 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
 
   const fetchUser = useCallback(async () => {
     if (auth) {
+      setLoading(true);
       const userResponse = await APIHttp.GET<User>(`/users/${auth.id}`);
       if (userResponse.data) {
         const user = userResponse.data[0];
@@ -69,9 +70,43 @@ export function UserProvider(props: React.PropsWithChildren<Record<string, unkno
         }
         setAbilityUser(user);
         setUser(user);
-      } else {
-        setUser(undefined);
         setLoading(false);
+      } else {
+        // No user account found - check if this is a guest or spectator user
+        if (auth.provider === 'guest' || auth.provider === 'spectator') {
+          // Automatically create a guest/spectator user account
+          const tempUser = {
+            name: auth.provider === 'guest' ? `Guest #${auth.id.slice(0, 6)}` : `Spectator #${auth.id.slice(0, 6)}`,
+            email: auth.email || auth.displayName || '',
+            color: 'blue',
+            userRole: auth.provider,
+            userType: 'client',
+            profilePicture: '',
+            savedBoards: [],
+            recentBoards: [],
+          } as UserSchema;
+
+          try {
+            const createResponse = await APIHttp.POST<User>('/users/create', tempUser);
+            if (createResponse.data) {
+              const newUser = createResponse.data[0];
+              setAbilityUser(newUser);
+              setUser(newUser);
+              setLoading(false);
+            } else {
+              console.error('Failed to create temporary user account: No data returned');
+              setUser(undefined);
+              setLoading(false);
+            }
+          } catch (error) {
+            console.error('Failed to create temporary user account:', error);
+            setUser(undefined);
+            setLoading(false);
+          }
+        } else {
+          setUser(undefined);
+          setLoading(false);
+        }
       }
     } else {
       setUser(undefined);

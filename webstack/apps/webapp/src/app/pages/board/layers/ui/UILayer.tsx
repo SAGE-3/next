@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2025. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -18,12 +18,23 @@ import {
   Divider,
   ButtonGroup,
   Text,
-  Button,
 } from '@chakra-ui/react';
 
 import { HiChip, HiPuzzle } from 'react-icons/hi';
 import { IoSparklesSharp } from 'react-icons/io5';
-import { MdAdd, MdApps, MdArrowBack, MdFolder, MdMap, MdPeople, MdRemove, MdRemoveRedEye, MdScreenShare } from 'react-icons/md';
+import {
+  MdAdd,
+  MdApps,
+  MdArrowBack,
+  MdArrowForward,
+  MdFolder,
+  MdHome,
+  MdMap,
+  MdPeople,
+  MdRemove,
+  MdRemoveRedEye,
+  MdScreenShare,
+} from 'react-icons/md';
 
 import { format as formatDate } from 'date-fns';
 import JSZip from 'jszip';
@@ -49,7 +60,8 @@ import {
   useHexColor,
   useUser,
   useThrottleScale,
-  EditUserSettingsModal,
+  MainButton,
+  PartyButton,
 } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 
@@ -71,7 +83,7 @@ import {
   PluginsMenu,
   UsersMenu,
   AssetsMenu,
-  MainButton,
+  EscapeApp,
 } from './components';
 
 type UILayerProps = {
@@ -129,7 +141,7 @@ export function UILayer(props: UILayerProps) {
   const deleteApp = useAppStore((state) => state.delete);
 
   // Navigation
-  const { toHome, back } = useRouteNav();
+  const { toHome, back, forward, canGoBack, canGoForward } = useRouteNav();
 
   // Toast
   const toast = useToast();
@@ -281,8 +293,18 @@ export function UILayer(props: UILayerProps) {
       // Back to the homepage with the room id
       toHome(room._id);
     } else {
-      back();
+      toHome();
     }
+  }
+
+  // Redirect to your previous board
+  function handleBackClick() {
+    back();
+  }
+
+  // Redirect to your next board
+  function handleForwardClick() {
+    forward();
   }
 
   const handleOpenAlfred = () => {
@@ -316,67 +338,63 @@ export function UILayer(props: UILayerProps) {
         )}
       </HStack>
 
-      {/* Map Buttons Bottom Right */}
-      <Box position="absolute" right="2" bottom="2" zIndex={101} display={showUI ? 'flex' : 'none'} borderRadius="md">
-        <ButtonGroup isAttached size="xs" gap="0" mr="1">
-          <Tooltip label={'Zoom In'}>
-            <IconButton
-              size="sm"
-              icon={<MdAdd />}
-              fontSize="lg"
-              aria-label={'input-type'}
-              onClick={() => zoomIn(10)}
-              sx={{
-                _dark: {
-                  bg: 'gray.600', // 'inherit' didnt seem to work
-                },
-              }}
-            ></IconButton>
-          </Tooltip>
-          <Tooltip label={'Reset Zoom'}>
-            <IconButton
-              size="sm"
-              aria-label={'input-type'}
-              px="1"
-              onClick={resetZoom}
-              minWidth="45px"
-              maxWidth="45px"
-              sx={{
-                _dark: {
-                  bg: 'gray.600', // 'inherit' didnt seem to work
-                },
-              }}
-              icon={<Text>{(scale * 100).toFixed(0)}%</Text>}
-            ></IconButton>
-          </Tooltip>
-          <Tooltip label={'Zoom Out'}>
-            <IconButton
-              size="sm"
-              icon={<MdRemove />}
-              fontSize="lg"
-              aria-label={'input-type'}
-              onClick={() => zoomOut(10)}
-              sx={{
-                _dark: {
-                  bg: 'gray.600', // 'inherit' didnt seem to work
-                },
-              }}
-            ></IconButton>
-          </Tooltip>
-        </ButtonGroup>
-        <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdMap />} tooltip={'Map'} title={'Map'} offset={[-97, 6]} stayActive>
-          <NavigationMenu />
-        </ToolbarButton>
-      </Box>
-
-      {/* Main Button Bottom Left */}
-      <Box position="absolute" left="2" bottom="2" zIndex={101} display={showUI ? 'flex' : 'none'} borderRadius="md">
+      {/* Tool bar at the bottom of the page in the middle */}
+      <Box
+        position="absolute"
+        left="50%"
+        bottom="2"
+        transform="translateX(-50%)"
+        zIndex={101}
+        display={showUI ? 'flex' : 'none'}
+        borderRadius="md"
+      >
         <Box display="flex" gap="1">
-          <Tooltip label={'Back to Home'} placement="top-start" shouldWrapChildren={true} openDelay={200} hasArrow={true}>
-            <Button onClick={handleHomeClick} aria-label={''} size="sm" p="0" colorScheme={usersColor} fontSize="lg">
-              <MdArrowBack />
-            </Button>
-          </Tooltip>
+          <ButtonGroup isAttached size="xs" gap="0" mr="1">
+            <Tooltip label={'Back'}>
+              <IconButton
+                size="sm"
+                icon={<MdArrowBack />}
+                fontSize="lg"
+                aria-label={'input-type'}
+                onClick={handleBackClick}
+                isDisabled={!canGoBack}
+                sx={{
+                  _dark: {
+                    bg: 'gray.600', // 'inherit' didnt seem to work
+                  },
+                }}
+              ></IconButton>
+            </Tooltip>
+            <Tooltip label={'Home'}>
+              <IconButton
+                size="sm"
+                icon={<MdHome />}
+                fontSize="lg"
+                aria-label={'input-type'}
+                onClick={handleHomeClick}
+                sx={{
+                  _dark: {
+                    bg: 'gray.600', // 'inherit' didnt seem to work
+                  },
+                }}
+              ></IconButton>
+            </Tooltip>
+            <Tooltip label={'Forward'}>
+              <IconButton
+                size="sm"
+                icon={<MdArrowForward />}
+                fontSize="lg"
+                aria-label={'input-type'}
+                onClick={handleForwardClick}
+                isDisabled={!canGoForward}
+                sx={{
+                  _dark: {
+                    bg: 'gray.600', // 'inherit' didnt seem to work
+                  },
+                }}
+              ></IconButton>
+            </Tooltip>
+          </ButtonGroup>
           <Divider orientation="vertical" mx="1" />
           <MainButton
             buttonStyle="solid"
@@ -391,6 +409,7 @@ export function UILayer(props: UILayerProps) {
           />
           <Divider orientation="vertical" mx="1" />
           <Interactionbar isContextMenuOpen={isContextMenuOpen} />
+          <EscapeApp />
           <Divider orientation="vertical" mx="1" />
           <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdPeople />} tooltip={'Users'} title={'Users'}>
             <UsersMenu boardId={props.boardId} />
@@ -410,19 +429,74 @@ export function UILayer(props: UILayerProps) {
           <ToolbarButton bgColor={usersColor as SAGEColors} icon={<HiChip />} tooltip={'Kernels'} title={'Kernels'}>
             {room && board && <KernelsMenu roomId={room?._id} boardId={board?._id} />}
           </ToolbarButton>
-          <Divider orientation="vertical" mx="1" />
-
-          <Tooltip label={'SAGE Intelligence'} placement={'top'} hasArrow={true} openDelay={400} shouldWrapChildren={true}>
-            <IconButton
-              colorScheme={'purple'}
-              size="sm"
-              icon={<IoSparklesSharp />}
-              fontSize="lg"
-              aria-label={`Open Alfred Menu`}
-              onClick={alfredOnOpen}
-            />
-          </Tooltip>
         </Box>
+        <Divider orientation="vertical" mx="2" />
+        <ButtonGroup isAttached size="xs" gap="0" mr="1">
+        <Tooltip label={'Zoom Out'}>
+            <IconButton
+              size="sm"
+              icon={<MdRemove />}
+              fontSize="lg"
+              aria-label={'input-type'}
+              onClick={() => zoomOut(10)}
+              sx={{
+                _dark: {
+                  bg: 'gray.600', // 'inherit' didnt seem to work
+                },
+              }}
+            ></IconButton>
+          </Tooltip>
+          <Tooltip label={'Reset Zoom'}>
+            <IconButton
+              size="sm"
+              aria-label={'input-type'}
+              px="1"
+              onClick={resetZoom}
+              minWidth="50px"
+              maxWidth="50px"
+              sx={{
+                _dark: {
+                  bg: 'gray.600', // 'inherit' didnt seem to work
+                },
+              }}
+              icon={<Text>{(scale * 100).toFixed(0)}%</Text>}
+            ></IconButton>
+          </Tooltip>
+
+          <Tooltip label={'Zoom In'}>
+            <IconButton
+              size="sm"
+              icon={<MdAdd />}
+              fontSize="lg"
+              aria-label={'input-type'}
+              onClick={() => zoomIn(10)}
+              sx={{
+                _dark: {
+                  bg: 'gray.600', // 'inherit' didnt seem to work
+                },
+              }}
+            ></IconButton>
+          </Tooltip>
+        </ButtonGroup>
+        <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdMap />} tooltip={'Map'} title={'Map'} offset={[-97, 6]} stayActive>
+          <NavigationMenu />
+        </ToolbarButton>
+        <Divider orientation="vertical" mx="2" />
+        <Tooltip label={'SAGE Intelligence'} placement={'top'} hasArrow={true} openDelay={400} shouldWrapChildren={true}>
+          <IconButton
+            colorScheme={'purple'}
+            size="sm"
+            icon={<IoSparklesSharp />}
+            fontSize="lg"
+            aria-label={`Open Alfred Menu`}
+            onClick={alfredOnOpen}
+          />
+        </Tooltip>
+      </Box>
+
+      {/* Party Button */}
+      <Box position="absolute" right="2" bottom="2" zIndex="1000" display={showUI ? 'initial' : 'none'}>
+        <PartyButton iconSize="sm" />
       </Box>
 
       {/* Hub-Room-Board Name Top Left */}

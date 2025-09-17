@@ -50,7 +50,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
 
   const [name, setName] = useState<RoomSchema['name']>('');
   const [description, setDescription] = useState<RoomSchema['description']>('');
-  const [isListed, setIsListed] = useState(true);
+  const [isListed, setIsListed] = useState(false); // default is not listed
   const [isProtected, setProtected] = useState(false);
   const [password, setPassword] = useState('');
   const [color, setColor] = useState('red' as SAGEColors);
@@ -91,9 +91,9 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
   };
 
   const create = async () => {
-    if (name && description && user) {
-      // remove leading and trailing space, and limit name length to 20
-      const cleanedName = name.trim().substring(0, 19);
+    if (name && user) {
+      // remove leading and trailing space, and limit name length to 32
+      const cleanedName = name.trim().substring(0, 31);
       const roomNames = rooms.map((room) => room.data.name);
 
       if (cleanedName.split(' ').join('').length === 0) {
@@ -112,7 +112,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
         });
       } else if (!isAlphanumericWithSpacesAndForeign(cleanedName)) {
         toast({
-          title: 'Name must only contain characters A-Z, 0-9, and spaces',
+          title: 'Name must only contain Unicode letters, numbers, comma, hyphen, underscore and spaces',
           status: 'error',
           duration: 3 * 1000,
           isClosable: true,
@@ -122,7 +122,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
         const key = uuidv5(password, config.namespace);
         const room = await createRoom({
           name: cleanedName,
-          description,
+          description: description || '',
           color: color,
           ownerId: user._id,
           isPrivate: isProtected,
@@ -161,14 +161,14 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
       <ModalContent>
         <ModalHeader fontSize="3xl">Create Room</ModalHeader>
         <ModalBody>
-          <InputGroup>
+          <InputGroup mb="4"  >
             <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
             <Input
               ref={initialRef}
               type="text"
               placeholder={'Room Name'}
-              _placeholder={{ opacity: 1, color: 'gray.600' }}
-              mr={4}
+              _placeholder={{ opacity: 1, color: 'gray.400' }}
+              mr={0}
               value={name}
               onChange={handleNameChange}
               onKeyDown={onSubmit}
@@ -179,13 +179,13 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
             <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
             <Input
               type="text"
-              placeholder={'Room Description'}
-              _placeholder={{ opacity: 1, color: 'gray.600' }}
-              mr={4}
+              placeholder={'Room Description (optional)'}
+              _placeholder={{ opacity: 1, color: 'gray.400' }}
+              mr={0}
               value={description}
               onChange={handleDescription}
               onKeyDown={onSubmit}
-              isRequired={true}
+              isRequired={false}
             />
           </InputGroup>
 
@@ -213,7 +213,7 @@ export function CreateRoomModal(props: CreateRoomModalProps): JSX.Element {
           </InputGroup>
         </ModalBody>
         <ModalFooter>
-          <Button colorScheme="green" onClick={() => create()} isDisabled={!name || !description}>
+          <Button colorScheme="green" onClick={() => create()} isDisabled={!name}>
             Create
           </Button>
         </ModalFooter>

@@ -11,9 +11,15 @@ import { useParams } from 'react-router';
 
 import { Button, ButtonGroup, HStack, Select, Tooltip, useDisclosure, useToast } from '@chakra-ui/react';
 import {
-  MdAdd, MdArrowDropDown, MdFileDownload,
-  MdFileUpload, MdHelp, MdWeb, MdRemove, MdPlayArrow,
-  MdStop, MdOutlineKeyboardDoubleArrowRight
+  MdAdd,
+  MdArrowDropDown,
+  MdFileDownload,
+  MdFileUpload,
+  MdHelp,
+  MdWeb,
+  MdRemove,
+  MdPlayArrow,
+  MdStop,
 } from 'react-icons/md';
 // Date manipulation (for filename)
 import { format } from 'date-fns/format';
@@ -34,6 +40,7 @@ import { App, AppGroup } from '../../../schema';
 import { state as AppState } from '../index';
 import { HelpModal } from './help';
 import { useStore } from './store';
+import { VscRunAbove, VscRunAll, VscRunBelow } from 'react-icons/vsc';
 
 /**
  * UI toolbar for the SAGEcell application
@@ -45,8 +52,8 @@ export function ToolbarComponent(props: App): JSX.Element {
   // Abilties
   const canExecuteCode = useAbility('execute', 'kernels');
   // Store between toolbar and appWindow
-  const setDrawer = useStore((state) => state.setDrawer);
   const setExecute = useStore((state) => state.setExecute);
+  const setExecuteAll = useStore((state) => state.setExecuteAll);
   const setInterrupt = useStore((state) => state.setInterrupt);
   // App State
   const s = props.data.state as AppState;
@@ -142,13 +149,14 @@ export function ToolbarComponent(props: App): JSX.Element {
    * Download the stickie as a text file
    * @returns {void}
    */
-  const downloadPy = (): void => {
+  const downloadCode = (): void => {
     // Current date
     const dt = format(new Date(), 'yyyy-MM-dd-HH:mm:ss');
     // generate a URL containing the text of the note
     const txturl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(s.code);
+    const extension = s.language === 'python' ? '.py' : s.language === 'r' ? '.R' : '.jl';
     // Make a filename with username and date
-    const filename = 'sagecell-' + dt + '.py';
+    const filename = 'sagecell-' + dt + extension;
     // Go for download
     downloadFile(txturl, filename);
   };
@@ -163,17 +171,8 @@ export function ToolbarComponent(props: App): JSX.Element {
     updateState(props._id, { fontSize: Math.max(8, s.fontSize - 2) });
   };
 
-  const openInDrawer = async () => {
-    // Set the drawer to open
-    setDrawer(props._id, true);
-  };
-
   const handleSave = useCallback(
     (val: string) => {
-      // save cell code in asset manager
-      if (!val.endsWith('.py')) {
-        val += '.py';
-      }
       // Save the code in the asset manager
       if (roomId) {
         // Create a form to upload the file
@@ -211,6 +210,15 @@ export function ToolbarComponent(props: App): JSX.Element {
     // Set the flag to execute the cell
     setExecute(props._id, true);
   };
+  const setExecuteAllTrue = () => {
+    setExecuteAll(props._id, true, 'all');
+  };
+  const setExecuteUpTrue = () => {
+    setExecuteAll(props._id, true, 'up');
+  };
+  const setExecuteDownTrue = () => {
+    setExecuteAll(props._id, true, 'down');
+  };
   const setStopTrue = () => {
     // Set the flag to stop the cell
     setInterrupt(props._id, true);
@@ -237,12 +245,12 @@ export function ToolbarComponent(props: App): JSX.Element {
           isDisabled={(selected?.is_private && !access) || !canCreateKernels}
         >
           {
-            //show my kernels
+            // Show my kernels
             myKernels
-              .filter((el) => el.name === 'python3')
+              // .filter((el) => el.name === 'python3')
               .map((el) => (
                 <option value={el.kernel_id} key={el.kernel_id}>
-                  {el.alias} ({el.name === 'python3' ? 'Python' : el.name === 'r' ? 'R' : 'Julia'})
+                  {el.alias} ({el.name === 'python3' ? 'Python' : el.name === 'ir' ? 'R' : 'Julia'})
                 </option>
               ))
           }
@@ -250,60 +258,92 @@ export function ToolbarComponent(props: App): JSX.Element {
       )}
 
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Execute'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Run'} openDelay={400}>
           <Button
             isDisabled={!selectedKernel || !canExecuteCode}
             onClick={setExecuteTrue}
             _hover={{ opacity: 0.7 }}
             size="xs"
             colorScheme="teal"
+            px={0}
           >
-            <MdPlayArrow />
+            <MdPlayArrow size="16px" />
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Stop'} openDelay={400}>
-          <Button isDisabled={!s.msgId || !canExecuteCode} onClick={setStopTrue} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal">
-            <MdStop />
+        <Tooltip placement="top" hasArrow={true} label={'Run All'} openDelay={400}>
+          <Button
+            isDisabled={!selectedKernel || !canExecuteCode}
+            onClick={setExecuteAllTrue}
+            _hover={{ opacity: 0.7 }}
+            size="xs"
+            colorScheme="teal"
+            px={0}
+          >
+            <VscRunAll size="16px" />
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Open in Drawer'} openDelay={400}>
-          <Button onClick={openInDrawer}>
-            <MdWeb />
+        <Tooltip placement="top" hasArrow={true} label={'Run To Here'} openDelay={400}>
+          <Button
+            isDisabled={!selectedKernel || !canExecuteCode}
+            onClick={setExecuteUpTrue}
+            _hover={{ opacity: 0.7 }}
+            size="xs"
+            colorScheme="teal"
+            px={0}
+          >
+            <VscRunAbove size="16px" />
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Click for help'} openDelay={400}>
-          <Button onClick={helpOnOpen} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal">
-            <MdHelp />
+        <Tooltip placement="top" hasArrow={true} label={'Run From Here'} openDelay={400}>
+          <Button
+            isDisabled={!selectedKernel || !canExecuteCode}
+            onClick={setExecuteDownTrue}
+            _hover={{ opacity: 0.7 }}
+            size="xs"
+            colorScheme="teal"
+            px={0}
+          >
+            <VscRunBelow size="16px" />
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top" hasArrow={true} label={'Stop'} openDelay={400}>
+          <Button isDisabled={!s.msgId || !canExecuteCode} onClick={setStopTrue} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal" px={0}>
+            <MdStop size="16px" />
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top" hasArrow={true} label={'Click for help'} openDelay={400}>
+          <Button onClick={helpOnOpen} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal" px={0}>
+            <MdHelp size="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>
 
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
-          <Button isDisabled={s.fontSize <= 8} onClick={decreaseFontSize} _hover={{ opacity: 0.7 }}>
-            <MdRemove />
+        <Tooltip placement="top" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
+          <Button isDisabled={s.fontSize <= 8} onClick={decreaseFontSize} _hover={{ opacity: 0.7 }} size="xs" px={0}>
+            <MdRemove size="16px" />
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Current Font Size'} openDelay={400}>
-          <Button _hover={{ opacity: 0.7 }}>{s.fontSize}</Button>
+        <Tooltip placement="top" hasArrow={true} label={'Current Font Size'} openDelay={400}>
+          <Button _hover={{ opacity: 0.7 }} size="xs" px={0}>{s.fontSize}</Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
-          <Button isDisabled={s.fontSize > 42} onClick={increaseFontSize} _hover={{ opacity: 0.7 }}>
-            <MdAdd />
+        <Tooltip placement="top" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
+          <Button isDisabled={s.fontSize > 42} onClick={increaseFontSize} _hover={{ opacity: 0.7 }} size="xs" px={0}>
+            <MdAdd size="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>
 
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Save Code in Asset Manager'} openDelay={400}>
-          <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }} isDisabled={s.code.length === 0}>
-            <MdFileUpload />
+        <Tooltip placement="top" hasArrow={true} label={'Save Code in Asset Manager'} openDelay={400}>
+          <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }} isDisabled={s.code.length === 0} size="xs" px={0}>
+            <MdFileUpload size="16px" />
           </Button>
         </Tooltip>
 
-        <Tooltip placement="top-start" hasArrow={true} label={'Download Code'} openDelay={400}>
-          <Button onClick={downloadPy} _hover={{ opacity: 0.7 }}>
-            <MdFileDownload />
+        <Tooltip placement="top" hasArrow={true} label={'Download Code'} openDelay={400}>
+          <Button onClick={downloadCode} _hover={{ opacity: 0.7 }} size="xs" px={0}>
+            <MdFileDownload size="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>
@@ -317,7 +357,7 @@ export function ToolbarComponent(props: App): JSX.Element {
         onConfirm={handleSave}
         title="Save Code in Asset Manager"
         message="Select a file name:"
-        initiaValue={'sagecell-' + format(new Date(), 'yyyy-MM-dd-HH:mm:ss') + '.py'}
+        initiaValue={'sagecell-' + format(new Date(), 'yyyy-MM-dd-HH:mm:ss') + (s.language === 'python' ? '.py' : s.language === 'r' ? '.R' : '.jl')}
         cancelText="Cancel"
         confirmText="Save"
         confirmColor="green"
@@ -415,7 +455,7 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
   async function executeAppNoChecks(appid: string, userid: string) {
     // Get the code from the store
     const code = useAppStore.getState().apps.find((app) => app._id === appid)?.data.state.code;
-    // Get the kernel from the store, since function executed from monoaco editor
+    // Get the kernel from the store, since function executed from monaco editor
     const kernel = useStore.getState().kernel[appid];
     if (kernel && code) {
       const response = await useKernelStore.getState().executeCode(code, kernel, userid);
@@ -424,7 +464,7 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
         useAppStore.getState().updateState(appid, { msgId: msgId, session: userid });
         return true;
       } else {
-        useAppStore.getState().updateState(appid, { streaming: false, msgId: '', });
+        useAppStore.getState().updateState(appid, { streaming: false, msgId: '' });
         return false;
       }
     }
@@ -440,7 +480,7 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
 
   // Wait for x seconds
   async function waitSeconds(x: number): Promise<void> {
-    await new Promise(resolve => setTimeout(resolve, x * 1000));
+    await new Promise((resolve) => setTimeout(resolve, x * 1000));
   }
 
   // Evaluate the sagecells in order
@@ -455,7 +495,6 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
       // Give illusion of sequential execution
       await waitSeconds(0.1);
     }
-
   };
 
   // Stop all selected cells
@@ -464,29 +503,6 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
       setInterrupt(app._id, true);
     });
   };
-
-  // This function efficiently calculates the enclosing bounding box for a given set of rectangles.
-  function getBoundingBox(rectangles: Array<{ id: string, x: number; y: number; width: number; height: number }>) {
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-
-    rectangles.forEach(({ x, y, width, height }) => {
-      minX = Math.min(minX, x);
-      minY = Math.min(minY, y);
-      maxX = Math.max(maxX, x + width);
-      maxY = Math.max(maxY, y + height);
-    });
-    const width = maxX - minX;
-    const height = maxY - minY;
-    const boundingBox = {
-      x: minX,
-      y: minY,
-      width: width,
-      height: height,
-      orientation: height > 1.3 * width ? "column" : width > 1.3 * height ? "row" : "squarish",
-    };
-
-    return boundingBox;
-  }
 
   // Calculate evaluation order
   const setEvaluationOrder = () => {
@@ -501,25 +517,14 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
       height: app.data.size.height,
       cx: app.data.position.x + app.data.size.width / 2,
       cy: app.data.position.y + app.data.size.height / 2,
-    }))
+    }));
 
-    // Get the bounding box of the group and orientation
-    // const box = getBoundingBox(boxes);
-
-    // Sort rectangles based on orientation
-    // const sorted = [...boxes].sort((a, b) =>
-    //   box.orientation === "column" ? a.cy - b.cy :
-    //     box.orientation === "row" ? a.cx - b.cx :
-    //       0
-    // );
     const sorted = [...boxes].sort((a, b) =>
       // If box `a` and `b` overlap in y, sort by x
       // Otherwise, sort by y
-      (Math.max(a.y, b.y) < Math.min(a.y + a.height, b.y + b.height))
-        ? a.x - b.x : a.y - b.y
+      Math.max(a.y, b.y) < Math.min(a.y + a.height, b.y + b.height) ? a.x - b.x : a.y - b.y
     );
 
-    // if (box.orientation !== "squarish") {
     // Array of update to batch at once
     const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
     sorted.forEach((app, index) => {
@@ -527,9 +532,7 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
     });
     // Update all the apps at once
     updateStateBatch(ps);
-    // }
   };
-
 
   /**
    * This is called when the user selects a kernel from the dropdown
@@ -592,12 +595,12 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
             </option>
           }
           {
-            //show my kernels
+            // Show my kernels
             myKernels
-              .filter((el) => el.name === 'python3')
+              // .filter((el) => el.name === 'python3')
               .map((el) => (
                 <option value={el.kernel_id} key={el.kernel_id}>
-                  {el.alias} ({el.name === 'python3' ? 'Python' : el.name === 'r' ? 'R' : 'Julia'})
+                  {el.alias} ({el.name === 'python3' ? 'Python' : el.name === 'ir' ? 'R' : 'Julia'})
                 </option>
               ))
           }
@@ -606,18 +609,18 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
 
       {/* Execute all selected cells */}
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        {/* <Tooltip placement="top-start" hasArrow={true} label={'Execute All Selected Cells'} openDelay={400}>
+        {/* <Tooltip placement="top" hasArrow={true} label={'Execute All Selected Cells'} openDelay={400}>
           <Button onClick={setExecuteAll} isDisabled={!canExecuteCode} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal">
             <MdPlayArrow />
           </Button>
         </Tooltip> */}
 
-        <Tooltip placement="top-start" hasArrow={true} label={'Execute Selected Cells in Order'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Execute Selected Cells in Order'} openDelay={400}>
           <Button onClick={setExecuteinOrder} isDisabled={!canExecuteCode} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal">
             <MdPlayArrow />
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Stop All Selected Cells'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Stop All Selected Cells'} openDelay={400}>
           <Button onClick={setStopAll} isDisabled={!canExecuteCode} _hover={{ opacity: 0.7 }} size="xs" colorScheme="teal">
             <MdStop />
           </Button>
@@ -625,17 +628,17 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
       </ButtonGroup>
 
       <ButtonGroup isAttached size="xs" colorScheme="teal" mr="2">
-        <Tooltip placement="top-start" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
           <Button onClick={handleDecreaseFont} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdRemove />
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Current Font Size'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Current Font Size'} openDelay={400}>
           <Button _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             {Math.min(...props.apps.map((app) => app.data.state.fontSize))}
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
           <Button onClick={handleIncreaseFont} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdAdd />
           </Button>

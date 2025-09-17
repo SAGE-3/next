@@ -13,19 +13,29 @@ import { Box, Spinner, useColorMode, Text } from '@chakra-ui/react';
 import * as echarts from 'echarts';
 
 import { ChartManager } from '../../EChartsViewer/ChartManager';
+import {variable_dict} from '../data/variableConversion'
 
 import '../styling.css';
 
-const EChartsViewer = (props: {
+interface EChartsViewerProps {
   stationNames: string[];
+  stationFriendlyNames: string[];
   startDate: string;
   isLoaded: boolean;
   widget: any;
-
   timeSinceLastUpdate?: string;
-  stationMetadata?: any;
+  stationMetadata?: { [key: string]: Array<{
+    timestamp: string;
+    station_id: string;
+    variable: string;
+    value: string;
+    flag: number;
+  }> };
   size: { width: number; height: number; depth: number };
-}) => {
+  stationIdToName: { [key: string]: string };
+}
+
+const EChartsViewer = (props: EChartsViewerProps) => {
   // HTML element reference
   const chartRef = useRef<any>(null);
   const outboxRef = useRef<any>(null);
@@ -40,15 +50,12 @@ const EChartsViewer = (props: {
 
   useEffect(() => {
     let namesOfStations = '';
-    for (let i = 0; i < props.stationMetadata.length; i++) {
-      if (i === props.stationMetadata.length - 1) {
-        namesOfStations += props.stationMetadata[i].NAME;
-      } else {
-        namesOfStations += props.stationMetadata[i].NAME + ', ';
-      }
+    if (props.stationMetadata) {
+      const stationIds = Object.keys(props.stationMetadata);
+      namesOfStations = stationIds.join(', ');
     }
     setStationNames(namesOfStations);
-  }, [JSON.stringify(props.stationMetadata)]);
+  }, [props.stationMetadata]);
 
   // If the chartRef changes, update the chart instance
   useEffect(() => {
@@ -72,31 +79,31 @@ const EChartsViewer = (props: {
   // If any properties for visualization changes, update the chart options
   useEffect(() => {
     const tmpWidget = { ...props.widget };
-    async function callToChartMangaer() {
-      const options = await ChartManager(
+    function callToChartManager() {
+      const options = ChartManager(
         tmpWidget.stationNames,
         tmpWidget.visualizationType,
         tmpWidget.yAxisNames,
         tmpWidget.xAxisNames,
         colorMode,
         props.startDate,
-        props.stationMetadata,
+        props.stationMetadata || {},
         props.widget.timePeriod,
-        props.size
+        props.size,
+        variable_dict
       );
-
       setChartOptions(options);
     }
     if (props.isLoaded) {
-      callToChartMangaer();
+      callToChartManager();
     }
-  }, [JSON.stringify(props.stationNames), JSON.stringify(props.stationMetadata), props.isLoaded, colorMode, JSON.stringify(props.size)]);
+    
+  }, [JSON.stringify(props.stationNames), JSON.stringify(props.stationMetadata), props.isLoaded, colorMode, JSON.stringify(props.size), JSON.stringify(props.widget)]);
 
   return (
     <>
       <Box
         bg={colorMode === 'light' ? '#fff' : '#222'}
-        pt="2rem"
         w={props.size ? props.size.width : '100%'}
         h={props.size ? props.size.height : '100%'}
         display="flex"
@@ -108,9 +115,13 @@ const EChartsViewer = (props: {
       >
         {props.isLoaded ? (
           <>
-            <Box pb="1rem" mt="-1rem">
+            <Box pb="2rem">
               <Text textAlign={'center'} fontSize={'80px'}>
-                {props.stationMetadata ? stationNames : 'No Station Selected'}
+                {props.stationMetadata ? 
+                  Object.keys(props.stationMetadata)
+                    .map(id => props.stationIdToName[id] || id)
+                    .join(', ') 
+                  : 'No Station Selected'}
               </Text>
             </Box>
             <div ref={chartRef} />
@@ -123,7 +134,7 @@ const EChartsViewer = (props: {
                 alignItems="center"
                 justifyContent={'center'}
                 fontSize={'25px'}
-                pb={'4rem'}
+                pb={'0rem'}
               >
                 {props.timeSinceLastUpdate}
               </Box>

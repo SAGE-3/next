@@ -24,6 +24,8 @@ import {
   PDFAnswer,
   WebScreenshot,
   WebScreenshotAnswer,
+  MesonetRequest,
+  MesonetResponse,
 } from '@sage3/shared';
 
 /**
@@ -71,6 +73,9 @@ const makeRpcGet = async (mth: string) => {
  */
 export const callStatus = async () => {
   return makeRpcGet(AgentRoutes.status) as Promise<HealthResponse | SError>;
+};
+export const callMesonet = async (data: MesonetRequest) => {
+  return makeRpcPost(AgentRoutes.mesonet, data) as Promise<MesonetResponse | SError>;
 };
 export const callAsk = async (data: AskRequest) => {
   return makeRpcPost(AgentRoutes.ask, data) as Promise<AskResponse | SError>;

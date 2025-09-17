@@ -75,11 +75,31 @@ export type ImageAnswer = {
   actions?: any[];
 };
 
+// Image request
+export type MesonetRequest = {
+  ctx: { previousQ: string; previousA: string; pos: number[]; roomId: string; boardId: string };
+  user: string;
+  q: string;
+  url: string;
+  currentTime: string;
+};
+export type MesonetResponse = {
+  attributes: string[];
+  stations: string[];
+  chart_type: string[];
+  summary: string;
+  success: boolean;
+  actions?: any[];
+  start_date: string;
+  end_date: string;
+};
+
 // PDF request
 export type PDFQuery = {
   ctx: { previousQ: string; previousA: string; pos: number[]; roomId: string; boardId: string };
   assetids: string[];
   user: string;
+  model: string;
   q: string;
 };
 export type PDFAnswer = {
@@ -115,4 +135,5 @@ export const AgentRoutes = {
   image: '/image',
   pdf: '/pdf',
   code: '/code',
+  mesonet: '/mesonet',
 } as const;

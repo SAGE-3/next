@@ -372,27 +372,27 @@ function ToolbarComponent(props: App): JSX.Element {
         </form>
       </ButtonGroup>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Zoom In'} openDelay={400}>
-          <Button isDisabled={s.zoom >= 18} onClick={incZoom}>
-            <MdAdd fontSize="16px" />
+        <Tooltip placement="top" hasArrow={true} label={'Zoom In'} openDelay={400}>
+          <Button isDisabled={s.zoom >= 18} onClick={incZoom} size='xs' px={0}>
+            <MdAdd size="16px" />
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Zoom Out'} openDelay={400}>
-          <Button isDisabled={s.zoom <= 1} onClick={decZoom}>
-            <MdRemove fontSize="16px" />
+        <Tooltip placement="top" hasArrow={true} label={'Zoom Out'} openDelay={400}>
+          <Button isDisabled={s.zoom <= 1} onClick={decZoom} size='xs' px={0}>
+            <MdRemove size="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Street Map'} openDelay={400}>
-          <Button onClick={() => updateState(props._id, { baseLayer: 'OpenStreetMap' })}>
-            <MdMap fontSize="20px" />
+        <Tooltip placement="top" hasArrow={true} label={'Street Map'} openDelay={400}>
+          <Button onClick={() => updateState(props._id, { baseLayer: 'OpenStreetMap' })} size='xs' px={0}>
+            <MdMap size="16px" />
           </Button>
         </Tooltip>
 
-        <Tooltip placement="top-start" hasArrow={true} label={'Satellite Map'} openDelay={400}>
-          <Button onClick={() => updateState(props._id, { baseLayer: 'World Imagery' })}>
-            <MdTerrain fontSize="20px" />
+        <Tooltip placement="top" hasArrow={true} label={'Satellite Map'} openDelay={400}>
+          <Button onClick={() => updateState(props._id, { baseLayer: 'World Imagery' })} size='xs' px={0}>
+            <MdTerrain size="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>

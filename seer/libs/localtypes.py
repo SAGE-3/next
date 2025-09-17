@@ -9,11 +9,12 @@
 # Models
 from typing import List, NamedTuple, Optional
 from pydantic import BaseModel, Json
+import io
 
 # Pydantic models: Question, Answer, Context
 
 
-class Context(NamedTuple):
+class Context(BaseModel):
     previousQ: str  # previous prompt
     previousA: str  # previous answer
     pos: List[float]  # position in the board
@@ -27,7 +28,7 @@ class Question(BaseModel):
     q: str  # question
     user: str  # user name
     location: str  # location
-    model: str  # AI model: llama, openai
+    model: str  # AI model: llama, openai, azure
 
 
 class Answer(BaseModel):
@@ -43,7 +44,7 @@ class CodeRequest(BaseModel):
     q: str  # question
     user: str  # user name
     location: str  # location
-    model: str  # AI model: llama, openai
+    model: str  # AI model: llama, openai, azure
     method: str
 
 
@@ -58,8 +59,27 @@ class ImageQuery(BaseModel):
     ctx: Context  # context
     asset: str  # question
     user: str  # user name
-    model: str  # AI model: llama, openai
+    model: str  # AI model: llama, openai, azure
     q: str  # question
+
+
+class MesonetQuery(BaseModel):
+    ctx: Context  # context
+    user: str  # user name
+    q: str  # question
+    url: str
+    currentTime: str
+
+
+class MesonetAnswer(BaseModel):
+    attributes: List[str]
+    stations: List[str]
+    chart_type: List[str]
+    end_date: str
+    start_date: str
+    summary: str
+    success: bool = True  # success flag
+    actions: List[Json]  # actions to be performed
 
 
 class ImageAnswer(BaseModel):
@@ -70,9 +90,9 @@ class ImageAnswer(BaseModel):
 
 class PDFQuery(BaseModel):
     ctx: Context  # context
-    # asset: str  # question
-    assetids: List[str] # pdfs in sage
+    assetids: List[str]  # pdfs in sage
     user: str  # user name
+    model: str  # AI model: openai, azure
     q: str  # question
 
 
@@ -86,7 +106,7 @@ class WebQuery(BaseModel):
     ctx: Context  # context
     url: str  # question
     user: str  # user name
-    model: str  # AI model: llama, openai
+    model: str  # AI model: llama, openai, azure
     q: str  # question
     extras: str  # extra request data: 'links' | 'text' | 'images' | 'pdfs'
 

@@ -9,4 +9,13 @@
 import { AppName } from './types';
 
 // List of AI enabled apps
-export const AI_ENABLED_APPS = ['Chat', 'ImageViewer', 'PDFViewer', 'Stickie', 'CodeEditor', 'Webview'] as AppName[];
+export const AI_ENABLED_APPS = [
+  'Map',
+  'Chat',
+  'ImageViewer',
+  'PDFViewer',
+  'Stickie',
+  'CodeEditor',
+  'Webview',
+  'Hawaii Mesonet',
+] as AppName[];

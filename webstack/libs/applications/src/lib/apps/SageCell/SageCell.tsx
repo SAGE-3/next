@@ -30,17 +30,11 @@ import {
   Text,
   useColorModeValue,
   useToast,
-  Drawer,
-  DrawerBody,
-  DrawerCloseButton,
-  DrawerContent,
-  DrawerHeader,
-  useDisclosure,
-  Button,
 } from '@chakra-ui/react';
 
 // Icons
 import { MdError, MdDelete, MdPlayArrow, MdStop } from 'react-icons/md';
+import { VscRunAbove, VscRunAll, VscRunBelow } from 'react-icons/vsc';
 import { FaPython } from 'react-icons/fa';
 
 // Event Source import
@@ -55,9 +49,9 @@ import { Vega, VisualizationSpec } from 'react-vega';
 // VegaLite library
 import { VegaLite } from 'react-vega';
 // Monaco Imports
-import Editor, { useMonaco, OnMount } from '@monaco-editor/react';
+import Editor, { OnMount } from '@monaco-editor/react';
 import { editor } from 'monaco-editor';
-import { monacoOptions, monacoOptionsDrawer } from './components/monacoOptions';
+import { monacoOptions } from './components/monacoOptions';
 // Yjs Imports
 
 import { MonacoBinding } from 'y-monaco';
@@ -74,24 +68,24 @@ import {
   useUser,
   useUsersStore,
   useUIStore,
-  useCursorBoardPosition,
   useYjs,
   serverTime,
   YjsRoomConnection,
-  useThrottleScale,
+  useLinkStore,
 } from '@sage3/frontend';
 import { KernelInfo, ContentItem } from '@sage3/shared/types';
 import { SAGE3Ability } from '@sage3/shared';
 
 // App Imports
-import { state as AppState } from './index';
-import { AppWindow } from '../../components';
-import { ToolbarComponent, GroupedToolbarComponent, PdfViewer, Markdown, StatusBar } from './components';
 import { App } from '../../schema';
 import { useStore } from './components/store';
+import { AppWindow } from '../../components';
+import { state as AppState } from './index';
+import { ToolbarComponent, GroupedToolbarComponent, PdfViewer, Markdown, StatusBar } from './components';
 
 // Styling
 import './SageCell.css';
+import { getRunOrderChain } from '../../appLinks';
 
 /**
  * SageCell - SAGE3 application
@@ -111,18 +105,19 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
   const createApp = useAppStore((state) => state.create);
+
   // Apps selection
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
 
   // Store between app window and toolbar
-  const drawer = useStore((state) => state.drawer[props._id]);
-  const setDrawer = useStore((state) => state.setDrawer);
   const execute = useStore((state) => state.execute[props._id]);
+  const executeAll = useStore((state) => state.executeAll[props._id]);
   const interrupt = useStore((state) => state.interrupt[props._id]);
   const setExecute = useStore((state) => state.setExecute);
+  const setExecuteAll = useStore((state) => state.setExecuteAll);
   const setInterrupt = useStore((state) => state.setInterrupt);
   const setKernel = useStore((state) => state.setKernel);
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  // const { isOpen, onOpen, onClose } = useDisclosure();
 
   // Styling
   const defaultTheme = useColorModeValue('vs', 'vs-dark');
@@ -137,10 +132,10 @@ function AppComponent(props: App): JSX.Element {
   // Room and Board info
   const roomId = props.data.roomId;
   const boardId = props.data.boardId;
-  const setBoardPosition = useUIStore((state) => state.setBoardPosition);
-  const boardPosition = useUIStore((state) => state.boardPosition);
-  const scale = useThrottleScale(250);
-  const { uiToBoard } = useCursorBoardPosition();
+  // const setBoardPosition = useUIStore((state) => state.setBoardPosition);
+  // const boardPosition = useUIStore((state) => state.boardPosition);
+  // const scale = useThrottleScale(250);
+  // const { getBoardCursor } = useCursorBoardPosition();
 
   // Local state
   const [cursorPosition, setCursorPosition] = useState({ r: 0, c: 0 });
@@ -154,9 +149,7 @@ function AppComponent(props: App): JSX.Element {
 
   // YJS and Monaco
   const { yApps } = useYjs();
-  const monaco = useMonaco();
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
-  const editorRef2 = useRef<editor.IStandaloneCodeEditor | null>(null);
 
   // Local state
   const [access, setAccess] = useState(true);
@@ -179,7 +172,7 @@ function AppComponent(props: App): JSX.Element {
   const [error, setError] = useState<{ traceback?: string[]; ename?: string; evalue?: string } | null>(null);
 
   // Drawer size: user's preference from local storage or default
-  const [drawerWidth, setDrawerWidth] = useState(localStorage.getItem('sage_preferred_drawer_width') || '50vw');
+  // const [drawerWidth, setDrawerWidth] = useState(localStorage.getItem('sage_preferred_drawer_width') || '50vw');
 
   useEffect(() => {
     // If the API Status is down, set the publicKernels to empty array
@@ -196,6 +189,15 @@ function AppComponent(props: App): JSX.Element {
       else setAccess(false);
     }
   }, [access, apiStatus, kernels, s.kernel]);
+
+  // Watch the kernel changes to update the Editor language
+  useEffect(() => {
+    const selectedKernel = kernels.find((kernel) => kernel.kernel_id === s.kernel);
+    if (selectedKernel) {
+      const language = selectedKernel.name === 'python3' ? 'python' : selectedKernel.name === 'ir' ? 'r' : 'julia';
+      updateState(props._id, { language });
+    }
+  }, [s.kernel]);
 
   /**
    * Update local state if the online status changes
@@ -225,11 +227,13 @@ function AppComponent(props: App): JSX.Element {
 
   const handleEditorResize = (deltaY: number) => {
     setEditorHeight((prevHeight) => {
-      const newHeight = prevHeight + deltaY;
-      // set the minimum height of the editor to 150px
-      if (newHeight < 150) return 150;
-      // set the maximum height of the editor to 50% of the window height
-      if (newHeight > props.data.size.height * 0.8) return props.data.size.height * 0.8;
+      const focused = useUIStore.getState().focusedAppId === props._id;
+      const maxHeight = focused ? window.innerHeight * 0.8 : props.data.size.height * 0.8;
+      let newHeight = prevHeight + deltaY;
+      // set the minimum height of the editor
+      if (newHeight < 280) newHeight = 280;
+      // set the maximum height of the editor to 80% of the window height
+      if (newHeight > maxHeight) newHeight = maxHeight;
       return newHeight;
     }); // update the Monaco editor height
   };
@@ -244,8 +248,9 @@ function AppComponent(props: App): JSX.Element {
    */
   useEffect(() => {
     if (!editorRef.current) return;
+    const focused = useUIStore.getState().focusedAppId === props._id;
     editorRef.current.layout({
-      width: props.data.size.width - 60,
+      width: focused ? window.innerWidth - 60 : props.data.size.width - 60,
       height: editorHeight && editorHeight > 150 ? editorHeight : 150,
       minHeight: '100%',
       minWidth: '100%',
@@ -260,17 +265,6 @@ function AppComponent(props: App): JSX.Element {
 
   // Keep a copy of the function
   const throttleFunc = useCallback(throttleUpdate, [editorRef.current]);
-
-  /**
-   * Executes the code in the editor
-   * @returns void
-   */
-  const handleExecuteDrawer = async () => {
-    // Copy the drawer code to the editor
-    editorRef.current?.setValue(editorRef2.current?.getValue() || '');
-    // Execute the code
-    handleExecute();
-  };
 
   const handleExecute = async () => {
     const canExec = SAGE3Ability.canCurrentUser('execute', 'kernels');
@@ -347,6 +341,60 @@ function AppComponent(props: App): JSX.Element {
     }
   };
 
+  ////// Todo: temporary proof of concept block...
+  // Evaluate the sagecells in provenance (source) order
+  // waitSeconds and executeAppNoChecks directly pulled from the toolbar.tsx, should consider some refactor strategy to resolve duplicated code
+  async function waitSeconds(x: number): Promise<void> {
+    await new Promise((resolve) => setTimeout(resolve, x * 1000));
+  }
+
+  const handleExecuteChain = async (type: 'up' | 'down' | 'all') => {
+    async function executeAppNoChecks(appid: string) {
+      // Get the code from the store
+      const code = useAppStore.getState().apps.find((app) => app._id === appid)?.data.state.code;
+      const userId = user?._id;
+      const kernel = useStore.getState().kernel[appid];
+
+      if (kernel && code && userId) {
+        const response = await executeCode(code, kernel, userId);
+        if (response.ok) {
+          const msgId = response.msg_id;
+          useAppStore.getState().updateState(appid, { msgId: msgId, session: userId });
+          return true;
+        } else {
+          useAppStore.getState().updateState(appid, { streaming: false, msgId: '' });
+          return false;
+        }
+      }
+      return false;
+    }
+
+    const allBoardApps: App[] = JSON.parse(JSON.stringify(useAppStore.getState().apps)); // deep copy
+    const links = useLinkStore.getState().links;
+
+    const run_order_appIds = getRunOrderChain(props._id, links);
+    // flip the order of the array to execute the apps in reverse order
+    run_order_appIds.reverse();
+    // If the type is up, only get the apps upstream, if down, only get the apps downstream, if all no change
+    if (type === 'down') {
+      const idx = run_order_appIds.indexOf(props._id);
+      run_order_appIds.splice(idx + 1, run_order_appIds.length - idx - 1);
+    } else if (type === 'up') {
+      const idx = run_order_appIds.indexOf(props._id);
+      run_order_appIds.splice(0, idx);
+    }
+
+    for (let i = run_order_appIds.length - 1; i >= 0; i--) {
+      const app = allBoardApps.find((a) => a._id === run_order_appIds[i]);
+      if (!app) break;
+      const res = await executeAppNoChecks(app._id);
+      // if error, break the loop
+      if (!res) break;
+      // Give illusion of sequential execution
+      await waitSeconds(0.1);
+    }
+  };
+
   // Track the execute flag from the store in the toolbar
   useEffect(() => {
     if (execute) {
@@ -354,6 +402,14 @@ function AppComponent(props: App): JSX.Element {
       setExecute(props._id, false);
     }
   }, [execute]);
+
+  // Track the execute flag from the store in the toolbar
+  useEffect(() => {
+    if (executeAll && executeAll.exec) {
+      handleExecuteChain(executeAll.type);
+      setExecuteAll(props._id, false, 'all');
+    }
+  }, [executeAll]);
 
   // Track the interrupt flag from the store in the toolbar
   useEffect(() => {
@@ -390,20 +446,6 @@ function AppComponent(props: App): JSX.Element {
       ]);
       // Ensure we are always operating on the same line endings
       model.setEOL(0);
-    }
-    if (!editorRef2.current) return;
-    const model2 = editorRef2.current.getModel();
-    if (model2) {
-      // Clear the drawer editor
-      editorRef2.current.executeEdits('update-value', [
-        {
-          range: model2.getFullModelRange(),
-          text: '',
-          forceMoveMarkers: false,
-        },
-      ]);
-      // Ensure we are always operating on the same line endings
-      model2.setEOL(0);
     }
   };
 
@@ -533,25 +575,21 @@ function AppComponent(props: App): JSX.Element {
           case 'stdout':
           case 'stderr':
             return <Ansi key={key}>{value as string}</Ansi>;
-          case 'text/html':
-            if (!value) return null; // hides other outputs if html is present
-            // remove extra \n from html
-            return <Box key={key} dangerouslySetInnerHTML={{ __html: value.replace(/\n/g, '') }} />;
-          case 'text/plain':
-            if (item['text/html']) return null;
-            return <Ansi key={key}>{value as string}</Ansi>;
           case 'image/png':
             return (
               <Image
                 key={key}
                 src={`data:image/png;base64,${value}`}
                 onDragStart={(e) => {
-                  // set the title in the drag transfer data
+                  // Set the title in the drag transfer data
+                  let title = "SAGEcell Output";
                   if (item['text/plain']) {
-                    const title = item['text/plain'];
-                    // remove the quotes from the title
-                    e.dataTransfer.setData('title', title.slice(1, -1));
+                    title = item['text/plain'];
+                    // Remove the quotes from the title
+                    title = title.replace(/[<>]/g, "");
                   }
+                  const data = JSON.stringify({ title, sources: [props._id] });
+                  e.dataTransfer.setData('app_state', data);
                 }}
               />
             );
@@ -561,15 +599,25 @@ function AppComponent(props: App): JSX.Element {
                 key={key}
                 src={`data:image/jpeg;base64,${value}`}
                 onDragStart={(e) => {
-                  // set the title in the drag transfer data
+                  // Set the title in the drag transfer data
+                  let title = "SAGEcell Output";
                   if (item['text/plain']) {
-                    const title = item['text/plain'];
-                    // remove the quotes from the title
-                    e.dataTransfer.setData('title', title.slice(1, -1));
+                    title = item['text/plain'];
+                    // Remove the quotes from the title
+                    title = title.replace(/[<>]/g, "");
                   }
+                  const data = JSON.stringify({ title, sources: [props._id] });
+                  e.dataTransfer.setData('app_state', data);
                 }}
               />
             );
+          case 'text/html':
+            if (!value) return null; // hides other outputs if html is present
+            // remove extra \n from html
+            return <Box key={key} dangerouslySetInnerHTML={{ __html: value.replace(/\n/g, '') }} />;
+          case 'text/plain':
+            if (item['text/html']) return null;
+            return <Ansi key={key}>{value as string}</Ansi>;
           case 'image/svg+xml':
             return <Box key={key} dangerouslySetInnerHTML={{ __html: value.replace(/\n/g, '') }} />;
           case 'text/markdown':
@@ -736,12 +784,12 @@ function AppComponent(props: App): JSX.Element {
   const handleFontDecrease = () => {
     setFontSize((prev) => Math.max(8, prev - 2));
   };
-  const handleSaveCode = () => {
-    if (editorRef2.current) {
-      // Copy the drawer code to the editor in the board
-      editorRef.current?.setValue(editorRef2.current.getValue());
-    }
-  };
+  // const handleSaveCode = () => {
+  //   if (editorRef2.current) {
+  //     // Copy the drawer code to the editor in the board
+  //     editorRef.current?.setValue(editorRef2.current.getValue());
+  //   }
+  // };
 
   /**
    *
@@ -774,9 +822,12 @@ function AppComponent(props: App): JSX.Element {
       endLineNumber: cursorPosition.r,
       endColumn: cursorPosition.c,
     });
-    // set the editor layout
+
+    // Set the editor layout
+    const isFocused = useUIStore.getState().focusedAppId === props._id;
+    const editorWidth = isFocused ? window.innerWidth - 60 : props.data.size.width - 60;
     editor.layout({
-      width: props.data.size.width - 60,
+      width: editorWidth,
       height: editorHeight && editorHeight > 150 ? editorHeight : 150,
       minHeight: '100%',
       minWidth: '100%',
@@ -847,122 +898,11 @@ function AppComponent(props: App): JSX.Element {
       if (e.code === 'Escape') {
         // Deselect the app
         setSelectedApp('');
+        // Unfocus the app
+        useUIStore.getState().setFocusedAppId('');
         return;
       }
       throttleFunc();
-    });
-
-    // Not in drawer to start
-    setDrawer(props._id, false);
-  };
-
-  const handleMountDrawer: OnMount = (editor, monaco) => {
-    // set the editorRef
-    editorRef2.current = editor;
-
-    // set the editor options
-    editor.updateOptions({ readOnly: !access || !apiStatus || !s.kernel });
-    // Default width and font size
-    const preference = localStorage.getItem('sage_preferred_drawer_width');
-    setDrawerWidth(preference || '50vw');
-
-    // set the editor theme
-    monaco.editor.setTheme(defaultTheme);
-    // set the editor language
-    monaco.editor.setModelLanguage(editor.getModel() as editor.ITextModel, 'python');
-    // set the editor cursor position
-    editor.setPosition({ lineNumber: cursorPosition.r, column: cursorPosition.c });
-    // set the editor cursor selection
-    editor.setSelection({
-      startLineNumber: cursorPosition.r,
-      startColumn: cursorPosition.c,
-      endLineNumber: cursorPosition.r,
-      endColumn: cursorPosition.c,
-    });
-    // set the editor layout
-    editor.layout({
-      width: props.data.size.width - 60,
-      height: editorHeight && editorHeight > 150 ? editorHeight : 150,
-      minHeight: '100%',
-      minWidth: '100%',
-    } as editor.IDimension);
-
-    editor.onDidChangeCursorPosition((e) => {
-      setCursorPosition({ r: e.position.lineNumber, c: e.position.column });
-    });
-    editor.addAction({
-      id: 'execute',
-      label: 'Cell Execute',
-      contextMenuOrder: 0,
-      contextMenuGroupId: '2_sage3',
-      keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
-      run: handleExecuteDrawer,
-    });
-    editor.addAction({
-      id: 'interrupt',
-      label: 'Cell Interrupt',
-      contextMenuOrder: 1,
-      contextMenuGroupId: '2_sage3',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyI],
-      run: handleInterrupt,
-    });
-    editor.addAction({
-      id: 'syncForServer',
-      label: 'Cell Save',
-      contextMenuOrder: 2,
-      contextMenuGroupId: '2_sage3',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
-      run: handleSaveCode,
-    });
-
-    editor.addAction({
-      id: 'setup_sage3',
-      label: 'Setup SAGE API',
-      contextMenuOrder: 0,
-      contextMenuGroupId: '3_sagecell',
-      run: handleInsertAPI,
-    });
-    editor.addAction({
-      id: 'insert_vars',
-      label: 'Insert Board Variables',
-      contextMenuOrder: 1,
-      contextMenuGroupId: '3_sagecell',
-      run: handleInsertInfo,
-    });
-    editor.addAction({
-      id: 'clear',
-      label: 'Clear Cell',
-      contextMenuOrder: 2,
-      contextMenuGroupId: '3_sagecell',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyL],
-      run: handleClear,
-    });
-
-    editor.addAction({
-      id: 'increaseFontSize',
-      label: 'Increase Font Size',
-      contextMenuOrder: 0,
-      contextMenuGroupId: '4_font',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Equal],
-      run: handleFontIncrease,
-    });
-    editor.addAction({
-      id: 'decreaseFontSize',
-      label: 'Decrease Font Size',
-      contextMenuOrder: 1,
-      contextMenuGroupId: '4_font',
-      keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Minus],
-      run: handleFontDecrease,
-    });
-
-    // Update database on key up
-    editor.onKeyUp((e) => {
-      if (e.code === 'Escape') {
-        // Deselect the app
-        setSelectedApp('');
-        closingDrawer();
-        return;
-      }
     });
   };
 
@@ -986,74 +926,6 @@ function AppComponent(props: App): JSX.Element {
       fontSize: s.fontSize,
     });
   }, [s.fontSize]);
-
-  useEffect(() => {
-    if (drawer) {
-      onOpen();
-      // If the right side of the app is beyond the center of the board, move the board
-      const xw = props.data.position.x + props.data.size.width;
-      let position = 1;
-      if (drawerWidth === '25vw') {
-        position = (3 * innerWidth) / 4;
-      } else if (drawerWidth === '50vw') {
-        position = innerWidth / 2;
-      } else if (drawerWidth === '75vw') {
-        position = innerWidth / 4;
-      }
-      const center = uiToBoard(position, innerHeight);
-      if (xw > center.x) {
-        const offset = xw - center.x + 10 / scale;
-        setBoardPosition({ x: boardPosition.x - offset, y: boardPosition.y });
-      }
-    }
-  }, [drawer]);
-
-  const closingDrawer = () => {
-    setDrawer(props._id, false);
-    if (editorRef2.current) {
-      // Copy the drawer code to the editor in the board
-      editorRef.current?.setValue(editorRef2.current.getValue());
-    }
-    onClose();
-  };
-
-  const drawerEditor = (
-    <Editor
-      defaultValue={editorRef.current?.getValue()}
-      loading={<Spinner />}
-      options={canExecuteCode ? { ...monacoOptionsDrawer } : { ...monacoOptionsDrawer, readOnly: true }}
-      onMount={handleMountDrawer}
-      height={'100%'}
-      width={'100%'}
-      theme={defaultTheme}
-      language={s.language}
-    />
-  );
-
-  const make25W = () => {
-    setDrawerWidth('25vw');
-    // save the value in local storage, user's preference
-    localStorage.setItem('sage_preferred_drawer_width', '25vw');
-    const base = 6;
-    const newFontsize = Math.round(Math.min(1.2 * base + (0.25 * innerWidth) / 100, 3 * base));
-    if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
-  };
-  const make50W = () => {
-    setDrawerWidth('50vw');
-    // save the value in local storage, user's preference
-    localStorage.setItem('sage_preferred_drawer_width', '50vw');
-    const base = 6;
-    const newFontsize = Math.round(Math.min(1.2 * base + (0.5 * innerWidth) / 100, 3 * base));
-    if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
-  };
-  const make75W = () => {
-    setDrawerWidth('75vw');
-    // save the value in local storage, user's preference
-    localStorage.setItem('sage_preferred_drawer_width', '75vw');
-    const base = 6;
-    const newFontsize = Math.round(Math.min(1.2 * base + (0.75 * innerWidth) / 100, 3 * base));
-    if (editorRef2.current) editorRef2.current.updateOptions({ fontSize: newFontsize });
-  };
 
   // Start dragging
   function OnDragOver(event: React.DragEvent<HTMLDivElement>) {
@@ -1079,46 +951,8 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props} hideBackgroundIcon={FaPython}>
       <>
-        <Drawer placement="right" variant="code" isOpen={isOpen} onClose={closingDrawer} closeOnOverlayClick={true}>
-          <DrawerContent maxW={drawerWidth}>
-            <DrawerCloseButton />
-            <DrawerHeader p={1} m={1}>
-              <Flex p={0} m={0}>
-                <Text flex={1} mr={'10px'}>
-                  SageCell
-                </Text>
-                <Box flex={2} width={'100px'} overflow={'clip'}>
-                  <Text fontSize={'md'} pt={1} whiteSpace={'nowrap'} textOverflow={'ellipsis'}>
-                    Use right-click for cell functions
-                  </Text>
-                </Box>
-                <Tooltip hasArrow label="Small Editor">
-                  <Button size={'sm'} p={2} m={'0 10px 0 10px'} onClick={make25W}>
-                    25%
-                  </Button>
-                </Tooltip>
-                <Tooltip hasArrow label="Medium Editor">
-                  <Button size={'sm'} p={2} m={'0 10px 0 1px'} onClick={make50W}>
-                    50%
-                  </Button>
-                </Tooltip>
-                <Tooltip hasArrow label="Large Editor">
-                  <Button size={'sm'} p={2} m={'0 40px 0 1px'} onClick={make75W}>
-                    75%
-                  </Button>
-                </Tooltip>
-              </Flex>
-            </DrawerHeader>
-            <DrawerBody p={0} m={0} boxSizing="border-box">
-              <Box style={{ width: '100%', height: '100%' }} border="1px solid darkgray">
-                {drawerEditor}
-              </Box>
-            </DrawerBody>
-          </DrawerContent>
-        </Drawer>
-
         <Box className="sc" h={'calc(100% - 1px)'} w={'100%'} display="flex" flexDirection="column" backgroundColor={bgColor}>
-          <StatusBar kernelName={selectedKernelName} access={access} online={apiStatus} rank={props.data.state.rank} />
+          <StatusBar kernelName={selectedKernelName} kernelLanguage={s.language} access={access} online={apiStatus} rank={props.data.state.rank} />
           <Box
             w={'100%'}
             h={'100%'}
@@ -1133,13 +967,12 @@ function AppComponent(props: App): JSX.Element {
           >
             <Flex direction={'row'}>
               {/* The editor status info (bottom) */}
-              <Flex direction={'column'}>
+              <Flex direction={'column'} w="100%">
                 <Editor
                   loading={<Spinner />}
                   options={canExecuteCode ? { ...monacoOptions } : { ...monacoOptions, readOnly: true }}
                   onMount={handleMount}
                   height={editorHeight && editorHeight > 150 ? editorHeight : 150}
-                  width={props.data.size.width - 60}
                   theme={defaultTheme}
                   language={s.language}
                 />
@@ -1151,11 +984,35 @@ function AppComponent(props: App): JSX.Element {
               {/* The editor action panel (right side) */}
               <Box p={1}>
                 <ButtonGroup isAttached variant="outline" size="lg" orientation="vertical">
-                  <Tooltip hasArrow label="Execute" placement="right-start">
+                  <Tooltip hasArrow label="Run" placement="right-start">
                     <IconButton
                       onClick={handleExecute}
                       aria-label={''}
                       icon={s.msgId ? <Spinner size="sm" color="teal.500" /> : <MdPlayArrow size={'1.5em'} color="#008080" />}
+                      isDisabled={!s.kernel || !canExecuteCode}
+                    />
+                  </Tooltip>
+                  <Tooltip hasArrow label="Run All" placement="right-start">
+                    <IconButton
+                      onClick={() => handleExecuteChain('all')}
+                      aria-label={''}
+                      icon={s.msgId ? <Spinner size="sm" color="teal.500" /> : <VscRunAll size={'1em'} color="#008080" />}
+                      isDisabled={!s.kernel || !canExecuteCode}
+                    />
+                  </Tooltip>
+                  <Tooltip hasArrow label="Run To Here" placement="right-start">
+                    <IconButton
+                      onClick={() => handleExecuteChain('up')}
+                      aria-label={''}
+                      icon={s.msgId ? <Spinner size="sm" color="teal.500" /> : <VscRunAbove size={'1em'} color="#008080" />}
+                      isDisabled={!s.kernel || !canExecuteCode}
+                    />
+                  </Tooltip>
+                  <Tooltip hasArrow label="Run From Here" placement="right-start">
+                    <IconButton
+                      onClick={() => handleExecuteChain('down')}
+                      aria-label={''}
+                      icon={s.msgId ? <Spinner size="sm" color="teal.500" /> : <VscRunBelow size={'1em'} color="#008080" />}
                       isDisabled={!s.kernel || !canExecuteCode}
                     />
                   </Tooltip>

@@ -27,7 +27,6 @@ import {
   MenuDivider,
   useToast,
   Input,
-  keyframes,
   Modal,
   ModalOverlay,
   ModalContent,
@@ -40,6 +39,7 @@ import {
   AlertDescription,
   Spacer,
 } from '@chakra-ui/react';
+import { keyframes } from '@emotion/react';
 
 import {
   MdDownload,
@@ -74,6 +74,7 @@ import {
   useInsightStore,
   useUserSettings,
   ColorPicker,
+  useLinkStore,
 } from '@sage3/frontend';
 import { AI_ENABLED_APPS, Applications } from '@sage3/applications/apps';
 import { AppSchema } from '@sage3/applications/schema';
@@ -104,6 +105,9 @@ export function LassoToolbar(props: LassoToolbarProps) {
   const createApp = useAppStore((state) => state.create);
   const updateBatch = useAppStore((state) => state.updateBatch);
 
+  // Links Store
+  const addLink = useLinkStore((state) => state.addLink);
+
   // UI Store
   const lassoApps = useUIStore((state) => state.selectedAppsIds);
   const fitApps = useUIStore((state) => state.fitApps);
@@ -114,7 +118,7 @@ export function LassoToolbar(props: LassoToolbarProps) {
   const updateInsight = useInsightStore((state) => state.update);
 
   // Position
-  const { boardCursor } = useCursorBoardPosition();
+  const { getBoardCursor } = useCursorBoardPosition();
 
   // Boards
   const boards = useBoardStore((state) => state.boards);
@@ -237,7 +241,7 @@ export function LassoToolbar(props: LassoToolbarProps) {
       if (!firstApp) return false;
       // return AI_ENABLED_APPS.includes(firstApp.data.type);
       // for now, only Chat and PDFViewer are AI_Enabled in multi-select
-      return ["Stickie", "PDFViewer"].includes(firstApp.data.type);
+      return ['Stickie', 'PDFViewer'].includes(firstApp.data.type);
     } else {
       return false;
     }
@@ -412,7 +416,8 @@ export function LassoToolbar(props: LassoToolbarProps) {
     });
   };
 
-  const openInChat = () => {
+  const openInChat = async () => {
+    const boardCursor = getBoardCursor();
     const x = boardCursor.x - 200;
     const y = boardCursor.y - 700;
     if (roomId && boardId) {
@@ -427,7 +432,14 @@ export function LassoToolbar(props: LassoToolbarProps) {
             return acc;
           }, '');
         }
-        createApp(setupApp('Chat', 'Chat', x, y, roomId, boardId, { w: 800, h: 420 }, { context: context, sources: lassoApps }));
+        const res = await createApp(setupApp('Chat', 'Chat', x, y, roomId, boardId, { w: 800, h: 420 }, { context: context }));
+        if (res.success) {
+          const targetId = res.data._id;
+          lassoApps.forEach((sourceId) => {
+            const newApp = res.data;
+            addLink(sourceId, targetId, boardId, 'provenance');
+          });
+        }
       } else {
         createApp(setupApp('Chat', 'Chat', x, y, roomId, boardId, { w: 800, h: 420 }, { sources: lassoApps }));
       }
@@ -435,6 +447,7 @@ export function LassoToolbar(props: LassoToolbarProps) {
   };
 
   const openInCell = () => {
+    const boardCursor = getBoardCursor();
     const x = boardCursor.x - 200;
     const y = boardCursor.y - 1000;
     if (roomId && boardId) {
@@ -587,7 +600,7 @@ for b in bits:
           transform={`translateX(-50%)`}
           position="absolute"
           left="50vw"
-          bottom="6px"
+          bottom="50px"
           border="solid 3px"
           borderColor={borderColor}
           bg={panelBackground}
@@ -780,20 +793,21 @@ for b in bits:
         </Box>
       )}
 
-      {deleteIsOpen &&
+      {deleteIsOpen && (
         <ConfirmModal
           isOpen={deleteIsOpen}
           onClose={deleteOnClose}
           onConfirm={closeSelectedApps}
           title="Delete Selected Applications"
-          message={`Are you sure you want to delete the selected ${lassoApps.length > 1 ? `${lassoApps.length} applications?` : 'application?'
-            } `}
+          message={`Are you sure you want to delete the selected ${
+            lassoApps.length > 1 ? `${lassoApps.length} applications?` : 'application?'
+          } `}
           cancelText="Cancel"
           confirmText="Delete"
           confirmColor="red"
           size="lg"
         />
-      }
+      )}
     </>
   );
 }
@@ -802,7 +816,7 @@ for b in bits:
  * Packing function
  */
 
-const GrowingPacker = function () { };
+const GrowingPacker = function () {};
 
 GrowingPacker.prototype = {
   fit: function (blocks: any[]) {

@@ -6,11 +6,20 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// import { useAppStore } from '@sage3/frontend';
-import { App, AppGroup } from '../../schema';
+import { ButtonGroup, Button, Tooltip } from '@chakra-ui/react';
+import { MdRefresh } from 'react-icons/md';
+import { renderToStaticMarkup } from 'react-dom/server';
 
-import { state as AppState } from './index';
+// Markdown
+import Markdown from 'markdown-to-jsx';
+
+// SAGE3
+import { useAppStore } from '@sage3/frontend';
+
 import { AppWindow } from '../../components';
+import { App, AppGroup } from '../../schema';
+import { state as AppState } from './index';
+
 
 
 /* App component for IFrame */
@@ -30,10 +39,42 @@ function AppComponent(props: App): JSX.Element {
 
 /* App toolbar component for the app IFrame */
 function ToolbarComponent(props: App): JSX.Element {
-  // const s = props.data.state as AppState;
-  // const updateState = useAppStore((state) => state.updateState);
+  const updateState = useAppStore((state) => state.updateState);
 
-  return (<></>);
+  const reloadFrame = () => {
+    if (props.data.sourceApps) {
+      if (props.data.sourceApps.length === 1) {
+        const sourceApp = props.data.sourceApps[0];
+        const app = useAppStore.getState().apps.find((app) => app._id === sourceApp);
+        if (app && app.data.type === 'CodeEditor') {
+          const doc = app.data.state.content;
+          if (app.data.state.language === 'html') {
+            updateState(props._id, { doc: doc });
+          } else if (app.data.state.language === 'markdown') {
+            const elt = <Markdown>{doc}</Markdown>;
+            const htmlResult = renderToStaticMarkup(elt);
+            updateState(props._id, { doc: htmlResult });
+          }
+        }
+      }
+    } else {
+      // just do a reload of the iframe
+      const iframe = document.querySelector('iframe');
+      if (iframe) {
+        iframe.contentWindow?.location.reload();
+      }
+    }
+  };
+
+  return (<>
+    <ButtonGroup isAttached size="xs" colorScheme="teal">
+      <Tooltip placement="top" hasArrow={true} label={'Reload Page'} openDelay={400}>
+        <Button onClick={reloadFrame} size='xs' px={0}>
+          <MdRefresh />
+        </Button>
+      </Tooltip>
+    </ButtonGroup>
+  </>);
 }
 
 /**

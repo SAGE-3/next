@@ -1,4 +1,4 @@
-FROM python:3.9-slim AS builder
+FROM python:3.13-slim-bookworm AS builder
 
 WORKDIR /code
 
@@ -9,7 +9,7 @@ COPY ./seer/requirements.txt /code/requirements.txt
 RUN pip install --no-cache-dir --upgrade --prefix=/install -r /code/requirements.txt
 
 # Stage 2: Final Image
-FROM python:3.9-slim
+FROM python:3.13-slim-bookworm
 
 WORKDIR /code
 
@@ -27,4 +27,4 @@ COPY ./seer/app /code/app
 COPY ./seer/libs/ /code/libs
 COPY ./seer/main.py /code
 
-CMD ["fastapi", "run", "main.py", "--proxy-headers", "--port", "9999", "--workers", "4"]
+CMD ["uvicorn", "main:app", "--proxy-headers", "--host", "0.0.0.0", "--port", "9999", "--workers", "1"]

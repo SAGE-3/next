@@ -37,9 +37,9 @@ import {
 import { MdInfo } from 'react-icons/md';
 
 // SAGE Imports
+import { ServerConfiguration } from '@sage3/shared/types';
 import { useUserSettings } from '../../../providers';
 import { useConfigStore } from '../../../stores';
-import { ServerConfiguration } from '@sage3/shared/types';
 import { isElectron } from '../../../utils';
 
 interface EditUserSettingsModalProps {
@@ -71,7 +71,7 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
     toggleShowViewports,
     toggleShowAppTitles,
     toggleShowUI,
-    toggleProvenance,
+    setShowLinks,
     toggleShowTags,
     setAIModel,
     setUIScale,
@@ -83,19 +83,21 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
   const showAppTitles = userSettings.showAppTitles;
   const showUI = userSettings.showUI;
   const showTags = userSettings.showTags;
-  const showProvenance = userSettings.showProvenance;
+  const showLinks = userSettings.showLinks;
   const uiScale = userSettings.uiScale;
 
   // SAGE Intelligence Settings
   const config = useConfigStore((state) => state.config);
   const [llama, setLlama] = useState<ServerConfiguration['services']['llama']>();
   const [openai, setOpenai] = useState<ServerConfiguration['services']['openai']>();
+  const [azure, setAzure] = useState<ServerConfiguration['services']['azure']>();
   const [selectedModel, setSelectedModel] = useState(userSettings.aiModel);
 
   useEffect(() => {
     if (config) {
       setLlama(config.llama);
       setOpenai(config.openai);
+      setAzure(config.azure);
     }
   }, [config]);
 
@@ -105,8 +107,8 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
       // If value previously set, use it
       setSelectedModel(userSettings.aiModel);
     } else {
-      // Otherwise, use openai if available, else llama
-      const val = openai?.apiKey ? 'openai' : 'llama';
+      // Otherwise, use azure as default
+      const val = 'azure';
       setSelectedModel(val);
       setAIModel(val);
     }
@@ -206,22 +208,23 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
 
                 <FormControl display="flex" mt="2" alignItems="center" justifyContent="space-between">
                   <FormLabel htmlFor="hide-provenance" mb="0">
-                    Provenance
+                    Links
                     <InfoTooltip label={'Show/Hide SAGE3 arrows for provenance. Must enable User Interface.'} />
                   </FormLabel>
                   <Select
                     id="other-viewports"
                     colorScheme="teal"
                     size="sm"
-                    onChange={(e) => toggleProvenance(e.target.value as 'none' | 'selected' | 'all')}
-                    value={showProvenance}
+                    onChange={(e) => setShowLinks(e.target.value as 'none' | 'selected' | 'selected-path' | 'all')}
+                    value={showLinks}
                     isDisabled={!showUI}
                     width="180px"
                     textAlign={'right'}
                   >
                     <option value="none">None</option>
-                    <option value="selected">Selected Application</option>
-                    <option value="all">All Applications</option>
+                    <option value="selected">Selected App</option>
+                    <option value="selected-path">Selected App's Path</option>
+                    <option value="all">All Links</option>
                   </Select>
                 </FormControl>
               </TabPanel>
@@ -240,6 +243,9 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
                         <Radio value="openai" isDisabled={!openai?.apiKey}>
                           <b>OpenAI</b>: {openai?.model} - {openai?.apiKey ? openai?.apiKey.substring(0, 3) + '•'.repeat(10) : 'n/a'}
                         </Radio>
+                        <Radio value="azure" isDisabled={!azure?.text.apiKey}>
+                          <b>Azure</b>: {azure?.text.model} - {azure?.text.apiKey ? azure?.text.apiKey.substring(0, 3) + '•'.repeat(10) : 'n/a'}
+                        </Radio>
                       </Stack>
                     </RadioGroup>
                   </VStack>
@@ -248,9 +254,12 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
             </TabPanels>
           </Tabs>
         </ModalBody>
-        <ModalFooter display="flex" justifyContent={'left'}>
-          <Button colorScheme="teal" size="sm" width="100%" onClick={restoreDefaultSettings} ref={initialRef}>
+        <ModalFooter display="flex" justifyContent={'space-between'}>
+          <Button colorScheme="teal" size="sm" onClick={restoreDefaultSettings}>
             Restore Default Settings
+          </Button>
+          <Button colorScheme="green" size="sm" width="80px" onClick={props.onClose} ref={initialRef}>
+            OK
           </Button>
         </ModalFooter>
       </ModalContent>

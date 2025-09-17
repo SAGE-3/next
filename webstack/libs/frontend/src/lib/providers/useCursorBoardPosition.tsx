@@ -1,134 +1,116 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2025. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useCallback, useEffect, useState, createContext, useContext } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { throttle } from 'throttle-debounce';
-
 import { useUIStore } from '../stores';
 
-type CursorBoardPositionContextType = {
-  boardCursor: { x: number; y: number };
-  uiToBoard: (x: number, y: number) => { x: number; y: number };
-  cursor: { x: number; y: number };
+type Point = { x: number; y: number };
+type ContextType = {
+  cursor: Point;
+  boardCursor: Point;
+  uiToBoard: (x: number, y: number) => Point;
+  getCursor: () => Point;
+  getBoardCursor: () => Point;
 };
 
-const CursorBoardPositionContext = createContext({
+const CursorBoardPositionContext = createContext<ContextType>({
   cursor: { x: 0, y: 0 },
   boardCursor: { x: 0, y: 0 },
-  uiToBoard: (x: number, y: number) => {
-    return { x: 0, y: 0 };
-  },
-} as CursorBoardPositionContextType);
+  uiToBoard: () => ({ x: 0, y: 0 }),
+  getCursor: () => ({ x: 0, y: 0 }),
+  getBoardCursor: () => ({ x: 0, y: 0 }),
+});
 
-/**
- * Hook to oberve the user's cursor position on the board
- * Usable only on the board page
- * @returns (x, y) position of the cursor
- */
-export function useCursorBoardPosition() {
-  return useContext(CursorBoardPositionContext);
-}
+export const useCursorBoardPosition = () => useContext(CursorBoardPositionContext);
 
-export function CursorBoardPositionProvider(props: React.PropsWithChildren<Record<string, unknown>>) {
-  const [boardCursor, setBoardCursor] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [cursor, setCursor] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const boardPosition = useUIStore((state) => state.boardPosition);
-  const scale = useUIStore((state) => state.scale);
-  const boardSynced = useUIStore((state) => state.boardSynced);
-  const [, setLastEvent] = useState<MouseEvent | undefined>(undefined);
+export const CursorBoardPositionProvider: React.FC<React.PropsWithChildren<{}>> = ({ children }) => {
+  const [cursor, setCursor] = useState<Point>({ x: 0, y: 0 });
+  const [boardCursor, setBoardCursor] = useState<Point>({ x: 0, y: 0 });
 
-  // This is needed to prevent throttleMoveRef from resettting the listeners
-  // practical issue it solves: when dragging w/ left mouse,
-  // then stopped (while still holding down left mouse) the use effect resets the listeners
-  // this stops the temporary optimizations.
-  const [, setIsMouseDown] = useState<boolean>(false);
+  // Refs to hold latest values for on-demand getters
+  const cursorRef = useRef<Point>(cursor);
+  const boardCursorRef = useRef<Point>(boardCursor);
 
-  // Throttle Functions for the cursor mousemove
-  const throttleMove = throttle(100, (e: any) => {
-    setCursor({ x: e.clientX, y: e.clientY });
-    // Calculate Board Position
-    const boardX = Math.floor(e.clientX / scale - boardPosition.x);
-    const boardY = Math.floor(e.clientY / scale - boardPosition.y);
-    setBoardCursor({ x: boardX, y: boardY });
-  });
-  const throttleMoveRef = useCallback(throttleMove, [boardPosition.x, boardPosition.y, scale]);
+  // Sync refs whenever state updates
+  useEffect(() => {
+    cursorRef.current = cursor;
+  }, [cursor]);
+  useEffect(() => {
+    boardCursorRef.current = boardCursor;
+  }, [boardCursor]);
+
+  // Batch UI store subscription
+  const { scale, boardPosition } = useUIStore((s) => ({
+    scale: s.scale,
+    boardPosition: s.boardPosition,
+  }));
+
+  // Keep refs for scale & position so throttle handler reads latest
+  const scaleRef = useRef(scale);
+  const posRef = useRef(boardPosition);
+  useEffect(() => {
+    scaleRef.current = scale;
+  }, [scale]);
+  useEffect(() => {
+    posRef.current = boardPosition;
+  }, [boardPosition]);
+
+  // On-demand getters
+  const getCursor = useCallback((): Point => {
+    return cursorRef.current;
+  }, []);
+  const getBoardCursor = useCallback((): Point => {
+    return boardCursorRef.current;
+  }, []);
+
+  // Throttled mousemove handler
+  const handleMove = useCallback((e: MouseEvent) => {
+    const x = e.clientX;
+    const y = e.clientY;
+    setCursor({ x, y });
+    const sc = scaleRef.current;
+    const bp = posRef.current;
+    setBoardCursor({
+      x: Math.floor(x / sc - bp.x),
+      y: Math.floor(y / sc - bp.y),
+    });
+  }, []);
+
+  const throttledMove = useRef(throttle(0, handleMove)).current;
 
   useEffect(() => {
-    setLastEvent((e) => {
-      if (e) {
-        throttleMoveRef(e);
-      }
-      return e;
-    });
-  }, [boardSynced]);
-
-  // Simple hacky way to (try) fix de-synced mouse and appwindow while dragging
-  // Also provides performance benefits when dragging the board
-  useEffect(() => {
-    const updateCursor = (e: MouseEvent) => {
-      setLastEvent(e);
-      throttleMoveRef(e);
-    };
-
-    const stopListening = (e: MouseEvent) => {
-      if (e.button === 0 || e.button === 1) {
-        setIsMouseDown(true);
-        window.removeEventListener('mousemove', updateCursor);
-      }
-    };
-
-    const startListening = (e: MouseEvent) => {
-      setIsMouseDown(false);
-      window.addEventListener('mousemove', updateCursor, { passive: true });
-      // setLastEvent(e);
-    };
-
-    setIsMouseDown((prev) => {
-      if (!prev) {
-        window.addEventListener('mousemove', updateCursor, { passive: true });
-      }
-      return prev;
-    });
-    window.addEventListener('mousedown', stopListening);
-    window.addEventListener('mouseup', startListening);
-
+    window.addEventListener('mousemove', throttledMove, { passive: true });
     return () => {
-      window.removeEventListener('mousedown', stopListening);
-      window.removeEventListener('mouseup', startListening);
-      window.removeEventListener('mousemove', updateCursor);
+      window.removeEventListener('mousemove', throttledMove);
     };
-  }, [throttleMoveRef]);
+  }, [throttledMove]);
 
+  // Coordinate converter
   const uiToBoard = useCallback(
-    (x: number, y: number) => {
-      return { x: Math.floor(x / scale - boardPosition.x), y: Math.floor(y / scale - boardPosition.y) };
-    },
-    [boardPosition.x, boardPosition.y, scale]
+    (x: number, y: number): Point => ({
+      x: Math.floor(x / scale - boardPosition.x),
+      y: Math.floor(y / scale - boardPosition.y),
+    }),
+    [scale, boardPosition]
   );
 
-  return (
-    <CursorBoardPositionContext.Provider value={{ cursor, uiToBoard, boardCursor }}>{props.children}</CursorBoardPositionContext.Provider>
-  );
-}
-
-export function useUIToBoard() {
-  const boardPosition = useUIStore((state) => state.boardPosition);
-  const scale = useUIStore((state) => state.scale);
-
-  const uiToBoard = useCallback(
-    (x: number, y: number) => {
-      return {
-        x: Math.floor(x / scale - boardPosition.x),
-        y: Math.floor(y / scale - boardPosition.y),
-      };
-    },
-    [boardPosition.x, boardPosition.y, scale]
+  // Memoize context value so consumers update only on real changes
+  const value = useMemo(
+    () => ({
+      cursor,
+      boardCursor,
+      uiToBoard,
+      getCursor,
+      getBoardCursor,
+    }),
+    [cursor, boardCursor, uiToBoard, getCursor, getBoardCursor]
   );
 
-  return uiToBoard;
-}
+  return <CursorBoardPositionContext.Provider value={value}>{children}</CursorBoardPositionContext.Provider>;
+};

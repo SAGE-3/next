@@ -13,7 +13,6 @@ export * from './subscription';
 export * from './logs';
 export * from './presencethrottle';
 export * from './kernels';
-export * from './ai/ai-router';
 export * from './ai/agent-router';
 export * from './vms/vms';
 export * from './vms/stream';

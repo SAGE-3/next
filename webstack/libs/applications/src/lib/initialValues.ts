@@ -13,6 +13,7 @@ import { name as CodeEditorName, init as defaultCodeEditor } from './apps/CodeEd
 import { name as CollabBrowserName, init as defaultCollabBrowser } from './apps/CollabBrowser';
 import { name as CounterName, init as defaultCounter } from './apps/Counter';
 import { name as DeepZoomImageName, init as defaultDeepZoomImage } from './apps/DeepZoomImage';
+import { name as DrawingName, init as defaultDrawing } from './apps/Drawing';
 import { name as EChartsViewerName, init as defaultEChartsViewer } from './apps/EChartsViewer';
 import { name as GLTFViewerName, init as defaultGLTFViewer } from './apps/GLTFViewer';
 import { name as HCDPName, init as defaultHCDP } from './apps/HCDP';
@@ -21,7 +22,7 @@ import { name as ImageViewerName, init as defaultImageViewer } from './apps/Imag
 import { name as JupyterLabName, init as defaultJupyterLab } from './apps/JupyterLab';
 import { name as LeafLetName, init as defaultLeafLet } from './apps/LeafLet';
 import { name as LinkerName, init as defaultLinker } from './apps/Linker';
-import { name as MapGLName, init as defaultMapGL } from './apps/MapGL';
+import { name as MapName, init as defaultMap } from './apps/Map';
 import { name as NotepadName, init as defaultNotepad } from './apps/Notepad';
 import { name as PDFResultName, init as defaultPDFResult } from './apps/PDFResult';
 import { name as PDFViewerName, init as defaultPDFViewer } from './apps/PDFViewer';
@@ -32,7 +33,6 @@ import { name as SageCellName, init as defaultSageCell } from './apps/SageCell';
 import { name as SeerName, init as defaultSeer } from './apps/Seer';
 import { name as SensorOverviewName, init as defaultSensorOverview } from './apps/SensorOverview';
 import { name as StickieName, init as defaultStickie } from './apps/Stickie';
-import { name as TLDrawName, init as defaultTLDraw } from './apps/TLDraw';
 import { name as TimerName, init as defaultTimer } from './apps/Timer';
 import { name as TwilioScreenshareName, init as defaultTwilioScreenshare } from './apps/TwilioScreenshare';
 import { name as VNCName, init as defaultVNC } from './apps/VNC';
@@ -56,6 +56,7 @@ export const initialValues = {
   [CollabBrowserName]: defaultCollabBrowser,
   [CounterName]: defaultCounter,
   [DeepZoomImageName]: defaultDeepZoomImage,
+  [DrawingName]: defaultDrawing,
   [EChartsViewerName]: defaultEChartsViewer,
   [GLTFViewerName]: defaultGLTFViewer,
   [HCDPName]: defaultHCDP,
@@ -64,7 +65,7 @@ export const initialValues = {
   [JupyterLabName]: defaultJupyterLab,
   [LeafLetName]: defaultLeafLet,
   [LinkerName]: defaultLinker,
-  [MapGLName]: defaultMapGL,
+  [MapName]: defaultMap,
   [NotepadName]: defaultNotepad,
   [PDFResultName]: defaultPDFResult,
   [PDFViewerName]: defaultPDFViewer,
@@ -75,7 +76,6 @@ export const initialValues = {
   [SeerName]: defaultSeer,
   [SensorOverviewName]: defaultSensorOverview,
   [StickieName]: defaultStickie,
-  [TLDrawName]: defaultTLDraw,
   [TimerName]: defaultTimer,
   [TwilioScreenshareName]: defaultTwilioScreenshare,
   [VNCName]: defaultVNC,

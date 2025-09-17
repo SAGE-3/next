@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Image, Button, ButtonGroup, Tooltip, Box } from '@chakra-ui/react';
+import { Image, Button, ButtonGroup, Tooltip, Box, useColorModeValue } from '@chakra-ui/react';
 // Icons
 import { MdBrokenImage, MdFileDownload, MdImage } from 'react-icons/md';
 import { HiPencilAlt } from 'react-icons/hi';
@@ -46,6 +46,7 @@ function AppComponent(props: App): JSX.Element {
   // Original image sizes
   const [origSizes, setOrigSizes] = useState({ width: 0, height: 0 });
   const boardDragging = useUIStore((state) => state.boardDragging);
+  const backgroundColor = useColorModeValue('white', 'gray.700');
 
   // Convert the ID to an asset
   useEffect(() => {
@@ -112,19 +113,30 @@ function AppComponent(props: App): JSX.Element {
   return (
     // background false to handle alpha channel
     <AppWindow app={props} lockAspectRatio={aspectRatio} background={url == '' ? true : false} hideBackgroundIcon={MdImage}>
-      <div
+      {/* <div
         ref={ref}
         style={{
           position: 'relative',
           overflowY: 'hidden',
           height: aspectRatio ? displaySize.width / (aspectRatio as number) : 'auto',
           maxHeight: '100%',
-        }}
+        }} */}
+      <Box
+        ref={ref}
+        position="relative"
+        overflowY="hidden"
+        // height={aspectRatio ? displaySize.width / (aspectRatio as number) : 'auto'}
+        height="100%"
+        maxHeight="100%"
+        background={backgroundColor}
+        objectFit="contain"
       >
         {url ? (
           <>
             <Image
               width="100%"
+              height="100%"
+              objectFit="contain"
               userSelect={'auto'}
               draggable={false}
               alt={file?.data.originalfilename}
@@ -159,7 +171,7 @@ function AppComponent(props: App): JSX.Element {
             <MdBrokenImage size="100%" />
           </Box>
         )}
-      </div>
+      </Box>
     </AppWindow>
   );
 }
@@ -188,7 +200,7 @@ function ToolbarComponent(props: App): JSX.Element {
   return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Download Image'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Download Image'} openDelay={400}>
           <Button
             onClick={() => {
               if (file) {
@@ -202,19 +214,23 @@ function ToolbarComponent(props: App): JSX.Element {
                 downloadFile(url, filename);
               }
             }}
+            size='xs'
+            px={0}
           >
-            <MdFileDownload />
+            <MdFileDownload size="16px"/>
           </Button>
         </Tooltip>
         <div style={{ display: s.boxes ? (Object.keys(s.boxes).length !== 0 ? 'flex' : 'none') : 'none' }}>
-          <Tooltip placement="top-start" hasArrow={true} label={'Annotations'} openDelay={400}>
+          <Tooltip placement="top" hasArrow={true} label={'Annotations'} openDelay={400}>
             <Button
               ml={1}
               onClick={() => {
                 updateState(props._id, { annotations: !s.annotations });
               }}
+              size='xs'
+              px={0}
             >
-              <HiPencilAlt />
+              <HiPencilAlt size="16px"/>
             </Button>
           </Tooltip>
         </div>
@@ -269,7 +285,7 @@ type YoloObject = {
 
 
       <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1} isDisabled={onlineModels.length == 0}>
-        <Menu placement="top-start">
+        <Menu placement="top">
           <Tooltip hasArrow={true} label={'Ai Model Selection'} openDelay={300}>
             <MenuButton as={Button} colorScheme="orange" width="100px" aria-label="layout">
               {selectedModel}
@@ -286,7 +302,7 @@ type YoloObject = {
       </ButtonGroup>
 
       <ButtonGroup isAttached size="xs" colorScheme="orange" ml={1}>
-        <Menu placement="top-start">
+        <Menu placement="top">
           <Tooltip hasArrow={true} label={'Remote Actions'} openDelay={300}>
             <MenuButton as={Button} colorScheme="orange" aria-label="layout">
               <MdOutlineLightbulb />

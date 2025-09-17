@@ -23,6 +23,8 @@ import {
   PDFAnswer,
   WebScreenshot,
   WebScreenshotAnswer,
+  MesonetRequest,
+  MesonetResponse,
 } from '@sage3/shared';
 
 // Define a general RPC handler type
@@ -46,7 +48,12 @@ async function fetchPost(url: string, data: object) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
-  }).then((res) => res.json());
+  })
+    .then((res) => res.json())
+    .catch((err) => {
+      console.error('fetchPost> Error', err);
+      return { message: 'Error' };
+    });
 }
 
 // Forward functions to the agents
@@ -82,6 +89,10 @@ const pdfHandler: RpcHandlerPost<PDFQuery, PDFAnswer> = (req) => {
   const route = AgentRoutes.pdf;
   return fetchPost(`${config.agents.url}${route}`, req);
 };
+const mesonetHandler: RpcHandlerPost<MesonetRequest, MesonetResponse> = (req) => {
+  const route = AgentRoutes.mesonet;
+  return fetchPost(`${config.agents.url}${route}`, req);
+};
 
 // List all the handlers
 const handlers: HandlerStore = {};
@@ -92,6 +103,7 @@ handlers[AgentRoutes.web] = { func: webHandler, method: 'POST' };
 handlers[AgentRoutes.webshot] = { func: webshotHandler, method: 'POST' };
 handlers[AgentRoutes.image] = { func: imageHandler, method: 'POST' };
 handlers[AgentRoutes.pdf] = { func: pdfHandler, method: 'POST' };
+handlers[AgentRoutes.mesonet] = { func: mesonetHandler, method: 'POST' };
 handlers[AgentRoutes.code] = { func: codeHandler, method: 'POST' };
 
 /*

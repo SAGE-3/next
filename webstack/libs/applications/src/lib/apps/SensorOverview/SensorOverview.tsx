@@ -47,16 +47,23 @@ import { state as AppState } from './index';
 import VariableCard from './viewers/VariableCard';
 import EChartsViewer from './viewers/EChartsViewer';
 import CurrentConditions from './viewers/CurrentConditions';
-import { getFormattedDateTime1MonthBefore, getFormattedDateTime1WeekBefore, getFormattedDateTime1YearBefore } from './utils';
-import StationMetadata from './viewers/StationMetadata';
-import FriendlyVariableCard from './viewers/FriendlyVariableCard';
-import StatisticCard from './viewers/StatisticCard';
+import {
+  getFormattedDateTime1MonthBefore,
+  getFormattedDateTime1WeekBefore,
+  getFormattedDateTime1YearBefore,
+  getFormattedDateTime24HoursBefore,
+} from './utils';
+// import StationMetadata from './viewers/StationMetadata';
+// import FriendlyVariableCard from './viewers/FriendlyVariableCard';
+// import StatisticCard from './viewers/StatisticCard';
 import MapViewer from './viewers/MapViewer';
 import { checkAvailableVisualizations } from './utils';
 import MapGL from './MapGL';
 
 // Styling
 import './styling.css';
+
+export type StationDataType = { lat: number; lng: number; name: string; selected: boolean; station_id: string };
 
 const convertToStringFormat = (date: string) => {
   const year = date.substring(0, 4);
@@ -105,17 +112,6 @@ const resolveTimePeriod = (timePeriod: string) => {
   }
 };
 
-function convertToFormattedDateTime(date: Date) {
-  const now = new Date(date);
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes()).padStart(2, '0');
-
-  return `${year}${month}${day}${hours}${minutes}`;
-}
-
 function formatDuration(ms: number) {
   if (ms < 0) ms = -ms;
   const mins = Math.floor(ms / 60000) % 60;
@@ -126,25 +122,15 @@ function formatDuration(ms: number) {
   }
 }
 
-function getFormattedDateTime24HoursBefore() {
-  const now = new Date();
-  now.setHours(now.getHours() - 24);
-
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes()).padStart(2, '0');
-
-  return `${year}${month}${day}${hours}${minutes}`;
-}
+const convertFormattedTimeToDateTime = (formattedTime: string) => {
+  return new Date(formattedTime);
+};
 
 /* App component for Sensor Overview */
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
-  const [stationMetadata, setStationMetadata] = useState([]);
   const updateState = useAppStore((state) => state.updateState);
 
   // Color Variables
@@ -156,6 +142,10 @@ function AppComponent(props: App): JSX.Element {
   const [lastUpdate, setLastUpdate] = useState<number>(Date.now());
   const [timeSinceLastUpdate, setTimeSinceLastUpdate] = useState<string>(formatDuration(Date.now() - lastUpdate));
   const createApp = useAppStore((state) => state.create);
+  const [stationData, setStationData] = useState<StationDataType[]>([]);
+  const [stationMetadata, setStationMetadata] = useState({});
+  const [allStationsData, setAllStationsData] = useState<any>([]);
+  const [stationIdToName, setStationIdToName] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     const updateTimesinceLastUpdate = () => {
@@ -188,39 +178,111 @@ function AppComponent(props: App): JSX.Element {
     return () => clearInterval(interval);
   }, [JSON.stringify(s.stationNames), JSON.stringify(s.widget)]);
 
+  useEffect(() => {
+    const translations: { [key: string]: string } = {};
+    stationData.forEach(station => {
+      translations[station.station_id] = station.name;
+    });
+    setStationIdToName(translations);
+  }, [stationData]);
+
   const fetchStationData = async () => {
-    setIsLoaded(false);
-    let tmpStationMetadata: any = [];
-    let url = '';
+    try {
+      const token = '71c5efcd8cfe303f2795e51f01d19c6';
 
-    if (s.widget.liveData || s.widget.startDate === s.widget.endDate) {
-      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&recent=${resolveTimePeriod(
-        s.widget.timePeriod
-      )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
-      // url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${resolveTimePeriod(
-      //   s.widget.timePeriod
-      // )}&end=${convertToFormattedDateTime(new Date())}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
-    } else if (!s.widget.liveData) {
-      url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(s.stationNames)}&showemptystations=1&start=${
-        s.widget.startDate
-      }&end=${s.widget.endDate}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+      const stations = await fetch(`https://api.hcdp.ikewai.org/mesonet/db/stations`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!stations.ok) {
+        throw new Error(`Station API error: ${stations.status}`);
+      }
+
+      const allStationsData = await stations.json();
+      setAllStationsData(allStationsData);
+      // First fetch station data
+      const stationResponse = await fetch(`https://api.hcdp.ikewai.org/mesonet/db/stations?station_ids=${s.stationNames.join(',')}`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!stationResponse.ok) {
+        throw new Error(`Station API error: ${stationResponse.status}`);
+      }
+
+      const data: StationDataType[] = await stationResponse.json();
+      // Get center Lat and Lon of stations
+      const centerLat = data.reduce((acc, station) => acc + station.lat, 0) / data.length;
+      const centerLon = data.reduce((acc, station) => acc + station.lng, 0) / data.length;
+      setStationData(data);
+      updateState(props._id, { location: [centerLon, centerLat] });
+      // Create a new object to store all measurements
+      const stationByMeasurements: { [key: string]: any[] } = {};
+      
+      // Fetch measurements for each station
+      for (const station of data) {
+        try {
+          // Build query URL with start date - only include the current station
+          const queryParams = new URLSearchParams({
+            station_ids: station.station_id, // Only use the current station's ID
+            var_ids: s.widget.yAxisNames.join(','),
+            row_mode: 'json',
+            limit: '100',
+          });
+          // Force the URL to be constructed with only the current station
+          const baseUrl = 'https://api.hcdp.ikewai.org/mesonet/db/measurements';
+          const url = `${baseUrl}?${queryParams.toString()}`;
+                    
+          const measurements = await fetch(url, {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          
+          if (!measurements.ok) {
+            stationByMeasurements[station.station_id] = [];
+            continue;
+          }
+
+          const measurementData = await measurements.json();
+          
+          // Only update if we have valid data
+          if (Array.isArray(measurementData) && measurementData.length > 0) {
+            // Filter the data to only include measurements for the current station
+            const filteredData = measurementData.filter(measurement => 
+              measurement.station_id === station.station_id
+            );
+            stationByMeasurements[station.station_id] = filteredData;
+          } else {
+            console.warn(`No valid data received for station ${station.station_id}`);
+            stationByMeasurements[station.station_id] = [];
+          }
+        } catch (err) {
+          console.warn(`Failed to fetch measurements for station ${station.station_id}:`, err);
+          stationByMeasurements[station.station_id] = [];
+        }
+      }
+
+
+      // Final state update - only update if we have data
+      if (Object.keys(stationByMeasurements).length > 0) {
+        setStationMetadata(stationByMeasurements);
+        setIsLoaded(true);
+        setLastUpdate(Date.now());
+      } else {
+        console.warn('No measurement data was fetched for any station');
+        setIsLoaded(true);
+      }
+    } catch (err) {
+      console.error('Failed to fetch station data:', err);
+      setIsLoaded(true); // Set loaded even on error to prevent infinite loading state
+      // Optionally show error to user
     }
-
-    const response = await fetch(url);
-    const sensor = await response.json();
-
-    if (sensor) {
-      const sensorData = sensor['STATION'];
-      tmpStationMetadata = sensorData;
-    }
-    const availableVariableNames = Object.getOwnPropertyNames(tmpStationMetadata[0].OBSERVATIONS);
-    availableVariableNames.push('Elevation, Longitude, Latitude, Name, Time');
-    availableVariableNames.push('Elevation & Current Temperature');
-
-    updateState(props._id, { availableVariableNames: availableVariableNames });
-    setStationMetadata(tmpStationMetadata);
-
-    setIsLoaded(true);
   };
 
   const handleLockAspectRatio = () => {
@@ -249,198 +311,86 @@ function AppComponent(props: App): JSX.Element {
     setButtonPosition({ top: buttonRect.top, left: buttonCenterX });
     onOpen();
   };
-
   const handleDuplicateVisualizationsAs = async (visualizationType: string) => {
-    const widget = { ...props.data.state.widget, visualizationType: visualizationType };
+    // Create a copy of the current app's state
+    const currentState = props.data.state;
+    
     await createApp({
-      title: 'Hawaii Mesonet',
+      title: props.data.title,
       roomId: props.data.roomId!,
       boardId: props.data.boardId!,
-      //TODO get middle of the screen space
       position: {
         x: props.data.position.x + props.data.size.width,
         y: props.data.position.y,
-        z: 0,
+        z: props.data.position.z,
       },
       size: {
         width: props.data.size.width,
         height: props.data.size.height,
-        depth: 0,
+        depth: props.data.size.depth,
       },
-      rotation: { x: 0, y: 0, z: 0 },
-      type: 'Hawaii Mesonet',
+      rotation: props.data.rotation,
+      type: props.data.type,
       state: {
-        sensorData: {},
-        stationNames: props.data.state.stationNames,
-        listOfStationNames: s.stationNames[0],
-        location: [-157.816, 21.297],
-        zoom: 10,
-        pitch: 0,
-        stationScale: 5,
-        baseLayer: 'OpenStreetMap',
-        overlay: true,
-        widget: widget,
+        ...currentState,
+        widget: {
+          ...currentState.widget,
+          visualizationType: visualizationType
+        }
       },
-
-      raised: true,
-      dragging: false,
-      pinned: false,
+      raised: props.data.raised,
+      dragging: props.data.dragging,
+      pinned: props.data.pinned,
     });
   };
-
   const duplicateMenuBackground = useColorModeValue('gray.50', 'gray.800');
   const duplicateMenuItems = useColorModeValue('gray.100', 'gray.700');
   const duplicateHoverMenuItem = useColorModeValue('rgb(178, 216, 243)', 'cyan.600');
-
   return (
     <AppWindow app={props} lockAspectRatio={handleLockAspectRatio()} hideBackgroundIcon={MdSensors}>
       <Box overflowY="auto" bg={bgColor} h="100%" border={`solid #7B7B7B 15px`}>
         <Box position="absolute" top="50%" right="1rem" zIndex={999}>
-          <Button
-            onMouseEnter={handleButtonHover}
-            onMouseLeave={() => {
-              onClose();
-            }}
-            colorScheme="twitter"
-            height="10%"
-          >
-            <MdDoubleArrow size="40" />
-          </Button>
-          {isOpen && (
-            <Portal>
-              <Box
-                onMouseEnter={() => {
-                  onOpen();
-                }}
-                onMouseLeave={() => {
-                  onClose();
-                }}
-                position="absolute"
-                top={`${buttonPosition.top}px`}
-                left={`${buttonPosition.left}px`}
-                // bg="blue.200"
-                borderRadius="lg"
-                p={4}
-                zIndex={1}
-                border={'solid 1px grey'}
-                borderLeft={'solid #60CDBA 3px'}
-                bg={duplicateMenuBackground}
-                transform={`scale(0.9) translateY(-${buttonPosition.top / 4}px)`}
-                transformOrigin={'top left'}
-                shadow={'xl'}
-              >
-                {/* Content of the opened div */}
-                <Text fontWeight={'bold'}>Duplicate as:</Text>
-                {/* <Tooltip label={'Select a visualization that you would like to see'} aria-label="A tooltip"> */}
-                {checkAvailableVisualizations(s.widget.yAxisNames[0]).map(
-                  (visualization: { value: string; name: string }, index: number) => {
-                    return (
-                      <Text
-                        key={index}
-                        onClick={() => {
-                          handleDuplicateVisualizationsAs(visualization.value);
-                        }}
-                        className="selectableListItem"
-                        backgroundColor={duplicateMenuItems}
-                        border={'grey solid 2px'}
-                        _hover={{ backgroundColor: duplicateHoverMenuItem }}
-                      >
-                        {visualization.name}
-                      </Text>
-                    );
-                  }
-                )}
-                {/* </Tooltip> */}
-              </Box>
-            </Portal>
-          )}
+          <Tooltip label="Duplicate this visualization" placement="left">
+            <Button
+              onClick={() => handleDuplicateVisualizationsAs(s.widget.visualizationType)}
+              colorScheme="twitter"
+              height="10%"
+            >
+              <MdDoubleArrow size="40" />
+            </Button>
+          </Tooltip>
         </Box>
 
-        {stationMetadata.length > 0 ? (
+        {stationMetadata ? (
           <Box bgColor={bgColor} color={textColor} fontSize="lg">
             <HStack>
               <Box>
-                {s.widget.visualizationType === 'variableCard' ? (
-                  <VariableCard
-                    size={{ width: props.data.size.width - 30, height: props.data.size.height - 35, depth: 0 }}
-                    state={props.data.state}
-                    stationNames={s.stationNames}
-                    startDate={s.widget.startDate}
-                    stationMetadata={stationMetadata}
-                    timeSinceLastUpdate={timeSinceLastUpdate}
-                    generateAllVariables={s.widget.visualizationType === 'allVariables'}
-                    isLoaded={true}
-                    isCustomizeWidgetMenu={false}
-                  />
-                ) : null}
-                {s.widget.visualizationType === 'friendlyVariableCard' ? (
-                  <FriendlyVariableCard
-                    size={{ width: props.data.size.width - 30, height: props.data.size.height - 35, depth: 0 }}
-                    state={props.data.state}
-                    stationNames={s.stationNames}
-                    startDate={s.widget.startDate}
-                    stationMetadata={stationMetadata}
-                    timeSinceLastUpdate={timeSinceLastUpdate}
-                    generateAllVariables={s.widget.visualizationType === 'allVariables'}
-                    isLoaded={true}
-                    isCustomizeWidgetMenu={false}
-                  />
-                ) : null}
-                {s.widget.visualizationType === 'statisticCard' ? (
-                  <StatisticCard
-                    size={{ width: props.data.size.width - 30, height: props.data.size.height - 35, depth: 0 }}
-                    state={props.data.state}
-                    widget={props.data.state.widget}
-                    stationNames={s.stationNames}
-                    startDate={s.widget.startDate}
-                    stationMetadata={stationMetadata}
-                    timeSinceLastUpdate={timeSinceLastUpdate}
-                    generateAllVariables={s.widget.visualizationType === 'allVariables'}
-                    isLoaded={isLoaded}
-                    isCustomizeWidgetMenu={false}
-                  />
-                ) : null}
-                {props.data.state.widget.visualizationType === 'line' ||
-                props.data.state.widget.visualizationType === 'bar' ||
-                props.data.state.widget.visualizationType === 'scatter' ? (
+                {props.data.state.widget.visualizationType === 'Line Chart' ||
+                props.data.state.widget.visualizationType === 'Pie Chart' ||
+                props.data.state.widget.visualizationType === 'Boxplot' ||
+                props.data.state.widget.visualizationType === 'Scatter Chart' ? (
                   <EChartsViewer
                     stationNames={s.stationNames}
-                    isLoaded={isLoaded}
+                    stationFriendlyNames={s.stationFriendlyNames}
+                    isLoaded={true}
                     startDate={props.data.state.widget.startDate}
                     timeSinceLastUpdate={timeSinceLastUpdate}
                     widget={s.widget}
                     size={{ width: props.data.size.width - 30, height: props.data.size.height - 35, depth: 0 }}
                     stationMetadata={stationMetadata}
+                    stationIdToName={stationIdToName}
                   />
-                ) : null}
-                {props.data.state.widget.visualizationType === 'allVariables' ? (
-                  <>
-                    <CurrentConditions
-                      size={props.data.size}
-                      state={props.data.state}
-                      stationNames={s.stationNames}
-                      startDate={s.widget.startDate}
-                      stationMetadata={stationMetadata}
-                      timeSinceLastUpdate={timeSinceLastUpdate}
-                      isLoaded={true}
-                    />
-                  </>
-                ) : null}
-                {props.data.state.widget.visualizationType === 'stationMetadata' ? (
-                  <>
-                    <StationMetadata
-                      size={{ width: props.data.size.width - 30, height: props.data.size.height - 35, depth: 0 }}
-                      state={props.data.state}
-                      stationNames={s.stationNames}
-                      stationMetadata={stationMetadata}
-                      isLoaded={isLoaded}
-                    />
-                  </>
                 ) : null}
                 {props.data.state.widget.visualizationType === 'map' ? (
                   <>
                     <Box id={'container' + props._id} width={props.data.size.width - 30} height={props.data.size.height - 78}>
-                      <MapViewer {...props} isSelectingStations={false} isLoaded={isLoaded} stationMetadata={stationMetadata} />
+                      <MapViewer
+                        {...props}
+                        isSelectingStations={false}
+                        isLoaded={isLoaded}
+                        stationData={stationData}
+                        stationMetadata={stationMetadata}
+                      />
                     </Box>
                   </>
                 ) : null}
@@ -462,15 +412,6 @@ function AppComponent(props: App): JSX.Element {
   );
 }
 
-const convertFormattedTimeToDateTime = (formattedTime: string) => {
-  const year = Number(formattedTime.substring(0, 4));
-  const month = Number(formattedTime.substring(4, 6));
-  const day = Number(formattedTime.substring(6, 8));
-  const hour = Number(formattedTime.substring(8, 10));
-  const minute = Number(formattedTime.substring(10, 12));
-  return new Date(year, month - 1, day, hour, minute);
-};
-
 /* App toolbar component for the app Sensor Overview */
 
 function ToolbarComponent(props: App): JSX.Element {
@@ -483,7 +424,7 @@ function ToolbarComponent(props: App): JSX.Element {
   ]);
 
   const [stationMetadata, setStationMetadata] = useState([]);
-  const [isLoaded, setIsLoaded] = useState<boolean>(false);
+  const [isLoaded, setIsLoaded] = useState<boolean>(true);
   const [isSortedOn, setIsSortedOn] = useState<{ name: string; direction: string }>({ name: 'NAME', direction: 'ascending' });
 
   // For color theme
@@ -493,49 +434,70 @@ function ToolbarComponent(props: App): JSX.Element {
 
   const stationNameRef = useRef<any>(s.stationNames);
   const toolbarStationData = useRef<any>(stationData);
+  const [allStationsData, setAllStationsData] = useState<any>([]);
+
+  // useEffect(() => {
+  //   if (selectedDates.length === 2) {
+  //     if (selectedDates[0] instanceof Date && selectedDates[1] instanceof Date) {
+  //       const startDate = selectedDates[0].toISOString();
+  //       const endDate = selectedDates[1].toISOString();
+  //       updateState(props._id, { widget: { ...s.widget, startDate: startDate, endDate: endDate } });
+  //     }
+  //   }
+  // }, [selectedDates]);
 
   useEffect(() => {
-    if (selectedDates.length === 2) {
-      if (selectedDates[0] instanceof Date && selectedDates[1] instanceof Date) {
-        const startDate = convertToFormattedDateTime(selectedDates[0]);
-        const endDate = convertToFormattedDateTime(selectedDates[1]);
-        updateState(props._id, { widget: { ...s.widget, startDate: startDate, endDate: endDate } });
-      }
-    }
-  }, [selectedDates]);
+    const fetchCall = async () => {
+      try {
+        const token = '71c5efcd8cfe303f2795e51f01d19c6';
 
-  useEffect(() => {
-    const fetchStationData = async () => {
-      setIsLoaded(false);
-      let tmpStationMetadata: any = [];
-      let url = '';
-      const stationNames = stationData.map((station) => station.name);
-      if (s.widget.liveData || s.widget.startDate === s.widget.endDate) {
-        url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(
-          s.stationNames
-        )}&showemptystations=1&recent=${resolveTimePeriod(
-          s.widget.timePeriod
-        )}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
-      } else if (!s.widget.liveData) {
-        url = `https://api.mesowest.net/v2/stations/timeseries?STID=${String(stationNames)}&showemptystations=1&start=${
-          s.widget.startDate
-        }&end=${s.widget.endDate}&token=d8c6aee36a994f90857925cea26934be&complete=1&obtimezone=local`;
+        // Fetch all stations data
+        const allStationsData = await fetch(`https://api.hcdp.ikewai.org/mesonet/db/stations`, {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!allStationsData.ok) {
+          throw new Error(`Station API error: ${allStationsData.status}`);
+        }
+        const allStations = await allStationsData.json();
+        setAllStationsData(allStations);
+
+        //********
+
+        // Fetch all variables
+        const allVariables = new Set<string>();
+
+        // Fetch variables for each station
+        for (const stationId of s.stationNames) {
+          const response = await fetch(
+            `https://api.hcdp.ikewai.org/mesonet/db/measurements?station_ids=${stationId}&limit=20&row_mode=json&join_metadata=true`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          if (response.ok) {
+            const data = await response.json();
+            if (data && data.length > 0) {
+              // Extract variable names and add to set
+              const variables = data.map((item: any) => item.variable);
+              variables.forEach((v: string) => allVariables.add(v));
+            }
+          }
+        }
+
+        // Update state with unique variables
+        updateState(props._id, { availableVariableNames: Array.from(allVariables) });
+      } catch (err) {
+        console.error('Failed to fetch available variables:', err);
       }
-      const response = await fetch(url);
-      const sensor = await response.json();
-      if (sensor) {
-        const sensorData = sensor['STATION'];
-        tmpStationMetadata = sensorData;
-      }
-      setStationMetadata(tmpStationMetadata);
-      setIsLoaded(true);
     };
 
-    fetchStationData().catch((err) => {
-      fetchStationData();
-      console.log(err);
-    });
-  }, []);
+    fetchCall();
+  }, [JSON.stringify(s.stationNames)]);
 
   const handleChangeVariable = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const variable = event.target.value;
@@ -621,12 +583,11 @@ function ToolbarComponent(props: App): JSX.Element {
 
   const tableRows = [
     { propName: 'selected', name: 'Selected' },
-    { propName: 'ID', name: 'ID' },
+    { propName: 'station_id', name: 'Station ID' },
     { propName: 'name', name: 'Station Name' },
-    { propName: 'county', name: 'County Name' },
     { propName: 'elevation', name: 'Elevation' },
     { propName: 'lat', name: 'Latitude' },
-    { propName: 'lon', name: 'Longitude' },
+    { propName: 'lng', name: 'Longitude' },
   ];
   const handleChangeSelectedStation = (e: React.ChangeEvent<HTMLInputElement>, stationSTID: string) => {
     let updatedStations;
@@ -663,7 +624,7 @@ function ToolbarComponent(props: App): JSX.Element {
           <ModalHeader>Station Selection</ModalHeader>
           <ModalCloseButton />
           <Box rounded="2xl" height={'40rem'} width="60rem">
-            <MapGL {...props} isSelectingStations={true} stationNameRef={stationNameRef} />
+            <MapGL {...props} isSelectingStations={true} stationNameRef={stationNameRef} allStationsData={allStationsData} />
           </Box>
           <ModalBody>
             <Box
@@ -694,25 +655,22 @@ function ToolbarComponent(props: App): JSX.Element {
 
                     switch (row.propName) {
                       case 'selected':
-                        widthSize = '9%';
+                        widthSize = '5%';
                         break;
-                      case 'ID':
+                      case 'station_id':
                         widthSize = '9%';
                         break;
                       case 'name':
                         widthSize = '18%';
                         break;
-                      case 'county':
-                        widthSize = '20%';
-                        break;
                       case 'elevation':
-                        widthSize = '10%';
+                        widthSize = '5%';
                         break;
                       case 'lat':
-                        widthSize = '10%';
+                        widthSize = '8%';
                         break;
-                      case 'lon':
-                        widthSize = '10%';
+                      case 'lng':
+                        widthSize = '8%';
                         break;
                     }
                     return (
@@ -723,24 +681,22 @@ function ToolbarComponent(props: App): JSX.Element {
                       </th>
                     );
                   })}
-                  {toolbarStationData.current.map((station: any, index: number) => {
-                    const isSelected = s.stationNames.includes(station.id);
+                  {allStationsData.map((station: any, index: number) => {
+                    const isSelected = s.stationNames.includes(station.station_id);
                     return (
                       <tr key={index}>
                         <td style={{ textAlign: 'center', width: '10px' }}>
                           <Checkbox
                             colorScheme="teal"
                             isChecked={isSelected}
-                            onChange={(e) => handleChangeSelectedStation(e, station.id)}
+                            onChange={(e) => handleChangeSelectedStation(e, station.station_id)}
                           />
                         </td>
-                        <td>{station.id}</td>
+                        <td>{station.station_id}</td>
                         <td>{station.name}</td>
-                        <td>{station.county}</td>
                         <td style={{ textAlign: 'right' }}>{station.elevation}</td>
-                        <td style={{ textAlign: 'right' }}>{Number(station.lat).toFixed(1)}</td>
-                        <td style={{ textAlign: 'right' }}>{Number(station.lon).toFixed(1)}</td>
-                        {/* <td>variable</td> */}
+                        <td style={{ textAlign: 'right' }}>{Number(station.lat).toFixed(4)}</td>
+                        <td style={{ textAlign: 'right' }}>{Number(station.lng).toFixed(4)}</td>
                       </tr>
                     );
                   })}
@@ -765,7 +721,7 @@ function ToolbarComponent(props: App): JSX.Element {
         </ModalContent>
       </Modal>
       <Divider border={'1px'} size={'2xl'} orientation="vertical" />
-      <Text fontSize={'sm'} mx="1rem">
+      {/* <Text fontSize={'sm'} mx="1rem">
         Live Data
       </Text>
       <Switch colorScheme={'green'} isChecked={s.widget.liveData} onChange={handleChangeLiveData} />
@@ -790,7 +746,7 @@ function ToolbarComponent(props: App): JSX.Element {
           selectedDates={selectedDates}
           onDateChange={setSelectedDates}
         />
-      )}
+      )} */}
 
       {/* <Text mx="1rem">OR</Text> */}
       {/* <Tooltip label={'Select a custom start date for this visualization'} aria-label="A tooltip">
@@ -837,21 +793,6 @@ function ToolbarComponent(props: App): JSX.Element {
           })}
         </Select>
       </Tooltip>
-
-      {s.widget.visualizationType === 'variableCard' ? (
-        <ButtonGroup size="xs" isAttached variant="outline">
-          {/* <Button >Celcius</Button>
-  <Button >Fahrenheit</Button> */}
-        </ButtonGroup>
-      ) : null}
-      {/* <Divider border={'1px'} size={'2xl'} ml="1rem" orientation="vertical" />
-      <ButtonGroup ml="1rem">
-        <Tooltip label={'Duplicate this chart for all other variables from this station'} aria-label="A tooltip">
-          <Button colorScheme={'teal'} size="xs" onClick={handleVisualizeAllVariables}>
-            All Variables
-          </Button>
-        </Tooltip>
-      </ButtonGroup> */}
     </>
   );
 }

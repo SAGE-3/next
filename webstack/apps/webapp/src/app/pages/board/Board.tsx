@@ -40,12 +40,12 @@ import {
   useInsightStore,
   useAssetStore,
   useHexColor,
+  useLinkStore,
 } from '@sage3/frontend';
 
 // Board Layers
 import { BackgroundLayer, UILayer } from './layers';
 import { InteractionbarShortcuts } from './layers/ui/components';
-import { set, sub } from 'date-fns';
 
 // Development or production
 const development: boolean = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
@@ -70,6 +70,7 @@ export function BoardPage() {
   const subRooms = useRoomStore((state) => state.subscribeToAllRooms);
   const subAssets = useAssetStore((state) => state.subscribe);
   const subPlugins = usePluginStore((state) => state.subscribeToPlugins);
+  const subLinks = useLinkStore((state) => state.subscribe);
 
   // Initial Load state
   const [initialLoad, setInitialLoad] = useState(false);
@@ -188,6 +189,8 @@ export function BoardPage() {
       // plugins
       subPlugins();
       setInitialLoad(true);
+      // links
+      subLinks(bId);
     }
 
     handleJoinBoard(roomId, boardId);

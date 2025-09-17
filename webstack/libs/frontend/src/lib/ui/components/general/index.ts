@@ -8,3 +8,4 @@
 
 export * from './ColorPicker';
 export * from './Clock';
+export * from './MainButton';

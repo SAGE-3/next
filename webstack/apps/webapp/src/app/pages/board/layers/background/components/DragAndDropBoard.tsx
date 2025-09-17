@@ -25,7 +25,17 @@ import {
   Center,
 } from '@chakra-ui/react';
 
-import { useAppStore, useUser, useAuth, useFiles, isValidURL, setupApp, useAbility, processContentURL } from '@sage3/frontend';
+import {
+  useAppStore,
+  useUser,
+  useAuth,
+  useFiles,
+  isValidURL,
+  setupApp,
+  useAbility,
+  processContentURL,
+  useLinkStore,
+} from '@sage3/frontend';
 
 import { initialValues } from '@sage3/applications/initialValues';
 import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
@@ -51,6 +61,9 @@ export const useDragAndDropBoard = (props: useDragAndDropBoardProps) => {
   // How to create some applications
   const createApp = useAppStore((state) => state.create);
   const createBatch = useAppStore((state) => state.createBatch);
+
+  // Links
+  const addLink = useLinkStore((state) => state.addLink);
 
   // User
   const { user, accessId } = useUser();
@@ -140,10 +153,14 @@ export const useDragAndDropBoard = (props: useDragAndDropBoardProps) => {
 
           const pastedText = event.dataTransfer.getData('Url');
           if (pastedText) {
-            if (pastedText.startsWith('data:image/png;base64')) {
-              const title = event.dataTransfer.getData('title') || 'Image';
+            if (pastedText.startsWith('data:image/png;base64') || pastedText.startsWith('data:image/jpeg;base64')) {
+              const appState = event.dataTransfer.getData('app_state');
+              if (!appState) return;
+              const parsedState = JSON.parse(appState);
+              const title = parsedState.title;
+              const sources = parsedState.sources;
               // it's a base64 image
-              getImageDimensionsFromBase64(pastedText).then((res) => {
+              getImageDimensionsFromBase64(pastedText).then(async (res) => {
                 const ar = res.w / res.h;
                 let w = res.w;
                 let h = w / ar;
@@ -151,7 +168,16 @@ export const useDragAndDropBoard = (props: useDragAndDropBoardProps) => {
                   w = res.h * ar;
                   h = res.h;
                 }
-                createApp(setupApp(title, 'ImageViewer', xdrop, ydrop, props.roomId, props.boardId, { w, h }, { assetid: pastedText }));
+                const r = await createApp(
+                  setupApp(title, 'ImageViewer', xdrop, ydrop, props.roomId, props.boardId, { w, h }, { assetid: pastedText })
+                );
+                if (r.success) {
+                  if (sources && sources.length) {
+                    const tId = r.data._id;
+                    const sId = sources[0];
+                    addLink(sId, tId, props.boardId, 'provenance');
+                  }
+                }
               });
             } else {
               // Is it a valid URL
@@ -197,7 +223,14 @@ export const useDragAndDropBoard = (props: useDragAndDropBoardProps) => {
                 dragging: false,
                 pinned: false,
               };
-              createApp(newState);
+              const res = await createApp(newState);
+              if (res.success) {
+                if (appstate.sources && appstate.sources.length) {
+                  const tId = res.data._id;
+                  const sId = appstate.sources[0];
+                  addLink(sId, tId, props.boardId, 'provenance');
+                }
+              }
             } else {
               newApp(appName, w, h, xdrop, ydrop);
             }
@@ -263,7 +296,16 @@ export const useDragAndDropBoard = (props: useDragAndDropBoardProps) => {
   const createWebview = useCallback(() => {
     if (isImageUrl(validURL)) {
       createApp(
-        setupApp('ImageViewer', 'ImageViewer', dropPosition.x, dropPosition.y, props.roomId, props.boardId, { w: 800, h: 800 }, { assetid: validURL })
+        setupApp(
+          'ImageViewer',
+          'ImageViewer',
+          dropPosition.x,
+          dropPosition.y,
+          props.roomId,
+          props.boardId,
+          { w: 800, h: 800 },
+          { assetid: validURL }
+        )
       );
     } else {
       const final_url = processContentURL(validURL);
@@ -275,7 +317,16 @@ export const useDragAndDropBoard = (props: useDragAndDropBoardProps) => {
         h = 720;
       }
       createApp(
-        setupApp('Webview', 'Webview', dropPosition.x, dropPosition.y, props.roomId, props.boardId, { w: w, h: h }, { webviewurl: final_url })
+        setupApp(
+          'Webview',
+          'Webview',
+          dropPosition.x,
+          dropPosition.y,
+          props.roomId,
+          props.boardId,
+          { w: w, h: h },
+          { webviewurl: final_url }
+        )
       );
     }
     popOnClose();

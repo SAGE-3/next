@@ -23,15 +23,14 @@ import {
   useDisclosure,
   useToast,
 } from '@chakra-ui/react';
+
 import { v5 as uuidv5 } from 'uuid';
 import { MdPerson, MdLock } from 'react-icons/md';
 
-import { Room, RoomSchema } from '@sage3/shared/types';
-import { useRoomStore, useBoardStore, useAppStore, useConfigStore, ConfirmModal } from '@sage3/frontend';
+import { useRoomStore, useBoardStore, useAppStore, useConfigStore, ConfirmModal, useRouteNav } from '@sage3/frontend';
 import { isAlphanumericWithSpacesAndForeign, SAGEColors } from '@sage3/shared';
+import { Room, RoomSchema } from '@sage3/shared/types';
 import { ColorPicker } from '../general';
-
-import { useRouteNav } from '@sage3/frontend';
 
 interface EditRoomModalProps {
   isOpen: boolean;
@@ -46,11 +45,11 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
   const config = useConfigStore((state) => state.config);
 
   const [name, setName] = useState<RoomSchema['name']>(props.room.data.name);
-  const [description, setEmail] = useState<RoomSchema['description']>(props.room.data.description);
+  const [description, setDescription] = useState<RoomSchema['description']>(props.room.data.description);
   const [color, setColor] = useState(props.room.data.color as SAGEColors);
 
   const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => setName(event.target.value);
-  const handleDescriptionChange = (event: React.ChangeEvent<HTMLInputElement>) => setEmail(event.target.value);
+  const handleDescriptionChange = (event: React.ChangeEvent<HTMLInputElement>) => setDescription(event.target.value);
   const handleColorChange = (c: string) => setColor(c as SAGEColors);
 
   // Rooms
@@ -80,7 +79,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
 
   useEffect(() => {
     setName(props.room.data.name);
-    setEmail(props.room.data.description);
+    setDescription(props.room.data.description);
     setColor(props.room.data.color as SAGEColors);
     setIsListed(props.room.data.isListed);
     setProtected(props.room.data.isPrivate);
@@ -103,14 +102,14 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
     if (name !== props.room.data.name) {
       const cleanedName = cleanNameCheckDoubles(name);
       if (cleanedName) {
-        updateRoom(props.room._id, { name: cleanedName, description, color, isListed });
+        updateRoom(props.room._id, { name: cleanedName, description: description, color, isListed });
         updated = true;
       } else {
         return;
       }
     }
-    if (description !== props.room.data.description) {
-      updateRoom(props.room._id, { description });
+    if (description != props.room.data.description) {
+      updateRoom(props.room._id, { description: description });
       updated = true;
     }
     if (color !== props.room.data.color) {
@@ -125,7 +124,6 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
     if (passwordChanged) {
       if (!isProtected) {
         updated = true;
-
         updateRoom(props.room._id, { privatePin: '', isPrivate: false });
       } else {
         if (password === '') {
@@ -133,7 +131,6 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
           updateRoom(props.room._id, { privatePin: '', isPrivate: false });
         } else {
           updated = true;
-
           // hash the PIN: the namespace comes from the server configuration
           const key = uuidv5(password, config.namespace);
           updateRoom(props.room._id, { privatePin: key, isPrivate: true });
@@ -149,12 +146,15 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
         duration: 3000,
       });
       props.onClose();
+    } else {
+      // Just close the modal
+      props.onClose();
     }
   };
 
   function cleanNameCheckDoubles(name: string): string | null {
-    // Remove leading and trailing space, and limit name length to 20
-    const cleanedName = name.trim().substring(0, 19);
+    // Remove leading and trailing space, and limit name length to 32
+    const cleanedName = name.trim().substring(0, 31);
     const roomNames = rooms.filter((r) => r._id !== props.room._id).map((room) => room.data.name);
     if (cleanedName.split(' ').join('').length === 0) {
       toast({
@@ -174,7 +174,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
       return null;
     } else if (!isAlphanumericWithSpacesAndForeign(cleanedName)) {
       toast({
-        title: 'Name must only contain Unicode letters, numbers, and whitespace characters',
+        title: 'Name must only contain Unicode letters, numbers, comma, hyphen, underscore and spaces',
         status: 'error',
         duration: 3 * 1000,
         isClosable: true,
@@ -238,14 +238,14 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
       <ModalContent>
         <ModalHeader fontSize="3xl">Edit Room: {props.room.data.name}</ModalHeader>
         <ModalBody>
-          <InputGroup mb={2}>
+          <InputGroup mb={4}>
             <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
             <Input
               ref={initialRef}
               type="text"
-              placeholder={name}
+              placeholder={'Room Name'}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
-              mr={4}
+              mr={0}
               value={name}
               onChange={handleNameChange}
               onKeyDown={onSubmit}
@@ -256,13 +256,13 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
             <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
             <Input
               type="text"
-              placeholder={props.room.data.description}
+              placeholder={'Room Description (optional)'}
               _placeholder={{ opacity: 1, color: 'gray.600' }}
-              mr={4}
+              mr={0}
               value={description}
               onChange={handleDescriptionChange}
               onKeyDown={onSubmit}
-              isRequired={true}
+              isRequired={false}
             />
           </InputGroup>
 
@@ -294,7 +294,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
             <Button colorScheme="red" onClick={delConfirmOnOpen} mx="2">
               Delete
             </Button>
-            <Button colorScheme="green" onClick={handleSubmit} isDisabled={!name || !description || !valid}>
+            <Button colorScheme="green" onClick={handleSubmit} isDisabled={!name || !valid}>
               Update
             </Button>
           </Box>

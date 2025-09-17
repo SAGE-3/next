@@ -7,7 +7,7 @@
  */
 import { useEffect, useState } from 'react';
 
-import { Button } from '@chakra-ui/react';
+import { Button, ButtonGroup, Tooltip } from '@chakra-ui/react';
 
 import { useAppStore } from '@sage3/frontend';
 
@@ -42,9 +42,15 @@ function ToolbarComponent(props: App): JSX.Element {
 
   return (
     <>
-      <Button colorScheme="green">Action</Button>
+      <ButtonGroup isAttached size="xs" colorScheme="teal" mr="1">
+        <Tooltip placement="top-start" hasArrow={true} label={'Action'} openDelay={400}>
+          <Button onClick={console.log}>
+            Action
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
     </>
-  )
+  );
 }
 
 /**

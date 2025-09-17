@@ -44,6 +44,8 @@ import {
   MdOutlineStickyNote2,
   MdInfoOutline,
   MdSettings,
+  MdMic,
+  MdStop,
 } from 'react-icons/md';
 import { v5 as uuidv5 } from 'uuid';
 
@@ -79,6 +81,7 @@ type props = {
 };
 
 const MaxElements = 12;
+let recognition: any = null;
 
 export function Alfred(props: props) {
   // Configuration information
@@ -100,7 +103,7 @@ export function Alfred(props: props) {
 
   // User
   const { user, accessId } = useUser();
-  const { boardCursor } = useCursorBoardPosition();
+  const { getBoardCursor } = useCursorBoardPosition();
   const [, setUsername] = useState('');
 
   useEffect(() => {
@@ -204,6 +207,7 @@ export function Alfred(props: props) {
       if (!user) return;
 
       // Get the position of the cursor
+      const boardCursor = getBoardCursor();
       const cursor = { ...boardCursor, z: 0 };
       const pos = cursor || { x: 100, y: 100, z: 0 };
       const width = 400;
@@ -337,7 +341,7 @@ export function Alfred(props: props) {
           rotation: { x: 0, y: 0, z: 0 },
           type: 'Chat',
           state: {
-            ...(initialValues['Stickie'] as AppState),
+            ...(initialValues['Chat'] as AppState),
             firstQuestion: term,
             messages: [question],
             previousQ: '',
@@ -352,7 +356,7 @@ export function Alfred(props: props) {
         });
       }
     },
-    [user, apps, props.boardId, boardCursor, colorMode]
+    [user, apps, props.boardId, colorMode]
   );
 
   return (
@@ -395,8 +399,10 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
   const [listIndex, setListIndex] = useState(0);
   const [buttonList, setButtonList] = useState<JSX.Element[]>([]);
   // colors
-  const intelligenceColor = useColorModeValue('purple.500', 'purple.400');
+  const intelligenceColor = useColorModeValue('purple.500', 'purple.300');
   const { isOpen: editSettingsIsOpen, onOpen: editSettingsOnOpen, onClose: editSettingsOnClose } = useDisclosure();
+  // Default mic color
+  const [recording, setRecording] = useState(false);
 
   // Select the file when clicked
   const handleChange = (event: React.FormEvent<HTMLInputElement>) => {
@@ -560,24 +566,80 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
     }
   }, [filteredList]);
 
+
+  // Voice command
+  const triggerVoice = () => {
+    // Check if the browser supports speech recognition
+    if (recording) {
+      setRecording(false);
+      if (recognition) {
+        recognition.stop();
+      }
+    }
+    if ('webkitSpeechRecognition' in window) {
+      recognition = new (window as any).webkitSpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      recognition.start();
+      console.log('Speech recognition start');
+      setRecording(true);
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        console.log('Speech recognition result:', transcript);
+        setTerm(transcript);
+        setListIndex(0);
+        if (initialRef.current) {
+          initialRef.current.value = transcript;
+          initialRef.current.focus();
+        }
+        // Feels to fast to trigger the action automatically
+        // props.onAction(transcript);
+        // props.onClose();
+      };
+      recognition.onerror = (event: any) => {
+        console.log('Speech recognition error:', event.error);
+        setRecording(false);
+        if (recognition) recognition.stop();
+      };
+      recognition.onend = () => {
+        console.log('Speech recognition ended');
+        setRecording(false);
+        if (recognition) recognition.stop();
+      };
+    } else {
+      console.error('Speech recognition not supported in this browser.');
+      setRecording(false);
+      if (recognition) recognition.stop();
+    }
+  };
+
+  const handleOnClose = () => {
+    if (recording) {
+      triggerVoice();
+    }
+    props.onClose();
+  };
+
   return (
     <>
       <Modal
         isOpen={props.isOpen}
-        onClose={props.onClose}
+        onClose={() => handleOnClose()}
         size="xl"
         initialFocusRef={initialRef}
         blockScrollOnMount={false}
         scrollBehavior={'inside'}
         isCentered
+
       >
         <ModalOverlay />
-        <ModalContent maxH={'30vh'} top={'4rem'}>
+        <ModalContent maxH={'30vh'} top={'4rem'} minWidth="800px">
           <HStack>
             {/* Search box */}
             <InputGroup>
               <InputLeftAddon p={2} m={'8px 0px 8px 8px'} backgroundColor={intelligenceColor}>
-                <IoSparklesSharp size="22px" color={'white'} />{' '}
+                <IoSparklesSharp size="22px" color={'white'} />
               </InputLeftAddon>
               <Input
                 ref={initialRef}
@@ -593,6 +655,14 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
                 onKeyDown={onSubmit}
               />
             </InputGroup>
+
+            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Voice to text - Click and speak'} openDelay={400}>
+              <Button p={0} m={'8px 0px 8px 0px'} disabled={!('webkitSpeechRecognition' in window)} onClick={triggerVoice}
+              colorScheme={recording ? 'red' : 'gray'}>
+              
+               {recording ?<MdStop size="24px" />: <MdMic size="24px" />  }
+              </Button>
+            </Tooltip>
 
             {/* Help box */}
             <Popover trigger="hover">

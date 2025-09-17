@@ -379,12 +379,12 @@ function ToolbarComponent(props: App): JSX.Element {
   return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Zoom In'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Zoom In'} openDelay={400}>
           <Button isDisabled={s.fontSizeMultiplier >= 30} onClick={increaseFontSize} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdAdd fontSize="16px" />
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Zoom Out'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Zoom Out'} openDelay={400}>
           <Button isDisabled={s.fontSizeMultiplier <= 1} onClick={decreaseFontSize} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdRemove fontSize="16px" />
           </Button>
@@ -445,12 +445,12 @@ function ToolbarComponent(props: App): JSX.Element {
         );
       })}
       <ButtonGroup isAttached size="xs" colorScheme="teal">
-        <Tooltip placement="top-start" hasArrow={true} label={'Add Variable'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Add Variable'} openDelay={400}>
           <Button isDisabled={s.datasets.length >= 2} onClick={increaseDatasetSize} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdAdd fontSize="16px" />
           </Button>
         </Tooltip>
-        <Tooltip placement="top-start" hasArrow={true} label={'Remove Variable'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Remove Variable'} openDelay={400}>
           <Button isDisabled={s.datasets.length <= 1} onClick={decreaseDatasetSize} _hover={{ opacity: 0.7, transform: 'scaleY(1.3)' }}>
             <MdRemove fontSize="16px" />
           </Button>

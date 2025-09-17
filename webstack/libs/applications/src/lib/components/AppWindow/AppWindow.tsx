@@ -7,14 +7,23 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { Box, useToast, useColorModeValue, Icon } from '@chakra-ui/react';
+import { Box, useToast, useColorModeValue, Icon, Portal, Button } from '@chakra-ui/react';
 
 import { DraggableData, ResizableDelta, Position, Rnd, RndDragEvent } from 'react-rnd';
 import { MdWindow } from 'react-icons/md';
 import { IconType } from 'react-icons/lib';
 
 // SAGE3 Frontend
-import { useAppStore, useUIStore, useHexColor, useThrottleScale, useAbility, useInsightStore, useUserSettings } from '@sage3/frontend';
+import {
+  useAppStore,
+  useUIStore,
+  useHexColor,
+  useThrottleScale,
+  useAbility,
+  useInsightStore,
+  useUserSettings,
+  useCursorBoardPosition,
+} from '@sage3/frontend';
 
 // Window Components
 import { App } from '../../schema';
@@ -25,6 +34,11 @@ const APP_MIN_WIDTH = 200;
 const APP_MIN_HEIGHT = 100;
 const APP_MAX_WIDTH = 8 * 1024;
 const APP_MAX_HEIGHT = 8 * 1024;
+
+// Window borders
+type Side = 'left' | 'right' | 'top' | 'bottom';
+type Corner = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+type HitType = { edge?: Side; corner?: Corner } | null;
 
 type WindowProps = {
   app: App;
@@ -43,7 +57,8 @@ type WindowProps = {
 
 export function AppWindow(props: WindowProps) {
   // Settings
-  const { settings } = useUserSettings();
+  const { settings, toggleShowUI } = useUserSettings();
+  const showUI = settings.showUI;
   const primaryActionMode = settings.primaryActionMode;
 
   // Can update
@@ -72,6 +87,7 @@ export function AppWindow(props: WindowProps) {
   const setLocalDeltaMove = useUIStore((state) => state.setDeltaLocalMove);
   const boardSynced = useUIStore((state) => state.boardSynced);
   const rndSafeForAction = useUIStore((state) => state.rndSafeForAction);
+  const { uiToBoard } = useCursorBoardPosition();
 
   // Selected Apps Info
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
@@ -255,14 +271,15 @@ export function AppWindow(props: WindowProps) {
     }
   }, [props.app.data.raised]);
 
-  function handleAppClick(e: MouseEvent) {
+  async function handleAppClick(e: MouseEvent) {
     e.stopPropagation();
 
-    // Uncomment me to block selection behaviour on AppWindows
     if (primaryActionMode === 'grab') {
       return;
     }
-
+    if (primaryActionMode === 'linker') {
+      return;
+    }
     // Set the selected app in the UI store
     if (appWasDragged) setAppWasDragged(false);
     else {
@@ -281,6 +298,10 @@ export function AppWindow(props: WindowProps) {
 
     // Uncomment me to block selection behaviour on AppWindows
     if (primaryActionMode === 'grab') {
+      return;
+    }
+
+    if (primaryActionMode === 'linker') {
       return;
     }
 
@@ -338,7 +359,170 @@ export function AppWindow(props: WindowProps) {
 
   const memoizedChildren = useMemo(() => props.children, [props.children]);
 
-  return (
+  // Handle double click on the app window borders
+  // This will resize the app window to the size of the viewport
+  // If Alt is pressed, it will resize also in the opposite direction
+  const onDoubleClick = (e: any) => {
+    // If not allowed to resize, return
+    if (!canMove || !canResize || isPinned) {
+      return;
+    }
+    // If clicked on the resize handle...
+    if (e.target.className === 'app-window-resize-handle') {
+      const position = uiToBoard(e.clientX, e.clientY);
+      const edge = getRectEdgeAtPoint(
+        { x: position.x, y: position.y },
+        { x: pos.x, y: pos.y, width: size.width, height: size.height },
+        20 * invScale
+      );
+      if (edge) {
+        let newOrigin = { x: pos.x, y: pos.y };
+        let newWidth = size.width;
+        let newHeight = size.height;
+        const padx = 20;
+        const pady = 60;
+        // Check if the edge is a corner
+        if (edge.corner) {
+          // Handle corner double click
+          if (edge.corner === 'top-left') {
+            newOrigin = uiToBoard(padx, pady);
+            newWidth = size.width + (pos.x - newOrigin.x);
+            newHeight = size.height + (pos.y - newOrigin.y);
+            if (e.altKey) {
+              const bottomRight = uiToBoard(window.innerWidth - padx, window.innerHeight - pady);
+              newWidth = bottomRight.x - newOrigin.x;
+              newHeight = bottomRight.y - newOrigin.y;
+            }
+          } else if (edge.corner === 'top-right') {
+            const topRight = uiToBoard(window.innerWidth - padx, pady);
+            newOrigin = { x: pos.x, y: topRight.y };
+            newWidth = topRight.x - pos.x;
+            newHeight = pos.y + size.height - topRight.y;
+            if (e.altKey) {
+              const bottomLeft = uiToBoard(padx, window.innerHeight - pady);
+              newOrigin = { x: bottomLeft.x, y: topRight.y };
+              newWidth = topRight.x - bottomLeft.x;
+              newHeight = bottomLeft.y - topRight.y;
+            }
+          } else if (edge.corner === 'bottom-left') {
+            const bottomLeft = uiToBoard(padx, window.innerHeight - pady);
+            newOrigin = { x: bottomLeft.x, y: pos.y };
+            newWidth = pos.x + size.width - bottomLeft.x;
+            newHeight = bottomLeft.y - pos.y;
+            if (e.altKey) {
+              const topRight = uiToBoard(window.innerWidth - padx, pady);
+              newOrigin = { x: bottomLeft.x, y: topRight.y };
+              newWidth = topRight.x - bottomLeft.x;
+              newHeight = bottomLeft.y - topRight.y;
+            }
+          } else if (edge.corner === 'bottom-right') {
+            const bottomRight = uiToBoard(window.innerWidth - padx, window.innerHeight - pady);
+            newWidth = bottomRight.x - pos.x;
+            newHeight = bottomRight.y - pos.y;
+            if (e.altKey) {
+              const topLeft = uiToBoard(padx, pady);
+              newOrigin = { x: topLeft.x, y: topLeft.y };
+              newWidth = bottomRight.x - topLeft.x;
+              newHeight = bottomRight.y - topLeft.y;
+            }
+          }
+        } else if (edge.edge) {
+          if (edge.edge === 'left') {
+            // Handle left edge double click
+            const topLeft = uiToBoard(padx, pady);
+            newOrigin = { x: topLeft.x, y: pos.y };
+            newWidth = size.width + (pos.x - topLeft.x);
+            newHeight = size.height;
+            if (e.altKey) {
+              const topRight = uiToBoard(window.innerWidth - padx, pady);
+              newWidth = topRight.x - topLeft.x;
+            }
+          } else if (edge.edge === 'right') {
+            // Handle right edge double click
+            const topRight = uiToBoard(window.innerWidth - padx, pady);
+            newWidth = topRight.x - pos.x;
+            if (e.altKey) {
+              const topLeft = uiToBoard(padx, pady);
+              newOrigin = { x: topLeft.x, y: pos.y };
+              newWidth = topRight.x - topLeft.x;
+            }
+          } else if (edge.edge === 'top') {
+            // Handle top edge double click
+            const topLeft = uiToBoard(padx, pady);
+            newOrigin = { x: pos.x, y: topLeft.y };
+            newWidth = size.width;
+            newHeight = size.height + (pos.y - topLeft.y);
+            if (e.altKey) {
+              const bottomLeft = uiToBoard(padx, window.innerHeight - pady);
+              newHeight = bottomLeft.y - topLeft.y;
+            }
+          } else if (edge.edge === 'bottom') {
+            // Handle bottom edge double click
+            const bottomLeft = uiToBoard(padx, window.innerHeight - pady);
+            newHeight = bottomLeft.y - pos.y;
+            if (e.altKey) {
+              const topLeft = uiToBoard(padx, pady);
+              newOrigin = { x: pos.x, y: topLeft.y };
+              newHeight = bottomLeft.y - topLeft.y;
+            }
+          }
+        }
+        // Update the app size and position
+        update(props.app._id, {
+          position: {
+            ...props.app.data.position,
+            x: newOrigin.x,
+            y: newOrigin.y,
+          },
+          size: {
+            ...props.app.data.size,
+            width: newWidth,
+            height: newHeight,
+          },
+        });
+        // Deselect the app
+        setSelectedApp('');
+      }
+    }
+  };
+
+  const isFocused = useUIStore((state) => state.focusedAppId === props.app._id);
+
+  return isFocused ? (
+    <Portal>
+      <Box
+        id={'app_' + props.app._id}
+        overflow="hidden"
+        left="0px"
+        top="0px"
+        position={'absolute'}
+        width="100%"
+        height="100%"
+        zIndex={999999999}
+        background={'backgroundColor'}
+      >
+        {memoizedChildren}
+      </Box>
+      <Button
+        position="absolute"
+        left="50%"
+        bottom="0px"
+        zIndex={999999999}
+        opacity={0.75}
+        backgroundColor={backgroundColor}
+        _hover={{ backgroundColor: 'teal', opacity: 1, transform: 'scale(1.15)' }}
+        color="white"
+        onClick={() => {
+          useUIStore.getState().setFocusedAppId('');
+          if (!showUI) {
+            toggleShowUI();
+          }
+        }}
+      >
+        Exit
+      </Button>
+    </Portal>
+  ) : (
     <Rnd
       bounds="parent"
       dragHandleClassName="handle"
@@ -351,13 +535,16 @@ export function AppWindow(props: WindowProps) {
       onResize={handleResize}
       onResizeStop={handleResizeStop}
       onClick={handleAppClick}
-      // select an app on touch
+      // Handle double click on the app window borders
+      onDoubleClick={onDoubleClick}
+      // Select an app on touch
       onPointerDown={handleAppTouchStart}
       onPointerMove={handleAppTouchMove}
-      // enableResizing={enableResize && canResize && !isPinned}
       enableResizing={enableResize && canResize && !isPinned && primaryActionMode === 'lasso'} // Temporary solution to fix resize while drag -> && (selectedApp !== "")
-      // boardSync && rndSafeForAction is a temporary solution to prevent the most common type of bug which is zooming followed by a click
-      disableDragging={!canMove || isPinned || !(boardSynced && rndSafeForAction) || primaryActionMode === 'grab'}
+      // BoardSync && rndSafeForAction is a temporary solution to prevent the most common type of bug which is zooming followed by a click
+      disableDragging={
+        !canMove || isPinned || !(boardSynced && rndSafeForAction) || primaryActionMode === 'grab' || primaryActionMode === 'linker'
+      }
       lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
       style={{
         zIndex: props.lockToBackground ? 0 : myZ,
@@ -405,7 +592,7 @@ export function AppWindow(props: WindowProps) {
         scale={scale}
         borderWidth={borderWidth}
         borderColor={borderColor}
-        selectColor={props.app.data.state?.msgId ? "#F69637" : selectColor} // Orange for SageCell when running
+        selectColor={selectColor}
         borderRadius={outerBorderRadius}
         pinned={isPinned}
         background={background}
@@ -421,7 +608,7 @@ export function AppWindow(props: WindowProps) {
         zIndex={2}
         background={background || outsideView ? backgroundColor : 'unset'}
         borderRadius={innerBorderRadius}
-        boxShadow={hideApp || isPinned || !background ? '' : `4px 4px 12px 0px ${shadowColor}`} //|| primaryActionMode === 'grab'
+        boxShadow={hideApp || isPinned || !background ? '' : `4px 4px 12px 0px ${shadowColor}}`}
         style={{ contentVisibility: hideApp ? 'hidden' : 'visible' }}
       >
         {memoizedChildren}
@@ -448,7 +635,6 @@ export function AppWindow(props: WindowProps) {
           }
           userSelect={'none'}
           zIndex={3}
-        // borderRadius={innerBorderRadius}
         ></Box>
       )}
 
@@ -484,4 +670,50 @@ export function AppWindow(props: WindowProps) {
       )}
     </Rnd>
   );
+}
+
+/**
+ * Determines which edge or corner of a rectangle a given point is near, within a specified tolerance.
+ *
+ * @param point - The point to check, with x and y coordinates.
+ * @param rect - The rectangle to check against, with x, y, width, and height properties.
+ * @param tolerance - The distance within which the point is considered near an edge or corner (default is 1).
+ * @returns An object indicating the edge or corner the point is near, or null if the point is not near any edge or corner.
+ */
+function getRectEdgeAtPoint(
+  point: { x: number; y: number },
+  rect: { x: number; y: number; width: number; height: number },
+  tolerance: number = 1
+): HitType {
+  const left = rect.x;
+  const right = rect.x + rect.width;
+  const top = rect.y;
+  const bottom = rect.y + rect.height;
+
+  // Check if the point is near any of the rectangle's corners
+  const nearTopLeft = Math.abs(point.x - left) <= tolerance && Math.abs(point.y - top) <= tolerance;
+  const nearTopRight = Math.abs(point.x - right) <= tolerance && Math.abs(point.y - top) <= tolerance;
+  const nearBottomLeft = Math.abs(point.x - left) <= tolerance && Math.abs(point.y - bottom) <= tolerance;
+  const nearBottomRight = Math.abs(point.x - right) <= tolerance && Math.abs(point.y - bottom) <= tolerance;
+
+  if (nearTopLeft) return { corner: 'top-left' };
+  if (nearTopRight) return { corner: 'top-right' };
+  if (nearBottomLeft) return { corner: 'bottom-left' };
+  if (nearBottomRight) return { corner: 'bottom-right' };
+
+  // Edges
+  const withinVerticalRange = point.y >= top - tolerance && point.y <= bottom + tolerance;
+  const withinHorizontalRange = point.x >= left - tolerance && point.x <= right + tolerance;
+
+  const onLeft = Math.abs(point.x - left) <= tolerance && withinVerticalRange;
+  const onRight = Math.abs(point.x - right) <= tolerance && withinVerticalRange;
+  const onTop = Math.abs(point.y - top) <= tolerance && withinHorizontalRange;
+  const onBottom = Math.abs(point.y - bottom) <= tolerance && withinHorizontalRange;
+
+  if (onLeft) return { edge: 'left' };
+  if (onRight) return { edge: 'right' };
+  if (onTop) return { edge: 'top' };
+  if (onBottom) return { edge: 'bottom' };
+
+  return null;
 }
