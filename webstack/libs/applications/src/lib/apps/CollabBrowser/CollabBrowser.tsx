@@ -42,11 +42,12 @@ import { userInfo } from 'os';
 import { useAppStore, useUser, useUIStore } from '@sage3/frontend';
 import { VncScreen, RFB } from '@sage3/frontend';
 import { FaFirefoxBrowser, FaClipboard } from 'react-icons/fa';
-import { MdVolumeOff } from 'react-icons/md'; // MdVolumeUp
+import { MdVolumeOff, MdVolumeUp } from 'react-icons/md'; // MdVolumeUp
 import { TbMouse, TbMouseOff } from 'react-icons/tb';
 import { PiTabs } from 'react-icons/pi';
 
 import { VmsAPI } from '@sage3/frontend';
+import { AudioVncService } from './AudioVNCService';
 
 // const fetchWS = async (vmId: string = 'allocate', theme: number = 0, urls: string[], id: string): Promise<any> => {
 //   const getUrl = () => {
@@ -70,7 +71,7 @@ import { VmsAPI } from '@sage3/frontend';
 //       'Content-Type': 'application/json',
 //     },
 //     body: JSON.stringify({
-//       vm: 'vnc-x11-firefox',
+//       vm: 'sage3-firefox',
 //       env: {
 //         FIREFOX_URLS: urls,
 //         FIREFOX_THEME: theme,
@@ -118,6 +119,7 @@ function AppComponent(props: App): JSX.Element {
   const [viewOnly, setViewOnly] = useState<boolean>(true);
   const [connected, setVncConnected] = useState<boolean>(false);
   const [rejoinSpinner, setRejoinSpinner] = useState<boolean>(false);
+  const [audioAutoPlay, setAudioAutoPlay] = useState<boolean>(false);
 
   const { user } = useUser();
   const updateState = useAppStore((state) => state.updateState);
@@ -141,6 +143,28 @@ function AppComponent(props: App): JSX.Element {
     }, delay);
   };
 
+  // Audio Autoplay Service
+  useEffect(() => {
+    if (audioAutoPlay) return; // Already received gesture, no need to listen
+
+    const handleUserGesture = () => {
+      setAudioAutoPlay(true);
+    };
+
+    // Listen for various user interaction events
+    const events = ['click', 'keydown', 'touchstart', 'mousedown'];
+    events.forEach((event) => {
+      window.addEventListener(event, handleUserGesture, { once: true });
+    });
+
+    // Cleanup listeners if component unmounts before gesture
+    return () => {
+      events.forEach((event) => {
+        window.removeEventListener(event, handleUserGesture);
+      });
+    };
+  }, [audioAutoPlay]);
+
   // keyboard grabbing on refresh on vnc load & on app selection
   useEffect(() => {
     if (isSelected) {
@@ -161,14 +185,14 @@ function AppComponent(props: App): JSX.Element {
     // Start Container on user selecting app; this is the alternative to autostarting the container
     if (isSelected && vmId && !vncScreenRef.current) {
       setRejoinSpinner(true);
-      VmsAPI.initalize(vmId, 'vnc-x11-firefox', { FIREFOX_URLS: s.urls, FIREFOX_THEME: theme, CALLBACK_ID: `${props._id}` }).then(
+      VmsAPI.initalize(vmId, 'sage3-firefox', { FIREFOX_URLS: s.urls, FIREFOX_THEME: theme, CALLBACK_ID: `${props._id}` }).then(
         (jsonData) => {
           if ('url' in jsonData) {
             setWsUrl(jsonData['url']);
             setRejoinSpinner(false);
             updateState(props._id, { refreshSeed: Math.random() });
           }
-        }
+        },
       );
     }
   }, [isSelected]);
@@ -178,12 +202,12 @@ function AppComponent(props: App): JSX.Element {
     if (s.init) {
       // Send request to start container or recieve websocket if running
       if ((startVmOnLoad && appIsMountingRef.current) || !appIsMountingRef.current) {
-        VmsAPI.initalize(vmId, 'vnc-x11-firefox', { FIREFOX_URLS: s.urls, FIREFOX_THEME: theme, CALLBACK_ID: `${props._id}` }).then(
+        VmsAPI.initalize(vmId, 'sage3-firefox', { FIREFOX_URLS: s.urls, FIREFOX_THEME: theme, CALLBACK_ID: `${props._id}` }).then(
           (jsonData) => {
             if ('url' in jsonData) {
               setWsUrl(jsonData['url']);
             }
-          }
+          },
         );
       }
       // Send request to check if container is running or not, do not issue start command on first load
@@ -211,10 +235,10 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     appIsMountingRef.current = false;
     if (!s.init && props._createdBy === user?._id) {
-      VmsAPI.initalize(vmId, 'vnc-x11-firefox', { FIREFOX_URLS: s.urls, FIREFOX_THEME: theme, CALLBACK_ID: `${props._id}` }).then(
+      VmsAPI.initalize(vmId, 'sage3-firefox', { FIREFOX_URLS: s.urls, FIREFOX_THEME: theme, CALLBACK_ID: `${props._id}` }).then(
         (jsonData) => {
           updateState(props._id, { refreshSeed: Math.random(), init: true, urls: ['about:page'] });
-        }
+        },
       );
     }
   }, []);
@@ -340,6 +364,13 @@ function AppComponent(props: App): JSX.Element {
                 // console.log(e)
               }}
             />
+            {audioAutoPlay && s.audio && (
+              <AudioVncService
+                wsUrl={`${wsUrl}/audio}`}
+                enabled={true}
+                // onConnectionChange?: (connected: boolean) => void;
+              />
+            )}
           </div>
         )}
       </>
@@ -427,9 +458,16 @@ function ToolbarComponent(props: App): JSX.Element {
           <FaClipboard />
         </Button>
       </Tooltip>
-      <Tooltip label="Audio is currently not supported" openDelay={400} hasArrow placement="top">
-        <Button size="xs" ml="1" colorScheme="gray" onClick={() => {}}>
-          <MdVolumeOff />
+      <Tooltip label="Toggle Audio" openDelay={400} hasArrow placement="top">
+        <Button
+          size="xs"
+          ml="1"
+          colorScheme="teal"
+          onClick={() => {
+            updateState(props._id, { audio: !s.audio });
+          }}
+        >
+          {s.audio ? <MdVolumeUp /> : <MdVolumeOff />}
         </Button>
       </Tooltip>
     </>

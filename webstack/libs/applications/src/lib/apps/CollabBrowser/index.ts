@@ -20,6 +20,7 @@ export const schema = z.object({
   init: z.boolean(),
   initialWebPage: z.string(),
   urls: z.array(z.string()),
+  audio: z.boolean(),
   refreshSeed: z.number(),
 });
 export type state = z.infer<typeof schema>;
@@ -32,6 +33,7 @@ export const init: Partial<state> = {
   init: false,
   initialWebPage: undefined,
   urls: [],
+  audio: false,
   refreshSeed: 0,
 };
 

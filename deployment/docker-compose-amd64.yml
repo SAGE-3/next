@@ -225,38 +225,23 @@ services:
     restart: unless-stopped
     labels:
       - "traefik.enable=true"
-      - "traefik.http.middlewares.sst.headers.customrequestheaders.Connection=Upgrade"
-      - "traefik.http.middlewares.sst.headers.customrequestheaders.Upgrade=websocket"
-
-      # HTTP API route
-      - "traefik.http.routers.vm-management.rule=Host(`${SAGE3_SERVER}`) && PathPrefix(`/api/vm`)"
-      - "traefik.http.routers.vm-management.entrypoints=websecure"
-      - "traefik.http.services.vm-management.loadbalancer.server.port=4024"
-      # - "traefik.http.routers.vm-management.tls=true"
-      # - "traefik.http.routers.vm-management.tls.certresolver=myresolver"
-      # - "traefik.http.routers.vm-management.service=vm-management-service"
-      # - "traefik.http.services.vm-management-service.loadbalancer.server.port=4024"
-
-      # WebSocket route
-      - "traefik.http.routers.vm-stream.rule=Host(`${SAGE3_SERVER}`) && PathPrefix(`/api/vmstream`)"
-      - "traefik.http.routers.vm-stream.entrypoints=websecure"
-      - "traefik.http.services.vm-stream.loadbalancer.server.port=4033"
-      # 4033 Middlewares
-      - "traefik.http.middlewares.vm-stream-headers.headers.customrequestheaders.Upgrade=websocket"
-      - "traefik.http.middlewares.vm-stream-headers.headers.customrequestheaders.Connection=Upgrade"
-      - traefik.http.middlewares.vm-stream-path-strip.replacepathregex.regex=^/api/vmstream(.*)
-      - traefik.http.middlewares.vm-stream-path-strip.replacepathregex.replacement=/stream$$1
-
-      # - "traefik.http.routers.vm-stream.middlewares=vm-stream-path-strip"
-      # - "traefik.http.routers.vm-stream.middlewares=vm-stream-headers"
-
-      - "traefik.http.routers.vm-stream.middlewares=vm-stream-path-strip,vm-stream-headers"
-
-      # - "traefik.http.routers.vm-stream.tls=true"
-      # - "traefik.http.routers.vm-stream.tls.certresolver=myresolver"
-      # - "traefik.http.routers.vm-stream.service=ws-service"
-      # - "traefik.http.services.vm-stream-service.loadbalancer.server.port=4033"
-
+      # VM route (port 4024)
+      - "traefik.http.routers.vm.rule=PathPrefix(`/api/vm`)"
+      - "traefik.http.routers.vm.priority=8"
+      - "traefik.http.services.vm.loadbalancer.server.port=4024"
+      - "traefik.http.services.vm.loadbalancer.passhostheader=true"
+      - "traefik.http.routers.vm.middlewares=vm-stripprefix,cors"
+      - "traefik.http.routers.vm.service=vm"
+      # Stream route (port 4033)
+      - "traefik.http.routers.stream.rule=PathPrefix(`/stream`)"
+      - "traefik.http.routers.stream.priority=8"
+      - "traefik.http.services.stream.loadbalancer.server.port=4033"
+      - "traefik.http.services.stream.loadbalancer.passhostheader=true"
+      - traefik.http.routers.vm.middlewares=vm-rewrite
+      - traefik.http.middlewares.vm-rewrite.replacepathregex.regex=^/api/vmstream(.*)
+      - traefik.http.middlewares.vm-rewrite.replacepathregex.replacement=/stream$$1
+      - "traefik.http.routers.stream.middlewares=stream-stripprefix,cors"
+      - "traefik.http.routers.stream.service=stream"
     environment:
       - SAGE3_SERVER=${SAGE3_SERVER}
       - TOKEN=${TOKEN}
@@ -273,4 +258,4 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    network_mode: host
+    # network_mode: host
