@@ -48,51 +48,6 @@ import { VscRemoteExplorer } from 'react-icons/vsc';
 
 import { VmsAPI } from '@sage3/frontend';
 
-// const fetchWS = (vmId: string = 'allocate', ip: string, port: string): Promise<any> => {
-//   return fetch(`/vm/any/${vmId}`, {
-//     method: 'POST',
-//     headers: {
-//       'Content-Type': 'application/json',
-//     },
-//     body: JSON.stringify({
-//       vm: 'vnc-connect',
-//       env: {
-//         TARGET_IP: ip,
-//         TARGET_PORT: port,
-//         // CALLBACK_ID: `${id}`,
-//       },
-//     }),
-//   })
-//     .then((response) => {
-//       if (!response.ok) {
-//         throw new Error('Request failed');
-//       }
-//       return response.json();
-//     })
-//     .catch((error) => {
-//       console.log(error);
-//       throw error;
-//     });
-// };
-
-// const fetchWSIfExists = (vmId: string = 'allocate'): Promise<any> => {
-//   return new Promise(async (resolve, reject) => {
-//     try {
-//       const response = await fetch(`/vm/ws/${vmId}`);
-//       if (!response.ok) {
-//         throw new Error('Request failed');
-//       }
-//       const jsonData = await response.json();
-//       resolve(jsonData);
-//     } catch (error) {
-//       console.log(error);
-//       reject(error);
-//     }
-//   });
-// };
-
-/* App component for VNC */
-
 function AppComponent(props: App): JSX.Element {
   const { colorMode } = useColorMode();
   const theme = colorMode === 'light' ? 1 : 0;

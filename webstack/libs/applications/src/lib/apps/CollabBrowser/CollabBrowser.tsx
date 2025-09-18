@@ -134,14 +134,14 @@ function AppComponent(props: App): JSX.Element {
   const appIsMountingRef = useRef(true);
   const vmId = props._id;
 
-  const updateScreenshot = (delay: number = 0) => {
-    setTimeout(() => {
-      if (vncScreenRef.current?.rfb) {
-        const dataUrl = vncScreenRef.current?.rfb?._canvas.toDataURL();
-        updateState(props._id, { lastImage: dataUrl });
-      }
-    }, delay);
-  };
+  // const updateScreenshot = (delay: number = 0) => {
+  //   setTimeout(() => {
+  //     if (vncScreenRef.current?.rfb) {
+  //       const dataUrl = vncScreenRef.current?.rfb?._canvas.toDataURL();
+  //       updateState(props._id, { lastImage: dataUrl });
+  //     }
+  //   }, delay);
+  // };
 
   // Audio Autoplay Service
   useEffect(() => {
@@ -179,9 +179,10 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     // Save Screenshot on deselect, set to timer instead maybe more ideal...
     // Save screenshot can be used for AI context
-    if (!isSelected) {
-      updateScreenshot();
-    }
+    // if (!isSelected) {
+    //   updateScreenshot();
+    // }
+
     // Start Container on user selecting app; this is the alternative to autostarting the container
     if (isSelected && vmId && !vncScreenRef.current) {
       setRejoinSpinner(true);
@@ -340,7 +341,7 @@ function AppComponent(props: App): JSX.Element {
               onConnect={(rfb: RFB) => {
                 // console.log(rfb);
                 setVncConnected(true);
-                updateScreenshot(200);
+                // updateScreenshot(200);
               }}
               onDisconnect={(rfb: RFB) => {
                 // console.log(rfb);
