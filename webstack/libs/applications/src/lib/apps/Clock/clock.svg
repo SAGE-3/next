@@ -24,7 +24,7 @@
     <text id="timezone"
           x="160" y="35"
           font-family="SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace"
-          font-size="14" fill="#999" text-anchor="middle">   
+          font-size="20" fill="#999" text-anchor="middle">   
     </text>
 
     <!-- Time -->
