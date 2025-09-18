@@ -14,176 +14,63 @@ import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
-// D3 library
 import * as d3 from 'd3';
-// SVG clock file
 import { ReactComponent as Clock } from './clock.svg';
 
-// List of timezones (IANA IDs)
+// IANA time zones (labels shown with abbreviations)
 const timeZones: string[] = [
-  'Pacific/Pago_Pago',
-  'Pacific/Honolulu',
-  'America/Juneau',
-  'America/Los_Angeles',
-  'America/Tijuana',
-  'America/Vancouver',
-  'America/Phoenix',
-  'America/Denver',
-  'America/Edmonton',
-  'America/Chicago',
-  'America/Winnipeg',
-  'America/Mexico_City',
-  'America/New_York',
-  'America/Toronto',
-  'America/Lima',
-  'America/Bogota',
-  'America/Caracas',
-  'America/Halifax',
-  'America/St_Johns',
-  'America/Sao_Paulo',
-  'Atlantic/Azores',
-  'Atlantic/Cape_Verde',
-  'Africa/Casablanca',
-  'Europe/London',
-  'Europe/Madrid',
-  'Europe/Paris',
-  'Europe/Berlin',
-  'Europe/Rome',
-  'Europe/Zurich',
-  'Europe/Athens',
-  'Europe/Bucharest',
-  'Europe/Moscow',
-  'Asia/Jerusalem',
-  'Asia/Istanbul',
-  'Asia/Amman',
-  'Africa/Cairo',
-  'Asia/Jeddah',
-  'Asia/Baghdad',
-  'Asia/Tehran',
-  'Asia/Dubai',
-  'Asia/Kabul',
-  'Asia/Karachi',
-  'Asia/Calcutta',
-  'Asia/Kolkata',
-  'Asia/Kathmandu',
-  'Asia/Dhaka',
-  'Asia/Rangoon',
-  'Asia/Bangkok',
-  'Asia/Jakarta',
-  'Asia/Hong_Kong',
-  'Asia/Shanghai',
-  'Asia/Singapore',
-  'Asia/Taipei',
-  'Asia/Tokyo',
-  'Asia/Seoul',
-  'Australia/Adelaide',
-  'Australia/Darwin',
-  'Australia/Sydney',
-  'Australia/Brisbane',
-  'Pacific/Guam',
-  'Pacific/Port_Moresby',
-  'Pacific/Fiji',
-  'Pacific/Auckland',
+  'Pacific/Pago_Pago','Pacific/Honolulu','America/Juneau','America/Los_Angeles','America/Tijuana','America/Vancouver',
+  'America/Phoenix','America/Denver','America/Edmonton','America/Chicago','America/Winnipeg','America/Mexico_City',
+  'America/New_York','America/Toronto','America/Lima','America/Bogota','America/Caracas','America/Halifax',
+  'America/St_Johns','America/Sao_Paulo','Atlantic/Azores','Atlantic/Cape_Verde','Africa/Casablanca','Europe/London',
+  'Europe/Madrid','Europe/Paris','Europe/Berlin','Europe/Rome','Europe/Zurich','Europe/Athens','Europe/Bucharest',
+  'Europe/Moscow','Asia/Jerusalem','Asia/Istanbul','Asia/Amman','Africa/Cairo','Asia/Jeddah','Asia/Baghdad','Asia/Tehran',
+  'Asia/Dubai','Asia/Kabul','Asia/Karachi','Asia/Calcutta','Asia/Kolkata','Asia/Kathmandu','Asia/Dhaka','Asia/Rangoon',
+  'Asia/Bangkok','Asia/Jakarta','Asia/Hong_Kong','Asia/Shanghai','Asia/Singapore','Asia/Taipei','Asia/Tokyo','Asia/Seoul',
+  'Australia/Adelaide','Australia/Darwin','Australia/Sydney','Australia/Brisbane','Pacific/Guam','Pacific/Port_Moresby',
+  'Pacific/Fiji','Pacific/Auckland',
 ];
 
 const timeZoneAbbr: string[] = [
-  'SST', // Pacific/Pago_Pago
-  'HST', // Pacific/Honolulu
-  'AKDT', // America/Juneau
-  'PDT', // America/Los_Angeles
-  'PDT', // America/Tijuana
-  'PDT', // America/Vancouver
-  'MST', // America/Phoenix
-  'MDT', // America/Denver
-  'MDT', // America/Edmonton
-  'CDT', // America/Chicago
-  'CDT', // America/Winnipeg
-  'CDT', // America/Mexico_City
-  'EDT', // America/New_York
-  'EDT', // America/Toronto
-  'PET', // America/Lima
-  'COT', // America/Bogota
-  'VET', // America/Caracas
-  'ADT', // America/Halifax
-  'NST', // America/St_Johns
-  'BRT', // America/Sao_Paulo
-  'AZOT', // Atlantic/Azores
-  'CVT', // Atlantic/Cape_Verde
-  'WET', // Africa/Casablanca
-  'BST', // Europe/London
-  'CEST', // Europe/Madrid
-  'CEST', // Europe/Paris
-  'CEST', // Europe/Berlin
-  'CEST', // Europe/Rome
-  'CEST', // Europe/Zurich
-  'EEST', // Europe/Athens
-  'EEST', // Europe/Bucharest
-  'MSK', // Europe/Moscow
-  'IDT', // Asia/Jerusalem
-  'TRT', // Asia/Istanbul
-  'EEST', // Asia/Amman
-  'EET', // Africa/Cairo
-  'AST', // Asia/Jeddah
-  'AST', // Asia/Baghdad
-  'IRST', // Asia/Tehran
-  'GST', // Asia/Dubai
-  'AFT', // Asia/Kabul
-  'PKT', // Asia/Karachi
-  'IST', // Asia/Calcutta
-  'IST', // Asia/Kolkata
-  'NPT', // Asia/Kathmandu
-  'BST', // Asia/Dhaka
-  'MMT', // Asia/Rangoon
-  'ICT', // Asia/Bangkok
-  'WIB', // Asia/Jakarta
-  'HKT', // Asia/Hong_Kong
-  'CST', // Asia/Shanghai
-  'SGT', // Asia/Singapore
-  'CST', // Asia/Taipei
-  'JST', // Asia/Tokyo
-  'KST', // Asia/Seoul
-  'ACST', // Australia/Adelaide
-  'ACST', // Australia/Darwin
-  'AEST', // Australia/Sydney
-  'AEST', // Australia/Brisbane
-  'ChST', // Pacific/Guam
-  'PGT', // Pacific/Port_Moresby
-  'FJT', // Pacific/Fiji
-  'NZST', // Pacific/Auckland
+  'SST','HST','AKDT','PDT','PDT','PDT','MST','MDT','MDT','CDT','CDT','CDT','EDT','EDT','PET','COT','VET','ADT','NST','BRT',
+  'AZOT','CVT','WET','BST','CEST','CEST','CEST','CEST','CEST','EEST','EEST','MSK','IDT','TRT','EEST','EET','AST','AST','IRST',
+  'GST','AFT','PKT','IST','IST','NPT','BST','MMT','ICT','WIB','HKT','CST','SGT','CST','JST','KST','ACST','ACST','AEST','AEST',
+  'ChST','PGT','FJT','NZST',
 ];
 
-/* App component for Clock */
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const svgRef = useRef<SVGSVGElement>(null);
   const updateState = useAppStore((state) => state.updateState);
+  const update = useAppStore((state) => state.update); // needed for sizing
 
   const CLOCK_WIDTH = 320;
   const CLOCK_HEIGHT = 160;
   const CLOCK_ASPECT = CLOCK_WIDTH / CLOCK_HEIGHT;
 
-  // Keep window aspect ratio consistent with the SVG
+  // ✅ Adopt clockCorrectResizing sizing behavior (height derived from width; fixes initial paint).
   useEffect(() => {
     const { width, height, depth } = props.data.size;
     const currentAspect = width / height;
     if (width !== CLOCK_WIDTH || height !== CLOCK_HEIGHT || Math.abs(currentAspect - CLOCK_ASPECT) > 0.01) {
       const newHeight = Math.round(width / CLOCK_ASPECT);
-      updateState(props._id, { size: { width, height: newHeight, depth: depth ?? 0 } });
+      update(props._id, { size: { width, height: newHeight, depth: depth ?? 0 } });
     }
-  }, [props.data.size.width, props.data.size.height, props.data.size.depth, props._id, updateState]);
+    // why: ensures AppWindow matches SVG aspect on first render using the existing width as driver
+  }, [props.data.size.width, props.data.size.height, props.data.size.depth, props._id, update]);
 
   const updateDigits = (id: string, time: number) => {
     const svgDoc = d3.select(svgRef.current);
     if (!svgDoc.empty()) svgDoc.select('#' + id).text(time.toString().padStart(2, '0'));
   };
 
-  const setTimeZoneText = (timeZoneAbbreviation: string) => {
+  const setTimeZoneText = (abbr: string) => {
     const svgDoc = d3.select(svgRef.current);
-    if (!svgDoc.empty()) svgDoc.select('#timezone').text(timeZoneAbbreviation.replaceAll('_', ' '));
+    if (!svgDoc.empty()) svgDoc.select('#timezone').text(abbr.replaceAll('_', ' '));
   };
 
   const updateDate = (month: number, day: number, year: number) => {
-    const monthList = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthList = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const svgDoc = d3.select(svgRef.current);
     if (!svgDoc.empty()) svgDoc.select('#date').text(`${monthList[month]} ${day}, ${year}`);
   };
@@ -206,7 +93,6 @@ function AppComponent(props: App): JSX.Element {
     }).formatToParts(date);
 
     const byType = Object.fromEntries(parts.map((p) => [p.type, p.value]));
-
     const month = parseInt(byType.month, 10) - 1;
     const day = parseInt(byType.day, 10);
     const year = parseInt(byType.year, 10);
@@ -238,7 +124,7 @@ function AppComponent(props: App): JSX.Element {
 
     setTimeZoneText(abbr);
 
-    // Ensure state stores IANA ID (why: avoid Select value mismatch and ambiguity)
+    // Keep state in IANA to match Select values
     if (props.data.state.timeZone !== ianaTz) {
       updateState(props._id, { timeZone: ianaTz });
     }
@@ -258,18 +144,18 @@ function AppComponent(props: App): JSX.Element {
   );
 }
 
-/* App toolbar component for the app clock */
 function ToolbarComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
 
   const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const selected = props.data.state.timeZone && timeZones.includes(props.data.state.timeZone)
-    ? props.data.state.timeZone
-    : browserTz;
+  const selected =
+    props.data.state.timeZone && timeZones.includes(props.data.state.timeZone)
+      ? props.data.state.timeZone
+      : browserTz;
 
   const handleTimeZoneChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const ianaTz = event.target.value; // IANA ID
-    updateState(props._id, { timeZone: ianaTz }); // keep state in IANA
+    const ianaTz = event.target.value;
+    updateState(props._id, { timeZone: ianaTz });
   };
 
   const handle24HourToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -306,12 +192,6 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-/**
- * Grouped App toolbar component, this component will display when a group of apps are selected
- * @returns JSX.Element | null
- */
-const GroupedToolbarComponent = () => {
-  return null;
-};
+const GroupedToolbarComponent = () => null;
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
