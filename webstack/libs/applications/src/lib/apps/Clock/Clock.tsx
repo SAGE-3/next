@@ -1,25 +1,25 @@
 // path: src/apps/clock/AppComponent.tsx
-/**
- * Copyright (c) SAGE3 Development Team 2022.
- * University of Hawaii, University of Illinois Chicago, Virginia Tech
- * Distributed under the SAGE3 License.
- */
-
 import { useEffect, useRef } from 'react';
-import { Select, Box, Switch, FormControl, FormLabel, useColorModeValue } from '@chakra-ui/react';
+import {
+  Select,
+  Box,
+  Switch,
+  FormControl,
+  FormLabel,
+  useColorMode,
+  useColorModeValue,
+} from '@chakra-ui/react';
 
 import { useAppStore } from '@sage3/frontend';
 import { App } from '../../schema';
-
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
 import * as d3 from 'd3';
 import { ReactComponent as Clock } from './clock.svg';
 
-// IANA time zones (labels shown with abbreviations)
-const timeZones: string[] = [
-  'Pacific/Pago_Pago','Pacific/Honolulu','America/Juneau','America/Los_Angeles','America/Tijuana','America/Vancouver',
+// TZ lists unchanged
+const timeZones: string[] = ['Pacific/Pago_Pago','Pacific/Honolulu','America/Juneau','America/Los_Angeles','America/Tijuana','America/Vancouver',
   'America/Phoenix','America/Denver','America/Edmonton','America/Chicago','America/Winnipeg','America/Mexico_City',
   'America/New_York','America/Toronto','America/Lima','America/Bogota','America/Caracas','America/Halifax',
   'America/St_Johns','America/Sao_Paulo','Atlantic/Azores','Atlantic/Cape_Verde','Africa/Casablanca','Europe/London',
@@ -28,52 +28,26 @@ const timeZones: string[] = [
   'Asia/Dubai','Asia/Kabul','Asia/Karachi','Asia/Calcutta','Asia/Kolkata','Asia/Kathmandu','Asia/Dhaka','Asia/Rangoon',
   'Asia/Bangkok','Asia/Jakarta','Asia/Hong_Kong','Asia/Shanghai','Asia/Singapore','Asia/Taipei','Asia/Tokyo','Asia/Seoul',
   'Australia/Adelaide','Australia/Darwin','Australia/Sydney','Australia/Brisbane','Pacific/Guam','Pacific/Port_Moresby',
-  'Pacific/Fiji','Pacific/Auckland',
-];
-
-const timeZoneAbbr: string[] = [
-  'SST','HST','AKDT','PDT','PDT','PDT','MST','MDT','MDT','CDT','CDT','CDT','EDT','EDT','PET','COT','VET','ADT','NST','BRT',
+  'Pacific/Fiji','Pacific/Auckland',];
+const timeZoneAbbr: string[] = ['SST','HST','AKDT','PDT','PDT','PDT','MST','MDT','MDT','CDT','CDT','CDT','EDT','EDT','PET','COT','VET','ADT','NST','BRT',
   'AZOT','CVT','WET','BST','CEST','CEST','CEST','CEST','CEST','EEST','EEST','MSK','IDT','TRT','EEST','EET','AST','AST','IRST',
   'GST','AFT','PKT','IST','IST','NPT','BST','MMT','ICT','WIB','HKT','CST','SGT','CST','JST','KST','ACST','ACST','AEST','AEST',
-  'ChST','PGT','FJT','NZST',
-];
+  'ChST','PGT','FJT','NZST',];
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const svgRef = useRef<SVGSVGElement>(null);
   const updateState = useAppStore((state) => state.updateState);
-  const update = useAppStore((state) => state.update); // needed for sizing
+  const update = useAppStore((state) => state.update);
 
   const CLOCK_WIDTH = 320;
-  const CLOCK_HEIGHT = 160;
+  const CLOCK_HEIGHT =130;
   const CLOCK_ASPECT = CLOCK_WIDTH / CLOCK_HEIGHT;
 
-  // Chakra: align with Calculator behavior
-  const background = useColorModeValue('white', 'gray.700');
-  const fg = useColorModeValue('#111111', '#E5E7EB');       // primary text
-  const muted = useColorModeValue('#6B7280', '#9CA3AF');    // secondary text
+  const { colorMode } = useColorMode();
+  const lightBg = useColorModeValue('white', undefined); // only apply bg in light
 
-  // Apply color mode to the inline SVG
-  useEffect(() => {
-    const svgDoc = d3.select(svgRef.current);
-    if (svgDoc.empty()) return;
-
-    // Make any built-in SVG background transparent (why: let Box background handle theme)
-    svgDoc
-      .selectAll('rect#background, #background, #bg, .bg')
-      .attr('fill', 'transparent')
-      .attr('stroke', 'none');
-
-    // Primary for all text
-    svgDoc.selectAll('text').attr('fill', fg);
-
-    // Muted for secondary labels if present
-    svgDoc.select('#date').attr('fill', muted);
-    svgDoc.select('#ampm').attr('fill', muted);
-    svgDoc.select('#timezone').attr('fill', muted);
-  }, [fg, muted]);
-
-  // sizing behavior from clockCorrectResizing (unchanged)
+  // keep aspect ratio from clockCorrectResizing
   useEffect(() => {
     const { width, height, depth } = props.data.size;
     const currentAspect = width / height;
@@ -82,6 +56,31 @@ function AppComponent(props: App): JSX.Element {
       update(props._id, { size: { width, height: newHeight, depth: depth ?? 0 } });
     }
   }, [props.data.size.width, props.data.size.height, props.data.size.depth, props._id, update]);
+
+  // 💡 Apply themed colors BOTH directions on every mode change (no caching)
+  useEffect(() => {
+    const svg = d3.select(svgRef.current);
+    if (svg.empty()) return;
+
+    const isLight = colorMode === 'light';
+    const primary = isLight ? '#111111' : '#E5E7EB';  // digits
+    const secondary = isLight ? '#6B7280' : '#9CA3AF'; // date/ampm/tz
+
+    // All text (digits)
+    svg.selectAll('text').attr('fill', primary);
+
+    // Secondary labels
+    svg.select('#date').attr('fill', secondary);
+    svg.select('#ampm').attr('fill', secondary);
+    svg.select('#timezone').attr('fill', secondary);
+
+    // Background rects: only clear in light so Box bg shows; leave dark as-authored
+    if (isLight) {
+      svg.selectAll('#background, #bg, .bg, rect#background')
+        .attr('fill', 'transparent')
+        .attr('stroke', 'none');
+    }
+  }, [colorMode]);
 
   const updateDigits = (id: string, time: number) => {
     const svgDoc = d3.select(svgRef.current);
@@ -148,7 +147,6 @@ function AppComponent(props: App): JSX.Element {
 
     setTimeZoneText(abbr);
 
-    // Keep state in IANA to match Select values
     if (props.data.state.timeZone !== ianaTz) {
       updateState(props._id, { timeZone: ianaTz });
     }
@@ -161,7 +159,14 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props} lockAspectRatio={CLOCK_ASPECT}>
-      <Box width="100%" height="100%" p={0} m={0} overflow="hidden" background={background}>
+      <Box
+        width="100%"
+        height="100%"
+        p={0}
+        m={0}
+        overflow="hidden"
+        background={colorMode === 'light' ? lightBg : 'transparent'}
+      >
         <Clock ref={svgRef} width="100%" height="100%" preserveAspectRatio="xMidYMid meet" />
       </Box>
     </AppWindow>
@@ -170,20 +175,17 @@ function AppComponent(props: App): JSX.Element {
 
 function ToolbarComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
-
   const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const selected =
     props.data.state.timeZone && timeZones.includes(props.data.state.timeZone)
       ? props.data.state.timeZone
       : browserTz;
 
-  const handleTimeZoneChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const ianaTz = event.target.value;
-    updateState(props._id, { timeZone: ianaTz });
+  const handleTimeZoneChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    updateState(props._id, { timeZone: e.target.value });
   };
-
-  const handle24HourToggle = (event: React.ChangeEvent<HTMLInputElement>) => {
-    updateState(props._id, { is24Hour: event.target.checked });
+  const handle24HourToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
+    updateState(props._id, { is24Hour: e.target.checked });
   };
 
   return (

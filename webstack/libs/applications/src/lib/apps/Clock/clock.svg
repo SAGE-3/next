@@ -1,49 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- file: svg/digital-clock.svg -->
 <svg
   id="digitalClock"
   xmlns="http://www.w3.org/2000/svg"
-  xmlns:xlink="http://www.w3.org/1999/xlink"
   viewBox="0 0 320 160"
   width="320" height="160"
 >
-  <defs>
-    <!-- Optional: add symbols or clip paths if needed later -->
-  </defs>
+  <defs></defs>
 
   <!-- Clock container -->
   <g id="clock" visibility="visible">
 
     <!-- Background -->
     <g id="backgroundGroup">
-      <rect x="0" y="0" width="320" height="160" rx="16" ry="16" fill="#111" id="background"/>
-      <rect x="6" y="6" width="308" height="148" rx="14" ry="14"
+      <rect x="0" y="0" width="320" height="130" rx="16" ry="16" fill="transparent" id="background"/>
+      <rect x="6" y="6" width="308" height="120" rx="14" ry="14"
             fill="none" stroke="#2a2a2a" stroke-width="2" id="frame"/>
+
+      <!-- Centered content, evenly spaced within the background -->
+      <g id="content" transform="translate(160,65)" font-family="SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" text-anchor="middle">
+        <!-- Timezone (top row) -->
+        <text id="timezone"
+              x="0" y="-40"
+              dominant-baseline="middle"
+              font-size="20" fill="#9CA3AF">
+          <!-- e.g., UTC−10:00 -->
+        </text>
+
+        <!-- Time (middle row) -->
+        <g id="timeGroup"
+           transform="translate(0,0)"
+           font-size="72" font-weight="600" dominant-baseline="middle" fill="#E5E7EB">
+          <text id="hour"    x="-60" y="0">12</text>
+          <text id="colon"   x="0"   y="0">:</text>
+          <text id="minutes" x="60"  y="0">34</text>
+          <text id="ampm"    x="120" y="0" font-size="28" font-weight="400" fill="#9CA3AF">am</text>
+        </g>
+
+        <!-- Date (bottom row) -->
+        <text id="date"
+              x="0" y="40"
+              dominant-baseline="middle"
+              font-size="20" fill="#9CA3AF">
+          Aug 28, 2025
+        </text>
+      </g>
     </g>
-
-    <!-- Timezone (moved above the time) -->
-    <text id="timezone"
-          x="160" y="35"
-          font-family="SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace"
-          font-size="20" fill="#999" text-anchor="middle">   
-    </text>
-
-    <!-- Time -->
-    <g id="timeGroup" font-family="SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace"
-       font-size="72" font-weight="600" text-anchor="middle" dominant-baseline="middle"
-       fill="#e7e7e7">
-      <text id="hour" x="100" y="90"></text>
-      <text id="colon" x="150" y="90">:</text>
-      <text id="minutes" x="200" y="90"></text>
-      <!-- AM/PM indicator -->
-      <text id="ampm" x="265" y="90" font-size="28" font-weight="400" fill="#ccc">am</text>
-    </g>
-
-    <!-- Date -->
-    <text id="date"
-          x="160" y="145"
-          font-family="SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace"
-          font-size="20" fill="#bfbfbf" text-anchor="middle">
-      Aug 28, 2025
-    </text>
   </g>
 </svg>
