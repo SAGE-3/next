@@ -23,7 +23,7 @@ export const schema = z.object({
   // initalizerUserId: z.string(),
   ip: z.string(),
   port: z.string(),
-  // password: z.string(),
+  password: z.string(),
 });
 export type state = z.infer<typeof schema>;
 
@@ -36,8 +36,7 @@ export const init: Partial<state> = {
   // initalizerUserId: undefined, // the person who hits connect is this user
   ip: "",
   port: "",
-  // password: "", // we should not store password and cannot encrypt/hash+salt it, ask user everytime is the optimal choice.
-
+  password: "", // we should not store password and cannot encrypt/hash+salt it, ask user everytime is the optimal choice.
 };
 
 export const name = 'VNC';

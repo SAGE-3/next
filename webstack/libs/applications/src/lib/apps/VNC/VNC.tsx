@@ -46,48 +46,50 @@ import { MdVolumeOff } from 'react-icons/md';
 import { TbMouseOff, TbMouse } from 'react-icons/tb';
 import { VscRemoteExplorer } from 'react-icons/vsc';
 
-const fetchWS = (vmId: string = 'allocate', ip: string, port: string): Promise<any> => {
-  return fetch(`/vm/any/${vmId}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      vm: 'vnc-connect',
-      env: {
-        TARGET_IP: ip,
-        TARGET_PORT: port,
-        // CALLBACK_ID: `${id}`,
-      },
-    }),
-  })
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error('Request failed');
-      }
-      return response.json();
-    })
-    .catch((error) => {
-      console.log(error);
-      throw error;
-    });
-};
+import { VmsAPI } from '@sage3/frontend';
 
-const fetchWSIfExists = (vmId: string = 'allocate'): Promise<any> => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const response = await fetch(`/vm/ws/${vmId}`);
-      if (!response.ok) {
-        throw new Error('Request failed');
-      }
-      const jsonData = await response.json();
-      resolve(jsonData);
-    } catch (error) {
-      console.log(error);
-      reject(error);
-    }
-  });
-};
+// const fetchWS = (vmId: string = 'allocate', ip: string, port: string): Promise<any> => {
+//   return fetch(`/vm/any/${vmId}`, {
+//     method: 'POST',
+//     headers: {
+//       'Content-Type': 'application/json',
+//     },
+//     body: JSON.stringify({
+//       vm: 'vnc-connect',
+//       env: {
+//         TARGET_IP: ip,
+//         TARGET_PORT: port,
+//         // CALLBACK_ID: `${id}`,
+//       },
+//     }),
+//   })
+//     .then((response) => {
+//       if (!response.ok) {
+//         throw new Error('Request failed');
+//       }
+//       return response.json();
+//     })
+//     .catch((error) => {
+//       console.log(error);
+//       throw error;
+//     });
+// };
+
+// const fetchWSIfExists = (vmId: string = 'allocate'): Promise<any> => {
+//   return new Promise(async (resolve, reject) => {
+//     try {
+//       const response = await fetch(`/vm/ws/${vmId}`);
+//       if (!response.ok) {
+//         throw new Error('Request failed');
+//       }
+//       const jsonData = await response.json();
+//       resolve(jsonData);
+//     } catch (error) {
+//       console.log(error);
+//       reject(error);
+//     }
+//   });
+// };
 
 /* App component for VNC */
 
@@ -105,6 +107,7 @@ function AppComponent(props: App): JSX.Element {
   // Do not update app state until user hits connect
   const [cachedIP, setCachedIP] = useState<string>('');
   const [cachedPort, setCachedPort] = useState<string>('');
+  const [cachedPassword, setCachedPassword] = useState<string>('');
   // const [connectErrorMsg, setConnectErrorMsg] = useState<string>('');
 
   const { user } = useUser();
@@ -171,7 +174,7 @@ function AppComponent(props: App): JSX.Element {
     // Start Container on user selecting app; this is the alternative to autostarting the container
     if (isSelected && vmId && !vncScreenRef.current && s.ip && s.port) {
       setRejoinSpinner(true);
-      fetchWS(vmId, s.ip, s.port).then((jsonData) => {
+      VmsAPI.initalize(vmId, 'vnc-connect', { TARGET_IP: s.ip, TARGET_PORT: s.port }).then((jsonData) => {
         if ('url' in jsonData) {
           setWsUrl(jsonData['url']);
           setRejoinSpinner(false);
@@ -186,7 +189,7 @@ function AppComponent(props: App): JSX.Element {
     if (s.ip && s.port) {
       // Send request to start container or recieve websocket if running
       if ((startVmOnLoad && appIsMountingRef.current) || !appIsMountingRef.current) {
-        fetchWS(vmId, s.ip, s.port).then((jsonData) => {
+        VmsAPI.initalize(vmId, 'vnc-connect', { TARGET_IP: s.ip, TARGET_PORT: s.port }).then((jsonData) => {
           if ('url' in jsonData) {
             setWsUrl(jsonData['url']);
             setRejoinSpinner(false);
@@ -195,7 +198,7 @@ function AppComponent(props: App): JSX.Element {
       }
       // Send request to check if container is running or not, do not issue start command on first load
       else if (appIsMountingRef.current) {
-        fetchWSIfExists(vmId).then((jsonData) => {
+        VmsAPI.getVmIfExists(vmId).then((jsonData) => {
           if ('url' in jsonData) {
             setWsUrl(jsonData['url']);
             setRejoinSpinner(false);
@@ -247,13 +250,14 @@ function AppComponent(props: App): JSX.Element {
               <>
                 <Input placeholder="ip" onChange={(e) => setCachedIP(e.target.value.replace(/\s+/g, ''))}></Input>
                 <Input placeholder="port" onChange={(e) => setCachedPort(e.target.value.replace(/\s+/g, ''))}></Input>
+                <Input placeholder="password (optional)" onChange={(e) => setCachedPassword(e.target.value)}></Input>
                 <Button
                   onClick={() => {
                     if (props._createdBy === user?._id && cachedIP && cachedPort) {
                       // updateState(props._id, { ip: cachedIP, port: cachedPort });
                       setRejoinSpinner(true);
-                      fetchWS(vmId, cachedIP, cachedPort).then((jsonData) => {
-                        updateState(props._id, { ip: cachedIP, port: cachedPort, refreshSeed: Math.random() });
+                      VmsAPI.initalize(vmId, 'vnc-connect', { TARGET_IP: cachedIP, TARGET_PORT: cachedPort }).then((jsonData) => {
+                        updateState(props._id, { ip: cachedIP, port: cachedPort, password: cachedPassword, refreshSeed: Math.random() });
                       });
                     }
                   }}
@@ -315,6 +319,9 @@ function AppComponent(props: App): JSX.Element {
               // screenSizeWidth: number;
               // screenSizeHeight: number;
 
+              rfbOptions={{
+                credentials: { password: s.password ?? '' },
+              }}
               onConnect={(rfb: RFB) => {
                 console.log(rfb);
                 setVncConnected(true);
