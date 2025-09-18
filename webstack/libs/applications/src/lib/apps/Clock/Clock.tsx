@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useRef } from 'react';
-import { Select, Box, Switch, FormControl, FormLabel } from '@chakra-ui/react';
+import { Select, Box, Switch, FormControl, FormLabel, useColorModeValue } from '@chakra-ui/react';
 
 import { useAppStore } from '@sage3/frontend';
 import { App } from '../../schema';
@@ -48,7 +48,32 @@ function AppComponent(props: App): JSX.Element {
   const CLOCK_HEIGHT = 160;
   const CLOCK_ASPECT = CLOCK_WIDTH / CLOCK_HEIGHT;
 
-  // ✅ Adopt clockCorrectResizing sizing behavior (height derived from width; fixes initial paint).
+  // Chakra: align with Calculator behavior
+  const background = useColorModeValue('white', 'gray.700');
+  const fg = useColorModeValue('#111111', '#E5E7EB');       // primary text
+  const muted = useColorModeValue('#6B7280', '#9CA3AF');    // secondary text
+
+  // Apply color mode to the inline SVG
+  useEffect(() => {
+    const svgDoc = d3.select(svgRef.current);
+    if (svgDoc.empty()) return;
+
+    // Make any built-in SVG background transparent (why: let Box background handle theme)
+    svgDoc
+      .selectAll('rect#background, #background, #bg, .bg')
+      .attr('fill', 'transparent')
+      .attr('stroke', 'none');
+
+    // Primary for all text
+    svgDoc.selectAll('text').attr('fill', fg);
+
+    // Muted for secondary labels if present
+    svgDoc.select('#date').attr('fill', muted);
+    svgDoc.select('#ampm').attr('fill', muted);
+    svgDoc.select('#timezone').attr('fill', muted);
+  }, [fg, muted]);
+
+  // sizing behavior from clockCorrectResizing (unchanged)
   useEffect(() => {
     const { width, height, depth } = props.data.size;
     const currentAspect = width / height;
@@ -56,7 +81,6 @@ function AppComponent(props: App): JSX.Element {
       const newHeight = Math.round(width / CLOCK_ASPECT);
       update(props._id, { size: { width, height: newHeight, depth: depth ?? 0 } });
     }
-    // why: ensures AppWindow matches SVG aspect on first render using the existing width as driver
   }, [props.data.size.width, props.data.size.height, props.data.size.depth, props._id, update]);
 
   const updateDigits = (id: string, time: number) => {
@@ -137,7 +161,7 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props} lockAspectRatio={CLOCK_ASPECT}>
-      <Box width="100%" height="100%" p={0} m={0} overflow="hidden">
+      <Box width="100%" height="100%" p={0} m={0} overflow="hidden" background={background}>
         <Clock ref={svgRef} width="100%" height="100%" preserveAspectRatio="xMidYMid meet" />
       </Box>
     </AppWindow>
