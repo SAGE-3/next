@@ -1,5 +1,5 @@
-// path: src/apps/clock/AppComponent.tsx
-import { useEffect, useRef, useLayoutEffect } from 'react';
+// path: src/apps/clock/Clock.tsx
+import { useEffect, useRef, useLayoutEffect, useMemo } from 'react';
 import {
   Select,
   Box,
@@ -18,21 +18,83 @@ import { AppWindow } from '../../components';
 import * as d3 from 'd3';
 import { ReactComponent as Clock } from './clock.svg';
 
-// TZ lists unchanged
-const timeZones: string[] = ['Pacific/Pago_Pago','Pacific/Honolulu','America/Juneau','America/Los_Angeles','America/Tijuana','America/Vancouver',
-  'America/Phoenix','America/Denver','America/Edmonton','America/Chicago','America/Winnipeg','America/Mexico_City',
-  'America/New_York','America/Toronto','America/Lima','America/Bogota','America/Caracas','America/Halifax',
-  'America/St_Johns','America/Sao_Paulo','Atlantic/Azores','Atlantic/Cape_Verde','Africa/Casablanca','Europe/London',
-  'Europe/Madrid','Europe/Paris','Europe/Berlin','Europe/Rome','Europe/Zurich','Europe/Athens','Europe/Bucharest',
-  'Europe/Moscow','Asia/Jerusalem','Asia/Istanbul','Asia/Amman','Africa/Cairo','Asia/Jeddah','Asia/Baghdad','Asia/Tehran',
-  'Asia/Dubai','Asia/Kabul','Asia/Karachi','Asia/Calcutta','Asia/Kolkata','Asia/Kathmandu','Asia/Dhaka','Asia/Rangoon',
-  'Asia/Bangkok','Asia/Jakarta','Asia/Hong_Kong','Asia/Shanghai','Asia/Singapore','Asia/Taipei','Asia/Tokyo','Asia/Seoul',
-  'Australia/Adelaide','Australia/Darwin','Australia/Sydney','Australia/Brisbane','Pacific/Guam','Pacific/Port_Moresby',
-  'Pacific/Fiji','Pacific/Auckland',];
-const timeZoneAbbr: string[] = ['SST','HST','AKDT','PDT','PDT','PDT','MST','MDT','MDT','CDT','CDT','CDT','EDT','EDT','PET','COT','VET','ADT','NST','BRT',
-  'AZOT','CVT','WET','BST','CEST','CEST','CEST','CEST','CEST','EEST','EEST','MSK','IDT','TRT','EEST','EET','AST','AST','IRST',
-  'GST','AFT','PKT','IST','IST','NPT','BST','MMT','ICT','WIB','HKT','CST','SGT','CST','JST','KST','ACST','ACST','AEST','AEST',
-  'ChST','PGT','FJT','NZST',];
+// ---- Time zone helpers (runtime-derived, no hardcoded arrays) ----
+function getSupportedTimeZones(): string[] {
+  try {
+    const fn = (Intl as any)?.supportedValuesOf;
+    if (typeof fn === 'function') {
+      return fn.call(Intl, 'timeZone') as string[];
+    }
+  } catch {
+  }
+  return [
+    'UTC',
+    'Pacific/Honolulu',
+    'America/Los_Angeles',
+    'America/Denver',
+    'America/Chicago',
+    'America/New_York',
+    'Europe/London',
+    'Europe/Paris',
+    'Europe/Berlin',
+    'Europe/Madrid',
+    'Asia/Tokyo',
+    'Asia/Shanghai',
+    'Asia/Kolkata',
+    'Australia/Sydney',
+  ];
+}
+
+function fmtParts(dt: Intl.DateTimeFormat) {
+  return dt.formatToParts().reduce<Record<string, string>>((acc, p) => {
+    if (p.type) acc[p.type] = p.value;
+    return acc;
+  }, {});
+}
+
+function tryAbbrev(zone: string, date: Date, name: 'short' | 'shortGeneric' | 'shortOffset'): string | null {
+  try {
+    const dt = new Intl.DateTimeFormat('en-US', {
+      timeZone: zone,
+      timeZoneName: name,
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    const tz = fmtParts(dt).timeZoneName;
+    return tz || null;
+  } catch {
+    return null;
+  }
+}
+
+function abbrFor(zone: string, date: Date): string {
+  return (
+    tryAbbrev(zone, date, 'short') ||         
+    tryAbbrev(zone, date, 'shortGeneric') ||  
+    tryAbbrev(zone, date, 'shortOffset') ||   
+    synthesizeGMT(zone, date)                 
+  );
+}
+
+function synthesizeGMT(zone: string, date: Date): string {
+  const f = (tz: string) =>
+    new Intl.DateTimeFormat('en-US', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false })
+      .format(date)
+      .split(':')
+      .map(Number);
+  const [uh, um] = f('UTC');
+  const [lh, lm] = f(zone);
+  const utcMin = uh * 60 + um;
+  const locMin = lh * 60 + lm;
+  let diff = locMin - utcMin;
+  if (diff > 720) diff -= 1440;
+  if (diff < -720) diff += 1440;
+  const sign = diff >= 0 ? '+' : '-';
+  const abs = Math.abs(diff);
+  const hh = String(Math.floor(abs / 60)).padStart(2, '0');
+  const mm = String(abs % 60).padStart(2, '0');
+  return `GMT${sign}${hh}:${mm}`;
+}
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
@@ -47,34 +109,15 @@ function AppComponent(props: App): JSX.Element {
   const { colorMode } = useColorMode();
   const lightBg = useColorModeValue('white', undefined);
 
-  // // --- Initial size: set before first paint to avoid visible snap ---
-  // const didInitSize = useRef(false);
-  // useLayoutEffect(() => {
-  //   if (didInitSize.current) return;
-  //   const { width, height, depth } = props.data.size;
-  //   const aspect = width / Math.max(1, height);
-  //   const needInit =
-  //     width !== CLOCK_WIDTH ||
-  //     height !== CLOCK_HEIGHT ||
-  //     Math.abs(aspect - CLOCK_ASPECT) > 0.01;
-  //   if (needInit) {
-  //     // why: ensure first frame renders at the clock's native size
-  //     update(props._id, { size: { width: CLOCK_WIDTH, height: CLOCK_HEIGHT, depth: depth ?? 0 } });
-  //   }
-  //   didInitSize.current = true;
-  // }, [props._id, update, props.data.size.width, props.data.size.height]);
+  // Build time zones + current abbreviations once
+  const { timeZones, timeZoneAbbr } = useMemo(() => {
+    const zones = getSupportedTimeZones();
+    const now = new Date();
+    const abbrs = zones.map((z) => abbrFor(z, now));
+    return { timeZones: zones, timeZoneAbbr: abbrs };
+  }, []);
 
-  // // --- Maintain aspect on subsequent resizes (unchanged behavior) ---
-  // useEffect(() => {
-  //   if (!didInitSize.current) return; // wait until initial size applied
-  //   const { width, height, depth } = props.data.size;
-  //   const currentAspect = width / Math.max(1, height);
-  //   if (Math.abs(currentAspect - CLOCK_ASPECT) > 0.01) {
-  //     const newHeight = Math.round(width / CLOCK_ASPECT);
-  //     update(props._id, { size: { width, height: newHeight, depth: depth ?? 0 } });
-  //   }
-  // }, [props.data.size.width, props.data.size.height, props.data.size.depth, props._id, update]);
-
+  // Theme colors on the SVG
   useEffect(() => {
     const svg = d3.select(svgRef.current);
     if (svg.empty()) return;
@@ -148,27 +191,34 @@ function AppComponent(props: App): JSX.Element {
     }
   };
 
+  // Live clock + live abbreviation update
   useEffect(() => {
     if (!svgRef.current) return;
 
     const tzFromState = props.data.state.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone;
     const isKnownIana = timeZones.includes(tzFromState);
-    if (!isKnownIana) console.warn(`Invalid or unknown timezone: ${tzFromState}; falling back to browser time zone.`);
+    if (!isKnownIana) {
+      console.warn(`Invalid or unknown timezone: ${tzFromState}; falling back to browser time zone.`);
+    }
 
     const ianaTz = isKnownIana ? tzFromState : Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const abbr = timeZoneAbbr[timeZones.indexOf(ianaTz)] ?? 'UTC';
 
-    setTimeZoneText(abbr);
-
+    // Ensure state holds a supported IANA zone
     if (props.data.state.timeZone !== ianaTz) {
       updateState(props._id, { timeZone: ianaTz });
     }
 
-    const tick = () => setTimeInTimezone(ianaTz, !!props.data.state.is24Hour);
+    const tick = () => {
+      // Update time and the CURRENT abbreviation (handles DST changes)
+      const abbrNow = abbrFor(ianaTz, new Date());
+      setTimeZoneText(abbrNow);
+      setTimeInTimezone(ianaTz, !!props.data.state.is24Hour);
+    };
+
     tick();
     const timing = window.setInterval(tick, 1000);
     return () => window.clearInterval(timing);
-  }, [props._id, props.data.state.timeZone, props.data.state.is24Hour, updateState]);
+  }, [props._id, props.data.state.timeZone, props.data.state.is24Hour, updateState, timeZones]);
 
   return (
     <AppWindow app={props} lockAspectRatio={CLOCK_ASPECT}>
@@ -179,8 +229,16 @@ function AppComponent(props: App): JSX.Element {
         m={0}
         overflow="hidden"
         background={colorMode === 'light' ? lightBg : 'transparent'}
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
       >
-        <Clock ref={svgRef} width="100%" height="100%" preserveAspectRatio="xMidYMid meet" />
+        <Clock
+          ref={svgRef}
+          width="100%"
+          height="100%"
+          preserveAspectRatio="xMidYMid meet"
+        />
       </Box>
     </AppWindow>
   );
@@ -188,6 +246,15 @@ function AppComponent(props: App): JSX.Element {
 
 function ToolbarComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
+
+  // Same runtime zone/abbr list as AppComponent, built once for this component
+  const { timeZones, timeZoneAbbr } = useMemo(() => {
+    const zones = getSupportedTimeZones();
+    const now = new Date();
+    const abbrs = zones.map((z) => abbrFor(z, now));
+    return { timeZones: zones, timeZoneAbbr: abbrs };
+  }, []);
+
   const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const selected =
     props.data.state.timeZone && timeZones.includes(props.data.state.timeZone)
@@ -209,7 +276,7 @@ function ToolbarComponent(props: App): JSX.Element {
             id="timezone-select"
             value={selected}
             onChange={handleTimeZoneChange}
-            style={{ padding: '0.5rem', borderRadius: '8px', width: '240px', height: '34px' }}
+            style={{ padding: '0.5rem', borderRadius: '8px', width: '280px', height: '34px' }}
           >
             {timeZones.map((tz, idx) => (
               <option key={tz} value={tz}>
