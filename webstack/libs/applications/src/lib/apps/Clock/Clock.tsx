@@ -1,4 +1,4 @@
-// path: src/apps/clock/Clock.tsx
+// path: src/apps/clock/AppComponent.tsx
 import { useEffect, useRef, useLayoutEffect } from 'react';
 import {
   Select,
@@ -18,6 +18,7 @@ import { AppWindow } from '../../components';
 import * as d3 from 'd3';
 import { ReactComponent as Clock } from './clock.svg';
 
+// TZ lists unchanged
 const timeZones: string[] = ['Pacific/Pago_Pago','Pacific/Honolulu','America/Juneau','America/Los_Angeles','America/Tijuana','America/Vancouver',
   'America/Phoenix','America/Denver','America/Edmonton','America/Chicago','America/Winnipeg','America/Mexico_City',
   'America/New_York','America/Toronto','America/Lima','America/Bogota','America/Caracas','America/Halifax',
@@ -46,23 +47,34 @@ function AppComponent(props: App): JSX.Element {
   const { colorMode } = useColorMode();
   const lightBg = useColorModeValue('white', undefined);
 
-  // Ensure a sane initial size once; avoids a snap on first render.
-  const didInitSize = useRef(false);
-  useLayoutEffect(() => {
-    if (didInitSize.current) return;
-    const { width, height, depth } = props.data.size;
-    const aspect = width / Math.max(1, height);
-    const needInit =
-      width !== CLOCK_WIDTH ||
-      height !== CLOCK_HEIGHT ||
-      Math.abs(aspect - CLOCK_ASPECT) > 0.01;
-    if (needInit) {
-      update(props._id, { size: { width: CLOCK_WIDTH, height: CLOCK_HEIGHT, depth: depth ?? 0 } });
-    }
-    didInitSize.current = true;
-  }, [props._id, update, props.data.size.width, props.data.size.height]);
+  // // --- Initial size: set before first paint to avoid visible snap ---
+  // const didInitSize = useRef(false);
+  // useLayoutEffect(() => {
+  //   if (didInitSize.current) return;
+  //   const { width, height, depth } = props.data.size;
+  //   const aspect = width / Math.max(1, height);
+  //   const needInit =
+  //     width !== CLOCK_WIDTH ||
+  //     height !== CLOCK_HEIGHT ||
+  //     Math.abs(aspect - CLOCK_ASPECT) > 0.01;
+  //   if (needInit) {
+  //     // why: ensure first frame renders at the clock's native size
+  //     update(props._id, { size: { width: CLOCK_WIDTH, height: CLOCK_HEIGHT, depth: depth ?? 0 } });
+  //   }
+  //   didInitSize.current = true;
+  // }, [props._id, update, props.data.size.width, props.data.size.height]);
 
-  // Theme colors into the SVG
+  // // --- Maintain aspect on subsequent resizes (unchanged behavior) ---
+  // useEffect(() => {
+  //   if (!didInitSize.current) return; // wait until initial size applied
+  //   const { width, height, depth } = props.data.size;
+  //   const currentAspect = width / Math.max(1, height);
+  //   if (Math.abs(currentAspect - CLOCK_ASPECT) > 0.01) {
+  //     const newHeight = Math.round(width / CLOCK_ASPECT);
+  //     update(props._id, { size: { width, height: newHeight, depth: depth ?? 0 } });
+  //   }
+  // }, [props.data.size.width, props.data.size.height, props.data.size.depth, props._id, update]);
+
   useEffect(() => {
     const svg = d3.select(svgRef.current);
     if (svg.empty()) return;
@@ -167,17 +179,8 @@ function AppComponent(props: App): JSX.Element {
         m={0}
         overflow="hidden"
         background={colorMode === 'light' ? lightBg : 'transparent'}
-        display="flex"
-        alignItems="center"
-        justifyContent="center"
       >
-        {/* Live-scale with the AppWindow during resize */}
-        <Clock
-          ref={svgRef}
-          width="100%"
-          height="100%"
-          preserveAspectRatio="xMidYMid meet"
-        />
+        <Clock ref={svgRef} width="100%" height="100%" preserveAspectRatio="xMidYMid meet" />
       </Box>
     </AppWindow>
   );
