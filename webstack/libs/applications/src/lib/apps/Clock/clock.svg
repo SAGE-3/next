@@ -3,8 +3,8 @@
 <svg
   id="digitalClock"
   xmlns="http://www.w3.org/2000/svg"
-  viewBox="0 0 320 160"
-  width="320" height="160"
+  viewBox="0 0 320 132"
+  width="320" height="132"
 >
   <defs></defs>
 
@@ -13,7 +13,7 @@
 
     <!-- Background -->
     <g id="backgroundGroup">
-      <rect x="0" y="0" width="320" height="130" rx="16" ry="16" fill="transparent" id="background"/>
+      <rect x="0" y="0" width="300" height="122" rx="16" ry="16" fill="transparent" id="background"/>
       <rect x="6" y="6" width="308" height="120" rx="14" ry="14"
             fill="none" stroke="#2a2a2a" stroke-width="2" id="frame"/>
 
@@ -31,15 +31,15 @@
         <g id="timeGroup"
            transform="translate(0,0)"
            font-size="72" font-weight="600" dominant-baseline="middle" fill="#E5E7EB">
-          <text id="hour"    x="-60" y="0">12</text>
-          <text id="colon"   x="0"   y="0">:</text>
-          <text id="minutes" x="60"  y="0">34</text>
-          <text id="ampm"    x="120" y="0" font-size="28" font-weight="400" fill="#9CA3AF">am</text>
+          <text id="hour"    x="-50" y="5">12</text>
+          <text id="colon"   x="0"   y="5">:</text>
+          <text id="minutes" x="50"  y="5">34</text>
+          <text id="ampm"    x="110" y="5" font-size="28" font-weight="400" fill="#9CA3AF">am</text>
         </g>
 
         <!-- Date (bottom row) -->
         <text id="date"
-              x="0" y="40"
+              x="0" y="42"
               dominant-baseline="middle"
               font-size="20" fill="#9CA3AF">
           Aug 28, 2025

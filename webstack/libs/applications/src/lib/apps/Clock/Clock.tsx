@@ -1,5 +1,5 @@
 // path: src/apps/clock/AppComponent.tsx
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useLayoutEffect } from 'react';
 import {
   Select,
   Box,
@@ -41,40 +41,54 @@ function AppComponent(props: App): JSX.Element {
   const update = useAppStore((state) => state.update);
 
   const CLOCK_WIDTH = 320;
-  const CLOCK_HEIGHT =130;
+  const CLOCK_HEIGHT = 130;
   const CLOCK_ASPECT = CLOCK_WIDTH / CLOCK_HEIGHT;
 
   const { colorMode } = useColorMode();
-  const lightBg = useColorModeValue('white', undefined); // only apply bg in light
+  const lightBg = useColorModeValue('white', undefined);
 
-  // keep aspect ratio from clockCorrectResizing
-  useEffect(() => {
+  // --- Initial size: set before first paint to avoid visible snap ---
+  const didInitSize = useRef(false);
+  useLayoutEffect(() => {
+    if (didInitSize.current) return;
     const { width, height, depth } = props.data.size;
-    const currentAspect = width / height;
-    if (width !== CLOCK_WIDTH || height !== CLOCK_HEIGHT || Math.abs(currentAspect - CLOCK_ASPECT) > 0.01) {
+    const aspect = width / Math.max(1, height);
+    const needInit =
+      width !== CLOCK_WIDTH ||
+      height !== CLOCK_HEIGHT ||
+      Math.abs(aspect - CLOCK_ASPECT) > 0.01;
+    if (needInit) {
+      // why: ensure first frame renders at the clock's native size
+      update(props._id, { size: { width: CLOCK_WIDTH, height: CLOCK_HEIGHT, depth: depth ?? 0 } });
+    }
+    didInitSize.current = true;
+  }, [props._id, update, props.data.size.width, props.data.size.height]);
+
+  // --- Maintain aspect on subsequent resizes (unchanged behavior) ---
+  useEffect(() => {
+    if (!didInitSize.current) return; // wait until initial size applied
+    const { width, height, depth } = props.data.size;
+    const currentAspect = width / Math.max(1, height);
+    if (Math.abs(currentAspect - CLOCK_ASPECT) > 0.01) {
       const newHeight = Math.round(width / CLOCK_ASPECT);
       update(props._id, { size: { width, height: newHeight, depth: depth ?? 0 } });
     }
   }, [props.data.size.width, props.data.size.height, props.data.size.depth, props._id, update]);
 
-  // 💡 Apply themed colors BOTH directions on every mode change (no caching)
+  // Color theming both directions (no caching)
   useEffect(() => {
     const svg = d3.select(svgRef.current);
     if (svg.empty()) return;
 
     const isLight = colorMode === 'light';
-    const primary = isLight ? '#111111' : '#E5E7EB';  // digits
-    const secondary = isLight ? '#6B7280' : '#9CA3AF'; // date/ampm/tz
+    const primary = isLight ? '#111111' : '#E5E7EB';
+    const secondary = isLight ? '#6B7280' : '#9CA3AF';
 
-    // All text (digits)
     svg.selectAll('text').attr('fill', primary);
-
-    // Secondary labels
     svg.select('#date').attr('fill', secondary);
     svg.select('#ampm').attr('fill', secondary);
     svg.select('#timezone').attr('fill', secondary);
 
-    // Background rects: only clear in light so Box bg shows; leave dark as-authored
     if (isLight) {
       svg.selectAll('#background, #bg, .bg, rect#background')
         .attr('fill', 'transparent')
