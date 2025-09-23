@@ -70,9 +70,38 @@ export function LinkerMode() {
 
   // On mount or apps/links change: if no source selected, list all valid sources
   useEffect(() => {
+    console.log('=== LINKER MODE STATE CHANGE ===');
+    console.log('Current selectedSourceId:', selectedSourceId);
+    
     if (!selectedSourceId) {
-      const srcs = apps.filter((src) => apps.some((tgt) => getAllowedLinkTypes(src, tgt, links).length > 0));
+      console.log('=== INITIAL LINKER MODE DEBUG ===');
+      console.log('All apps:', apps.map(app => ({ 
+        id: app._id, 
+        type: app.data.type, 
+        title: app.data.title 
+      })));
+      console.log('All links:', links.map(link => ({ 
+        id: link._id, 
+        sourceId: link.data.sourceAppId, 
+        targetId: link.data.targetAppId, 
+        type: link.data.type 
+      })));
+      
+      const srcs = apps.filter((src) => {
+        const canLinkToAny = apps.some((tgt) => {
+          if (src._id === tgt._id) return false; // Can't link to self
+          const allowedTypes = getAllowedLinkTypes(src, tgt, links);
+          console.log(`  Testing ${src._id} -> ${tgt._id}: ${allowedTypes.length > 0 ? 'ALLOWED' : 'BLOCKED'} (${allowedTypes})`);
+          return allowedTypes.length > 0;
+        });
+        console.log(`App ${src.data.type} (${src._id}) can start links:`, canLinkToAny);
+        return canLinkToAny;
+      });
+      console.log('Valid source apps:', srcs.map(s => `${s.data.type} (${s._id})`));
       setCandidates(srcs.map((a) => a._id));
+      console.log('Candidates set to:', srcs.map((a) => a._id));
+    } else {
+      console.log(`Source already selected: ${selectedSourceId}`);
     }
   }, [selectedSourceId, apps, links]);
 
@@ -115,6 +144,7 @@ export function LinkerMode() {
           isClosable: true,
           position: 'top',
         });
+
       } else {
         toast({
           title: 'Creation Failed',
@@ -188,6 +218,7 @@ export function LinkerMode() {
         setCandidates([]);
       }
       setPrimaryActionMode('lasso');
+
     } else if (selectedSourceId && result && !result.success) {
       // Handle case where app creation failed but we had a selected source
       toast({
@@ -204,6 +235,10 @@ export function LinkerMode() {
   // Handle click on an app rectangle
   const handleClick = (e: React.MouseEvent<SVGRectElement>, appId: string) => {
     e.stopPropagation();
+    console.log(`=== CLICK ON APP: ${appId} ===`);
+    console.log(`Current selectedSourceId: ${selectedSourceId}`);
+    console.log(`Clicked app is candidate: ${candidates.includes(appId)}`);
+    
     // 1) No source yet: pick source
     if (!selectedSourceId) {
       if (!candidates.includes(appId)) {
@@ -220,13 +255,38 @@ export function LinkerMode() {
       setSelectedSourceId(appId);
       // Compute targets for this source
       const sourceApp = apps.find((a) => a._id === appId)!;
-      const tgts = apps.filter((t) => getAllowedLinkTypes(sourceApp, t, links).length > 0);
-      setCandidates(tgts.map((t) => t._id));
+      console.log(`=== SOURCE SELECTED: ${sourceApp.data.type} (${sourceApp._id}) ===`);
+      
+      const tgts = apps.filter((t) => {
+        const allowedTypes = getAllowedLinkTypes(sourceApp, t, links);
+        console.log(`  Checking ${sourceApp.data.type}->${t.data.type} (${t._id}):`, allowedTypes);
+        
+        // Debug the specific constraint checking
+        if (sourceApp.data.type === 'SageCell' && t.data.type === 'SageCell') {
+          const existingOutgoing = links.filter(l => l.data.sourceAppId === sourceApp._id && l.data.type === 'run_order');
+          const existingIncoming = links.filter(l => l.data.targetAppId === t._id && l.data.type === 'run_order');
+          console.log(`    SageCell->SageCell debug:`, {
+            outgoingCount: existingOutgoing.length,
+            incomingCount: existingIncoming.length,
+            maxOutgoing: 1,
+            maxIncoming: 1,
+            wouldCreateCycle: allowedTypes.length === 0 && existingOutgoing.length === 0 && existingIncoming.length === 0
+          });
+        }
+        
+        return allowedTypes.length > 0;
+      });
+      
+      console.log(`Valid targets for ${sourceApp.data.type}:`, tgts.map(t => `${t.data.type} (${t._id})`));
+      // Include both the selected source and valid targets in candidates
+      setCandidates([appId, ...tgts.map((t) => t._id)]);
+      console.log('New candidates after source selection:', [appId, ...tgts.map((t) => t._id)]);
       return;
     }
 
     // 2) Clicking same source: deselect
     if (selectedSourceId === appId) {
+      console.log(`Deselecting source: ${appId}`);
       setSelectedSourceId('');
       setCandidates([]);
       return;
@@ -247,8 +307,13 @@ export function LinkerMode() {
 
     // Create link of first allowed type
     const src = apps.find((a) => a._id === selectedSourceId)!;
-    const allowed = getAllowedLinkTypes(src, apps.find((a) => a._id === appId)!, links);
+    const tgt = apps.find((a) => a._id === appId)!;
+    const allowed = getAllowedLinkTypes(src, tgt, links);
+    console.log(`Attempting to create link from ${src.data.type} (${src._id}) to ${tgt.data.type} (${tgt._id})`);
+    console.log(`Allowed link types:`, allowed);
+    
     if (allowed.length === 0) {
+      console.log('Link creation blocked - no allowed types');
       toast({
         title: 'No Link Available',
         description: 'No valid link type between these apps.',
@@ -258,6 +323,7 @@ export function LinkerMode() {
         position: 'top',
       });
     } else {
+      console.log(`Creating link with type: ${allowed[0]}`);
       addLink(selectedSourceId, appId, src.data.boardId, allowed[0]);
       setSelectedSourceId('');
       setCandidates([]);
@@ -291,10 +357,21 @@ export function LinkerMode() {
       
       {/* App overlay rectangles */}
       {boxes.map(({ id, position, size }) => {
-        if (candidates.includes(id) == false) return null;
-        const color = selectedSourceId === id ? teal : candidates.includes(id) ? green : red;
-        // Fill should be color but a little transparent
-        const fill = color + '40';
+        const isCandidate = candidates.includes(id);
+        const isSelected = selectedSourceId === id;
+        
+        let color, fill;
+        if (isSelected) {
+          color = teal;
+          fill = teal + '40';
+        } else if (isCandidate) {
+          color = green;
+          fill = green + '40';
+        } else {
+          color = red;
+          fill = red + '20'; // More transparent for non-candidates
+        }
+        
         return (
           <rect
             key={id}
