@@ -10,6 +10,7 @@ import { state as ChatState, name as ChatName } from './apps/Chat';
 import { state as ClockState, name as ClockName } from './apps/Clock';
 import { state as CobrowseState, name as CobrowseName } from './apps/Cobrowse';
 import { state as CodeEditorState, name as CodeEditorName } from './apps/CodeEditor';
+import { state as CollabBrowserState, name as CollabBrowserName } from './apps/CollabBrowser';
 import { state as CounterState, name as CounterName } from './apps/Counter';
 import { state as DeepZoomImageState, name as DeepZoomImageName } from './apps/DeepZoomImage';
 import { state as DrawingState, name as DrawingName } from './apps/Drawing';
@@ -34,6 +35,7 @@ import { state as SensorOverviewState, name as SensorOverviewName } from './apps
 import { state as StickieState, name as StickieName } from './apps/Stickie';
 import { state as TimerState, name as TimerName } from './apps/Timer';
 import { state as TwilioScreenshareState, name as TwilioScreenshareName } from './apps/TwilioScreenshare';
+import { state as VNCState, name as VNCName } from './apps/VNC';
 import { state as VegaLiteState, name as VegaLiteName } from './apps/VegaLite';
 import { state as VegaLiteViewerState, name as VegaLiteViewerName } from './apps/VegaLiteViewer';
 import { state as VideoViewerState, name as VideoViewerName } from './apps/VideoViewer';
@@ -53,6 +55,7 @@ export type AppState =
   | ClockState
   | CobrowseState
   | CodeEditorState
+  | CollabBrowserState
   | CounterState
   | DeepZoomImageState
   | DrawingState
@@ -77,6 +80,7 @@ export type AppState =
   | StickieState
   | TimerState
   | TwilioScreenshareState
+  | VNCState
   | VegaLiteState
   | VegaLiteViewerState
   | VideoViewerState
@@ -84,4 +88,4 @@ export type AppState =
   | WebviewState;
 
 
-export type AppName = typeof AIPaneName | typeof AssetLinkName | typeof BoardLinkName | typeof CSVViewerName | typeof CalculatorName | typeof ChartGeneratorName | typeof ChatName | typeof ClockName | typeof CobrowseName | typeof CodeEditorName | typeof CounterName | typeof DeepZoomImageName | typeof DrawingName | typeof EChartsViewerName | typeof GLTFViewerName | typeof HCDPName | typeof IFrameName | typeof ImageViewerName | typeof JupyterLabName | typeof LeafLetName | typeof LinkerName | typeof MapName | typeof NotepadName | typeof PDFResultName | typeof PDFViewerName | typeof PluginAppName | typeof PollName | typeof RTCChatName | typeof SageCellName | typeof SeerName | typeof SensorOverviewName | typeof StickieName | typeof TimerName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebpageLinkName | typeof WebviewName;
+export type AppName = typeof AIPaneName | typeof AssetLinkName | typeof BoardLinkName | typeof CSVViewerName | typeof CalculatorName | typeof ChartGeneratorName | typeof ChatName | typeof ClockName | typeof CobrowseName | typeof CodeEditorName | typeof CollabBrowserName | typeof CounterName | typeof DeepZoomImageName | typeof DrawingName | typeof EChartsViewerName | typeof GLTFViewerName | typeof HCDPName | typeof IFrameName | typeof ImageViewerName | typeof JupyterLabName | typeof LeafLetName | typeof LinkerName | typeof MapName | typeof NotepadName | typeof PDFResultName | typeof PDFViewerName | typeof PluginAppName | typeof PollName | typeof RTCChatName | typeof SageCellName | typeof SeerName | typeof SensorOverviewName | typeof StickieName | typeof TimerName | typeof TwilioScreenshareName | typeof VNCName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebpageLinkName | typeof WebviewName;

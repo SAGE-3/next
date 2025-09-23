@@ -1,4 +1,3 @@
-
 services:
   redis-server:
     image: "redis/redis-stack-server:latest"
@@ -123,3 +122,24 @@ services:
       timeout: 30s
       retries: 3
       start_period: 30s
+
+  cosagecontainermanager:
+    image: co-sage-container-manager:latest
+    container_name: cosagecontainermanager
+    restart: unless-stopped
+    environment:
+      - SAGE3_SERVER=${SAGE3_SERVER}
+      - TOKEN=${TOKEN}
+      - ENVIRONMENT=development
+      - PYTHONUNBUFFERED=1
+      - PORT_RANGE_START=11000
+      - PORT_RANGE_END=12000
+      - CONTAINER_BASE_NAME=collab-vm-
+      - CONTAINER_NO_CLIENT_TIMEOUT=15
+    ports:
+      - 4024:4024
+      - 4033:4033
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

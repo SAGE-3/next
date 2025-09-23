@@ -4,9 +4,9 @@ services:
     container_name: traefik
     restart: always
     ports:
-      - "443:443"  # HTTPS for secure traffic
+      - "443:443" # HTTPS for secure traffic
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock  # Allow Traefik to access Docker API
+      - /var/run/docker.sock:/var/run/docker.sock # Allow Traefik to access Docker API
       - ./configurations/traefik:/etc/traefik
   redis-server:
     image: "redis/redis-stack-server:latest"
@@ -218,3 +218,44 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
+
+  cosagecontainermanager:
+    image: "ghcr.io/sage-3/cosage-containermanager:amd64"
+    container_name: cosagecontainermanager
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      # VM route (port 4024)
+      - "traefik.http.routers.vm.rule=PathPrefix(`/api/vm`)"
+      - "traefik.http.routers.vm.priority=8"
+      - "traefik.http.services.vm.loadbalancer.server.port=4024"
+      - "traefik.http.services.vm.loadbalancer.passhostheader=true"
+      - "traefik.http.routers.vm.middlewares=vm-stripprefix,cors"
+      - "traefik.http.routers.vm.service=vm"
+      # Stream route (port 4033)
+      - "traefik.http.routers.stream.rule=PathPrefix(`/api/vmstream`)"
+      - "traefik.http.routers.stream.priority=8"
+      - "traefik.http.services.stream.loadbalancer.server.port=4033"
+      - "traefik.http.services.stream.loadbalancer.passhostheader=true"
+      - traefik.http.routers.stream.middlewares=stream-rewrite
+      - traefik.http.middlewares.stream-rewrite.replacepathregex.regex=^/api/vmstream(.*)
+      - traefik.http.middlewares.stream-rewrite.replacepathregex.replacement=/stream$$1
+      - "traefik.http.routers.stream.middlewares=stream-stripprefix,cors"
+      - "traefik.http.routers.stream.service=stream"
+    environment:
+      - SAGE3_SERVER=${SAGE3_SERVER}
+      - TOKEN=${TOKEN}
+      - ENVIRONMENT=production
+      - PYTHONUNBUFFERED=1
+      - PORT_RANGE_START=11000
+      - PORT_RANGE_END=12000
+      - CONTAINER_BASE_NAME=collab-vm-
+      - CONTAINER_NO_CLIENT_TIMEOUT=15
+    ports:
+      - 4024:4024
+      - 4033:4033
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # network_mode: host

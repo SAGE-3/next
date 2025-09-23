@@ -12,5 +12,6 @@ import { Asset, Board, Message, Plugin, Presence, Room, User, Insight, RoomMembe
 export * from './http/index';
 export * from './ws/api-socket';
 export * from './kernels/kernels';
+export * from './vms/vms';
 
 export type CollectionDocs = App | Asset | Board | Message | Plugin | Presence | Room | User | Insight | RoomMembers | Annotation | Link;

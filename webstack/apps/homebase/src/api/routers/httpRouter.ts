@@ -38,7 +38,7 @@ import {
 import { SAGEBase } from '@sage3/sagebase';
 
 // Custom Routes
-import { ConfigRouter, InfoRouter, TimeRouter, NLPRouter, LogsRouter, KernelsRouter, PresenceThrottle, AgentRouter } from './custom';
+import { ConfigRouter, InfoRouter, TimeRouter, NLPRouter, LogsRouter, KernelsRouter, PresenceThrottle, AgentRouter, VmsRouter, VmsStreamRouter, } from './custom';
 
 import { config } from '../../config';
 
@@ -62,6 +62,10 @@ export function expressAPIRouter(): express.Router {
 
   // Kernels Routes
   router.use('/kernels', KernelsRouter());
+
+  // Vms Routes
+  router.use('/vm', VmsRouter());
+  // router.use('/vmstream', VmsStreamRouter());
 
   // Collections
   router.use('/users', UsersCollection.router());

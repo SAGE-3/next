@@ -55,4 +55,8 @@ export const apiUrls = {
       summary: '/api/agents/summary',
     },
   },
+  vms: {
+    init: (vmId: string = 'allocate') => `/api/vm/any/${vmId}`,
+    get:  (vmId: string = 'allocate') => `/api/vm/ws/${vmId}`,
+  }
 };
