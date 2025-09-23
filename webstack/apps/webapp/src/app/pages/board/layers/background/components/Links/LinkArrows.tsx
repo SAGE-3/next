@@ -26,7 +26,6 @@ export function LinksArrows(props: { links: Link[] }) {
   const links = props.links;
 
   const { settings } = useUserSettings();
-  const interactionMode = settings?.primaryActionMode === 'linker';
 
   // Apps Store
   const apps = useThrottleApps(200);
@@ -125,7 +124,7 @@ export function LinksArrows(props: { links: Link[] }) {
             size: targetApp.data.size,
           };
           const arrowColor = link.data.color ? link.data.color : ('teal' as SAGEColors);
-          const interactionFunction = interactionMode ? () => handleDeleteLink(link._id) : undefined;
+          const interactionFunction = () => handleDeleteLink(link._id);
           const arrow = BoxToBoxArrow(sBox, tBox, link._id, strokeColor, strokeType, arrowColor, scale, interactionFunction, alternatingOffset);
           return arrow;
         })}

@@ -9,7 +9,7 @@
 // Arrow library
 import { getBoxToBoxArrow } from 'perfect-arrows';
 
-import { useHexColor } from '@sage3/frontend';
+import { useHexColor, useUserSettings } from '@sage3/frontend';
 import { Position, Size } from '@sage3/shared/types';
 
 type Box = {
@@ -92,18 +92,11 @@ function createArrow(
   const angleRadians = Math.atan2(dy, dx);
   const angleDegrees = angleRadians * (180 / Math.PI);
 
-  const dist = Math.hypot(cx - sx, cy - sy);
-
-  const arrowCount = Math.max(2, Math.min(4, Math.floor(dist / 100))); // between 2 and 6 arrows
-  const dur = Math.max(1.5, Math.min(4, dist / 100)); // animation duration (in seconds)
-  const delayGap = dur / arrowCount;
-
   const strokeColorHex = useHexColor(strokeColor);
-  const arrowColorHex = useHexColor(arrowColor);
   const deleteColorHex = useHexColor('red');
-  const gray = useHexColor('gray.500');
 
   const isInteractable = onClick ? true : false;
+  const primaryActionMode = useUserSettings().settings.primaryActionMode;
 
   const t = 0.5;
   const midX = (1 - t) * (1 - t) * sx + 2 * (1 - t) * t * cx + t * t * ex;
@@ -144,11 +137,11 @@ function createArrow(
         onClick={onClick}
       />
 
-      {isInteractable && (
+      {isInteractable && primaryActionMode === 'lasso' && (
         <g
           style={{ pointerEvents: 'auto', touchAction: 'auto', cursor: 'pointer' }}
           onClick={onClick}
-          transform={`translate(${midX}, ${midY}) scale(${Math.max(0.5, 1 / scale)}) translate(${-midX}, ${-midY})`}
+          transform={`translate(${midX}, ${midY}) scale(2) translate(${-midX}, ${-midY})`}
         >
           {/* Background circle */}
           <circle cx={midX} cy={midY} r={12} fill="white" stroke={deleteColorHex} strokeWidth={2} />

@@ -65,11 +65,12 @@ import {
   MdMenu,
   MdPushPin,
   MdOutlinePushPin,
-  MdCenterFocusStrong,
+
 } from 'react-icons/md';
 import { HiOutlineTrash } from 'react-icons/hi';
 import { MdDeselect } from 'react-icons/md';
 import { IoSparklesSharp } from 'react-icons/io5';
+import { GoLink, GoUnlink } from 'react-icons/go';
 
 import { formatDistance } from 'date-fns';
 
@@ -93,9 +94,9 @@ import {
 } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 import { AI_ENABLED_APPS, Applications } from '@sage3/applications/apps';
-import { Position, Size } from '@sage3/shared/types';
+import { Link, Position, Size } from '@sage3/shared/types';
 import ky from 'ky';
-import { FaLink } from 'react-icons/fa';
+import { FaLink, FaUnlink } from 'react-icons/fa';
 
 const UI_BAR_OFFSET = 50;
 
@@ -1026,6 +1027,22 @@ export function AppToolbar(props: AppToolbarProps) {
     }, 250);
   };
 
+  const links = useLinkStore((state) => state.links);
+  const removeLinks = useLinkStore((state) => state.removeLinks);
+  const removeLinkColor = useHexColor('red');
+  let thisAppSourceLinks = [] as Link[];
+  if (app) {
+    thisAppSourceLinks = links.filter((link) => link.data.sourceAppId === app._id);
+  }
+
+  const deleteLinks = () => {
+    if (thisAppSourceLinks.length > 0) {
+      removeLinks(thisAppSourceLinks.map((link) => link._id));
+    }
+  }
+
+
+
   if (showUI && app)
     return (
       <Box
@@ -1056,20 +1073,20 @@ export function AppToolbar(props: AppToolbarProps) {
             <Flex>
               {app.data.type === 'SageCell' && (
                 <Box>
-                  <Tooltip placement="top" hasArrow={true} openDelay={400} ml="1" label={'Link Application'}>
-                    <Button
-                      onClick={enterLinkerMode}
-                      backgroundColor={linkColor}
-                      variant="solid"
-                      size="xs"
-                      m={0}
-                      mr={2}
-                      p={0}
-                      _hover={{ cursor: 'pointer', transform: 'scale(1.2)', opacity: 1, backgroundColor: linkColor }}
-                    >
-                      <FaLink size="16px" color={'white'} />
-                    </Button>
-                  </Tooltip>
+                  {thisAppSourceLinks.length > 0 && (
+                    <Tooltip placement="top" hasArrow={true} openDelay={400} ml="1" label={'Delete Links'}>
+                      <Button onClick={deleteLinks} colorScheme="red" size="xs" m={0} mr={2} p={0}>
+                        <FaUnlink size="16px" color={buttonTextColor} />
+                      </Button>
+                    </Tooltip>
+                  )}
+                  {thisAppSourceLinks.length === 0 && (
+                    <Tooltip placement="top" hasArrow={true} openDelay={400} ml="1" label={'Link Application'}>
+                      <Button onClick={enterLinkerMode} backgroundColor={linkColor} variant="solid" size="xs" m={0} mr={2} p={0}>
+                        <FaLink size="16px" color={'white'} />
+                      </Button>
+                    </Tooltip>
+                  )}
                 </Box>
               )}
               {/* Sage Intelligence */}

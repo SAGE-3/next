@@ -12,7 +12,7 @@ import { useToast } from '@chakra-ui/react';
 
 import type { App } from '@sage3/applications/schema';
 import { getAllowedLinkTypes } from '@sage3/applications/apps';
-import { useHexColor, useLinkStore, useThrottleApps, useUIStore, useAppStore, useUser, useAuth, useCursorBoardPosition } from '@sage3/frontend';
+import { useHexColor, useLinkStore, useThrottleApps, useUIStore, useAppStore, useUser, useAuth, useCursorBoardPosition, useUserSettings, useHotkeys } from '@sage3/frontend';
 import { initialValues } from '@sage3/applications/initialValues';
 
 /**
@@ -30,6 +30,7 @@ export function LinkerMode() {
   const links = useLinkStore((s) => s.links);
   const addLink = useLinkStore((s) => s.addLink);
   const {getBoardCursor} = useCursorBoardPosition()
+  const {  setPrimaryActionMode } = useUserSettings();
 
   // Board viewport dimensions and zoom scale
   const { boardWidth, boardHeight, scale } = useUIStore((s) => ({
@@ -125,16 +126,12 @@ export function LinkerMode() {
         });
       }
     }
-    
+    setPrimaryActionMode('lasso');
     return result;
   };
 
   // Handle click on background
   const handleBackgroundClick = async (e: React.MouseEvent<SVGElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    // Get board position and scale for coordinate transformation
-    const boardPosition = useUIStore.getState().boardPosition;
-    const currentScale = useUIStore.getState().scale;
     
     // Transform screen coordinates to board coordinates
     const {x, y} = getBoardCursor()
@@ -190,6 +187,7 @@ export function LinkerMode() {
         setSelectedSourceId('');
         setCandidates([]);
       }
+      setPrimaryActionMode('lasso');
     } else if (selectedSourceId && result && !result.success) {
       // Handle case where app creation failed but we had a selected source
       toast({
@@ -263,8 +261,16 @@ export function LinkerMode() {
       addLink(selectedSourceId, appId, src.data.boardId, allowed[0]);
       setSelectedSourceId('');
       setCandidates([]);
+      setPrimaryActionMode('lasso');
     }
   };
+
+  // IF user hits escape, reset the linker mode and deselect the source
+  useHotkeys('esc', () => {
+    setPrimaryActionMode('lasso');
+    setSelectedSourceId('');
+  });
+  
 
   return (
     <svg 
