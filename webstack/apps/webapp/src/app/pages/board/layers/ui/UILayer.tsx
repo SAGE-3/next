@@ -27,6 +27,7 @@ import {
   MdApps,
   MdArrowBack,
   MdArrowForward,
+  MdError,
   MdFolder,
   MdHome,
   MdMap,
@@ -85,6 +86,8 @@ import {
   AssetsMenu,
   EscapeApp,
 } from './components';
+import { useEffect, useState } from 'react';
+import { App } from '@sage3/applications/schema';
 
 type UILayerProps = {
   boardId: string;
@@ -138,7 +141,9 @@ export function UILayer(props: UILayerProps) {
   const room = rooms.find((el) => el._id === props.roomId);
   // Apps
   const apps = useThrottleApps(250);
+  const [outlierApps, setOutlierApps] = useState<App[]>([]);
   const deleteApp = useAppStore((state) => state.delete);
+  const updateApp = useAppStore(state => state.update);
 
   // Navigation
   const { toHome, back, forward, canGoBack, canGoForward } = useRouteNav();
@@ -311,6 +316,41 @@ export function UILayer(props: UILayerProps) {
     alfredOnOpen();
   };
 
+  useEffect(() => {
+    // Are there any apps that are far away...like if the app is 2000px away from the rest of the other apps?
+    const outlierApps = apps.filter((app) => {
+      const otherApps = apps.filter((a) => a._id !== app._id);
+      const otherAppsPositions = otherApps.map((a) => a.data.position);
+      // Get center of all the other apps
+      const center = {
+        x: otherAppsPositions.reduce((acc, a) => acc + a.x, 0) / otherAppsPositions.length,
+        y: otherAppsPositions.reduce((acc, a) => acc + a.y, 0) / otherAppsPositions.length,
+      };
+      // Get distance between the app and the center
+      const distance = Math.sqrt(Math.pow(app.data.position.x - center.x, 2) + Math.pow(app.data.position.y - center.y, 2));
+      return distance > 10000;
+    });
+    setOutlierApps(outlierApps);
+
+  }, [apps]);
+
+  // Fix apps that are far away
+  const fixAppsFarAway = () => {
+    for (const app of outlierApps) {
+      // Move the app to the center of the other apps
+      const otherApps = apps.filter((a) => a._id !== app._id);
+      const otherAppsPositions = otherApps.map((a) => a.data.position);
+      const center = {
+        x: otherAppsPositions.reduce((acc, a) => acc + a.x, 0) / otherAppsPositions.length,
+        y: otherAppsPositions.reduce((acc, a) => acc + a.y, 0) / otherAppsPositions.length,
+        z: 0,
+      };
+
+      updateApp(app._id, { position: center });
+    }
+  };
+
+
   return (
     <>
       {/* The bottom right corner showing the visibility icon when the user decides to hide the UI */}
@@ -432,7 +472,7 @@ export function UILayer(props: UILayerProps) {
         </Box>
         <Divider orientation="vertical" mx="2" />
         <ButtonGroup isAttached size="xs" gap="0" mr="1">
-        <Tooltip label={'Zoom Out'}>
+          <Tooltip label={'Zoom Out'}>
             <IconButton
               size="sm"
               icon={<MdRemove />}
@@ -492,6 +532,17 @@ export function UILayer(props: UILayerProps) {
             onClick={alfredOnOpen}
           />
         </Tooltip>
+        {outlierApps.length > 0 && (
+          <Tooltip label={'Issue'} placement={'top'} hasArrow={true} openDelay={400} shouldWrapChildren={true}>
+            <IconButton
+              colorScheme={'red'}
+              size="sm"
+              icon={<MdError />}
+              fontSize="lg"
+              aria-label={`Fix Apps`}
+              onClick={fixAppsFarAway}
+            />
+          </Tooltip>)}
       </Box>
 
       {/* Party Button */}
