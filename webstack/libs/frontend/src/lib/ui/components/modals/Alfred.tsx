@@ -136,6 +136,10 @@ export function Alfred(props: props) {
       w = 260;
       h = 369;
     }
+    else if (appName === 'Clock') {
+      w = 320 * 1.5;
+      h = 130 * 1.5;
+    }
     // Get around  the center of the board
     const bx = useUIStore.getState().boardPosition.x;
     const by = useUIStore.getState().boardPosition.y;
