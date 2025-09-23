@@ -205,6 +205,9 @@ export const useDragAndDropBoard = (props: useDragAndDropBoardProps) => {
             } else if (appName === 'Chat') {
               w = 800;
               h = 420;
+            }else if (appName === 'Clock') {
+              w = 320 * 1.5;
+              h = 130 * 1.5;
             }
             // if a specific app was setup, create it
             const appstatestr = event.dataTransfer.getData('app_state');

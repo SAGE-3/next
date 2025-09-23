@@ -87,6 +87,9 @@ export function ApplicationsMenu(props: ApplicationProps) {
     } else if (appName === 'Hawaii Mesonet') {
       w = 650;
       h = 650;
+    } else if (appName === 'Clock') {
+      w = 320 * 1.5;
+      h = 130 * 1.5;
     }
 
     const title = appName == 'Stickie' ? user.data.name : ''; // Gross

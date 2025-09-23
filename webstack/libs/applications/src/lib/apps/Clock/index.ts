@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2025. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -8,20 +8,20 @@
 
 import { z } from 'zod';
 
-/**
- * SAGE3 application: SVGBox
- * created by: Luc Renambot
- */
-
 export const schema = z.object({
   file: z.string(),
   city: z.string(),
+  timeZone: z.string(),
+  //state for 24 hour time
+  is24Hour: z.boolean()
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  file: 'file.svg',
-  city: 'Chicago',
+  file: '',
+  city: '',
+  timeZone: '',
+  is24Hour: false
 };
 
 export const name = 'Clock';
