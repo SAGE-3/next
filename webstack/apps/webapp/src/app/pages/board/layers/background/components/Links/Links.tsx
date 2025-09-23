@@ -6,9 +6,9 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
-import { useLinkStore, useUIStore, useUserSettings } from '@sage3/frontend';
+import { useLinkStore, useThrottleApps, useUIStore, useUserSettings } from '@sage3/frontend';
 import { LinksArrows } from './LinkArrows';
 import { Link } from '@sage3/shared/types';
 
@@ -22,6 +22,7 @@ export function Links() {
 
   // All links from the store
   const links = useLinkStore((s) => s.links);
+  
 
   // Compute full‐depth path apps once, whenever links or selection changes
   const pathAppIds = useMemo(() => {

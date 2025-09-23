@@ -112,14 +112,6 @@ function createArrow(
         strokeWidth={8}
         strokeDasharray={strokeType === 'dashed' ? `45,50` : '0'}
       />
-      {/* {animated &&
-        Array.from({ length: arrowCount }).map((_, index) => (
-          <polygon key={`animated-arrow-${key}-${index}`} points="0,-16 24,0 0,16" fill={arrowColorHex}>
-            <animateMotion dur={`${dur}s`} begin={`${index * delayGap}s`} repeatCount="indefinite" rotate="auto">
-              <mpath href={`#arrow-path-${key}`} />
-            </animateMotion>
-          </polygon>
-        ))} */}
 
 
       {/* end of the arrow */}

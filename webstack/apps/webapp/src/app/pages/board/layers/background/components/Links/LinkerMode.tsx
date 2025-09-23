@@ -29,8 +29,9 @@ export function LinkerMode() {
   const apps = useThrottleApps(250);
   const links = useLinkStore((s) => s.links);
   const addLink = useLinkStore((s) => s.addLink);
-  const {getBoardCursor} = useCursorBoardPosition()
-  const {  setPrimaryActionMode } = useUserSettings();
+  const removeLinks = useLinkStore((s) => s.removeLinks);
+  const { getBoardCursor } = useCursorBoardPosition()
+  const { setPrimaryActionMode } = useUserSettings();
 
   // Board viewport dimensions and zoom scale
   const { boardWidth, boardHeight, scale } = useUIStore((s) => ({
@@ -52,6 +53,11 @@ export function LinkerMode() {
   // Candidate app IDs (either sources or valid targets)
   const [candidates, setCandidates] = useState<string[]>([]);
 
+  // Colors
+  const green = useHexColor('green');
+  const red = useHexColor('red');
+  const teal = useHexColor('teal');
+
   // Prepare svg boxes for each app
   const boxes = useMemo(
     () =>
@@ -63,45 +69,30 @@ export function LinkerMode() {
     [apps]
   );
 
-  // Colors
-  const green = useHexColor('green');
-  const red = useHexColor('red');
-  const teal = useHexColor('teal');
-
   // On mount or apps/links change: if no source selected, list all valid sources
   useEffect(() => {
     console.log('=== LINKER MODE STATE CHANGE ===');
     console.log('Current selectedSourceId:', selectedSourceId);
-    
-    if (!selectedSourceId) {
-      console.log('=== INITIAL LINKER MODE DEBUG ===');
-      console.log('All apps:', apps.map(app => ({ 
-        id: app._id, 
-        type: app.data.type, 
-        title: app.data.title 
-      })));
-      console.log('All links:', links.map(link => ({ 
-        id: link._id, 
-        sourceId: link.data.sourceAppId, 
-        targetId: link.data.targetAppId, 
-        type: link.data.type 
-      })));
-      
-      const srcs = apps.filter((src) => {
-        const canLinkToAny = apps.some((tgt) => {
-          if (src._id === tgt._id) return false; // Can't link to self
-          const allowedTypes = getAllowedLinkTypes(src, tgt, links);
-          console.log(`  Testing ${src._id} -> ${tgt._id}: ${allowedTypes.length > 0 ? 'ALLOWED' : 'BLOCKED'} (${allowedTypes})`);
-          return allowedTypes.length > 0;
-        });
-        console.log(`App ${src.data.type} (${src._id}) can start links:`, canLinkToAny);
-        return canLinkToAny;
+
+    if (selectedSourceId) {
+     
+      const sourceApp = apps.find((a) => a._id === selectedSourceId);
+      if (!sourceApp) {
+        setPrimaryActionMode('lasso');
+        return;
+      }
+
+      // Get all SAGECell Apps
+      const sageCellApps = apps.filter((a) => a.data.type === 'SageCell');
+      // Do any of these SAGECells Apps have a link going into it from another app?
+      const newCandidates = sageCellApps.filter((a) => {
+        const existingIncoming = links.filter((l) => l.data.targetAppId === a._id && l.data.type === 'run_order'); 
+        const isValid = getAllowedLinkTypes(sourceApp, a, links);
+        return isValid.includes('run_order');
       });
-      console.log('Valid source apps:', srcs.map(s => `${s.data.type} (${s._id})`));
-      setCandidates(srcs.map((a) => a._id));
-      console.log('Candidates set to:', srcs.map((a) => a._id));
+      setCandidates(newCandidates.map((a) => a._id));
     } else {
-      console.log(`Source already selected: ${selectedSourceId}`);
+      setPrimaryActionMode('lasso');
     }
   }, [selectedSourceId, apps, links]);
 
@@ -132,7 +123,7 @@ export function LinkerMode() {
     };
 
     const result = await createApp(newApp);
-    
+
     // Only show individual creation toast if there's no selected source (no linking happening)
     if (!selectedSourceId) {
       if (result.success) {
@@ -162,20 +153,20 @@ export function LinkerMode() {
 
   // Handle click on background
   const handleBackgroundClick = async (e: React.MouseEvent<SVGElement>) => {
-    
+
     // Transform screen coordinates to board coordinates
-    const {x, y} = getBoardCursor()
+    const { x, y } = getBoardCursor()
     const boardX = x;
     const boardY = y;
-    
+
     // Create the new SageCell
     const result = await createSageCellAt(boardX, boardY);
-    
+
     // If there's a selected source and the app was created successfully, create a link
     if (selectedSourceId && result?.success) {
       const sourceApp = apps.find((a) => a._id === selectedSourceId);
       const newAppId = result.data._id;
-      
+
       if (sourceApp) {
         // Find the first allowed link type between source and the new SageCell
         const dummySageCellApp = {
@@ -188,12 +179,12 @@ export function LinkerMode() {
             size: { width: 650, height: 400, depth: 0 }
           }
         } as App;
-        
+
         const allowedTypes = getAllowedLinkTypes(sourceApp, dummySageCellApp, links);
-        
+
         if (allowedTypes.length > 0) {
           addLink(selectedSourceId, newAppId, sourceApp.data.boardId, allowedTypes[0]);
-          
+
           toast({
             title: 'SageCell Created & Linked',
             description: `New SageCell created and linked with ${allowedTypes[0]} connection.`,
@@ -212,7 +203,7 @@ export function LinkerMode() {
             position: 'top',
           });
         }
-        
+
         // Reset the linker state after creating the link
         setSelectedSourceId('');
         setCandidates([]);
@@ -238,7 +229,7 @@ export function LinkerMode() {
     console.log(`=== CLICK ON APP: ${appId} ===`);
     console.log(`Current selectedSourceId: ${selectedSourceId}`);
     console.log(`Clicked app is candidate: ${candidates.includes(appId)}`);
-    
+
     // 1) No source yet: pick source
     if (!selectedSourceId) {
       if (!candidates.includes(appId)) {
@@ -256,11 +247,11 @@ export function LinkerMode() {
       // Compute targets for this source
       const sourceApp = apps.find((a) => a._id === appId)!;
       console.log(`=== SOURCE SELECTED: ${sourceApp.data.type} (${sourceApp._id}) ===`);
-      
+
       const tgts = apps.filter((t) => {
         const allowedTypes = getAllowedLinkTypes(sourceApp, t, links);
         console.log(`  Checking ${sourceApp.data.type}->${t.data.type} (${t._id}):`, allowedTypes);
-        
+
         // Debug the specific constraint checking
         if (sourceApp.data.type === 'SageCell' && t.data.type === 'SageCell') {
           const existingOutgoing = links.filter(l => l.data.sourceAppId === sourceApp._id && l.data.type === 'run_order');
@@ -273,10 +264,10 @@ export function LinkerMode() {
             wouldCreateCycle: allowedTypes.length === 0 && existingOutgoing.length === 0 && existingIncoming.length === 0
           });
         }
-        
+
         return allowedTypes.length > 0;
       });
-      
+
       console.log(`Valid targets for ${sourceApp.data.type}:`, tgts.map(t => `${t.data.type} (${t._id})`));
       // Include both the selected source and valid targets in candidates
       setCandidates([appId, ...tgts.map((t) => t._id)]);
@@ -311,7 +302,7 @@ export function LinkerMode() {
     const allowed = getAllowedLinkTypes(src, tgt, links);
     console.log(`Attempting to create link from ${src.data.type} (${src._id}) to ${tgt.data.type} (${tgt._id})`);
     console.log(`Allowed link types:`, allowed);
-    
+
     if (allowed.length === 0) {
       console.log('Link creation blocked - no allowed types');
       toast({
@@ -336,12 +327,12 @@ export function LinkerMode() {
     setPrimaryActionMode('lasso');
     setSelectedSourceId('');
   });
-  
+
 
   return (
-    <svg 
-      width={boardWidth} 
-      height={boardHeight} 
+    <svg
+      width={boardWidth}
+      height={boardHeight}
       style={{ position: 'absolute', top: 0, left: 0, zIndex: 100000, pointerEvents: 'auto' }}
       onClick={handleBackgroundClick}
     >
@@ -354,12 +345,12 @@ export function LinkerMode() {
         fill="transparent"
         style={{ pointerEvents: 'auto' }}
       />
-      
+
       {/* App overlay rectangles */}
       {boxes.map(({ id, position, size }) => {
         const isCandidate = candidates.includes(id);
         const isSelected = selectedSourceId === id;
-        
+
         let color, fill;
         if (isSelected) {
           color = teal;
@@ -371,7 +362,7 @@ export function LinkerMode() {
           color = red;
           fill = red + '20'; // More transparent for non-candidates
         }
-        
+
         return (
           <rect
             key={id}

@@ -1019,13 +1019,7 @@ export function AppToolbar(props: AppToolbarProps) {
     }
   };
 
-  const enterLinkerMode = () => {
-    setPrimaryActionMode('linker');
-    // wait 1 second
-    setTimeout(() => {
-      cacheLinkedAppId(selectedApp);
-    }, 250);
-  };
+
 
   const links = useLinkStore((state) => state.links);
   const removeLinks = useLinkStore((state) => state.removeLinks);
@@ -1041,7 +1035,11 @@ export function AppToolbar(props: AppToolbarProps) {
     }
   }
 
-
+  const enterLinkerMode = () => {
+    cacheLinkedAppId(selectedApp);
+    setPrimaryActionMode('linker');
+    
+  };
 
   if (showUI && app)
     return (
