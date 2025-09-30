@@ -35,7 +35,8 @@ import {
   useColorModeValue,
 } from '@chakra-ui/react';
 
-import { useAppStore, useHexColor } from '@sage3/frontend';
+import { SAGEColors } from '@sage3/shared';
+import { useAppStore, useHexColor, ColorPicker } from '@sage3/frontend';
 import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
@@ -205,10 +206,11 @@ function AppComponent(props: App): JSX.Element {
   
   // Theme-aware color setup
   const { colorMode } = useColorMode();
-  const teal = useColorModeValue('teal.500', 'teal.500');      // Accent color (same in both modes)
-  const tealHex = useHexColor(teal);                           // Convert to hex for SVG
   const primary = useColorModeValue('black', 'white');         // Primary text color
   const background = useColorModeValue('white', 'gray.900');   // Background color
+
+  // Prop value color
+  const digColor = useHexColor(props.data.state.color);    
 
   // Build time zones + current abbreviations once at component mount
   // This is memoized to avoid recalculating on every render
@@ -225,7 +227,9 @@ function AppComponent(props: App): JSX.Element {
     if (svg.empty()) return;
 
     // Style time digits with accent color
-    svg.selectAll('text').attr('fill', tealHex);
+    svg.selectAll('text').attr('fill', digColor);
+    console.log("color: props.data.state.color ", props.data.state.color);
+    console.log('Setting clock digit color to', digColor);
     
     // Style secondary text elements (date, AM/PM, timezone) with primary color
     svg.select('#date').attr('fill', primary).attr('font-size', '16px');
@@ -237,7 +241,7 @@ function AppComponent(props: App): JSX.Element {
       .attr('fill', 'transparent')
       .attr('stroke', 'none');
 
-  }, [colorMode]);
+  }, [colorMode, props.data.state.color]);
 
   // ===============================================================================
   // SVG UPDATE FUNCTIONS
@@ -384,7 +388,7 @@ function AppComponent(props: App): JSX.Element {
 
     // Initial update, then start interval
     tick();
-    intervalId = window.setInterval(tick, 1000);
+    intervalId = window.setInterval(tick, 1000 * 10); // Update every 10 seconds
 
     // Cleanup function - called when component unmounts or dependencies change
     return () => {
@@ -423,6 +427,7 @@ function AppComponent(props: App): JSX.Element {
 
 function ToolbarComponent(props: App): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
+  const locked = props.data.state.lock;
 
   // Build timezone list with abbreviations (same logic as AppComponent)
   // Memoized to avoid recalculation on every render
@@ -456,9 +461,17 @@ function ToolbarComponent(props: App): JSX.Element {
     updateState(props._id, { is24Hour: e.target.checked });
   };
 
+  /**
+   * Handle digit color change
+   * Updates the app state with the new digit color
+   */
+  const handleColorChange = (color: string) => {
+    updateState(props._id, { color: color });
+  }
+
   return (
-    <div style={{ padding: '1rem', fontFamily: 'sans-serif' }}>
-      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '1rem' }}>
+    <div style={{  fontFamily: 'sans-serif' }}>
+      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '0.5rem' }}>
         
         {/* Timezone Selection Dropdown */}
         <div style={{ fontWeight: 'bold' }}>
@@ -481,7 +494,7 @@ function ToolbarComponent(props: App): JSX.Element {
         <div style={{ fontSize: '0.8rem' }}>
           <FormControl display="flex" alignItems="center">
             <FormLabel mb="0" style={{ whiteSpace: 'nowrap', marginRight: '0.5rem' }}>
-              24 Hour Time
+              24 Hour
             </FormLabel>
             <Switch 
               id="is24Hours" 
@@ -489,6 +502,9 @@ function ToolbarComponent(props: App): JSX.Element {
               onChange={handle24HourToggle} 
             />
           </FormControl>
+        </div>
+        <div style={{ marginLeft: 'auto', marginRight: '0.5rem' }}>
+          <ColorPicker onChange={handleColorChange} selectedColor={props.data.state.color as SAGEColors} size="xs" disabled={locked}/>
         </div>
       </div>
     </div>
