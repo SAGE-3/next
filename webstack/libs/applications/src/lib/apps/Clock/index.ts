@@ -24,7 +24,6 @@ export const init: Partial<state> = {
   timeZone: '',
   is24Hour: false,
   color: 'green'
-  // 60CC8D
 };
 
 export const name = 'Clock';
