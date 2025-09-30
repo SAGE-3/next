@@ -366,7 +366,7 @@ function ToolbarComponent(props: App): JSX.Element {
   return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal" mr="1">
-        <Tooltip placement="top" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
+ s   <Tooltip placement="top" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
           <Button isDisabled={s.fontSize <= 8 || locked} onClick={() => handleDecreaseFont()} size="xs" px={0}>
             <MdRemove size="16px" />
           </Button>

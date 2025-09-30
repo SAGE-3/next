@@ -13,7 +13,8 @@ export const schema = z.object({
   city: z.string(),
   timeZone: z.string(),
   //state for 24 hour time
-  is24Hour: z.boolean()
+  is24Hour: z.boolean(),
+  color: z.string()
 });
 export type state = z.infer<typeof schema>;
 
@@ -21,7 +22,9 @@ export const init: Partial<state> = {
   file: '',
   city: '',
   timeZone: '',
-  is24Hour: false
+  is24Hour: false,
+  color: 'green'
+  // 60CC8D
 };
 
 export const name = 'Clock';
