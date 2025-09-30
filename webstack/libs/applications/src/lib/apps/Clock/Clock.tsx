@@ -388,7 +388,7 @@ function AppComponent(props: App): JSX.Element {
 
     // Initial update, then start interval
     tick();
-    intervalId = window.setInterval(tick, 1000);
+    intervalId = window.setInterval(tick, 1000 * 10); // Update every 10 seconds
 
     // Cleanup function - called when component unmounts or dependencies change
     return () => {
@@ -470,8 +470,8 @@ function ToolbarComponent(props: App): JSX.Element {
   }
 
   return (
-    <div style={{ padding: '1rem', fontFamily: 'sans-serif' }}>
-      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '1rem' }}>
+    <div style={{  fontFamily: 'sans-serif' }}>
+      <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '0.5rem' }}>
         
         {/* Timezone Selection Dropdown */}
         <div style={{ fontWeight: 'bold' }}>
@@ -494,7 +494,7 @@ function ToolbarComponent(props: App): JSX.Element {
         <div style={{ fontSize: '0.8rem' }}>
           <FormControl display="flex" alignItems="center">
             <FormLabel mb="0" style={{ whiteSpace: 'nowrap', marginRight: '0.5rem' }}>
-              24 Hour Time
+              24 Hour
             </FormLabel>
             <Switch 
               id="is24Hours" 
@@ -503,7 +503,7 @@ function ToolbarComponent(props: App): JSX.Element {
             />
           </FormControl>
         </div>
-        <div style={{ marginLeft: 'auto' }}>
+        <div style={{ marginLeft: 'auto', marginRight: '0.5rem' }}>
           <ColorPicker onChange={handleColorChange} selectedColor={props.data.state.color as SAGEColors} size="xs" disabled={locked}/>
         </div>
       </div>

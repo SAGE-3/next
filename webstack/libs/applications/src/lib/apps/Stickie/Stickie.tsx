@@ -366,7 +366,7 @@ function ToolbarComponent(props: App): JSX.Element {
   return (
     <>
       <ButtonGroup isAttached size="xs" colorScheme="teal" mr="1">
- s   <Tooltip placement="top" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
           <Button isDisabled={s.fontSize <= 8 || locked} onClick={() => handleDecreaseFont()} size="xs" px={0}>
             <MdRemove size="16px" />
           </Button>
@@ -590,7 +590,7 @@ const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
         </Tooltip>
 
         <Tooltip placement="top" hasArrow={true} label={'Unlock Stickies'} openDelay={400}>
-                <Button onClick={() => handleUnlock()} size="xs" px={0}>
+          <Button onClick={() => handleUnlock()} size="xs" px={0}>
             <MdLockOpen size="16px" />
           </Button>
         </Tooltip>
