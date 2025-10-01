@@ -9,12 +9,11 @@
 import { useColorModeValue } from '@chakra-ui/react';
 
 // SAGE Imports
-import { useThrottleApps, useUIStore, useLinkStore, useUserSettings, useAppStore } from '@sage3/frontend';
+import { useThrottleApps, useUIStore, useLinkStore, useUserSettings } from '@sage3/frontend';
 import { Link } from '@sage3/shared/types';
 import { SAGEColors } from '@sage3/shared';
 
 import { BoxToBoxArrow } from './DrawArrows';
-import { useEffect } from 'react';
 
 /**
  * The Arrows component, showing arrows of links between apps.
@@ -28,7 +27,6 @@ export function LinksArrows(props: { links: Link[] }) {
   // Apps Store
   const apps = useThrottleApps(200);
 
-  // Apps Fectch
   // UI Store
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);

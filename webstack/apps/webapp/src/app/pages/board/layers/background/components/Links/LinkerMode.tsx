@@ -71,8 +71,6 @@ export function LinkerMode() {
 
   // On mount or apps/links change: if no source selected, list all valid sources
   useEffect(() => {
-    console.log('=== LINKER MODE STATE CHANGE ===');
-    console.log('Current selectedSourceId:', selectedSourceId);
 
     if (selectedSourceId) {
      
@@ -226,9 +224,7 @@ export function LinkerMode() {
   // Handle click on an app rectangle
   const handleClick = (e: React.MouseEvent<SVGRectElement>, appId: string) => {
     e.stopPropagation();
-    console.log(`=== CLICK ON APP: ${appId} ===`);
-    console.log(`Current selectedSourceId: ${selectedSourceId}`);
-    console.log(`Clicked app is candidate: ${candidates.includes(appId)}`);
+
 
     // 1) No source yet: pick source
     if (!selectedSourceId) {
@@ -246,38 +242,19 @@ export function LinkerMode() {
       setSelectedSourceId(appId);
       // Compute targets for this source
       const sourceApp = apps.find((a) => a._id === appId)!;
-      console.log(`=== SOURCE SELECTED: ${sourceApp.data.type} (${sourceApp._id}) ===`);
 
       const tgts = apps.filter((t) => {
         const allowedTypes = getAllowedLinkTypes(sourceApp, t, links);
-        console.log(`  Checking ${sourceApp.data.type}->${t.data.type} (${t._id}):`, allowedTypes);
-
-        // Debug the specific constraint checking
-        if (sourceApp.data.type === 'SageCell' && t.data.type === 'SageCell') {
-          const existingOutgoing = links.filter(l => l.data.sourceAppId === sourceApp._id && l.data.type === 'run_order');
-          const existingIncoming = links.filter(l => l.data.targetAppId === t._id && l.data.type === 'run_order');
-          console.log(`    SageCell->SageCell debug:`, {
-            outgoingCount: existingOutgoing.length,
-            incomingCount: existingIncoming.length,
-            maxOutgoing: 1,
-            maxIncoming: 1,
-            wouldCreateCycle: allowedTypes.length === 0 && existingOutgoing.length === 0 && existingIncoming.length === 0
-          });
-        }
-
         return allowedTypes.length > 0;
       });
 
-      console.log(`Valid targets for ${sourceApp.data.type}:`, tgts.map(t => `${t.data.type} (${t._id})`));
       // Include both the selected source and valid targets in candidates
       setCandidates([appId, ...tgts.map((t) => t._id)]);
-      console.log('New candidates after source selection:', [appId, ...tgts.map((t) => t._id)]);
       return;
     }
 
     // 2) Clicking same source: deselect
     if (selectedSourceId === appId) {
-      console.log(`Deselecting source: ${appId}`);
       setSelectedSourceId('');
       setCandidates([]);
       return;
@@ -300,11 +277,9 @@ export function LinkerMode() {
     const src = apps.find((a) => a._id === selectedSourceId)!;
     const tgt = apps.find((a) => a._id === appId)!;
     const allowed = getAllowedLinkTypes(src, tgt, links);
-    console.log(`Attempting to create link from ${src.data.type} (${src._id}) to ${tgt.data.type} (${tgt._id})`);
-    console.log(`Allowed link types:`, allowed);
+
 
     if (allowed.length === 0) {
-      console.log('Link creation blocked - no allowed types');
       toast({
         title: 'No Link Available',
         description: 'No valid link type between these apps.',
@@ -314,7 +289,6 @@ export function LinkerMode() {
         position: 'top',
       });
     } else {
-      console.log(`Creating link with type: ${allowed[0]}`);
       addLink(selectedSourceId, appId, src.data.boardId, allowed[0]);
       setSelectedSourceId('');
       setCandidates([]);
