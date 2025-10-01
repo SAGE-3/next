@@ -20,7 +20,7 @@ export function InteractionbarShortcuts() {
   const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
   const clearLinkAppId = useLinkStore((state) => state.clearLinkAppId);
 
-  const [cachedPrimaryActionMode, setCachedPrimaryActionMode] = useState<'lasso' | 'grab' | 'pen' | 'eraser' | 'linker' | undefined>(
+  const [cachedPrimaryActionMode, setCachedPrimaryActionMode] = useState<'lasso' | 'grab' | 'pen' | 'eraser' | 'linker' | 'shape' | 'rectangle' | 'circle' | undefined>(
     undefined
   );
   const spacebarPressed = useKeyPress(' ');
@@ -88,7 +88,7 @@ export function InteractionbarShortcuts() {
     '4',
     (event: KeyboardEvent): void | boolean => {
       event.stopPropagation();
-      setPrimaryActionMode('linker');
+      setPrimaryActionMode('shape');
       setSelectedApp('');
       setSelectedAppsIds([]);
       clearLinkAppId();

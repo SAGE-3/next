@@ -34,10 +34,11 @@ import {
   MenuItem,
 } from '@chakra-ui/react';
 
+import { IoShapesOutline  } from "react-icons/io5";
 import { BiPencil } from 'react-icons/bi';
-import { MdGraphicEq } from 'react-icons/md';
+import { MdGraphicEq, MdOutlineRectangle  } from 'react-icons/md';
 import { BsEraserFill } from 'react-icons/bs';
-import { FaUndo, FaEraser, FaTrash, FaLink } from 'react-icons/fa';
+import { FaUndo, FaEraser, FaTrash, FaLink, FaRegCircle  } from 'react-icons/fa';
 
 import { LiaMousePointerSolid, LiaHandPaperSolid } from 'react-icons/lia';
 
@@ -102,6 +103,11 @@ export function Interactionbar(props: {
 
   // Handle mode switching
   const handleModeChange = (mode: 'pen' | 'eraser') => {
+    setPrimaryActionMode(mode);
+  };
+
+  // Handle shape switching
+  const handleShapeChange = (mode: 'rectangle' | 'circle') => {
     setPrimaryActionMode(mode);
   };
 
@@ -244,7 +250,6 @@ export function Interactionbar(props: {
                     </Tooltip>
                   </ButtonGroup>
                 </Box>
-2
                 {/* Drawing Controls - Middle */}
                 <HStack spacing="3" align="center" flex="1" justify="center">
                   {/* Color Picker */}
@@ -325,6 +330,160 @@ export function Interactionbar(props: {
             </PopoverBody>
           </PopoverContent>
         </Popover>
+        {/* 
+        
+        <----------------------------------------------WIP----------------------------------------------------------> 
+        <----------------------------------------------WIP----------------------------------------------------------> 
+        <----------------------------------------------WIP----------------------------------------------------------> 
+        
+        */}
+        <Popover isOpen={annotationsIsOpen && (primaryActionMode === 'shape' || primaryActionMode === 'eraser')}>
+          <Tooltip label={'Shape — [4]'} placement={tooltipPlacement} hasArrow={true} openDelay={400} shouldWrapChildren={true}>
+            <PopoverTrigger>
+              <IconButton
+                borderRadius={0}
+                size="sm"
+                colorScheme={(primaryActionMode === 'shape' || primaryActionMode === 'eraser') ? user?.data.color || 'teal' : 'gray'}
+                sx={{
+                  _dark: {
+                    bg: (primaryActionMode === 'shape' || primaryActionMode === 'eraser') ? `${user?.data.color}.200` : 'gray.600',
+                  },
+                }}
+                icon={<IoShapesOutline />}
+                fontSize="lg"
+                aria-label={'input-type'}
+                onClick={() => {
+                  if (annotationsIsOpen) annotationsOnClose();
+                  else {
+                    if (!isContextMenuOpen) {
+                      annotationsOnOpen();
+                    }
+                  }
+                  setPrimaryActionMode('shape');      // LOOK HERE TO SEE WHERE PRIMARY ACTION STATE IS STORED
+                  setSelectedApp('');
+                  setSelectedAppsIds([]);
+                  clearLinkAppId();
+                }}
+              ></IconButton>
+            </PopoverTrigger>
+          </Tooltip>
+          <PopoverContent width="650px">
+            <PopoverHeader userSelect="none">Shape</PopoverHeader>
+            <PopoverBody p="4">
+              <HStack spacing="4" justify="space-between" align="center">
+                {/* Mode Toggle Buttons - Left */}
+                <Box display="flex" flexDirection="column" alignItems="left" minW="60px">
+                  <Text fontSize="sm" mb="2" userSelect="none">Shape</Text>
+                  <ButtonGroup size="sm" isAttached>
+                    <Tooltip placement="top" hasArrow label="Rectangle">
+                      <Button
+                        colorScheme={primaryActionMode === 'rectangle' ? user?.data.color || 'teal' : 'gray'}
+                        variant={primaryActionMode === 'rectangle' ? 'solid' : 'outline'}
+                        onClick={() => handleShapeChange('rectangle')}       // NEED TO CHANGE THIS TO ALLOW SHAPE TO BE A VALID MODE
+                        px="3"
+                      >
+                        <MdOutlineRectangle fontSize="16px" /> 
+                      </Button>
+                    </Tooltip>
+                    <Tooltip placement="top" hasArrow label="Circle">
+                      <Button
+                        colorScheme={primaryActionMode === 'circle' ? user?.data.color || 'teal' : 'gray'}
+                        variant={primaryActionMode === 'circle' ? 'solid' : 'outline'}
+                        onClick={() => handleShapeChange('circle')}  // NEED TO CHANGE THIS TO ALLOW SHAPE TO BE A VALID MODE
+                        px="3"
+                      >
+                        <FaRegCircle fontSize="16px"/>
+                      </Button>
+                    </Tooltip>
+                  </ButtonGroup>
+                </Box>
+                {/* Drawing Controls - Middle */}
+                <HStack spacing="3" align="center" flex="1" justify="center">
+                  {/* Color Picker */}
+                  <Box display="flex" flexDirection="column" alignItems="left" minW="80px">
+                    <Text fontSize="sm" mb="2" userSelect="none">Color</Text>
+                    <ColorPicker selectedColor={markerColor} onChange={handleColorChange} size="sm" />
+                  </Box>
+
+                  {/* Width Select */}
+                  <Box display="flex" flexDirection="column" alignItems="left" minW="80px">
+                    <Text fontSize="sm" mb="2" userSelect="none">Width</Text>
+                    <Menu>
+                      <MenuButton as={Button} size="sm" width="80px" variant="outline">
+                        {markerSize}
+                      </MenuButton>
+                      <MenuList>
+                        <MenuItem onClick={() => setMarkerSize(1)}>1</MenuItem>
+                        <MenuItem onClick={() => setMarkerSize(3)}>3</MenuItem>
+                        <MenuItem onClick={() => setMarkerSize(5)}>5</MenuItem>
+                        <MenuItem onClick={() => setMarkerSize(8)}>8</MenuItem>
+                        <MenuItem onClick={() => setMarkerSize(12)}>12</MenuItem>
+                        <MenuItem onClick={() => setMarkerSize(20)}>20</MenuItem>
+                        <MenuItem onClick={() => setMarkerSize(32)}>32</MenuItem>
+                        <MenuItem onClick={() => setMarkerSize(60)}>60</MenuItem>
+                        <MenuItem onClick={() => setMarkerSize(90)}>90</MenuItem>
+                        <MenuItem onClick={() => setMarkerSize(120)}>120</MenuItem>
+                      </MenuList>
+                    </Menu>
+                  </Box>
+
+                  {/* Opacity Select */}
+                  <Box display="flex" flexDirection="column" alignItems="left" minW="80px">
+                    <Text fontSize="sm" mb="2" userSelect="none">Opacity</Text>
+                    <Menu>
+                      <MenuButton as={Button} size="sm" width="80px" variant="outline">
+                        {Math.round(markerOpacity * 100)}%
+                      </MenuButton>
+                      <MenuList>
+                        <MenuItem onClick={() => setMarkerOpacity(0.1)}>10%</MenuItem>
+                        <MenuItem onClick={() => setMarkerOpacity(0.2)}>20%</MenuItem>
+                        <MenuItem onClick={() => setMarkerOpacity(0.3)}>30%</MenuItem>
+                        <MenuItem onClick={() => setMarkerOpacity(0.4)}>40%</MenuItem>
+                        <MenuItem onClick={() => setMarkerOpacity(0.5)}>50%</MenuItem>
+                        <MenuItem onClick={() => setMarkerOpacity(0.6)}>60%</MenuItem>
+                        <MenuItem onClick={() => setMarkerOpacity(0.7)}>70%</MenuItem>
+                        <MenuItem onClick={() => setMarkerOpacity(0.8)}>80%</MenuItem>
+                        <MenuItem onClick={() => setMarkerOpacity(0.9)}>90%</MenuItem>
+                        <MenuItem onClick={() => setMarkerOpacity(1.0)}>100%</MenuItem>
+                      </MenuList>
+                    </Menu>
+                  </Box>
+                </HStack>
+
+                {/* Eraser Controls - Right */}
+                <Box display="flex" flexDirection="column" alignItems="left" minW="120px">
+                  <Text fontSize="sm" mb="2" userSelect="none">Actions</Text>
+                  <HStack spacing="1" align="center">
+                    <Tooltip placement="top" hasArrow label="Undo Last Line">
+                      <Button onClick={() => setUndoLastMarker(true)} size="sm">
+                        <FaUndo fontSize="16px"/>
+                      </Button>
+                    </Tooltip>
+
+                    <Tooltip placement="top" hasArrow label="Erase Your Lines">
+                      <Button onClick={myOnOpen} size="sm">
+                        <FaEraser  fontSize="16px"/>
+                      </Button>
+                    </Tooltip>
+
+                    <Tooltip placement="top" hasArrow label="Erase All">
+                      <Button onClick={allOnOpen} size="sm">
+                        <FaTrash fontSize="16px"/>
+                      </Button>
+                    </Tooltip>
+                  </HStack>
+                </Box>
+              </HStack>
+            </PopoverBody>
+          </PopoverContent>
+        </Popover>
+        {/* 
+        
+        <----------------------------------------------WIP----------------------------------------------------------> 
+        <----------------------------------------------WIP----------------------------------------------------------> 
+        <----------------------------------------------WIP----------------------------------------------------------> 
+        
+        */}
         <Tooltip label={'Linker — [4]'} placement={tooltipPlacement} hasArrow={true} openDelay={400} shouldWrapChildren={true}>
           <IconButton
             borderRadius={'0 0.5rem 0.5rem 0'}

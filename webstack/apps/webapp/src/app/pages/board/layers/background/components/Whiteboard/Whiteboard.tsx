@@ -27,6 +27,7 @@ import {
 
 import { Line } from './Line';
 import { useDragAndDropBoard } from '../DragAndDropBoard';
+import { ConsoleLogger } from 'exiftool-vendored/dist/DefaultExifToolOptions';
 
 type WhiteboardProps = {
   boardId: string;
@@ -36,7 +37,7 @@ type WhiteboardProps = {
 export function Whiteboard(props: WhiteboardProps) {
   // Settings
   const { settings } = useUserSettings();
-  const primaryActionMode = settings.primaryActionMode;
+  const primaryActionMode = settings.primaryActionMode;    // MODE FOR FUNCTION
 
   const { user } = useUser();
 
@@ -71,6 +72,9 @@ export function Whiteboard(props: WhiteboardProps) {
   const [yLines, setYlines] = useState<Y.Array<Y.Map<any>> | null>(null);
   const [lines, setLines] = useState<Y.Map<any>[]>([]);
   const rCurrentLine = useRef<Y.Map<any>>();
+  //rectangle Yjs
+  const[yLinesRectangle, setYlinesRectangle] = useState<Y.Array<Y.Map<any>> | null>(null);
+  const currentRectangle = useRef<Y.Map<any>>();
 
   // Preview cursor state
   const [cursorPosition, setCursorPosition] = useState<{ x: number; y: number } | null>(null);
@@ -81,11 +85,14 @@ export function Whiteboard(props: WhiteboardProps) {
   // Save the whiteboard lines to SAGE database
   function updateBoardLines() {
     if (yLines && props.boardId) {
-      const lines = yLines.toJSON();
+      let lines = yLines.toJSON();
+      // lines = lines.splice(0, 1); // Create a copy of the array
+      console.log('Updating board lines: ', lines);
       updateAnnotation(props.boardId, { whiteboardLines: lines });
     }
   }
 
+  // <-------------------------USE THIS TO TRACK CORNERS------------------------->
   const getPoint = useCallback(
     (x: number, y: number) => {
       x = x / scale - boardPosition.x;
@@ -94,19 +101,20 @@ export function Whiteboard(props: WhiteboardProps) {
     },
     [boardPosition.x, boardPosition.y, scale]
   );
+  // <-------------------------USE THIS TO TRACK CORNERS------------------------->
 
   // On pointer down, start a new current line
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
-      if (yLines && yDoc && canAnnotate && boardSynced) {
+      if (yLines && yDoc && canAnnotate && boardSynced && primaryActionMode === 'pen') {
         // if primary pointing device and left button
         if (e.isPrimary && e.button === 0) {
           e.currentTarget.setPointerCapture(e.pointerId);
           const id = Date.now().toString();
           const yPoints = new Y.Array<number>();
+          let endPoints = new Y.Array<number>();
 
           const yLine = new Y.Map();
-
           yDoc.transact(() => {
             yLine.set('id', id);
             yLine.set('points', yPoints);
@@ -116,7 +124,38 @@ export function Whiteboard(props: WhiteboardProps) {
             yLine.set('isComplete', false);
             yLine.set('userId', user?._id);
           });
+          endPoints.push([yPoints.get(0), yPoints.get(-1)]);
+          yLine.set('points', endPoints);
+          rCurrentLine.current = yLine;
+          console.log("yLine points: ");
+          yLines.push([yLine]);
+        }
+      }
+    },
+    [yDoc, yLines, user, color, markerOpacity, markerSize, boardSynced]
+  );
 
+  // On pointer down, start a new rectangle
+  const handlePointerDownRect = useCallback(
+    (e: React.PointerEvent<SVGSVGElement>) => {
+      if (yLines && yDoc && canAnnotate && boardSynced && primaryActionMode === 'rectangle') {
+        // if primary pointing device and left button
+        if (e.isPrimary && e.button === 0) {
+          e.currentTarget.setPointerCapture(e.pointerId);
+          const id = Date.now().toString();
+          const yPoints = new Y.Array<number>();
+
+          const yLine = new Y.Map();
+          console.log("y points: " + yPoints.toArray().toString());
+          yDoc.transact(() => {
+            yLine.set('id', id);
+            yLine.set('points', yPoints);
+            yLine.set('userColor', color);
+            yLine.set('alpha', markerOpacity);
+            yLine.set('size', markerSize);
+            yLine.set('isComplete', false);
+            yLine.set('userId', user?._id);
+          });
           rCurrentLine.current = yLine;
           yLines.push([yLine]);
         }
@@ -216,6 +255,22 @@ export function Whiteboard(props: WhiteboardProps) {
     },
     [rCurrentLine.current, primaryActionMode]
   );
+// <-------------------------WIP------------------------->
+  const drawRectangle = useCallback(
+    (x: number, y: number) => {
+      if (primaryActionMode === 'rectangle') {
+        const currentLine = rCurrentLine.current;
+        if (!currentLine) return;
+        const points = currentLine.get('points');
+        // Don't add the new point to the line
+        if (!points) return;
+        const point = getPoint(x, y);
+        points.push([...point]);
+      }
+    },
+    [rCurrentLine.current, primaryActionMode]
+  );
+// <-------------------------WIP------------------------->
 
   const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
     // Update cursor position for preview
@@ -230,6 +285,7 @@ export function Whiteboard(props: WhiteboardProps) {
       draw(e.clientX, e.clientY);
     }
   };
+
 
   const handleTouchMove = (e: React.TouchEvent<SVGSVGElement>) => {
     if (e.touches.length === 1) {
@@ -347,8 +403,8 @@ export function Whiteboard(props: WhiteboardProps) {
     <div
       className="canvas-container"
       style={{
-        pointerEvents: primaryActionMode === 'pen' || primaryActionMode === 'eraser' ? 'auto' : 'none',
-        touchAction: primaryActionMode === 'pen' || primaryActionMode === 'eraser' ? 'none' : 'auto',
+        pointerEvents: primaryActionMode === 'pen' || primaryActionMode === 'eraser' || primaryActionMode === 'rectangle' || primaryActionMode ==='circle' ? 'auto' : 'none',
+        touchAction: primaryActionMode === 'pen' || primaryActionMode === 'eraser' || primaryActionMode === 'rectangle' || primaryActionMode ==='circle' ? 'none' : 'auto',
       }}
     >
       <svg
