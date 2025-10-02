@@ -273,7 +273,7 @@ export function Whiteboard(props: WhiteboardProps) {
         setCursorPosition(null);
       }
     },
-    [primaryActionMode, getPoint]
+    [primaryActionMode, getPoint, rCurrentLine.current]
   );
 
   /**

@@ -95,14 +95,14 @@ export function Interactionbar(props: {
 
   // Color Change
   const handleColorChange = (color: SAGEColors) => {
-    if (primaryActionMode !== 'pen' && primaryActionMode !== 'eraser') {
-      setPrimaryActionMode('pen');
+    if (primaryActionMode !== 'pen' && primaryActionMode !== 'eraser' && primaryActionMode !== 'rectangle' && primaryActionMode !== 'circle') {
+      setPrimaryActionMode(primaryActionMode);
     }
     setMarkerColor(color);
   };
 
   // Handle mode switching
-  const handleModeChange = (mode: 'pen' | 'eraser' | 'rectangle') => {
+  const handleModeChange = (mode: 'pen' | 'eraser' | 'rectangle' | 'circle') => {
     setPrimaryActionMode(mode);
   };
 
@@ -130,7 +130,7 @@ export function Interactionbar(props: {
     if (isContextMenuOpen) {
       annotationsOnClose();
     } else {
-      if (primaryActionMode === 'pen' || primaryActionMode === 'eraser' || primaryActionMode === 'rectangle') {
+      if (primaryActionMode === 'pen' || primaryActionMode === 'eraser' || primaryActionMode === 'rectangle' || primaryActionMode === 'circle') {
         annotationsOnOpen();
       } else {
         annotationsOnClose();
@@ -185,16 +185,16 @@ export function Interactionbar(props: {
           ></IconButton>
         </Tooltip>
 
-        <Popover isOpen={annotationsIsOpen && (primaryActionMode === 'pen' || primaryActionMode === 'eraser' || primaryActionMode === 'rectangle')}>
+        <Popover isOpen={annotationsIsOpen && (primaryActionMode === 'pen' || primaryActionMode === 'eraser' || primaryActionMode === 'rectangle') || primaryActionMode ==='circle'}>
           <Tooltip label={'Annotations — [3]'} placement={tooltipPlacement} hasArrow={true} openDelay={400} shouldWrapChildren={true}>
             <PopoverTrigger>
               <IconButton
                 borderRadius={0}
                 size="sm"
-                colorScheme={(primaryActionMode === 'pen' || primaryActionMode === 'eraser' || primaryActionMode === 'rectangle') ? user?.data.color || 'teal' : 'gray'}
+                colorScheme={(primaryActionMode === 'pen' || primaryActionMode === 'eraser' || primaryActionMode === 'rectangle' || primaryActionMode === 'circle') ? user?.data.color || 'teal' : 'gray'}
                 sx={{
                   _dark: {
-                    bg: (primaryActionMode === 'pen' || primaryActionMode === 'eraser' || primaryActionMode === 'rectangle') ? `${user?.data.color}.200` : 'gray.600',
+                    bg: (primaryActionMode === 'pen' || primaryActionMode === 'eraser' || primaryActionMode === 'rectangle' || primaryActionMode === 'circle') ? `${user?.data.color}.200` : 'gray.600',
                   },
                 }}
                 icon={<BiPencil />}
@@ -215,7 +215,7 @@ export function Interactionbar(props: {
               ></IconButton>
             </PopoverTrigger>
           </Tooltip>
-          <PopoverContent width="650px">
+          <PopoverContent width="800px">
             <PopoverHeader userSelect="none">Annotations</PopoverHeader>
             <PopoverBody p="4">
               <HStack spacing="4" justify="space-between" align="center">
@@ -241,6 +241,16 @@ export function Interactionbar(props: {
                         px="3"
                       >
                         <MdOutlineRectangle fontSize="16px" /> 
+                      </Button>
+                    </Tooltip>
+                    <Tooltip placement="top" hasArrow label="Circle">
+                      <Button
+                        colorScheme={primaryActionMode === 'circle' ? user?.data.color || 'teal' : 'gray'}
+                        variant={primaryActionMode === 'circle' ? 'solid' : 'outline'}
+                        onClick={() => handleModeChange('circle')}
+                        px="3"
+                      >
+                        <FaRegCircle fontSize="16px"/>
                       </Button>
                     </Tooltip>
                     <Tooltip placement="top" hasArrow label="Eraser">
