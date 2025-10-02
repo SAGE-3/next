@@ -208,6 +208,7 @@ function AppComponent(props: App): JSX.Element {
   const { colorMode } = useColorMode();
   const primary = useColorModeValue('black', 'white');         // Primary text color
   const background = useColorModeValue('white', 'gray.900');   // Background color
+  const border = useColorModeValue('#EEEEEE', '#2a2a2a'); // Border color
 
   // Prop value color
   const digColor = useHexColor(props.data.state.color);    
@@ -230,6 +231,8 @@ function AppComponent(props: App): JSX.Element {
     svg.selectAll('text').attr('fill', digColor);
     console.log("color: props.data.state.color ", props.data.state.color);
     console.log('Setting clock digit color to', digColor);
+    // Style border elements
+    svg.select('#frame').attr('stroke', border)
     
     // Style secondary text elements (date, AM/PM, timezone) with primary color
     svg.select('#date').attr('fill', primary).attr('font-size', '16px');
