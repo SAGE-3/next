@@ -124,38 +124,8 @@ export function Whiteboard(props: WhiteboardProps) {
             yLine.set('isComplete', false);
             yLine.set('userId', user?._id);
           });
-          endPoints.push([yPoints.get(0), yPoints.get(-1)]);
-          yLine.set('points', endPoints);
-          rCurrentLine.current = yLine;
-          console.log("yLine points: ");
-          yLines.push([yLine]);
-        }
-      }
-    },
-    [yDoc, yLines, user, color, markerOpacity, markerSize, boardSynced]
-  );
-
-  // On pointer down, start a new rectangle
-  const handlePointerDownRect = useCallback(
-    (e: React.PointerEvent<SVGSVGElement>) => {
-      if (yLines && yDoc && canAnnotate && boardSynced && primaryActionMode === 'rectangle') {
-        // if primary pointing device and left button
-        if (e.isPrimary && e.button === 0) {
-          e.currentTarget.setPointerCapture(e.pointerId);
-          const id = Date.now().toString();
-          const yPoints = new Y.Array<number>();
-
-          const yLine = new Y.Map();
-          console.log("y points: " + yPoints.toArray().toString());
-          yDoc.transact(() => {
-            yLine.set('id', id);
-            yLine.set('points', yPoints);
-            yLine.set('userColor', color);
-            yLine.set('alpha', markerOpacity);
-            yLine.set('size', markerSize);
-            yLine.set('isComplete', false);
-            yLine.set('userId', user?._id);
-          });
+          // endPoints.push([yPoints.get(0), yPoints.get(-1)]);
+          // yLine.set('points', endPoints);
           rCurrentLine.current = yLine;
           yLines.push([yLine]);
         }
@@ -256,12 +226,55 @@ export function Whiteboard(props: WhiteboardProps) {
     [rCurrentLine.current, primaryActionMode]
   );
 // <-------------------------WIP------------------------->
-  const drawRectangle = useCallback(
+
+// On pointer down, start a new rectangle
+  const handlePointerDownRect = useCallback(
+    (e: React.PointerEvent<SVGSVGElement>) => {
+      if (yLines && yDoc && canAnnotate && boardSynced && primaryActionMode === 'rectangle') {
+        // if primary pointing device and left button
+        if (e.isPrimary && e.button === 0) {
+          e.currentTarget.setPointerCapture(e.pointerId);
+          const id = Date.now().toString();
+          const yEndPoints = new Y.Array<number>();
+
+          const yLine = new Y.Map();
+          yDoc.transact(() => {
+            yLine.set('id', id);
+            yLine.set('endPoints', yEndPoints);
+            yLine.set('userColor', color);
+            yLine.set('alpha', markerOpacity);
+            yLine.set('size', markerSize);
+            yLine.set('isComplete', false);
+            yLine.set('userId', user?._id);
+          });
+          rCurrentLine.current = yLine;
+          yLines.push([yLine]);
+        }
+      }
+    },
+    [yDoc, yLines, user, color, markerOpacity, markerSize, boardSynced]
+  );
+
+  const handlePointerMoveRect = (e: React.PointerEvent<SVGSVGElement>) => {
+    // Update cursor position for preview
+    if (primaryActionMode === 'rectangle') {
+      const point = getPoint(e.clientX, e.clientY);
+      setCursorPosition({ x: point[0], y: point[1] });
+    } else {
+      setCursorPosition(null);
+    }
+
+    if (e.currentTarget.hasPointerCapture(e.pointerId) && e.pointerType !== 'touch') {
+      draw(e.clientX, e.clientY);
+    }
+  };
+
+  const drawRect = useCallback(
     (x: number, y: number) => {
       if (primaryActionMode === 'rectangle') {
         const currentLine = rCurrentLine.current;
         if (!currentLine) return;
-        const points = currentLine.get('points');
+        const points = currentLine.get('endPoints');
         // Don't add the new point to the line
         if (!points) return;
         const point = getPoint(x, y);
@@ -269,6 +282,43 @@ export function Whiteboard(props: WhiteboardProps) {
       }
     },
     [rCurrentLine.current, primaryActionMode]
+  );
+
+  const handlePointerUp = useCallback(
+    (e: React.PointerEvent<SVGSVGElement>) => {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+
+      const currentLine = rCurrentLine.current;
+      if (!currentLine) return;
+
+      // Get the points from the current stroke
+      const points: Y.Array<number> = currentLine.get('endPoints');
+      let endPoints = new Y.Array<number>();
+      if (points && points.length > 0) {
+        const xyPoints: { x: number; y: number }[] = [];
+        // endPoints.push([points.get(0), points.get(-1)]);
+        for (let i = 0; i < points.length / 2; i++) {
+          // Convert the points to an array of objects
+          xyPoints.push({ x: points.get(i * 2), y: points.get(i * 2 + 1) });
+        }
+        // Simplify: points: Point[], tolerance: number, highQuality: boolean
+        // High quality simplification but runs ~10-20 times slower
+        const simpler = Simplify.default(xyPoints, 0.5, true);
+        // Delete the old points
+        points.delete(0, points.length);
+        // Add the new points
+        for (let i = 0; i < simpler.length; i++) {
+          // convert to integers for storage efficiency
+          points.push([Math.round(simpler[i].x), Math.round(simpler[i].y)]);
+        }
+        currentLine.set('isComplete', true);
+        console.log("rectangle points: ", points);
+        updateBoardLines();
+      }
+      // Clear the current line anymway
+      rCurrentLine.current = undefined;
+    },
+    [rCurrentLine.current]
   );
 // <-------------------------WIP------------------------->
 
@@ -294,39 +344,39 @@ export function Whiteboard(props: WhiteboardProps) {
   };
 
   // On pointer up, complete the current line
-  const handlePointerUp = useCallback(
-    (e: React.PointerEvent<SVGSVGElement>) => {
-      e.currentTarget.releasePointerCapture(e.pointerId);
+  // const handlePointerUp = useCallback(
+  //   (e: React.PointerEvent<SVGSVGElement>) => {
+  //     e.currentTarget.releasePointerCapture(e.pointerId);
 
-      const currentLine = rCurrentLine.current;
-      if (!currentLine) return;
+  //     const currentLine = rCurrentLine.current;
+  //     if (!currentLine) return;
 
-      // Get the points from the current stroke
-      const points: Y.Array<number> = currentLine.get('points');
-      if (points && points.length > 0) {
-        const xyPoints: { x: number; y: number }[] = [];
-        for (let i = 0; i < points.length / 2; i++) {
-          // Convert the points to an array of objects
-          xyPoints.push({ x: points.get(i * 2), y: points.get(i * 2 + 1) });
-        }
-        // Simplify: points: Point[], tolerance: number, highQuality: boolean
-        // High quality simplification but runs ~10-20 times slower
-        const simpler = Simplify.default(xyPoints, 0.5, true);
-        // Delete the old points
-        points.delete(0, points.length);
-        // Add the new points
-        for (let i = 0; i < simpler.length; i++) {
-          // convert to integers for storage efficiency
-          points.push([Math.round(simpler[i].x), Math.round(simpler[i].y)]);
-        }
-        currentLine.set('isComplete', true);
-        updateBoardLines();
-      }
-      // Clear the current line anymway
-      rCurrentLine.current = undefined;
-    },
-    [rCurrentLine.current]
-  );
+  //     // Get the points from the current stroke
+  //     const points: Y.Array<number> = currentLine.get('points');
+  //     if (points && points.length > 0) {
+  //       const xyPoints: { x: number; y: number }[] = [];
+  //       for (let i = 0; i < points.length / 2; i++) {
+  //         // Convert the points to an array of objects
+  //         xyPoints.push({ x: points.get(i * 2), y: points.get(i * 2 + 1) });
+  //       }
+  //       // Simplify: points: Point[], tolerance: number, highQuality: boolean
+  //       // High quality simplification but runs ~10-20 times slower
+  //       const simpler = Simplify.default(xyPoints, 0.5, true);
+  //       // Delete the old points
+  //       points.delete(0, points.length);
+  //       // Add the new points
+  //       for (let i = 0; i < simpler.length; i++) {
+  //         // convert to integers for storage efficiency
+  //         points.push([Math.round(simpler[i].x), Math.round(simpler[i].y)]);
+  //       }
+  //       currentLine.set('isComplete', true);
+  //       updateBoardLines();
+  //     }
+  //     // Clear the current line anymway
+  //     rCurrentLine.current = undefined;
+  //   },
+  //   [rCurrentLine.current]
+  // );
 
   useEffect(() => {
     if (yLines && clearAllMarkers) {
