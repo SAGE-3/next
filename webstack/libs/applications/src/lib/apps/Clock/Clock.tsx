@@ -380,7 +380,7 @@ function AppComponent(props: App): JSX.Element {
     const tick = () => {
       // Get current abbreviation (changes with DST)
       const abbrNow = abbrFor(ianaTz, new Date());
-      setTimeZoneText(abbrNow);
+      setTimeZoneText(ianaTz);
       
       // Update all time/date displays
       setTimeInTimezone(ianaTz, !!props.data.state.is24Hour);
