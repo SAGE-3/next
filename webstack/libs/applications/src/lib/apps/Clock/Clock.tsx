@@ -256,7 +256,7 @@ function AppComponent(props: App): JSX.Element {
   const updateDigits = (id: string, time: number) => {
     const svgDoc = d3.select(svgRef.current);
     if (!svgDoc.empty()) {
-      svgDoc.select('#' + id).text(time.toString().padStart(2, '0'));
+      svgDoc.select('#' + id).text(time.toString());
     }
   };
 
