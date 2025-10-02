@@ -34,20 +34,21 @@ import {
   useColorMode,
   useColorModeValue,
 } from '@chakra-ui/react';
+import * as d3 from 'd3';
 
 import { SAGEColors } from '@sage3/shared';
 import { useAppStore, useHexColor, ColorPicker } from '@sage3/frontend';
+
 import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
-
-import * as d3 from 'd3';
 import { ReactComponent as Clock } from './clock.svg';
 
 // ===============================================================================
 // TIMEZONE HELPER FUNCTIONS
 // These functions handle timezone detection, abbreviation generation, and formatting
 // ===============================================================================
+
 /**
  * Get all supported IANA timezone identifiers
  * 
@@ -66,7 +67,7 @@ function getSupportedTimeZones(): string[] {
   } catch {
     // Silently fall back to hardcoded list
   }
-  
+
   // Fallback list covering major world timezones
   return [
     'UTC',
@@ -165,20 +166,20 @@ function synthesizeGMT(zone: string, date: Date): string {
       .format(date)
       .split(':')
       .map(Number);
-  
+
   // Get time in both UTC and target timezone
   const [uh, um] = f('UTC');
   const [lh, lm] = f(zone);
-  
+
   // Convert to minutes for easier calculation
   const utcMin = uh * 60 + um;
   const locMin = lh * 60 + lm;
-  
+
   // Calculate difference, handling day boundary crossings
   let diff = locMin - utcMin;
   if (diff > 720) diff -= 1440;  // Crossed midnight forward
   if (diff < -720) diff += 1440; // Crossed midnight backward
-  
+
   // Format as GMT±HH:MM
   const sign = diff >= 0 ? '+' : '-';
   const abs = Math.abs(diff);
@@ -197,13 +198,12 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const svgRef = useRef<SVGSVGElement>(null); // Reference to SVG clock element
   const updateState = useAppStore((state) => state.updateState);
-  const update = useAppStore((state) => state.update);
 
   // Clock display constants
   const CLOCK_WIDTH = 320;
   const CLOCK_HEIGHT = 130;
   const CLOCK_ASPECT = CLOCK_WIDTH / CLOCK_HEIGHT; // For maintaining aspect ratio
-  
+
   // Theme-aware color setup
   const { colorMode } = useColorMode();
   const primary = useColorModeValue('black', 'white');         // Primary text color
@@ -211,7 +211,7 @@ function AppComponent(props: App): JSX.Element {
   const border = useColorModeValue('#EEEEEE', '#2a2a2a'); // Border color
 
   // Prop value color
-  const digColor = useHexColor(props.data.state.color);    
+  const digColor = useHexColor(props.data.state.color);
 
   // Build time zones + current abbreviations once at component mount
   // This is memoized to avoid recalculating on every render
@@ -229,11 +229,12 @@ function AppComponent(props: App): JSX.Element {
 
     // Style time digits with accent color
     svg.selectAll('text').attr('fill', digColor);
-    console.log("color: props.data.state.color ", props.data.state.color);
-    console.log('Setting clock digit color to', digColor);
+    // console.log("color: props.data.state.color ", props.data.state.color);
+    // console.log('Setting clock digit color to', digColor);
+
     // Style border elements
     svg.select('#frame').attr('stroke', border)
-    
+
     // Style secondary text elements (date, AM/PM, timezone) with primary color
     svg.select('#date').attr('fill', primary).attr('font-size', '16px');
     svg.select('#ampm').attr('fill', primary).attr('font-size', '16px');
@@ -259,7 +260,11 @@ function AppComponent(props: App): JSX.Element {
   const updateDigits = (id: string, time: number) => {
     const svgDoc = d3.select(svgRef.current);
     if (!svgDoc.empty()) {
-      svgDoc.select('#' + id).text(time.toString().padStart(2, '0'));
+      if (id === 'hour') {
+        svgDoc.select('#' + id).text(time.toString());
+      } else {
+        svgDoc.select('#' + id).text(time.toString().padStart(2, '0'));
+      }
     }
   };
 
@@ -310,7 +315,7 @@ function AppComponent(props: App): JSX.Element {
    */
   const setTimeInTimezone = (timeZone: string, is24Hour: boolean) => {
     const date = new Date();
-    
+
     // Get formatted date/time parts for the specified timezone
     const parts = Intl.DateTimeFormat('en-US', {
       timeZone,
@@ -351,7 +356,7 @@ function AppComponent(props: App): JSX.Element {
   // LIVE CLOCK EFFECT
   // Sets up real-time updates with proper cleanup and timezone validation
   // ===============================================================================
-  
+
   useEffect(() => {
     // Early return if SVG ref not ready
     if (!svgRef.current) return;
@@ -359,7 +364,7 @@ function AppComponent(props: App): JSX.Element {
     // Determine the timezone to use, with fallback to browser timezone
     const tzFromState = props.data.state.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone;
     const isKnownIana = timeZones.includes(tzFromState);
-    
+
     // Log warning for invalid timezones (helps with debugging)
     if (!isKnownIana) {
       console.warn(`Invalid or unknown timezone: ${tzFromState}; falling back to browser time zone.`);
@@ -382,9 +387,9 @@ function AppComponent(props: App): JSX.Element {
      */
     const tick = () => {
       // Get current abbreviation (changes with DST)
-      const abbrNow = abbrFor(ianaTz, new Date());
-      setTimeZoneText(abbrNow);
-      
+      // const abbrNow = abbrFor(ianaTz, new Date());
+      setTimeZoneText(ianaTz);
+
       // Update all time/date displays
       setTimeInTimezone(ianaTz, !!props.data.state.is24Hour);
     };
@@ -455,7 +460,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const handleTimeZoneChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     updateState(props._id, { timeZone: e.target.value });
   };
-  
+
   /**
    * Handle 24-hour format toggle
    * Updates the app state with the new format preference
@@ -473,9 +478,9 @@ function ToolbarComponent(props: App): JSX.Element {
   }
 
   return (
-    <div style={{  fontFamily: 'sans-serif' }}>
+    <div style={{ fontFamily: 'sans-serif' }}>
       <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '0.5rem' }}>
-        
+
         {/* Timezone Selection Dropdown */}
         <div style={{ fontWeight: 'bold' }}>
           <Select
@@ -492,22 +497,22 @@ function ToolbarComponent(props: App): JSX.Element {
             ))}
           </Select>
         </div>
-        
+
         {/* 24-Hour Format Toggle */}
         <div style={{ fontSize: '0.8rem' }}>
           <FormControl display="flex" alignItems="center">
             <FormLabel mb="0" style={{ whiteSpace: 'nowrap', marginRight: '0.5rem' }}>
               24 Hour
             </FormLabel>
-            <Switch 
-              id="is24Hours" 
-              isChecked={!!props.data.state.is24Hour} 
-              onChange={handle24HourToggle} 
+            <Switch
+              id="is24Hours"
+              isChecked={!!props.data.state.is24Hour}
+              onChange={handle24HourToggle}
             />
           </FormControl>
         </div>
         <div style={{ marginLeft: 'auto', marginRight: '0.5rem' }}>
-          <ColorPicker onChange={handleColorChange} selectedColor={props.data.state.color as SAGEColors} size="xs" disabled={locked}/>
+          <ColorPicker onChange={handleColorChange} selectedColor={props.data.state.color as SAGEColors} size="xs" disabled={locked} />
         </div>
       </div>
     </div>

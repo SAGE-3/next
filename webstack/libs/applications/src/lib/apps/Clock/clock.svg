@@ -18,7 +18,7 @@
             fill="none" stroke="#2a2a" stroke-width="2" id="frame"/>
 
       <!-- Centered content, evenly spaced within the background -->
-      <g id="content" transform="translate(160,65)" font-family="SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" text-anchor="middle">
+      <g id="content" transform="translate(160,65)" font-family="SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" text-anchor="middle" place-self="center" display="flex">
         <!-- Timezone (top row) -->
         <text id="timezone"
               x="0" y="-40"
@@ -30,11 +30,26 @@
         <!-- Time (middle row) -->
         <g id="timeGroup"
            transform="translate(0,0)"
-           font-size="72" font-weight="600" dominant-baseline="middle" fill="#E5E7EB">
-          <text id="hour"    x="-50" y="5">12</text>
-          <text id="colon"   x="0"   y="5">:</text>
-          <text id="minutes" x="50"  y="5">34</text>
-          <text id="ampm"    x="110" y="5" font-size="28" font-weight="400" fill="#9CA3AF">am</text>
+           font-size="72" font-weight="600"
+           dominant-baseline="middle" fill="#E5E7EB"
+           display="flex" margin="auto">
+
+          <!-- Time (middle row) -->
+          <text id="time"
+            x="0" y="5"
+            dominant-baseline="middle"
+            text-anchor="middle"
+            style="font-variant-numeric: tabular-nums; kerning:auto; letter-spacing:normal">
+              <tspan id="hour">9</tspan>
+              <tspan id="colon" dx="-0.1em">:</tspan>
+              <tspan id="minutes" dx="-0.1em">07</tspan>
+          </text>
+
+
+          <!-- AM/PM stays to the right (unchanged behavior) -->
+          <text id="ampm" x="120" y="5"
+                font-size="28" font-weight="400"
+                fill="#9CA3AF" text-anchor="start">am</text>
         </g>
 
         <!-- Date (bottom row) -->
