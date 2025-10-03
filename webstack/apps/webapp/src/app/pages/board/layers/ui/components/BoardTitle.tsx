@@ -30,9 +30,11 @@ export function BoardTitle(props: BoardTitleProps) {
   const title = `${props.config?.serverName} / ${(props.room?.data.name ? props.room.data.name : '') + ' / ' + (props.board?.data.name ? props.board.data.name : '')
     }`;
   const textColor = useColorModeValue('gray.800', 'gray.50');
+  const backgroundColor = useColorModeValue('gray.100', 'gray.800');
 
   return (
-    <Box borderRadius="md" whiteSpace={'nowrap'} width="100%" display="flex" justifyContent="left" alignItems={'center'} ml="1">
+    <Box borderRadius="md" whiteSpace={'nowrap'} width="100%" display="flex" justifyContent="left"
+      alignItems={'center'} ml="1" background={backgroundColor}>
       <Text fontSize={'lg'} color={textColor} userSelect="none" ml="1" whiteSpace="nowrap">
         {title}
       </Text>

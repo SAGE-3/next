@@ -136,6 +136,10 @@ export function Alfred(props: props) {
       w = 260;
       h = 369;
     }
+    if (appName === 'Timer') {
+      w = 330;
+      h = 226;
+    }
     else if (appName === 'Clock') {
       w = 320 * 1.5;
       h = 130 * 1.5;
@@ -662,9 +666,9 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
 
             <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Voice to text - Click and speak'} openDelay={400}>
               <Button p={0} m={'8px 0px 8px 0px'} disabled={!('webkitSpeechRecognition' in window)} onClick={triggerVoice}
-              colorScheme={recording ? 'red' : 'gray'}>
-              
-               {recording ?<MdStop size="24px" />: <MdMic size="24px" />  }
+                colorScheme={recording ? 'red' : 'gray'}>
+
+                {recording ? <MdStop size="24px" /> : <MdMic size="24px" />}
               </Button>
             </Tooltip>
 
