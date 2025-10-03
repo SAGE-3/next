@@ -70,7 +70,7 @@ export async function loadCollections(): Promise<void> {
             privatePin: '',
             isListed: true,
           },
-          '-'
+          '-',
         );
         if (res?._id) {
           console.log('Rooms> default room added');
@@ -86,7 +86,7 @@ export async function loadCollections(): Promise<void> {
               privatePin: '',
               executeInfo: { executeFunc: '', params: {} },
             },
-            '-'
+            '-',
           );
           if (res2?._id) {
             console.log('Boards> default board addedd');
@@ -100,30 +100,28 @@ export async function loadCollections(): Promise<void> {
 
   // Check all links for orphaned references
   async function checkAllLinks() {
-    console.log('Running full link validation check after app deletion...');
+    console.log('DEBUG> Running full link validation check after app deletion...');
     const links = await LinkCollection.getAll();
     const apps = await AppsCollection.getAll();
     if (!links || !apps) return;
-    
-    const appIds = new Set(apps.map(app => app._id));
-    const invalidLinks = links.filter(link => 
-      !appIds.has(link.data.sourceAppId) || !appIds.has(link.data.targetAppId)
-    );
-    
+
+    const appIds = new Set(apps.map((app) => app._id));
+    const invalidLinks = links.filter((link) => !appIds.has(link.data.sourceAppId) || !appIds.has(link.data.targetAppId));
+
     if (invalidLinks.length > 0) {
-      console.log(`Found ${invalidLinks.length} orphaned links, cleaning up...`);
-      const invalidLinkIds = invalidLinks.map(link => link._id);
-      console.log('Deleting orphaned links:', invalidLinkIds);
-      
+      console.log(`DEBUG> Found ${invalidLinks.length} orphaned links, cleaning up...`);
+      const invalidLinkIds = invalidLinks.map((link) => link._id);
+      console.log('DEBUG> Deleting orphaned links:', invalidLinkIds);
+
       // Use batch deletion for better performance
       const result = await LinkCollection.deleteBatch(invalidLinkIds);
       if (result) {
-        console.log(`Successfully deleted ${result.length} orphaned links`);
+        console.log(`DEBUG> Successfully deleted ${result.length} orphaned links`);
       } else {
-        console.log('Failed to delete some orphaned links');
+        console.log('DEBUG> Failed to delete some orphaned links');
       }
     } else {
-      console.log('No orphaned links found');
+      console.log('DEBUG> No orphaned links found');
     }
   }
 

@@ -19,7 +19,6 @@ import {
   Alert,
   Box,
   Button,
-  ButtonGroup,
   Code,
   Flex,
   Icon,
@@ -83,10 +82,10 @@ import { useStore } from './components/store';
 import { AppWindow } from '../../components';
 import { state as AppState } from './index';
 import { ToolbarComponent, GroupedToolbarComponent, PdfViewer, Markdown } from './components';
+import { getRunOrderChain } from '../../appLinks';
 
 // Styling
 import './SageCell.css';
-import { getRunOrderChain } from '../../appLinks';
 
 /**
  * SageCell - SAGE3 application
@@ -1000,72 +999,70 @@ function AppComponent(props: App): JSX.Element {
                 SAGECell
               </Text>
 
-             
-
               {/* Execution Buttons */}
 
-               <Button
-                 onClick={handleExecute}
-                 leftIcon={!isNarrow ? (s.msgId ? <Spinner size="sm" /> : <MdPlayArrow size="16px" />) : undefined}
-                 isDisabled={!s.kernel || !canExecuteCode}
-                 size="xs"
-                 variant="ghost"
-                 title="Run"
-               >
-                 {isNarrow ? (s.msgId ? <Spinner size="sm" /> : <MdPlayArrow size="16px" />) : 'Run'}
-               </Button>
-               <Button
-                 onClick={() => handleExecuteChain('all')}
-                 leftIcon={!isNarrow ? (s.msgId ? <Spinner size="sm" /> : <VscRunAll size="16px" />) : undefined}
-                 isDisabled={!s.kernel || !canExecuteCode}
-                 size="xs"
-                 variant="ghost"
-                 title="Run All"
-               >
-                 {isNarrow ? (s.msgId ? <Spinner size="sm" /> : <VscRunAll size="16px" />) : 'All'}
-               </Button>
-               <Button
-                 onClick={() => handleExecuteChain('up')}
-                 leftIcon={!isNarrow ? (s.msgId ? <Spinner size="sm" /> : <VscRunAbove size="16px" />) : undefined}
-                 isDisabled={!s.kernel || !canExecuteCode}
-                 size="xs"
-                 variant="ghost"
-                 title="Run To Here"
-               >
-                 {isNarrow ? (s.msgId ? <Spinner size="sm" /> : <VscRunAbove size="16px" />) : 'To Here'}
-               </Button>
-               <Button
-                 onClick={() => handleExecuteChain('down')}
-                 leftIcon={!isNarrow ? (s.msgId ? <Spinner size="sm" /> : <VscRunBelow size="16px" />) : undefined}
-                 isDisabled={!s.kernel || !canExecuteCode}
-                 size="xs"
-                 variant="ghost"
-                 title="From Here"
-               >
-                 {isNarrow ? (s.msgId ? <Spinner size="sm" /> : <VscRunBelow size="16px" />) : 'From Here'}
-               </Button>
-               <Button
-                 onClick={handleInterrupt}
-                 leftIcon={!isNarrow ? <MdStop size="16px" /> : undefined}
-                 isDisabled={!s.msgId || !canExecuteCode}
-                 size="xs"
-                 variant="ghost"
-                 title="Stop"
-               >
-                 {isNarrow ? <MdStop size="16px" /> : 'Stop'}
-               </Button>
-               <Button
-                 onClick={handleClear}
-                 leftIcon={!isNarrow ? <MdDelete size="16px" /> : undefined}
-                 isDisabled={!s.kernel}
-                 size="xs"
-                 variant="ghost"
-                 title="Clear"
-               >
-                 {isNarrow ? <MdDelete size="16px" /> : 'Clear'}
-               </Button>
+              <Button
+                onClick={handleExecute}
+                leftIcon={!isNarrow ? (s.msgId ? <Spinner size="sm" /> : <MdPlayArrow size="16px" />) : undefined}
+                isDisabled={!s.kernel || !canExecuteCode}
+                size="xs"
+                variant="ghost"
+                title="Run"
+              >
+                {isNarrow ? (s.msgId ? <Spinner size="sm" /> : <MdPlayArrow size="16px" />) : 'Run'}
+              </Button>
+              <Button
+                onClick={() => handleExecuteChain('all')}
+                leftIcon={!isNarrow ? (s.msgId ? <Spinner size="sm" /> : <VscRunAll size="16px" />) : undefined}
+                isDisabled={!s.kernel || !canExecuteCode}
+                size="xs"
+                variant="ghost"
+                title="Run All"
+              >
+                {isNarrow ? (s.msgId ? <Spinner size="sm" /> : <VscRunAll size="16px" />) : 'All'}
+              </Button>
+              <Button
+                onClick={() => handleExecuteChain('up')}
+                leftIcon={!isNarrow ? (s.msgId ? <Spinner size="sm" /> : <VscRunAbove size="16px" />) : undefined}
+                isDisabled={!s.kernel || !canExecuteCode}
+                size="xs"
+                variant="ghost"
+                title="Run To Here"
+              >
+                {isNarrow ? (s.msgId ? <Spinner size="sm" /> : <VscRunAbove size="16px" />) : 'To Here'}
+              </Button>
+              <Button
+                onClick={() => handleExecuteChain('down')}
+                leftIcon={!isNarrow ? (s.msgId ? <Spinner size="sm" /> : <VscRunBelow size="16px" />) : undefined}
+                isDisabled={!s.kernel || !canExecuteCode}
+                size="xs"
+                variant="ghost"
+                title="From Here"
+              >
+                {isNarrow ? (s.msgId ? <Spinner size="sm" /> : <VscRunBelow size="16px" />) : 'From Here'}
+              </Button>
+              <Button
+                onClick={handleInterrupt}
+                leftIcon={!isNarrow ? <MdStop size="16px" /> : undefined}
+                isDisabled={!s.msgId || !canExecuteCode}
+                size="xs"
+                variant="ghost"
+                title="Stop"
+              >
+                {isNarrow ? <MdStop size="16px" /> : 'Stop'}
+              </Button>
+              <Button
+                onClick={handleClear}
+                leftIcon={!isNarrow ? <MdDelete size="16px" /> : undefined}
+                isDisabled={!s.kernel}
+                size="xs"
+                variant="ghost"
+                title="Clear"
+              >
+                {isNarrow ? <MdDelete size="16px" /> : 'Clear'}
+              </Button>
 
-                {/* Kernel Selector */}
+              {/* Kernel Selector */}
               <Box minW={isNarrow ? "100px" : "180px"}>
                 {myKernels.length === 0 ? (
                   <Button size="sm" colorScheme="teal" variant="outline" isDisabled>
@@ -1124,64 +1121,64 @@ function AppComponent(props: App): JSX.Element {
 
             {/* The output area */}
             <Box>
-               <Box
-                 px="2"
-                 py="1"
-                 backgroundColor={titleBarBgColor}
-                 onMouseDown={handleResizeStart}
-                 css={{
-                   cursor: 'row-resize',
-                   userSelect: 'none',
-                 }}
-                 height="32px"
-                 display="flex"
-                 alignItems="center"
-                 justifyContent="space-between"
-                 borderBottom="1px solid"
-                 borderTop="1px solid"
-                 borderColor={titleBarBorderColorHex}
-               >
-                 <Text fontSize="xl" fontWeight="bold" mx="2">
-                   Output
-                 </Text>
-                 
-                 {/* Positioning buttons - centered */}
-                 <Flex gap={1} position="absolute" left="50%" transform="translateX(-50%)">
-                   <IconButton
-                     size="xs"
-                     variant="ghost"
-                     icon={<MdVerticalAlignTop size="14px" />}
-                     onClick={(e) => {
-                       e.stopPropagation();
-                       handlePositionTop();
-                     }}
-                     title="Editor to Top (80%)"
-                     aria-label="Move editor to top"
-                   />
-                   <IconButton
-                     size="xs"
-                     variant="ghost"
-                     icon={<MdVerticalAlignCenter size="14px" />}
-                     onClick={(e) => {
-                       e.stopPropagation();
-                       handlePositionMiddle();
-                     }}
-                     title="Editor to Middle (50%)"
-                     aria-label="Move editor to middle"
-                   />
-                   <IconButton
-                     size="xs"
-                     variant="ghost"
-                     icon={<MdVerticalAlignBottom size="14px" />}
-                     onClick={(e) => {
-                       e.stopPropagation();
-                       handlePositionBottom();
-                     }}
-                     title="Editor to Bottom (20%)"
-                     aria-label="Move editor to bottom"
-                   />
-                 </Flex>
-               </Box>
+              <Box
+                px="2"
+                py="1"
+                backgroundColor={titleBarBgColor}
+                onMouseDown={handleResizeStart}
+                css={{
+                  cursor: 'row-resize',
+                  userSelect: 'none',
+                }}
+                height="32px"
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+                borderBottom="1px solid"
+                borderTop="1px solid"
+                borderColor={titleBarBorderColorHex}
+              >
+                <Text fontSize="xl" fontWeight="bold" mx="2">
+                  Output
+                </Text>
+
+                {/* Positioning buttons - centered */}
+                <Flex gap={1} position="absolute" left="50%" transform="translateX(-50%)">
+                  <IconButton
+                    size="xs"
+                    variant="ghost"
+                    icon={<MdVerticalAlignTop size="14px" />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePositionTop();
+                    }}
+                    title="Editor to Top (80%)"
+                    aria-label="Move editor to top"
+                  />
+                  <IconButton
+                    size="xs"
+                    variant="ghost"
+                    icon={<MdVerticalAlignCenter size="14px" />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePositionMiddle();
+                    }}
+                    title="Editor to Middle (50%)"
+                    aria-label="Move editor to middle"
+                  />
+                  <IconButton
+                    size="xs"
+                    variant="ghost"
+                    icon={<MdVerticalAlignBottom size="14px" />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePositionBottom();
+                    }}
+                    title="Editor to Bottom (20%)"
+                    aria-label="Move editor to bottom"
+                  />
+                </Flex>
+              </Box>
 
 
               <Box w="100%" h="100%" display="flex">
@@ -1228,38 +1225,38 @@ function AppComponent(props: App): JSX.Element {
                   )}
                   {error?.traceback && error.traceback.map((line: string, idx: number) => <Ansi key={line + idx}>{line}</Ansi>)}
                   {renderedContent}
-                 </Box>
-               </Box>
-               {/* End of Flex container */}
-             </Box>
-           </Box>
-           
-           {/* Fixed bottom info bar */}
-           <Box
-             px={2}
-             py={1}
-             borderTop="1px solid"
-             borderColor={titleBarBorderColorHex}
-             backgroundColor={titleBarBgColor}
-             height="28px"
-             display="flex"
-             alignItems="center"
-             justifyContent="space-between"
-             fontSize="xs"
-             color="gray.600"
-             _dark={{ color: "gray.400" }}
-           >
-             <Text>
-               {selectedKernel ? `${selectedKernel.alias} (${selectedKernel.name})` : 'No kernel selected'}
-             </Text>
-             <Text>
-               {cursorPosition.r > 0 && cursorPosition.c > 0 ? `Ln ${cursorPosition.r}, Col ${cursorPosition.c}` : ''}
-             </Text>
-           </Box>
-         </Box>
-       </>
-     </AppWindow>
-   );
- }
+                </Box>
+              </Box>
+              {/* End of Flex container */}
+            </Box>
+          </Box>
+
+          {/* Fixed bottom info bar */}
+          <Box
+            px={2}
+            py={1}
+            borderTop="1px solid"
+            borderColor={titleBarBorderColorHex}
+            backgroundColor={titleBarBgColor}
+            height="28px"
+            display="flex"
+            alignItems="center"
+            justifyContent="space-between"
+            fontSize="xs"
+            color="gray.600"
+            _dark={{ color: "gray.400" }}
+          >
+            <Text>
+              {selectedKernel ? `${selectedKernel.alias} (${selectedKernel.name})` : 'No kernel selected'}
+            </Text>
+            <Text>
+              {cursorPosition.r > 0 && cursorPosition.c > 0 ? `Ln ${cursorPosition.r}, Col ${cursorPosition.c}` : ''}
+            </Text>
+          </Box>
+        </Box>
+      </>
+    </AppWindow>
+  );
+}
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
