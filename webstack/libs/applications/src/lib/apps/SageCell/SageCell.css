@@ -15,20 +15,90 @@
   * It is a modified version of the css file from SageCell.
   */
 
-.grab-bar {
-  flex: 1;
-  max-height: 5px;
-  margin: 1px 0;
-  padding: 4px;
-  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFAQMAAABo7865AAAABlBMVEVHcEzMzMzyAv2sAAAAAXRSTlMAQObYZgAAABBJREFUeF5jOAMEEAIEEFwAn3kMwcB6I2AAAAAASUVORK5CYII=)
-    teal no-repeat center !important;
-  cursor: row-resize;
+
+/* Toolbar styling */
+.sc .chakra-button-group {
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.sc .chakra-button-group .chakra-button {
+  border-radius: 0;
+  border-right-width: 1px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 12px;
+}
+
+.sc .chakra-button-group .chakra-button:first-child {
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
+}
+
+.sc .chakra-button-group .chakra-button:last-child {
+  border-top-right-radius: 6px;
+  border-bottom-right-radius: 6px;
+  border-right-width: 0;
+}
+
+/* Kernel selector styling */
+.sc .chakra-select {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Responsive button styling */
+.sc .chakra-button:not([aria-label]) {
+  min-width: auto;
+}
+
+.sc .chakra-button[aria-label] {
+  min-width: 32px;
+  padding: 6px 8px;
+}
+
+/* Narrow mode button styling */
+.sc .chakra-button-group.narrow-mode .chakra-button {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 40px !important;
+  width: 40px !important;
+  padding: 6px !important;
+}
+
+.sc .chakra-button-group.narrow-mode .chakra-button .chakra-icon {
+  margin: 0 !important;
+}
+
+.sc .chakra-button-group.narrow-mode .chakra-button .chakra-spinner {
+  margin: 0 !important;
+}
+
+/* Narrow mode ensures icons are centered */
+.sc .chakra-button-group.narrow-mode .chakra-button {
+  text-align: center;
 }
 
 .monaco-editor {
   font-family: 'Monaco', 'Courier New', Courier, monospace;
-  height: 100%;
-  width: 100%;
+  height: 100% !important;
+  width: 100% !important;
+  min-width: 100% !important;
+  max-width: 100% !important;
+}
+
+/* Ensure Monaco editor container fills flex space */
+.sc .monaco-editor-container {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sc .monaco-editor-container .monaco-editor {
+  flex: 1;
+  min-height: 0;
 }
 
 .monaco-editor .margin-view-overlays .current-line-margin {
@@ -841,6 +911,7 @@
 .monaco-shell .monaco-scrollable-element > .scrollbar > .slider.active {
   background: rgba(191, 191, 191, 0.4);
 }
+
 
 .monaco-shell [tabindex='0']:focus,
 .monaco-shell .synthetic-focus,

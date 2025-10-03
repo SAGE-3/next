@@ -109,6 +109,7 @@ async function PUT<T extends CollectionDocs>(
   url: string,
   body: Partial<T['data']> | { id: string; updates: Partial<T['data']> }[]
 ): Promise<PUTResponse<T>> {
+  console.log('PUT', url, body);
   try {
     const response = await fetch('/api' + url, {
       method: 'PUT',
