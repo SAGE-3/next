@@ -259,7 +259,7 @@ function AppComponent(props: App): JSX.Element {
       const focused = useUIStore.getState().focusedAppId === props._id;
       const maxHeight = props.data.size.height - 108;
 
-      setEditorHeight(Math.max(50, Math.min(newHeight, maxHeight)));
+      setEditorHeight(Math.max(0, Math.min(newHeight, maxHeight)));
     };
 
     const handleMouseUp = () => {
@@ -1102,7 +1102,7 @@ function AppComponent(props: App): JSX.Element {
           >
             {/* Editor area */}
             <Box h="100%" w="100%" display="flex" flexDirection="column">
-              <Box flex="1" minH="0" w="100%">
+              <Box flex="1"  w="100%">
                 <Editor
                   loading={<Spinner />}
                   options={canExecuteCode ? { ...monacoOptions } : { ...monacoOptions, readOnly: true }}
