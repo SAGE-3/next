@@ -40,16 +40,17 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
   if(type === 'circle'){
     if (!points || points.length === 0) return null;
     let pointArr = Array.from(points);
-    const x1 = pointArr[0][0];
-    const y1 = pointArr[0][1];
-    const x0 = pointArr[pointArr.length - 1][0];
-    const y0 = pointArr[pointArr.length - 1][1];
+    const x1 = points[0][0];
+    const y1 = points[0][1];
+    const x0 = points[1][0];
+    const y0 = points[1][1];
+    console.log(`LINE |points: ${points} length: ${points.length}`);
     const maxX = Math.max(x0, x1);
-          const minX = Math.min(x0, x1);
-          const maxY = Math.max(y0, y1);
-          const minY = Math.min(y0, y1);
-          const midpointX = (maxX + minX) / 2;
-          const midpointY = (maxY + minY) / 2;
+    const minX = Math.min(x0, x1);
+    const maxY = Math.max(y0, y1);
+    const minY = Math.min(y0, y1);
+    const midpointX = (maxX + minX) / 2;
+    const midpointY = (maxY + minY) / 2;
     return(
       <g>
         <ellipse

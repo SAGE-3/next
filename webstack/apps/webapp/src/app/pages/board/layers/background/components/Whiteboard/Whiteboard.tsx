@@ -229,6 +229,11 @@ export function Whiteboard(props: WhiteboardProps) {
       // Prepare a shared Yjs array for storing points
       const pts = new Y.Array<number>();
       pts.push([x0, y0]);
+      // Circle needs to have at least two points to correctly render
+      // Extra point gets deleted when the pointer moves
+      if (type === 'circle'){
+        pts.push([x0 + .000001, y0 + .000001]); 
+      }
       // Create a Yjs map for this shape
       const yShape = new Y.Map();
 
@@ -363,14 +368,12 @@ export function Whiteboard(props: WhiteboardProps) {
       }
       else if( type === 'circle'){
         if(pts.length < 4) {
-          console.log("points less than 4")
           const index = yLines?.toArray().indexOf(current) ?? -1;
           if (index >= 0 && yLines) {
             yLines.delete(index, 1);
           }
         }
         else{
-          console.log('enough points to make circle, making circle');
           const x0 = pts.get(0);
           const y0 = pts.get(1);
           const x1 = pts.get(2);
@@ -379,20 +382,20 @@ export function Whiteboard(props: WhiteboardProps) {
           const minX = Math.min(x0, x1);
           const maxY = Math.max(y0, y1);
           const minY = Math.min(y0, y1);
-          const midpointX = (maxX + minX) / 2;
-          const midpointY = (maxY + minY) / 2;
-          // const rx = (maxX - minX) / 2;
-          // const ry = (maxY - minY) / 2;
-          // const vert1x = midpointX + rx * Math.cos(Math.PI / 2);
-          // const vert1y = midpointY + ry * Math.sin(Math.PI / 2);
-          // const vert2x = midpointX + rx * Math.cos((3 * Math.PI) / 2);
-          // const vert2y = midpointY + ry * Math.sin((3 * Math.PI) / 2);
-          const a = Math.abs((maxX - minX)) / 2;
-          const b = Math.abs((maxY - minY)) / 2;
-          const vert1x = midpointX
-          const vert1y = midpointY + b
-          const vert2x = midpointX
-          const vert2y = midpointY - b
+          const cx = (maxX + minX) / 2;
+          const cy = (maxY + minY) / 2;
+          const rx = (maxX - minX) / 2;
+          const ry = (maxY - minY) / 2;
+          const vert1x = cx + rx * Math.cos(Math.PI / 2);
+          const vert1y = cy + ry * Math.sin(Math.PI / 2);
+          const vert2x = cx + rx * Math.cos((3 * Math.PI) / 2);
+          const vert2y = cy + ry * Math.sin((3 * Math.PI) / 2);
+          // const a = Math.abs((maxX - minX)) / 2;
+          // const b = Math.abs((maxY - minY)) / 2;
+          // const vert1x = cx
+          // const vert1y = cx + b
+          // const vert2x = cx
+          // const vert2y = cx - b
           const circlePoints = [
             x0,
             y0,
@@ -403,11 +406,10 @@ export function Whiteboard(props: WhiteboardProps) {
             vert2x,
             vert2y,
           ];
-          console.log(circlePoints);
           pts.delete(0, pts.length);
           for (let i = 0; i < circlePoints.length; i+=2){
             pts.push([circlePoints[i], circlePoints[i+1]]);
-            console.log(i);
+            console.log(`HANDLE POINTER UP | point ${i}: (${circlePoints[i]}, ${circlePoints[i+1]})`);
           }
           current.set('isComplete', true);
         }      
