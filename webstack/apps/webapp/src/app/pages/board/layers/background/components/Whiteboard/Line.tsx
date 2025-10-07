@@ -37,6 +37,40 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
     }
   };
 
+  if(type === 'circle'){
+    if (!points || points.length === 0) return null;
+    let pointArr = Array.from(points);
+    const x1 = pointArr[0][0];
+    const y1 = pointArr[0][1];
+    const x0 = pointArr[pointArr.length - 1][0];
+    const y0 = pointArr[pointArr.length - 1][1];
+    const maxX = Math.max(x0, x1);
+          const minX = Math.min(x0, x1);
+          const maxY = Math.max(y0, y1);
+          const minY = Math.min(y0, y1);
+          const midpointX = (maxX + minX) / 2;
+          const midpointY = (maxY + minY) / 2;
+    return(
+      <g>
+        <ellipse
+          cx={midpointX}
+          cy={midpointY}
+          rx={(maxX - minX) / 2}
+          ry={(maxY - minY) / 2}
+          fill="none"
+          stroke={hover ? hoverC : c}
+          strokeOpacity={alpha ?? 0.6}
+          strokeWidth={size ?? 5}
+          strokeLinejoin="miter"   // <-- sharp corners
+          strokeLinecap="butt"     // <-- flat line ends
+          shapeRendering="crispEdges"
+          onMouseEnter={() => setHover(true)}
+          onMouseLeave={() => setHover(false)}
+          onMouseDown={handleClick}
+        />
+      </g>
+    );
+  }
   // --- Render rectangles with crisp right angles ---------------------------
   if (type === 'rectangle') {
     if (!points || points.length === 0) return null;

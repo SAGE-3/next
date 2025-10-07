@@ -13,6 +13,15 @@
 // set the first corner, dragging to the opposite corner, and releasing to
 // finalise the shape.  Lines are drawn by pressing down and moving.
 
+/* 
+<--------------------------------------------------------------------------------------------TODO-------------------------------------------------------------------------------------------->
+When making rectangle, thickness of marker does not reflect the 'start' point
+Implement circle drawing tool
+Can't select and move lines/shapes
+<--------------------------------------------------------------------------------------------TODO-------------------------------------------------------------------------------------------->
+*/
+
+
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import * as Simplify from 'simplify-js';
 
@@ -34,6 +43,7 @@ import {
 
 import { Line } from './Line';
 import { useDragAndDropBoard } from '../DragAndDropBoard';
+import { circle } from 'leaflet';
 
 type WhiteboardProps = {
   boardId: string;
@@ -205,7 +215,7 @@ export function Whiteboard(props: WhiteboardProps) {
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
       // Determine type based on current tool
-      const type = primaryActionMode === 'rectangle' ? 'rectangle' : primaryActionMode === 'pen' ? 'line' : 'eraser';
+      const type = primaryActionMode === 'rectangle' ? 'rectangle' : primaryActionMode === 'pen' ? 'line' : primaryActionMode ==='circle' ? 'circle' : 'eraser';
       if (type === 'eraser') return;
       if (!yLines || !yDoc || !canAnnotate || !boardSynced) return;
       if (!e.isPrimary || e.button !== 0) return;
@@ -261,7 +271,8 @@ export function Whiteboard(props: WhiteboardProps) {
         // Append new point for freehand line
         pts.push([x, y]);
       } 
-      else if (type === 'rectangle') {
+      // use same logic to track circle and rectangle movements 
+      else if (type === 'rectangle' || type === 'circle') {
         // Replace the last end point (if exists) with the current coordinates
         // A rectangle stores two points: start and current drag end
         if (pts.length >= 4) {
@@ -349,6 +360,57 @@ export function Whiteboard(props: WhiteboardProps) {
           }
           current.set('isComplete', true);
         }
+      }
+      else if( type === 'circle'){
+        if(pts.length < 4) {
+          console.log("points less than 4")
+          const index = yLines?.toArray().indexOf(current) ?? -1;
+          if (index >= 0 && yLines) {
+            yLines.delete(index, 1);
+          }
+        }
+        else{
+          console.log('enough points to make circle, making circle');
+          const x0 = pts.get(0);
+          const y0 = pts.get(1);
+          const x1 = pts.get(2);
+          const y1 = pts.get(3);
+          const maxX = Math.max(x0, x1);
+          const minX = Math.min(x0, x1);
+          const maxY = Math.max(y0, y1);
+          const minY = Math.min(y0, y1);
+          const midpointX = (maxX + minX) / 2;
+          const midpointY = (maxY + minY) / 2;
+          // const rx = (maxX - minX) / 2;
+          // const ry = (maxY - minY) / 2;
+          // const vert1x = midpointX + rx * Math.cos(Math.PI / 2);
+          // const vert1y = midpointY + ry * Math.sin(Math.PI / 2);
+          // const vert2x = midpointX + rx * Math.cos((3 * Math.PI) / 2);
+          // const vert2y = midpointY + ry * Math.sin((3 * Math.PI) / 2);
+          const a = Math.abs((maxX - minX)) / 2;
+          const b = Math.abs((maxY - minY)) / 2;
+          const vert1x = midpointX
+          const vert1y = midpointY + b
+          const vert2x = midpointX
+          const vert2y = midpointY - b
+          const circlePoints = [
+            x0,
+            y0,
+            x1,
+            y1,
+            vert1x,
+            vert1y,
+            vert2x,
+            vert2y,
+          ];
+          console.log(circlePoints);
+          pts.delete(0, pts.length);
+          for (let i = 0; i < circlePoints.length; i+=2){
+            pts.push([circlePoints[i], circlePoints[i+1]]);
+            console.log(i);
+          }
+          current.set('isComplete', true);
+        }      
       }
       updateBoardLines();
       rCurrentLine.current = undefined;
