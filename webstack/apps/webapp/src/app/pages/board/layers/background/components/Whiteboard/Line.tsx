@@ -11,7 +11,7 @@ import { useColorModeValue } from '@chakra-ui/react';
 import { getStroke } from 'perfect-freehand';
 import * as Y from 'yjs';
 
-import { useHexColor, useUserSettings } from '@sage3/frontend';
+import { useHexColor, useUserSettings, useAbility, useUIStore } from '@sage3/frontend';
 
 export interface LineProps {
   line: Y.Map<any>;
@@ -32,9 +32,14 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
 
   const handleClick = (ev: any) => {
     // Left-click while in eraser mode deletes this line/shape
+    console.log(`LINE |click: primaryActionMode=${primaryActionMode}`);
     if (ev.button === 0 && primaryActionMode === 'eraser') {
       onClick(id);
     }
+    // else if (ev.button === 0 && primaryActionMode === 'lasso') {
+    //   onClick(id);
+    //   console.log(`LINE |click: grabbed`);
+    // }
   };
 
   if(type === 'circle'){
@@ -44,7 +49,6 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
     const y1 = points[0][1];
     const x0 = points[1][0];
     const y0 = points[1][1];
-    console.log(`LINE |points: ${points} length: ${points.length}`);
     const maxX = Math.max(x0, x1);
     const minX = Math.min(x0, x1);
     const maxY = Math.max(y0, y1);

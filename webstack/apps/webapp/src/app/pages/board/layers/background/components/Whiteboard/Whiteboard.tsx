@@ -409,7 +409,6 @@ export function Whiteboard(props: WhiteboardProps) {
           pts.delete(0, pts.length);
           for (let i = 0; i < circlePoints.length; i+=2){
             pts.push([circlePoints[i], circlePoints[i+1]]);
-            console.log(`HANDLE POINTER UP | point ${i}: (${circlePoints[i]}, ${circlePoints[i+1]})`);
           }
           current.set('isComplete', true);
         }      
