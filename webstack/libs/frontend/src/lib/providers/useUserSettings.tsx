@@ -33,7 +33,7 @@ type UserSettings = {
   showUI: boolean;
   showTags: boolean;
   selectedBoardListView: 'grid' | 'list';
-  primaryActionMode: 'lasso' | 'grab' | 'pen' | 'eraser' | 'linker' | 'shape' | 'circle' | 'rectangle';
+  primaryActionMode: 'lasso' | 'grab' | 'pen' | 'eraser' | 'linker' | 'shape' | 'circle' | 'rectangle' | 'arrow';
   aiModel: 'llama' | 'openai' | 'azure';
   uiScale: 'xs' | 's' | 'md' | 'lg' | 'xl';
 };

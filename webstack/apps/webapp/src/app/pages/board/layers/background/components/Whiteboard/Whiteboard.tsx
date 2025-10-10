@@ -215,7 +215,7 @@ export function Whiteboard(props: WhiteboardProps) {
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
       // Determine type based on current tool
-      const type = primaryActionMode === 'rectangle' ? 'rectangle' : primaryActionMode === 'pen' ? 'line' : primaryActionMode ==='circle' ? 'circle' : 'eraser';
+      const type = primaryActionMode === 'rectangle' ? 'rectangle' : primaryActionMode === 'pen' ? 'line' : primaryActionMode ==='circle' ? 'circle' : primaryActionMode === 'arrow' ? 'arrow' : 'eraser';
       if (type === 'eraser') return;
       if (!yLines || !yDoc || !canAnnotate || !boardSynced) return;
       if (!e.isPrimary || e.button !== 0) return;
@@ -277,7 +277,7 @@ export function Whiteboard(props: WhiteboardProps) {
         pts.push([x, y]);
       } 
       // use same logic to track circle and rectangle movements 
-      else if (type === 'rectangle' || type === 'circle') {
+      else if (type === 'rectangle' || type === 'circle' || type === 'arrow') {
         // Replace the last end point (if exists) with the current coordinates
         // A rectangle stores two points: start and current drag end
         if (pts.length >= 4) {
@@ -411,8 +411,29 @@ export function Whiteboard(props: WhiteboardProps) {
             pts.push([circlePoints[i], circlePoints[i+1]]);
           }
           current.set('isComplete', true);
-        }      
+        }
       }
+      else if(type === 'arrow'){
+          if(pts.length < 4){
+            const index = yLines?.toArray().indexOf(current) ?? -1;
+            if (index >= 0 && yLines) {
+              yLines.delete(index, 1);
+            } 
+          }
+          else{
+            const x0 = pts.get(0);
+            const y0 = pts.get(1);
+            const x1 = pts.get(2);
+            const y1 = pts.get(3);
+            const points = [x0, y0, x1, y1];
+            pts.delete(0, pts.length);
+            for (let i = 0; i < points.length; i+=2){
+              pts.push([points[i], points[i+1]]);
+            }
+            current.set('isComplete', true);
+            console.log('completed arrow')
+          }  
+        }
       updateBoardLines();
       rCurrentLine.current = undefined;
     },
@@ -504,10 +525,10 @@ export function Whiteboard(props: WhiteboardProps) {
     <div
       className="canvas-container"
       style={{
-        pointerEvents: ['pen', 'eraser', 'rectangle', 'circle'].includes(primaryActionMode)
+        pointerEvents: ['pen', 'eraser', 'rectangle', 'circle', 'arrow'].includes(primaryActionMode)
           ? 'auto'
           : 'none',
-        touchAction: ['pen', 'eraser', 'rectangle', 'circle'].includes(primaryActionMode)
+        touchAction: ['pen', 'eraser', 'rectangle', 'circle', 'arrow'].includes(primaryActionMode)
           ? 'none'
           : 'auto',
       }}

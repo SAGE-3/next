@@ -113,7 +113,7 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
     );
   }
 
-  // --- Render freehand lines with LESS rounding ----------------------------
+    // --- Render freehand lines with LESS rounding ----------------------------
   // Use perfect-freehand to build the stroke outline, but:
   //  - Lower smoothing and streamline to reduce roundness
   //  - Build a polygonal path (M/L + Z) instead of quadratic curves
@@ -126,6 +126,52 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
   });
 
   const pathData = getSvgPathFromStrokePolygon(strokeOutline);
+
+  if (type === 'arrow') {
+    if (!points || points.length === 0) return null;
+
+    // Compute bounding box from whatever points we have (robust to closed poly or 2-point form)
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const [x, y] of points) {
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+      if (x > maxX) maxX = x;
+      if (y > maxY) maxY = y;
+    }
+    const width = Math.max(0, maxX - minX);
+    const height = Math.max(0, maxY - minY);
+
+    return (
+       <g>
+          <defs>
+            <marker 
+            id='head' 
+            orient="auto" 
+            markerWidth='3' 
+            markerHeight='4' 
+            refX='9'
+            refY='5'
+            >
+              <path
+                d="M0 0 L10 5 L0 10 Z"
+                fill={hover ? hoverC : c}
+                fillOpacity={alpha}/>
+            </marker>
+          </defs>
+
+          <path
+          className="canvas-line"
+          d={pathData}
+          fill={hover ? hoverC : c}
+          fillOpacity={alpha}
+          markerEnd="url(#head)"
+          onMouseEnter={() => setHover(true)}
+          onMouseLeave={() => setHover(false)}
+          onMouseDown={handleClick}
+          />
+      </g>
+    );
+  }
 
   return (
     <g>

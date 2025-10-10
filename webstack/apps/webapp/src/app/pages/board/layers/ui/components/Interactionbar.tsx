@@ -38,7 +38,7 @@ import { IoShapesOutline  } from "react-icons/io5";
 import { BiPencil } from 'react-icons/bi';
 import { MdGraphicEq, MdOutlineRectangle  } from 'react-icons/md';
 import { BsEraserFill } from 'react-icons/bs';
-import { FaUndo, FaEraser, FaTrash, FaLink, FaRegCircle  } from 'react-icons/fa';
+import { FaUndo, FaEraser, FaTrash, FaLink, FaRegCircle, FaArrowRight  } from 'react-icons/fa';
 
 import { LiaMousePointerSolid, LiaHandPaperSolid } from 'react-icons/lia';
 
@@ -95,14 +95,14 @@ export function Interactionbar(props: {
 
   // Color Change
   const handleColorChange = (color: SAGEColors) => {
-    if (primaryActionMode !== 'pen' && primaryActionMode !== 'eraser' && primaryActionMode !== 'rectangle' && primaryActionMode !== 'circle') {
+    if (primaryActionMode !== 'pen' && primaryActionMode !== 'eraser' && primaryActionMode !== 'rectangle' && primaryActionMode !== 'circle' && primaryActionMode !== 'arrow') {
       setPrimaryActionMode(primaryActionMode);
     }
     setMarkerColor(color);
   };
 
   // Handle mode switching
-  const handleModeChange = (mode: 'pen' | 'eraser' | 'rectangle' | 'circle') => {
+  const handleModeChange = (mode: 'pen' | 'eraser' | 'rectangle' | 'circle' | 'arrow') => {
     setPrimaryActionMode(mode);
   };
 
@@ -130,7 +130,7 @@ export function Interactionbar(props: {
     if (isContextMenuOpen) {
       annotationsOnClose();
     } else {
-      if (primaryActionMode === 'pen' || primaryActionMode === 'eraser' || primaryActionMode === 'rectangle' || primaryActionMode === 'circle') {
+      if (primaryActionMode === 'pen' || primaryActionMode === 'eraser' || primaryActionMode === 'rectangle' || primaryActionMode === 'circle' || primaryActionMode === 'arrow') {
         annotationsOnOpen();
       } else {
         annotationsOnClose();
@@ -185,16 +185,16 @@ export function Interactionbar(props: {
           ></IconButton>
         </Tooltip>
 
-        <Popover isOpen={annotationsIsOpen && (primaryActionMode === 'pen' || primaryActionMode === 'eraser' || primaryActionMode === 'rectangle') || primaryActionMode ==='circle'}>
+        <Popover isOpen={annotationsIsOpen && (primaryActionMode === 'pen' || primaryActionMode === 'eraser' || primaryActionMode === 'rectangle'|| primaryActionMode ==='circle' || primaryActionMode === 'arrow') }>
           <Tooltip label={'Annotations — [3]'} placement={tooltipPlacement} hasArrow={true} openDelay={400} shouldWrapChildren={true}>
             <PopoverTrigger>
               <IconButton
                 borderRadius={0}
                 size="sm"
-                colorScheme={(primaryActionMode === 'pen' || primaryActionMode === 'eraser' || primaryActionMode === 'rectangle' || primaryActionMode === 'circle') ? user?.data.color || 'teal' : 'gray'}
+                colorScheme={(primaryActionMode === 'pen' || primaryActionMode === 'eraser' || primaryActionMode === 'rectangle' || primaryActionMode === 'circle' || primaryActionMode === 'arrow') ? user?.data.color || 'teal' : 'gray'}
                 sx={{
                   _dark: {
-                    bg: (primaryActionMode === 'pen' || primaryActionMode === 'eraser' || primaryActionMode === 'rectangle' || primaryActionMode === 'circle') ? `${user?.data.color}.200` : 'gray.600',
+                    bg: (primaryActionMode === 'pen' || primaryActionMode === 'eraser' || primaryActionMode === 'rectangle' || primaryActionMode === 'circle' || primaryActionMode === 'arrow') ? `${user?.data.color}.200` : 'gray.600',
                   },
                 }}
                 icon={<BiPencil />}
@@ -251,6 +251,16 @@ export function Interactionbar(props: {
                         px="3"
                       >
                         <FaRegCircle fontSize="16px"/>
+                      </Button>
+                    </Tooltip>
+                    <Tooltip placement="top" hasArrow label="Arrow">
+                      <Button
+                        colorScheme={primaryActionMode === 'arrow' ? user?.data.color || 'teal' : 'gray'}
+                        variant={primaryActionMode === 'arrow' ? 'solid' : 'outline'}
+                        onClick={() => handleModeChange('arrow')}
+                        px="3"
+                      >
+                        <FaArrowRight fontSize="16px"/>
                       </Button>
                     </Tooltip>
                     <Tooltip placement="top" hasArrow label="Eraser">
