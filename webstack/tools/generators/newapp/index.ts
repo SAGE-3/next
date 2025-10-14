@@ -220,7 +220,8 @@ export default async function (host: Tree, schema: Schema) {
   }
 
   // Pretty please
-  await formatFiles(host);
+  // Note: formatFiles disabled due to dynamic import issues with Prettier in newer Node.js versions
+  // await formatFiles(host);
 
   // All done
   return () => {
