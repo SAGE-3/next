@@ -24,10 +24,6 @@ import { BoxToBoxArrow } from './DrawArrows';
 export function LinksArrows(props: { links: Link[] }) {
   // Links to draw
   const links = props.links;
-
-  const { settings } = useUserSettings();
-  const interactionMode = settings?.primaryActionMode === 'linker';
-
   // Apps Store
   const apps = useThrottleApps(200);
 
@@ -37,7 +33,7 @@ export function LinksArrows(props: { links: Link[] }) {
 
   const scale = useUIStore((state) => state.scale);
   // Default Theme
-  const strokeColor = useColorModeValue('gray.500', 'gray.500');
+  const strokeColor = useColorModeValue('gray.700', 'gray.200');
 
   // Linker Interaction Mode
   const removeLink = useLinkStore((state) => state.removeLinks);
@@ -45,6 +41,7 @@ export function LinksArrows(props: { links: Link[] }) {
   function handleDeleteLink(linkId: string) {
     removeLink(linkId);
   }
+
 
   return (
     <div className="arrows-container" style={{ pointerEvents: 'none', touchAction: 'auto' }}>
@@ -61,7 +58,7 @@ export function LinksArrows(props: { links: Link[] }) {
         }}
       >
         {/* All arrows */}
-        {links.map((link) => {
+        {links.map((link, linkIndex) => {
           const { data } = link;
           const { sourceAppId, targetAppId } = data;
           const sourceApp = apps.find((a) => a._id === sourceAppId);
@@ -69,7 +66,53 @@ export function LinksArrows(props: { links: Link[] }) {
           const strokeType = data.type === 'run_order' ? 'solid' : 'dashed';
 
           if (!sourceApp || !targetApp) return null;
-          const isAnimated = link.data.type === 'run_order';
+          
+          // Calculate offset for overlapping arrows
+          const similarLinks = links.filter((otherLink, otherIndex) => {
+            if (otherIndex >= linkIndex) return false; // Only count previous links
+            const { sourceAppId: otherSource, targetAppId: otherTarget } = otherLink.data;
+            const otherSourceApp = apps.find((a) => a._id === otherSource);
+            const otherTargetApp = apps.find((a) => a._id === otherTarget);
+            
+            if (!otherSourceApp || !otherTargetApp) return false;
+            
+            // Check for exact same connection or reverse connection
+            const exactMatch = (sourceAppId === otherSource && targetAppId === otherTarget) ||
+                              (sourceAppId === otherTarget && targetAppId === otherSource);
+            
+            if (exactMatch) return true;
+            
+            // Check for nearby apps that would create visually overlapping arrows
+            const distance = (a1: any, a2: any) => 
+              Math.sqrt(Math.pow(a1.data.position.x - a2.data.position.x, 2) + 
+                       Math.pow(a1.data.position.y - a2.data.position.y, 2));
+            
+            const sourceDistance = distance(sourceApp, otherSourceApp);
+            const targetDistance = distance(targetApp, otherTargetApp);
+            const crossDistance1 = distance(sourceApp, otherTargetApp);
+            const crossDistance2 = distance(targetApp, otherSourceApp);
+            
+            const threshold = 200; // Apps within 200 pixels are considered "close" (increased sensitivity)
+            
+            // Check if arrows would visually overlap due to proximity
+            return (sourceDistance < threshold && targetDistance < threshold) ||
+                   (crossDistance1 < threshold && crossDistance2 < threshold);
+          });
+          
+          const offsetMultiplier = similarLinks.length;
+          const maxOffset = 0.8; // Maximum bow offset (increased)
+          const baseOffset = 0.25; // Base offset for each additional arrow (doubled)
+          const offset = Math.min(offsetMultiplier * baseOffset, maxOffset);
+          
+          // Create more dramatic separation with improved alternating pattern
+          // First arrow gets no offset, then alternate with increasing magnitude
+          let alternatingOffset = 0;
+          if (offsetMultiplier > 0) {
+            const magnitude = (Math.floor(offsetMultiplier / 2) + 1) * baseOffset;
+            const cappedMagnitude = Math.min(magnitude, maxOffset);
+            alternatingOffset = offsetMultiplier % 2 === 1 ? cappedMagnitude : -cappedMagnitude;
+          }
+          
           const sBox = {
             position: sourceApp.data.position,
             size: sourceApp.data.size,
@@ -79,8 +122,8 @@ export function LinksArrows(props: { links: Link[] }) {
             size: targetApp.data.size,
           };
           const arrowColor = link.data.color ? link.data.color : ('teal' as SAGEColors);
-          const interactionFunction = interactionMode ? () => handleDeleteLink(link._id) : undefined;
-          const arrow = BoxToBoxArrow(sBox, tBox, link._id, strokeColor, strokeType, arrowColor, scale, interactionFunction);
+          const interactionFunction = () => handleDeleteLink(link._id);
+          const arrow = BoxToBoxArrow(sBox, tBox, link._id, strokeColor, strokeType, arrowColor, scale, interactionFunction, alternatingOffset);
           return arrow;
         })}
       </svg>

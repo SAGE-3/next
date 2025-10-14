@@ -590,7 +590,7 @@ const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
         </Tooltip>
 
         <Tooltip placement="top" hasArrow={true} label={'Unlock Stickies'} openDelay={400}>
-                <Button onClick={() => handleUnlock()} size="xs" px={0}>
+          <Button onClick={() => handleUnlock()} size="xs" px={0}>
             <MdLockOpen size="16px" />
           </Button>
         </Tooltip>

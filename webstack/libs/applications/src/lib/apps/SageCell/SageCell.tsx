@@ -18,22 +18,22 @@ import {
   AccordionPanel,
   Alert,
   Box,
-  ButtonGroup,
+  Button,
   Code,
   Flex,
   Icon,
   IconButton,
   Image,
+  Select,
   Spacer,
   Spinner,
-  Tooltip,
   Text,
   useColorModeValue,
   useToast,
 } from '@chakra-ui/react';
 
 // Icons
-import { MdError, MdDelete, MdPlayArrow, MdStop } from 'react-icons/md';
+import { MdError, MdDelete, MdPlayArrow, MdStop, MdVerticalAlignTop, MdVerticalAlignCenter, MdVerticalAlignBottom } from 'react-icons/md';
 import { VscRunAbove, VscRunAll, VscRunBelow } from 'react-icons/vsc';
 import { FaPython } from 'react-icons/fa';
 
@@ -81,11 +81,11 @@ import { App } from '../../schema';
 import { useStore } from './components/store';
 import { AppWindow } from '../../components';
 import { state as AppState } from './index';
-import { ToolbarComponent, GroupedToolbarComponent, PdfViewer, Markdown, StatusBar } from './components';
+import { ToolbarComponent, GroupedToolbarComponent, PdfViewer, Markdown } from './components';
+import { getRunOrderChain } from '../../appLinks';
 
 // Styling
 import './SageCell.css';
-import { getRunOrderChain } from '../../appLinks';
 
 /**
  * SageCell - SAGE3 application
@@ -117,7 +117,6 @@ function AppComponent(props: App): JSX.Element {
   const setExecuteAll = useStore((state) => state.setExecuteAll);
   const setInterrupt = useStore((state) => state.setInterrupt);
   const setKernel = useStore((state) => state.setKernel);
-  // const { isOpen, onOpen, onClose } = useDisclosure();
 
   // Styling
   const defaultTheme = useColorModeValue('vs', 'vs-dark');
@@ -132,10 +131,6 @@ function AppComponent(props: App): JSX.Element {
   // Room and Board info
   const roomId = props.data.roomId;
   const boardId = props.data.boardId;
-  // const setBoardPosition = useUIStore((state) => state.setBoardPosition);
-  // const boardPosition = useUIStore((state) => state.boardPosition);
-  // const scale = useThrottleScale(250);
-  // const { getBoardCursor } = useCursorBoardPosition();
 
   // Local state
   const [cursorPosition, setCursorPosition] = useState({ r: 0, c: 0 });
@@ -154,11 +149,16 @@ function AppComponent(props: App): JSX.Element {
   // Local state
   const [access, setAccess] = useState(true);
   const [selectedKernelName, setSelectedKernelName] = useState<string>('');
+  const [isNarrow, setIsNarrow] = useState(false);
 
   // Styles
-  const [editorHeight, setEditorHeight] = useState(350);
-  const bgColor = useColorModeValue('#E8E8E8', '#1A1A1A'); // gray.100  gray.800
+  const [editorHeight, setEditorHeight] = useState(200);
+  const bgColor = useColorModeValue('white', '#1e1e1e'); // gray.100  gray.800
   const executionCountColor = useHexColor('red');
+  const titleBarBgColor = useColorModeValue('gray.100', 'gray.800');
+  const titleBarBgColorHex = useHexColor(titleBarBgColor);
+  const titleBarBorderColor = useColorModeValue('gray.300', 'gray.700');
+  const titleBarBorderColorHex = useHexColor(titleBarBorderColor);
 
   // Kernel Store
   const apiStatus = useKernelStore((state) => state.apiStatus);
@@ -166,6 +166,38 @@ function AppComponent(props: App): JSX.Element {
   const executeCode = useKernelStore((state) => state.executeCode);
   const fetchResults = useKernelStore((state) => state.fetchResults);
   const interruptKernel = useKernelStore((state) => state.interruptKernel);
+
+  // Kernel selection logic
+  const hasKernelAccess = (kernel: KernelInfo): boolean => {
+    return !kernel.is_private || (kernel.is_private && kernel.owner === user?._id);
+  };
+
+  const filterMyKernels = (kernels: KernelInfo[]) => {
+    return kernels.filter((kernel) => kernel.board === props.data.boardId && hasKernelAccess(kernel));
+  };
+
+  const myKernels = filterMyKernels(kernels);
+  const selectedKernel = myKernels.find((kernel) => kernel.kernel_id === s.kernel);
+
+  const selectKernel = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newKernelValue = e.target.value;
+    updateState(props._id, { kernel: newKernelValue });
+  };
+
+  // Responsive behavior for narrow windows
+  useEffect(() => {
+    const checkWidth = () => {
+      const focused = useUIStore.getState().focusedAppId === props._id;
+      const currentWidth = focused ? window.innerWidth : props.data.size.width;
+      setIsNarrow(currentWidth < 850);
+    };
+
+    checkWidth();
+    window.addEventListener('resize', checkWidth);
+
+    return () => window.removeEventListener('resize', checkWidth);
+  }, [props.data.size.width]);
+
 
   // Memos and errors
   const renderedContent = useMemo(() => processedContent(content || []), [content]);
@@ -213,49 +245,61 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [apiStatus]);
 
-  // handle mouse move event
-  const handleMouseMove = (e: MouseEvent) => {
-    const deltaY = e.movementY;
-    handleEditorResize(deltaY);
-  };
+  // Simplified resize handler
+  const handleResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault();
 
-  // handle mouse up event
-  const handleMouseUp = () => {
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', handleMouseUp);
-  };
+    const startY = e.clientY;
+    const startHeight = editorHeight;
+    const scale = useUIStore.getState().scale;
 
-  const handleEditorResize = (deltaY: number) => {
-    setEditorHeight((prevHeight) => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaY = (e.clientY / scale) - (startY / scale);
+      const newHeight = startHeight + deltaY;
       const focused = useUIStore.getState().focusedAppId === props._id;
-      const maxHeight = focused ? window.innerHeight * 0.8 : props.data.size.height * 0.8;
-      let newHeight = prevHeight + deltaY;
-      // set the minimum height of the editor
-      if (newHeight < 280) newHeight = 280;
-      // set the maximum height of the editor to 80% of the window height
-      if (newHeight > maxHeight) newHeight = maxHeight;
-      return newHeight;
-    }); // update the Monaco editor height
+      const maxHeight = props.data.size.height - 108;
+
+      setEditorHeight(Math.max(0, Math.min(newHeight, maxHeight)));
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
   };
 
-  useEffect(() => {
-    handleEditorResize(0);
-  }, [props.data.size.height]);
+  // Quick positioning functions
+  const handlePositionTop = () => {
+    setEditorHeight(0);
+  };
 
-  /**
-   * Resizes the editor when the window is resized
-   * or when the editorHeight changes.
-   */
+  const handlePositionMiddle = () => {
+    setEditorHeight(props.data.size.height / 2);
+  };
+
+  const handlePositionBottom = () => {
+    setEditorHeight(props.data.size.height - 108);
+  };
+
+
+
+  // Monaco editor layout - handle both width and height
   useEffect(() => {
     if (!editorRef.current) return;
-    const focused = useUIStore.getState().focusedAppId === props._id;
-    editorRef.current.layout({
-      width: focused ? window.innerWidth - 60 : props.data.size.width - 60,
-      height: editorHeight && editorHeight > 150 ? editorHeight : 150,
-      minHeight: '100%',
-      minWidth: '100%',
-    } as editor.IDimension);
+    const width = props.data.size.width;
+    editorRef.current.layout({ width, height: editorHeight });
   }, [props.data.size.width, editorHeight]);
+
+  // Adjust editor height when app size changes to prevent grab bar from disappearing
+  useEffect(() => {
+    const maxHeight = props.data.size.height - 108; // Account for toolbar and bottom bar
+    if (editorHeight > maxHeight) {
+      setEditorHeight(Math.max(0, maxHeight));
+    }
+  }, [props.data.size.height, editorHeight]);
 
   // Debounce Updates
   const throttleUpdate = throttle(1000, () => {
@@ -770,7 +814,6 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     if (!editorRef.current) return;
     editorRef.current.updateOptions({ fontSize });
-    // if (editorRef2.current) editorRef2.current.updateOptions({ fontSize });
     updateState(props._id, { fontSize });
   }, [fontSize]);
 
@@ -784,12 +827,7 @@ function AppComponent(props: App): JSX.Element {
   const handleFontDecrease = () => {
     setFontSize((prev) => Math.max(8, prev - 2));
   };
-  // const handleSaveCode = () => {
-  //   if (editorRef2.current) {
-  //     // Copy the drawer code to the editor in the board
-  //     editorRef.current?.setValue(editorRef2.current.getValue());
-  //   }
-  // };
+
 
   /**
    *
@@ -825,10 +863,10 @@ function AppComponent(props: App): JSX.Element {
 
     // Set the editor layout
     const isFocused = useUIStore.getState().focusedAppId === props._id;
-    const editorWidth = isFocused ? window.innerWidth - 60 : props.data.size.width - 60;
+    const editorWidth = props.data.size.width;
     editor.layout({
       width: editorWidth,
-      height: editorHeight && editorHeight > 150 ? editorHeight : 150,
+      height: editorHeight,
       minHeight: '100%',
       minWidth: '100%',
     } as editor.IDimension);
@@ -951,130 +989,221 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props} hideBackgroundIcon={FaPython}>
       <>
-        <Box className="sc" h={'calc(100% - 1px)'} w={'100%'} display="flex" flexDirection="column" backgroundColor={bgColor}>
-          <StatusBar kernelName={selectedKernelName} kernelLanguage={s.language} access={access} online={apiStatus} rank={props.data.state.rank} />
+        <Box className="sc" h="100%" w={'100%'} display="flex" flexDirection="column" backgroundColor={bgColor}>
+
+          {/* Toolbar at the top */}
+          <Box p={2} borderBottom="1px solid" backgroundColor={titleBarBgColor} borderColor={titleBarBorderColor} >
+            <Flex gap={2} align="center">
+              {/* Editor label */}
+              <Text fontSize="xl" fontWeight="bold" mx="2">
+                SAGECell
+              </Text>
+
+              {/* Execution Buttons */}
+
+              <Button
+                onClick={handleExecute}
+                leftIcon={!isNarrow ? (s.msgId ? <Spinner size="sm" /> : <MdPlayArrow size="16px" />) : undefined}
+                isDisabled={!s.kernel || !canExecuteCode}
+                size="xs"
+                variant="ghost"
+                title="Run"
+              >
+                {isNarrow ? (s.msgId ? <Spinner size="sm" /> : <MdPlayArrow size="16px" />) : 'Run'}
+              </Button>
+              <Button
+                onClick={() => handleExecuteChain('all')}
+                leftIcon={!isNarrow ? (s.msgId ? <Spinner size="sm" /> : <VscRunAll size="16px" />) : undefined}
+                isDisabled={!s.kernel || !canExecuteCode}
+                size="xs"
+                variant="ghost"
+                title="Run All"
+              >
+                {isNarrow ? (s.msgId ? <Spinner size="sm" /> : <VscRunAll size="16px" />) : 'All'}
+              </Button>
+              <Button
+                onClick={() => handleExecuteChain('up')}
+                leftIcon={!isNarrow ? (s.msgId ? <Spinner size="sm" /> : <VscRunAbove size="16px" />) : undefined}
+                isDisabled={!s.kernel || !canExecuteCode}
+                size="xs"
+                variant="ghost"
+                title="Run To Here"
+              >
+                {isNarrow ? (s.msgId ? <Spinner size="sm" /> : <VscRunAbove size="16px" />) : 'To Here'}
+              </Button>
+              <Button
+                onClick={() => handleExecuteChain('down')}
+                leftIcon={!isNarrow ? (s.msgId ? <Spinner size="sm" /> : <VscRunBelow size="16px" />) : undefined}
+                isDisabled={!s.kernel || !canExecuteCode}
+                size="xs"
+                variant="ghost"
+                title="From Here"
+              >
+                {isNarrow ? (s.msgId ? <Spinner size="sm" /> : <VscRunBelow size="16px" />) : 'From Here'}
+              </Button>
+              <Button
+                onClick={handleInterrupt}
+                leftIcon={!isNarrow ? <MdStop size="16px" /> : undefined}
+                isDisabled={!s.msgId || !canExecuteCode}
+                size="xs"
+                variant="ghost"
+                title="Stop"
+              >
+                {isNarrow ? <MdStop size="16px" /> : 'Stop'}
+              </Button>
+              <Button
+                onClick={handleClear}
+                leftIcon={!isNarrow ? <MdDelete size="16px" /> : undefined}
+                isDisabled={!s.kernel}
+                size="xs"
+                variant="ghost"
+                title="Clear"
+              >
+                {isNarrow ? <MdDelete size="16px" /> : 'Clear'}
+              </Button>
+
+              {/* Kernel Selector */}
+              <Box minW={isNarrow ? "100px" : "180px"}>
+                {myKernels.length === 0 ? (
+                  <Button size="sm" colorScheme="teal" variant="outline" isDisabled>
+                    {!isNarrow && 'No Kernels'}
+                  </Button>
+                ) : (
+                  <Select
+                    placeholder={isNarrow ? "Kernel" : "Select Kernel"}
+                    size="md"
+                    value={selectedKernel?.kernel_id || ''}
+                    onChange={selectKernel}
+                    backgroundColor={bgColor}
+                    height="33px"
+
+                  >
+                    {myKernels.map((kernel) => (
+                      <option key={kernel.kernel_id} value={kernel.kernel_id}>
+                        {isNarrow ? kernel.alias : `${kernel.alias} (${kernel.name})`}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              </Box>
+
+            </Flex>
+          </Box>
+
           <Box
             w={'100%'}
             h={'100%'}
-            display="flex"
-            flex="1"
-            flexDirection="column"
+            display="grid"
+            gridTemplateRows={`${editorHeight}px 5px 1fr`}
             whiteSpace={'pre-wrap'}
             overflowWrap="break-word"
-            overflowY="auto"
             onDrop={OnDrop}
             onDragOver={OnDragOver}
           >
-            <Flex direction={'row'}>
-              {/* The editor status info (bottom) */}
-              <Flex direction={'column'} w="100%">
+            {/* Editor area */}
+            <Box h="100%" w="100%" display="flex" flexDirection="column">
+              <Box flex="1"  w="100%">
                 <Editor
                   loading={<Spinner />}
                   options={canExecuteCode ? { ...monacoOptions } : { ...monacoOptions, readOnly: true }}
                   onMount={handleMount}
-                  height={editorHeight && editorHeight > 150 ? editorHeight : 150}
+                  height="100%"
+                  width="100%"
                   theme={defaultTheme}
                   language={s.language}
                 />
-                <Flex px={1} h={'24px'} fontSize={'16px'} color={userColor} justifyContent={'left'}>
-                  {cursorPosition.r > 0 && cursorPosition.c > 0 ? `Ln: ${cursorPosition.r} Col: ${cursorPosition.c}` : null}
-                  <Spacer />
-                </Flex>
-              </Flex>
-              {/* The editor action panel (right side) */}
-              <Box p={1}>
-                <ButtonGroup isAttached variant="outline" size="lg" orientation="vertical">
-                  <Tooltip hasArrow label="Run" placement="right-start">
-                    <IconButton
-                      onClick={handleExecute}
-                      aria-label={''}
-                      icon={s.msgId ? <Spinner size="sm" color="teal.500" /> : <MdPlayArrow size={'1.5em'} color="#008080" />}
-                      isDisabled={!s.kernel || !canExecuteCode}
-                    />
-                  </Tooltip>
-                  <Tooltip hasArrow label="Run All" placement="right-start">
-                    <IconButton
-                      onClick={() => handleExecuteChain('all')}
-                      aria-label={''}
-                      icon={s.msgId ? <Spinner size="sm" color="teal.500" /> : <VscRunAll size={'1em'} color="#008080" />}
-                      isDisabled={!s.kernel || !canExecuteCode}
-                    />
-                  </Tooltip>
-                  <Tooltip hasArrow label="Run To Here" placement="right-start">
-                    <IconButton
-                      onClick={() => handleExecuteChain('up')}
-                      aria-label={''}
-                      icon={s.msgId ? <Spinner size="sm" color="teal.500" /> : <VscRunAbove size={'1em'} color="#008080" />}
-                      isDisabled={!s.kernel || !canExecuteCode}
-                    />
-                  </Tooltip>
-                  <Tooltip hasArrow label="Run From Here" placement="right-start">
-                    <IconButton
-                      onClick={() => handleExecuteChain('down')}
-                      aria-label={''}
-                      icon={s.msgId ? <Spinner size="sm" color="teal.500" /> : <VscRunBelow size={'1em'} color="#008080" />}
-                      isDisabled={!s.kernel || !canExecuteCode}
-                    />
-                  </Tooltip>
-                  <Tooltip hasArrow label="Stop" placement="right-start">
-                    <IconButton
-                      onClick={handleInterrupt}
-                      aria-label={''}
-                      isDisabled={!s.msgId || !canExecuteCode}
-                      icon={<MdStop size={'1.5em'} color="#008080" />}
-                    />
-                  </Tooltip>
-                  <Tooltip hasArrow label="Clear Cell" placement="right-start">
-                    <IconButton
-                      onClick={handleClear}
-                      aria-label={''}
-                      isDisabled={!s.kernel}
-                      icon={<MdDelete size={'1.5em'} color="#008080" />}
-                    />
-                  </Tooltip>
-                </ButtonGroup>
               </Box>
-            </Flex>
-            {/* The grab bar */}
-            <Box
-              className="grab-bar"
-              onMouseDown={(e) => {
-                e.preventDefault();
-                document.addEventListener('mousemove', handleMouseMove);
-                document.addEventListener('mouseup', handleMouseUp);
-              }}
-            />
+              <Flex px={1} h={'24px'} fontSize={'16px'} color={userColor} justifyContent={'left'} w="100%">
+                {cursorPosition.r > 0 && cursorPosition.c > 0 ? `Ln: ${cursorPosition.r} Col: ${cursorPosition.c}` : null}
+                <Spacer />
+              </Flex>
+            </Box>
+
             {/* The output area */}
-            <Box
-              // height={window.innerHeight - editorHeight - 20 + 'px'}
-              overflow={'scroll'}
-              mr={'8px'}
-              css={{
-                '&::-webkit-scrollbar': {
-                  background: `${bgColor}`,
-                  width: '28px',
-                  height: '2px',
-                  // reserver space for scrollbar
-                  scrollbarGutter: 'stable',
-                },
-                '&::-webkit-scrollbar-thumb': {
-                  background: 'teal',
-                  borderRadius: '8px',
-                },
-              }}
-            >
-              <Flex align="start">
-                {!executionCount || executionCount < 1 ? null : (
-                  <Text padding="0.25rem" fontSize={s.fontSize} color={executionCountColor} marginRight="0.5rem">
-                    [{executionCount}]:
-                  </Text>
-                )}
+            <Box>
+              <Box
+                px="2"
+                py="1"
+                backgroundColor={titleBarBgColor}
+                onMouseDown={handleResizeStart}
+                css={{
+                  cursor: 'row-resize',
+                  userSelect: 'none',
+                }}
+                height="32px"
+                display="flex"
+                alignItems="center"
+                justifyContent="space-between"
+                borderBottom="1px solid"
+                borderTop="1px solid"
+                borderColor={titleBarBorderColorHex}
+              >
+                <Text fontSize="xl" fontWeight="bold" mx="2">
+                  Output
+                </Text>
+
+                {/* Positioning buttons - centered */}
+                <Flex gap={1} position="absolute" left="50%" transform="translateX(-50%)">
+                  <IconButton
+                    size="xs"
+                    variant="ghost"
+                    icon={<MdVerticalAlignTop size="14px" />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePositionTop();
+                    }}
+                    title="Editor to Top (80%)"
+                    aria-label="Move editor to top"
+                  />
+                  <IconButton
+                    size="xs"
+                    variant="ghost"
+                    icon={<MdVerticalAlignCenter size="14px" />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePositionMiddle();
+                    }}
+                    title="Editor to Middle (50%)"
+                    aria-label="Move editor to middle"
+                  />
+                  <IconButton
+                    size="xs"
+                    variant="ghost"
+                    icon={<MdVerticalAlignBottom size="14px" />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePositionBottom();
+                    }}
+                    title="Editor to Bottom (20%)"
+                    aria-label="Move editor to bottom"
+                  />
+                </Flex>
+              </Box>
+
+
+              <Box w="100%" h="100%" display="flex">
+                <Box w="32px" h="100%" backgroundColor="transparent"></Box>
                 <Box
-                  flex="1"
-                  borderLeft={`0.4rem solid ${useHexColor(ownerColor)}`}
+                  h={`calc(${props.data.size.height}px - ${editorHeight}px - 44px - 52px)`}
+                  w="100%"
                   p={1}
-                  className={`output ${useColorModeValue('output-area-light', 'output-area-dark')}`}
                   fontSize={s.fontSize}
+                  overflow={'auto'}
+                  mr={'6px'}
+                  css={{
+                    '&::-webkit-scrollbar': {
+                      width: '16px',
+                      background: 'transparent',
+                    },
+                    '&::-webkit-scrollbar-track': {
+                      width: '16px',
+                      background: 'transparent',
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                      background: titleBarBgColorHex,
+                      borderRadius: '8px',
+                    },
+                  }}
                 >
                   {error && (
                     <Alert status="error">
@@ -1097,9 +1226,32 @@ function AppComponent(props: App): JSX.Element {
                   {error?.traceback && error.traceback.map((line: string, idx: number) => <Ansi key={line + idx}>{line}</Ansi>)}
                   {renderedContent}
                 </Box>
-              </Flex>
+              </Box>
               {/* End of Flex container */}
             </Box>
+          </Box>
+
+          {/* Fixed bottom info bar */}
+          <Box
+            px={2}
+            py={1}
+            borderTop="1px solid"
+            borderColor={titleBarBorderColorHex}
+            backgroundColor={titleBarBgColor}
+            height="28px"
+            display="flex"
+            alignItems="center"
+            justifyContent="space-between"
+            fontSize="xs"
+            color="gray.600"
+            _dark={{ color: "gray.400" }}
+          >
+            <Text>
+              {selectedKernel ? `${selectedKernel.alias} (${selectedKernel.name})` : 'No kernel selected'}
+            </Text>
+            <Text>
+              {cursorPosition.r > 0 && cursorPosition.c > 0 ? `Ln ${cursorPosition.r}, Col ${cursorPosition.c}` : ''}
+            </Text>
           </Box>
         </Box>
       </>

@@ -388,7 +388,7 @@ async function openSession(a: Asset, xDrop: number, yDrop: number, roomId: strin
         const result = await up.json();
         const newasset = result[0];
         // Rebuild the app with the new asset
-        app.data.state.assetid = newasset.id;
+        app.data.state.assetid = newasset;
       }
     }
     // Create an application

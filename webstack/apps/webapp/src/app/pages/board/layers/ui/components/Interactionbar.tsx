@@ -185,10 +185,10 @@ export function Interactionbar(props: {
         </Tooltip>
 
         <Popover isOpen={annotationsIsOpen && (primaryActionMode === 'pen' || primaryActionMode === 'eraser')}>
-          <Tooltip label={'Annotations — [3]'} placement={tooltipPlacement} hasArrow={true} openDelay={400} shouldWrapChildren={true}>
+          <Tooltip label={'Annotations — [3,4]'} placement={tooltipPlacement} hasArrow={true} openDelay={400} shouldWrapChildren={true}>
             <PopoverTrigger>
               <IconButton
-                borderRadius={0}
+                 borderRadius={'0 0.5rem 0.5rem 0'}
                 size="sm"
                 colorScheme={(primaryActionMode === 'pen' || primaryActionMode === 'eraser') ? user?.data.color || 'teal' : 'gray'}
                 sx={{
@@ -325,25 +325,6 @@ export function Interactionbar(props: {
             </PopoverBody>
           </PopoverContent>
         </Popover>
-        <Tooltip label={'Linker — [4]'} placement={tooltipPlacement} hasArrow={true} openDelay={400} shouldWrapChildren={true}>
-          <IconButton
-            borderRadius={'0 0.5rem 0.5rem 0'}
-            size="sm"
-            colorScheme={primaryActionMode === 'linker' ? user?.data.color || 'teal' : 'gray'}
-            sx={{
-              _dark: {
-                bg: primaryActionMode === 'linker' ? `${user?.data.color}.200` : 'gray.600',
-              },
-            }}
-            icon={<FaLink />}
-            fontSize="lg"
-            aria-label={'linker-mode'}
-            onClick={() => {
-              annotationsOnClose();
-              setPrimaryActionMode('linker');
-            }}
-          ></IconButton>
-        </Tooltip>
       </ButtonGroup>
 
       {myIsOpen && (
