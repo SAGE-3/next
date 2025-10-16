@@ -108,11 +108,6 @@ async function startServer() {
   };
   await SAGEBase.init(sbConfig, app);
 
-  app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
-    next();
-  });
-
   const router = await expressAPIRouter();
   // Load the API Routes
   app.use('/api', router);

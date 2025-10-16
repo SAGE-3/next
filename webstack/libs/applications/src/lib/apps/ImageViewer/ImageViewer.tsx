@@ -210,9 +210,8 @@ function ToolbarComponent(props: App): JSX.Element {
                 downloadFile(dl, filename);
               } else {
                 const url = s.assetid;
-                const filename = props.data.title || s.assetid.split('/').pop();
-                console.log('Download image', { url, filename });
-                downloadViaProxy(url, "image.jpg");
+                const filename = getFilenameFromUrl(url) || "image.jpg";
+                downloadViaProxy(url, filename);
               }
             }}
             size='xs'
@@ -238,6 +237,26 @@ function ToolbarComponent(props: App): JSX.Element {
       </ButtonGroup>
     </>
   );
+}
+
+/**
+ * Retrieve the filename from a URL
+ *
+ * Works with absolute URLs (https://...)
+ * Handles query strings (?x=y) and fragments (#id)
+ * Gracefully falls back if the URL is invalid
+ *
+ * @param url string
+ * @returns string
+ */
+function getFilenameFromUrl(url: string): string {
+  try {
+    const { pathname } = new URL(url);
+    return pathname.substring(pathname.lastIndexOf('/') + 1);
+  } catch {
+    // fallback for malformed URLs
+    return url.split('/').pop()?.split('?')[0].split('#')[0] || '';
+  }
 }
 
 /**

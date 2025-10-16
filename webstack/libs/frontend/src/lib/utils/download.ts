@@ -6,17 +6,17 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { apiUrls } from '../config/urls';
+
 /**
  * Trigger a file download
  * @param url data to download
  * @param name optional filename
  */
 export function downloadFile(url: string, name?: string): void {
-  console.log('Downloading file from url:', url, ' with name:', name);
   const a = document.createElement('a');
   a.href = url;
   const filename = name || url.split('/').pop();
-  console.log('      filename:', filename);
   if (filename) {
     a.download = filename;
     document.body.appendChild(a);
@@ -25,21 +25,43 @@ export function downloadFile(url: string, name?: string): void {
   }
 }
 
-export async function downloadViaProxy(url: string, name?: string) {
-  const proxyUrl = `http://localhost:4200/api/files/download/${encodeURIComponent(url)}`;
+/**
+ * Downloads a resource by proxying the provided URL through the application's download API and triggering a browser save dialog.
+ *
+ * The function encodes the target URL, requests `/api/files/download/{encodedUrl}`, converts the response to a Blob, creates a temporary object URL,
+ * and programmatically clicks an anchor element with the provided filename as the download attribute. The temporary object URL is revoked after clicking.
+ *
+ * @param url - The remote resource URL to download (will be encoded and proxied).
+ * @param name - Suggested filename for the downloaded file (sets the anchor's `download` attribute).
+ * @returns A promise that resolves when the download process has been initiated. It does not guarantee completion of the file write to disk.
+ * @throws {Error} If the fetch response is not OK (response.ok is false), an Error with the HTTP status is thrown.
+ */
+export async function downloadViaProxy(url: string, name: string) {
+  // Construct a proxy endpoint that will fetch the remote URL server-side.
+  // The target URL is encoded to make it safe to include in the path.
+  const proxyUrl = apiUrls.assets.getDownloadURL(url);
 
+  // Request the proxied resource from the application's API.
   const response = await fetch(proxyUrl);
-  console.log('Proxy download response', response);
+
+  // If the server returned a non-2xx status, throw an Error with the status code.
   if (!response.ok) throw new Error(`Download failed1: ${response.status}`);
 
+  // Convert the response body to a Blob so the browser can treat it as a file.
   const blob = await response.blob();
+
+  // Create a temporary object URL for the Blob that can be used as an <a> href.
   const blobUrl = URL.createObjectURL(blob);
 
+  // Create an anchor element and configure it to download the Blob when clicked.
   const a = document.createElement('a');
   a.href = blobUrl;
-  a.download = name || 'download';
+  a.download = name;
+
+  // Programmatically click the anchor to trigger the browser's save dialog.
   a.click();
 
+  // Release the temporary object URL to free memory/resources.
   URL.revokeObjectURL(blobUrl);
 }
 
