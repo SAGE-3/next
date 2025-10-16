@@ -32,14 +32,9 @@ import { AssetsCollection } from './assetsCollection';
 export function FilesRouter(): express.Router {
   const router = express.Router();
 
-  router.get('/download/test', async ({ params }, res) => {
-    console.log('Proxy download test');
-    // const fileUrl = params.url as string;
-    res.status(200).send('OK12');
-  });
-
+  // Download a file from a URL and pipe it to the response
+  // route: /api/files/download/:url
   router.get('/download/:url', async ({ params }, res) => {
-    console.log('Proxy download request for url:', params.url);
     const fileUrl = params.url as string;
     if (!fileUrl) return res.status(400).send('Missing URL');
     try {
@@ -49,8 +44,12 @@ export function FilesRouter(): express.Router {
       if (!body) return res.status(500).send('No content returned');
 
       // Forward headers
+      // set the content type to the one from the fetched file or default to binary
       res.setHeader('Content-Type', response.headers.get('content-type') || 'application/octet-stream');
+      // set the content disposition to attachment to prompt download with the original filename
+      // or 'download' if the filename cannot be determined from the URL
       res.setHeader('Content-Disposition', `attachment; filename="${decodeURIComponent(fileUrl.split('/').pop() || 'download')}"`);
+
       // Convert from Web stream -> Node stream
       const nodeStream = Readable.fromWeb(body as any);
       nodeStream.pipe(res);
@@ -61,6 +60,7 @@ export function FilesRouter(): express.Router {
   });
 
   // Get one asset: GET /api/files/:id/:token
+  // route: /api/files/:id/:token
   router.get('/:id/:token', async ({ params }, res) => {
     // Get the asset
     const data = await AssetsCollection.get(params.id);
