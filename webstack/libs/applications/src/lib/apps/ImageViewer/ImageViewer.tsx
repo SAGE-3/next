@@ -13,7 +13,7 @@ import { MdBrokenImage, MdFileDownload, MdImage } from 'react-icons/md';
 import { HiPencilAlt } from 'react-icons/hi';
 
 // Utility functions from SAGE3
-import { useThrottleScale, useAssetStore, useAppStore, useMeasure, downloadFile, isUUIDv4, apiUrls, useUIStore } from '@sage3/frontend';
+import { useThrottleScale, useAssetStore, useAppStore, useMeasure, downloadFile, downloadViaProxy, isUUIDv4, apiUrls, useUIStore } from '@sage3/frontend';
 import { Asset, ExtraImageType, ImageInfoType } from '@sage3/shared/types';
 
 import { App } from '../../schema';
@@ -211,13 +211,14 @@ function ToolbarComponent(props: App): JSX.Element {
               } else {
                 const url = s.assetid;
                 const filename = props.data.title || s.assetid.split('/').pop();
-                downloadFile(url, filename);
+                console.log('Download image', { url, filename });
+                downloadViaProxy(url, "image.jpg");
               }
             }}
             size='xs'
             px={0}
           >
-            <MdFileDownload size="16px"/>
+            <MdFileDownload size="16px" />
           </Button>
         </Tooltip>
         <div style={{ display: s.boxes ? (Object.keys(s.boxes).length !== 0 ? 'flex' : 'none') : 'none' }}>
@@ -230,7 +231,7 @@ function ToolbarComponent(props: App): JSX.Element {
               size='xs'
               px={0}
             >
-              <HiPencilAlt size="16px"/>
+              <HiPencilAlt size="16px" />
             </Button>
           </Tooltip>
         </div>

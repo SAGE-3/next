@@ -12,15 +12,35 @@
  * @param name optional filename
  */
 export function downloadFile(url: string, name?: string): void {
+  console.log('Downloading file from url:', url, ' with name:', name);
   const a = document.createElement('a');
   a.href = url;
   const filename = name || url.split('/').pop();
+  console.log('      filename:', filename);
   if (filename) {
     a.download = filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
   }
+}
+
+export async function downloadViaProxy(url: string, name?: string) {
+  const proxyUrl = `http://localhost:4200/api/files/download/${encodeURIComponent(url)}`;
+
+  const response = await fetch(proxyUrl);
+  console.log('Proxy download response', response);
+  if (!response.ok) throw new Error(`Download failed1: ${response.status}`);
+
+  const blob = await response.blob();
+  const blobUrl = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = blobUrl;
+  a.download = name || 'download';
+  a.click();
+
+  URL.revokeObjectURL(blobUrl);
 }
 
 // /**

@@ -47,7 +47,7 @@ export function createApp(): express.Express {
       // Cross-Origin-Embedder-Policy: disable to enable map images and zoom images to load
       crossOriginEmbedderPolicy: false,
       crossOriginResourcePolicy: false,
-    })
+    }),
   );
 
   // Enabling CORS for all requests
@@ -107,6 +107,11 @@ async function startServer() {
     },
   };
   await SAGEBase.init(sbConfig, app);
+
+  app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+    next();
+  });
 
   const router = await expressAPIRouter();
   // Load the API Routes
