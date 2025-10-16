@@ -47,7 +47,7 @@ export function createApp(): express.Express {
       // Cross-Origin-Embedder-Policy: disable to enable map images and zoom images to load
       crossOriginEmbedderPolicy: false,
       crossOriginResourcePolicy: false,
-    })
+    }),
   );
 
   // Enabling CORS for all requests

@@ -13,7 +13,7 @@ import { MdBrokenImage, MdFileDownload, MdImage } from 'react-icons/md';
 import { HiPencilAlt } from 'react-icons/hi';
 
 // Utility functions from SAGE3
-import { useThrottleScale, useAssetStore, useAppStore, useMeasure, downloadFile, isUUIDv4, apiUrls, useUIStore } from '@sage3/frontend';
+import { useThrottleScale, useAssetStore, useAppStore, useMeasure, downloadFile, downloadViaProxy, isUUIDv4, apiUrls, useUIStore } from '@sage3/frontend';
 import { Asset, ExtraImageType, ImageInfoType } from '@sage3/shared/types';
 
 import { App } from '../../schema';
@@ -210,14 +210,14 @@ function ToolbarComponent(props: App): JSX.Element {
                 downloadFile(dl, filename);
               } else {
                 const url = s.assetid;
-                const filename = props.data.title || s.assetid.split('/').pop();
-                downloadFile(url, filename);
+                const filename = getFilenameFromUrl(url) || "image.jpg";
+                downloadViaProxy(url, filename);
               }
             }}
             size='xs'
             px={0}
           >
-            <MdFileDownload size="16px"/>
+            <MdFileDownload size="16px" />
           </Button>
         </Tooltip>
         <div style={{ display: s.boxes ? (Object.keys(s.boxes).length !== 0 ? 'flex' : 'none') : 'none' }}>
@@ -230,13 +230,33 @@ function ToolbarComponent(props: App): JSX.Element {
               size='xs'
               px={0}
             >
-              <HiPencilAlt size="16px"/>
+              <HiPencilAlt size="16px" />
             </Button>
           </Tooltip>
         </div>
       </ButtonGroup>
     </>
   );
+}
+
+/**
+ * Retrieve the filename from a URL
+ *
+ * Works with absolute URLs (https://...)
+ * Handles query strings (?x=y) and fragments (#id)
+ * Gracefully falls back if the URL is invalid
+ *
+ * @param url string
+ * @returns string
+ */
+function getFilenameFromUrl(url: string): string {
+  try {
+    const { pathname } = new URL(url);
+    return pathname.substring(pathname.lastIndexOf('/') + 1);
+  } catch {
+    // fallback for malformed URLs
+    return url.split('/').pop()?.split('?')[0].split('#')[0] || '';
+  }
 }
 
 /**
