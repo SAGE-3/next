@@ -1,0 +1,82 @@
+{
+  "id": "",
+  "label": "",
+  "level": 0,
+  "is_cluster": true,
+  "children": [
+    {
+      "id": "",
+      "label": "",
+      "level": 1,
+      "is_cluster": true,
+      "children": [
+        {
+          "id": "",
+          "label": "",
+          "level": 2,
+          "is_cluster": true,
+          "children": [
+            {
+              "id": "",
+              "label": "",
+              "level": 3,
+              "is_cluster": true,
+              "children": [
+                {
+                  "id": "",
+                  "label": "",
+                  "level": 4,
+                  "is_cluster": true,
+                  "children": [
+                    {
+                      "id": "",
+                      "label": "",
+                      "level": 5,
+                      "is_cluster": true,
+                      "children": [
+                        {
+                          "id": "",
+                          "label": "",
+                          "level": 6,
+                          "is_cluster": true,
+                          "children": [
+                            {
+                              "id": "",
+                              "label": "",
+                              "level": 7,
+                              "is_document": true,
+                              "title": "",
+                              "authors": [],
+                              "venue": "",
+                              "year": "",
+                              "summary": "",
+                              "paper_count": 1
+                            }
+                          ],
+                          "paper_count": 0,
+                          "summary": ""
+                        }
+                      ],
+                      "paper_count": 0,
+                      "summary": ""
+                    }
+                  ],
+                  "paper_count": 0,
+                  "summary": ""
+                }
+              ],
+              "paper_count": 0,
+              "summary": ""
+            }
+          ],
+          "paper_count": 0,
+          "summary": ""
+        }
+      ],
+      "paper_count": 0,
+      "summary": ""
+    }
+  ],
+  "paper_count": 0,
+  "summary": ""
+}

@@ -12,6 +12,8 @@ import { name as CobrowseName, init as defaultCobrowse } from './apps/Cobrowse';
 import { name as CodeEditorName, init as defaultCodeEditor } from './apps/CodeEditor';
 import { name as CounterName, init as defaultCounter } from './apps/Counter';
 import { name as DeepZoomImageName, init as defaultDeepZoomImage } from './apps/DeepZoomImage';
+import { name as DocuCHATName, init as defaultDocuCHAT } from './apps/DocuCHAT';
+import { name as DocuSAGEName, init as defaultDocuSAGE } from './apps/DocuSAGE';
 import { name as DrawingName, init as defaultDrawing } from './apps/Drawing';
 import { name as EChartsViewerName, init as defaultEChartsViewer } from './apps/EChartsViewer';
 import { name as GLTFViewerName, init as defaultGLTFViewer } from './apps/GLTFViewer';
@@ -53,6 +55,8 @@ export const initialValues = {
   [CodeEditorName]: defaultCodeEditor,
   [CounterName]: defaultCounter,
   [DeepZoomImageName]: defaultDeepZoomImage,
+  [DocuCHATName]: defaultDocuCHAT,
+  [DocuSAGEName]: defaultDocuSAGE,
   [DrawingName]: defaultDrawing,
   [EChartsViewerName]: defaultEChartsViewer,
   [GLTFViewerName]: defaultGLTFViewer,

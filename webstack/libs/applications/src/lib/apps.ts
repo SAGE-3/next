@@ -12,6 +12,8 @@ import { name as CobrowseName } from './apps/Cobrowse';
 import { name as CodeEditorName } from './apps/CodeEditor';
 import { name as CounterName } from './apps/Counter';
 import { name as DeepZoomImageName } from './apps/DeepZoomImage';
+import { name as DocuCHATName } from './apps/DocuCHAT';
+import { name as DocuSAGEName } from './apps/DocuSAGE';
 import { name as DrawingName } from './apps/Drawing';
 import { name as EChartsViewerName } from './apps/EChartsViewer';
 import { name as GLTFViewerName } from './apps/GLTFViewer';
@@ -55,6 +57,8 @@ import Cobrowse from './apps/Cobrowse/Cobrowse';
 import CodeEditor from './apps/CodeEditor/CodeEditor';
 import Counter from './apps/Counter/Counter';
 import DeepZoomImage from './apps/DeepZoomImage/DeepZoomImage';
+import DocuCHAT from './apps/DocuCHAT/DocuCHAT';
+import DocuSAGE from './apps/DocuSAGE/DocuSAGE';
 import Drawing from './apps/Drawing/Drawing';
 import EChartsViewer from './apps/EChartsViewer/EChartsViewer';
 import GLTFViewer from './apps/GLTFViewer/GLTFViewer';
@@ -143,6 +147,16 @@ export const Applications = {
     AppComponent: React.memo(DeepZoomImage.AppComponent),
     ToolbarComponent: DeepZoomImage.ToolbarComponent,
     GroupedToolbarComponent: DeepZoomImage.GroupedToolbarComponent,
+  },
+  [DocuCHATName]: {
+    AppComponent: React.memo(DocuCHAT.AppComponent),
+    ToolbarComponent: DocuCHAT.ToolbarComponent,
+    GroupedToolbarComponent: DocuCHAT.GroupedToolbarComponent,
+  },
+  [DocuSAGEName]: {
+    AppComponent: React.memo(DocuSAGE.AppComponent),
+    ToolbarComponent: DocuSAGE.ToolbarComponent,
+    GroupedToolbarComponent: DocuSAGE.GroupedToolbarComponent,
   },
   [DrawingName]: {
     AppComponent: React.memo(Drawing.AppComponent),

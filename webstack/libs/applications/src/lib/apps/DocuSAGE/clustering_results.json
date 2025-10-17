@@ -1,0 +1,136 @@
+{
+  "id": "root",
+  "label": "DocuSAGE Demo",
+  "level": 0,
+  "children": [
+    {
+      "id": "docu",
+      "label": "Docu",
+      "is_cluster": true,
+      "level": 1,
+      "children": [
+        {
+          "id": "vis",
+          "label": "Visualization",
+      "is_cluster": true,
+          "level": 2,
+      "children": [
+        {
+              "id": "circular",
+              "label": "Circular Packing",
+          "is_document": true,
+              "level": 3,
+              "title": "Circular Packing Visualization",
+              "authors": ["SAGE3 Team"],
+              "summary": "A hierarchical visualization using nested circles"
+            },
+            {
+              "id": "treemap",
+              "label": "Treemap",
+          "is_document": true,
+              "level": 3,
+              "title": "Treemap Visualization",
+              "authors": ["SAGE3 Team"],
+              "summary": "A space-filling visualization using rectangles"
+            },
+            {
+              "id": "force",
+              "label": "Force Graph",
+          "is_document": true,
+              "level": 3,
+              "title": "Force Graph Visualization",
+              "authors": ["SAGE3 Team"],
+              "summary": "An interactive network visualization"
+            }
+          ]
+        },
+        {
+          "id": "ai",
+          "label": "AI Integration",
+      "is_cluster": true,
+          "level": 2,
+      "children": [
+        {
+              "id": "nlp",
+              "label": "Natural Language Processing",
+          "is_document": true,
+              "level": 3,
+              "title": "NLP in DocuSAGE",
+              "authors": ["SAGE3 Team"],
+              "summary": "Using NLP for document analysis"
+            },
+            {
+              "id": "ml",
+              "label": "Machine Learning",
+          "is_document": true,
+              "level": 3,
+              "title": "ML in DocuSAGE",
+              "authors": ["SAGE3 Team"],
+              "summary": "ML algorithms for document clustering"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sage",
+      "label": "SAGE",
+      "is_cluster": true,
+      "level": 1,
+      "children": [
+        {
+          "id": "collab",
+          "label": "Collaboration",
+      "is_cluster": true,
+          "level": 2,
+      "children": [
+        {
+              "id": "realtime",
+              "label": "Real-time Collaboration",
+          "is_document": true,
+              "level": 3,
+              "title": "Real-time Collaboration Features",
+              "authors": ["SAGE3 Team"],
+              "summary": "Features for collaborative work"
+            },
+            {
+              "id": "sharing",
+              "label": "Document Sharing",
+          "is_document": true,
+              "level": 3,
+              "title": "Document Sharing Capabilities",
+              "authors": ["SAGE3 Team"],
+              "summary": "Tools for sharing and collaborating on documents"
+            }
+          ]
+        },
+        {
+          "id": "teaching",
+          "label": "Teaching",
+      "is_cluster": true,
+          "level": 2,
+      "children": [
+        {
+              "id": "classroom",
+              "label": "Classroom Integration",
+          "is_document": true,
+              "level": 3,
+              "title": "Classroom Features",
+              "authors": ["SAGE3 Team"],
+              "summary": "Tools for educational settings"
+            },
+            {
+              "id": "learning",
+              "label": "Learning Tools",
+          "is_document": true,
+              "level": 3,
+              "title": "Learning Tools in SAGE",
+              "authors": ["SAGE3 Team"],
+              "summary": "Features designed for learning environments"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
