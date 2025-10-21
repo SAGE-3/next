@@ -231,7 +231,7 @@ export function Whiteboard(props: WhiteboardProps) {
       pts.push([x0, y0]);
       // Circle needs to have at least two points to correctly render
       // Extra point gets deleted when the pointer moves
-      if (type === 'circle'){
+      if (type === 'circle' || type === 'arrow'){
         pts.push([x0 + .000001, y0 + .000001]); 
       }
       // Create a Yjs map for this shape
@@ -281,7 +281,7 @@ export function Whiteboard(props: WhiteboardProps) {
         // Replace the last end point (if exists) with the current coordinates
         // A rectangle stores two points: start and current drag end
         if (pts.length >= 4) {
-          pts.delete(2, 2);
+          pts.delete(2, 2); 
         }
         pts.push([x, y]);
       }
@@ -431,7 +431,6 @@ export function Whiteboard(props: WhiteboardProps) {
               pts.push([points[i], points[i+1]]);
             }
             current.set('isComplete', true);
-            console.log('completed arrow')
           }  
         }
       updateBoardLines();
