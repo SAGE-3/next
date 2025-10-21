@@ -131,40 +131,35 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
     if (!points || points.length === 0) return null;
 
     // Compute bounding box from whatever points we have (robust to closed poly or 2-point form)
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    for (const [x, y] of points) {
-      if (x < minX) minX = x;
-      if (y < minY) minY = y;
-      if (x > maxX) maxX = x;
-      if (y > maxY) maxY = y;
-    }
-    const width = Math.max(0, maxX - minX);
-    const height = Math.max(0, maxY - minY);
+    const x1 = points[0][0];
+    const y1 = points[0][1];
+    const x2 = points[1][0];
+    const y2 = points[1][1];
 
     return (
-       <g>
+       <g opacity={alpha}>
           <defs>
             <marker 
-            id='head' 
+            // unique ID for every marker head
+            id={`${x1},${y1},${x2},${y2}`}
             orient="auto" 
-            markerWidth='3' 
-            markerHeight='4' 
-            refX='9'
-            refY='5'
+            markerWidth="10"
+            markerHeight="10"
+            viewBox="0 0 10 10"
+            refX="9"   // place the tip (10,5) on the vertex
+            refY="5"
             >
-              <path
-                d="M0 0 L10 5 L0 10 Z"
-                fill={hover ? hoverC : c}
-                fillOpacity={alpha}/>
+              <path d="M0 0 L10 5 L0 10 Z" fill={hover ? hoverC : c}/>
             </marker>
           </defs>
 
           <path
-          className="canvas-line"
-          d={pathData}
-          fill={hover ? hoverC : c}
-          fillOpacity={alpha}
-          markerEnd="url(#head)"
+          className="line"
+          d={`M ${x1},${y1}, L ${x2},${y2}`}
+          stroke={hover ? hoverC : c}
+          strokeWidth={size}
+          strokeLinecap='round'
+          markerEnd={`url(#${x1},${y1},${x2},${y2})`}
           onMouseEnter={() => setHover(true)}
           onMouseLeave={() => setHover(false)}
           onMouseDown={handleClick}
