@@ -22,14 +22,13 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
   const { settings } = useUserSettings();
   const primaryActionMode = settings.primaryActionMode;
 
-  const { points, color, isComplete, alpha, size, type } = useLine(line);
+  const { points, color, isComplete, alpha, size, type, text } = useLine(line);
 
   const c = useHexColor(color ? color : 'red');
   const hoverColor = useColorModeValue(`${color}.600`, `${color}.100`);
   const hoverC = useHexColor(hoverColor);
   const id = line.get('id') as string;
   const [hover, setHover] = useState(false);
-  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
 
   const handleClick = (ev: any) => {
     // Left-click while in eraser mode deletes this line/shape
@@ -74,6 +73,12 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
     );
   }
   // --- Render rectangles with crisp right angles ---------------------------
+
+  const handleTextChange = (ev:any) => {
+    console.log('line.tsx | text changed')
+    line.set('text', ev.target.value)
+  }
+
   if (type === 'rectangle') {
     if (!points || points.length === 0) return null;
 
@@ -127,10 +132,11 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
                 background: 'transparent',
                 border: 'none',
                 color: c,
-                fontSize: '20px',
+                fontSize: '50px',
                 textAlign: 'center',
                 outline: 'none'
               }}
+              onChange={handleTextChange}
             />
           </div>
         </foreignObject>
@@ -270,6 +276,7 @@ export function useLine(line: Y.Map<any>) {
   const [alpha, setAlpha] = useState<number>(0.6);
   const [size, setSize] = useState<number>(5);
   const [type, setType] = useState<string>('line');
+  const [text, setText] = useState<string>('');
 
   // Subscribe to changes to the line itself and sync into React state.
   useEffect(() => {
@@ -280,6 +287,7 @@ export function useLine(line: Y.Map<any>) {
       setAlpha(current.alpha);
       setSize(current.size);
       setType(current.type || 'line'); // <-- read 'type' ('line' | 'rectangle')
+      setText(current.text);
     }
 
     handleChange();
@@ -309,7 +317,7 @@ export function useLine(line: Y.Map<any>) {
     };
   }, [line]);
 
-  return { points: pts, color, isComplete, alpha, size, type };
+  return { points: pts, color, isComplete, alpha, size, type, text };
 }
 
 export function toPairs<T>(arr: T[]): T[][] {

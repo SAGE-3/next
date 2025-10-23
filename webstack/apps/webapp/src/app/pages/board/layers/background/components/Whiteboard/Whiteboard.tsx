@@ -246,6 +246,7 @@ export function Whiteboard(props: WhiteboardProps) {
         yShape.set('size', markerSize);
         yShape.set('isComplete', false);
         yShape.set('userId', user?._id);
+        yShape.set('text', '');
       });
       rCurrentLine.current = yShape;
       yLines.push([yShape]);
