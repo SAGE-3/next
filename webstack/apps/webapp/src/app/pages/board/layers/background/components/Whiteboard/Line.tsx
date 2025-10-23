@@ -190,10 +190,10 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
             // unique ID for every marker head
             id={`${x1},${y1},${x2},${y2}`}
             orient="auto-start-reverse" 
-            markerWidth="10"
-            markerHeight="10"
+            markerWidth="5"
+            markerHeight="5"
             viewBox="0 0 10 10"
-            refX="9"   // place the tip (10,5) on the vertex
+            refX="4"   // place the tip (10,5) on the vertex
             refY="5"
             >
               <path d="M0 0 L10 5 L0 10 Z" fill={hover ? hoverC : c}/>
