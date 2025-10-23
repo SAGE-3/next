@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useState, memo } from 'react';
-import { propNames, useColorModeValue } from '@chakra-ui/react';
+import { AbsoluteCenter, propNames, useColorModeValue } from '@chakra-ui/react';
 import { getStroke } from 'perfect-freehand';
 import * as Y from 'yjs';
 
@@ -110,10 +110,31 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
           onMouseLeave={() => setHover(false)}
           onMouseDown={handleClick}
         />
-        <text x={minX} y={minY}  textAnchor='middle' dominantBaseline='middle' fontSize='20' fill='#999'>
-          hellooooooooo
-        </text>
-      </g>
+        <foreignObject x={minX} y={minY} width={width} height={height}>
+          <div style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <input
+              type='text'
+              placeholder=''
+              style={{
+                width: '90%',
+                height: '90%',
+                background: 'transparent',
+                border: 'none',
+                color: c,
+                fontSize: '20px',
+                textAlign: 'center',
+                outline: 'none'
+              }}
+            />
+          </div>
+        </foreignObject>
+        </g>
     );
     // }
   }
