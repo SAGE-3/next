@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useState, memo } from 'react';
-import { useColorModeValue } from '@chakra-ui/react';
+import { propNames, useColorModeValue } from '@chakra-ui/react';
 import { getStroke } from 'perfect-freehand';
 import * as Y from 'yjs';
 
@@ -29,17 +29,18 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
   const hoverC = useHexColor(hoverColor);
   const id = line.get('id') as string;
   const [hover, setHover] = useState(false);
+  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
 
   const handleClick = (ev: any) => {
     // Left-click while in eraser mode deletes this line/shape
-    console.log(`LINE |click: primaryActionMode=${primaryActionMode}`);
     if (ev.button === 0 && primaryActionMode === 'eraser') {
       onClick(id);
+      console.log(`LINE |click: primaryActionMode=${primaryActionMode}`);
     }
-    // else if (ev.button === 0 && primaryActionMode === 'lasso') {
-    //   onClick(id);
-    //   console.log(`LINE |click: grabbed`);
-    // }
+    else if (ev.button == 0 && primaryActionMode === 'lasso'){
+      console.log(`Lassoed`)
+      // setSelectedApp(id)
+    }
   };
 
   if(type === 'circle'){
@@ -109,6 +110,11 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
           onMouseLeave={() => setHover(false)}
           onMouseDown={handleClick}
         />
+        <foreignObject x="55" y="55" width="290" height="40">
+          <div>
+            <input type="text" placeholder="Enter text here..."/>
+          </div>
+        </foreignObject>
       </g>
     );
   }
@@ -160,6 +166,48 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
           strokeWidth={size}
           strokeLinecap='round'
           markerEnd={`url(#${x1},${y1},${x2},${y2})`}
+          onMouseEnter={() => setHover(true)}
+          onMouseLeave={() => setHover(false)}
+          onMouseDown={handleClick}
+          />
+      </g>
+    );
+  }
+
+  if (type === 'doubleArrow') {
+    if (!points || points.length === 0) return null;
+
+    // Compute bounding box from whatever points we have (robust to closed poly or 2-point form)
+    const x1 = points[0][0];
+    const y1 = points[0][1];
+    const x2 = points[1][0];
+    const y2 = points[1][1];
+
+    return (
+       <g opacity={alpha}>
+          <defs>
+            <marker 
+            // unique ID for every marker head
+            id={`${x1},${y1},${x2},${y2}`}
+            orient="auto-start-reverse" 
+            markerWidth="10"
+            markerHeight="10"
+            viewBox="0 0 10 10"
+            refX="9"   // place the tip (10,5) on the vertex
+            refY="5"
+            >
+              <path d="M0 0 L10 5 L0 10 Z" fill={hover ? hoverC : c}/>
+            </marker>
+          </defs>
+
+          <path
+          className="line"
+          d={`M ${x1},${y1}, L ${x2},${y2}`}
+          stroke={hover ? hoverC : c}
+          strokeWidth={size}
+          strokeLinecap='round'
+          markerEnd={`url(#${x1},${y1},${x2},${y2})`}
+          markerStart={`url(#${x1},${y1},${x2},${y2})`}
           onMouseEnter={() => setHover(true)}
           onMouseLeave={() => setHover(false)}
           onMouseDown={handleClick}

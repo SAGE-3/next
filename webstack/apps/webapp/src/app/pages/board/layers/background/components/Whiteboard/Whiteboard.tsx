@@ -215,7 +215,7 @@ export function Whiteboard(props: WhiteboardProps) {
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
       // Determine type based on current tool
-      const type = primaryActionMode === 'rectangle' ? 'rectangle' : primaryActionMode === 'pen' ? 'line' : primaryActionMode ==='circle' ? 'circle' : primaryActionMode === 'arrow' ? 'arrow' : 'eraser';
+      const type = primaryActionMode === 'rectangle' ? 'rectangle' : primaryActionMode === 'pen' ? 'line' : primaryActionMode ==='circle' ? 'circle' : primaryActionMode === 'arrow' ? 'arrow' : primaryActionMode === 'doubleArrow' ? 'doubleArrow' : 'eraser';
       if (type === 'eraser') return;
       if (!yLines || !yDoc || !canAnnotate || !boardSynced) return;
       if (!e.isPrimary || e.button !== 0) return;
@@ -231,7 +231,7 @@ export function Whiteboard(props: WhiteboardProps) {
       pts.push([x0, y0]);
       // Circle needs to have at least two points to correctly render
       // Extra point gets deleted when the pointer moves
-      if (type === 'circle' || type === 'arrow'){
+      if (type === 'circle' || type === 'arrow' || type === 'doubleArrow'){
         pts.push([x0 + .000001, y0 + .000001]); 
       }
       // Create a Yjs map for this shape
@@ -277,7 +277,7 @@ export function Whiteboard(props: WhiteboardProps) {
         pts.push([x, y]);
       } 
       // use same logic to track circle and rectangle movements 
-      else if (type === 'rectangle' || type === 'circle' || type === 'arrow') {
+      else if (type === 'rectangle' || type === 'circle' || type === 'arrow' || type === 'doubleArrow') {
         // Replace the last end point (if exists) with the current coordinates
         // A rectangle stores two points: start and current drag end
         if (pts.length >= 4) {
@@ -413,7 +413,8 @@ export function Whiteboard(props: WhiteboardProps) {
           current.set('isComplete', true);
         }
       }
-      else if(type === 'arrow'){
+      else if(type === 'arrow' || type === 'doubleArrow'){
+        console.log(type)
           if(pts.length < 4){
             const index = yLines?.toArray().indexOf(current) ?? -1;
             if (index >= 0 && yLines) {
@@ -524,10 +525,10 @@ export function Whiteboard(props: WhiteboardProps) {
     <div
       className="canvas-container"
       style={{
-        pointerEvents: ['pen', 'eraser', 'rectangle', 'circle', 'arrow'].includes(primaryActionMode)
+        pointerEvents: [/* 'lasso',*/ 'pen', 'eraser', 'rectangle', 'circle', 'arrow', 'doubleArrow'].includes(primaryActionMode)
           ? 'auto'
           : 'none',
-        touchAction: ['pen', 'eraser', 'rectangle', 'circle', 'arrow'].includes(primaryActionMode)
+        touchAction: [/* 'lasso',*/ 'pen', 'eraser', 'rectangle', 'circle', 'arrow', 'doubleArrow'].includes(primaryActionMode)
           ? 'none'
           : 'auto',
       }}
