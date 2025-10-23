@@ -37,10 +37,6 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
       onClick(id);
       console.log(`LINE |click: primaryActionMode=${primaryActionMode}`);
     }
-    else if (ev.button == 0 && primaryActionMode === 'lasso'){
-      console.log(`Lassoed`)
-      // setSelectedApp(id)
-    }
   };
 
   if(type === 'circle'){
@@ -91,8 +87,12 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
     }
     const width = Math.max(0, maxX - minX);
     const height = Math.max(0, maxY - minY);
-
-    return (
+    // function TextInput(){
+    //   const [text, setText] = useState('');
+    //   const handleChange = (event: any) => {
+    //     setText(event.target.value);
+    //   };
+        return (
       <g>
         <rect
           x={minX}
@@ -110,13 +110,12 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
           onMouseLeave={() => setHover(false)}
           onMouseDown={handleClick}
         />
-        <foreignObject x="55" y="55" width="290" height="40">
-          <div>
-            <input type="text" placeholder="Enter text here..."/>
-          </div>
-        </foreignObject>
+        <text x={minX} y={minY}  textAnchor='middle' dominantBaseline='middle' fontSize='20' fill='#999'>
+          hellooooooooo
+        </text>
       </g>
     );
+    // }
   }
 
     // --- Render freehand lines with LESS rounding ----------------------------
