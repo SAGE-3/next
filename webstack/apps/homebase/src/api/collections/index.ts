@@ -8,6 +8,7 @@
 
 import { URLMetadata } from '@sage3/backend';
 import { generateReadableID } from '@sage3/shared';
+import { throttle } from 'throttle-debounce';
 import {
   AppsCollection,
   AssetsCollection,
@@ -69,7 +70,7 @@ export async function loadCollections(): Promise<void> {
             privatePin: '',
             isListed: true,
           },
-          '-'
+          '-',
         );
         if (res?._id) {
           console.log('Rooms> default room added');
@@ -85,7 +86,7 @@ export async function loadCollections(): Promise<void> {
               privatePin: '',
               executeInfo: { executeFunc: '', params: {} },
             },
-            '-'
+            '-',
           );
           if (res2?._id) {
             console.log('Boards> default board addedd');
@@ -97,6 +98,36 @@ export async function loadCollections(): Promise<void> {
     }
   });
 
+  // Check all links for orphaned references
+  async function checkAllLinks() {
+    console.log('DEBUG> Running full link validation check after app deletion...');
+    const links = await LinkCollection.getAll();
+    const apps = await AppsCollection.getAll();
+    if (!links || !apps) return;
+
+    const appIds = new Set(apps.map((app) => app._id));
+    const invalidLinks = links.filter((link) => !appIds.has(link.data.sourceAppId) || !appIds.has(link.data.targetAppId));
+
+    if (invalidLinks.length > 0) {
+      console.log(`DEBUG> Found ${invalidLinks.length} orphaned links, cleaning up...`);
+      const invalidLinkIds = invalidLinks.map((link) => link._id);
+      console.log('DEBUG> Deleting orphaned links:', invalidLinkIds);
+
+      // Use batch deletion for better performance
+      const result = await LinkCollection.deleteBatch(invalidLinkIds);
+      if (result) {
+        console.log(`DEBUG> Successfully deleted ${result.length} orphaned links`);
+      } else {
+        console.log('DEBUG> Failed to delete some orphaned links');
+      }
+    } else {
+      console.log('DEBUG> No orphaned links found');
+    }
+  }
+
+  // Throttled version - runs immediately, then ignores calls for 5 seconds
+  const throttledCheckAllLinks = throttle(5000, checkAllLinks);
+
   // Listen for apps changes
   AppsCollection.subscribeAll((message) => {
     if (message.type === 'CREATE') {
@@ -107,6 +138,9 @@ export async function loadCollections(): Promise<void> {
           });
         }
       });
+    } else if (message.type === 'DELETE') {
+      // Check all links when any app is deleted (with throttle)
+      throttledCheckAllLinks();
     }
   });
 

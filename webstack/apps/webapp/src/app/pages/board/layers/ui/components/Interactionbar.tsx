@@ -188,7 +188,7 @@ export function Interactionbar(props: {
           <Tooltip label={'Annotations — [3]'} placement={tooltipPlacement} hasArrow={true} openDelay={400} shouldWrapChildren={true}>
             <PopoverTrigger>
               <IconButton
-                borderRadius={0}
+                 borderRadius={'0 0.5rem 0.5rem 0'}
                 size="sm"
                 colorScheme={(primaryActionMode === 'pen' || primaryActionMode === 'eraser' || primaryActionMode === 'rectangle' || primaryActionMode === 'circle' || primaryActionMode === 'arrow' || primaryActionMode === 'doubleArrow') ? user?.data.color || 'teal' : 'gray'}
                 sx={{

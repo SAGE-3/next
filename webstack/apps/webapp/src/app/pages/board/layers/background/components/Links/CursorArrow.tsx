@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useColorModeValue } from '@chakra-ui/react';
 
 // SAGE Imports
@@ -17,7 +17,7 @@ import { BoxToCursorArrow } from './DrawArrows';
 // Keep seperate to avoid unnecessary rerenders caused by cursor movement
 export function CursorArrow() {
   const linkedAppId = useLinkStore((state) => state.linkedAppId);
-  return <>{linkedAppId && <ArrowToCursorMain linkedAppId={linkedAppId} />}</>;
+  return <ArrowToCursorMain linkedAppId={linkedAppId || ''} />;
 }
 
 function ArrowToCursorMain({ linkedAppId }: { linkedAppId: string }) {
@@ -28,34 +28,42 @@ function ArrowToCursorMain({ linkedAppId }: { linkedAppId: string }) {
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
   const boardSynced = useUIStore((state) => state.boardSynced);
+  const scale = useUIStore((state) => state.scale);
 
   // Theme
   const strokeColor = useColorModeValue('gray.500', 'gray.500');
 
   // User Cursor
   const { getBoardCursor } = useCursorBoardPosition();
-  const [cursorPos, setCursorPos] = useState<{ x: number; y: number }>({ x: -1, y: -1 });
+  // Use useRef instead of useState to avoid re-renders
+  const cursorPosRef = useRef<{ x: number; y: number }>({ x: -1, y: -1 });
+  const [, forceUpdate] = useState({});
 
   useEffect(() => {
     const updateCursor = (e: MouseEvent) => {
-      if (boardSynced) {
-        setCursorPos(getBoardCursor());
+      if (boardSynced && linkedAppId) {
+        const pos = getBoardCursor();
+        cursorPosRef.current = { x: pos.x, y: pos.y };
+        // Force a re-render to update the arrow
+        forceUpdate({});
       }
     };
 
-    window.addEventListener('mousemove', updateCursor, { passive: true });
-
-    return () => {
-      window.removeEventListener('mousemove', updateCursor);
-    };
-  }, [boardSynced]);
+    if (linkedAppId) {
+      window.addEventListener('mousemove', updateCursor, { passive: true });
+      return () => window.removeEventListener('mousemove', updateCursor);
+    }
+    
+    // Return undefined cleanup function when linkedAppId is falsy
+    return undefined;
+  }, [boardSynced, getBoardCursor, linkedAppId]);
 
   function buildArrow(src: string) {
     const srcApp = apps.find((a) => a._id === src);
 
-    if (srcApp && cursorPos.x !== -1 && cursorPos.y !== -1) {
+    if (srcApp && cursorPosRef.current.x !== -1 && cursorPosRef.current.y !== -1) {
       const box = { position: srcApp.data.position, size: srcApp.data.size };
-      return BoxToCursorArrow(box, cursorPos.x, cursorPos.y, strokeColor, 'red');
+      return BoxToCursorArrow(box, cursorPosRef.current.x, cursorPosRef.current.y, strokeColor, 'red', scale);
     }
     return null;
   }
