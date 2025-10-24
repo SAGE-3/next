@@ -545,7 +545,7 @@ export function Whiteboard(props: WhiteboardProps) {
           left: 0,
           top: 0,
           zIndex: 1000,
-          cursor: 'crosshair',
+          cursor: primaryActionMode ==='pen' ? 'crosshair' : 'eraser',
         }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}

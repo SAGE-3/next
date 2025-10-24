@@ -11,7 +11,6 @@ import { Box, Text, useColorModeValue, useDisclosure } from '@chakra-ui/react';
 import { EditUserSettingsModal, useUserSettings } from '@sage3/frontend';
 
 type ClockProps = {
-  style?: CSSProperties;
   opacity?: number;
   isBoard?: boolean;
   homeHelpClick?: () => void;
@@ -29,6 +28,7 @@ export function Clock(props: ClockProps) {
 
   // Colors
   const textColor = useColorModeValue('gray.800', 'gray.50');
+  const backgroundColor = useColorModeValue('gray.100', 'gray.800');
 
   // Presence settings modal
   const { isOpen: editSettingsIsOpen, onClose: editSettingsOnClose } = useDisclosure();
@@ -53,6 +53,7 @@ export function Clock(props: ClockProps) {
       pl={1}
       justifyContent="right"
       alignItems={'center'}
+      background={props.isBoard ? backgroundColor : "transparent"}
     >
       {/* Edit User Settings  modal dialog */}
       {isBoard && <EditUserSettingsModal isOpen={editSettingsIsOpen} onClose={editSettingsOnClose} />}

@@ -30,7 +30,7 @@
   },
   "private": true,
   "dependencies": {
-    "@chakra-ui/react": "2",
+    "@chakra-ui/react": "^2.10.9",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@fluent-org/logger": "^1.0.10",
@@ -62,7 +62,7 @@
     "express": "^4.21.2",
     "express-session": "^1.18.2",
     "extended-eventsource": "^1.4.9",
-    "framer-motion": "^12.23.12",
+    "framer-motion": "^12.23.22",
     "fuse.js": "^7.1.0",
     "geotiff": "^2.0.7",
     "helmet": "^8.1.0",

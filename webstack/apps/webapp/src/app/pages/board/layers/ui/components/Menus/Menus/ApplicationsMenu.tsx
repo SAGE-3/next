@@ -77,6 +77,9 @@ export function ApplicationsMenu(props: ApplicationProps) {
     } else if (appName === 'Calculator') {
       w = 260;
       h = 369;
+    } else if (appName === 'Timer') {
+      w = 330;
+      h = 226;
     } else if (appName === 'Chat') {
       w = 800;
       h = 620;

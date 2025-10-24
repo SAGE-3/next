@@ -88,7 +88,7 @@ export function InteractionbarShortcuts() {
     '4',
     (event: KeyboardEvent): void | boolean => {
       event.stopPropagation();
-      setPrimaryActionMode('shape');
+      setPrimaryActionMode('eraser');
       setSelectedApp('');
       setSelectedAppsIds([]);
       clearLinkAppId();
