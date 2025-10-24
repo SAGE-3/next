@@ -7,11 +7,12 @@
  */
 
 import { useEffect, useState, memo } from 'react';
-import { propNames, useColorModeValue } from '@chakra-ui/react';
+import { AbsoluteCenter, propNames, useColorModeValue } from '@chakra-ui/react';
 import { getStroke } from 'perfect-freehand';
 import * as Y from 'yjs';
 
-import { useHexColor, useUserSettings, useAbility, useUIStore } from '@sage3/frontend';
+
+import { useHexColor, useUserSettings, useAnnotationStore, useAppStore } from '@sage3/frontend';
 
 export interface LineProps {
   line: Y.Map<any>;
@@ -22,24 +23,24 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
   const { settings } = useUserSettings();
   const primaryActionMode = settings.primaryActionMode;
 
-  const { points, color, isComplete, alpha, size, type } = useLine(line);
+  const { points, color, isComplete, alpha, size, type, text } = useLine(line);
 
   const c = useHexColor(color ? color : 'red');
   const hoverColor = useColorModeValue(`${color}.600`, `${color}.100`);
   const hoverC = useHexColor(hoverColor);
   const id = line.get('id') as string;
   const [hover, setHover] = useState(false);
-  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
+  const updateAnnotation = useAnnotationStore((state) => state.update);
+
+  const handleTextChange = (ev: React.ChangeEvent<HTMLInputElement>) => {
+    line.set('text', ev.target.value);
+  }
 
   const handleClick = (ev: any) => {
     // Left-click while in eraser mode deletes this line/shape
     if (ev.button === 0 && primaryActionMode === 'eraser') {
       onClick(id);
       console.log(`LINE |click: primaryActionMode=${primaryActionMode}`);
-    }
-    else if (ev.button == 0 && primaryActionMode === 'lasso'){
-      console.log(`Lassoed`)
-      // setSelectedApp(id)
     }
   };
 
@@ -74,10 +75,36 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
           onMouseLeave={() => setHover(false)}
           onMouseDown={handleClick}
         />
+        <foreignObject x={minX} y={minY} width={maxX-minX} height={maxY-minY}>
+          <div style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <input
+              type='text'
+              value={text}
+              style={{
+                width: '90%',
+                height: '90%',
+                background: 'transparent',
+                border: 'none',
+                color: c,
+                fontSize: '50px',
+                textAlign: 'center',
+                outline: 'none'
+              }}
+              onChange={handleTextChange}
+            />
+          </div>
+        </foreignObject>
       </g>
     );
   }
   // --- Render rectangles with crisp right angles ---------------------------
+
   if (type === 'rectangle') {
     if (!points || points.length === 0) return null;
 
@@ -91,7 +118,6 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
     }
     const width = Math.max(0, maxX - minX);
     const height = Math.max(0, maxY - minY);
-
     return (
       <g>
         <rect
@@ -110,12 +136,32 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
           onMouseLeave={() => setHover(false)}
           onMouseDown={handleClick}
         />
-        <foreignObject x="55" y="55" width="290" height="40">
-          <div>
-            <input type="text" placeholder="Enter text here..."/>
+        <foreignObject x={minX} y={minY} width={width} height={height}>
+          <div style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <input
+              type='text'
+              value={text}
+              style={{
+                width: '90%',
+                height: '90%',
+                background: 'transparent',
+                border: 'none',
+                color: c,
+                fontSize: '50px',
+                textAlign: 'center',
+                outline: 'none'
+              }}
+              onChange={handleTextChange}
+            />
           </div>
         </foreignObject>
-      </g>
+        </g>
     );
   }
 
@@ -250,6 +296,7 @@ export function useLine(line: Y.Map<any>) {
   const [alpha, setAlpha] = useState<number>(0.6);
   const [size, setSize] = useState<number>(5);
   const [type, setType] = useState<string>('line');
+  const [text, setText] = useState<string>('');
 
   // Subscribe to changes to the line itself and sync into React state.
   useEffect(() => {
@@ -260,6 +307,7 @@ export function useLine(line: Y.Map<any>) {
       setAlpha(current.alpha);
       setSize(current.size);
       setType(current.type || 'line'); // <-- read 'type' ('line' | 'rectangle')
+      setText(current.text);
     }
 
     handleChange();
@@ -289,7 +337,7 @@ export function useLine(line: Y.Map<any>) {
     };
   }, [line]);
 
-  return { points: pts, color, isComplete, alpha, size, type };
+  return { points: pts, color, isComplete, alpha, size, type, text };
 }
 
 export function toPairs<T>(arr: T[]): T[][] {

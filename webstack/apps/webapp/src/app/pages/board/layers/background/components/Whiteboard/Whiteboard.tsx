@@ -184,6 +184,7 @@ export function Whiteboard(props: WhiteboardProps) {
               yLine.set('size', line.size);
               yLine.set('isComplete', true);
               yLine.set('userId', line.userId);
+              yLine.set('text', line.text);
             });
             yLinesArr.push([yLine]);
           });
@@ -246,6 +247,7 @@ export function Whiteboard(props: WhiteboardProps) {
         yShape.set('size', markerSize);
         yShape.set('isComplete', false);
         yShape.set('userId', user?._id);
+        yShape.set('text', '');
       });
       rCurrentLine.current = yShape;
       yLines.push([yShape]);
