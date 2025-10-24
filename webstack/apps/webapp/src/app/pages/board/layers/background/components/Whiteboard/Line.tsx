@@ -32,6 +32,10 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
   const [hover, setHover] = useState(false);
   const updateAnnotation = useAnnotationStore((state) => state.update);
 
+  const handleTextChange = (ev: React.ChangeEvent<HTMLInputElement>) => {
+    line.set('text', ev.target.value);
+  }
+
   const handleClick = (ev: any) => {
     // Left-click while in eraser mode deletes this line/shape
     if (ev.button === 0 && primaryActionMode === 'eraser') {
@@ -71,18 +75,35 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
           onMouseLeave={() => setHover(false)}
           onMouseDown={handleClick}
         />
+        <foreignObject x={minX} y={minY} width={maxX-minX} height={maxY-minY}>
+          <div style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <input
+              type='text'
+              value={text}
+              style={{
+                width: '90%',
+                height: '90%',
+                background: 'transparent',
+                border: 'none',
+                color: c,
+                fontSize: '50px',
+                textAlign: 'center',
+                outline: 'none'
+              }}
+              onChange={handleTextChange}
+            />
+          </div>
+        </foreignObject>
       </g>
     );
   }
   // --- Render rectangles with crisp right angles ---------------------------
-
-  const handleTextChange = (ev: React.ChangeEvent<HTMLInputElement>) => {
-    // Update the text in the Yjs document
-    line.set('text', ev.target.value);
-    
-    // The Yjs update should automatically trigger synchronization
-    // through the line.observe() handler in useLine
-  }
 
   if (type === 'rectangle') {
     if (!points || points.length === 0) return null;
@@ -97,12 +118,7 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
     }
     const width = Math.max(0, maxX - minX);
     const height = Math.max(0, maxY - minY);
-    // function TextInput(){
-    //   const [text, setText] = useState('');
-    //   const handleChange = (event: any) => {
-    //     setText(event.target.value);
-    //   };
-        return (
+    return (
       <g>
         <rect
           x={minX}
@@ -147,7 +163,6 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
         </foreignObject>
         </g>
     );
-    // }
   }
 
     // --- Render freehand lines with LESS rounding ----------------------------
