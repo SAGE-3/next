@@ -184,6 +184,7 @@ export function Whiteboard(props: WhiteboardProps) {
               yLine.set('size', line.size);
               yLine.set('isComplete', true);
               yLine.set('userId', line.userId);
+              yLine.set('text', line.text);
             });
             yLinesArr.push([yLine]);
           });

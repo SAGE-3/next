@@ -11,7 +11,8 @@ import { AbsoluteCenter, propNames, useColorModeValue } from '@chakra-ui/react';
 import { getStroke } from 'perfect-freehand';
 import * as Y from 'yjs';
 
-import { useHexColor, useUserSettings, useAbility, useUIStore } from '@sage3/frontend';
+
+import { useHexColor, useUserSettings, useAnnotationStore, useAppStore } from '@sage3/frontend';
 
 export interface LineProps {
   line: Y.Map<any>;
@@ -29,6 +30,7 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
   const hoverC = useHexColor(hoverColor);
   const id = line.get('id') as string;
   const [hover, setHover] = useState(false);
+  const updateAnnotation = useAnnotationStore((state) => state.update);
 
   const handleClick = (ev: any) => {
     // Left-click while in eraser mode deletes this line/shape
@@ -74,9 +76,12 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
   }
   // --- Render rectangles with crisp right angles ---------------------------
 
-  const handleTextChange = (ev:any) => {
-    console.log('line.tsx | text changed')
-    line.set('text', ev.target.value)
+  const handleTextChange = (ev: React.ChangeEvent<HTMLInputElement>) => {
+    // Update the text in the Yjs document
+    line.set('text', ev.target.value);
+    
+    // The Yjs update should automatically trigger synchronization
+    // through the line.observe() handler in useLine
   }
 
   if (type === 'rectangle') {
@@ -125,7 +130,7 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
           }}>
             <input
               type='text'
-              placeholder=''
+              value={text}
               style={{
                 width: '90%',
                 height: '90%',
