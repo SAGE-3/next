@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2025. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -23,7 +23,7 @@ import {
   MdCopyAll,
   MdFileUpload,
   MdWeb,
-  MdSync,
+  MdCallMade,
   MdCallReceived,
 } from 'react-icons/md';
 
@@ -570,8 +570,41 @@ function ToolbarComponent(props: App): JSX.Element {
             </InputGroup>
           </form>
 
+          <ButtonGroup isAttached size="xs" colorScheme={urlsMatch ? "gray" : "orange"} variant="solid" >
+            <Tooltip 
+              placement="top" 
+              hasArrow={true} 
+              label={urlsMatch ? 'Already synced' : `Revert to the shared URL`}
+              openDelay={400}
+            >
+              <Button 
+                onClick={returnToGroup} 
+                size="xs"
+                isDisabled={urlsMatch}
+                px={0}
+              >
+                <MdCallReceived size="16px" />
+              </Button>
+            </Tooltip>
 
-          <ButtonGroup isAttached size="xs" colorScheme="teal">
+            <Tooltip 
+              placement="top" 
+              hasArrow={true} 
+              label={urlsMatch ? 'Already synced' : `Update the shared URL`}
+              openDelay={400}
+            >
+              <Button 
+                onClick={syncCurrentUrl} 
+                size="xs"
+                isDisabled={urlsMatch}
+                px={0}
+              >
+                <MdCallMade size="16px" />
+              </Button>
+            </Tooltip>
+          </ButtonGroup>
+
+          <ButtonGroup isAttached size="xs" colorScheme="teal" mr="1">
             <Tooltip placement="top" hasArrow={true} label={'Zoom In'} openDelay={400}>
               <Button onClick={() => handleZoom('zoom-in')} size="xs" px={0}>
                 <MdAdd size="16px" />
@@ -606,39 +639,6 @@ function ToolbarComponent(props: App): JSX.Element {
           </ButtonGroup>
 
 
-          <ButtonGroup isAttached size="xs" colorScheme={urlsMatch ? "gray" : "orange"} variant="solid" mr="1">
-            <Tooltip 
-              placement="top" 
-              hasArrow={true} 
-              label={urlsMatch ? 'Already synced' : `Revert to the shared URL`}
-              openDelay={400}
-            >
-              <Button 
-                onClick={returnToGroup} 
-                size="xs"
-                isDisabled={urlsMatch}
-              >
-                <MdCallReceived size="16px" style={{ marginRight: '4px' }} />
-                Revert URL
-              </Button>
-            </Tooltip>
-
-            <Tooltip 
-              placement="top" 
-              hasArrow={true} 
-              label={urlsMatch ? 'Already synced' : `Update the shared URL`}
-              openDelay={400}
-            >
-              <Button 
-                onClick={syncCurrentUrl} 
-                size="xs"
-                isDisabled={urlsMatch}
-              >
-                <MdSync size="16px" style={{ marginRight: '4px' }} />
-                Update URL
-              </Button>
-            </Tooltip>
-          </ButtonGroup>
 
           <ConfirmValueModal
             isOpen={saveIsOpen}
