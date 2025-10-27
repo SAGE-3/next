@@ -9,7 +9,7 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { useParams } from 'react-router';
 
-import { Button, ButtonGroup, Tooltip, Input, InputGroup, HStack, useToast, useDisclosure } from '@chakra-ui/react';
+import { Button, ButtonGroup, Tooltip, Input, InputGroup, InputRightElement, HStack, useToast, useDisclosure } from '@chakra-ui/react';
 import {
   MdArrowBack,
   MdArrowForward,
@@ -23,12 +23,13 @@ import {
   MdCopyAll,
   MdFileUpload,
   MdWeb,
+  MdSync,
+  MdCallReceived,
 } from 'react-icons/md';
-import { FaEyeSlash } from 'react-icons/fa';
 
 import { create } from 'zustand';
 
-import { useAppStore, useUser, processContentURL, useHexColor, ConfirmValueModal, apiUrls, useUIStore, useWindowResize } from '@sage3/frontend';
+import { useAppStore, useUser, processContentURL, ConfirmValueModal, apiUrls, useUIStore, useWindowResize } from '@sage3/frontend';
 import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow, ElectronRequired } from '../../components';
@@ -94,9 +95,6 @@ function AppComponent(props: App): JSX.Element {
   const [domReady, setDomReady] = useState(false);
   const [attached, setAttached] = useState(false);
 
-  // Track if your URL matches the state's URL
-  const [urlMatchesState, setUrlMatchesState] = useState(true);
-  const matchIconColor = useHexColor('red');
   const setLocalURL = useStore((state) => state.setLocalURL);
 
   // Init the webview
@@ -174,16 +172,11 @@ function AppComponent(props: App): JSX.Element {
     });
   };
 
-  // If the URL changes, check if it matches the state's URL
+  // Update to URL from backend (only loads, doesn't sync back)
   useEffect(() => {
-    setUrlMatchesState(url === s.webviewurl);
-  }, [s.webviewurl, url]);
-
-  // Update to URL from backend
-  useEffect(() => {
-    setUrl(s.webviewurl);
-    setLocalURL(props._id, s.webviewurl);
     if (s.webviewurl !== url) {
+      setUrl(s.webviewurl);
+      setLocalURL(props._id, s.webviewurl);
       loadURL(s.webviewurl);
     }
   }, [s.webviewurl]);
@@ -275,11 +268,18 @@ function AppComponent(props: App): JSX.Element {
     };
 
     const didNavigate = (event: any) => {
+      // Only update local state, don't sync to backend automatically
       if (event.url != 'about:blank' && event.isMainFrame && !event.url.includes('.pdf')) {
         setUrl(event.url);
         setLocalURL(props._id, event.url);
-        // update the backend
-        updateState(props._id, { webviewurl: event.url });
+      }
+    };
+    
+    const didNavigateInPage = (event: any) => {
+      // Only update local state, don't sync to backend automatically
+      if (event.url != 'about:blank' && !event.url.includes('.pdf')) {
+        setUrl(event.url);
+        setLocalURL(props._id, event.url);
       }
     };
 
@@ -291,7 +291,10 @@ function AppComponent(props: App): JSX.Element {
     webview.addEventListener('new-window', newWindow);
     // Check the url before navigating
     webview.addEventListener('will-navigate', willNavigate);
-    webview.addEventListener('did-start-navigation', didNavigate);
+    // Listen for completed navigation (fires once per navigation vs did-start-navigation which can fire multiple times)
+    webview.addEventListener('did-navigate', didNavigate);
+    // Listen for in-page navigation (single-page apps, hash changes, etc.)
+    webview.addEventListener('did-navigate-in-page', didNavigateInPage);
 
     window.electron.on('open-webview', openWebview);
 
@@ -299,7 +302,8 @@ function AppComponent(props: App): JSX.Element {
       if (webview) {
         webview.removeEventListener('new-window', newWindow);
         webview.removeEventListener('will-navigate', willNavigate);
-        webview.removeEventListener('did-start-navigation', didNavigate);
+        webview.removeEventListener('did-navigate', didNavigate);
+        webview.removeEventListener('did-navigate-in-page', didNavigateInPage);
         window.electron.removeAllListeners('open-webview');
       }
     };
@@ -327,24 +331,7 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props} hideBackgroundIcon={MdWeb}>
       {isElectron() ? (
-        <div>
-          {/* Warning Icon to show your view might not match others */}
-          {!urlMatchesState && (
-            <Tooltip placement="top" hasArrow={true} label={'Your view might not match everyone elses.'}>
-              <div
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  bottom: 0,
-                }}
-              >
-                <FaEyeSlash size={64} color={matchIconColor}></FaEyeSlash>
-              </div>
-            </Tooltip>
-          )}
-
-          <webview ref={setWebviewRef} style={webviewStyle} allowpopups={'true' as any}></webview>
-        </div>
+        <webview ref={setWebviewRef} style={webviewStyle} allowpopups={'true' as any}></webview>
       ) : (
         <ElectronRequired appName={props.data.type} link={s.webviewurl} title={props.data.title} />
       )}
@@ -379,6 +366,9 @@ function ToolbarComponent(props: App): JSX.Element {
 
   // Toast
   const toast = useToast();
+
+  // Check if local URL differs from backend URL
+  const urlsMatch = localURL === s.webviewurl;
 
   // from the UI to the react state
   const handleUrlChange = (event: any) => {
@@ -467,6 +457,31 @@ function ToolbarComponent(props: App): JSX.Element {
     }
   };
 
+  // Update the group URL with current local URL
+  const syncCurrentUrl = () => {
+    if (localURL) {
+      updateState(props._id, { webviewurl: localURL });
+      toast({
+        title: 'URL updated for group',
+        status: 'success',
+        duration: 2000,
+      });
+    }
+  };
+
+  // Revert to the group's current URL
+  const returnToGroup = () => {
+    if (s.webviewurl && view) {
+      view.loadURL(s.webviewurl);
+      setLocalURL(props._id, s.webviewurl);
+      toast({
+        title: 'Reverted to group URL',
+        status: 'success',
+        duration: 2000,
+      });
+    }
+  };
+
   const saveInAssetManager = useCallback(
     (val: string) => {
       // save URL in asset manager
@@ -533,7 +548,7 @@ function ToolbarComponent(props: App): JSX.Element {
           </ButtonGroup>
 
           <form onSubmit={changeUrl}>
-            <InputGroup size="xs" minWidth="200px">
+            <InputGroup size="xs" minWidth="250px">
               <Input
                 placeholder="Web Address"
                 value={viewURL}
@@ -542,15 +557,19 @@ function ToolbarComponent(props: App): JSX.Element {
                   event.stopPropagation();
                 }}
                 backgroundColor="whiteAlpha.300"
+                paddingRight="50px"
+                borderRadius="md"
               />
+              <InputRightElement width="auto" paddingRight="2px">
+                <Tooltip placement="top" hasArrow={true} label={'Go to Web Address'} openDelay={400}>
+                  <Button onClick={changeUrl} size="xs" variant="ghost" colorScheme="teal" height="20px">
+                    <MdOutlineSubdirectoryArrowLeft size="16px" />
+                  </Button>
+                </Tooltip>
+              </InputRightElement>
             </InputGroup>
           </form>
 
-          <Tooltip placement="top" hasArrow={true} label={'Go to Web Address'} openDelay={400}>
-            <Button onClick={changeUrl} size="xs" variant="solid" colorScheme="teal" px={0}>
-              <MdOutlineSubdirectoryArrowLeft size="16px" />
-            </Button>
-          </Tooltip>
 
           <ButtonGroup isAttached size="xs" colorScheme="teal">
             <Tooltip placement="top" hasArrow={true} label={'Zoom In'} openDelay={400}>
@@ -582,6 +601,41 @@ function ToolbarComponent(props: App): JSX.Element {
             <Tooltip placement="top" hasArrow={true} label={'Open in Desktop'} openDelay={400}>
               <Button onClick={handleOpen} size="xs" px={0}>
                 <MdOpenInNew size="16px" />
+              </Button>
+            </Tooltip>
+          </ButtonGroup>
+
+
+          <ButtonGroup isAttached size="xs" colorScheme={urlsMatch ? "gray" : "orange"} variant="solid" mr="1">
+            <Tooltip 
+              placement="top" 
+              hasArrow={true} 
+              label={urlsMatch ? 'Already synced' : `Revert to the shared URL`}
+              openDelay={400}
+            >
+              <Button 
+                onClick={returnToGroup} 
+                size="xs"
+                isDisabled={urlsMatch}
+              >
+                <MdCallReceived size="16px" style={{ marginRight: '4px' }} />
+                Revert URL
+              </Button>
+            </Tooltip>
+
+            <Tooltip 
+              placement="top" 
+              hasArrow={true} 
+              label={urlsMatch ? 'Already synced' : `Update the shared URL`}
+              openDelay={400}
+            >
+              <Button 
+                onClick={syncCurrentUrl} 
+                size="xs"
+                isDisabled={urlsMatch}
+              >
+                <MdSync size="16px" style={{ marginRight: '4px' }} />
+                Update URL
               </Button>
             </Tooltip>
           </ButtonGroup>
