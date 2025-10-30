@@ -52,7 +52,12 @@ class ChatAgent:
             ("openai key: " + openai["apiKey"] + " - model: " + openai["model"]),
         )
         self.logger.info(
-            "chat server: url: " + llama["url"] + " - model: " + llama["model"],
+            "chat server: url: "
+            + llama["url"]
+            + " - apiKey: "
+            + llama["apiKey"]
+            + " - model: "
+            + llama["model"],
         )
         self.logger.info(
             "chat server: url: "
