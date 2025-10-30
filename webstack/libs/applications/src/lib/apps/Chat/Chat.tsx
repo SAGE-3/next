@@ -616,7 +616,7 @@ function AppComponent(props: App): JSX.Element {
     if (!user) return;
     if (selectedModel == 'llama') {
       toast({
-        title: 'Mesonet Feature not available for llama model',
+        title: 'Mesonet Feature not available for current model',
         description: 'Please switch SAGE Intelligence to OpenAI in User Settings.',
         status: 'error',
         duration: 4000,
@@ -2280,7 +2280,7 @@ function ToolbarComponent(props: App): JSX.Element {
       <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
         <Tooltip placement="top" hasArrow={true} label={'Download Transcript'} openDelay={400}>
           <Button onClick={downloadTxt} size='xs' px={0}>
-            <MdFileDownload fontSize="16px"/>
+            <MdFileDownload fontSize="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>
