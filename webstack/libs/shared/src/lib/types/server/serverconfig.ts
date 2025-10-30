@@ -158,6 +158,7 @@ export interface TwilioConfiguration {
 export interface OpenAIConfiguration {
   apiKey: string; // API Key
   model: string; // LLM model
+  label?: string; // Model label in the UI
 }
 
 // Llama Configuration
@@ -166,6 +167,7 @@ export interface LlamaConfiguration {
   model: string; // LLM model
   apiKey: string; // API Key
   max_tokens: number;
+  label?: string; // Model label in the UI
 }
 
 // Azure Configuration
@@ -174,6 +176,7 @@ export type AzureServiceConfig = {
   model: string;
   apiKey: string;
   api_version: string;
+  label?: string; // Model label in the UI
 };
 
 export type AzureConfig = {
