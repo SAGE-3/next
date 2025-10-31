@@ -6,7 +6,23 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+// This is a complete React component for the SAGE whiteboard.  It supports
+// drawing free‑hand lines and rectangles using pointer events.  Lines and
+// rectangles are stored in Yjs maps and synchronised with other users via
+// the SAGE annotation store.  Rectangles are drawn by clicking once to
+// set the first corner, dragging to the opposite corner, and releasing to
+// finalise the shape.  Lines are drawn by pressing down and moving.
+
+/* 
+<--------------------------------------------------------------------------------------------TODO-------------------------------------------------------------------------------------------->
+When making rectangle, thickness of marker does not reflect the 'start' point
+Implement circle drawing tool
+Can't select and move lines/shapes
+<--------------------------------------------------------------------------------------------TODO-------------------------------------------------------------------------------------------->
+*/
+
+
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import * as Simplify from 'simplify-js';
 
 // Yjs Imports
@@ -27,32 +43,38 @@ import {
 
 import { Line } from './Line';
 import { useDragAndDropBoard } from '../DragAndDropBoard';
+import { circle } from 'leaflet';
 
 type WhiteboardProps = {
   boardId: string;
   roomId: string;
 };
 
+/**
+ * Whiteboard component supporting free‑hand and rectangle drawing.
+ */
 export function Whiteboard(props: WhiteboardProps) {
   // Settings
   const { settings } = useUserSettings();
-  const primaryActionMode = settings.primaryActionMode;
+  const primaryActionMode = settings.primaryActionMode; // 'pen', 'eraser', 'rectangle', etc.
 
   const { user } = useUser();
 
+  // Scale throttling hook to reduce the frequency of scale recalculation
   const scale = useThrottleScale(250);
-  // Can annotate
+
+  // Ability: whether the current user can annotate this board
   const canAnnotate = useAbility('update', 'boards');
 
-  // UI Store
+  // UI Store state
   const boardPosition = useUIStore((state) => state.boardPosition);
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
   const clearMarkers = useUIStore((state) => state.clearMarkers);
   const setClearMarkers = useUIStore((state) => state.setClearMarkers);
   const clearAllMarkers = useUIStore((state) => state.clearAllMarkers);
-  const undoLastMaker = useUIStore((state) => state.undoLastMarker);
-  const setUndoLastMaker = useUIStore((state) => state.setUndoLastMarker);
+  const undoLastMarker = useUIStore((state) => state.undoLastMarker);
+  const setUndoLastMarker = useUIStore((state) => state.setUndoLastMarker);
   const markerOpacity = useUIStore((state) => state.markerOpacity);
   const markerSize = useUIStore((state) => state.markerSize);
   const setClearAllMarkers = useUIStore((state) => state.setClearAllMarkers);
@@ -65,7 +87,7 @@ export function Whiteboard(props: WhiteboardProps) {
   const unsubAnnotations = useAnnotationStore((state) => state.unsubscribe);
   const getAnnotations = useAnnotationStore((state) => state.getAnnotations);
 
-  // Yjs
+  // Yjs room and state
   const { yAnnotations } = useYjs();
   const [yDoc, setYdoc] = useState<Y.Doc | null>(null);
   const [yLines, setYlines] = useState<Y.Array<Y.Map<any>> | null>(null);
@@ -78,58 +100,40 @@ export function Whiteboard(props: WhiteboardProps) {
   // Drag and Drop On Board
   const { dragProps, renderContent } = useDragAndDropBoard({ roomId: props.roomId, boardId: props.boardId });
 
-  // Save the whiteboard lines to SAGE database
+  /**
+   * Persist the Yjs lines array to the SAGE annotation store.  Called after
+   * completing a stroke or clearing markers.  Only runs when yLines and
+   * boardId are defined.
+   */
   function updateBoardLines() {
     if (yLines && props.boardId) {
-      const lines = yLines.toJSON();
-      updateAnnotation(props.boardId, { whiteboardLines: lines });
+      const serialized = yLines.toJSON();
+      updateAnnotation(props.boardId, { whiteboardLines: serialized });
     }
   }
 
+  /**
+   * Convert pointer coordinates from client space to board space, accounting
+   * for board position and current scale.  Returns an array [x, y].
+   */
   const getPoint = useCallback(
     (x: number, y: number) => {
-      x = x / scale - boardPosition.x;
-      y = y / scale - boardPosition.y;
-      return [x, y];
+      const localX = x / scale - boardPosition.x;
+      const localY = y / scale - boardPosition.y;
+      return [localX, localY];
     },
     [boardPosition.x, boardPosition.y, scale]
   );
 
-  // On pointer down, start a new current line
-  const handlePointerDown = useCallback(
-    (e: React.PointerEvent<SVGSVGElement>) => {
-      if (yLines && yDoc && canAnnotate && boardSynced) {
-        // if primary pointing device and left button
-        if (e.isPrimary && e.button === 0) {
-          e.currentTarget.setPointerCapture(e.pointerId);
-          const id = Date.now().toString();
-          const yPoints = new Y.Array<number>();
-
-          const yLine = new Y.Map();
-
-          yDoc.transact(() => {
-            yLine.set('id', id);
-            yLine.set('points', yPoints);
-            yLine.set('userColor', color);
-            yLine.set('alpha', markerOpacity);
-            yLine.set('size', markerSize);
-            yLine.set('isComplete', false);
-            yLine.set('userId', user?._id);
-          });
-
-          rCurrentLine.current = yLine;
-          yLines.push([yLine]);
-        }
-      }
-    },
-    [yDoc, yLines, user, color, markerOpacity, markerSize, boardSynced]
-  );
-
+  /**
+   * Yjs observer registration: whenever the Yjs array changes, update
+   * local React state.  This keeps the component in sync with remote
+   * collaborators.
+   */
   useEffect(() => {
     function handleChange() {
       if (yLines) {
-        const lines = yLines.toArray();
-        setLines(lines);
+        setLines(yLines.toArray());
       }
     }
 
@@ -143,135 +147,304 @@ export function Whiteboard(props: WhiteboardProps) {
     };
   }, [yLines]);
 
+  /**
+   * Connect to the Yjs room and load persisted annotations.  On first
+   * connection (when the only user is the current one), clear any existing
+   * strokes and load those saved in the database.  Otherwise just hook
+   * into the Yjs doc.
+   */
   useEffect(() => {
     async function connectYjs(yRoom: YjsRoomConnection) {
-      const yLines = yRoom.doc.getArray('lines') as Y.Array<Y.Map<any>>;
+      const yLinesArr = yRoom.doc.getArray('lines') as Y.Array<Y.Map<any>>;
       const ydoc = yRoom.doc;
 
       setYdoc(ydoc);
-      setYlines(yLines);
-      const lines = yLines.toArray();
-      setLines(lines);
+      setYlines(yLinesArr);
+      setLines(yLinesArr.toArray());
 
-      // Sync state with sage when a user connects and is the only one present
+      // If I'm the only user connected, sync lines from the DB
       const users = yRoom.provider.awareness.getStates();
-      const count = users.size;
-      // I'm the only one here, so need to sync current ydoc with that is saved in the database
-      if (count === 1) {
+      if (users.size === 1) {
         const dbLines = getAnnotations();
         if (dbLines && ydoc) {
-          // Clear any existing lines
-          yLines.delete(0, yLines.length);
-          // Add each line to the board from the database
+          // Clear the Yjs array
+          yLinesArr.delete(0, yLinesArr.length);
+          // Push each persisted line/rectangle into the Yjs array
           dbLines.data.whiteboardLines.forEach((line: any) => {
-            const yPoints = new Y.Array<number>();
-            yPoints.push(line.points);
+            const pts = new Y.Array<number>();
+            // If the persisted line stores points as nested arrays, push them
+            pts.push(line.points);
             const yLine = new Y.Map<any>();
             ydoc.transact(() => {
               yLine.set('id', line.id);
-              yLine.set('points', yPoints);
+              yLine.set('type', line.type ?? 'line');
+              yLine.set('points', pts);
               yLine.set('userColor', line.userColor);
               yLine.set('alpha', line.alpha);
               yLine.set('size', line.size);
               yLine.set('isComplete', true);
               yLine.set('userId', line.userId);
+              yLine.set('text', line.text);
             });
-            yLines.push([yLine]);
+            yLinesArr.push([yLine]);
           });
-          // Set Local Lines
-          const lines = yLines.toArray();
-          setLines(lines);
+          // Update local state
+          setLines(yLinesArr.toArray());
         }
       }
     }
     async function connect(yRoom: YjsRoomConnection) {
-      // Sub to annotations for this board
       setLines([]);
       await subAnnotations(props.boardId);
       connectYjs(yRoom);
     }
-
     if (yAnnotations) {
       connect(yAnnotations);
     }
-
     return () => {
-      // Remove the bindings and disconnect the provider
       unsubAnnotations();
     };
   }, [yAnnotations, props.boardId]);
 
-  // On pointer move, update awareness and (if down) update the current line
-  const draw = useCallback(
-    (x: number, y: number) => {
-      if (primaryActionMode === 'pen') {
-        const currentLine = rCurrentLine.current;
-        if (!currentLine) return;
-        const points = currentLine.get('points');
-        // Don't add the new point to the line
-        if (!points) return;
-        const point = getPoint(x, y);
-        points.push([...point]);
+  /**
+   * Begin drawing a new stroke or rectangle on pointer down.  This function
+   * handles both pen and rectangle tools by examining primaryActionMode.  It
+   * creates a Yjs map with the appropriate metadata and stores the start
+   * coordinates in the points array.  It also captures the pointer so
+   * subsequent move/up events continue to target this element.
+   */
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent<SVGSVGElement>) => {
+      // Determine type based on current tool
+      const type = primaryActionMode === 'rectangle' ? 'rectangle' : primaryActionMode === 'pen' ? 'line' : primaryActionMode ==='circle' ? 'circle' : primaryActionMode === 'arrow' ? 'arrow' : primaryActionMode === 'doubleArrow' ? 'doubleArrow' : 'eraser';
+      if (type === 'eraser') return;
+      if (!yLines || !yDoc || !canAnnotate || !boardSynced) return;
+      if (!e.isPrimary || e.button !== 0) return;
+
+      const id = Date.now().toString();
+      const [x0, y0] = getPoint(e.clientX, e.clientY);
+
+      // Capture pointer events
+      e.currentTarget.setPointerCapture(e.pointerId);
+
+      // Prepare a shared Yjs array for storing points
+      const pts = new Y.Array<number>();
+      pts.push([x0, y0]);
+      // Circle needs to have at least two points to correctly render
+      // Extra point gets deleted when the pointer moves
+      if (type === 'circle' || type === 'arrow' || type === 'doubleArrow'){
+        pts.push([x0 + .000001, y0 + .000001]); 
       }
+      // Create a Yjs map for this shape
+      const yShape = new Y.Map();
+
+      yDoc.transact(() => {
+        yShape.set('id', id);
+        yShape.set('type', type);
+        yShape.set('points', pts);
+        yShape.set('userColor', color);
+        yShape.set('alpha', markerOpacity);
+        yShape.set('size', markerSize);
+        yShape.set('isComplete', false);
+        yShape.set('userId', user?._id);
+        yShape.set('text', '');
+      });
+      rCurrentLine.current = yShape;
+      yLines.push([yShape]);
+      setCursorPosition({ x: x0, y: y0 });
     },
-    [rCurrentLine.current, primaryActionMode]
+    [yLines, yDoc, canAnnotate, boardSynced, primaryActionMode, color, markerOpacity, markerSize, user, getPoint]
   );
 
-  const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
-    // Update cursor position for preview
-    if (primaryActionMode === 'pen') {
-      const point = getPoint(e.clientX, e.clientY);
-      setCursorPosition({ x: point[0], y: point[1] });
-    } else {
-      setCursorPosition(null);
-    }
+  /**
+   * Update the current stroke or rectangle on pointer move.  For lines, this
+   * simply appends each new point; for rectangles, it replaces the end point
+   * with the most recent coordinates.  The preview cursor is updated for
+   * all tools except eraser.
+   */
+  const handlePointerMove = useCallback(
+    (e: React.PointerEvent<SVGSVGElement>) => {
+      if (!rCurrentLine.current) return;
+      if (!e.currentTarget.hasPointerCapture(e.pointerId) || e.pointerType === 'touch') return;
+      const [x, y] = getPoint(e.clientX, e.clientY);
+      setCursorPosition(primaryActionMode !== 'eraser' ? { x, y } : null);
 
-    if (e.currentTarget.hasPointerCapture(e.pointerId) && e.pointerType !== 'touch') {
-      draw(e.clientX, e.clientY);
-    }
-  };
+      const current = rCurrentLine.current;
+      const type = current.get('type') as string;
+      const pts = current.get('points') as Y.Array<number>;
+      if (!pts) return;
 
-  const handleTouchMove = (e: React.TouchEvent<SVGSVGElement>) => {
-    if (e.touches.length === 1) {
-      draw(e.touches[0].clientX, e.touches[0].clientY);
-    }
-  };
+      if (type === 'line') {
+        // Append new point for freehand line
+        pts.push([x, y]);
+      } 
+      // use same logic to track circle and rectangle movements 
+      else if (type === 'rectangle' || type === 'circle' || type === 'arrow' || type === 'doubleArrow') {
+        // Replace the last end point (if exists) with the current coordinates
+        // A rectangle stores two points: start and current drag end
+        if (pts.length >= 4) {
+          pts.delete(2, 2); 
+        }
+        pts.push([x, y]);
+      }
+      else{
+        setCursorPosition(null);
+      }
+    },
+    [primaryActionMode, getPoint, rCurrentLine.current]
+  );
 
-  // On pointer up, complete the current line
+  /**
+   * Finalise the current stroke or rectangle on pointer up.  Lines are
+   * simplified via simplify-js for storage efficiency; rectangles are
+   * converted from start/end points into a closed polygon (five points,
+   * including the starting point repeated).  After finalisation, the
+   * shape is marked complete and persisted to the annotation store.
+   */
   const handlePointerUp = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
       e.currentTarget.releasePointerCapture(e.pointerId);
+      const current = rCurrentLine.current;
+      if (!current) return;
 
-      const currentLine = rCurrentLine.current;
-      if (!currentLine) return;
-
-      // Get the points from the current stroke
-      const points: Y.Array<number> = currentLine.get('points');
-      if (points && points.length > 0) {
-        const xyPoints: { x: number; y: number }[] = [];
-        for (let i = 0; i < points.length / 2; i++) {
-          // Convert the points to an array of objects
-          xyPoints.push({ x: points.get(i * 2), y: points.get(i * 2 + 1) });
-        }
-        // Simplify: points: Point[], tolerance: number, highQuality: boolean
-        // High quality simplification but runs ~10-20 times slower
-        const simpler = Simplify.default(xyPoints, 0.5, true);
-        // Delete the old points
-        points.delete(0, points.length);
-        // Add the new points
-        for (let i = 0; i < simpler.length; i++) {
-          // convert to integers for storage efficiency
-          points.push([Math.round(simpler[i].x), Math.round(simpler[i].y)]);
-        }
-        currentLine.set('isComplete', true);
-        updateBoardLines();
+      const type = current.get('type') as string;
+      const pts = current.get('points') as Y.Array<number>;
+      if (!pts) {
+        rCurrentLine.current = undefined;
+        return;
       }
-      // Clear the current line anymway
+
+      if (type === 'line') {
+        // Simplify freehand stroke
+        if (pts.length >= 4) {
+          const xyPoints: { x: number; y: number }[] = [];
+          for (let i = 0; i < pts.length / 2; i++) {
+            xyPoints.push({ x: pts.get(i * 2), y: pts.get(i * 2 + 1) });
+          }
+          // Simplify the stroke; tolerance 0.5, high quality
+          const simpler = Simplify.default(xyPoints, 0.5, true);
+          pts.delete(0, pts.length);
+          for (const p of simpler) {
+            pts.push([Math.round(p.x), Math.round(p.y)]);
+          }
+        }
+        current.set('isComplete', true);
+      } else if (type === 'rectangle') {
+        // Finalise rectangle: convert two endpoints to a closed rectangle
+        // If the user never moved, remove the shape
+        if (pts.length < 4) {
+          // Remove incomplete rectangle
+          const index = yLines?.toArray().indexOf(current) ?? -1;
+          if (index >= 0 && yLines) {
+            yLines.delete(index, 1);
+          }
+        } else {
+          const x0 = pts.get(0);
+          const y0 = pts.get(1);
+          const x1 = pts.get(2);
+          const y1 = pts.get(3);
+          // Determine top-left corner and dimensions【992428044196702†L130-L147】
+          const xMin = Math.min(x0, x1);
+          const yMin = Math.min(y0, y1);
+          const width = Math.abs(x1 - x0);
+          const height = Math.abs(y1 - y0);
+          // Build a closed rectangle path: TL, TR, BR, BL, back to TL
+          const rectPoints = [
+            xMin,
+            yMin,
+            xMin + width,
+            yMin,
+            xMin + width,
+            yMin + height,
+            xMin,
+            yMin + height,
+            xMin,
+            yMin,
+          ];
+          pts.delete(0, pts.length);
+          for (let i = 0; i < rectPoints.length; i += 2) {
+            pts.push([rectPoints[i], rectPoints[i + 1]]);
+          }
+          current.set('isComplete', true);
+        }
+      }
+      else if( type === 'circle'){
+        if(pts.length < 4) {
+          const index = yLines?.toArray().indexOf(current) ?? -1;
+          if (index >= 0 && yLines) {
+            yLines.delete(index, 1);
+          }
+        }
+        else{
+          const x0 = pts.get(0);
+          const y0 = pts.get(1);
+          const x1 = pts.get(2);
+          const y1 = pts.get(3);
+          const maxX = Math.max(x0, x1);
+          const minX = Math.min(x0, x1);
+          const maxY = Math.max(y0, y1);
+          const minY = Math.min(y0, y1);
+          const cx = (maxX + minX) / 2;
+          const cy = (maxY + minY) / 2;
+          const rx = (maxX - minX) / 2;
+          const ry = (maxY - minY) / 2;
+          const vert1x = cx + rx * Math.cos(Math.PI / 2);
+          const vert1y = cy + ry * Math.sin(Math.PI / 2);
+          const vert2x = cx + rx * Math.cos((3 * Math.PI) / 2);
+          const vert2y = cy + ry * Math.sin((3 * Math.PI) / 2);
+          // const a = Math.abs((maxX - minX)) / 2;
+          // const b = Math.abs((maxY - minY)) / 2;
+          // const vert1x = cx
+          // const vert1y = cx + b
+          // const vert2x = cx
+          // const vert2y = cx - b
+          const circlePoints = [
+            x0,
+            y0,
+            x1,
+            y1,
+            vert1x,
+            vert1y,
+            vert2x,
+            vert2y,
+          ];
+          pts.delete(0, pts.length);
+          for (let i = 0; i < circlePoints.length; i+=2){
+            pts.push([circlePoints[i], circlePoints[i+1]]);
+          }
+          current.set('isComplete', true);
+        }
+      }
+      else if(type === 'arrow' || type === 'doubleArrow'){
+        console.log(type)
+          if(pts.length < 4){
+            const index = yLines?.toArray().indexOf(current) ?? -1;
+            if (index >= 0 && yLines) {
+              yLines.delete(index, 1);
+            } 
+          }
+          else{
+            const x0 = pts.get(0);
+            const y0 = pts.get(1);
+            const x1 = pts.get(2);
+            const y1 = pts.get(3);
+            const points = [x0, y0, x1, y1];
+            pts.delete(0, pts.length);
+            for (let i = 0; i < points.length; i+=2){
+              pts.push([points[i], points[i+1]]);
+            }
+            current.set('isComplete', true);
+          }  
+        }
+      updateBoardLines();
       rCurrentLine.current = undefined;
     },
-    [rCurrentLine.current]
+    [updateBoardLines, yLines]
   );
 
+  /**
+   * Effect for clearing all markers when requested.
+   */
   useEffect(() => {
     if (yLines && clearAllMarkers) {
       yLines.delete(0, yLines.length);
@@ -280,10 +453,11 @@ export function Whiteboard(props: WhiteboardProps) {
     }
   }, [clearAllMarkers]);
 
-  // Clear only your markers
+  /**
+   * Effect for clearing only the current user's markers.
+   */
   useEffect(() => {
     if (yLines && clearMarkers) {
-      // delete all the users strokes
       for (let index = yLines.length - 1; index >= 0; index--) {
         const line = yLines.get(index);
         if (line.get('userId') === user?._id) {
@@ -295,60 +469,70 @@ export function Whiteboard(props: WhiteboardProps) {
     }
   }, [clearMarkers]);
 
-  // Undo last mark
+  /**
+   * Effect for undoing the last marker (pen only).
+   */
   useEffect(() => {
-    if (yLines && undoLastMaker) {
+    if (yLines && undoLastMarker) {
       for (let index = yLines.length - 1; index >= 0; index--) {
         const line = yLines.get(index);
         if (line.get('userId') === user?._id) {
-          // delete the first stroke that belongs to the user and stop
           yLines.delete(index, 1);
           break;
         }
       }
       updateBoardLines();
-      setUndoLastMaker(false);
+      setUndoLastMarker(false);
     }
-  }, [undoLastMaker]);
+  }, [undoLastMarker]);
 
-  // Delete a line when it is clicked
+  /**
+   * Remove a shape when clicked on.
+   */
   const lineClicked = (id: string) => {
-    if (!yLines) return; // Exit if yLines is undefined or null
-    let delComplete = false;
-    // Loop through yLines in reverse to find and delete the line with the matching id
+    if (!yLines) return;
+    let deleted = false;
     for (let index = yLines.length - 1; index >= 0; index--) {
       const line = yLines.get(index);
-
       if (line.get('id') === id) {
         yLines.delete(index, 1);
-        delComplete = true;
-        break; // Exit loop after deleting the line
+        deleted = true;
+        break;
       }
     }
-    // If the line was deleted, update the board lines
-    if (delComplete) updateBoardLines();
+    if (deleted) updateBoardLines();
   };
 
-  // Undo last line Windows
-  useHotkeys('alt+z', () => {
-    if (primaryActionMode === 'pen') {
-      setUndoLastMaker(true);
-    }
-  }, { dependencies: [primaryActionMode] });
-
-  // Undo last line Mac
-  useHotkeys('cmd+z', () => {
-    if (primaryActionMode === 'pen') {
-      setUndoLastMaker(true);
-    }
-  }, { dependencies: [primaryActionMode] });
+  // Hotkeys: undo last line (Pen only)
+  useHotkeys(
+    'alt+z',
+    () => {
+      if (primaryActionMode === 'pen') {
+        setUndoLastMarker(true);
+      }
+    },
+    { dependencies: [primaryActionMode] }
+  );
+  useHotkeys(
+    'cmd+z',
+    () => {
+      if (primaryActionMode === 'pen') {
+        setUndoLastMarker(true);
+      }
+    },
+    { dependencies: [primaryActionMode] }
+  );
 
   return (
     <div
       className="canvas-container"
       style={{
-        pointerEvents: primaryActionMode === 'pen' || primaryActionMode === 'eraser' ? 'auto' : 'none',
-        touchAction: primaryActionMode === 'pen' || primaryActionMode === 'eraser' ? 'none' : 'auto',
+        pointerEvents: [/* 'lasso',*/ 'pen', 'eraser', 'rectangle', 'circle', 'arrow', 'doubleArrow'].includes(primaryActionMode)
+          ? 'auto'
+          : 'none',
+        touchAction: [/* 'lasso',*/ 'pen', 'eraser', 'rectangle', 'circle', 'arrow', 'doubleArrow'].includes(primaryActionMode)
+          ? 'none'
+          : 'auto',
       }}
     >
       <svg
@@ -366,17 +550,29 @@ export function Whiteboard(props: WhiteboardProps) {
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
-        onTouchMove={handleTouchMove}
+        onTouchMove={(e) => {
+          // For touch events, delegate to handlePointerMove if only one finger
+          if (e.touches.length === 1) {
+            const touch = e.touches[0];
+            // Construct a synthetic pointer event-like object for coordinates
+            handlePointerMove({
+              ...e,
+              clientX: touch.clientX,
+              clientY: touch.clientY,
+              pointerId: 0,
+              isPrimary: true,
+              pointerType: 'touch',
+            } as unknown as React.PointerEvent<SVGSVGElement>);
+          }
+        }}
         {...dragProps}
-      // Note to future devs, handledeselect behaviour move to BackgroundLayer.tsx
       >
         <g>
-          {/* Lines */}
+          {/* Render all shapes */}
           {lines.map((line, i) => (
             <Line key={i} line={line} onClick={lineClicked} />
           ))}
-          
-          {/* Preview cursor */}
+          {/* Preview cursor for pen */}
           {cursorPosition && primaryActionMode === 'pen' && (
             <circle
               cx={cursorPosition.x}

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2025. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -9,7 +9,7 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { useParams } from 'react-router';
 
-import { Button, ButtonGroup, Tooltip, Input, InputGroup, HStack, useToast, useDisclosure } from '@chakra-ui/react';
+import { Button, ButtonGroup, Tooltip, Input, InputGroup, InputRightElement, HStack, useToast, useDisclosure } from '@chakra-ui/react';
 import {
   MdArrowBack,
   MdArrowForward,
@@ -23,21 +23,25 @@ import {
   MdCopyAll,
   MdFileUpload,
   MdWeb,
+  MdCallMade,
+  MdCallReceived,
 } from 'react-icons/md';
-import { FaEyeSlash } from 'react-icons/fa';
 
 import { create } from 'zustand';
 
-import { useAppStore, useUser, processContentURL, useHexColor, ConfirmValueModal, apiUrls, useUIStore, useWindowResize } from '@sage3/frontend';
+import { useAppStore, useUser, processContentURL, ConfirmValueModal, apiUrls, useUIStore, useWindowResize } from '@sage3/frontend';
 import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow, ElectronRequired } from '../../components';
 import { isElectron } from './util';
 
-// Electron and Browser components
+// Electron WebviewTag type
 // @ts-ignore
 import { WebviewTag } from 'electron';
 
+/**
+ * Zustand store for managing webview instances across the application
+ */
 interface WebviewStore {
   title: { [key: string]: string };
   setTitle: (id: string, title: string) => void;
@@ -90,16 +94,15 @@ function AppComponent(props: App): JSX.Element {
   const { boardId, roomId } = useParams();
   const { user } = useUser();
 
-  // Tracking the dom-ready and did-load events
+  // Track webview ready states
   const [domReady, setDomReady] = useState(false);
   const [attached, setAttached] = useState(false);
 
-  // Track if your URL matches the state's URL
-  const [urlMatchesState, setUrlMatchesState] = useState(true);
-  const matchIconColor = useHexColor('red');
   const setLocalURL = useStore((state) => state.setLocalURL);
 
-  // Init the webview
+  /**
+   * Initialize the webview element and set up partitions based on URL
+   */
   const setWebviewRef = useCallback((node: WebviewTag) => {
     // event did-attach callback
     const didAttachCallback = (evt: any) => {
@@ -117,35 +120,29 @@ function AppComponent(props: App): JSX.Element {
       webviewNode.current = node;
       const webview = webviewNode.current;
 
-      // save the webview for the toolbar
+      // Save the webview reference for toolbar access
       setView(props._id, webview);
 
-      // Special partitions to keep login info and settings separate
+      // Set partition to persist login info and settings per service
+      // This allows users to stay logged in across app instances
       if (url.indexOf('sharepoint.com') >= 0 || url.indexOf('live.com') >= 0 || url.indexOf('office.com') >= 0) {
         webview.partition = 'persist:office';
       } else if (url.indexOf('appear.in') >= 0 || url.indexOf('whereby.com') >= 0) {
-        // VTC
         webview.partition = 'persist:whereby';
       } else if (url.indexOf('youtube.com') >= 0) {
-        // VTC
         webview.partition = 'persist:youtube';
       } else if (url.indexOf('github.com') >= 0) {
-        // GITHUB
         webview.partition = 'persist:github';
       } else if (url.indexOf('google.com') >= 0) {
-        // GOOGLE
         webview.partition = 'persist:google';
       } else if (url.includes('.pdf')) {
-        // PDF documents
         webview.partition = 'persist:pdf';
       } else if (url.includes(window.location.hostname)) {
-        // Jupyter
         webview.partition = 'persist:jupyter';
       } else if (url.includes('colab.research.google.com')) {
-        // Colab
         webview.partition = 'persist:colab';
       } else {
-        // Isolation for other content
+        // Unique partition for isolation
         webview.partition = 'partition_' + props._id;
       }
 
@@ -154,17 +151,19 @@ function AppComponent(props: App): JSX.Element {
       webview.addEventListener('did-attach', didAttachCallback);
 
       const titleUpdated = (event: any) => {
-        // Update the app title
+        // Update the app title to match webpage title
         update(props._id, { title: event.title });
       };
       webview.addEventListener('page-title-updated', titleUpdated);
 
-      // After the partition has been set, you can navigate
+      // Set initial URL after partition is configured
       webview.src = url;
     }
   }, []);
 
-  // Load the new URL
+  /**
+   * Load a new URL in the webview
+   */
   const loadURL = (url: string) => {
     if (domReady === false || attached === false) return;
     webviewNode.current.stop();
@@ -174,28 +173,30 @@ function AppComponent(props: App): JSX.Element {
     });
   };
 
-  // If the URL changes, check if it matches the state's URL
+  /**
+   * Load URL from backend when it changes
+   * Note: This only loads the URL locally, it doesn't sync back to prevent loops
+   */
   useEffect(() => {
-    setUrlMatchesState(url === s.webviewurl);
-  }, [s.webviewurl, url]);
-
-  // Update to URL from backend
-  useEffect(() => {
-    setUrl(s.webviewurl);
-    setLocalURL(props._id, s.webviewurl);
     if (s.webviewurl !== url) {
+      setUrl(s.webviewurl);
+      setLocalURL(props._id, s.webviewurl);
       loadURL(s.webviewurl);
     }
   }, [s.webviewurl]);
 
+  /**
+   * Initialize audio mute state when webview is ready
+   */
   useEffect(() => {
     if (domReady === false || attached === false) return;
-    // Start page muted
     webviewNode.current.setAudioMuted(false);
     setMute(props._id, false);
   }, [domReady, attached]);
 
-  // First Load
+  /**
+   * Load initial URL when webview is ready
+   */
   useEffect(() => {
     if (domReady === false || attached === false) return;
     if (webviewNode.current) {
@@ -204,6 +205,9 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [domReady, attached]);
 
+  /**
+   * Sync zoom level from backend state
+   */
   useEffect(() => {
     if (domReady === false || attached === false) return;
     if (webviewNode.current && s.zoom) {
@@ -213,7 +217,7 @@ function AppComponent(props: App): JSX.Element {
   }, [s.zoom, domReady, attached]);
 
   /**
-   * Observes for Mute Changes
+   * Apply mute state changes to the webview
    */
   useEffect(() => {
     if (!isElectron()) return;
@@ -224,13 +228,18 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [mute, domReady, attached]);
 
-  // Open a url in a new webview, should result from event new-window within webview component
-  // Added here since there is access to more relevant information
+  /**
+   * Set up webview navigation event listeners
+   * Handles new windows, PDF links, and URL changes
+   */
   useEffect(() => {
     if (!isElectron()) return;
     if (domReady === false || attached === false) return;
     const webview = webviewNode.current;
 
+    /**
+     * Create a new Webview app positioned next to this one
+     */
     const openUrlInNewWebviewApp = (aUrl: string): void => {
       if (!user) return;
       createApp({
@@ -248,23 +257,26 @@ function AppComponent(props: App): JSX.Element {
       });
     };
 
-    // When the webview tries to open a new window
+    /**
+     * Handle new window events from the webview
+     */
     const newWindow = (event: any) => {
       if (event.url.includes(window.location.hostname)) {
-        // Allow jupyter to stay within the same window
+        // Allow Jupyter and local services to stay within the same window
         setUrl(event.url);
         setLocalURL(props._id, s.webviewurl);
-      }
-      // Open a new window
-      else if (event.url !== 'about:blank') {
+      } else if (event.url !== 'about:blank') {
+        // Open in a new webview app
         openUrlInNewWebviewApp(event.url);
       }
     };
 
+    /**
+     * Intercept PDF navigation and open in a new webview instead
+     */
     const willNavigate = (event: any) => {
-      // Check if destination is a PDF document and open another webview if so
       if (event.url && event.url.includes('.pdf')) {
-        // Dont try to download a PDF
+        // Don't download PDF, open it in a new webview app
         event.preventDefault();
         webview.stop();
         openUrlInNewWebviewApp(event.url + '#toolbar=1&view=Fit&pagemode=none');
@@ -274,45 +286,57 @@ function AppComponent(props: App): JSX.Element {
       }
     };
 
+    /**
+     * Handle completed navigation (full page loads)
+     * Note: Only updates local state - manual sync required via toolbar buttons
+     */
     const didNavigate = (event: any) => {
       if (event.url != 'about:blank' && event.isMainFrame && !event.url.includes('.pdf')) {
         setUrl(event.url);
         setLocalURL(props._id, event.url);
-        // update the backend
-        updateState(props._id, { webviewurl: event.url });
+      }
+    };
+    
+    /**
+     * Handle in-page navigation (SPA route changes, hash changes, etc.)
+     * Note: Only updates local state - manual sync required via toolbar buttons
+     */
+    const didNavigateInPage = (event: any) => {
+      if (event.url != 'about:blank' && !event.url.includes('.pdf')) {
+        setUrl(event.url);
+        setLocalURL(props._id, event.url);
       }
     };
 
+    /**
+     * Handle IPC message to open URL in a new webview
+     */
     const openWebview = ({ url }: { url: string }) => {
       openUrlInNewWebviewApp(url);
     };
 
-    // Webview opened a new window
+    // Register event listeners
     webview.addEventListener('new-window', newWindow);
-    // Check the url before navigating
     webview.addEventListener('will-navigate', willNavigate);
-    webview.addEventListener('did-start-navigation', didNavigate);
-
+    webview.addEventListener('did-navigate', didNavigate);
+    webview.addEventListener('did-navigate-in-page', didNavigateInPage);
     window.electron.on('open-webview', openWebview);
 
+    // Cleanup on unmount
     return () => {
       if (webview) {
         webview.removeEventListener('new-window', newWindow);
         webview.removeEventListener('will-navigate', willNavigate);
-        webview.removeEventListener('did-start-navigation', didNavigate);
+        webview.removeEventListener('did-navigate', didNavigate);
+        webview.removeEventListener('did-navigate-in-page', didNavigateInPage);
         window.electron.removeAllListeners('open-webview');
       }
     };
   }, [props.data.position, domReady]);
 
-  // Open the url in the default browser or a new tab
-  const handleOpen = () => {
-    if (isElectron()) {
-      window.electron.send('open-external-url', { url: s.webviewurl });
-    }
-  };
-
-  // Window resize hook
+  /**
+   * Handle window resize when app is focused
+   */
   const isFocused = useUIStore((state) => state.focusedAppId === props._id);
   const { width: winWidth, height: winHeight } = useWindowResize();
 
@@ -327,24 +351,7 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props} hideBackgroundIcon={MdWeb}>
       {isElectron() ? (
-        <div>
-          {/* Warning Icon to show your view might not match others */}
-          {!urlMatchesState && (
-            <Tooltip placement="top" hasArrow={true} label={'Your view might not match everyone elses.'}>
-              <div
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  bottom: 0,
-                }}
-              >
-                <FaEyeSlash size={64} color={matchIconColor}></FaEyeSlash>
-              </div>
-            </Tooltip>
-          )}
-
-          <webview ref={setWebviewRef} style={webviewStyle} allowpopups={'true' as any}></webview>
-        </div>
+        <webview ref={setWebviewRef} style={webviewStyle} allowpopups={'true' as any}></webview>
       ) : (
         <ElectronRequired appName={props.data.type} link={s.webviewurl} title={props.data.title} />
       )}
@@ -361,56 +368,61 @@ function ToolbarComponent(props: App): JSX.Element {
   const setMute = useStore((state) => state.setMute);
   const view = useStore((state) => state.view[props._id]);
 
-  // Local URL
+  // Local URL state
   const setLocalURL = useStore((state) => state.setLocalURL);
   const localURL = useStore((state) => state.localURL[props._id]);
   const [viewURL, setViewURL] = useState(localURL);
-  // Save Confirmation  Modal
+  
+  // Modal state
   const { isOpen: saveIsOpen, onOpen: saveOnOpen, onClose: saveOnClose } = useDisclosure();
-  // Room and board
+  
+  // Room info
   const { roomId } = useParams();
 
+  // Sync viewURL with localURL
   useEffect(() => {
     setViewURL(localURL);
   }, [localURL]);
 
-  // Is Electron
   const clientIsElectron = isElectron();
-
-  // Toast
   const toast = useToast();
 
-  // from the UI to the react state
+  // Check if local URL differs from backend URL
+  const urlsMatch = localURL === s.webviewurl;
+
+  /**
+   * Handle URL input changes
+   */
   const handleUrlChange = (event: any) => {
-    // setLocalURL(props._id, event.target.value);
     setViewURL(event.target.value);
   }
 
-  // Used by electron to change the url, usually be in-page navigation.
+  /**
+   * Navigate to the URL from the address bar
+   * Handles both URLs and search queries
+   */
   const changeUrl = (evt: any) => {
     evt.preventDefault();
     let url = viewURL.trim();
-    // Check for spaces. If they exist the this isn't a url. Create a google search
+    
+    // If input contains spaces, treat it as a search query
     if (url.indexOf(' ') !== -1) {
       url = 'https://www.google.com/search?q=' + url.replace(' ', '+');
     }
-    // Maybe it is just a one word search. Check for no SPACES and has no periods.
-    // Stuff like: news.google.com will bypass this but a search for 'Chicago' wont
-    // But 'Chicago.' will fail....Probably a better way to do this.
+    // Single word with no periods (excluding localhost) - treat as search
     else if (url.indexOf(' ') === -1 && url.indexOf('.') === -1 && url.indexOf('localhost') === -1) {
       url = 'https://www.google.com/search?q=' + url.replace(' ', '+');
     }
     // Must be a URL
     else {
       if (!url.startsWith('http')) {
-        // Add https protocol to make it a valid URL
         url = 'https://' + url;
       }
     }
+    
     try {
       url = new URL(url).toString();
       updateState(props._id, { webviewurl: url });
-      // update the address bar
       setLocalURL(props._id, url);
     } catch (error) {
       console.log('Webview> Invalid URL', url);
@@ -422,17 +434,23 @@ function ToolbarComponent(props: App): JSX.Element {
     }
   };
 
-  // Go back in the webview history
+  /**
+   * Navigate back in webview history
+   */
   const goBack = () => {
     view.goBack();
   };
 
-  // Go forward in the webview history
+  /**
+   * Navigate forward in webview history
+   */
   const goForward = () => {
     view.goForward();
   };
 
-  // Zooming
+  /**
+   * Handle zoom controls for the webview
+   */
   const handleZoom = (dir: string) => {
     const v = view as WebviewTag;
     if (dir === 'zoom-in') {
@@ -445,17 +463,20 @@ function ToolbarComponent(props: App): JSX.Element {
     updateState(props._id, { zoom: v.zoomFactor });
   };
 
-  // Open the url in the default browser or a new tab
+  /**
+   * Open current URL in default browser or new tab
+   */
   const handleOpen = () => {
     if (clientIsElectron) {
       window.electron.send('open-external-url', { url: s.webviewurl });
     } else {
-      // Open in new tab
       window.open(s.webviewurl, '_blank');
     }
   };
 
-  // Copy the url to the clipboard
+  /**
+   * Copy current URL to clipboard
+   */
   const handleCopy = () => {
     if (navigator.clipboard) {
       navigator.clipboard.writeText(localURL);
@@ -467,23 +488,54 @@ function ToolbarComponent(props: App): JSX.Element {
     }
   };
 
+  /**
+   * Update the shared URL with your current page (push to other clients)
+   */
+  const syncCurrentUrl = () => {
+    if (localURL) {
+      updateState(props._id, { webviewurl: localURL });
+      toast({
+        title: 'URL updated for group',
+        status: 'success',
+        duration: 2000,
+      });
+    }
+  };
+
+  /**
+   * Revert to the shared URL (pull from other clients)
+   */
+  const returnToGroup = () => {
+    if (s.webviewurl && view) {
+      view.loadURL(s.webviewurl);
+      setLocalURL(props._id, s.webviewurl);
+      toast({
+        title: 'Reverted to group URL',
+        status: 'success',
+        duration: 2000,
+      });
+    }
+  };
+
+  /**
+   * Save the current URL as a .url file in the asset manager
+   */
   const saveInAssetManager = useCallback(
     (val: string) => {
-      // save URL in asset manager
       if (!val.endsWith('.url')) {
         val += '.url';
       }
-      // Generate the content of the file
+      
+      // Generate Internet Shortcut file content
       const content = `[InternetShortcut]\nURL=${viewURL}\n`;
-      // Save the code in the asset manager
+      
       if (roomId) {
-        // Create a form to upload the file
         const fd = new FormData();
         const codefile = new File([new Blob([content])], val);
         fd.append('files', codefile);
-        // Add fields to the upload form
         fd.append('room', roomId);
-        // Upload with a POST request
+        
+        // Upload to asset manager
         fetch(apiUrls.assets.upload, { method: 'POST', body: fd })
           .catch((error: Error) => {
             toast({
@@ -533,7 +585,7 @@ function ToolbarComponent(props: App): JSX.Element {
           </ButtonGroup>
 
           <form onSubmit={changeUrl}>
-            <InputGroup size="xs" minWidth="200px">
+            <InputGroup size="xs" minWidth="250px">
               <Input
                 placeholder="Web Address"
                 value={viewURL}
@@ -542,17 +594,54 @@ function ToolbarComponent(props: App): JSX.Element {
                   event.stopPropagation();
                 }}
                 backgroundColor="whiteAlpha.300"
+                paddingRight="50px"
+                borderRadius="md"
               />
+              <InputRightElement width="auto" paddingRight="2px">
+                <Tooltip placement="top" hasArrow={true} label={'Go to Web Address'} openDelay={400}>
+                  <Button onClick={changeUrl} size="xs" variant="ghost" colorScheme="teal" height="20px">
+                    <MdOutlineSubdirectoryArrowLeft size="16px" />
+                  </Button>
+                </Tooltip>
+              </InputRightElement>
             </InputGroup>
           </form>
 
-          <Tooltip placement="top" hasArrow={true} label={'Go to Web Address'} openDelay={400}>
-            <Button onClick={changeUrl} size="xs" variant="solid" colorScheme="teal" px={0}>
-              <MdOutlineSubdirectoryArrowLeft size="16px" />
-            </Button>
-          </Tooltip>
+          <ButtonGroup isAttached size="xs" colorScheme={urlsMatch ? "gray" : "orange"} variant="solid" >
+            <Tooltip 
+              placement="top" 
+              hasArrow={true} 
+              label={urlsMatch ? 'Already synced' : `Revert to the shared URL`}
+              openDelay={400}
+            >
+              <Button 
+                onClick={returnToGroup} 
+                size="xs"
+                isDisabled={urlsMatch}
+                px={0}
+              >
+                <MdCallReceived size="16px" />
+              </Button>
+            </Tooltip>
 
-          <ButtonGroup isAttached size="xs" colorScheme="teal">
+            <Tooltip 
+              placement="top" 
+              hasArrow={true} 
+              label={urlsMatch ? 'Already synced' : `Update the shared URL`}
+              openDelay={400}
+            >
+              <Button 
+                onClick={syncCurrentUrl} 
+                size="xs"
+                isDisabled={urlsMatch}
+                px={0}
+              >
+                <MdCallMade size="16px" />
+              </Button>
+            </Tooltip>
+          </ButtonGroup>
+
+          <ButtonGroup isAttached size="xs" colorScheme="teal" mr="1">
             <Tooltip placement="top" hasArrow={true} label={'Zoom In'} openDelay={400}>
               <Button onClick={() => handleZoom('zoom-in')} size="xs" px={0}>
                 <MdAdd size="16px" />
@@ -576,7 +665,9 @@ function ToolbarComponent(props: App): JSX.Element {
             </Tooltip>
 
             <Tooltip placement="top" hasArrow={true} label={'Copy URL'} openDelay={400}>
-              <Button onClick={handleCopy} size="xs" px={0}>{<MdCopyAll size="16px" />}</Button>
+              <Button onClick={handleCopy} size="xs" px={0}>
+                <MdCopyAll size="16px" />
+              </Button>
             </Tooltip>
 
             <Tooltip placement="top" hasArrow={true} label={'Open in Desktop'} openDelay={400}>
