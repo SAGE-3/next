@@ -180,9 +180,10 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
   const pathData = getSvgPathFromStrokePolygon(strokeOutline);
 
   if (type === 'arrow') {
-    if (!points || points.length === 0) return null;
+    if (!points || points.length < 2) return null;
 
     // Compute bounding box from whatever points we have (robust to closed poly or 2-point form)
+    try{
     const x1 = points[0][0];
     const y1 = points[0][1];
     const x2 = points[1][0];
@@ -217,13 +218,16 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
           onMouseDown={handleClick}
           />
       </g>
-    );
+    );} catch(e){
+      console.log("Error rendering arrow:", e);
+    }
   }
 
   if (type === 'doubleArrow') {
-    if (!points || points.length === 0) return null;
+    if (!points || points.length < 2) return null;
 
     // Compute bounding box from whatever points we have (robust to closed poly or 2-point form)
+    try {
     const x1 = points[0][0];
     const y1 = points[0][1];
     const x2 = points[1][0];
@@ -260,6 +264,9 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
           />
       </g>
     );
+    } catch(e){
+      console.log("Error rendering double arrow:", e);
+    }
   }
 
   return (
