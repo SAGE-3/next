@@ -15,8 +15,9 @@ import { CircularPacking } from './visualizations/CircularPacking';
 import { Treemap } from './visualizations/Treemap';
 import { Force } from './visualizations/Force';
 import { TSNE } from './visualizations/TSNE';
+import { UMAP } from './visualizations/UMAP';
+import { DotPlot } from './visualizations/DotPlot';
 import { LineGraph } from './visualizations/LineGraph';
-import { PaperApp } from './visualizations/Paper'; // We'll use this as a visualization, not an app
 
 // Slightly lighten each color by about 8%
 const colors = [
@@ -32,6 +33,9 @@ const colors = [
 // Default colors for reset functionality
 const defaultColors = [...colors];
 
+// Fixed aspect ratio for DocuSAGE apps (4:3)
+const DOCUSAGE_ASPECT_RATIO = 16/9;
+
 export type AppState = {
   depth: number;
   selectedTopic: string | null;
@@ -39,7 +43,8 @@ export type AppState = {
   maxDepth: number;
   data?: Tree;
   customColors?: string[]; // Add custom colors to state
-  visualizationType?: 'treemap' | 'tsne' | 'linegraph'; // Add visualization type
+  visualizationType?: 'treemap' | 'tsne' | 'umap' | 'dotplot' | 'linegraph'; // Add visualization type
+  dotPlotAlgorithm?: 'tsne' | 'umap'; // Algorithm for dot plot
 };
 
 export const state: AppState = {
@@ -49,6 +54,7 @@ export const state: AppState = {
   maxDepth: 3, // Default to 3, will be calculated from data
   customColors: [...defaultColors], // Initialize with default colors
   visualizationType: 'treemap', // Default to treemap
+  dotPlotAlgorithm: 'tsne', // Default algorithm for dot plot
 };
 
 /* App component for DocuSAGE */
@@ -174,7 +180,10 @@ export const AppComponent = (props: App): JSX.Element => {
   };
 
   const handlePaperClick = (paper: any) => {
-    const paperSize = { width: 850, height: 1100, depth: 0 };
+    // Use 8.5x11 aspect ratio for paper
+    const DOCUPAGE_ASPECT_RATIO = 8.5 / 11;
+    const baseWidth = 850;
+    const paperSize = { width: baseWidth, height: Math.round(baseWidth / DOCUPAGE_ASPECT_RATIO), depth: 0 };
     const newPosition = findNextAvailablePosition(paperSize, 60, false); // Papers prefer right
     
     createApp({
@@ -184,17 +193,14 @@ export const AppComponent = (props: App): JSX.Element => {
       position: newPosition,
       size: paperSize,
       rotation: { x: 0, y: 0, z: 0 },
-      type: 'DocuSAGE',
+      type: 'DocuPAGE',
       state: {
-        depth: 1,
-        selectedTopic: paper.topic,
-        filteredData: paper,
-        maxDepth: 1,
-        data: paper,
-        paperView: true, // custom flag to indicate this is a paper view
-        paperData: paper,
-        disableResize: true, // prevent resizing for paper
-        customColors: s.customColors || [...defaultColors], // Include custom colors
+        topic: paper.topic || '',
+        title: paper.title,
+        authors: paper.authors,
+        year: paper.year,
+        venue: paper.venue,
+        summary: paper.summary,
       },
       raised: true,
       dragging: false,
@@ -216,15 +222,18 @@ export const AppComponent = (props: App): JSX.Element => {
       customColors: s.customColors || [...defaultColors], // Ensure custom colors are included
     };
 
-    const newPosition = findNextAvailablePosition(props.data.size, 40, true); // Filtered layers prefer below
+    // Use consistent aspect ratio
+    const baseWidth = props.data.size.width;
+    const consistentSize = { width: baseWidth, height: Math.round(baseWidth / DOCUSAGE_ASPECT_RATIO), depth: 0 };
+    const newPosition = findNextAvailablePosition(consistentSize, 40, true); // Filtered layers prefer below
 
-    // Create the new application with the same size as the current one
+    // Create the new application with consistent aspect ratio
     createApp({
       title: topic,
       roomId: props.data.roomId,
       boardId: props.data.boardId,
       position: newPosition,
-      size: props.data.size, // Use the same size as the current app
+      size: consistentSize, // Use consistent aspect ratio
       rotation: { x: 0, y: 0, z: 0 },
       type: 'DocuSAGE',
       state: newAppState,
@@ -310,44 +319,56 @@ export const AppComponent = (props: App): JSX.Element => {
     onRequestRename: handleRequestRename,
   };
 
+  const handleDotPlotAlgorithmChange = (algorithm: 'tsne' | 'umap') => {
+    updateState(props._id, { dotPlotAlgorithm: algorithm });
+  };
+
   const renderVisualization = () => {
-    // If this app is a paper view, only show the PaperApp
-    if ((s as any).paperView && (s as any).paperData) {
-      return <PaperApp {...(s as any).paperData} />;
-    }
-    
     // Choose visualization based on type
-    if (s.visualizationType === 'tsne') {
-      return <TSNE {...visualizationProps} />;
+    if (s.visualizationType === 'dotplot') {
+      return <DotPlot {...visualizationProps} algorithm={s.dotPlotAlgorithm || 'tsne'} onAlgorithmChange={handleDotPlotAlgorithmChange} />;
     }
     
     if (s.visualizationType === 'linegraph') {
       return <LineGraph {...visualizationProps} />;
     }
     
+    // For backward compatibility with old t-SNE and UMAP apps
+    if (s.visualizationType === 'tsne' || s.visualizationType === 'umap') {
+      return <DotPlot {...visualizationProps} algorithm={s.visualizationType} onAlgorithmChange={handleDotPlotAlgorithmChange} />;
+    }
+    
     return <Treemap {...visualizationProps} />;
   };
 
+  // Calculate responsive hover title font size based on app size
+  const baseSize = Math.min(props.data.size.width, props.data.size.height);
+  const hoverTitleFontSize = baseSize * 0.025;
+
   return (
-    <AppWindow app={props} disableResize={(s as any).paperView || (s as any).disableResize}>
+    <AppWindow 
+      app={props} 
+      lockAspectRatio={DOCUSAGE_ASPECT_RATIO} // Lock to 16:9 aspect ratio
+    >
       <div style={{ position: 'relative', width: '100%', height: '100%' }}>
         {hoverTitle && (
           <div
             style={{
               position: 'absolute',
-              top: 40,
+              top: '0.74em',
               left: '50%',
               transform: 'translateX(-50%)',
               background: hoverTitleBg,
               color: hoverTitleColor,
               fontWeight: 700,
-              fontSize: 54,
+              fontSize: `${hoverTitleFontSize}px`,
               textAlign: 'center',
-              padding: '32px 80px',
+              padding: '0.6em 1.5em',
               zIndex: 2000,
-              border: `3px solid ${hoverTitleBorder}`,
-              borderRadius: 32,
-              boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+              border: '0.056em solid',
+              borderColor: hoverTitleBorder,
+              borderRadius: '0.6em',
+              boxShadow: '0 0.15em 0.6em rgba(0,0,0,0.18)',
               pointerEvents: 'none',
             }}
           >
@@ -421,7 +442,7 @@ function ToolbarComponent(props: App): JSX.Element {
     updateState(props._id, { customColors: newColors });
   };
 
-  const handleVisualizationChange = (type: 'treemap' | 'tsne' | 'linegraph') => {
+  const handleVisualizationChange = (type: 'treemap' | 'dotplot' | 'linegraph') => {
     updateState(props._id, { visualizationType: type });
   };
 
@@ -477,12 +498,12 @@ function ToolbarComponent(props: App): JSX.Element {
         </ChakraText>
         <Select
           value={s.visualizationType || 'treemap'}
-          onChange={(e) => handleVisualizationChange(e.target.value as 'treemap' | 'tsne' | 'linegraph')}
+          onChange={(e) => handleVisualizationChange(e.target.value as 'treemap' | 'dotplot' | 'linegraph')}
           size="sm"
           width="120px"
         >
           <option value="treemap">Tree Map</option>
-          <option value="tsne">t-SNE Plot</option>
+          <option value="dotplot">Dot Plot</option>
           <option value="linegraph">Line Graph</option>
         </Select>
       </Box>

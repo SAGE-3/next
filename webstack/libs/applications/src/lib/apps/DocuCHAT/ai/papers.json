@@ -1,0 +1,347 @@
+{
+  "papers": [
+    {
+      "title": "Smoking and Carcinoma of the Lung: Preliminary Report",
+      "authors": "Richard Doll; A. Bradford Hill",
+      "year": 1950,
+      "topic": "Epidemiology / Smoking",
+      "description": "Landmark case-control study linking cigarette smoking to lung cancer, helping establish smoking as a major health risk."
+    },
+    {
+      "title": "Epidemiological Approaches to Heart Disease: The Framingham Study",
+      "authors": "Thomas R. Dawber; Gilbert F. Meadors; Felix E. Moore",
+      "year": 1951,
+      "topic": "Cardiology / Epidemiology",
+      "description": "Introduced the Framingham cohort, identifying key cardiovascular risk factors like hypertension, cholesterol, and smoking."
+    },
+    {
+      "title": "Sick Individuals and Sick Populations",
+      "authors": "Geoffrey Rose",
+      "year": 1985,
+      "topic": "Public Health / Prevention",
+      "description": "Classic essay distinguishing individual-level and population-level strategies in disease prevention."
+    },
+    {
+      "title": "Health Inequalities among British Civil Servants: The Whitehall II Study",
+      "authors": "Michael G. Marmot; Jane Smith; Stephen A. Stansfeld; et al.",
+      "year": 1991,
+      "topic": "Social Determinants of Health",
+      "description": "Demonstrated strong gradients in health by employment grade, highlighting psychosocial and socioeconomic influences on disease."
+    },
+    {
+      "title": "Streptomycin Treatment of Pulmonary Tuberculosis: A Medical Research Council Investigation",
+      "authors": "MRC Tuberculosis Trials Committee",
+      "year": 1948,
+      "topic": "Infectious Disease / Clinical Trials",
+      "description": "First randomized controlled trial, showing streptomycin's efficacy against TB and pioneering modern trial methodology."
+    },
+    {
+      "title": "Randomised Trial of Intravenous Streptokinase, Oral Aspirin, Both, or Neither among 17,187 Cases of Suspected Acute Myocardial Infarction: ISIS-2",
+      "authors": "ISIS-2 Collaborative Group",
+      "year": 1988,
+      "topic": "Cardiology / Clinical Trial",
+      "description": "Established substantial mortality reduction with aspirin and streptokinase in acute myocardial infarction."
+    },
+    {
+      "title": "Major Outcomes in High-Risk Hypertensive Patients Randomized to ACE Inhibitor or Calcium Channel Blocker vs Diuretic (ALLHAT)",
+      "authors": "ALLHAT Collaborative Research Group",
+      "year": 2002,
+      "topic": "Cardiology / Hypertension",
+      "description": "Found thiazide diuretics comparable or superior to newer agents for preventing cardiovascular events in hypertension."
+    },
+    {
+      "title": "Risks and Benefits of Estrogen plus Progestin in Healthy Postmenopausal Women: Principal Results from the WHI Randomized Controlled Trial",
+      "authors": "Writing Group for the Women\u2019s Health Initiative Investigators",
+      "year": 2002,
+      "topic": "Women\u2019s Health / Endocrinology",
+      "description": "Showed combined hormone therapy increases risks of breast cancer and cardiovascular events, reshaping HRT practice."
+    },
+    {
+      "title": "Evidence Based Medicine: What It Is and What It Isn\u2019t",
+      "authors": "David L. Sackett; William M.C. Rosenberg; J.A. Gray; R.B. Haynes; W.S. Richardson",
+      "year": 1996,
+      "topic": "Clinical Methodology",
+      "description": "Foundational article defining evidence-based medicine and its integration of best evidence with clinical expertise and patient values."
+    },
+    {
+      "title": "CONSORT 2010 Statement: Updated Guidelines for Reporting Parallel-Group Randomised Trials",
+      "authors": "David Moher; Kenneth F. Schulz; Douglas G. Altman; for the CONSORT Group",
+      "year": 2010,
+      "topic": "Research Methods / Reporting",
+      "description": "Standardized trial reporting to improve transparency and reduce bias in randomized controlled trials."
+    },
+    {
+      "title": "Preferred Reporting Items for Systematic Reviews and Meta-Analyses (PRISMA) Statement",
+      "authors": "David Moher; Alessandro Liberati; Jennifer Tetzlaff; Douglas G. Altman",
+      "year": 2009,
+      "topic": "Research Methods / Systematic Reviews",
+      "description": "Established guidelines to enhance the reporting quality of systematic reviews and meta-analyses."
+    },
+    {
+      "title": "The Strengthening the Reporting of Observational Studies in Epidemiology (STROBE) Statement: Guidelines for Reporting Observational Studies",
+      "authors": "Erik von Elm; Douglas G. Altman; Matthias Egger; et al.",
+      "year": 2007,
+      "topic": "Research Methods / Observational Studies",
+      "description": "Provided a checklist to improve the quality and transparency of observational study reporting."
+    },
+    {
+      "title": "GRADE: An Emerging Consensus on Rating Quality of Evidence and Strength of Recommendations",
+      "authors": "Gordon H. Guyatt; Andrew D. Oxman; Gunn Vist; et al.",
+      "year": 2008,
+      "topic": "Research Methods / Guidelines",
+      "description": "Introduced the GRADE framework for evaluating evidence quality and recommendation strength in healthcare."
+    },
+    {
+      "title": "Primary Prevention of Cardiovascular Disease with a Mediterranean Diet",
+      "authors": "Ram\u00f3n Estruch; Emilio Ros; Jordi Salas-Salvad\u00f3; et al.",
+      "year": 2013,
+      "topic": "Nutrition / Cardiology",
+      "description": "Showed Mediterranean diet supplemented with olive oil or nuts reduces major cardiovascular events."
+    },
+    {
+      "title": "A Clinical Trial of the Effects of Dietary Patterns on Blood Pressure (DASH)",
+      "authors": "Lawrence J. Appel; Thomas J. Moore; Eva Obarzanek; et al.",
+      "year": 1997,
+      "topic": "Nutrition / Hypertension",
+      "description": "DASH diet significantly lowered blood pressure independent of weight loss, informing dietary guidelines."
+    },
+    {
+      "title": "Prevention of HIV-1 Infection with Early Antiretroviral Therapy",
+      "authors": "Myron S. Cohen; Ying Q. Chen; Marybeth McCauley; et al.",
+      "year": 2011,
+      "topic": "Infectious Disease / HIV",
+      "description": "Early ART reduced HIV transmission by 96%, establishing treatment as prevention."
+    },
+    {
+      "title": "Declining Morbidity and Mortality among Patients with Advanced HIV Infection",
+      "authors": "Frank J. Palella Jr.; Kathleen M. Delaney; Andrew C. Moorman; et al.",
+      "year": 1998,
+      "topic": "Infectious Disease / HIV",
+      "description": "Documented dramatic reductions in AIDS morbidity and mortality following HAART introduction."
+    },
+    {
+      "title": "Global and Regional Mortality from 235 Causes of Death for 20 Age Groups in 1990 and 2010: A Systematic Analysis",
+      "authors": "Rafael Lozano; Mohsen Naghavi; Stephen S. Lim; et al.",
+      "year": 2012,
+      "topic": "Global Health / Epidemiology",
+      "description": "GBD 2010 analysis quantified shifts in global mortality patterns, informing health priorities."
+    },
+    {
+      "title": "An Association Between Air Pollution and Mortality in Six U.S. Cities",
+      "authors": "Douglas W. Dockery; C. Arden Pope III; Xiping Xu; et al.",
+      "year": 1993,
+      "topic": "Environmental Health",
+      "description": "Linked long-term particulate air pollution exposure to increased mortality, catalyzing air quality regulations."
+    },
+    {
+      "title": "The Oregon Experiment \u2014 Effects of Medicaid on Clinical Outcomes",
+      "authors": "Katherine Baicker; Sarah L. Taubman; Heidi L. Allen; et al.",
+      "year": 2013,
+      "topic": "Health Policy / Health Economics",
+      "description": "Randomized Medicaid expansion showed improved financial security and mental health, with mixed clinical biomarkers."
+    },
+    {
+      "title": "Mortality and Morbidity from Malaria in Gambian Children after Introduction of Permethrin-Treated Bed Nets",
+      "authors": "Umberto D\u2019Alessandro; Chris F. R. Curtis; et al.",
+      "year": 1995,
+      "topic": "Global Health / Malaria",
+      "description": "Demonstrated that insecticide-treated nets significantly reduce child mortality and malaria morbidity."
+    },
+    {
+      "title": "Tissue Plasminogen Activator for Acute Ischemic Stroke",
+      "authors": "The NINDS rt-PA Stroke Study Group",
+      "year": 1995,
+      "topic": "Neurology / Stroke",
+      "description": "Showed intravenous tPA improves outcomes when administered within 3 hours of stroke onset, changing acute stroke care."
+    },
+    {
+      "title": "Randomised Trial of Cholesterol Lowering in 4444 Patients with Coronary Heart Disease: The Scandinavian Simvastatin Survival Study (4S)",
+      "authors": "4S Study Group",
+      "year": 1994,
+      "topic": "Cardiology / Lipids",
+      "description": "Established statins reduce mortality and major cardiovascular events in secondary prevention."
+    },
+    {
+      "title": "Prevention of Coronary Heart Disease with Pravastatin in Men with Hypercholesterolemia (WOSCOPS)",
+      "authors": "James Shepherd; Stuart Cobbe; et al.",
+      "year": 1995,
+      "topic": "Cardiology / Lipids",
+      "description": "First primary prevention statin trial showing reduced CHD events in men with high LDL."
+    },
+    {
+      "title": "Rosuvastatin to Prevent Vascular Events in Men and Women with Elevated C-Reactive Protein (JUPITER)",
+      "authors": "Paul M. Ridker; Eugene Braunwald; et al.",
+      "year": 2008,
+      "topic": "Cardiology / Prevention",
+      "description": "Demonstrated statin benefits in individuals with normal LDL but elevated hs-CRP, expanding preventive statin use."
+    },
+    {
+      "title": "A Randomized Trial of Intensive versus Standard Blood-Pressure Control (SPRINT)",
+      "authors": "SPRINT Research Group",
+      "year": 2015,
+      "topic": "Cardiology / Hypertension",
+      "description": "Intensive systolic BP target (<120 mm Hg) reduced cardiovascular events and mortality compared with standard control."
+    },
+    {
+      "title": "Reduction in the Incidence of Type 2 Diabetes with Lifestyle Intervention or Metformin (DPP)",
+      "authors": "William C. Knowler; Elizabeth Barrett-Connor; Sarah E. Fowler; et al.",
+      "year": 2002,
+      "topic": "Endocrinology / Diabetes Prevention",
+      "description": "Lifestyle modification reduced diabetes incidence by 58% and metformin by 31% among high-risk adults."
+    },
+    {
+      "title": "Intensive Blood-Glucose Control with Sulphonylureas or Insulin Compared with Conventional Treatment and Risk of Complications in Type 2 Diabetes (UKPDS 33)",
+      "authors": "UKPDS Group",
+      "year": 1998,
+      "topic": "Endocrinology / Diabetes",
+      "description": "Tight glycemic control reduced microvascular complications in type 2 diabetes, informing long-term management."
+    },
+    {
+      "title": "The Effect of Intensive Treatment of Diabetes on the Development and Progression of Long-Term Complications in Insulin-Dependent Diabetes Mellitus (DCCT)",
+      "authors": "DCCT Research Group",
+      "year": 1993,
+      "topic": "Endocrinology / Diabetes",
+      "description": "Intensive insulin therapy in type 1 diabetes reduced microvascular complications, establishing glycemic targets."
+    },
+    {
+      "title": "Weight in Infancy and Death from Ischaemic Heart Disease",
+      "authors": "D.J.P. Barker; C. Osmond; K. M. Thornburg; et al.",
+      "year": 1989,
+      "topic": "Epidemiology / Developmental Origins",
+      "description": "Linked low birth weight to higher adult heart disease risk, introducing the fetal origins hypothesis."
+    },
+    {
+      "title": "Evaluation of the 1954 Poliomyelitis Vaccine Field Trial",
+      "authors": "Thomas Francis Jr.; Jonas Salk; et al.",
+      "year": 1955,
+      "topic": "Infectious Disease / Vaccines",
+      "description": "Confirmed the efficacy of the Salk polio vaccine in a massive field trial, transforming polio control."
+    },
+    {
+      "title": "Quadrivalent Vaccine against Human Papillomavirus to Prevent High-Grade Cervical Lesions (FUTURE II)",
+      "authors": "FUTURE II Study Group",
+      "year": 2007,
+      "topic": "Infectious Disease / Vaccines",
+      "description": "Showed HPV vaccination prevents high-grade cervical lesions caused by oncogenic HPV types."
+    },
+    {
+      "title": "Dexamethasone in Hospitalized Patients with Covid-19",
+      "authors": "RECOVERY Collaborative Group",
+      "year": 2021,
+      "topic": "Infectious Disease / COVID-19",
+      "description": "Demonstrated dexamethasone reduces mortality among severely ill COVID-19 patients requiring oxygen."
+    },
+    {
+      "title": "Safety and Efficacy of the BNT162b2 mRNA Covid-19 Vaccine",
+      "authors": "Fernando P. Polack; Stephen J. Thomas; Nicholas Kitchin; et al.",
+      "year": 2020,
+      "topic": "Infectious Disease / Vaccines",
+      "description": "Phase 3 trial showing high efficacy and acceptable safety of the Pfizer-BioNTech mRNA vaccine."
+    },
+    {
+      "title": "Efficacy and Safety of the mRNA-1273 SARS-CoV-2 Vaccine",
+      "authors": "Lindsey R. Baden; Hana M. El Sahly; Brandon Essink; et al.",
+      "year": 2021,
+      "topic": "Infectious Disease / Vaccines",
+      "description": "Phase 3 trial demonstrating high efficacy of the Moderna mRNA COVID-19 vaccine against symptomatic infection."
+    },
+    {
+      "title": "Clinical Features of Patients Infected with 2019 Novel Coronavirus in Wuhan, China",
+      "authors": "Chaolin Huang; Yeming Wang; Xingwang Li; et al.",
+      "year": 2020,
+      "topic": "Infectious Disease / COVID-19",
+      "description": "Early characterization of COVID-19 clinical manifestations, laboratory findings, and outcomes in hospitalized patients."
+    },
+    {
+      "title": "Mortality Results from a Randomized Prostate-Cancer Screening Trial (PLCO)",
+      "authors": "Gerald L. Andriole; E. David Crawford; et al.",
+      "year": 2009,
+      "topic": "Cancer Screening",
+      "description": "U.S. trial found no significant mortality reduction from annual PSA-based screening."
+    },
+    {
+      "title": "Screening and Prostate-Cancer Mortality in a Randomized European Study (ERSPC)",
+      "authors": "Fritz H. Schr\u00f6der; Jonas Hugosson; et al.",
+      "year": 2009,
+      "topic": "Cancer Screening",
+      "description": "European trial showed PSA screening reduced prostate cancer mortality but with risks of overdiagnosis."
+    },
+    {
+      "title": "Twenty Five Year Follow-Up for Breast Cancer Incidence and Mortality of the Canadian National Breast Screening Study: Randomised Screening Trial",
+      "authors": "Anthony B. Miller; Teresa To; Cindy Baines; Heather D. Wall",
+      "year": 2014,
+      "topic": "Cancer Screening",
+      "description": "Long-term results questioned the benefit of annual mammography in women aged 40\u201359 without palpable abnormalities."
+    },
+    {
+      "title": "A Common Variant in the FTO Gene Is Associated with Body Mass Index and Predisposes to Childhood and Adult Obesity",
+      "authors": "Timothy M. Frayling; N. J. Timpson; et al.",
+      "year": 2007,
+      "topic": "Genetics / Obesity",
+      "description": "Identified FTO variants strongly associated with BMI, advancing understanding of genetic contributions to obesity."
+    },
+    {
+      "title": "The Nature of Adverse Events in Hospitalized Patients: Results of the Harvard Medical Practice Study II",
+      "authors": "Lucian L. Leape; Troyen A. Brennan; Nan Laird; et al.",
+      "year": 1991,
+      "topic": "Patient Safety / Health Services",
+      "description": "Seminal study quantifying adverse events and preventable harm in hospitals, fueling patient safety initiatives."
+    },
+    {
+      "title": "Incidence of Adverse Drug Events and Potential Adverse Drug Events: Implications for Prevention",
+      "authors": "David W. Bates; Lucian L. Leape; David J. Cullen; et al.",
+      "year": 1995,
+      "topic": "Patient Safety / Pharmacology",
+      "description": "Prospective study detailing the frequency and types of medication-related harm, informing error prevention strategies."
+    },
+    {
+      "title": "A Controlled Trial of Oral Therapy in Cholera",
+      "authors": "Richard A. Cash; N.K. Nalin; J.M. Rochat; et al.",
+      "year": 1969,
+      "topic": "Global Health / Infectious Disease",
+      "description": "Demonstrated effectiveness of oral rehydration therapy for cholera, transforming diarrheal disease management."
+    },
+    {
+      "title": "Ebola Virus Disease in West Africa \u2014 The First 9 Months of the Epidemic and Forward Projections",
+      "authors": "WHO Ebola Response Team",
+      "year": 2014,
+      "topic": "Infectious Disease / Outbreaks",
+      "description": "Analyzed early Ebola epidemic dynamics and projected trajectories, guiding international response efforts."
+    },
+    {
+      "title": "21st-Century Hazards of Smoking and Benefits of Cessation in the United States",
+      "authors": "Prabhat Jha; Ramasundarahettige C.; Victoria Landsman; et al.",
+      "year": 2013,
+      "topic": "Epidemiology / Smoking",
+      "description": "Quantified large mortality risks from persistent smoking and substantial benefits of quitting at various ages."
+    },
+    {
+      "title": "Effectiveness of a Hospital-Wide Programme to Improve Compliance with Hand Hygiene",
+      "authors": "Didier Pittet; Philippe Mourouga; Thomas V. Perneger",
+      "year": 2000,
+      "topic": "Infection Control / Patient Safety",
+      "description": "Demonstrated sustained improvements in hand hygiene adherence associated with reduced nosocomial infections."
+    },
+    {
+      "title": "Efficacy and Safety of a Specific Inhibitor of the BCR-ABL Tyrosine Kinase in Chronic Myeloid Leukemia",
+      "authors": "Brian J. Druker; Charles L. Sawyers; Stephen P. O\u2019Brien; et al.",
+      "year": 2001,
+      "topic": "Oncology / Hematology",
+      "description": "Showed imatinib induces high response rates in CML, ushering in targeted cancer therapy."
+    },
+    {
+      "title": "Tamoxifen for Prevention of Breast Cancer: Report of the NSABP P-1 Study",
+      "authors": "Bernard Fisher; Joseph P. Costantino; David Wickerham; et al.",
+      "year": 1998,
+      "topic": "Oncology / Prevention",
+      "description": "Tamoxifen significantly reduced invasive breast cancer incidence in high-risk women, with noted adverse effects."
+    },
+    {
+      "title": "A Randomized Trial of Low-Dose Aspirin in the Primary Prevention of Cardiovascular Disease in Women (Women\u2019s Health Study)",
+      "authors": "Paul M. Ridker; Nancy R. Cook; Julie E. Buring; et al.",
+      "year": 2005,
+      "topic": "Cardiology / Prevention",
+      "description": "Found low-dose aspirin reduces stroke risk in healthy women, with age-dependent effects on cardiovascular outcomes."
+    }
+  ]
+}

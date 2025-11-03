@@ -13,6 +13,7 @@ import { name as CodeEditorName, init as defaultCodeEditor } from './apps/CodeEd
 import { name as CounterName, init as defaultCounter } from './apps/Counter';
 import { name as DeepZoomImageName, init as defaultDeepZoomImage } from './apps/DeepZoomImage';
 import { name as DocuCHATName, init as defaultDocuCHAT } from './apps/DocuCHAT';
+import { name as DocuPAGEName, init as defaultDocuPAGE } from './apps/DocuPAGE';
 import { name as DocuSAGEName, init as defaultDocuSAGE } from './apps/DocuSAGE';
 import { name as DrawingName, init as defaultDrawing } from './apps/Drawing';
 import { name as EChartsViewerName, init as defaultEChartsViewer } from './apps/EChartsViewer';
@@ -56,6 +57,7 @@ export const initialValues = {
   [CounterName]: defaultCounter,
   [DeepZoomImageName]: defaultDeepZoomImage,
   [DocuCHATName]: defaultDocuCHAT,
+  [DocuPAGEName]: defaultDocuPAGE,
   [DocuSAGEName]: defaultDocuSAGE,
   [DrawingName]: defaultDrawing,
   [EChartsViewerName]: defaultEChartsViewer,

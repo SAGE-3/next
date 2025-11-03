@@ -33,8 +33,25 @@ export const LineGraph = ({
   const textColor = useColorModeValue('#333', '#ccc');
   const gridColor = useColorModeValue('#e0e0e0', '#404040');
 
-  // Calculate margins (increased to prevent text clipping)
-  const margin = { top: 100, right: 80, bottom: 120, left: 150 };
+  // Calculate responsive sizes based on viewport (always proportional)
+  const baseSize = Math.min(width, height);
+  
+  // Legend sizes
+  const legendWidth = width * 0.2;
+  const legendPadding = baseSize * 0.0375;
+  const legendTitleSize = baseSize * 0.03;
+  const legendItemSize = baseSize * 0.024;
+  const legendColorSize = baseSize * 0.03;
+  const legendItemSpacing = baseSize * 0.018;
+
+  // Calculate top margin to accommodate hover text (hover title font size is baseSize * 0.025)
+  // Adding space for font size + padding (0.6em top + 0.6em bottom) + border + buffer
+  const hoverTitleFontSize = baseSize * 0.025;
+  const hoverTitleHeight = hoverTitleFontSize * 1.2 + hoverTitleFontSize * 0.6 * 2; // font + top/bottom padding
+  const topMarginForHover = hoverTitleHeight + baseSize * 0.05; // Add buffer
+
+  // Calculate margins (increased top margin to prevent overlap with hover text)
+  const margin = { top: Math.max(topMarginForHover, 100), right: 80, bottom: 120, left: 150 };
   const innerWidth = width - margin.left - margin.right;
   const innerHeight = height - margin.top - margin.bottom;
 
@@ -335,24 +352,23 @@ export const LineGraph = ({
         
       </svg>
       
-      {/* Legend Overlay - Similar to TSNE */}
+      {/* Legend Overlay */}
       <Box
         position="absolute"
         top="20px"
-        right="20px"
+        left="20px"
         bg={useColorModeValue('white', 'gray.800')}
-        p={4}
+        p={legendPadding / 2}
         borderRadius="lg"
         boxShadow="xl"
+        width={`${legendWidth}px`}
         border="2px solid"
         borderColor={useColorModeValue('gray.200', 'gray.600')}
-        minWidth="300px"
-        maxWidth="1200px"
       >
         <Box 
-          fontSize="24px" 
+          fontSize={`${legendTitleSize}px`} 
           fontWeight="bold" 
-          mb={3}
+          mb={legendItemSpacing}
           color={useColorModeValue('gray.800', 'gray.100')}
         >
           Topic Trends
@@ -366,7 +382,7 @@ export const LineGraph = ({
               key={topic} 
               display="flex" 
               alignItems="center" 
-              mb={2}
+              mb={legendItemSpacing / 2}
               p={2}
               borderRadius="md"
               _hover={{ 
@@ -376,17 +392,17 @@ export const LineGraph = ({
               }}
             >
               <Box
-                width="18px"
-                height="18px"
+                width={`${legendColorSize}px`}
+                height={`${legendColorSize}px`}
                 bg={color}
                 borderRadius="50%"
-                mr={3}
+                mr={legendItemSpacing}
                 border="2px solid"
                 borderColor={useColorModeValue('white', 'gray.600')}
                 boxShadow="sm"
               />
               <Box
-                fontSize="18px"
+                fontSize={`${legendItemSize}px`}
                 color={useColorModeValue('gray.600', 'gray.300')}
                 fontWeight="medium"
                 lineHeight="1.2"

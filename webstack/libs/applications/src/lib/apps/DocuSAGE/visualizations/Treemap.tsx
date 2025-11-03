@@ -63,6 +63,36 @@ export const Treemap = ({
   const [moveTargetValue, setMoveTargetValue] = useState('');
   const [movePaperTopic, setMovePaperTopic] = useState<string | null>(null);
 
+  // Calculate responsive sizes based on viewport (always proportional)
+  const baseSize = Math.min(width, height);
+  
+  // Control bar sizes
+  const controlBarWidth = baseSize * 0.075;
+  const controlBarPadding = baseSize * 0.0375;
+  const controlBarSpacing = baseSize * 0.0275;
+  const labelFontSize = baseSize * 0.03;
+  const labelMarginTop = baseSize * 0.01;
+  const labelMarginBottom = baseSize * 0.01;
+  const buttonFontSize = baseSize * 0.03;
+  const buttonWidth = baseSize * 0.05;
+  const buttonHeight = baseSize * 0.05;
+  const buttonMarginTop = baseSize * 0.001;
+  const buttonMarginBottom = baseSize * 0.005;
+  const sliderTrackWidth = baseSize * 0.01;
+  const sliderThumbWidth = baseSize * 0.025;
+  const sliderMinHeight = baseSize * 0.1;
+  const modeButtonWidth = baseSize * 0.2;
+  const modeButtonHeight = baseSize * 0.05;
+  const modeButtonFontSize = baseSize * 0.025;
+  const modeButtonGap = baseSize * 0.009;
+  const modeButtonBorderRadius = baseSize * 0.009;
+  const modeIndicatorFontSize = baseSize * 0.028;
+  const modeIndicatorPadding = baseSize * 0.004;
+  const twoDViewPadding = baseSize * 0.019;
+  const twoDViewTitleFontSize = baseSize * 0.03;
+  const twoDViewTitleMargin = baseSize * 0.01;
+  const tooltipFontSize = baseSize * 0.094;
+
   // Update selected layer when depth changes
   useEffect(() => {
     setSelectedLayer((s.depth || 1) - 1);
@@ -478,13 +508,13 @@ export const Treemap = ({
       width: '50%', 
       height: '100%',
       borderLeft: '1px solid #ccc',
-      padding: '20px',
+      padding: `${twoDViewPadding}px`,
       boxSizing: 'border-box',
       overflow: 'hidden',
       display: 'flex',
       flexDirection: 'column'
     }}>
-      <h3 style={{ margin: '0 0 20px 0', fontSize: '48px', fontWeight: 'bold', textAlign: 'center' }}>Layer {selectedLayer + 1}</h3>
+      <h3 style={{ margin: `0 0 ${twoDViewTitleMargin}px 0`, fontSize: `${twoDViewTitleFontSize}px`, fontWeight: 'bold', textAlign: 'center' }}>Layer {selectedLayer + 1}</h3>
       <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         <svg width="100%" height="100%" viewBox={`0 0 ${squareSize} ${squareSize}`} preserveAspectRatio="xMidYMid meet">
           {/* Background for rectangles */}
@@ -580,34 +610,35 @@ export const Treemap = ({
           top: '50%',
           transform: 'translate(-50%, -50%)',
           backgroundColor: 'white',
-          padding: '40px',
-          borderRadius: '12px',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          padding: '0.4em',
+          borderRadius: '0.12em',
+          boxShadow: '0 0.04em 0.12em rgba(0,0,0,0.15)',
           zIndex: 1000,
           width: '90%',
           height: '90%',
           pointerEvents: 'none',
-          border: '1px solid #eee',
+          border: '0.01em solid #eee',
           display: 'flex',
           flexDirection: 'column',
-          gap: '24px',
-          overflow: 'auto'
+          gap: '0.24em',
+          overflow: 'auto',
+          fontSize: `${tooltipFontSize}px`
         }}
       >
         <div style={{ 
           fontWeight: 'bold', 
-          fontSize: '100px', 
+          fontSize: '1em', 
           color: '#666',
           textAlign: 'center',
-          borderBottom: '2px solid #eee',
-          paddingBottom: '24px'
+          borderBottom: '0.02em solid #eee',
+          paddingBottom: '0.24em'
         }}>
           <span>{tooltipData.topic}</span>
         </div>
         
         {tooltipData.title && (
           <div style={{ 
-            fontSize: '80px',
+            fontSize: '0.8em',
             fontWeight: '500',
             color: '#333',
             textAlign: 'center'
@@ -618,7 +649,7 @@ export const Treemap = ({
 
         {tooltipData.authors && tooltipData.authors.length > 0 && (
           <div style={{ 
-            fontSize: '60px',
+            fontSize: '0.6em',
             color: '#666',
             textAlign: 'center',
             fontStyle: 'italic'
@@ -629,7 +660,7 @@ export const Treemap = ({
 
         {(tooltipData.year || tooltipData.venue) && (
           <div style={{ 
-            fontSize: '50px',
+            fontSize: '0.5em',
             color: '#888',
             textAlign: 'center'
           }}>
@@ -639,12 +670,12 @@ export const Treemap = ({
 
         {tooltipData.summary && (
           <div style={{ 
-            fontSize: '60px',
+            fontSize: '0.6em',
             color: '#444',
             lineHeight: '1.4',
             textAlign: 'left',
-            marginTop: '24px',
-            padding: '0 40px'
+            marginTop: '0.24em',
+            padding: '0 0.4em'
           }}>
             {tooltipData.summary}
           </div>
@@ -656,10 +687,10 @@ export const Treemap = ({
   return (
     <div style={{ display: 'flex', width: '100%', height: '100%' }}>
       <VStack 
-        width="120px" 
+        width={`${controlBarWidth}px`}
         height="100%" 
-        spacing={4} 
-        padding="40px 0" 
+        spacing={controlBarSpacing}
+        padding={`${controlBarPadding}px 0`}
         justifyContent="flex-start"
         alignItems="center"
         borderRight="1px solid #eee"
@@ -667,15 +698,15 @@ export const Treemap = ({
         <Text 
           transform="rotate(-90deg)" 
           whiteSpace="nowrap" 
-          fontSize="50" 
+          fontSize={`${labelFontSize}px`}
           color="gray.400"
-          marginTop="50px"
-          marginBottom="100px"
+          marginTop={`${labelMarginTop}px`}
+          marginBottom={`${labelMarginBottom}px`}
           fontWeight="medium"
         >
           Spacing
         </Text>
-        <Box flex="1" width="100%" display="flex" justifyContent="center" minHeight="400px">
+        <Box flex="1" width="100%" display="flex" justifyContent="center" minHeight={`${sliderMinHeight}px`}>
           <Slider
             orientation="vertical"
             min={-400}
@@ -685,42 +716,26 @@ export const Treemap = ({
             height="100%"
             size="lg"
           >
-            <SliderTrack width="20px">
+            <SliderTrack width={`${sliderTrackWidth}px`}>
               <SliderFilledTrack />
             </SliderTrack>
-            <SliderThumb width={24} />
+            <SliderThumb width={sliderThumbWidth} />
           </Slider>
         </Box>
-        <Button
-          size="lg"
-          colorScheme={hideLayersAbove ? "blue" : "blue"}
-          variant={hideLayersAbove ? "solid" : "outline"}
-          onClick={() => setHideLayersAbove(!hideLayersAbove)}
-          width="300px"
-          height="100px"
-          fontSize="48px"
-          marginTop="120px"
-          marginBottom="80px"
-          transform="rotate(-90deg)"
-          whiteSpace="nowrap"
-          overflow="hidden"
-        >
-          {hideLayersAbove ? "Show All" : "Hide Above"}
-        </Button>
         
         {/* Zoom Controls */}
         <Text 
           transform="rotate(-90deg)" 
           whiteSpace="nowrap" 
-          fontSize="50" 
+          fontSize={`${labelFontSize}px`}
           color="gray.400"
-          marginTop="50px"
-          marginBottom="100px"
+          marginTop={`${labelMarginTop}px`}
+          marginBottom={`${labelMarginBottom}px`}
           fontWeight="medium"
         >
           Zoom
         </Text>
-        <Box flex="1" width="100%" display="flex" justifyContent="center" minHeight="400px">
+        <Box flex="1" width="100%" display="flex" justifyContent="center" minHeight={`${sliderMinHeight}px`}>
           <Slider
             orientation="vertical"
             min={0.5}
@@ -731,33 +746,45 @@ export const Treemap = ({
             height="100%"
             size="lg"
           >
-            <SliderTrack width="20px">
+            <SliderTrack width={`${sliderTrackWidth}px`}>
               <SliderFilledTrack />
             </SliderTrack>
-            <SliderThumb width={24} />
+            <SliderThumb width={sliderThumbWidth} />
           </Slider>
         </Box>
-        <Button
-          size="lg"
-          colorScheme="teal"
-          variant="outline"
-          onClick={resetView}
-          width="300px"
-          height="100px"
-          fontSize="48px"
-          marginTop="120px"
-          marginBottom="80px"
-          transform="rotate(-90deg)"
+         <Button
+          colorScheme={hideLayersAbove ? "blue" : "blue"}
+          variant={hideLayersAbove ? "solid" : "outline"}
+          onClick={() => setHideLayersAbove(!hideLayersAbove)}
+          width={`${buttonWidth}px`}
+          height={`${buttonHeight}px`}
+          fontSize={`${buttonFontSize}px`}
+          marginTop={`${buttonMarginTop}px`}
+          marginBottom={`${buttonMarginBottom}px`}
           whiteSpace="nowrap"
           overflow="hidden"
         >
-          Reset View
+          {hideLayersAbove ? "-" : "="}
+        </Button>
+        <Button
+          colorScheme="teal"
+          variant="outline"
+          onClick={resetView}
+          width={`${buttonWidth}px`}
+          height={`${buttonHeight}px`}
+          fontSize={`${buttonFontSize}px`}
+          marginTop={`${buttonMarginTop}px`}
+          marginBottom={`${buttonMarginBottom}px`}
+          whiteSpace="nowrap"
+          overflow="hidden"
+        >
+          ↻
         </Button>
       </VStack>
       <div 
         style={{ 
           perspective: '2000px',
-          width: 'calc(50% - 60px)',
+          width: `calc(50% - ${controlBarWidth / 2}px)`,
           height: '100%',
           cursor: isDragging ? 'grabbing' : (mode === 'rotate' ? 'grab' : 'move'),
           display: 'flex',
@@ -781,18 +808,17 @@ export const Treemap = ({
           zIndex: 1000,
           display: 'flex',
           flexDirection: 'column',
-          gap: '10px'
+          gap: `${modeButtonGap}px`
         }}>
           <Tooltip label="Rotate the 3D visualization around its center" placement="right" hasArrow>
             <Button
-              size="sm"
               colorScheme={mode === 'rotate' ? "blue" : "gray"}
               variant={mode === 'rotate' ? "solid" : "solid"}
               onClick={() => setMode('rotate')}
-              width="300px"
-              height="110px"
-              fontSize="36px"
-              borderRadius="10px"
+              width={`${modeButtonWidth}px`}
+              height={`${modeButtonHeight}px`}
+              fontSize={`${modeButtonFontSize}px`}
+              borderRadius={`${modeButtonBorderRadius}px`}
               bg={mode === 'rotate' ? undefined : "gray.600"}
               color={mode === 'rotate' ? undefined : "white"}
               _hover={{ bg: mode === 'rotate' ? undefined : "gray.500" }}
@@ -802,14 +828,13 @@ export const Treemap = ({
           </Tooltip>
           <Tooltip label="Pan the visualization around the viewport" placement="right" hasArrow>
             <Button
-              size="sm"
               colorScheme={mode === 'pan' ? "blue" : "gray"}
               variant={mode === 'pan' ? "solid" : "solid"}
               onClick={() => setMode('pan')}
-              width="300px"
-              height="110px"
-              fontSize="36px"
-              borderRadius="10px"
+              width={`${modeButtonWidth}px`}
+              height={`${modeButtonHeight}px`}
+              fontSize={`${modeButtonFontSize}px`}
+              borderRadius={`${modeButtonBorderRadius}px`}
               bg={mode === 'pan' ? undefined : "gray.600"}
               color={mode === 'pan' ? undefined : "white"}
               _hover={{ bg: mode === 'pan' ? undefined : "gray.500" }}
@@ -821,12 +846,12 @@ export const Treemap = ({
           {/* Mode Indicator */}
           <div style={{
             textAlign: 'center',
-            fontSize: '30px',
+            fontSize: `${modeIndicatorFontSize}px`,
             color: mode === 'rotate' ? 'blue.600' : 'gray.600',
             fontWeight: 'medium',
-            padding: '4px 8px',
+            padding: `${modeIndicatorPadding}px ${modeIndicatorPadding * 2}px`,
             backgroundColor: mode === 'rotate' ? 'blue.50' : 'gray.50',
-            borderRadius: '4px',
+            borderRadius: `${modeIndicatorPadding}px`,
             border: `1px solid ${mode === 'rotate' ? 'blue.200' : 'gray.200'}`
           }}>
             {mode === 'rotate' ? 'Rotation Mode' : 'Pan Mode'}

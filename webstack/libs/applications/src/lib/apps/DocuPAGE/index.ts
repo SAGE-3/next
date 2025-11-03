@@ -9,25 +9,22 @@
 import { z } from 'zod';
 
 /**
- * SAGE3 application: DocuCHAT
+ * SAGE3 application: DocuPAGE
  * created by: Ben
  */
 
 export const schema = z.object({
-  messages: z.array(z.object({
-    id: z.string(),
-    role: z.enum(['user', 'assistant']),
-    content: z.string(),
-    timestamp: z.number(),
-    jsonData: z.any().optional(), // Store JSON data separately
-  })),
-  isLoading: z.boolean(),
+  topic: z.string(),
+  title: z.string().optional(),
+  authors: z.array(z.string()).optional(),
+  year: z.string().optional(),
+  venue: z.string().optional(),
+  summary: z.string().optional(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  messages: [],
-  isLoading: false,
+  topic: '',
 };
 
-export const name = 'DocuCHAT';
+export const name = 'DocuPAGE';

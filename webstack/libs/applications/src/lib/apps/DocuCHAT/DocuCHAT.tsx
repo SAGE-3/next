@@ -5,7 +5,7 @@
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
-import { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 import { 
   Button, 
@@ -22,7 +22,7 @@ import {
   IconButton,
   Divider
 } from '@chakra-ui/react';
-import { MdSend, MdRefresh } from 'react-icons/md';
+import { MdSend, MdRefresh, MdCode } from 'react-icons/md';
 
 import { useAppStore, apiUrls } from '@sage3/frontend';
 import { genId } from '@sage3/shared';
@@ -86,9 +86,10 @@ function AppComponent(props: App): JSX.Element {
         id: genId(),
         role: 'assistant' as const,
         content: result.success 
-          ? `AI Search Results:\n\n${result.data ? JSON.stringify(result.data, null, 2) : 'No data returned from AI search.'}`
+          ? `AI Search Results:\n\n${result.data ? 'Research paper hierarchy generated successfully!' : 'No data returned from AI search.'}`
           : `Error: ${result.message}`,
         timestamp: Date.now(),
+        jsonData: result.success ? result.data : null, // Store the JSON data separately
       };
 
       updateState(props._id, { 
@@ -155,7 +156,101 @@ function AppComponent(props: App): JSX.Element {
     }
   };
 
-  const createDocuSAGEApp = (hierarchyData: any, visualizationType: 'treemap' | 'tsne' | 'linegraph') => {
+  const createCodeEditorApp = (jsonData: any, filename: string = 'output.json') => {
+    // Helper function to find next available position
+    const findNextAvailablePosition = (appSize: { width: number; height: number }, gap: number = 40) => {
+      const apps = useAppStore.getState().apps;
+      const currentApp = props;
+      
+      // Get all apps in the same room/board
+      const roomApps = Object.values(apps).filter((app: any) => 
+        app.data.roomId === currentApp.data.roomId && 
+        app.data.boardId === currentApp.data.boardId &&
+        app._id !== currentApp._id
+      );
+      
+      // Start with position to the right
+      let candidatePosition = {
+        x: currentApp.data.position.x + currentApp.data.size.width + gap,
+        y: currentApp.data.position.y,
+        z: 0
+      };
+      
+      // Check for collisions and find next available position
+      const maxAttempts = 30;
+      let attempts = 0;
+      
+      while (attempts < maxAttempts) {
+        let hasCollision = false;
+        
+        for (const app of roomApps) {
+          const appLeft = (app as any).data.position.x;
+          const appRight = (app as any).data.position.x + (app as any).data.size.width;
+          const appTop = (app as any).data.position.y;
+          const appBottom = (app as any).data.position.y + (app as any).data.size.height;
+          
+          const candidateLeft = candidatePosition.x;
+          const candidateRight = candidatePosition.x + appSize.width;
+          const candidateTop = candidatePosition.y;
+          const candidateBottom = candidatePosition.y + appSize.height;
+          
+          if (!(candidateRight < appLeft || candidateLeft > appRight || 
+                candidateBottom < appTop || candidateTop > appBottom)) {
+            hasCollision = true;
+            break;
+          }
+        }
+        
+        if (!hasCollision) {
+          return candidatePosition;
+        }
+        
+        // Try next position
+        if (attempts < 10) {
+          candidatePosition.x += appSize.width + gap;
+        } else if (attempts < 20) {
+          candidatePosition.x = currentApp.data.position.x + currentApp.data.size.width + gap;
+          candidatePosition.y += appSize.height + gap;
+        } else {
+          candidatePosition.x += appSize.width + gap;
+          if (attempts % 10 === 0) {
+            candidatePosition.x = currentApp.data.position.x + currentApp.data.size.width + gap;
+            candidatePosition.y += appSize.height + gap;
+          }
+        }
+        
+        attempts++;
+      }
+      
+      return candidatePosition;
+    };
+
+    const appSize = { width: 1000, height: 700, depth: 0 };
+    const newPosition = findNextAvailablePosition(appSize, 40);
+
+    createApp({
+      title: `CodeEditor - ${filename}`,
+      roomId: props.data.roomId,
+      boardId: props.data.boardId,
+      position: newPosition,
+      size: appSize,
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'CodeEditor',
+      state: {
+        content: JSON.stringify(jsonData, null, 2),
+        language: 'json',
+        fontSize: 14,
+        readonly: true,
+        filename: filename,
+        sources: [],
+      },
+      raised: true,
+      dragging: false,
+      pinned: false,
+    });
+  };
+
+  const createDocuSAGEApp = (hierarchyData: any, visualizationType: 'treemap' | 'tsne' | 'umap' | 'dotplot' | 'linegraph') => {
     console.log('Creating DocuSAGE app with data:', hierarchyData);
     console.log('Visualization type:', visualizationType);
     
@@ -253,6 +348,7 @@ function AppComponent(props: App): JSX.Element {
           "#f2c74a", "#7a9ed6", "#b9d98a", "#f06d6d", "#b48ad0", "#b04a6a", "#a0a0a0"
         ],
         visualizationType: visualizationType,
+        dotPlotAlgorithm: visualizationType === 'dotplot' ? 'tsne' : undefined,
       },
       raised: true,
       dragging: false,
@@ -266,7 +362,7 @@ function AppComponent(props: App): JSX.Element {
         {/* Header */}
         <Box p={4} borderBottom="1px" borderColor={borderColor}>
           <HStack justify="space-between">
-            <Text fontSize="lg" fontWeight="bold">DocuCHAT AI</Text>
+            <Text fontSize="lg" fontWeight="bold">DocuCHAT</Text>
             <ButtonGroup size="sm">
               <Tooltip label="Clear Chat">
                 <IconButton
@@ -293,23 +389,10 @@ function AppComponent(props: App): JSX.Element {
             s.messages.map((message) => {
               // Check if this is an AI response with data
               const isAIResponse = message.role === 'assistant' && message.content.includes('AI Search Results:');
-              let hierarchyData = null;
+              const hierarchyData = message.jsonData || null;
               
-              if (isAIResponse) {
-                try {
-                  // Extract JSON data from the message content
-                  const jsonMatch = message.content.match(/AI Search Results:\n\n([\s\S]*)/);
-                  if (jsonMatch) {
-                    console.log('Raw JSON string:', jsonMatch[1]);
-                    hierarchyData = JSON.parse(jsonMatch[1]);
-                    console.log('Parsed hierarchy data:', hierarchyData);
-                  } else {
-                    console.log('No JSON match found in message:', message.content);
-                  }
-                } catch (error) {
-                  console.error('Error parsing hierarchy data:', error);
-                  console.log('Failed to parse JSON string:', message.content);
-                }
+              if (isAIResponse && hierarchyData) {
+                console.log('Found hierarchy data in message:', hierarchyData);
               }
 
               return (
@@ -335,37 +418,50 @@ function AppComponent(props: App): JSX.Element {
                       {new Date(message.timestamp).toLocaleTimeString()}
                     </Text>
                     
-                    {/* Visualization buttons for AI responses with data */}
-                    {isAIResponse && hierarchyData && hierarchyData.children && hierarchyData.children.length > 0 && (
+                    {/* Action buttons for AI responses with data */}
+                    {isAIResponse && hierarchyData && (
                       <Box mt={3} pt={2} borderTop="1px" borderColor={borderColor}>
                         <Text fontSize="xs" mb={2} opacity={0.8}>
-                          Visualize with DocuSAGE:
+                          Actions:
                         </Text>
-                        <HStack spacing={2}>
+                        <HStack spacing={2} wrap="wrap">
                           <Button
                             size="xs"
-                            colorScheme="teal"
+                            colorScheme="blue"
                             variant="outline"
-                            onClick={() => createDocuSAGEApp(hierarchyData, 'treemap')}
+                            leftIcon={<MdCode />}
+                            onClick={() => createCodeEditorApp(hierarchyData, 'output.json')}
                           >
-                            Tree Map
+                            View JSON
                           </Button>
-                          <Button
-                            size="xs"
-                            colorScheme="purple"
-                            variant="outline"
-                            onClick={() => createDocuSAGEApp(hierarchyData, 'tsne')}
-                          >
-                            t-SNE Plot
-                          </Button>
-                          <Button
-                            size="xs"
-                            colorScheme="orange"
-                            variant="outline"
-                            onClick={() => createDocuSAGEApp(hierarchyData, 'linegraph')}
-                          >
-                            Line Graph
-                          </Button>
+                          {hierarchyData.children && hierarchyData.children.length > 0 && (
+                            <>
+                              <Button
+                                size="xs"
+                                colorScheme="teal"
+                                variant="outline"
+                                onClick={() => createDocuSAGEApp(hierarchyData, 'treemap')}
+                              >
+                                Tree Map
+                              </Button>
+                              <Button
+                                size="xs"
+                                colorScheme="green"
+                                variant="outline"
+                                onClick={() => createDocuSAGEApp(hierarchyData, 'dotplot')}
+                              >
+                                Dot Plot
+                              </Button>
+                              <Button
+                                size="xs"
+                                colorScheme="orange"
+                                variant="outline"
+                                onClick={() => createDocuSAGEApp(hierarchyData, 'linegraph')}
+                              >
+                                Line Graph
+                              </Button>
+                            </>
+                          )}
                         </HStack>
                       </Box>
                     )}
