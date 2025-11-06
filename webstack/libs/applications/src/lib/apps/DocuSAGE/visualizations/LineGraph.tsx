@@ -394,6 +394,9 @@ export const LineGraph = ({
               <Box
                 width={`${legendColorSize}px`}
                 height={`${legendColorSize}px`}
+                minWidth={`${legendColorSize}px`}
+                minHeight={`${legendColorSize}px`}
+                flexShrink={0}
                 bg={color}
                 borderRadius="50%"
                 mr={legendItemSpacing}
@@ -406,6 +409,8 @@ export const LineGraph = ({
                 color={useColorModeValue('gray.600', 'gray.300')}
                 fontWeight="medium"
                 lineHeight="1.2"
+                wordBreak="break-word"
+                flex="1"
                 style={{ cursor: 'pointer' }}
                 onMouseEnter={() => onTitleHover?.(topic)}
                 onMouseLeave={() => onTitleHover?.(null)}

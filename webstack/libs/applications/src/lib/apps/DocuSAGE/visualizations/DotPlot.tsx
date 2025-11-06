@@ -191,7 +191,7 @@ export const DotPlot = ({
   };
 
   // Project embeddings using t-SNE algorithm
-  const projectTSNE = (embeddings: number[][]): DotPlotPoint[] => {
+  const projectTSNE = (embeddings: number[][], items: Array<{ data: Tree; color: string; isCustom?: boolean; customText?: string }>): DotPlotPoint[] => {
     const projected = embeddings.map((embedding, i) => {
       // Simple PCA-like projection for demo
       const x = embedding.slice(0, 25).reduce((a, b) => a + b, 0) * 50;
@@ -200,8 +200,10 @@ export const DotPlot = ({
       return {
         x: x,
         y: y,
-        data: papers[i],
-        color: getColorForPaper(papers[i])
+        data: items[i].data,
+        color: items[i].color,
+        isCustom: items[i].isCustom,
+        customText: items[i].customText
       };
     });
     
@@ -209,7 +211,7 @@ export const DotPlot = ({
   };
 
   // Project embeddings using UMAP algorithm
-  const projectUMAP = (embeddings: number[][]): DotPlotPoint[] => {
+  const projectUMAP = (embeddings: number[][], items: Array<{ data: Tree; color: string; isCustom?: boolean; customText?: string }>): DotPlotPoint[] => {
     const projected = embeddings.map((embedding, i) => {
       // UMAP-style projection: uses different component weights
       // More emphasis on middle components for different clustering
@@ -219,8 +221,10 @@ export const DotPlot = ({
       return {
         x: x,
         y: y,
-        data: papers[i],
-        color: getColorForPaper(papers[i])
+        data: items[i].data,
+        color: items[i].color,
+        isCustom: items[i].isCustom,
+        customText: items[i].customText
       };
     });
     
@@ -228,21 +232,49 @@ export const DotPlot = ({
   };
 
   // Run dimensionality reduction
-  const runProjection = async () => {
+  const runProjection = useCallback(async () => {
     if (papers.length === 0) return;
     
     setIsLoading(true);
     
     try {
-      // Generate embeddings
-      const embeddings = await generateEmbeddings(papers);
+      // Generate embeddings for papers
+      const paperEmbeddings = await generateEmbeddings(papers);
       
-      // Project based on selected algorithm
+      // Generate embeddings for custom points
+      const customEmbeddings = customPointData.map(data => generateCustomEmbedding(data.text));
+      
+      // Combine all embeddings
+      const allEmbeddings = [...paperEmbeddings, ...customEmbeddings];
+      
+      // Prepare items array with metadata
+      const paperItems = papers.map(paper => ({
+        data: paper,
+        color: getColorForPaper(paper),
+        isCustom: false as const
+      }));
+      
+      const customItems = customPointData.map(data => ({
+        data: {
+          topic: data.text,
+          size: 1,
+          children: [],
+          title: data.text,
+          summary: '',
+        } as Tree,
+        color: data.color,
+        isCustom: true as const,
+        customText: data.text
+      }));
+      
+      const allItems = [...paperItems, ...customItems];
+      
+      // Project based on selected algorithm (all points together)
       let projected;
       if (algorithm === 'umap') {
-        projected = projectUMAP(embeddings);
+        projected = projectUMAP(allEmbeddings, allItems);
       } else {
-        projected = projectTSNE(embeddings);
+        projected = projectTSNE(allEmbeddings, allItems);
       }
       
       // Scale and center the points to fit within the viewport
@@ -268,7 +300,7 @@ export const DotPlot = ({
       const centerX = (minX + maxX) / 2;
       const centerY = (minY + maxY) / 2;
       
-      // Store scale and center for custom points
+      // Store scale and center
       setProjectionScale(scale);
       setProjectionCenter({ x: centerX, y: centerY });
       setOriginalProjected(projected.map(p => ({ x: p.x, y: p.y })));
@@ -283,7 +315,12 @@ export const DotPlot = ({
       const minDistance = Math.min(width, height) * 0.05; // 5% of smaller dimension
       const spacedPoints = ensureMinimumDistance(scaledProjected, minDistance);
       
-      setPoints(spacedPoints);
+      // Separate papers and custom points
+      const paperPoints = spacedPoints.slice(0, papers.length);
+      const customPointsResult = spacedPoints.slice(papers.length);
+      
+      setPoints(paperPoints);
+      setCustomPoints(customPointsResult);
       
       // Only clear custom points if the data actually changed (papers length changed)
       if (papers.length !== previousPapersLength) {
@@ -296,7 +333,7 @@ export const DotPlot = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [papers, customPointData, algorithm, width, height]);
 
   // Helper: find path from root to target node
   const findPathToNode = (root: Tree, target: Tree): Tree[] | null => {
@@ -351,10 +388,10 @@ export const DotPlot = ({
     return colorScale(top) as string;
   };
 
-  // Run projection when papers or algorithm changes
+  // Run projection when papers, algorithm, or custom points change
   useEffect(() => {
     runProjection();
-  }, [papers, algorithm]);
+  }, [runProjection]);
 
   const handlePointClick = (point: DotPlotPoint) => {
     onPaperClick?.(point.data);
@@ -378,98 +415,12 @@ export const DotPlot = ({
   };
 
   const handleAddCustomPoint = () => {
-    if (!customText.trim() || points.length === 0 || projectionScale === 1) return;
+    if (!customText.trim() || points.length === 0) return;
 
-    // Generate embedding for custom text
-    const embedding = generateCustomEmbedding(customText);
-    
-    // Project using the same algorithm
-    let projectedX: number, projectedY: number;
-    if (algorithm === 'umap') {
-      projectedX = (embedding.slice(5, 30).reduce((a, b) => a + b, 0) / 25) * 60;
-      projectedY = (embedding.slice(20, 45).reduce((a, b) => a + b, 0) / 25) * 60;
-    } else {
-      projectedX = embedding.slice(0, 25).reduce((a, b) => a + b, 0) * 50;
-      projectedY = embedding.slice(25, 50).reduce((a, b) => a + b, 0) * 50;
-    }
-
-    // Scale and center the custom point using stored values
-    const scaledX = (projectedX - projectionCenter.x) * projectionScale;
-    const scaledY = (projectedY - projectionCenter.y) * projectionScale;
-
-    // Create a dummy Tree object for the custom point
-    const customTree: Tree = {
-      topic: customText,
-      size: 1,
-      children: [],
-      title: customText,
-      summary: '',
-    };
-
-    const customPoint: DotPlotPoint = {
-      x: scaledX,
-      y: scaledY,
-      data: customTree,
-      color: customColor,
-      isCustom: true,
-      customText: customText,
-    };
-
-    setCustomPoints([...customPoints, customPoint]);
+    // Just add to customPointData - this will trigger runProjection via useEffect
     setCustomPointData([...customPointData, { text: customText, color: customColor }]);
     setCustomText('');
   };
-
-  // Re-project custom points using current algorithm and scale
-  const reprojectCustomPoints = useCallback(() => {
-    if (customPointData.length === 0 || projectionScale === 1) return;
-
-    const reprojected = customPointData.map((data) => {
-      // Generate embedding for custom text
-      const embedding = generateCustomEmbedding(data.text);
-      
-      // Project using the current algorithm
-      let projectedX: number, projectedY: number;
-      if (algorithm === 'umap') {
-        projectedX = (embedding.slice(5, 30).reduce((a, b) => a + b, 0) / 25) * 60;
-        projectedY = (embedding.slice(20, 45).reduce((a, b) => a + b, 0) / 25) * 60;
-      } else {
-        projectedX = embedding.slice(0, 25).reduce((a, b) => a + b, 0) * 50;
-        projectedY = embedding.slice(25, 50).reduce((a, b) => a + b, 0) * 50;
-      }
-
-      // Scale and center the custom point using stored values
-      const scaledX = (projectedX - projectionCenter.x) * projectionScale;
-      const scaledY = (projectedY - projectionCenter.y) * projectionScale;
-
-      // Create a dummy Tree object for the custom point
-      const customTree: Tree = {
-        topic: data.text,
-        size: 1,
-        children: [],
-        title: data.text,
-        summary: '',
-      };
-
-      return {
-        x: scaledX,
-        y: scaledY,
-        data: customTree,
-        color: data.color,
-        isCustom: true,
-        customText: data.text,
-      } as DotPlotPoint;
-    });
-
-    setCustomPoints(reprojected);
-  }, [customPointData, algorithm, projectionScale, projectionCenter]);
-
-  // Re-project custom points when algorithm, scale, or center changes
-  useEffect(() => {
-    if (customPointData.length > 0 && projectionScale !== 1 && !isLoading) {
-      reprojectCustomPoints();
-    }
-  }, [algorithm, projectionScale, projectionCenter.x, projectionCenter.y, customPointData.length, isLoading, reprojectCustomPoints]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -577,7 +528,7 @@ export const DotPlot = ({
             height={`${inputHeight}px`}
             fontSize={`${iconButtonFontSize}px`}
             colorScheme="blue"
-            isDisabled={!customText.trim() || points.length === 0}
+            isDisabled={!customText.trim() || points.length === 0 || isLoading}
           />
         </HStack>
       </Box>
@@ -672,6 +623,9 @@ export const DotPlot = ({
               <Box
                 width={`${legendColorSize}px`}
                 height={`${legendColorSize}px`}
+                minWidth={`${legendColorSize}px`}
+                minHeight={`${legendColorSize}px`}
+                flexShrink={0}
                 bg={color}
                 borderRadius="50%"
                 mr={legendItemSpacing}
@@ -684,6 +638,8 @@ export const DotPlot = ({
                 color={legendTextColor}
                 fontWeight="medium"
                 lineHeight="1.2"
+                wordBreak="break-word"
+                flex="1"
               >
                 {parentAtDepth} ({papersWithColor.length})
               </Text>
