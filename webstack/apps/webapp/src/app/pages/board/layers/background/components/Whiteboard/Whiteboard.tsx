@@ -507,7 +507,7 @@ export function Whiteboard(props: WhiteboardProps) {
   useHotkeys(
     'alt+z',
     () => {
-      if (primaryActionMode === 'pen') {
+      if (['pen', 'eraser', 'rectangle', 'circle', 'arrow', 'doubleArrow'].includes(primaryActionMode)) {
         setUndoLastMarker(true);
       }
     },
@@ -516,7 +516,7 @@ export function Whiteboard(props: WhiteboardProps) {
   useHotkeys(
     'cmd+z',
     () => {
-      if (primaryActionMode === 'pen') {
+      if (['pen', 'eraser', 'rectangle', 'circle', 'arrow', 'doubleArrow'].includes(primaryActionMode)) {
         setUndoLastMarker(true);
       }
     },
@@ -527,10 +527,10 @@ export function Whiteboard(props: WhiteboardProps) {
     <div
       className="canvas-container"
       style={{
-        pointerEvents: [/* 'lasso',*/ 'pen', 'eraser', 'rectangle', 'circle', 'arrow', 'doubleArrow'].includes(primaryActionMode)
+        pointerEvents: ['pen', 'rectangle', 'circle', 'arrow', 'doubleArrow'].includes(primaryActionMode)
           ? 'auto'
           : 'none',
-        touchAction: [/* 'lasso',*/ 'pen', 'eraser', 'rectangle', 'circle', 'arrow', 'doubleArrow'].includes(primaryActionMode)
+        touchAction: ['pen', 'rectangle', 'circle', 'arrow', 'doubleArrow'].includes(primaryActionMode)
           ? 'none'
           : 'auto',
       }}
@@ -545,7 +545,7 @@ export function Whiteboard(props: WhiteboardProps) {
           left: 0,
           top: 0,
           zIndex: 1000,
-          cursor: primaryActionMode ==='pen' ? 'crosshair' : 'eraser',
+          cursor: 'crosshair',
         }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
