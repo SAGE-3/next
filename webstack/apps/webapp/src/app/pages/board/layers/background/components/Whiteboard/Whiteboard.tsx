@@ -507,7 +507,7 @@ export function Whiteboard(props: WhiteboardProps) {
   useHotkeys(
     'alt+z',
     () => {
-      if (primaryActionMode === 'pen') {
+      if (['pen', 'rectangle', 'circle', 'arrow', 'doubleArrow'].includes(primaryActionMode)) {
         setUndoLastMarker(true);
       }
     },
@@ -516,7 +516,7 @@ export function Whiteboard(props: WhiteboardProps) {
   useHotkeys(
     'cmd+z',
     () => {
-      if (primaryActionMode === 'pen') {
+      if (['pen', 'rectangle', 'circle', 'arrow', 'doubleArrow'].includes(primaryActionMode)) {
         setUndoLastMarker(true);
       }
     },
