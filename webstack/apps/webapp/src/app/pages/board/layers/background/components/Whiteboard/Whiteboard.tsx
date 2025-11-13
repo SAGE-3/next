@@ -374,11 +374,10 @@ export function Whiteboard(props: WhiteboardProps) {
             const index = yLines?.toArray().indexOf(current) ?? -1;
             if (index >= 0 && yLines) {
             yLines.delete(index, 1);
-            return;
             }
-          current.set('isComplete', true);}
+          }
           catch{
-            console.log(`circle points: ${pts}`)
+            console.log(`array not long enough circle points: ${pts}`)
           }
         }
         else{
