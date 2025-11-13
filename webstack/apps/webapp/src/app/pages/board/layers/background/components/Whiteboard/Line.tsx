@@ -45,8 +45,7 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
   };
 
   if(type === 'circle'){
-    if (!points || points.length === 0) return null;
-    let pointArr = Array.from(points);
+    if (!points || points.length < 4) return null;
     const x1 = points[0][0];
     const y1 = points[0][1];
     const x0 = points[1][0];
