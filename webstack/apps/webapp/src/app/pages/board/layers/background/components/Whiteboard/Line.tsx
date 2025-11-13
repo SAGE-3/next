@@ -45,17 +45,18 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
   };
 
   if(type === 'circle'){
-    if (!points || points.length < 4) return null;
-    const x1 = points[0][0];
-    const y1 = points[0][1];
-    const x0 = points[1][0];
-    const y0 = points[1][1];
-    const maxX = Math.max(x0, x1);
-    const minX = Math.min(x0, x1);
-    const maxY = Math.max(y0, y1);
-    const minY = Math.min(y0, y1);
-    const midpointX = (maxX + minX) / 2;
-    const midpointY = (maxY + minY) / 2;
+    if (!points || points.length < 2) return null;
+    try{
+      const x1 = points[0][0];
+      const y1 = points[0][1];
+      const x0 = points[1][0];
+      const y0 = points[1][1];
+      const maxX = Math.max(x0, x1);
+      const minX = Math.min(x0, x1);
+      const maxY = Math.max(y0, y1);
+      const minY = Math.min(y0, y1);
+      const midpointX = (maxX + minX) / 2;
+      const midpointY = (maxY + minY) / 2;
     return(
       <g>
         <ellipse
@@ -101,6 +102,9 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
         </foreignObject>
       </g>
     );
+  } catch (error) {
+    console.log(`${error}`)
+  }
   }
   // --- Render rectangles with crisp right angles ---------------------------
 
