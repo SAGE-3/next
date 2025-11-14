@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useState, memo } from 'react';
-import { AbsoluteCenter, propNames, useColorModeValue } from '@chakra-ui/react';
+import { useColorModeValue } from '@chakra-ui/react';
 import { getStroke } from 'perfect-freehand';
 import * as Y from 'yjs';
 
@@ -30,7 +30,6 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
   const hoverC = useHexColor(hoverColor);
   const id = line.get('id') as string;
   const [hover, setHover] = useState(false);
-  const updateAnnotation = useAnnotationStore((state) => state.update);
 
   const handleTextChange = (ev: React.ChangeEvent<HTMLInputElement>) => {
     line.set('text', ev.target.value);
@@ -44,9 +43,9 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
     }
   };
 
-  if(type === 'circle'){
+  if (type === 'circle') {
     if (!points || points.length < 2) return null;
-    try{
+    try {
       const x1 = points[0][0];
       const y1 = points[0][1];
       const x0 = points[1][0];
@@ -57,55 +56,56 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
       const minY = Math.min(y0, y1);
       const midpointX = (maxX + minX) / 2;
       const midpointY = (maxY + minY) / 2;
-    return(
-      <g>
-        <ellipse
-          cx={midpointX}
-          cy={midpointY}
-          rx={(maxX - minX) / 2}
-          ry={(maxY - minY) / 2}
-          fill="none"
-          stroke={hover ? hoverC : c}
-          strokeOpacity={alpha ?? 0.6}
-          strokeWidth={size ?? 5}
-          strokeLinejoin="miter"   // <-- sharp corners
-          strokeLinecap="butt"     // <-- flat line ends
-          shapeRendering="crispEdges"
-          onMouseEnter={() => setHover(true)}
-          onMouseLeave={() => setHover(false)}
-          onMouseDown={handleClick}
-        />
-        <foreignObject x={minX} y={minY} width={maxX-minX} height={maxY-minY}>
-          <div style={{
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <input
-              type='text'
-              value={text}
-              style={{
-                width: '90%',
-                height: '90%',
-                background: 'transparent',
-                border: 'none',
-                color: c,
-                fontSize: '50px',
-                textAlign: 'center',
-                outline: 'none'
-              }}
-              onChange={handleTextChange}
-            />
-          </div>
-        </foreignObject>
-      </g>
-    );
-  } catch (error) {
-    console.log(`${error}`)
+      return (
+        <g>
+          <ellipse
+            cx={midpointX}
+            cy={midpointY}
+            rx={(maxX - minX) / 2}
+            ry={(maxY - minY) / 2}
+            fill="none"
+            stroke={hover ? hoverC : c}
+            strokeOpacity={alpha ?? 0.6}
+            strokeWidth={size ?? 5}
+            strokeLinejoin="miter"   // <-- sharp corners
+            strokeLinecap="butt"     // <-- flat line ends
+            shapeRendering="crispEdges"
+            onMouseEnter={() => setHover(true)}
+            onMouseLeave={() => setHover(false)}
+            onMouseDown={handleClick}
+          />
+          <foreignObject x={minX} y={minY} width={maxX - minX} height={maxY - minY}>
+            <div style={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <input
+                type='text'
+                value={text}
+                style={{
+                  width: '90%',
+                  height: '90%',
+                  background: 'transparent',
+                  border: 'none',
+                  color: c,
+                  fontSize: '50px',
+                  textAlign: 'center',
+                  outline: 'none'
+                }}
+                onChange={handleTextChange}
+              />
+            </div>
+          </foreignObject>
+        </g>
+      );
+    } catch (error) {
+      console.log(`${error}`)
+    }
   }
-  }
+
   // --- Render rectangles with crisp right angles ---------------------------
 
   if (type === 'rectangle') {
@@ -132,8 +132,8 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
           stroke={hover ? hoverC : c}
           strokeOpacity={alpha ?? 0.6}
           strokeWidth={size ?? 5}
-          strokeLinejoin="miter"   // <-- sharp corners
-          strokeLinecap="butt"     // <-- flat line ends
+          strokeLinejoin="miter"   // Sharp corners
+          strokeLinecap="butt"     // Flat line ends
           shapeRendering="crispEdges"
           onMouseEnter={() => setHover(true)}
           onMouseLeave={() => setHover(false)}
@@ -164,11 +164,11 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
             />
           </div>
         </foreignObject>
-        </g>
+      </g>
     );
   }
 
-    // --- Render freehand lines with LESS rounding ----------------------------
+  // --- Render freehand lines with LESS rounding ----------------------------
   // Use perfect-freehand to build the stroke outline, but:
   //  - Lower smoothing and streamline to reduce roundness
   //  - Build a polygonal path (M/L + Z) instead of quadratic curves
@@ -186,42 +186,43 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
     if (!points || points.length < 2) return null;
 
     // Compute bounding box from whatever points we have (robust to closed poly or 2-point form)
-    try{
-    const x1 = points[0][0];
-    const y1 = points[0][1];
-    const x2 = points[1][0];
-    const y2 = points[1][1];
+    try {
+      const x1 = points[0][0];
+      const y1 = points[0][1];
+      const x2 = points[1][0];
+      const y2 = points[1][1];
 
-    return (
-       <g opacity={alpha}>
+      return (
+        <g opacity={alpha}>
           <defs>
-            <marker 
-            // unique ID for every marker head
-            id={`${x1},${y1},${x2},${y2}`}
-            orient="auto" 
-            markerWidth="5"
-            markerHeight="5"
-            viewBox="0 0 10 10"
-            refX="5"   // place the tip (10,5) on the vertex
-            refY="5"
+            <marker
+              // unique ID for every marker head
+              id={`${x1},${y1},${x2},${y2}`}
+              orient="auto"
+              markerWidth="5"
+              markerHeight="5"
+              viewBox="0 0 10 10"
+              refX="5"   // place the tip (10,5) on the vertex
+              refY="5"
             >
-              <path d="M0 0 L10 5 L0 10 Z" fill={hover ? hoverC : c}/>
+              <path d="M0 0 L10 5 L0 10 Z" fill={hover ? hoverC : c} />
             </marker>
           </defs>
 
           <path
-          className="line"
-          d={`M ${x1},${y1}, L ${x2},${y2}`}
-          stroke={hover ? hoverC : c}
-          strokeWidth={size}
-          strokeLinecap='round'
-          markerEnd={`url(#${x1},${y1},${x2},${y2})`}
-          onMouseEnter={() => setHover(true)}
-          onMouseLeave={() => setHover(false)}
-          onMouseDown={handleClick}
+            className="line"
+            d={`M ${x1},${y1}, L ${x2},${y2}`}
+            stroke={hover ? hoverC : c}
+            strokeWidth={size}
+            strokeLinecap='round'
+            markerEnd={`url(#${x1},${y1},${x2},${y2})`}
+            onMouseEnter={() => setHover(true)}
+            onMouseLeave={() => setHover(false)}
+            onMouseDown={handleClick}
           />
-      </g>
-    );} catch(e){
+        </g>
+      );
+    } catch (e) {
       console.log("Error rendering arrow:", e);
     }
   }
@@ -231,43 +232,43 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
 
     // Compute bounding box from whatever points we have (robust to closed poly or 2-point form)
     try {
-    const x1 = points[0][0];
-    const y1 = points[0][1];
-    const x2 = points[1][0];
-    const y2 = points[1][1];
+      const x1 = points[0][0];
+      const y1 = points[0][1];
+      const x2 = points[1][0];
+      const y2 = points[1][1];
 
-    return (
-       <g opacity={alpha}>
+      return (
+        <g opacity={alpha}>
           <defs>
-            <marker 
-            // unique ID for every marker head
-            id={`${x1},${y1},${x2},${y2}`}
-            orient="auto-start-reverse" 
-            markerWidth="5"
-            markerHeight="5"
-            viewBox="0 0 10 10"
-            refX="4"   // place the tip (10,5) on the vertex
-            refY="5"
+            <marker
+              // unique ID for every marker head
+              id={`${x1},${y1},${x2},${y2}`}
+              orient="auto-start-reverse"
+              markerWidth="5"
+              markerHeight="5"
+              viewBox="0 0 10 10"
+              refX="4"   // place the tip (10,5) on the vertex
+              refY="5"
             >
-              <path d="M0 0 L10 5 L0 10 Z" fill={hover ? hoverC : c}/>
+              <path d="M0 0 L10 5 L0 10 Z" fill={hover ? hoverC : c} />
             </marker>
           </defs>
 
           <path
-          className="line"
-          d={`M ${x1},${y1}, L ${x2},${y2}`}
-          stroke={hover ? hoverC : c}
-          strokeWidth={size}
-          strokeLinecap='round'
-          markerEnd={`url(#${x1},${y1},${x2},${y2})`}
-          markerStart={`url(#${x1},${y1},${x2},${y2})`}
-          onMouseEnter={() => setHover(true)}
-          onMouseLeave={() => setHover(false)}
-          onMouseDown={handleClick}
+            className="line"
+            d={`M ${x1},${y1}, L ${x2},${y2}`}
+            stroke={hover ? hoverC : c}
+            strokeWidth={size}
+            strokeLinecap='round'
+            markerEnd={`url(#${x1},${y1},${x2},${y2})`}
+            markerStart={`url(#${x1},${y1},${x2},${y2})`}
+            onMouseEnter={() => setHover(true)}
+            onMouseLeave={() => setHover(false)}
+            onMouseDown={handleClick}
           />
-      </g>
-    );
-    } catch(e){
+        </g>
+      );
+    } catch (e) {
       console.log("Error rendering double arrow:", e);
     }
   }
@@ -316,7 +317,7 @@ export function useLine(line: Y.Map<any>) {
       setColor(current.userColor);
       setAlpha(current.alpha);
       setSize(current.size);
-      setType(current.type || 'line'); // <-- read 'type' ('line' | 'rectangle')
+      setType(current.type || 'line'); // read 'type' ('line' | 'rectangle')
       setText(current.text);
     }
 
@@ -350,6 +351,13 @@ export function useLine(line: Y.Map<any>) {
   return { points: pts, color, isComplete, alpha, size, type, text };
 }
 
+/**
+ * Converts an array into an array of pairs by grouping consecutive elements.
+ * 
+ * @template T - The type of elements in the input array
+ * @param arr - The input array to be converted into pairs
+ * @returns An array of pairs, where each pair is a two-element array containing consecutive elements from the input array
+ */
 export function toPairs<T>(arr: T[]): T[][] {
   const pairs: T[][] = [];
   for (let i = 0; i < arr.length - 1; i += 2) {
