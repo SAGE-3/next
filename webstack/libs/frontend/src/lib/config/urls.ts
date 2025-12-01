@@ -23,6 +23,7 @@ export const apiUrls = {
     getDownloadURL: (url: string) => `/api/files/download/${encodeURIComponent(url)}`,
     getNotebookByName: (name: string) => `/api/contents/notebooks/${name}`,
     upload: '/api/assets/upload',
+    submit: '/api/assets/submit',
   },
   kernels: {
     heartbeat: `/api/kernels/heartbeat`,
