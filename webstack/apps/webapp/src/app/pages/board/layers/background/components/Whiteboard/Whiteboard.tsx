@@ -369,9 +369,14 @@ export function Whiteboard(props: WhiteboardProps) {
       }
       else if (type === 'circle') {
         if (pts.length < 4) {
-          const index = yLines?.toArray().indexOf(current) ?? -1;
-          if (index >= 0 && yLines) {
-            yLines.delete(index, 1);
+          try {
+            const index = yLines?.toArray().indexOf(current) ?? -1;
+            if (index >= 0 && yLines) {
+              yLines.delete(index, 1);
+            }
+          }
+          catch {
+            console.log(`array not long enough circle points: ${pts}`)
           }
         }
         else {
@@ -391,12 +396,6 @@ export function Whiteboard(props: WhiteboardProps) {
           const vert1y = cy + ry * Math.sin(Math.PI / 2);
           const vert2x = cx + rx * Math.cos((3 * Math.PI) / 2);
           const vert2y = cy + ry * Math.sin((3 * Math.PI) / 2);
-          // const a = Math.abs((maxX - minX)) / 2;
-          // const b = Math.abs((maxY - minY)) / 2;
-          // const vert1x = cx
-          // const vert1y = cx + b
-          // const vert2x = cx
-          // const vert2y = cx - b
           const circlePoints = [
             x0,
             y0,
@@ -544,7 +543,7 @@ export function Whiteboard(props: WhiteboardProps) {
           left: 0,
           top: 0,
           zIndex: 1000,
-          cursor: 'crosshair',
+          cursor: primaryActionMode === 'pen' ? 'crosshair' : 'eraser',
         }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
