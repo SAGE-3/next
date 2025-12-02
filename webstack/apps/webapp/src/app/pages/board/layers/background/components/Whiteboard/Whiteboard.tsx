@@ -43,7 +43,6 @@ import {
 
 import { Line } from './Line';
 import { useDragAndDropBoard } from '../DragAndDropBoard';
-import { circle } from 'leaflet';
 
 type WhiteboardProps = {
   boardId: string;
@@ -506,7 +505,7 @@ export function Whiteboard(props: WhiteboardProps) {
   useHotkeys(
     'alt+z',
     () => {
-      if (primaryActionMode === 'pen') {
+      if (['pen', 'rectangle', 'circle', 'arrow', 'doubleArrow'].includes(primaryActionMode)) {
         setUndoLastMarker(true);
       }
     },
@@ -515,7 +514,7 @@ export function Whiteboard(props: WhiteboardProps) {
   useHotkeys(
     'cmd+z',
     () => {
-      if (primaryActionMode === 'pen') {
+      if (['pen', 'rectangle', 'circle', 'arrow', 'doubleArrow'].includes(primaryActionMode)) {
         setUndoLastMarker(true);
       }
     },
@@ -526,10 +525,10 @@ export function Whiteboard(props: WhiteboardProps) {
     <div
       className="canvas-container"
       style={{
-        pointerEvents: [/* 'lasso',*/ 'pen', 'eraser', 'rectangle', 'circle', 'arrow', 'doubleArrow'].includes(primaryActionMode)
+        pointerEvents: ['pen', 'eraser', 'rectangle', 'circle', 'arrow', 'doubleArrow'].includes(primaryActionMode)
           ? 'auto'
           : 'none',
-        touchAction: [/* 'lasso',*/ 'pen', 'eraser', 'rectangle', 'circle', 'arrow', 'doubleArrow'].includes(primaryActionMode)
+        touchAction: ['pen', 'eraser', 'rectangle', 'circle', 'arrow', 'doubleArrow'].includes(primaryActionMode)
           ? 'none'
           : 'auto',
       }}
