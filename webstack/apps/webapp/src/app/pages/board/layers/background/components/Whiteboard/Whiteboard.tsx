@@ -43,7 +43,6 @@ import {
 
 import { Line } from './Line';
 import { useDragAndDropBoard } from '../DragAndDropBoard';
-import { circle } from 'leaflet';
 
 type WhiteboardProps = {
   boardId: string;
@@ -216,7 +215,7 @@ export function Whiteboard(props: WhiteboardProps) {
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
       // Determine type based on current tool
-      const type = primaryActionMode === 'rectangle' ? 'rectangle' : primaryActionMode === 'pen' ? 'line' : primaryActionMode ==='circle' ? 'circle' : primaryActionMode === 'arrow' ? 'arrow' : primaryActionMode === 'doubleArrow' ? 'doubleArrow' : 'eraser';
+      const type = primaryActionMode === 'rectangle' ? 'rectangle' : primaryActionMode === 'pen' ? 'line' : primaryActionMode === 'circle' ? 'circle' : primaryActionMode === 'arrow' ? 'arrow' : primaryActionMode === 'doubleArrow' ? 'doubleArrow' : 'eraser';
       if (type === 'eraser') return;
       if (!yLines || !yDoc || !canAnnotate || !boardSynced) return;
       if (!e.isPrimary || e.button !== 0) return;
@@ -232,8 +231,8 @@ export function Whiteboard(props: WhiteboardProps) {
       pts.push([x0, y0]);
       // Circle needs to have at least two points to correctly render
       // Extra point gets deleted when the pointer moves
-      if (type === 'circle' || type === 'arrow' || type === 'doubleArrow'){
-        pts.push([x0 + .000001, y0 + .000001]); 
+      if (type === 'circle' || type === 'arrow' || type === 'doubleArrow') {
+        pts.push([x0 + .000001, y0 + .000001]);
       }
       // Create a Yjs map for this shape
       const yShape = new Y.Map();
@@ -277,17 +276,17 @@ export function Whiteboard(props: WhiteboardProps) {
       if (type === 'line') {
         // Append new point for freehand line
         pts.push([x, y]);
-      } 
+      }
       // use same logic to track circle and rectangle movements 
       else if (type === 'rectangle' || type === 'circle' || type === 'arrow' || type === 'doubleArrow') {
         // Replace the last end point (if exists) with the current coordinates
         // A rectangle stores two points: start and current drag end
         if (pts.length >= 4) {
-          pts.delete(2, 2); 
+          pts.delete(2, 2);
         }
         pts.push([x, y]);
       }
-      else{
+      else {
         setCursorPosition(null);
       }
     },
@@ -368,14 +367,19 @@ export function Whiteboard(props: WhiteboardProps) {
           current.set('isComplete', true);
         }
       }
-      else if( type === 'circle'){
-        if(pts.length < 4) {
-          const index = yLines?.toArray().indexOf(current) ?? -1;
-          if (index >= 0 && yLines) {
-            yLines.delete(index, 1);
+      else if (type === 'circle') {
+        if (pts.length < 4) {
+          try {
+            const index = yLines?.toArray().indexOf(current) ?? -1;
+            if (index >= 0 && yLines) {
+              yLines.delete(index, 1);
+            }
+          }
+          catch {
+            console.log(`array not long enough circle points: ${pts}`)
           }
         }
-        else{
+        else {
           const x0 = pts.get(0);
           const y0 = pts.get(1);
           const x1 = pts.get(2);
@@ -392,12 +396,6 @@ export function Whiteboard(props: WhiteboardProps) {
           const vert1y = cy + ry * Math.sin(Math.PI / 2);
           const vert2x = cx + rx * Math.cos((3 * Math.PI) / 2);
           const vert2y = cy + ry * Math.sin((3 * Math.PI) / 2);
-          // const a = Math.abs((maxX - minX)) / 2;
-          // const b = Math.abs((maxY - minY)) / 2;
-          // const vert1x = cx
-          // const vert1y = cx + b
-          // const vert2x = cx
-          // const vert2y = cx - b
           const circlePoints = [
             x0,
             y0,
@@ -409,33 +407,33 @@ export function Whiteboard(props: WhiteboardProps) {
             vert2y,
           ];
           pts.delete(0, pts.length);
-          for (let i = 0; i < circlePoints.length; i+=2){
-            pts.push([circlePoints[i], circlePoints[i+1]]);
+          for (let i = 0; i < circlePoints.length; i += 2) {
+            pts.push([circlePoints[i], circlePoints[i + 1]]);
           }
           current.set('isComplete', true);
         }
       }
-      else if(type === 'arrow' || type === 'doubleArrow'){
+      else if (type === 'arrow' || type === 'doubleArrow') {
         console.log(type)
-          if(pts.length < 4){
-            const index = yLines?.toArray().indexOf(current) ?? -1;
-            if (index >= 0 && yLines) {
-              yLines.delete(index, 1);
-            } 
+        if (pts.length < 4) {
+          const index = yLines?.toArray().indexOf(current) ?? -1;
+          if (index >= 0 && yLines) {
+            yLines.delete(index, 1);
           }
-          else{
-            const x0 = pts.get(0);
-            const y0 = pts.get(1);
-            const x1 = pts.get(2);
-            const y1 = pts.get(3);
-            const points = [x0, y0, x1, y1];
-            pts.delete(0, pts.length);
-            for (let i = 0; i < points.length; i+=2){
-              pts.push([points[i], points[i+1]]);
-            }
-            current.set('isComplete', true);
-          }  
         }
+        else {
+          const x0 = pts.get(0);
+          const y0 = pts.get(1);
+          const x1 = pts.get(2);
+          const y1 = pts.get(3);
+          const points = [x0, y0, x1, y1];
+          pts.delete(0, pts.length);
+          for (let i = 0; i < points.length; i += 2) {
+            pts.push([points[i], points[i + 1]]);
+          }
+          current.set('isComplete', true);
+        }
+      }
       updateBoardLines();
       rCurrentLine.current = undefined;
     },
@@ -507,7 +505,7 @@ export function Whiteboard(props: WhiteboardProps) {
   useHotkeys(
     'alt+z',
     () => {
-      if (primaryActionMode === 'pen') {
+      if (['pen', 'rectangle', 'circle', 'arrow', 'doubleArrow'].includes(primaryActionMode)) {
         setUndoLastMarker(true);
       }
     },
@@ -516,7 +514,7 @@ export function Whiteboard(props: WhiteboardProps) {
   useHotkeys(
     'cmd+z',
     () => {
-      if (primaryActionMode === 'pen') {
+      if (['pen', 'rectangle', 'circle', 'arrow', 'doubleArrow'].includes(primaryActionMode)) {
         setUndoLastMarker(true);
       }
     },
@@ -527,10 +525,10 @@ export function Whiteboard(props: WhiteboardProps) {
     <div
       className="canvas-container"
       style={{
-        pointerEvents: [/* 'lasso',*/ 'pen', 'eraser', 'rectangle', 'circle', 'arrow', 'doubleArrow'].includes(primaryActionMode)
+        pointerEvents: ['pen', 'eraser', 'rectangle', 'circle', 'arrow', 'doubleArrow'].includes(primaryActionMode)
           ? 'auto'
           : 'none',
-        touchAction: [/* 'lasso',*/ 'pen', 'eraser', 'rectangle', 'circle', 'arrow', 'doubleArrow'].includes(primaryActionMode)
+        touchAction: ['pen', 'eraser', 'rectangle', 'circle', 'arrow', 'doubleArrow'].includes(primaryActionMode)
           ? 'none'
           : 'auto',
       }}
@@ -545,7 +543,7 @@ export function Whiteboard(props: WhiteboardProps) {
           left: 0,
           top: 0,
           zIndex: 1000,
-          cursor: primaryActionMode ==='pen' ? 'crosshair' : 'eraser',
+          cursor: primaryActionMode === 'pen' ? 'crosshair' : 'eraser',
         }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
