@@ -129,6 +129,7 @@ const autoUpdater = electron.autoUpdater;
 // Auto update
 // require('update-electron-app')({ repo: 'SAGE-3/next' });
 const { updateElectronApp, UpdateSourceType } = require('update-electron-app');
+
 updateElectronApp({
   updateSource: {
     host: 'https://update.electronjs.org',
@@ -835,6 +836,25 @@ function createWindow() {
   // New webview added
   mainWindow.webContents.on('did-attach-webview', function (event, webContents) {
     // disableGeolocation(webContents.session);
+
+    // Intercept HTTP requests before they're sent to modify headers
+    // This is specifically for YouTube/GoogleVideo to set the Referer header
+    webContents.session.webRequest.onBeforeSendHeaders(
+      // Only apply this to YouTube and GoogleVideo domains
+      { urls: ['*://*.youtube.com/*', '*://*.googlevideo.com/*'] },
+      (details, callback) => {
+        // Get the current URL being displayed in the main window
+        const currentURL = mainWindow.webContents.getURL();
+        // Parse the URL to extract the origin (scheme + host + port)
+        var parsedURL = new URL(currentURL);
+        var referrer = parsedURL.origin;
+        // Set the Referer header to the current page origin
+        // This helps bypass referrer restrictions on embedded content
+        details.requestHeaders['Referer'] = referrer;
+        // Send the modified headers back to proceed with the request
+        callback({ requestHeaders: details.requestHeaders });
+      },
+    );
   });
 
   // Request from the renderer process
