@@ -91,7 +91,7 @@ async function startServer() {
   };
   console.log(
     `Server> Database Loggger set to ${config.fluentd.databaseLevel.toUpperCase()}, logging collections:`,
-    sbLogConfig.collections
+    sbLogConfig.collections,
   );
 
   // Initialization of SAGEBase
@@ -250,7 +250,7 @@ async function startServer() {
   // Serve the static react files from webapp folder
   serveApp(app, path.join(__dirname, 'webapp'));
   // Serve the plugins folder
-  app.use('/plugins', express.static(path.join(__dirname, 'plugins'), { maxAge: '1d' }));
+  app.use('/plugins', express.static(path.join(__dirname, 'plugins'), { cacheControl: false }));
 
   // Handle termination
   function exitHandler() {
