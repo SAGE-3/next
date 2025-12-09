@@ -63,6 +63,7 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
       const description = req.body.description as string;
       const username = req.body.username as string;
       const roomId = req.body.roomId ? req.body.roomId : '';
+      let foundPreviousVersion = false;
 
       // Check if the request is valid
       if (!username || !description || !pluginName) {
@@ -74,9 +75,18 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
       // Check to see if plugin with that name already exists
       const check = await this.collection.query('name', pluginName);
       if (check.length > 0) {
-        removeUploadedFile();
-        res.status(400).send({ success: false, message: 'Plugin with that name already exists.' });
-        return;
+        // see if the existing plugin is owned by the user
+        const isYours = check.some((p) => p.data.ownerId === req.user.id);
+        if (!isYours) {
+          // If not yours, reject the upload
+          removeUploadedFile();
+          res.status(400).send({ success: false, message: 'Plugin with that name already exists.' });
+          return;
+        } else {
+          // If it is yours, remove the old files
+          fs.rmSync(path.join(appsPath, pluginName), { recursive: true, force: true });
+          foundPreviousVersion = true;
+        }
       }
 
       // Make the directory
@@ -129,13 +139,20 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
             res.status(400).send({ success: false, message: 'Index.html not found' });
             return;
           }
+
           // Update the database
-          this.add(
-            { name: pluginName, description, ownerId: req.user.id, ownerName: username, dateCreated: Date.now().toString(), roomId },
-            req.user.id
-          );
-          removeUploadedFile();
-          res.status(200).send({ success: true, message: 'Plugin Uploaded' });
+          if (foundPreviousVersion) {
+            removeUploadedFile();
+            res.status(200).send({ success: true, message: 'Plugin Updated with new upload' });
+          } else {
+            // Add to the database
+            this.add(
+              { name: pluginName, description, ownerId: req.user.id, ownerName: username, dateCreated: Date.now().toString(), roomId },
+              req.user.id,
+            );
+            removeUploadedFile();
+            res.status(200).send({ success: true, message: 'Plugin Successfully Uploaded' });
+          }
         });
       } catch (e) {
         removeUploadedFile();

@@ -100,7 +100,7 @@ export function PluginUploadModal(props: PluginUploadModalProps): JSX.Element {
       if (response.success) {
         toast({
           title: 'Plugin Upload',
-          description: 'Plugin Successfully Uploaded.',
+          description: response.message, // uploaded or updated
           status: 'success',
           duration: 3000,
           isClosable: true,
