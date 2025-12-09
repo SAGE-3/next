@@ -96,6 +96,18 @@ export function PluginUploadModal(props: PluginUploadModalProps): JSX.Element {
       setUploading(true);
       // Upload with a POST request
       const response = await upload(input[0], name, description, user.data.name, roomId);
+      // Handle case where response might be undefined (shouldn't happen, but safety check)
+      if (!response) {
+        toast({
+          title: 'Plugin Upload',
+          description: 'Upload failed. Please try again.',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+        setUploading(false);
+        return;
+      }
       // Upload Successful
       if (response.success) {
         toast({
@@ -106,7 +118,17 @@ export function PluginUploadModal(props: PluginUploadModalProps): JSX.Element {
           isClosable: true,
         });
       } else {
-        toast({ title: 'Plugin Upload', description: response.message, status: 'warning', duration: 3000, isClosable: true });
+        // Determine error status based on response
+        // 403 = permission denied (not owner), 400 = validation error, others = server error
+        const statusCode = response.status ?? 500;
+        const isError = statusCode === 403 || statusCode === 400;
+        toast({ 
+          title: 'Plugin Upload', 
+          description: response.message, 
+          status: isError ? 'error' : 'warning', 
+          duration: 4000, 
+          isClosable: true 
+        });
       }
       // Show spinner for just a little longer so it doesnt look like UI is flashing.
       setTimeout(() => setUploading(false), 500);

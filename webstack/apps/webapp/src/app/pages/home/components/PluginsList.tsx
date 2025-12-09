@@ -207,7 +207,7 @@ export function PluginsList(props: PluginsListProps): JSX.Element {
                 <Text textAlign={'left'}>{selectedPlugin.data.name}</Text>
                 <Text>{selectedPlugin.data.description}</Text>
                 <Text>{selectedPlugin.data.ownerName}</Text>
-                <Text>{formatDateAndTime(selectedPlugin._createdAt)}</Text>
+                <Text>{formatDateAndTime(Number(selectedPlugin.data.dateCreated))}</Text>
               </VStack>
             </HStack>
             <Box minHeight="50px">
@@ -231,7 +231,7 @@ export function PluginsList(props: PluginsListProps): JSX.Element {
               </Tooltip>
             </Box>
             <Box width="100%" height="500px" overflow="hidden" borderRadius="md">
-              <iframe loading="eager" src={`/plugins/apps/${selectedPlugin.data.name}`} style={{ width: '100%', height: '100%' }}></iframe>
+              <iframe loading="eager" src={`/plugins/apps/${selectedPlugin.data.roomId}_${selectedPlugin.data.name}`} style={{ width: '100%', height: '100%' }}></iframe>
             </Box>
           </Box>
         </Box>
