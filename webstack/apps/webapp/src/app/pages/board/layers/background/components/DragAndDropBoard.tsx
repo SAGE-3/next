@@ -199,12 +199,18 @@ export const useDragAndDropBoard = (props: useDragAndDropBoardProps) => {
             if (appName === 'SageCell') {
               w = 650;
               h = 400;
+            } else if (appName === 'Timer') {
+              w = 330;
+              h = 226;
             } else if (appName === 'Calculator') {
               w = 260;
               h = 369;
             } else if (appName === 'Chat') {
               w = 800;
               h = 420;
+            } else if (appName === 'Clock') {
+              w = 320 * 1.5;
+              h = 130 * 1.5;
             }
             // if a specific app was setup, create it
             const appstatestr = event.dataTransfer.getData('app_state');

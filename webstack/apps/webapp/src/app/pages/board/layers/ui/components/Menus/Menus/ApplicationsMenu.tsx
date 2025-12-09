@@ -77,6 +77,9 @@ export function ApplicationsMenu(props: ApplicationProps) {
     } else if (appName === 'Calculator') {
       w = 260;
       h = 369;
+    } else if (appName === 'Timer') {
+      w = 330;
+      h = 226;
     } else if (appName === 'Chat') {
       w = 800;
       h = 620;
@@ -87,6 +90,9 @@ export function ApplicationsMenu(props: ApplicationProps) {
     } else if (appName === 'Hawaii Mesonet') {
       w = 650;
       h = 650;
+    } else if (appName === 'Clock') {
+      w = 320 * 1.5;
+      h = 130 * 1.5;
     }
 
     const title = appName == 'Stickie' ? user.data.name : ''; // Gross

@@ -7,7 +7,7 @@
  */
 import { useEffect, useState } from 'react';
 
-import { Box, Button, ButtonGroup, Text, Tooltip, HStack, VStack } from '@chakra-ui/react';
+import { Box, Button, ButtonGroup, Text, Tooltip, HStack, VStack, useColorModeValue, AspectRatio } from '@chakra-ui/react';
 import { MdAdd, MdRemove, MdPlayArrow, MdPause, MdReplay } from 'react-icons/md';
 
 import { useAppStore, zeroPad, serverTime } from '@sage3/frontend';
@@ -23,11 +23,10 @@ import './styling.css';
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-  const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
 
-  // Set size for the app
-  update(props._id, { size: { 'width': 900, 'height': 510, 'depth': 0 } });
+  const [scale, setScale] = useState(1);
+  const backgroundColor = useColorModeValue('white', 'gray.700');
 
   // Local state for timer control
   const [total, setTotal] = useState<number>(s.total); // in seconds
@@ -114,77 +113,88 @@ function AppComponent(props: App): JSX.Element {
     }
   };
 
+  // Track the width of the app window and set the scale accordingly
+  useEffect(() => {
+    setScale(props.data.size.width / 330);
+  }, [props.data.size.width]);
+
   return (
-    <AppWindow app={props} disableResize={true}>
-      <>
-        <Text fontFamily={"monospace"} letterSpacing={-18} fontSize="200px" align="center" lineHeight="1.2"
-          color={total > -1 ? total < 60 ? "orange.600" : "green.600" : "red.600"}
-          animation={(total < 0) && s.isRunning ? `scaleAnimation infinite 1s linear` : 'none'}
-        >
-          {formatTime(total)}
-        </Text>
+    <AppWindow app={props} lockAspectRatio={true}>
+      <AspectRatio width={"100%"} height="100%" ratio={1.46} p={0} m={0} background={backgroundColor}>
+        <Box transform={`scale(${scale})`} transformOrigin={'center'} p={0} m={0}>
+          <VStack p={0} m={0}>
 
-        <VStack>
-          <HStack display="flex" textAlign="center" spacing="15px">
-            <Box w="162px"><Text fontSize="3xl" display="inline">Hour</Text></Box>
-            <Box w="162px"><Text fontSize="3xl" display="inline">Minute</Text></Box>
-            <Box w="162px"><Text fontSize="3xl" display="inline">Second</Text></Box>
-          </HStack>
-          <Box display="flex" justifyContent="center">
-            <ButtonGroup isAttached colorScheme="teal">
-              <Tooltip placement="bottom" hasArrow={true} label={'+1 Hour'} openDelay={400}>
-                <Button w="80px" h="80px" fontSize="40px" isDisabled={s.isRunning} onClick={() => adjustTotal(3600)}>
-                  <MdAdd />
-                </Button>
-              </Tooltip>
-              <Tooltip placement="bottom" hasArrow={true} label={'-1 Hour'} openDelay={400}>
-                <Button w="80px" h="80px" fontSize="40px" isDisabled={s.isRunning} onClick={() => adjustTotal(-3600)}>
-                  <MdRemove />
-                </Button>
-              </Tooltip>
-            </ButtonGroup>
+            <Text fontFamily={"monospace"} fontSize="5xl" align="center" lineHeight="1.2"
+              color={total > -1 ? total < 60 ? "orange.600" : "green.600" : "red.600"}
+              animation={(total < 0) && s.isRunning ? `scaleAnimation infinite 1s linear` : 'none'}
+            >
+              {formatTime(total)}
+            </Text>
 
-            <Text fontSize="5xl" display="inline" px="3px">:</Text>
+            <HStack display="flex" justifyContent="center">
 
-            <ButtonGroup isAttached size="lg" colorScheme="teal">
-              <Tooltip placement="bottom" hasArrow={true} label={'+1 Minute'} openDelay={400}>
-                <Button w="80px" h="80px" fontSize="40px" isDisabled={s.isRunning} onClick={() => adjustTotal(60)}>
-                  <MdAdd />
-                </Button>
-              </Tooltip>
-              <Tooltip placement="bottom" hasArrow={true} label={'-1 Minute'} openDelay={400}>
-                <Button w="80px" h="80px" fontSize="40px" isDisabled={s.isRunning} onClick={() => adjustTotal(-60)}>
-                  <MdRemove />
-                </Button>
-              </Tooltip>
-            </ButtonGroup>
+              <VStack>
+                <Text fontSize="xl" display="inline">Hour</Text>
+                <ButtonGroup isAttached size="md" colorScheme="teal">
+                  <Tooltip placement="bottom" hasArrow={true} label={'+1 Hour'} openDelay={400}>
+                    <Button isDisabled={s.isRunning} onClick={() => adjustTotal(3600)}>
+                      <MdAdd />
+                    </Button>
+                  </Tooltip>
+                  <Tooltip placement="bottom" hasArrow={true} label={'-1 Hour'} openDelay={400}>
+                    <Button isDisabled={s.isRunning} onClick={() => adjustTotal(-3600)}>
+                      <MdRemove />
+                    </Button>
+                  </Tooltip>
+                </ButtonGroup>
+              </VStack>
 
-            <Text fontSize="5xl" display="inline" px="3px">:</Text>
+              <VStack>
+                <Text fontSize="xl" display="inline">Minute</Text>
+                <ButtonGroup isAttached size="md" colorScheme="teal">
+                  <Tooltip placement="bottom" hasArrow={true} label={'+1 Minute'} openDelay={400}>
+                    <Button isDisabled={s.isRunning} onClick={() => adjustTotal(60)}>
+                      <MdAdd />
+                    </Button>
+                  </Tooltip>
+                  <Tooltip placement="bottom" hasArrow={true} label={'-1 Minute'} openDelay={400}>
+                    <Button isDisabled={s.isRunning} onClick={() => adjustTotal(-60)}>
+                      <MdRemove />
+                    </Button>
+                  </Tooltip>
+                </ButtonGroup>
+              </VStack>
 
-            <ButtonGroup isAttached size="lg" colorScheme="teal">
-              <Tooltip placement="bottom" hasArrow={true} label={'+1 Second'} openDelay={400}>
-                <Button w="80px" h="80px" fontSize="40px" isDisabled={s.isRunning} onClick={() => adjustTotal(1)}>
-                  <MdAdd />
-                </Button>
-              </Tooltip>
-              <Tooltip placement="bottom" hasArrow={true} label={'-1 Second'} openDelay={400}>
-                <Button w="80px" h="80px" fontSize="40px" isDisabled={s.isRunning} onClick={() => adjustTotal(-1)}>
-                  <MdRemove />
-                </Button>
-              </Tooltip>
-            </ButtonGroup>
-          </Box>
+              <VStack>
+                <Text fontSize="xl" display="inline">Second</Text>
+                <ButtonGroup isAttached size="md" colorScheme="teal">
+                  <Tooltip placement="bottom" hasArrow={true} label={'+1 Second'} openDelay={400}>
+                    <Button isDisabled={s.isRunning} onClick={() => adjustTotal(1)}>
+                      <MdAdd />
+                    </Button>
+                  </Tooltip>
+                  <Tooltip placement="bottom" hasArrow={true} label={'-1 Second'} openDelay={400}>
+                    <Button isDisabled={s.isRunning} onClick={() => adjustTotal(-1)}>
+                      <MdRemove />
+                    </Button>
+                  </Tooltip>
+                </ButtonGroup>
+              </VStack>
 
-          <Box display="flex" justifyContent="center" w="512px" mt={5}>
-            <Tooltip placement="bottom" hasArrow={true} label={s.isRunning ? 'Pause' : 'Start'} openDelay={400}>
-              <Button w="50%" h="80px" fontSize="40px" colorScheme="orange" onClick={setTimerRunning}>{s.isRunning ? <MdPause /> : <MdPlayArrow />}</Button>
-            </Tooltip>
-            <Tooltip placement="bottom" hasArrow={true} label={'Reset'} openDelay={400}>
-              <Button w="50%" h="80px" fontSize="40px" ml={3} colorScheme="orange" onClick={resetTimer}><MdReplay /></Button>
-            </Tooltip>
-          </Box>
-        </VStack>
-      </>
+            </HStack>
+
+            <HStack display="flex" justifyContent="center" w="sm" mt={5}>
+              <Tooltip placement="bottom" hasArrow={true} label={s.isRunning ? 'Pause' : 'Start'} openDelay={400}>
+                <Button w="37%" colorScheme="orange" onClick={setTimerRunning}>{s.isRunning ? <MdPause /> : <MdPlayArrow />}</Button>
+              </Tooltip>
+              <Tooltip placement="bottom" hasArrow={true} label={'Reset'} openDelay={400}>
+                <Button w="37%" ml={3} colorScheme="orange" onClick={resetTimer}><MdReplay /></Button>
+              </Tooltip>
+            </HStack>
+
+          </VStack>
+        </Box>
+      </AspectRatio>
     </AppWindow>
   );
 }

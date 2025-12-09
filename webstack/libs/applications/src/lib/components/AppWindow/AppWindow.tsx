@@ -201,12 +201,27 @@ export function AppWindow(props: WindowProps) {
   function handleDragStop(_e: RndDragEvent, data: DraggableData) {
     const x = data.x;
     const y = data.y;
+    // If the new positions is way far away from the old positoins, then dont update the position
+    // Calculate the distance
+    const dx = x - props.app.data.position.x;
+    const dy = y - props.app.data.position.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    if (distance > 50000) {
+      toast({
+        title: 'Invalid Position',
+        description: 'An invalid position was detected. The position was not updated.',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+      setPos({ x: props.app.data.position.x, y: props.app.data.position.y });
+      setLocalDeltaMove({ x: 0, y: 0 }, selectedApps);
+      return;
+    }
     setPos({ x, y });
     setAppDragging(false);
     // Update the position of the app in the server and all the other apps in the group
     if (isGrouped) {
-      const dx = data.x - props.app.data.position.x;
-      const dy = data.y - props.app.data.position.y;
       updateAppLocationByDelta({ x: dx, y: dy }, selectedApps);
       setLocalDeltaMove({ x: 0, y: 0 }, []);
     } else {
@@ -286,6 +301,7 @@ export function AppWindow(props: WindowProps) {
       handleBringAppForward();
       clearSelectedApps();
       setSelectedApp(props.app._id);
+      console.log(`AppWindow: ${primaryActionMode}`)
       // // Uncomment to allow for selection in grab mode to change interaction modes
       // if (primaryActionMode === 'grab') {
       //   setPrimaryActionMode('lasso');

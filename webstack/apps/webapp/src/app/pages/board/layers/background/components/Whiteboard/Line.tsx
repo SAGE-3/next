@@ -11,7 +11,8 @@ import { useColorModeValue } from '@chakra-ui/react';
 import { getStroke } from 'perfect-freehand';
 import * as Y from 'yjs';
 
-import { useHexColor, useUserSettings } from '@sage3/frontend';
+
+import { useHexColor, useUserSettings, useAnnotationStore, useAppStore } from '@sage3/frontend';
 
 export interface LineProps {
   line: Y.Map<any>;
@@ -22,29 +23,255 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
   const { settings } = useUserSettings();
   const primaryActionMode = settings.primaryActionMode;
 
-  const { points, color, isComplete, alpha, size } = useLine(line);
+  const { points, color, isComplete, alpha, size, type, text } = useLine(line);
+
   const c = useHexColor(color ? color : 'red');
   const hoverColor = useColorModeValue(`${color}.600`, `${color}.100`);
   const hoverC = useHexColor(hoverColor);
   const id = line.get('id') as string;
   const [hover, setHover] = useState(false);
 
+  const handleTextChange = (ev: React.ChangeEvent<HTMLInputElement>) => {
+    line.set('text', ev.target.value);
+  }
+
   const handleClick = (ev: any) => {
-    // If Right Click
+    // Left-click while in eraser mode deletes this line/shape
     if (ev.button === 0 && primaryActionMode === 'eraser') {
       onClick(id);
+      console.log(`LINE |click: primaryActionMode=${primaryActionMode}`);
     }
   };
 
-  const pathData = getSvgPathFromStroke(
-    getStroke(points, {
-      size: size,
-      thinning: 0.5,
-      smoothing: 0.6,
-      streamline: 0.2, // don't need much since already optimzed
-      last: isComplete,
-    })
-  );
+  if (type === 'circle') {
+    if (!points || points.length < 2) return null;
+    try {
+      const x1 = points[0][0];
+      const y1 = points[0][1];
+      const x0 = points[1][0];
+      const y0 = points[1][1];
+      const maxX = Math.max(x0, x1);
+      const minX = Math.min(x0, x1);
+      const maxY = Math.max(y0, y1);
+      const minY = Math.min(y0, y1);
+      const midpointX = (maxX + minX) / 2;
+      const midpointY = (maxY + minY) / 2;
+      return (
+        <g>
+          <ellipse
+            cx={midpointX}
+            cy={midpointY}
+            rx={(maxX - minX) / 2}
+            ry={(maxY - minY) / 2}
+            fill="none"
+            stroke={hover ? hoverC : c}
+            strokeOpacity={alpha ?? 0.6}
+            strokeWidth={size ?? 5}
+            strokeLinejoin="miter"   // <-- sharp corners
+            strokeLinecap="butt"     // <-- flat line ends
+            shapeRendering="crispEdges"
+            onMouseEnter={() => setHover(true)}
+            onMouseLeave={() => setHover(false)}
+            onMouseDown={handleClick}
+          />
+          <foreignObject x={minX} y={minY} width={maxX - minX} height={maxY - minY}>
+            <div style={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <input
+                type='text'
+                value={text}
+                style={{
+                  width: '90%',
+                  height: '90%',
+                  background: 'transparent',
+                  border: 'none',
+                  color: c,
+                  fontSize: '50px',
+                  textAlign: 'center',
+                  outline: 'none'
+                }}
+                onChange={handleTextChange}
+              />
+            </div>
+          </foreignObject>
+        </g>
+      );
+    } catch (error) {
+      console.log(`${error}`)
+    }
+  }
+
+  // --- Render rectangles with crisp right angles ---------------------------
+
+  if (type === 'rectangle') {
+    if (!points || points.length === 0) return null;
+
+    // Compute bounding box from whatever points we have (robust to closed poly or 2-point form)
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    for (const [x, y] of points) {
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+      if (x > maxX) maxX = x;
+      if (y > maxY) maxY = y;
+    }
+    const width = Math.max(0, maxX - minX);
+    const height = Math.max(0, maxY - minY);
+    return (
+      <g>
+        <rect
+          x={minX}
+          y={minY}
+          width={width}
+          height={height}
+          fill="none"
+          stroke={hover ? hoverC : c}
+          strokeOpacity={alpha ?? 0.6}
+          strokeWidth={size ?? 5}
+          strokeLinejoin="miter"   // Sharp corners
+          strokeLinecap="butt"     // Flat line ends
+          shapeRendering="crispEdges"
+          onMouseEnter={() => setHover(true)}
+          onMouseLeave={() => setHover(false)}
+          onMouseDown={handleClick}
+        />
+        <foreignObject x={minX} y={minY} width={width} height={height}>
+          <div style={{
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <input
+              type='text'
+              value={text}
+              style={{
+                width: '90%',
+                height: '90%',
+                background: 'transparent',
+                border: 'none',
+                color: c,
+                fontSize: '50px',
+                textAlign: 'center',
+                outline: 'none'
+              }}
+              onChange={handleTextChange}
+            />
+          </div>
+        </foreignObject>
+      </g>
+    );
+  }
+
+  // --- Render freehand lines with LESS rounding ----------------------------
+  // Use perfect-freehand to build the stroke outline, but:
+  //  - Lower smoothing and streamline to reduce roundness
+  //  - Build a polygonal path (M/L + Z) instead of quadratic curves
+  const strokeOutline = getStroke(points, {
+    size: size,
+    thinning: 0.35,     // a bit less 'brushy'
+    smoothing: 0.2,     // LOWER -> less rounding than your 0.6
+    streamline: 0.12,   // LOWER -> tracks pointer more tightly
+    last: isComplete,
+  });
+
+  const pathData = getSvgPathFromStrokePolygon(strokeOutline);
+
+  if (type === 'arrow') {
+    if (!points || points.length < 2) return null;
+
+    // Compute bounding box from whatever points we have (robust to closed poly or 2-point form)
+    try {
+      const x1 = points[0][0];
+      const y1 = points[0][1];
+      const x2 = points[1][0];
+      const y2 = points[1][1];
+
+      return (
+        <g opacity={alpha}>
+          <defs>
+            <marker
+              // unique ID for every marker head
+              id={`${x1},${y1},${x2},${y2}`}
+              orient="auto"
+              markerWidth="5"
+              markerHeight="5"
+              viewBox="0 0 10 10"
+              refX="5"   // place the tip (10,5) on the vertex
+              refY="5"
+            >
+              <path d="M0 0 L10 5 L0 10 Z" fill={hover ? hoverC : c} />
+            </marker>
+          </defs>
+
+          <path
+            className="line"
+            d={`M ${x1},${y1}, L ${x2},${y2}`}
+            stroke={hover ? hoverC : c}
+            strokeWidth={size}
+            strokeLinecap='round'
+            markerEnd={`url(#${x1},${y1},${x2},${y2})`}
+            onMouseEnter={() => setHover(true)}
+            onMouseLeave={() => setHover(false)}
+            onMouseDown={handleClick}
+          />
+        </g>
+      );
+    } catch (e) {
+      console.log("Error rendering arrow:", e);
+    }
+  }
+
+  if (type === 'doubleArrow') {
+    if (!points || points.length < 2) return null;
+
+    // Compute bounding box from whatever points we have (robust to closed poly or 2-point form)
+    try {
+      const x1 = points[0][0];
+      const y1 = points[0][1];
+      const x2 = points[1][0];
+      const y2 = points[1][1];
+
+      return (
+        <g opacity={alpha}>
+          <defs>
+            <marker
+              // unique ID for every marker head
+              id={`${x1},${y1},${x2},${y2}`}
+              orient="auto-start-reverse"
+              markerWidth="5"
+              markerHeight="5"
+              viewBox="0 0 10 10"
+              refX="4"   // place the tip (10,5) on the vertex
+              refY="5"
+            >
+              <path d="M0 0 L10 5 L0 10 Z" fill={hover ? hoverC : c} />
+            </marker>
+          </defs>
+
+          <path
+            className="line"
+            d={`M ${x1},${y1}, L ${x2},${y2}`}
+            stroke={hover ? hoverC : c}
+            strokeWidth={size}
+            strokeLinecap='round'
+            markerEnd={`url(#${x1},${y1},${x2},${y2})`}
+            markerStart={`url(#${x1},${y1},${x2},${y2})`}
+            onMouseEnter={() => setHover(true)}
+            onMouseLeave={() => setHover(false)}
+            onMouseDown={handleClick}
+          />
+        </g>
+      );
+    } catch (e) {
+      console.log("Error rendering double arrow:", e);
+    }
+  }
 
   return (
     <g>
@@ -61,49 +288,16 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
   );
 });
 
-function average(a: number, b: number) {
-  return (a + b) / 2;
-}
-
-function getSvgPathFromStroke(points: number[][]) {
-  const len = points.length;
-
-  if (len < 4) {
-    return ``;
+function getSvgPathFromStrokePolygon(stroke: number[][]) {
+  // Build a polygonal path (no quadratic beziers) for crisper corners
+  if (!stroke || stroke.length === 0) return '';
+  let d = `M${stroke[0][0].toFixed(1)},${stroke[0][1].toFixed(1)}`;
+  for (let i = 1; i < stroke.length; i++) {
+    const [x, y] = stroke[i];
+    d += ` L${x.toFixed(1)},${y.toFixed(1)}`;
   }
-
-  let a = points[0];
-  let b = points[1];
-  const c = points[2];
-
-  let result = `M${a[0].toFixed(1)},${a[1].toFixed(1)} Q${b[0].toFixed(1)},${b[1].toFixed(1)} ${average(b[0], c[0]).toFixed(1)},${average(
-    b[1],
-    c[1]
-  ).toFixed(1)} T`;
-
-  for (let i = 2, max = len - 1; i < max; i++) {
-    a = points[i];
-    b = points[i + 1];
-    result += `${average(a[0], b[0]).toFixed(1)},${average(a[1], b[1]).toFixed(1)} `;
-  }
-
-  return result;
-}
-
-function getSvgPathFromStrokeOLD(stroke: number[][]) {
-  if (!stroke.length) return '';
-
-  const d = stroke.reduce(
-    (acc, [x0, y0], i, arr) => {
-      const [x1, y1] = arr[(i + 1) % arr.length];
-      acc.push(x0, y0, (x0 + x1) / 2, (y0 + y1) / 2);
-      return acc;
-    },
-    ['M', ...stroke[0], 'Q']
-  );
-
-  d.push('Z');
-  return d.join(' ');
+  d += ' Z';
+  return d;
 }
 
 export function useLine(line: Y.Map<any>) {
@@ -112,9 +306,10 @@ export function useLine(line: Y.Map<any>) {
   const [pts, setPts] = useState<number[][]>([]);
   const [alpha, setAlpha] = useState<number>(0.6);
   const [size, setSize] = useState<number>(5);
+  const [type, setType] = useState<string>('line');
+  const [text, setText] = useState<string>('');
 
-  // Subscribe to changes to the line itself and sync
-  // them into React state.
+  // Subscribe to changes to the line itself and sync into React state.
   useEffect(() => {
     function handleChange() {
       const current = line.toJSON();
@@ -122,10 +317,11 @@ export function useLine(line: Y.Map<any>) {
       setColor(current.userColor);
       setAlpha(current.alpha);
       setSize(current.size);
+      setType(current.type || 'line'); // read 'type' ('line' | 'rectangle')
+      setText(current.text);
     }
 
     handleChange();
-
     line.observe(handleChange);
 
     return () => {
@@ -133,15 +329,12 @@ export function useLine(line: Y.Map<any>) {
     };
   }, [line]);
 
-  // Subscribe to changes in the line's points array and sync
-  // them into React state.
+  // Subscribe to changes in the line's points array and sync into React state.
   useEffect(() => {
     const points = line.get('points') as Y.Array<number>;
 
     function handleChange() {
-      // For performance reasons (I think), we store the
-      // numbers as [x, y, x, y]; but now we need to turn
-      // them into [[x, y], [x, y]].
+      // Stored as [x, y, x, y, ...] -> convert to [[x,y], [x,y], ...]
       if (points) {
         setPts(toPairs(points.toArray()));
       }
@@ -149,26 +342,26 @@ export function useLine(line: Y.Map<any>) {
 
     handleChange();
 
-    if (points) {
-      points.observe(handleChange);
-    }
-
+    if (points) points.observe(handleChange);
     return () => {
-      if (points) {
-        points.unobserve(handleChange);
-      }
+      if (points) points.unobserve(handleChange);
     };
   }, [line]);
 
-  return { points: pts, color, isComplete, alpha, size };
+  return { points: pts, color, isComplete, alpha, size, type, text };
 }
 
+/**
+ * Converts an array into an array of pairs by grouping consecutive elements.
+ * 
+ * @template T - The type of elements in the input array
+ * @param arr - The input array to be converted into pairs
+ * @returns An array of pairs, where each pair is a two-element array containing consecutive elements from the input array
+ */
 export function toPairs<T>(arr: T[]): T[][] {
-  let pairs: T[][] = [];
-
+  const pairs: T[][] = [];
   for (let i = 0; i < arr.length - 1; i += 2) {
     pairs.push([arr[i], arr[i + 1]]);
   }
-
   return pairs;
 }

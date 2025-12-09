@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import React, { createContext, useContext, useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useCallback, useMemo } from 'react';
 import { throttle } from 'throttle-debounce';
 import { useUIStore } from '../stores';
 
@@ -30,20 +30,9 @@ const CursorBoardPositionContext = createContext<ContextType>({
 export const useCursorBoardPosition = () => useContext(CursorBoardPositionContext);
 
 export const CursorBoardPositionProvider: React.FC<React.PropsWithChildren<{}>> = ({ children }) => {
-  const [cursor, setCursor] = useState<Point>({ x: 0, y: 0 });
-  const [boardCursor, setBoardCursor] = useState<Point>({ x: 0, y: 0 });
-
-  // Refs to hold latest values for on-demand getters
-  const cursorRef = useRef<Point>(cursor);
-  const boardCursorRef = useRef<Point>(boardCursor);
-
-  // Sync refs whenever state updates
-  useEffect(() => {
-    cursorRef.current = cursor;
-  }, [cursor]);
-  useEffect(() => {
-    boardCursorRef.current = boardCursor;
-  }, [boardCursor]);
+  // Only use refs - no state updates = no re-renders
+  const cursorRef = useRef<Point>({ x: 0, y: 0 });
+  const boardCursorRef = useRef<Point>({ x: 0, y: 0 });
 
   // Batch UI store subscription
   const { scale, boardPosition } = useUIStore((s) => ({
@@ -69,17 +58,17 @@ export const CursorBoardPositionProvider: React.FC<React.PropsWithChildren<{}>> 
     return boardCursorRef.current;
   }, []);
 
-  // Throttled mousemove handler
+  // Throttled mousemove handler - only updates refs, no state
   const handleMove = useCallback((e: MouseEvent) => {
     const x = e.clientX;
     const y = e.clientY;
-    setCursor({ x, y });
+    cursorRef.current = { x, y };
     const sc = scaleRef.current;
     const bp = posRef.current;
-    setBoardCursor({
+    boardCursorRef.current = {
       x: Math.floor(x / sc - bp.x),
       y: Math.floor(y / sc - bp.y),
-    });
+    };
   }, []);
 
   const throttledMove = useRef(throttle(0, handleMove)).current;
@@ -97,19 +86,19 @@ export const CursorBoardPositionProvider: React.FC<React.PropsWithChildren<{}>> 
       x: Math.floor(x / scale - boardPosition.x),
       y: Math.floor(y / scale - boardPosition.y),
     }),
-    [scale, boardPosition]
+    [scale, boardPosition],
   );
 
-  // Memoize context value so consumers update only on real changes
+  // Memoize context value - only depends on scale/boardPosition changes now
   const value = useMemo(
     () => ({
-      cursor,
-      boardCursor,
+      cursor: cursorRef.current,
+      boardCursor: boardCursorRef.current,
       uiToBoard,
       getCursor,
       getBoardCursor,
     }),
-    [cursor, boardCursor, uiToBoard, getCursor, getBoardCursor]
+    [uiToBoard, getCursor, getBoardCursor],
   );
 
   return <CursorBoardPositionContext.Provider value={value}>{children}</CursorBoardPositionContext.Provider>;

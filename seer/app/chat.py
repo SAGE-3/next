@@ -52,7 +52,12 @@ class ChatAgent:
             ("openai key: " + openai["apiKey"] + " - model: " + openai["model"]),
         )
         self.logger.info(
-            "chat server: url: " + llama["url"] + " - model: " + llama["model"],
+            "chat server: url: "
+            + llama["url"]
+            + " - apiKey: "
+            + llama["apiKey"]
+            + " - model: "
+            + llama["model"],
         )
         self.logger.info(
             "chat server: url: "
@@ -70,6 +75,7 @@ class ChatAgent:
             llm_llama = ChatNVIDIA(
                 base_url=llama["url"] + "/v1",
                 model=llama["model"],
+                api_key=llama["apiKey"],
                 stream=False,
                 max_tokens=2000,
             )

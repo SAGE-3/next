@@ -7,7 +7,7 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Button, Input, useDisclosure } from '@chakra-ui/react';
+import { Box, Button, Input, useDisclosure } from '@chakra-ui/react';
 
 import { EnterBoardModal, apiUrls, isElectron, useAppStore } from '@sage3/frontend';
 import { Board } from '@sage3/shared/types';
@@ -49,10 +49,13 @@ function ToolbarComponent(props: App): JSX.Element {
 
   const updateState = useAppStore((state) => state.updateState);
 
-  // Check if this is another server
-  const otherServer = new URL(s.url.replace('sage3://', 'https://')).hostname !== window.location.hostname;
-
   const { isOpen: enterBoardIsOpen, onOpen: enterBoardOnOpen, onClose: enterBoardOnClose } = useDisclosure();
+
+    // Check if this is another server
+  const otherServer = new URL(s.url.replace('sage3://', 'https://')).hostname !== window.location.hostname;
+  
+  // Disable buttons if no board found and not other server
+  const disabled = !board && !otherServer;
 
   const boardId = s.url.split('/')[s.url.split('/').length - 1];
   useEffect(() => {
@@ -102,7 +105,8 @@ function ToolbarComponent(props: App): JSX.Element {
     <>
       {board && <EnterBoardModal board={board} isOpen={enterBoardIsOpen} onClose={goToBoardFinish} />}
 
-      <Button colorScheme="teal" size="xs" px="6" disabled={!board} onClick={enterBoard}>
+      <Box width="350px" display="flex">
+      <Button colorScheme="teal" size="xs" width="200px" px="3" disabled={disabled} onClick={enterBoard}>
         Enter Board
       </Button>
 
@@ -117,11 +121,12 @@ function ToolbarComponent(props: App): JSX.Element {
             onKeyDown={onSubmit}
           />
 
-          <Button colorScheme="teal" size="xs" px="4" ml="2" disabled={!board} onClick={updateCardTitle}>
+          <Button colorScheme="teal" size="xs" width={"120px"} px="3" ml="2" disabled={disabled} onClick={updateCardTitle}>
             Update
           </Button>
         </>
       )}
+      </Box>
     </>
   );
 }
