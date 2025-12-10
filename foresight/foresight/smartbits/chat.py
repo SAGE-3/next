@@ -12,8 +12,8 @@ from typing import List
 
 
 class ChatState(TrackedBaseModel):
-    previousQ: str
-    previousA: str
+    previousQ: List[str]
+    previousA: List[str]
     context: str
     token: str
     messages: List
