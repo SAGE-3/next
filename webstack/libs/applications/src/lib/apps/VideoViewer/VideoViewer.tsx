@@ -49,7 +49,7 @@ import {
 import { format as formatTime } from 'date-fns';
 
 import { Asset, ExtraImageType, ExtraVideoType } from '@sage3/shared/types';
-import { useAppStore, useAssetStore, downloadFile, useHexColor, useUIStore } from '@sage3/frontend';
+import { useAppStore, useAssetStore, downloadFile, useHexColor, useUIStore, serverTime } from '@sage3/frontend';
 
 import { App, AppSchema, AppGroup } from '../../schema';
 import { state as AppState } from './index';
@@ -65,6 +65,41 @@ import { throttle } from 'throttle-debounce';
  */
 function getDurationString(n: number): string {
   return formatTime(n * 1000, 'mm:ss');
+}
+
+/**
+ * Calculate expected video time based on server time sync
+ * @param playbackStartTime Server timestamp when playback started
+ * @param startTime Video time when playback started
+ * @param currentServerTime Current server timestamp
+ * @param videoDuration Video duration in seconds
+ * @param loop Whether video is looping
+ * @returns Expected video time in seconds, or null if stale/invalid
+ */
+function calculateExpectedTime(
+  playbackStartTime: number,
+  startTime: number,
+  currentServerTime: number,
+  videoDuration: number | undefined,
+  loop: boolean
+): number | null {
+  const elapsedServerTime = (currentServerTime - playbackStartTime) / 1000;
+  
+  // Validate that the playbackStartTime is recent (within last 5 minutes)
+  if (elapsedServerTime < 0 || elapsedServerTime > 300) {
+    return null; // Stale state
+  }
+  
+  let expectedTime = startTime + elapsedServerTime;
+  
+  // Handle looping
+  if (loop && videoDuration) {
+    expectedTime = expectedTime % videoDuration;
+  } else if (videoDuration) {
+    expectedTime = Math.min(expectedTime, videoDuration);
+  }
+  
+  return expectedTime;
 }
 
 function AppComponent(props: App): JSX.Element {
@@ -85,6 +120,8 @@ function AppComponent(props: App): JSX.Element {
   const videoRef = useRef<HTMLVideoElement>(null);
   // Div around the pages to capture events
   const divRef = useRef<HTMLDivElement>(null);
+  // Ref to prevent race conditions when setting currentTime
+  const isSettingTimeRef = useRef(false);
   // Used to deselect the app
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const boardDragging = useUIStore((state) => state.boardDragging);
@@ -106,32 +143,93 @@ function AppComponent(props: App): JSX.Element {
     if (file) {
       const extras = file.data.derived as ExtraVideoType;
       const video_url = extras.url;
-      // save the url of the video
       setUrl(video_url);
     }
-  }, [file, videoRef]);
+  }, [file]);
 
-  // Set pause state of the video
+  // Set pause/play state and handle time sync (fallback for manual control)
   useEffect(() => {
-    if (videoRef.current) {
-      if (s.paused) {
-        videoRef.current.pause();
-        videoRef.current.currentTime = s.currentTime;
-      } else {
-        videoRef.current.play();
-        videoRef.current.currentTime = s.currentTime;
+    const video = videoRef.current;
+    if (!video || isSettingTimeRef.current) return;
+
+    // Handle play/pause
+    if (s.paused) {
+      video.pause();
+    } else {
+      video.play().catch(console.error);
+    }
+
+    // Only set currentTime if we don't have playback markers (manual control)
+    // Server-time sync handles time when playbackStartTime exists
+    if (!s.playbackStartTime || !s.startTime) {
+      const drift = Math.abs(video.currentTime - s.currentTime);
+      if (drift > 3) {
+        isSettingTimeRef.current = true;
+        video.currentTime = s.currentTime;
+        setTimeout(() => {
+          isSettingTimeRef.current = false;
+        }, 100);
       }
     }
-  }, [s.paused, videoRef]);
+  }, [s.paused, s.currentTime, s.playbackStartTime, s.startTime]);
 
-  // Set time of video
-  useEffect(() => {
-    if (videoRef.current) {
-      if (Math.abs(videoRef.current.currentTime - s.currentTime) > 4) {
-        videoRef.current.currentTime = s.currentTime;
+  // Shared sync function: Calculate expected time and sync if needed
+  const performSync = useCallback(async (shouldPlay: boolean = false) => {
+    const video = videoRef.current;
+    if (!video || !s.playbackStartTime || !s.startTime || isSettingTimeRef.current) return false;
+
+    // Wait for video to have metadata loaded
+    if (video.readyState < 1) return false;
+
+    // Check if video is buffering (for continuous sync)
+    if (!shouldPlay && video.readyState < 3) return false;
+
+    try {
+      const serverTimeData = await serverTime();
+      const expectedTime = calculateExpectedTime(
+        s.playbackStartTime,
+        s.startTime,
+        serverTimeData.epoch,
+        video.duration,
+        s.loop
+      );
+
+      if (expectedTime === null) return false; // Stale state
+
+      const actualTime = video.currentTime;
+      const drift = Math.abs(expectedTime - actualTime);
+
+      // Sync if drift is significant (> 0.5 seconds)
+      if (drift > 0.5) {
+        isSettingTimeRef.current = true;
+        video.currentTime = expectedTime;
+        
+        if (shouldPlay && !s.paused) {
+          video.play().catch(console.error);
+        }
+        
+        setTimeout(() => {
+          isSettingTimeRef.current = false;
+        }, 100);
+        return true;
       }
+    } catch (error) {
+      console.error('VideoViewer> Error syncing with server time:', error);
     }
-  }, [s.currentTime, videoRef]);
+    return false;
+  }, [s.playbackStartTime, s.startTime, s.paused, s.loop]);
+
+  // Server-time-based continuous sync: Calculate expected time and correct drift
+  useEffect(() => {
+    if (!s.playbackStartTime || !s.startTime || s.paused) return;
+
+    const syncInterval = setInterval(() => {
+      performSync(false);
+    }, 1000); // Check every second
+
+    return () => clearInterval(syncInterval);
+  }, [s.playbackStartTime, s.startTime, s.paused, performSync]);
+
 
   // Set loop state of video
   useEffect(() => {
@@ -140,12 +238,83 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [s.loop, videoRef]);
 
+  // Track when video element becomes available (triggers re-render)
+  const [videoReady, setVideoReady] = useState(false);
+  
+  // Monitor when video element becomes available
+  useEffect(() => {
+    if (videoRef.current && !videoReady) {
+      setVideoReady(true);
+    }
+  }, [url, videoReady]); // Re-check when URL changes
+
+  // Late joiner handling: Sync when video loads or state changes
+  useEffect(() => {
+    // Early return if we don't have the required state
+    if (!s.playbackStartTime || !s.startTime) return;
+    
+    // Wait for video element to be available
+    if (!videoRef.current) {
+      // Video not ready yet - will retry when videoReady becomes true
+      return;
+    }
+
+    const syncToExpectedTime = () => {
+      performSync(true); // shouldPlay = true for late joiners
+    };
+
+    const video = videoRef.current;
+    
+    // Try to sync on multiple events to catch different loading states
+    const events = ['loadedmetadata', 'loadeddata', 'canplay', 'canplaythrough'];
+    events.forEach((event) => {
+      video.addEventListener(event, syncToExpectedTime);
+    });
+
+    // Try immediately if video is already loaded
+    if (video.readyState >= 1) {
+      syncToExpectedTime();
+    }
+
+    // Also try after delays to catch cases where state loads after video
+    // These timeouts help catch late joiners who receive state after video loads
+    const timeoutId1 = setTimeout(syncToExpectedTime, 100);  // Quick retry
+    const timeoutId2 = setTimeout(syncToExpectedTime, 500);
+    const timeoutId3 = setTimeout(syncToExpectedTime, 2000);
+    const timeoutId4 = setTimeout(syncToExpectedTime, 5000); // Final attempt for late joiners
+
+    return () => {
+      events.forEach((event) => {
+        video.removeEventListener(event, syncToExpectedTime);
+      });
+      clearTimeout(timeoutId1);
+      clearTimeout(timeoutId2);
+      clearTimeout(timeoutId3);
+      clearTimeout(timeoutId4);
+    };
+  }, [s.playbackStartTime, s.startTime, s.paused, s.loop, videoReady, performSync]);
+
   // Handle a play action
-  const handlePlay = () => {
+  const handlePlay = async () => {
     if (videoRef.current) {
       const paused = !s.paused;
-      const time = videoRef.current.currentTime;
-      updateState(props._id, { currentTime: time, paused: paused });
+      // Ensure we get the actual current time, defaulting to 0 if not available
+      const time = videoRef.current.currentTime || 0;
+
+      // Get server time and set playback start markers for sync
+      try {
+        const serverTimeData = await serverTime();
+        updateState(props._id, {
+          currentTime: time,
+          paused: paused,
+          playbackStartTime: serverTimeData.epoch,
+          startTime: time,
+        });
+      } catch (error) {
+        console.error('VideoViewer> Error getting server time:', error);
+        // Fallback to old behavior if server time fails
+        updateState(props._id, { currentTime: time, paused: paused });
+      }
     }
   };
 
@@ -215,8 +384,41 @@ function AppComponent(props: App): JSX.Element {
 
   // Event handler for video end
   function onVideoEnd() {
-    updateState(props._id, { paused: true });
+    // Clear playback start markers when video ends
+    updateState(props._id, {
+      paused: true,
+      playbackStartTime: undefined,
+      startTime: undefined,
+    });
   }
+
+  // Handle video looping - reset playback start time when video loops
+  useEffect(() => {
+    if (!videoRef.current || !s.loop || !s.playbackStartTime || !s.startTime) return;
+
+    const handleTimeUpdate = () => {
+      if (!videoRef.current || !s.playbackStartTime || !s.startTime) return;
+      
+      // If video loops back to start (currentTime < 0.5 and we were past the start)
+      if (videoRef.current.currentTime < 0.5 && s.startTime > 1) {
+        // Video has looped, reset the playback start markers
+        serverTime()
+          .then((serverTimeData) => {
+            updateState(props._id, {
+              playbackStartTime: serverTimeData.epoch,
+              startTime: videoRef.current?.currentTime || 0,
+            });
+          })
+          .catch(console.error);
+      }
+    };
+
+    const video = videoRef.current;
+    video.addEventListener('timeupdate', handleTimeUpdate);
+    return () => {
+      video.removeEventListener('timeupdate', handleTimeUpdate);
+    };
+  }, [videoRef, s.loop, s.playbackStartTime, s.startTime]);
 
   return (
     <AppWindow app={props} lockAspectRatio={aspectRatio} hideBackgroundIcon={MdMovie}>
@@ -249,7 +451,6 @@ function ToolbarComponent(props: App): JSX.Element {
   const assets = useAssetStore((state) => state.assets);
 
   // React State
-  const [videoRef, setVideoRef] = useState<HTMLVideoElement>();
   const [file, setFile] = useState<Asset>();
   const [extras, setExtras] = useState<ExtraVideoType>();
 
@@ -257,36 +458,44 @@ function ToolbarComponent(props: App): JSX.Element {
   const [sliderTime, setSliderTime] = useState<number | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
 
+  // Use ref for video element (more efficient than state)
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
   // Color
   const teal = useHexColor('teal');
 
+  // Get video element once when component mounts
   useEffect(() => {
-    let interval: number | null = null;
-    const obtainVideoRef = () => {
-      const video = document.getElementById(`${props._id}-video`) as HTMLVideoElement;
-      if (video) {
-        setVideoRef(video);
-        if (interval) window.clearInterval(interval);
+    const video = document.getElementById(`${props._id}-video`) as HTMLVideoElement;
+    if (video) {
+      videoRef.current = video;
+    }
+    // Also check after a short delay in case video loads later
+    const timeoutId = setTimeout(() => {
+      const videoDelayed = document.getElementById(`${props._id}-video`) as HTMLVideoElement;
+      if (videoDelayed) {
+        videoRef.current = videoDelayed;
       }
-    };
-    interval = window.setInterval(obtainVideoRef, 500);
-    return () => {
-      if (interval) window.clearInterval(interval);
-    };
-  }, []);
+    }, 500);
+    return () => clearTimeout(timeoutId);
+  }, [props._id]);
 
+  // Use timeupdate event listener instead of polling (more efficient)
   useEffect(() => {
-    let interval: number | null = null;
-    const setTime = () => {
-      if (videoRef) {
-        setCurrentTime(videoRef.currentTime);
-      }
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handleTimeUpdate = () => {
+      setCurrentTime(video.currentTime);
     };
-    interval = window.setInterval(setTime, 500);
+
+    video.addEventListener('timeupdate', handleTimeUpdate);
+    setCurrentTime(video.currentTime);
+
     return () => {
-      if (interval) window.clearInterval(interval);
+      video.removeEventListener('timeupdate', handleTimeUpdate);
     };
-  }, [videoRef]);
+  }, [props._id]); // Re-run when component ID changes
 
   // Obtain the asset for download functionality
   useEffect(() => {
@@ -297,56 +506,91 @@ function ToolbarComponent(props: App): JSX.Element {
     }
   }, [s.assetid, assets]);
 
-  // Handle a play action
-  const handlePlay = () => {
-    if (videoRef) {
-      const v = videoRef;
-      let time = v.currentTime;
-      // Check if time of video is at the end
-      if (time === videoRef.duration) {
-        time = 0.0;
-        v.currentTime = 0.0;
-        v.play();
-      }
-      updateState(props._id, { currentTime: time, paused: false });
+  // Helper function to set playback markers when starting/continuing playback
+  const setPlaybackMarkers = useCallback(async (time: number) => {
+    try {
+      const serverTimeData = await serverTime();
+      updateState(props._id, {
+        currentTime: time,
+        playbackStartTime: serverTimeData.epoch,
+        startTime: time,
+      });
+    } catch (error) {
+      console.error('VideoViewer> Error getting server time:', error);
+      updateState(props._id, { currentTime: time });
     }
+  }, [props._id]);
+
+  // Handle a play action
+  const handlePlay = async () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    let time = video.currentTime;
+    // Check if time of video is at the end
+    if (time === video.duration) {
+      time = 0.0;
+      video.currentTime = 0.0;
+      video.play();
+    }
+
+    await setPlaybackMarkers(time || 0);
+    updateState(props._id, { paused: false });
   };
 
   // Handle a pause action
   const handlePause = () => {
-    if (videoRef) {
-      updateState(props._id, { currentTime: videoRef.currentTime, paused: true });
-    }
+    const video = videoRef.current;
+    if (!video) return;
+
+    updateState(props._id, {
+      currentTime: video.currentTime,
+      paused: true,
+      playbackStartTime: undefined,
+      startTime: undefined,
+    });
   };
 
   // Handle a rewind action
-  const handleRewind = () => {
-    if (videoRef) {
-      const time = Math.min(videoRef.duration, videoRef.currentTime - 5);
+  const handleRewind = async () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const time = Math.max(0, video.currentTime - 5);
+    video.currentTime = time;
+
+    if (!s.paused) {
+      await setPlaybackMarkers(time);
+    } else {
       updateState(props._id, { currentTime: time });
     }
   };
 
   // Handle a forward action
-  const handleForward = () => {
-    if (videoRef) {
-      const time = Math.min(videoRef.duration, videoRef.currentTime + 5);
+  const handleForward = async () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const time = Math.min(video.duration, video.currentTime + 5);
+    video.currentTime = time;
+
+    if (!s.paused) {
+      await setPlaybackMarkers(time);
+    } else {
       updateState(props._id, { currentTime: time });
     }
   };
 
-  // Handle a forward action
+  // Handle a loop action
   const handleLoop = () => {
-    if (videoRef) {
-      const loop = !s.loop;
-      updateState(props._id, { loop: loop });
-    }
+    updateState(props._id, { loop: !s.loop });
   };
 
   // Handle a mute action, local state only
   const handleMute = () => {
-    if (videoRef) {
-      videoRef.muted = !videoRef.muted;
+    const video = videoRef.current;
+    if (video) {
+      video.muted = !video.muted;
     }
   };
 
@@ -362,10 +606,25 @@ function ToolbarComponent(props: App): JSX.Element {
 
   // Screenshot the video and open an image viewer
   const handleScreenshot = async () => {
-    if (videoRef) {
-      if (s.paused) {
-        // Just capture now
-        const setup = await captureFrame(videoRef);
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (s.paused) {
+      // Just capture now
+      const setup = await captureFrame(video);
+      if (setup && roomId && boardId) {
+        createApp({
+          ...setup,
+          roomId: roomId,
+          boardId: boardId,
+          position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+          size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
+        } as AppSchema);
+      }
+    } else {
+      // Next frame, then capture
+      video.requestVideoFrameCallback(async () => {
+        const setup = await captureFrame(video);
         if (setup && roomId && boardId) {
           createApp({
             ...setup,
@@ -375,22 +634,7 @@ function ToolbarComponent(props: App): JSX.Element {
             size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
           } as AppSchema);
         }
-      } else {
-        // Next frame, then capture
-        videoRef.requestVideoFrameCallback(async () => {
-          // params to requestVideoFrameCallback: (now: DOMHighResTimeStamp, metadata: VideoFrameCallbackMetadata)
-          const setup = await captureFrame(videoRef);
-          if (setup && roomId && boardId) {
-            createApp({
-              ...setup,
-              roomId: roomId,
-              boardId: boardId,
-              position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
-              size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
-            } as AppSchema);
-          }
-        });
-      }
+      });
     }
   };
 
@@ -404,26 +648,53 @@ function ToolbarComponent(props: App): JSX.Element {
 
   // Handle user moving slider
   const seekChangeHandle = (value: number) => {
-    if (videoRef) {
-      videoRef.currentTime = value;
+    const video = videoRef.current;
+    if (video) {
+      video.currentTime = value;
       setSliderTime(value);
       throttleSeekFunc.current(value);
     }
   };
 
   // Handle user moving slider
-  const seekEndHandle = (value: number) => {
-    if (videoRef) {
-      videoRef.currentTime = value;
+  const seekEndHandle = async (value: number) => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    video.currentTime = value;
+    setCurrentTime(value);
+    setSliderTime(null);
+
+    // If playing, reset playback start markers after seek
+    if (!s.paused) {
+      await setPlaybackMarkers(value);
+    } else {
       updateState(props._id, { currentTime: value });
-      setCurrentTime(value);
-      setSliderTime(null);
     }
   };
 
-  const handleSyncOnMe = () => {
-    if (videoRef) {
-      updateState(props._id, { currentTime: videoRef.currentTime, loop: videoRef.loop, paused: videoRef.paused });
+  const handleSyncOnMe = async () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const time = video.currentTime;
+    const paused = video.paused;
+
+    // Reset playback start markers to sync everyone to this client's position
+    if (!paused) {
+      await setPlaybackMarkers(time);
+      updateState(props._id, {
+        loop: video.loop,
+        paused: paused,
+      });
+    } else {
+      updateState(props._id, {
+        currentTime: time,
+        loop: video.loop,
+        paused: paused,
+        playbackStartTime: undefined,
+        startTime: undefined,
+      });
     }
   };
 
@@ -432,25 +703,25 @@ function ToolbarComponent(props: App): JSX.Element {
       {/* App State with server */}
       <ButtonGroup isAttached size="xs" colorScheme="teal" mr={1}>
         <Tooltip placement="top" hasArrow={true} label={'Rewind 5 Seconds'} openDelay={400}>
-          <Button onClick={handleRewind} isDisabled={!videoRef} size="xs" px={0}>
+          <Button onClick={handleRewind} isDisabled={!videoRef.current} size="xs" px={0}>
             <MdFastRewind size="16px" />
           </Button>
         </Tooltip>
 
         <Tooltip placement="top" hasArrow={true} label={'Play Video'} openDelay={400}>
-          <Button onClick={handlePlay} isDisabled={!videoRef} size="xs" px={0}>
+          <Button onClick={handlePlay} isDisabled={!videoRef.current} size="xs" px={0}>
             <MdPlayArrow size="16px" />
           </Button>
         </Tooltip>
 
         <Tooltip placement="top" hasArrow={true} label={'Pause Video'} openDelay={400}>
-          <Button onClick={handlePause} isDisabled={!videoRef} size="xs" px={0}>
+          <Button onClick={handlePause} isDisabled={!videoRef.current} size="xs" px={0}>
             <MdPause size="16px" />
           </Button>
         </Tooltip>
 
         <Tooltip placement="top" hasArrow={true} label={'Forward 5 Seconds'} openDelay={400}>
-          <Button onClick={handleForward} isDisabled={!videoRef} size="xs" px={0}>
+          <Button onClick={handleForward} isDisabled={!videoRef.current} size="xs" px={0}>
             <MdFastForward size="16px" />
           </Button>
         </Tooltip>
@@ -458,12 +729,12 @@ function ToolbarComponent(props: App): JSX.Element {
 
       <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
         <Tooltip placement="top" hasArrow={true} label={'Loop'} openDelay={400}>
-          <Button onClick={handleLoop} isDisabled={!videoRef} size="xs" px={0}>
-            {videoRef?.loop ? <MdLoop size="16px" /> : <MdArrowRightAlt size="16px" />}
+          <Button onClick={handleLoop} isDisabled={!videoRef.current} size="xs" px={0}>
+            {videoRef.current?.loop ? <MdLoop size="16px" /> : <MdArrowRightAlt size="16px" />}
           </Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={'Sync on me'} openDelay={400}>
-          <Button onClick={handleSyncOnMe} isDisabled={!videoRef} size="xs" px={0}>
+          <Button onClick={handleSyncOnMe} isDisabled={!videoRef.current} size="xs" px={0}>
             <MdAccessTime size="16px" />
           </Button>
         </Tooltip>
@@ -471,8 +742,8 @@ function ToolbarComponent(props: App): JSX.Element {
 
       <Slider
         aria-label="slider-ex-4"
-        value={sliderTime ? sliderTime : currentTime}
-        max={videoRef?.duration}
+        value={sliderTime !== null ? sliderTime : currentTime}
+        max={videoRef.current?.duration}
         width="200px"
         mx={4}
         onChange={seekChangeHandle}
@@ -485,11 +756,11 @@ function ToolbarComponent(props: App): JSX.Element {
         <SliderMark value={0} fontSize="xs" mt="1.5" ml="-3">
           {getDurationString(0)}
         </SliderMark>
-        <SliderMark value={videoRef?.duration || 0} fontSize="xs" mt="1.5" ml="-5">
-          {getDurationString(videoRef?.duration || 0)}
+        <SliderMark value={videoRef.current?.duration || 0} fontSize="xs" mt="1.5" ml="-5">
+          {getDurationString(videoRef.current?.duration || 0)}
         </SliderMark>
         <SliderMark
-          value={sliderTime ? sliderTime : currentTime}
+          value={sliderTime !== null ? sliderTime : currentTime}
           textAlign="center"
           bg={teal}
           color="white"
@@ -499,7 +770,7 @@ function ToolbarComponent(props: App): JSX.Element {
           fontSize="xs"
           borderRadius="md"
         >
-          {getDurationString(sliderTime ? sliderTime : currentTime)}
+          {getDurationString(sliderTime !== null ? sliderTime : currentTime)}
         </SliderMark>
         <SliderThumb boxSize={4}>
           <Box color="teal" as={MdGraphicEq} transition={'all 0.2s'} _hover={{ color: teal }} />
@@ -508,24 +779,24 @@ function ToolbarComponent(props: App): JSX.Element {
 
       {/* Local State Buttons - Only Changes the video state for the local user */}
       <ButtonGroup isAttached size="xs" colorScheme={'teal'} mx={1}>
-        <Tooltip placement="top" hasArrow={true} label={videoRef?.muted ? 'Unmute' : 'Mute'} openDelay={400}>
-          <Button onClick={handleMute} isDisabled={!videoRef} size="xs" px={0}>
-            {videoRef?.muted ? <MdVolumeOff size="16px" /> : <MdVolumeUp size="16px" />}
+        <Tooltip placement="top" hasArrow={true} label={videoRef.current?.muted ? 'Unmute' : 'Mute'} openDelay={400}>
+          <Button onClick={handleMute} isDisabled={!videoRef.current} size="xs" px={0}>
+            {videoRef.current?.muted ? <MdVolumeOff size="16px" /> : <MdVolumeUp size="16px" />}
           </Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={'Download Video'} openDelay={400}>
-          <Button onClick={handleDownload} isDisabled={!videoRef} size="xs" px={0}>
+          <Button onClick={handleDownload} isDisabled={!videoRef.current} size="xs" px={0}>
             <MdFileDownload size="16px" />
           </Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={'Screenshot'} openDelay={400}>
-          <Button onClick={handleScreenshot} isDisabled={!videoRef} size="xs" px={0}>
+          <Button onClick={handleScreenshot} isDisabled={!videoRef.current} size="xs" px={0}>
             <MdScreenshotMonitor size="16px" />
           </Button>
         </Tooltip>
         <Popover placement="top" trigger="hover">
           <PopoverTrigger>
-                <Button isDisabled={!videoRef} size="xs" px={0}>
+                <Button isDisabled={!videoRef.current} size="xs" px={0}>
               <MdInfoOutline size="16px" />
             </Button>
           </PopoverTrigger>
