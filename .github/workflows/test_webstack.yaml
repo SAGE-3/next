@@ -29,8 +29,14 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Install Dependencies
-        run: yarn install --frozen-lockfile --silent
+      - name: Install Dependencies (debug)
+        working-directory: ./webstack
+        run: |
+          echo "node: $(node --version)"
+          echo "yarn: $(yarn --version)"
+          pwd
+          ls -la
+          yarn install --frozen-lockfile --verbose
 
       - name: Build Homebase
         run: yarn build --if-present
