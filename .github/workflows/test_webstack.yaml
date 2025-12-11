@@ -36,7 +36,7 @@ jobs:
           echo "yarn: $(yarn --version)"
           pwd
           ls -la
-          yarn install --frozen-lockfile --verbose
+          yarn install --frozen-lockfile
 
       - name: Build Homebase
         run: yarn build --if-present
