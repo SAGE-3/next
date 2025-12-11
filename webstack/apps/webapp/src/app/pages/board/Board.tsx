@@ -176,22 +176,24 @@ export function BoardPage() {
       await Promise.all([
         // assets
         subAssets(rId),
-        // This is if someone is joining a board by a link
-        subRooms(),
-        // Sub to boards belonging to this room
-        subBoards(rId),
-        // Subscribe to the app on the board that was selected
-        subApps(bId),
+        // Downstream code (other components) replies on user data being populated
         // Sub to users and presence
         subscribeToPresence(),
         subscribeToUsers(),
-        // Sub to insights
-        subToInsight(bId),
-        // plugins
-        subPlugins(),
-        // links
-        subLinks(bId),
       ]);
+
+      // This is if someone is joining a board by a link
+      subRooms();
+      // Sub to boards belonging to this room
+      subBoards(rId);
+      // Subscribe to the app on the board that was selected
+      subApps(bId);
+      // Sub to insights
+      subToInsight(bId);
+      // plugins
+      subPlugins();
+      // links
+      subLinks(bId);
 
       setInitialLoad(true);
     }
