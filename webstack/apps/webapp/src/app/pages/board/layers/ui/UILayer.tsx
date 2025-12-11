@@ -295,6 +295,7 @@ export function UILayer(props: UILayerProps) {
     } else {
       toHome();
     }
+    localStorage.removeItem('boardId');
   }
 
   // Redirect to your previous board
@@ -398,7 +399,7 @@ export function UILayer(props: UILayerProps) {
           <Divider orientation="vertical" mx="1" />
           <MainButton
             buttonStyle="solid"
-            backToRoom={() => toHome(props.roomId)}
+            backToRoom={handleHomeClick}
             boardInfo={{
               boardId: props.boardId,
               roomId: props.roomId,
