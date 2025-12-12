@@ -21,7 +21,7 @@
   "devDependencies": {
     "@electron/notarize": "^2.3.2",
     "@electron/packager": "latest",
-    "electron": "^39.2.5"
+    "electron": "^39.2.6"
   },
   "optionalDependencies": {
     "electron-installer-debian": "latest",
