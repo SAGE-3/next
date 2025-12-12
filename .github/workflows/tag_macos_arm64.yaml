@@ -25,7 +25,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "20"
       - name: Install
         run: yarn install --frozen-lockfile --silent
       - name: Packager
