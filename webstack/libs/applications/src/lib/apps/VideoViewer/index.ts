@@ -18,8 +18,8 @@ export const schema = z.object({
   currentTime: z.number(),
   paused: z.boolean(),
   loop: z.boolean(),
-  playbackStartTime: z.number().optional(), // Server timestamp (ms) when playback started
-  startTime: z.number().optional(), // Video time (seconds) when playback started
+  syncServerTime: z.number().optional(), // Server timestamp (ms) when sync started - used with syncVideoTime for synchronization
+  syncVideoTime: z.number().optional(), // Video time (seconds) when sync started - used with syncServerTime for synchronization
 });
 export type state = z.infer<typeof schema>;
 
@@ -28,8 +28,8 @@ export const init: state = {
   currentTime: 0,
   paused: true,
   loop: false,
-  playbackStartTime: undefined,
-  startTime: undefined,
+  syncServerTime: undefined,
+  syncVideoTime: undefined,
 };
 
 export const name = 'VideoViewer';

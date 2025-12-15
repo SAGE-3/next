@@ -69,28 +69,28 @@ function getDurationString(n: number): string {
 
 /**
  * Calculate expected video time based on server time sync
- * @param playbackStartTime Server timestamp when playback started
- * @param startTime Video time when playback started
+ * @param syncServerTime Server timestamp (ms) when sync started
+ * @param syncVideoTime Video time (seconds) when sync started
  * @param currentServerTime Current server timestamp
  * @param videoDuration Video duration in seconds
  * @param loop Whether video is looping
  * @returns Expected video time in seconds, or null if stale/invalid
  */
 function calculateExpectedTime(
-  playbackStartTime: number,
-  startTime: number,
+  syncServerTime: number,
+  syncVideoTime: number,
   currentServerTime: number,
   videoDuration: number | undefined,
   loop: boolean
 ): number | null {
-  const elapsedServerTime = (currentServerTime - playbackStartTime) / 1000;
+  const elapsedServerTime = (currentServerTime - syncServerTime) / 1000;
   
-  // Validate that the playbackStartTime is recent (within last 5 minutes)
+  // Validate that the syncServerTime is recent (within last 5 minutes)
   if (elapsedServerTime < 0 || elapsedServerTime > 300) {
     return null; // Stale state
   }
   
-  let expectedTime = startTime + elapsedServerTime;
+  let expectedTime = syncVideoTime + elapsedServerTime;
   
   // Handle looping
   if (loop && videoDuration) {
@@ -159,9 +159,19 @@ function AppComponent(props: App): JSX.Element {
       video.play().catch(console.error);
     }
 
-    // Only set currentTime if we don't have playback markers (manual control)
-    // Server-time sync handles time when playbackStartTime exists
-    if (!s.playbackStartTime || !s.startTime) {
+    // Only set currentTime if we don't have sync markers (manual control)
+    // Server-time sync handles time when syncServerTime exists
+    // IMPORTANT: Don't set currentTime if video is at 0 and not paused - this indicates
+    // a late joiner scenario where we should wait for sync markers to arrive
+    if (!s.syncServerTime || !s.syncVideoTime) {
+      // If video is at 0 and we're trying to play, wait for sync markers (late joiner)
+      // Only sync if video has already started playing (not a fresh load)
+      if (video.currentTime === 0 && !s.paused && video.readyState >= 1) {
+        // This is likely a late joiner - wait a bit for sync markers to arrive
+        // The late joiner useEffect will handle syncing
+        return;
+      }
+      
       const drift = Math.abs(video.currentTime - s.currentTime);
       if (drift > 3) {
         isSettingTimeRef.current = true;
@@ -171,24 +181,24 @@ function AppComponent(props: App): JSX.Element {
         }, 100);
       }
     }
-  }, [s.paused, s.currentTime, s.playbackStartTime, s.startTime]);
+  }, [s.paused, s.currentTime, s.syncServerTime, s.syncVideoTime]);
 
   // Shared sync function: Calculate expected time and sync if needed
   const performSync = useCallback(async (shouldPlay: boolean = false) => {
     const video = videoRef.current;
-    if (!video || !s.playbackStartTime || !s.startTime || isSettingTimeRef.current) return false;
+    if (!video || !s.syncServerTime || !s.syncVideoTime || isSettingTimeRef.current) return false;
 
-    // Wait for video to have metadata loaded
+    // Wait for video to have metadata loaded (need duration for sync calculations)
     if (video.readyState < 1) return false;
 
-    // Check if video is buffering (for continuous sync)
+    // Check if video is buffering (for continuous sync only, not late joiners)
     if (!shouldPlay && video.readyState < 3) return false;
 
     try {
       const serverTimeData = await serverTime();
       const expectedTime = calculateExpectedTime(
-        s.playbackStartTime,
-        s.startTime,
+        s.syncServerTime,
+        s.syncVideoTime,
         serverTimeData.epoch,
         video.duration,
         s.loop
@@ -199,8 +209,11 @@ function AppComponent(props: App): JSX.Element {
       const actualTime = video.currentTime;
       const drift = Math.abs(expectedTime - actualTime);
 
-      // Sync if drift is significant (> 0.5 seconds)
-      if (drift > 0.5) {
+      // For late joiners (shouldPlay=true), be more aggressive - sync if drift > 0.1 seconds
+      // For continuous sync, use 0.5 second threshold
+      const threshold = shouldPlay ? 0.1 : 0.5;
+      
+      if (drift > threshold) {
         isSettingTimeRef.current = true;
         video.currentTime = expectedTime;
         
@@ -217,18 +230,18 @@ function AppComponent(props: App): JSX.Element {
       console.error('VideoViewer> Error syncing with server time:', error);
     }
     return false;
-  }, [s.playbackStartTime, s.startTime, s.paused, s.loop]);
+  }, [s.syncServerTime, s.syncVideoTime, s.paused, s.loop]);
 
   // Server-time-based continuous sync: Calculate expected time and correct drift
   useEffect(() => {
-    if (!s.playbackStartTime || !s.startTime || s.paused) return;
+    if (!s.syncServerTime || !s.syncVideoTime || s.paused) return;
 
     const syncInterval = setInterval(() => {
       performSync(false);
     }, 1000); // Check every second
 
     return () => clearInterval(syncInterval);
-  }, [s.playbackStartTime, s.startTime, s.paused, performSync]);
+  }, [s.syncServerTime, s.syncVideoTime, s.paused, performSync]);
 
 
   // Set loop state of video
@@ -251,7 +264,7 @@ function AppComponent(props: App): JSX.Element {
   // Late joiner handling: Sync when video loads or state changes
   useEffect(() => {
     // Early return if we don't have the required state
-    if (!s.playbackStartTime || !s.startTime) return;
+    if (!s.syncServerTime || !s.syncVideoTime) return;
     
     // Wait for video element to be available
     if (!videoRef.current) {
@@ -259,40 +272,47 @@ function AppComponent(props: App): JSX.Element {
       return;
     }
 
-    const syncToExpectedTime = () => {
-      performSync(true); // shouldPlay = true for late joiners
+    const video = videoRef.current;
+    let retryCount = 0;
+    const maxRetries = 20; // Try for up to ~5 seconds (20 * 250ms)
+    let retryTimeoutId: NodeJS.Timeout | null = null;
+    let isCleanedUp = false;
+
+    const attemptSync = async () => {
+      if (isCleanedUp || !videoRef.current) return;
+      
+      const synced = await performSync(true);
+      
+      // If sync succeeded or we've tried enough times, stop
+      if (synced || retryCount >= maxRetries) {
+        return;
+      }
+      
+      // Retry with exponential backoff (starts at 100ms, max 500ms)
+      retryCount++;
+      const delay = Math.min(100 * Math.pow(1.2, retryCount), 500);
+      retryTimeoutId = setTimeout(attemptSync, delay);
     };
 
-    const video = videoRef.current;
-    
-    // Try to sync on multiple events to catch different loading states
+    // Try to sync on video loading events
     const events = ['loadedmetadata', 'loadeddata', 'canplay', 'canplaythrough'];
     events.forEach((event) => {
-      video.addEventListener(event, syncToExpectedTime);
+      video.addEventListener(event, attemptSync);
     });
 
-    // Try immediately if video is already loaded
-    if (video.readyState >= 1) {
-      syncToExpectedTime();
-    }
-
-    // Also try after delays to catch cases where state loads after video
-    // These timeouts help catch late joiners who receive state after video loads
-    const timeoutId1 = setTimeout(syncToExpectedTime, 100);  // Quick retry
-    const timeoutId2 = setTimeout(syncToExpectedTime, 500);
-    const timeoutId3 = setTimeout(syncToExpectedTime, 2000);
-    const timeoutId4 = setTimeout(syncToExpectedTime, 5000); // Final attempt for late joiners
+    // Start sync attempts immediately
+    attemptSync();
 
     return () => {
+      isCleanedUp = true;
       events.forEach((event) => {
-        video.removeEventListener(event, syncToExpectedTime);
+        video.removeEventListener(event, attemptSync);
       });
-      clearTimeout(timeoutId1);
-      clearTimeout(timeoutId2);
-      clearTimeout(timeoutId3);
-      clearTimeout(timeoutId4);
+      if (retryTimeoutId) {
+        clearTimeout(retryTimeoutId);
+      }
     };
-  }, [s.playbackStartTime, s.startTime, s.paused, s.loop, videoReady, performSync]);
+  }, [s.syncServerTime, s.syncVideoTime, s.paused, s.loop, videoReady, performSync]);
 
   // Handle a play action
   const handlePlay = async () => {
@@ -301,14 +321,14 @@ function AppComponent(props: App): JSX.Element {
       // Ensure we get the actual current time, defaulting to 0 if not available
       const time = videoRef.current.currentTime || 0;
 
-      // Get server time and set playback start markers for sync
+      // Get server time and set sync markers for synchronization
       try {
         const serverTimeData = await serverTime();
         updateState(props._id, {
           currentTime: time,
           paused: paused,
-          playbackStartTime: serverTimeData.epoch,
-          startTime: time,
+          syncServerTime: serverTimeData.epoch,
+          syncVideoTime: time,
         });
       } catch (error) {
         console.error('VideoViewer> Error getting server time:', error);
@@ -384,29 +404,33 @@ function AppComponent(props: App): JSX.Element {
 
   // Event handler for video end
   function onVideoEnd() {
-    // Clear playback start markers when video ends
+    // Clear sync markers when video ends and set final currentTime
+    const finalTime = videoRef.current?.currentTime || 0;
     updateState(props._id, {
+      currentTime: finalTime,
       paused: true,
-      playbackStartTime: undefined,
-      startTime: undefined,
+      syncServerTime: undefined,
+      syncVideoTime: undefined,
     });
   }
 
-  // Handle video looping - reset playback start time when video loops
+  // Handle video looping - reset sync markers when video loops
   useEffect(() => {
-    if (!videoRef.current || !s.loop || !s.playbackStartTime || !s.startTime) return;
+    if (!videoRef.current || !s.loop || !s.syncServerTime || !s.syncVideoTime) return;
 
     const handleTimeUpdate = () => {
-      if (!videoRef.current || !s.playbackStartTime || !s.startTime) return;
+      if (!videoRef.current || !s.syncServerTime || !s.syncVideoTime) return;
       
       // If video loops back to start (currentTime < 0.5 and we were past the start)
-      if (videoRef.current.currentTime < 0.5 && s.startTime > 1) {
-        // Video has looped, reset the playback start markers
+      if (videoRef.current.currentTime < 0.5 && s.syncVideoTime > 1) {
+        // Video has looped, reset the sync markers (include currentTime for consistency)
+        const loopTime = videoRef.current.currentTime || 0;
         serverTime()
           .then((serverTimeData) => {
             updateState(props._id, {
-              playbackStartTime: serverTimeData.epoch,
-              startTime: videoRef.current?.currentTime || 0,
+              currentTime: loopTime,
+              syncServerTime: serverTimeData.epoch,
+              syncVideoTime: loopTime,
             });
           })
           .catch(console.error);
@@ -418,7 +442,7 @@ function AppComponent(props: App): JSX.Element {
     return () => {
       video.removeEventListener('timeupdate', handleTimeUpdate);
     };
-  }, [videoRef, s.loop, s.playbackStartTime, s.startTime]);
+  }, [videoRef, s.loop, s.syncServerTime, s.syncVideoTime]);
 
   return (
     <AppWindow app={props} lockAspectRatio={aspectRatio} hideBackgroundIcon={MdMovie}>
@@ -506,36 +530,58 @@ function ToolbarComponent(props: App): JSX.Element {
     }
   }, [s.assetid, assets]);
 
-  // Helper function to set playback markers when starting/continuing playback
-  const setPlaybackMarkers = useCallback(async (time: number) => {
-    try {
-      const serverTimeData = await serverTime();
-      updateState(props._id, {
-        currentTime: time,
-        playbackStartTime: serverTimeData.epoch,
-        startTime: time,
-      });
-    } catch (error) {
-      console.error('VideoViewer> Error getting server time:', error);
-      updateState(props._id, { currentTime: time });
-    }
-  }, [props._id]);
-
   // Handle a play action
   const handlePlay = async () => {
     const video = videoRef.current;
     if (!video) return;
 
-    let time = video.currentTime;
-    // Check if time of video is at the end
-    if (time === video.duration) {
-      time = 0.0;
-      video.currentTime = 0.0;
-      video.play();
+    // Ensure video has metadata loaded before getting currentTime
+    // This is critical for first play when video might not be ready
+    if (video.readyState < 1) {
+      // Wait for metadata to load
+      await new Promise<void>((resolve) => {
+        const onLoadedMetadata = () => {
+          video.removeEventListener('loadedmetadata', onLoadedMetadata);
+          resolve();
+        };
+        video.addEventListener('loadedmetadata', onLoadedMetadata);
+        // Fallback timeout in case event never fires
+        setTimeout(resolve, 1000);
+      });
     }
 
-    await setPlaybackMarkers(time || 0);
-    updateState(props._id, { paused: false });
+    let time = video.currentTime;
+    // Ensure we have a valid time (not NaN)
+    if (isNaN(time) || time < 0) {
+      time = 0;
+    }
+
+    // Check if time of video is at the end
+    if (video.duration && time >= video.duration) {
+      time = 0.0;
+      video.currentTime = 0.0;
+    }
+
+    // Start playing the video BEFORE setting sync markers
+    // This ensures the video is actually playing when we capture the time
+    await video.play().catch(console.error);
+
+    // Get server time and set ALL sync values in ONE atomic update
+    // Use the actual currentTime after play() to ensure accuracy
+    const finalTime = video.currentTime || time || 0;
+    try {
+      const serverTimeData = await serverTime();
+      updateState(props._id, {
+        currentTime: finalTime,
+        paused: false,
+        syncServerTime: serverTimeData.epoch,
+        syncVideoTime: finalTime,
+      });
+    } catch (error) {
+      console.error('VideoViewer> Error getting server time:', error);
+      // Fallback: set currentTime and paused if server time fails
+      updateState(props._id, { currentTime: finalTime, paused: false });
+    }
   };
 
   // Handle a pause action
@@ -546,40 +592,11 @@ function ToolbarComponent(props: App): JSX.Element {
     updateState(props._id, {
       currentTime: video.currentTime,
       paused: true,
-      playbackStartTime: undefined,
-      startTime: undefined,
+      syncServerTime: undefined,
+      syncVideoTime: undefined,
     });
   };
 
-  // Handle a rewind action
-  const handleRewind = async () => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const time = Math.max(0, video.currentTime - 5);
-    video.currentTime = time;
-
-    if (!s.paused) {
-      await setPlaybackMarkers(time);
-    } else {
-      updateState(props._id, { currentTime: time });
-    }
-  };
-
-  // Handle a forward action
-  const handleForward = async () => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const time = Math.min(video.duration, video.currentTime + 5);
-    video.currentTime = time;
-
-    if (!s.paused) {
-      await setPlaybackMarkers(time);
-    } else {
-      updateState(props._id, { currentTime: time });
-    }
-  };
 
   // Handle a loop action
   const handleLoop = () => {
@@ -665,48 +682,31 @@ function ToolbarComponent(props: App): JSX.Element {
     setCurrentTime(value);
     setSliderTime(null);
 
-    // If playing, reset playback start markers after seek
+    // If playing, reset sync markers after seek (all in one atomic update)
     if (!s.paused) {
-      await setPlaybackMarkers(value);
+      try {
+        const serverTimeData = await serverTime();
+        updateState(props._id, {
+          currentTime: value,
+          syncServerTime: serverTimeData.epoch,
+          syncVideoTime: value,
+        });
+      } catch (error) {
+        console.error('VideoViewer> Error getting server time:', error);
+        // Fallback: set currentTime only if server time fails
+        updateState(props._id, { currentTime: value });
+      }
     } else {
+      // If paused, just update currentTime (no sync markers needed)
       updateState(props._id, { currentTime: value });
     }
   };
 
-  const handleSyncOnMe = async () => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const time = video.currentTime;
-    const paused = video.paused;
-
-    // Reset playback start markers to sync everyone to this client's position
-    if (!paused) {
-      await setPlaybackMarkers(time);
-      updateState(props._id, {
-        loop: video.loop,
-        paused: paused,
-      });
-    } else {
-      updateState(props._id, {
-        currentTime: time,
-        loop: video.loop,
-        paused: paused,
-        playbackStartTime: undefined,
-        startTime: undefined,
-      });
-    }
-  };
 
   return (
     <>
       {/* App State with server */}
       <ButtonGroup isAttached size="xs" colorScheme="teal" mr={1}>
-        <Tooltip placement="top" hasArrow={true} label={'Rewind 5 Seconds'} openDelay={400}>
-          <Button onClick={handleRewind} isDisabled={!videoRef.current} size="xs" px={0}>
-            <MdFastRewind size="16px" />
-          </Button>
-        </Tooltip>
 
         <Tooltip placement="top" hasArrow={true} label={'Play Video'} openDelay={400}>
           <Button onClick={handlePlay} isDisabled={!videoRef.current} size="xs" px={0}>
@@ -720,11 +720,6 @@ function ToolbarComponent(props: App): JSX.Element {
           </Button>
         </Tooltip>
 
-        <Tooltip placement="top" hasArrow={true} label={'Forward 5 Seconds'} openDelay={400}>
-          <Button onClick={handleForward} isDisabled={!videoRef.current} size="xs" px={0}>
-            <MdFastForward size="16px" />
-          </Button>
-        </Tooltip>
       </ButtonGroup>
 
       <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
@@ -733,9 +728,9 @@ function ToolbarComponent(props: App): JSX.Element {
             {videoRef.current?.loop ? <MdLoop size="16px" /> : <MdArrowRightAlt size="16px" />}
           </Button>
         </Tooltip>
-        <Tooltip placement="top" hasArrow={true} label={'Sync on me'} openDelay={400}>
-          <Button onClick={handleSyncOnMe} isDisabled={!videoRef.current} size="xs" px={0}>
-            <MdAccessTime size="16px" />
+        <Tooltip placement="top" hasArrow={true} label={videoRef.current?.muted ? 'Unmute' : 'Mute'} openDelay={400}>
+          <Button onClick={handleMute} isDisabled={!videoRef.current} size="xs" px={0}>
+            {videoRef.current?.muted ? <MdVolumeOff size="16px" /> : <MdVolumeUp size="16px" />}
           </Button>
         </Tooltip>
       </ButtonGroup>
@@ -779,11 +774,7 @@ function ToolbarComponent(props: App): JSX.Element {
 
       {/* Local State Buttons - Only Changes the video state for the local user */}
       <ButtonGroup isAttached size="xs" colorScheme={'teal'} mx={1}>
-        <Tooltip placement="top" hasArrow={true} label={videoRef.current?.muted ? 'Unmute' : 'Mute'} openDelay={400}>
-          <Button onClick={handleMute} isDisabled={!videoRef.current} size="xs" px={0}>
-            {videoRef.current?.muted ? <MdVolumeOff size="16px" /> : <MdVolumeUp size="16px" />}
-          </Button>
-        </Tooltip>
+
         <Tooltip placement="top" hasArrow={true} label={'Download Video'} openDelay={400}>
           <Button onClick={handleDownload} isDisabled={!videoRef.current} size="xs" px={0}>
             <MdFileDownload size="16px" />
@@ -833,134 +824,7 @@ function ToolbarComponent(props: App): JSX.Element {
  * @returns JSX.Element | null
  */
 const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
-  const updateStateBatch = useAppStore((state) => state.updateStateBatch);
-
-  const handleRewind = () => {
-    // Array of update to batch at once
-    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
-    // Iterate through all the selected apps
-    props.apps.forEach((app) => {
-      ps.push({ id: app._id, updates: { currentTime: 0.0, paused: true } });
-      const v = document.getElementById(`${app._id}-video`) as HTMLVideoElement;
-      if (v) {
-        v.pause();
-        v.currentTime = 0.0;
-        v.load();
-      }
-    });
-    // Update all the apps at once
-    updateStateBatch(ps);
-  };
-
-  const handlePlay = () => {
-    // Array of update to batch at once
-    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
-    // Iterate through all the selected apps
-    props.apps.forEach((app) => {
-      const v = document.getElementById(`${app._id}-video`) as HTMLVideoElement;
-      if (v) {
-        // Check if time of video is at the end
-        if (v.currentTime === v.duration) {
-          v.currentTime = 0.0;
-        }
-        v.play();
-        ps.push({ id: app._id, updates: { paused: false, currentTime: v.currentTime } });
-      }
-    });
-    // Update all the apps at once
-    updateStateBatch(ps);
-  };
-
-  const handleStop = () => {
-    // Array of update to batch at once
-    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
-    props.apps.forEach((app) => {
-      const v = document.getElementById(`${app._id}-video`) as HTMLVideoElement;
-      if (v) {
-        v.pause();
-        ps.push({ id: app._id, updates: { paused: true, currentTime: v.currentTime } });
-      }
-    });
-    // Update all the apps at once
-    updateStateBatch(ps);
-  };
-
-  const handleLoop = () => {
-    // Array of update to batch at once
-    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
-    props.apps.forEach((app) => {
-      ps.push({ id: app._id, updates: { loop: true } });
-      const v = document.getElementById(`${app._id}-video`) as HTMLVideoElement;
-      if (v) v.loop = true;
-    });
-    // Update all the apps at once
-    updateStateBatch(ps);
-  };
-
-  const handleNoLoop = () => {
-    // Array of update to batch at once
-    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
-    props.apps.forEach((app) => {
-      ps.push({ id: app._id, updates: { loop: false } });
-      const v = document.getElementById(`${app._id}-video`) as HTMLVideoElement;
-      if (v) v.loop = false;
-    });
-    // Update all the apps at once
-    updateStateBatch(ps);
-  };
-
-  const handleSyncOnMe = () => {
-    // Array of update to batch at once
-    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
-    props.apps.forEach((app) => {
-      const v = document.getElementById(`${app._id}-video`) as HTMLVideoElement;
-      if (v) {
-        ps.push({ id: app._id, updates: { currentTime: v.currentTime, loop: v.loop, paused: v.paused } });
-      }
-    });
-    // Update all the apps at once
-    updateStateBatch(ps);
-  };
-
-  return (
-    <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
-      <Tooltip placement="top" hasArrow={true} label={'Rewind To Begining'} openDelay={400}>
-        <Button onClick={handleRewind} size="xs" px={0}>
-          <MdFastRewind size="16px" />
-        </Button>
-      </Tooltip>
-
-      <Tooltip placement="top" hasArrow={true} label={'Play Videos'} openDelay={400}>
-        <Button onClick={handlePlay} size="xs" px={0}>
-          <MdPlayArrow size="16px" />
-        </Button>
-      </Tooltip>
-
-      <Tooltip placement="top" hasArrow={true} label={'Pause Videos'} openDelay={400}>
-        <Button onClick={handleStop} size="xs" px={0}>
-          <MdPause size="16px" />
-        </Button>
-      </Tooltip>
-
-      <Tooltip placement="top" hasArrow={true} label={'Loop'} openDelay={400}>
-        <Button onClick={handleLoop} size="xs" px={0}>
-          <MdLoop size="16px" />
-        </Button>
-      </Tooltip>
-
-      <Tooltip placement="top" hasArrow={true} label={'No Loop'} openDelay={400}>
-        <Button onClick={handleNoLoop} size="xs" px={0}>
-          <MdArrowRightAlt size="16px" />
-        </Button>
-      </Tooltip>
-
-      <Tooltip placement="top" hasArrow={true} label={'Sync on me'} openDelay={400}>
-        <Button onClick={handleSyncOnMe} size="xs" px={0}>
-          <MdAccessTime size="16px" />
-        </Button>
-      </Tooltip>
-    </ButtonGroup>
-  );
+ return null;
 };
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
