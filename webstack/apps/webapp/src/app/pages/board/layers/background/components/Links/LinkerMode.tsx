@@ -333,8 +333,7 @@ export function LinkerMode() {
           color = green;
           fill = green + '40';
         } else {
-          color = red;
-          fill = red + '20'; // More transparent for non-candidates
+          return null;
         }
 
         return (
