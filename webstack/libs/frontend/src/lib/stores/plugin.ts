@@ -29,7 +29,7 @@ interface PluginState {
     description: string,
     username: string,
     roomId: string
-  ) => Promise<{ success: boolean; message: string }>;
+  ) => Promise<{ success: boolean; message: string; status?: number }>;
   subscribeToPlugins: () => Promise<void>;
   delete: (id: string) => Promise<void>;
 }
@@ -51,7 +51,9 @@ const PluginStore = create<PluginState>()((set, get) => {
       await APIHttp.DELETE('/plugins/remove/' + id);
     },
     upload: async (file: File, name: string, description: string, username: string, roomId: string) => {
-      if (!SAGE3Ability.canCurrentUser('create', 'plugins')) return;
+      if (!SAGE3Ability.canCurrentUser('create', 'plugins')) {
+        return { success: false, message: 'You do not have permission to upload plugins.', status: 403 };
+      }
       // Uploaded with a Form object
       const fd = new FormData();
       fd.append('plugin', file);
@@ -64,7 +66,8 @@ const PluginStore = create<PluginState>()((set, get) => {
         body: fd,
       });
       const resJson = await res.json();
-      return resJson;
+      // Include status code in response so UI can determine error vs warning
+      return { ...resJson, status: res.status };
     },
     subscribeToPlugins: async () => {
       if (!SAGE3Ability.canCurrentUser('read', 'plugins')) return;

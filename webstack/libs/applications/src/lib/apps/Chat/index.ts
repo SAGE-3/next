@@ -14,8 +14,8 @@ import { z } from 'zod';
  */
 
 export const schema = z.object({
-  previousQ: z.string(),
-  previousA: z.string(),
+  previousQ: z.array(z.string()),
+  previousA: z.array(z.string()),
   context: z.string(),
   token: z.string(),
   sources: z.array(z.string()),
@@ -35,8 +35,8 @@ export const schema = z.object({
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  previousQ: '',
-  previousA: '',
+  previousQ: [],
+  previousA: [],
   context: '',
   token: '',
   sources: [],
