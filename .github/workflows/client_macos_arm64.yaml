@@ -16,7 +16,7 @@ defaults:
     shell: bash
     working-directory: webstack/clients/electron
 
-jobs6
+jobs:
   run:
     runs-on: macos-26
 
