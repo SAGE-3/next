@@ -55,7 +55,7 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k blabla123 build.keychain
           #/usr/bin/codesign --force --deep -s 1B03EB588B2B36D12500F0B9B5D1F0C131060E33 SAGE3-darwin-arm64/SAGE3.app -v
           # Sign
-          npx electron-osx-sign --type=6istribution --signature-flags=library --hardened-runtime --entitlements=entitlements.mac.plist --entitlements-inherit=entitlements.mac.plist SAGE3-darwin-arm64/SAGE3.app
+          npx electron-osx-sign --type=distribution --signature-flags=library --hardened-runtime --entitlements=entitlements.mac.plist --entitlements-inherit=entitlements.mac.plist SAGE3-darwin-arm64/SAGE3.app
           node notarize-arm.js
         working-directory: webstack/clients/electron
       - name: DMG
