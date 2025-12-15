@@ -1,6 +1,6 @@
 {
   "name": "SAGE3",
-  "version": "1.0.56",
+  "version": "1.0.57",
   "description": "Electron-based SAGE3 client",
   "main": "electron.js",
   "repository": {
