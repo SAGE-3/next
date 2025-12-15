@@ -12,8 +12,7 @@ import { WebsocketProvider } from 'y-websocket';
 import { useParams } from 'react-router';
 import { useUser } from './useUser';
 import { User } from '@sage3/shared/types';
-import { Box, Button, CircularProgress } from '@chakra-ui/react';
-import { useHexColor, useRouteNav } from '@sage3/frontend';
+import { LoadingScreen } from '@sage3/frontend';
 
 // Enum Yjs Rooms
 export enum YjsRooms {
@@ -150,34 +149,15 @@ export function YjsProvider(props: React.PropsWithChildren<Record<string, unknow
 
   return (
     <YjsContext.Provider value={{ yAnnotations, yApps }}>
-      {yApps && yAnnotations ? props.children : <LoadingYjsComponent />}
+      {yApps && yAnnotations  ? props.children : <LoadingYjsComponent />}
     </YjsContext.Provider>
   );
 }
 
 function LoadingYjsComponent() {
-  const teal = useHexColor('teal');
-
-  const { boardId, roomId } = useParams();
-  const { toHome, toBoard } = useRouteNav();
-
-  const [tries, setTries] = useState(3);
-
-  const retry = () => {
-    if (boardId && roomId && tries > 0) {
-      toBoard(boardId, roomId);
-      setTries(tries - 1);
-    } else {
-      toHome(roomId);
-    }
-  };
-
   return (
-    <Box width="100vw" height="100vh" display="flex" justifyContent={'center'} alignItems={'center'}>
-      <CircularProgress isIndeterminate size={'xl'} color={teal} />
-      <Button onClick={retry} colorScheme="teal" variant="outline" position="absolute" left="2" bottom="2">
-        {tries ? ` Retry ${tries}` : 'Go Home'}
-      </Button>
-    </Box>
+    <LoadingScreen
+      subtext="Connecting to the real time collaborative environment."
+    />
   );
 }
