@@ -16,17 +16,17 @@ defaults:
     shell: bash
     working-directory: webstack/clients/electron
 
-jobs:
+jobs6
   run:
     runs-on: macos-26
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          node-version: "22"
       - name: Install
         run: yarn install --frozen-lockfile --silent
         working-directory: webstack/clients/electron
@@ -55,13 +55,13 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k blabla123 build.keychain
           #/usr/bin/codesign --force --deep -s 1B03EB588B2B36D12500F0B9B5D1F0C131060E33 SAGE3-darwin-arm64/SAGE3.app -v
           # Sign
-          npx electron-osx-sign --type=distribution --signature-flags=library --hardened-runtime --entitlements=entitlements.mac.plist --entitlements-inherit=entitlements.mac.plist SAGE3-darwin-arm64/SAGE3.app
+          npx electron-osx-sign --type=6istribution --signature-flags=library --hardened-runtime --entitlements=entitlements.mac.plist --entitlements-inherit=entitlements.mac.plist SAGE3-darwin-arm64/SAGE3.app
           node notarize-arm.js
         working-directory: webstack/clients/electron
       - name: DMG
         run: npx electron-installer-dmg SAGE3-darwin-arm64/SAGE3.app SAGE3 --dmgPath=SAGE3-darwin-arm64/SAGE3-darwin-arm64.dmg --icon=s3.icns --background=images/background.png --overwrite
         working-directory: webstack/clients/electron
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: SAGE3-darwin-arm64.dmg
           path: webstack/clients/electron/SAGE3-darwin-arm64/SAGE3-darwin-arm64.dmg
