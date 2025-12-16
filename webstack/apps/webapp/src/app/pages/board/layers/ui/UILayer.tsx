@@ -109,6 +109,8 @@ export function UILayer(props: UILayerProps) {
   const { user } = useUser();
   const usersColor = user ? user.data.color : 'teal';
   const usersColorMode = useColorModeValue(`${usersColor}.500`, `${usersColor}.300`);
+  const backgroundColor = useColorModeValue('#f2f2f299', '#32323299');
+
 
   // Scale
   const scale = useThrottleScale(250);
@@ -501,12 +503,12 @@ export function UILayer(props: UILayerProps) {
       </Box>
 
       {/* Hub-Room-Board Name Top Left */}
-      <Box position="absolute" left="1" top="1" display={showUI ? 'initial' : 'none'}>
+      <Box position="absolute" left="1" top="1" display={showUI ? 'initial' : 'none'}  backdropFilter="blur(5px)">
         <BoardTitle room={room} board={board} config={config} />
       </Box>
 
       {/* The clock Top Right */}
-      <Box position="absolute" right="1" top="1">
+      <Box position="absolute" right="1" top="1"      backdropFilter="blur(5px)">
         <Clock isBoard={true} />
       </Box>
 
