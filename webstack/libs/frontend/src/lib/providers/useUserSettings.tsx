@@ -50,7 +50,7 @@ const defaultSettings: UserSettings = {
   showCursors: true,
   showViewports: true,
   showAppTitles: false,
-  showLinks: 'selected',
+  showLinks: 'all',
   showUI: true,
   showTags: false,
   selectedBoardListView: 'grid',
