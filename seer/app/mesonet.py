@@ -117,6 +117,9 @@ class MesonetAgent:
             self.client = openai_client.OpenAI(
                 base_url="https://api.openai.com/v1", api_key=openai["apiKey"]
             )
+            # OpenAI for now, can explore more in the future
+            self.embedding_model = OpenAIEmbeddings(api_key=openai["apiKey"])
+
         # Templates
         sys_template_str = """Today is {date}. 
         You are a helpful and succinct assistant, providing informative answers to {username}. 
@@ -147,9 +150,6 @@ class MesonetAgent:
 
         if self.llm_llama:
             self.session_llama = prompt | self.llm_llama | output_parser
-
-        # OpenAI for now, can explore more in the future
-        self.embedding_model = OpenAIEmbeddings(api_key=openai["apiKey"])
 
     async def process(self, qq: MesonetQuery):
         self.logger.info("Got Mesonet> from " + qq.user + ": " + qq.q)
