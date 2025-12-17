@@ -350,6 +350,7 @@ export function UILayer(props: UILayerProps) {
         zIndex={101}
         display={showUI ? 'flex' : 'none'}
         borderRadius="md"
+
       >
         <Box display="flex" gap="1">
           <ButtonGroup isAttached size="xs" gap="0" mr="1">
