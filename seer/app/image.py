@@ -28,7 +28,14 @@ from langchain_openai import ChatOpenAI, AzureChatOpenAI
 
 # Typing for RPC
 from libs.localtypes import ImageQuery, ImageAnswer
-from libs.utils import getModelsInfo, getImageFile, scaleImage, isURL, isDataURL
+from libs.utils import (
+    getModelsInfo,
+    getImageFile,
+    scaleImage,
+    isURL,
+    isDataURL,
+    parse_openai_error,
+)
 
 # AI logging
 from libs.ai_logging import ai_logger, LoggingLLMHandler
@@ -37,7 +44,7 @@ from libs.ai_logging import ai_logger, LoggingLLMHandler
 ai_handler = LoggingLLMHandler("image")
 
 # Downsized image size for processing by LLMs
-ImageSize = 600
+ImageSize = 800
 
 sys_template_str = """You are a helpful and succinct assistant, providing informative answers.
   Always format your responses using valid Markdown syntax. Use appropriate elements like:
@@ -113,6 +120,7 @@ class ImageAgent:
     async def process(self, qq: ImageQuery):
         self.logger.info("Got image> from " + qq.user + ": " + qq.q + " - " + qq.model)
         description = "No description available."
+        success = True
 
         if isDataURL(qq.asset):
             # Load an image from a base64 encoded data URL
@@ -151,11 +159,15 @@ class ImageAgent:
                         ]
                     )
                 )
-                response = await self.llm_llama.ainvoke(
-                    messages,
-                    config={"callbacks": [ai_handler]},
-                )
-                description = str(response.content)
+                try:
+                    response = await self.llm_llama.ainvoke(
+                        messages,
+                        config={"callbacks": [ai_handler]},
+                    )
+                    description = str(response.content)
+                except Exception as e:
+                    success = False
+                    description = f"Error from Llama AI"
             elif qq.model == "openai":
                 messages: List[BaseMessage] = []
                 messages.append(SystemMessage(content=sys_template_str))
@@ -172,11 +184,19 @@ class ImageAgent:
                         ]
                     )
                 )
-                response = await self.llm_openai.ainvoke(
-                    messages,
-                    config={"callbacks": [ai_handler]},
-                )
-                description = str(response.content)
+                try:
+                    response = await self.llm_openai.ainvoke(
+                        messages,
+                        config={"callbacks": [ai_handler]},
+                    )
+                    description = str(response.content)
+                except Exception as e:
+                    success = False
+                    code, message = parse_openai_error(e)
+                    if code:
+                        description = f"Error from OpenAI: _{code.replace("_", r"\_")}_"
+                    else:
+                        description = f"Error from OpenAI"
             elif qq.model == "azure":
                 messages: List[BaseMessage] = []
                 messages.append(SystemMessage(content=sys_template_str))
@@ -193,34 +213,42 @@ class ImageAgent:
                         ]
                     )
                 )
-                response = await self.llm_azure.ainvoke(
-                    messages,
-                    config={"callbacks": [ai_handler]},
-                )
-                description = str(response.content)
+                try:
+                    response = await self.llm_azure.ainvoke(
+                        messages,
+                        config={"callbacks": [ai_handler]},
+                    )
+                    description = str(response.content)
+                except Exception as e:
+                    success = False
+                    code, message = parse_openai_error(e)
+                    if code:
+                        description = f"Error from Azure AI: {code}, {message}"
+                    else:
+                        description = f"Error from Azure AI: {message}"
         else:
             description = "Failed to get image."
 
-        text = description
+        if success:
+            # Propose the answer to the user
+            action1 = json.dumps(
+                {
+                    "type": "create_app",
+                    "app": "Stickie",
+                    "state": {"text": description, "fontSize": 16, "color": "purple"},
+                    "data": {
+                        "title": "Answer",
+                        "position": {"x": qq.ctx.pos[0], "y": qq.ctx.pos[1], "z": 0},
+                        "size": {"width": 400, "height": 500, "depth": 0},
+                    },
+                }
+            )
 
-        # Propose the answer to the user
-        action1 = json.dumps(
-            {
-                "type": "create_app",
-                "app": "Stickie",
-                "state": {"text": text, "fontSize": 16, "color": "purple"},
-                "data": {
-                    "title": "Answer",
-                    "position": {"x": qq.ctx.pos[0], "y": qq.ctx.pos[1], "z": 0},
-                    "size": {"width": 400, "height": 500, "depth": 0},
-                },
-            }
-        )
-
-        # Build the answer object
-        val = ImageAnswer(
-            r=text,
-            success=True,
-            actions=[action1],
-        )
-        return val
+            # Build the answer object
+            return ImageAnswer(
+                r=description,
+                success=success,
+                actions=[action1],
+            )
+        else:
+            return ImageAnswer(r=description, success=success, actions=[])

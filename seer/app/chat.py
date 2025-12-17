@@ -8,7 +8,7 @@
 
 # Chat Agent
 
-import time, json, uuid, re
+import time, json
 from logging import Logger
 
 # Web API
@@ -25,7 +25,7 @@ from langchain_openai import ChatOpenAI, AzureChatOpenAI
 
 # Typing for RPC
 from libs.localtypes import Question, Answer
-from libs.utils import getModelsInfo, extract_code_blocks
+from libs.utils import getModelsInfo, extract_code_blocks, parse_openai_error
 
 # AI logging
 from libs.ai_logging import ai_logger, LoggingChainHandler
@@ -154,6 +154,7 @@ class ChatAgent:
         self.logger.info(
             "Got Chat> from " + qq.user + " from:" + qq.location + " using: " + qq.model
         )
+        success = True
 
         # Get the current date and time
         today = time.asctime()
@@ -168,120 +169,142 @@ class ChatAgent:
             for q, a in zip(qq.ctx.previousQ, qq.ctx.previousA):
                 history.append(("human", q))
                 history.append(("ai", a))
-            response = await self.session_llama.ainvoke(
-                {
-                    "history": history,
-                    "question": qq.q,
-                    "username": qq.user,
-                    "location": qq.location,
-                    "date": today,
-                },
-                config={"callbacks": [ai_handler]},
-            )
+            try:
+                response = await self.session_llama.ainvoke(
+                    {
+                        "history": history,
+                        "question": qq.q,
+                        "username": qq.user,
+                        "location": qq.location,
+                        "date": today,
+                    },
+                    config={"callbacks": [ai_handler]},
+                )
+            except Exception as e:
+                success = False
+                description = f"Error from Llama AI"
         elif qq.model == "openai" and self.session_openai:
             history = []
             for q, a in zip(qq.ctx.previousQ, qq.ctx.previousA):
                 history.append(("human", q))
                 history.append(("ai", a))
-            response = await self.session_openai.ainvoke(
-                {
-                    "history": history,
-                    "question": qq.q,
-                    "username": qq.user,
-                    "location": qq.location,
-                    "date": today,
-                },
-                config={"callbacks": [ai_handler]},
-            )
+            try:
+                response = await self.session_openai.ainvoke(
+                    {
+                        "history": history,
+                        "question": qq.q,
+                        "username": qq.user,
+                        "location": qq.location,
+                        "date": today,
+                    },
+                    config={"callbacks": [ai_handler]},
+                )
+            except Exception as e:
+                success = False
+                code, message = parse_openai_error(e)
+                if code:
+                    description = f"Error from OpenAI: _{code.replace("_", r"\_")}_"
+                else:
+                    description = f"Error from OpenAI"
         elif qq.model == "azure" and self.session_azure:
             history = []
             for q, a in zip(qq.ctx.previousQ, qq.ctx.previousA):
                 history.append(("human", q))
                 history.append(("ai", a))
-            response = await self.session_azure.ainvoke(
-                {
-                    "history": history,
-                    "question": qq.q,
-                    "username": qq.user,
-                    "location": qq.location,
-                    "date": today,
-                },
-                config={"callbacks": [ai_handler]},
-            )
+            try:
+                response = await self.session_azure.ainvoke(
+                    {
+                        "history": history,
+                        "question": qq.q,
+                        "username": qq.user,
+                        "location": qq.location,
+                        "date": today,
+                    },
+                    config={"callbacks": [ai_handler]},
+                )
+            except Exception as e:
+                success = False
+                code, message = parse_openai_error(e)
+                if code:
+                    description = f"Error from Azure AI: {code}, {message}"
+                else:
+                    description = f"Error from Azure AI: {message}"
         else:
             raise HTTPException(status_code=500, detail="Langchain> Model unknown")
 
-        # Annotate the answer
-        text = response.strip()
-        response = text + "\n\n---\n"
-        response += "Text generated using an AI model [" + qq.model + "]\n"
+        if not success:
+            return Answer(id=qq.id, r=description, actions=[])
+        else:
+            # Annotate the answer
+            text = response.strip()
+            response = text + "\n\n---\n"
+            response += "Text generated using an AI model [" + qq.model + "]\n"
 
-        # Propose the answer to the user
-        action1 = json.dumps(
-            {
-                "type": "create_app",
-                "app": "Stickie",
-                "state": {"text": response, "fontSize": 24, "color": "purple"},
-                "data": {
-                    "title": "Answer",
-                    "position": {"x": qq.ctx.pos[0], "y": qq.ctx.pos[1], "z": 0},
-                    "size": {"width": 400, "height": 720, "depth": 0},
-                },
-            }
-        )
-        actions = [action1]
+            # Propose the answer to the user
+            action1 = json.dumps(
+                {
+                    "type": "create_app",
+                    "app": "Stickie",
+                    "state": {"text": response, "fontSize": 24, "color": "purple"},
+                    "data": {
+                        "title": "Answer",
+                        "position": {"x": qq.ctx.pos[0], "y": qq.ctx.pos[1], "z": 0},
+                        "size": {"width": 400, "height": 720, "depth": 0},
+                    },
+                }
+            )
+            actions = [action1]
 
-        # Extract code blocks
-        blocks = extract_code_blocks(text)
-        for bl in blocks:
-            code = bl.get("code")
-            lang = bl.get("language")
-            if lang == "python":
-                act = json.dumps(
-                    {
-                        "type": "create_app",
-                        "app": "SageCell",
-                        "state": {
-                            "code": code,
-                            "language": "python",
-                        },
-                        "data": {
-                            "title": "Answer",
-                            "position": {
-                                "x": qq.ctx.pos[0],
-                                "y": qq.ctx.pos[1],
-                                "z": 0,
+            # Extract code blocks
+            blocks = extract_code_blocks(text)
+            for bl in blocks:
+                code = bl.get("code")
+                lang = bl.get("language")
+                if lang == "python":
+                    act = json.dumps(
+                        {
+                            "type": "create_app",
+                            "app": "SageCell",
+                            "state": {
+                                "code": code,
+                                "language": "python",
                             },
-                            "size": {"width": 600, "height": 420, "depth": 0},
-                        },
-                    }
-                )
-            else:
-                act = json.dumps(
-                    {
-                        "type": "create_app",
-                        "app": "CodeEditor",
-                        "state": {
-                            "content": code,
-                            "language": lang if lang else "markdown",
-                        },
-                        "data": {
-                            "title": "Answer",
-                            "position": {
-                                "x": qq.ctx.pos[0],
-                                "y": qq.ctx.pos[1],
-                                "z": 0,
+                            "data": {
+                                "title": "Answer",
+                                "position": {
+                                    "x": qq.ctx.pos[0],
+                                    "y": qq.ctx.pos[1],
+                                    "z": 0,
+                                },
+                                "size": {"width": 600, "height": 420, "depth": 0},
                             },
-                            "size": {"width": 600, "height": 420, "depth": 0},
-                        },
-                    }
-                )
-            actions.append(act)
+                        }
+                    )
+                else:
+                    act = json.dumps(
+                        {
+                            "type": "create_app",
+                            "app": "CodeEditor",
+                            "state": {
+                                "content": code,
+                                "language": lang if lang else "markdown",
+                            },
+                            "data": {
+                                "title": "Answer",
+                                "position": {
+                                    "x": qq.ctx.pos[0],
+                                    "y": qq.ctx.pos[1],
+                                    "z": 0,
+                                },
+                                "size": {"width": 600, "height": 420, "depth": 0},
+                            },
+                        }
+                    )
+                actions.append(act)
 
-        # Build the answer object
-        val = Answer(
-            id=qq.id,
-            r=response,
-            actions=actions,
-        )
-        return val
+            # Build the answer object
+            return Answer(
+                id=qq.id,
+                r=response,
+                actions=actions,
+            )
