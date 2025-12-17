@@ -5,7 +5,7 @@
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
-import { CSSProperties, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Box, Text, useColorModeValue, useDisclosure } from '@chakra-ui/react';
 
 import { EditUserSettingsModal, useUserSettings } from '@sage3/frontend';
