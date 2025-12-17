@@ -5,7 +5,7 @@
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
-import { CSSProperties, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Box, Text, useColorModeValue, useDisclosure } from '@chakra-ui/react';
 
 import { EditUserSettingsModal, useUserSettings } from '@sage3/frontend';
@@ -28,7 +28,7 @@ export function Clock(props: ClockProps) {
 
   // Colors
   const textColor = useColorModeValue('gray.800', 'gray.50');
-  const backgroundColor = useColorModeValue('gray.100', 'gray.800');
+  const backgroundColor = useColorModeValue('#f2f2f299', '#32323299');
 
   // Presence settings modal
   const { isOpen: editSettingsIsOpen, onClose: editSettingsOnClose } = useDisclosure();
@@ -49,8 +49,7 @@ export function Clock(props: ClockProps) {
       whiteSpace={'nowrap'}
       width="100%"
       display="flex"
-      pr={1}
-      pl={1}
+      px={1}
       justifyContent="right"
       alignItems={'center'}
       background={props.isBoard ? backgroundColor : "transparent"}
