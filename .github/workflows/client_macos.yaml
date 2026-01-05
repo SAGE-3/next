@@ -18,15 +18,15 @@ defaults:
 
 jobs:
   run:
-    runs-on: macos-14
+    runs-on: macos-26
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          node-version: "22"
       - name: Install
         run: yarn install --frozen-lockfile --silent
         working-directory: webstack/clients/electron
@@ -61,7 +61,7 @@ jobs:
       - name: DMG
         run: npx electron-installer-dmg SAGE3-darwin-x64/SAGE3.app SAGE3 --dmgPath=SAGE3-darwin-x64/SAGE3-darwin-x64.dmg --icon=s3.icns --background=images/background.png --overwrite
         working-directory: webstack/clients/electron
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: SAGE3-darwin-x64.dmg
           path: webstack/clients/electron/SAGE3-darwin-x64/SAGE3-darwin-x64.dmg

@@ -8,6 +8,8 @@
 
 // Arrow library
 import { getBoxToBoxArrow } from 'perfect-arrows';
+import { useState } from 'react';
+import { FaUnlink } from 'react-icons/fa';
 
 import { useHexColor, useUserSettings } from '@sage3/frontend';
 import { Position, Size } from '@sage3/shared/types';
@@ -16,6 +18,74 @@ type Box = {
   position: Position;
   size: Size;
 };
+
+// Component wrapper for the delete button group with hover state
+function DeleteButtonGroup({ onClick, deleteColorHex, midX, midY }: { onClick: () => void; deleteColorHex: string; midX: number; midY: number }) {
+  const [isHovered, setIsHovered] = useState(false);
+  const scale = isHovered ? 1.15 : 1;
+  const iconSize = 24;
+  const circleRadius = 20;
+  const containerSize = circleRadius * 2 + 4; // Add some padding
+
+  
+  
+  return (
+    <foreignObject 
+      x={midX - containerSize / 2} 
+      y={midY - containerSize / 2} 
+      width={containerSize} 
+      height={containerSize}
+      style={{ pointerEvents: 'auto', touchAction: 'auto', overflow: 'visible' }}
+    >
+      <div
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onClick={onClick}
+        style={{
+          position: 'relative',
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          transform: `scale(${scale})`,
+          transformOrigin: 'center',
+          transition: 'transform 0.2s ease',
+        }}
+      >
+        {/* Background circle - subtle gray */}
+        <div
+          style={{
+            position: 'absolute',
+            width: circleRadius * 2,
+            height: circleRadius * 2,
+            borderRadius: '50%',
+            backgroundColor: 'white',
+            border: '1px solid #d1d5db',
+            opacity: 1,
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+          }}
+        />
+        {/* Link breaking icon */}
+        <div
+          style={{
+            position: 'relative',
+            zIndex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'color 0.2s ease',
+          }}
+        >
+          <FaUnlink size={iconSize} color={isHovered ? deleteColorHex : '#9ca3af'} />
+        </div>
+      </div>
+    </foreignObject>
+  );
+}
 
 // Create an arrow from a box to the cursor position
 export function BoxToCursorArrow(box: Box, posX: number, posY: number, strokeColor: string, arrowColor: string, scale: number = 1) {
@@ -130,17 +200,7 @@ function createArrow(
       />
 
       {isInteractable && primaryActionMode === 'lasso' && (
-        <g
-          style={{ pointerEvents: 'auto', touchAction: 'auto', cursor: 'pointer' }}
-          onClick={onClick}
-          transform={`translate(${midX}, ${midY}) scale(2) translate(${-midX}, ${-midY})`}
-        >
-          {/* Background circle */}
-          <circle cx={midX} cy={midY} r={12} fill="white" stroke={deleteColorHex} strokeWidth={2} />
-          {/* X lines */}
-          <line x1={midX - 5} y1={midY - 5} x2={midX + 5} y2={midY + 5} stroke={deleteColorHex} strokeWidth={3} strokeLinecap="round" />
-          <line x1={midX + 5} y1={midY - 5} x2={midX - 5} y2={midY + 5} stroke={deleteColorHex} strokeWidth={3} strokeLinecap="round" />
-        </g>
+        <DeleteButtonGroup onClick={onClick!} deleteColorHex={deleteColorHex} midX={midX} midY={midY} />
       )}
     </g>
   );

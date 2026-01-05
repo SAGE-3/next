@@ -6,6 +6,8 @@
 #  the file LICENSE, distributed as part of this software.
 # -----------------------------------------------------------------------------
 
+import json
+
 # Image
 from PIL import Image
 from io import BytesIO
@@ -503,3 +505,26 @@ def extract_code_blocks(text):
     for lang, code in matches:
         code_blocks.append({"language": lang if lang else None, "code": code.strip()})
     return code_blocks
+
+
+def parse_openai_error(e):
+    """
+    Parse an OpenAI API error and extract error code and message.
+
+    Args:
+        e: The exception object from an OpenAI API call
+
+    Returns:
+        tuple: A tuple of (error_code, error_message). If parsing fails,
+                returns (None, error_string)
+    """
+    raw = getattr(getattr(e, "response", None), "text", None) or (
+        e.args[0] if e.args else None
+    )
+    if not raw:
+        return None, str(e)
+    try:
+        err = json.loads(raw)["error"]
+        return err.get("code"), err.get("message")
+    except Exception:
+        return None, str(raw)

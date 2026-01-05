@@ -20,12 +20,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          node-version: "22"
       - name: Install
         run: yarn install --frozen-lockfile --silent
       - name: Build
@@ -40,7 +40,7 @@ jobs:
       - name: Zip files
         run: zip SAGE3-linux-x64.tar.zip SAGE3-linux-x64.tar
       - name: Upload
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: SAGE3-linux-client-ubuntu-24.04
           path: webstack/clients/electron/SAGE3-linux-x64.tar

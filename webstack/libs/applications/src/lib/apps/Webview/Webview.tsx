@@ -296,7 +296,7 @@ function AppComponent(props: App): JSX.Element {
         setLocalURL(props._id, event.url);
       }
     };
-    
+
     /**
      * Handle in-page navigation (SPA route changes, hash changes, etc.)
      * Note: Only updates local state - manual sync required via toolbar buttons
@@ -372,10 +372,10 @@ function ToolbarComponent(props: App): JSX.Element {
   const setLocalURL = useStore((state) => state.setLocalURL);
   const localURL = useStore((state) => state.localURL[props._id]);
   const [viewURL, setViewURL] = useState(localURL);
-  
+
   // Modal state
   const { isOpen: saveIsOpen, onOpen: saveOnOpen, onClose: saveOnClose } = useDisclosure();
-  
+
   // Room info
   const { roomId } = useParams();
 
@@ -404,7 +404,7 @@ function ToolbarComponent(props: App): JSX.Element {
   const changeUrl = (evt: any) => {
     evt.preventDefault();
     let url = viewURL.trim();
-    
+
     // If input contains spaces, treat it as a search query
     if (url.indexOf(' ') !== -1) {
       url = 'https://www.google.com/search?q=' + url.replace(' ', '+');
@@ -419,7 +419,7 @@ function ToolbarComponent(props: App): JSX.Element {
         url = 'https://' + url;
       }
     }
-    
+
     try {
       url = new URL(url).toString();
       updateState(props._id, { webviewurl: url });
@@ -525,16 +525,16 @@ function ToolbarComponent(props: App): JSX.Element {
       if (!val.endsWith('.url')) {
         val += '.url';
       }
-      
+
       // Generate Internet Shortcut file content
       const content = `[InternetShortcut]\nURL=${viewURL}\n`;
-      
+
       if (roomId) {
         const fd = new FormData();
         const codefile = new File([new Blob([content])], val);
         fd.append('files', codefile);
         fd.append('room', roomId);
-        
+
         // Upload to asset manager
         fetch(apiUrls.assets.upload, { method: 'POST', body: fd })
           .catch((error: Error) => {
@@ -608,14 +608,14 @@ function ToolbarComponent(props: App): JSX.Element {
           </form>
 
           <ButtonGroup isAttached size="xs" colorScheme={urlsMatch ? "gray" : "orange"} variant="solid" >
-            <Tooltip 
-              placement="top" 
-              hasArrow={true} 
+            <Tooltip
+              placement="top"
+              hasArrow={true}
               label={urlsMatch ? 'Already synced' : `Revert to the shared URL`}
               openDelay={400}
             >
-              <Button 
-                onClick={returnToGroup} 
+              <Button
+                onClick={returnToGroup}
                 size="xs"
                 isDisabled={urlsMatch}
                 px={0}
@@ -624,14 +624,14 @@ function ToolbarComponent(props: App): JSX.Element {
               </Button>
             </Tooltip>
 
-            <Tooltip 
-              placement="top" 
-              hasArrow={true} 
+            <Tooltip
+              placement="top"
+              hasArrow={true}
               label={urlsMatch ? 'Already synced' : `Update the shared URL`}
               openDelay={400}
             >
-              <Button 
-                onClick={syncCurrentUrl} 
+              <Button
+                onClick={syncCurrentUrl}
                 size="xs"
                 isDisabled={urlsMatch}
                 px={0}
