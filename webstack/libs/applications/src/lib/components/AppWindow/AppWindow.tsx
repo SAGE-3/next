@@ -301,7 +301,6 @@ export function AppWindow(props: WindowProps) {
       handleBringAppForward();
       clearSelectedApps();
       setSelectedApp(props.app._id);
-      console.log(`AppWindow: ${primaryActionMode}`)
       // // Uncomment to allow for selection in grab mode to change interaction modes
       // if (primaryActionMode === 'grab') {
       //   setPrimaryActionMode('lasso');
