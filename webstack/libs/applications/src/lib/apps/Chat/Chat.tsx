@@ -517,7 +517,7 @@ function AppComponent(props: App): JSX.Element {
   const onContentImage = async (prompt: string) => {
     if (!user) return;
     if (sourceApps.length > 0) {
-      // Update the context with the stickies
+      // Update the context
       const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
 
       // Check for image
@@ -729,7 +729,7 @@ function AppComponent(props: App): JSX.Element {
     const name = isQuestion ? 'SAGE' : user?.data.name;
 
     if (sourceApps.length > 0) {
-      // Update the context with the stickies
+      // Update the context
       const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
 
       // Check for image
@@ -837,7 +837,7 @@ function AppComponent(props: App): JSX.Element {
   const onContentWeb = async (prompt: string) => {
     if (!user) return;
     if (sourceApps.length > 0) {
-      // Update the context with the stickies
+      // Update the context
       const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
 
       // Check for image
@@ -921,7 +921,7 @@ function AppComponent(props: App): JSX.Element {
   const onContentMap = async (prompt: string) => {
     if (!user) return;
     if (sourceApps.length > 0) {
-      // Update the context with the stickies
+      // Update the context
       const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
 
       // Check for map
@@ -1049,7 +1049,7 @@ function AppComponent(props: App): JSX.Element {
   const onContentWebScreenshot = async () => {
     if (!user) return;
     if (sourceApps.length > 0) {
-      // Update the context with the stickies
+      // Update the context
       const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
 
       // Check for image
@@ -1328,7 +1328,7 @@ function AppComponent(props: App): JSX.Element {
     // Get the current context
     let newctx = s.context;
     if (!newctx && sourceApps.length > 0) {
-      // Update the context with the stickies
+      // Update the context
       let language = 'python';
       const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
       newctx = apps.reduce((accumulate, app) => {
@@ -1356,7 +1356,7 @@ function AppComponent(props: App): JSX.Element {
     // Get the current context
     let newctx = s.context;
     if (!newctx && sourceApps.length > 0) {
-      // Update the context with the stickies
+      // Update the context
       let language = 'python';
       const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
       newctx = apps.reduce((accumulate, app) => {
@@ -1384,7 +1384,7 @@ function AppComponent(props: App): JSX.Element {
     // Get the current context
     let newctx = s.context;
     if (sourceApps.length > 0) {
-      // Update the context with the stickies
+      // Update the context
       let language = 'python';
       const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
       newctx = apps.reduce((accumulate, app) => {
@@ -1409,7 +1409,7 @@ function AppComponent(props: App): JSX.Element {
     // Get the current context
     let newctx = s.context;
     if (!newctx && sourceApps.length > 0) {
-      // Update the context with the stickies
+      // Update the context
       let language = 'python';
       const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
       newctx = apps.reduce((accumulate, app) => {
@@ -2246,7 +2246,7 @@ function ToolbarComponent(props: App): JSX.Element {
   // Sort messages by creation date to display in order
   const sortedMessages = s.messages ? s.messages.sort((a, b) => a.creationDate - b.creationDate) : [];
 
-  // Download the stickie as a text file
+  // Download the content as a text file
   const downloadTxt = () => {
     // Rebuid the content as text
     let content = '';
