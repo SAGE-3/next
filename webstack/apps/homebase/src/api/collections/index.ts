@@ -100,7 +100,6 @@ export async function loadCollections(): Promise<void> {
 
   // Check all links for orphaned references
   async function checkAllLinks() {
-    console.log('DEBUG> Running full link validation check after app deletion...');
     const links = await LinkCollection.getAll();
     const apps = await AppsCollection.getAll();
     if (!links || !apps) return;
@@ -109,19 +108,10 @@ export async function loadCollections(): Promise<void> {
     const invalidLinks = links.filter((link) => !appIds.has(link.data.sourceAppId) || !appIds.has(link.data.targetAppId));
 
     if (invalidLinks.length > 0) {
-      console.log(`DEBUG> Found ${invalidLinks.length} orphaned links, cleaning up...`);
       const invalidLinkIds = invalidLinks.map((link) => link._id);
-      console.log('DEBUG> Deleting orphaned links:', invalidLinkIds);
 
       // Use batch deletion for better performance
       const result = await LinkCollection.deleteBatch(invalidLinkIds);
-      if (result) {
-        console.log(`DEBUG> Successfully deleted ${result.length} orphaned links`);
-      } else {
-        console.log('DEBUG> Failed to delete some orphaned links');
-      }
-    } else {
-      console.log('DEBUG> No orphaned links found');
     }
   }
 
