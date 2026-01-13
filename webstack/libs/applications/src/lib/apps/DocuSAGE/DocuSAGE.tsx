@@ -11,13 +11,12 @@ import { useAppStore } from '@sage3/frontend';
 import { App, AppGroup } from '../../schema';
 import { AppWindow } from '../../components';
 import { data, Tree, transformToTree } from './data';
-import { CircularPacking } from './visualizations/CircularPacking';
 import { Treemap } from './visualizations/Treemap';
-import { Force } from './visualizations/Force';
 import { TSNE } from './visualizations/TSNE';
 import { UMAP } from './visualizations/UMAP';
 import { DotPlot } from './visualizations/DotPlot';
 import { LineGraph } from './visualizations/LineGraph';
+import { ForceNetwork } from './visualizations/ForceNetwork';
 
 // Slightly lighten each color by about 8%
 const colors = [
@@ -43,7 +42,7 @@ export type AppState = {
   maxDepth: number;
   data?: Tree;
   customColors?: string[]; // Add custom colors to state
-  visualizationType?: 'treemap' | 'tsne' | 'umap' | 'dotplot' | 'linegraph'; // Add visualization type
+  visualizationType?: 'treemap' | 'tsne' | 'umap' | 'dotplot' | 'linegraph' | 'forcenetwork'; // Add visualization type
   dotPlotAlgorithm?: 'tsne' | 'umap'; // Algorithm for dot plot
 };
 
@@ -333,6 +332,10 @@ export const AppComponent = (props: App): JSX.Element => {
       return <LineGraph {...visualizationProps} />;
     }
     
+    if (s.visualizationType === 'forcenetwork') {
+      return <ForceNetwork {...visualizationProps} />;
+    }
+    
     // For backward compatibility with old t-SNE and UMAP apps
     if (s.visualizationType === 'tsne' || s.visualizationType === 'umap') {
       return <DotPlot {...visualizationProps} algorithm={s.visualizationType} onAlgorithmChange={handleDotPlotAlgorithmChange} />;
@@ -442,7 +445,7 @@ function ToolbarComponent(props: App): JSX.Element {
     updateState(props._id, { customColors: newColors });
   };
 
-  const handleVisualizationChange = (type: 'treemap' | 'dotplot' | 'linegraph') => {
+  const handleVisualizationChange = (type: 'treemap' | 'dotplot' | 'linegraph' | 'forcenetwork') => {
     updateState(props._id, { visualizationType: type });
   };
 
@@ -498,13 +501,14 @@ function ToolbarComponent(props: App): JSX.Element {
         </ChakraText>
         <Select
           value={s.visualizationType || 'treemap'}
-          onChange={(e) => handleVisualizationChange(e.target.value as 'treemap' | 'dotplot' | 'linegraph')}
+          onChange={(e) => handleVisualizationChange(e.target.value as 'treemap' | 'dotplot' | 'linegraph' | 'forcenetwork')}
           size="sm"
-          width="120px"
+          width="140px"
         >
           <option value="treemap">Tree Map</option>
           <option value="dotplot">Dot Plot</option>
           <option value="linegraph">Line Graph</option>
+          <option value="forcenetwork">Force Network</option>
         </Select>
       </Box>
       

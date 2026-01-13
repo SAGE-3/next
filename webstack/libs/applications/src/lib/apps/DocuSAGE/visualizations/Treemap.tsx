@@ -91,7 +91,7 @@ export const Treemap = ({
   const twoDViewPadding = baseSize * 0.019;
   const twoDViewTitleFontSize = baseSize * 0.03;
   const twoDViewTitleMargin = baseSize * 0.01;
-  const tooltipFontSize = baseSize * 0.094;
+  const tooltipFontSize = baseSize * 0.04;
 
   // Update selected layer when depth changes
   useEffect(() => {

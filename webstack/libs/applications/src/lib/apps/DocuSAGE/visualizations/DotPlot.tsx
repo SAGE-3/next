@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import * as d3 from 'd3';
 import { Tree } from '../data';
 import { AppState } from '../DocuSAGE';
-import { Box, Text, useColorModeValue, Button, HStack, Input, VStack, InputGroup, InputRightElement, IconButton } from '@chakra-ui/react';
+import { Box, Text, useColorModeValue, Button, HStack, Input, VStack, InputGroup, InputRightElement, IconButton, Slider, SliderTrack, SliderFilledTrack, SliderThumb } from '@chakra-ui/react';
 import { MdAdd } from 'react-icons/md';
 
 type DotPlotProps = {
@@ -48,6 +48,10 @@ export const DotPlot = ({
   const [projectionCenter, setProjectionCenter] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [originalProjected, setOriginalProjected] = useState<{ x: number; y: number }[]>([]);
   const [previousPapersLength, setPreviousPapersLength] = useState<number>(0);
+  const [spreadMultiplier, setSpreadMultiplier] = useState<number>(1.0);
+  const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState<boolean>(false);
+  const [lastPanPoint, setLastPanPoint] = useState<{ x: number; y: number } | null>(null);
 
   // Color mode values for dark/light theme support
   const backgroundColor = useColorModeValue('#f8f9fa', '#1a1a1a');
@@ -63,7 +67,7 @@ export const DotPlot = ({
   const buttonActiveTextColor = useColorModeValue('white', 'white');
 
   // Calculate responsive circle size based on viewport
-  const circleRadius = Math.max(15, Math.min(40, Math.min(width, height) * 0.02));
+  const circleRadius = Math.max(10, Math.min(30, Math.min(width, height) * 0.02));
   const strokeWidth = Math.max(2, circleRadius * 0.15);
   
   // Calculate responsive sizes based on viewport (always proportional)
@@ -294,7 +298,8 @@ export const DotPlot = ({
       const availableHeight = height - margin;
       const scaleX = availableWidth / Math.max(rangeX, 1);
       const scaleY = availableHeight / Math.max(rangeY, 1);
-      const scale = Math.min(scaleX, scaleY) * 0.8; // Use 80% of available space
+      const baseScale = Math.min(scaleX, scaleY) * 0.8; // Use 80% of available space
+      const scale = baseScale * spreadMultiplier; // Apply spread multiplier
       
       // Center the points
       const centerX = (minX + maxX) / 2;
@@ -333,7 +338,7 @@ export const DotPlot = ({
     } finally {
       setIsLoading(false);
     }
-  }, [papers, customPointData, algorithm, width, height]);
+  }, [papers, customPointData, algorithm, width, height, spreadMultiplier]);
 
   // Helper: find path from root to target node
   const findPathToNode = (root: Tree, target: Tree): Tree[] | null => {
@@ -428,6 +433,39 @@ export const DotPlot = ({
     }
   };
 
+  const handleMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
+    // Only start panning if clicking on the background (not on a point)
+    // Check if the target is the SVG or the background rect
+    const target = e.target as SVGElement;
+    if (target.tagName === 'svg' || target.tagName === 'rect') {
+      e.preventDefault();
+      setIsPanning(true);
+      setLastPanPoint({ x: e.clientX, y: e.clientY });
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
+    if (isPanning && lastPanPoint) {
+      const deltaX = e.clientX - lastPanPoint.x;
+      const deltaY = e.clientY - lastPanPoint.y;
+      setPanOffset(prev => ({
+        x: prev.x + deltaX,
+        y: prev.y + deltaY
+      }));
+      setLastPanPoint({ x: e.clientX, y: e.clientY });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsPanning(false);
+    setLastPanPoint(null);
+  };
+
+  const handleMouseLeave = () => {
+    setIsPanning(false);
+    setLastPanPoint(null);
+  };
+
   if (isLoading) {
     return (
       <Box
@@ -446,47 +484,72 @@ export const DotPlot = ({
 
   return (
     <Box width="100%" height="100%" position="relative">
-      {/* Algorithm Toggle */}
+      {/* Algorithm Toggle and Spread Slider */}
       <Box
         position="absolute"
         top="20px"
         right="20px"
         zIndex={100}
       >
-        <HStack spacing={controlSpacing}>
-          <Button
-            fontSize={`${buttonFontSize}px`}
-            px={buttonPaddingX}
-            py={buttonPaddingY}
-            width={`${buttonWidth}px`}
-            height={`${buttonHeight}px`}
-            onClick={() => handleAlgorithmChange('tsne')}
-            bg={algorithm === 'tsne' ? buttonActiveBg : buttonBg}
-            color={algorithm === 'tsne' ? buttonActiveTextColor : buttonTextColor}
-            fontWeight="bold"
-            _hover={{
-              bg: algorithm === 'tsne' ? buttonActiveBg : useColorModeValue('gray.200', 'gray.600')
-            }}
-          >
-            t-SNE
-          </Button>
-          <Button
-            fontSize={`${buttonFontSize}px`}
-            px={buttonPaddingX}
-            py={buttonPaddingY}
-            width={`${buttonWidth}px`}
-            height={`${buttonHeight}px`}
-            onClick={() => handleAlgorithmChange('umap')}
-            bg={algorithm === 'umap' ? buttonActiveBg : buttonBg}
-            color={algorithm === 'umap' ? buttonActiveTextColor : buttonTextColor}
-            fontWeight="bold"
-            _hover={{
-              bg: algorithm === 'umap' ? buttonActiveBg : useColorModeValue('gray.200', 'gray.600')
-            }}
-          >
-            UMAP
-          </Button>
-        </HStack>
+        <VStack spacing={controlSpacing * 2} align="stretch">
+          <HStack spacing={controlSpacing}>
+            <Button
+              fontSize={`${buttonFontSize}px`}
+              px={buttonPaddingX}
+              py={buttonPaddingY}
+              width={`${buttonWidth}px`}
+              height={`${buttonHeight}px`}
+              onClick={() => handleAlgorithmChange('tsne')}
+              bg={algorithm === 'tsne' ? buttonActiveBg : buttonBg}
+              color={algorithm === 'tsne' ? buttonActiveTextColor : buttonTextColor}
+              fontWeight="bold"
+              _hover={{
+                bg: algorithm === 'tsne' ? buttonActiveBg : useColorModeValue('gray.200', 'gray.600')
+              }}
+            >
+              t-SNE
+            </Button>
+            <Button
+              fontSize={`${buttonFontSize}px`}
+              px={buttonPaddingX}
+              py={buttonPaddingY}
+              width={`${buttonWidth}px`}
+              height={`${buttonHeight}px`}
+              onClick={() => handleAlgorithmChange('umap')}
+              bg={algorithm === 'umap' ? buttonActiveBg : buttonBg}
+              color={algorithm === 'umap' ? buttonActiveTextColor : buttonTextColor}
+              fontWeight="bold"
+              _hover={{
+                bg: algorithm === 'umap' ? buttonActiveBg : useColorModeValue('gray.200', 'gray.600')
+              }}
+            >
+              UMAP
+            </Button>
+          </HStack>
+          <Box width={`${buttonWidth * 2 + controlSpacing}px`} px={2}>
+            <Text 
+              fontSize={`${baseSize * 0.025}px`} 
+              color={useColorModeValue('gray.600', 'gray.300')}
+              mb={1}
+            >
+              Spread
+            </Text>
+            <Slider
+              aria-label="spread-slider"
+              value={spreadMultiplier}
+              onChange={setSpreadMultiplier}
+              min={0.3}
+              max={2.0}
+              step={0.1}
+              size="lg"
+            >
+              <SliderTrack>
+                <SliderFilledTrack />
+              </SliderTrack>
+              <SliderThumb />
+            </Slider>
+          </Box>
+        </VStack>
       </Box>
 
       {/* Custom Point Input - Bottom Left */}
@@ -533,7 +596,15 @@ export const DotPlot = ({
         </HStack>
       </Box>
 
-      <svg width={width} height={height}>
+      <svg 
+        width={width} 
+        height={height}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
+        style={{ cursor: isPanning ? 'grabbing' : 'grab' }}
+      >
         {/* Background */}
         <rect
           width={width}
@@ -541,43 +612,56 @@ export const DotPlot = ({
           fill={backgroundColor}
           stroke={strokeColor}
           strokeWidth={1}
+          style={{ pointerEvents: 'all' }}
         />
         
-        {/* Original Points */}
-        {points.map((point, i) => (
-          <g key={i}>
-            <circle
-              cx={point.x + width / 2}
-              cy={point.y + height / 2}
-              r={circleRadius}
-              fill={point.color}
-              stroke={circleStroke}
-              strokeWidth={strokeWidth}
-              style={{ cursor: 'pointer' }}
-              onClick={() => handlePointClick(point)}
-              onMouseEnter={() => handlePointHover(point)}
-              onMouseLeave={() => handlePointHover(null)}
-            />
-          </g>
-        ))}
-        
-        {/* Custom Points - rendered after original points so they appear on top */}
-        {customPoints.map((point, i) => (
-          <g key={`custom-${i}`}>
-            <circle
-              cx={point.x + width / 2}
-              cy={point.y + height / 2}
-              r={circleRadius * 1.5}
-              fill={point.color}
-              stroke={useColorModeValue('black', 'white')}
-              strokeWidth={strokeWidth * 2}
-              style={{ cursor: 'pointer' }}
-              onClick={() => handlePointClick(point)}
-              onMouseEnter={() => handlePointHover(point)}
-              onMouseLeave={() => handlePointHover(null)}
-            />
-          </g>
-        ))}
+        {/* Transform group for panning */}
+        <g transform={`translate(${panOffset.x}, ${panOffset.y})`}>
+          {/* Original Points */}
+          {points.map((point, i) => (
+            <g key={i}>
+              <circle
+                cx={point.x + width / 2}
+                cy={point.y + height / 2}
+                r={circleRadius}
+                fill={point.color}
+                stroke={circleStroke}
+                strokeWidth={strokeWidth}
+                style={{ cursor: 'pointer' }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePointClick(point);
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
+                onMouseEnter={() => handlePointHover(point)}
+                onMouseLeave={() => handlePointHover(null)}
+              />
+            </g>
+          ))}
+          
+          {/* Custom Points - rendered after original points so they appear on top */}
+          {customPoints.map((point, i) => (
+            <g key={`custom-${i}`}>
+              <circle
+                cx={point.x + width / 2}
+                cy={point.y + height / 2}
+                r={circleRadius * 0.8}
+                fill={point.color}
+                stroke={useColorModeValue('black', 'white')}
+                strokeWidth={strokeWidth * 1 }
+                opacity={0.7}
+                style={{ cursor: 'pointer' }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePointClick(point);
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
+                onMouseEnter={() => handlePointHover(point)}
+                onMouseLeave={() => handlePointHover(null)}
+              />
+            </g>
+          ))}
+        </g>
       </svg>
       
       {/* Legend */}
