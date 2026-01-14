@@ -103,10 +103,12 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
       // If value previously set, use it
       setSelectedModel(userSettings.aiModel);
     } else {
-      // Otherwise, use azure as default
-      const val = 'azure';
-      setSelectedModel(val);
-      setAIModel(val);
+      // Otherwise, use the first one as default
+      if (models.length > 0) {
+        const val = models[0].label;
+        setSelectedModel(val);
+        setAIModel(val);
+      }
     }
   }, [userSettings.aiModel, openai, setAIModel]);
 

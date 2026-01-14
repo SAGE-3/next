@@ -151,14 +151,14 @@ export interface TwilioConfiguration {
 }
 
 // LLM Configuration
-export type LLMType = 'openai' | 'azure' | 'custom';
+export type LLMType = 'chat' | 'vision' | 'image' | 'custom';
 
 export interface LLMConfiguration {
   apiType: LLMType;
   apiKey: string; // API Key
   model: string; // LLM model
+  label: string; // Model label in the UI, has to be unique
   url?: string;
-  label?: string; // Model label in the UI
   max_tokens?: number;
   api_version?: string;
   vision_enabled?: boolean;
