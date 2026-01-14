@@ -49,10 +49,7 @@ export function ConfigRouter(): express.Router {
       // Jupyter token
       token: token,
       admins: config.auth.admins || [],
-      openai: config.services.openai || {},
-      llama: config.services.llama || {},
-      azure: config.services.azure || {},
-      feedback: config.feedback || {},
+      models: config.services.models || [],
       fluentd: config.fluentd || {},
     } as OpenConfiguration;
     res.json(configuration);
