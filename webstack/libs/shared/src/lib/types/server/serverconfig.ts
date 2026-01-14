@@ -62,9 +62,7 @@ export interface ServerConfiguration {
   // External Services
   services: {
     twilio: TwilioConfiguration;
-    openai: OpenAIConfiguration;
-    llama: LlamaConfiguration;
-    azure: AzureConfig;
+    models: LLMConfiguration[];
   };
 
   // Feature flags
@@ -96,9 +94,7 @@ export type OpenConfiguration = Pick<
   admins: ServerConfiguration['auth']['admins'];
   logins: ServerConfiguration['auth']['strategies'];
   features: ServerConfiguration['features'];
-  openai: ServerConfiguration['services']['openai'];
-  llama: ServerConfiguration['services']['llama'];
-  azure: ServerConfiguration['services']['azure'];
+  models: ServerConfiguration['services']['models'];
   fluentd: ServerConfiguration['fluentd'];
 };
 
@@ -154,35 +150,16 @@ export interface TwilioConfiguration {
   apiSecret: string; // API Secret
 }
 
-// The OpenAI Configuration
-export interface OpenAIConfiguration {
+// LLM Configuration
+export type LLMType = 'openai' | 'azure' | 'custom';
+
+export interface LLMConfiguration {
+  apiType: LLMType;
   apiKey: string; // API Key
   model: string; // LLM model
+  url?: string;
   label?: string; // Model label in the UI
+  max_tokens?: number;
+  api_version?: string;
+  vision_enabled?: boolean;
 }
-
-// Llama Configuration
-export interface LlamaConfiguration {
-  url: string;
-  model: string; // LLM model
-  apiKey: string; // API Key
-  max_tokens: number;
-  label?: string; // Model label in the UI
-}
-
-// Azure Configuration
-export type AzureServiceConfig = {
-  url: string;
-  model: string;
-  apiKey: string;
-  api_version: string;
-  label?: string; // Model label in the UI
-};
-
-export type AzureConfig = {
-  text: AzureServiceConfig;
-  embedding: AzureServiceConfig;
-  transcription: AzureServiceConfig;
-  reasoning: AzureServiceConfig;
-  vision: AzureServiceConfig;
-};
