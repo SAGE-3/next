@@ -37,7 +37,7 @@ import {
 import { MdInfo } from 'react-icons/md';
 
 // SAGE Imports
-import { ServerConfiguration } from '@sage3/shared/types';
+import { ServerConfiguration, LLMConfiguration } from '@sage3/shared/types';
 import { useUserSettings } from '../../../providers';
 import { useConfigStore } from '../../../stores';
 import { isElectron } from '../../../utils';
@@ -88,16 +88,12 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
 
   // SAGE Intelligence Settings
   const config = useConfigStore((state) => state.config);
-  const [llama, setLlama] = useState<ServerConfiguration['services']['llama']>();
-  const [openai, setOpenai] = useState<ServerConfiguration['services']['openai']>();
-  const [azure, setAzure] = useState<ServerConfiguration['services']['azure']>();
+  const [models, setModels] = useState<LLMConfiguration[]>([]);
   const [selectedModel, setSelectedModel] = useState(userSettings.aiModel);
 
   useEffect(() => {
     if (config) {
-      setLlama(config.llama);
-      setOpenai(config.openai);
-      setAzure(config.azure);
+      setModels(config.models);
     }
   }, [config]);
 
