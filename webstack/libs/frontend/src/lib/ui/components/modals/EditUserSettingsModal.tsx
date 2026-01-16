@@ -110,7 +110,7 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
         setAIModel(val);
       }
     }
-  }, [userSettings.aiModel, openai, setAIModel]);
+  }, [userSettings.aiModel]);
 
   return (
     <Modal
@@ -235,7 +235,13 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
                     </Text>
                     <RadioGroup defaultValue={selectedModel} onChange={setAIModel} colorScheme="purple">
                       <Stack>
-                        <Radio value="llama" isDisabled={!llama?.url}>
+                        {models.map((model, index) => (
+                          <Radio key={index} value={model.label} isDisabled={!model.url && !model.apiKey}>
+                            <b>{model.label}</b>: {model.apiType}
+                          </Radio>
+                        ))}
+
+                        {/* <Radio value="llama" isDisabled={!llama?.url}>
                           <b>{llama?.label || 'Llama'}</b>: {llama?.model}
                         </Radio>
                         <Radio value="openai" isDisabled={!openai?.apiKey}>
@@ -243,7 +249,8 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
                         </Radio>
                         <Radio value="azure" isDisabled={!azure?.text.apiKey}>
                           <b>{azure?.text.label || 'Azure'}</b>: {azure?.text.model}
-                        </Radio>
+                        </Radio> */}
+
                       </Stack>
                     </RadioGroup>
                   </VStack>

@@ -62,7 +62,7 @@ export interface ServerConfiguration {
   // External Services
   services: {
     twilio: TwilioConfiguration;
-    models: LLMConfiguration[];
+    models: LLMConfiguration;
   };
 
   // Feature flags
@@ -151,15 +151,38 @@ export interface TwilioConfiguration {
 }
 
 // LLM Configuration
-export type LLMType = 'chat' | 'vision' | 'image' | 'custom';
+
+// Core type definitions
+export type LLMCapability = 'text' | 'imagegen' | 'vision' | 'pdf' | 'embeddings';
+export type TaskType = 'image' | 'image_generation' | 'chat' | 'pdf_processing' | 'embeddings';
+
+interface ModelConfig {
+  model_id: string;
+  capabilities: LLMCapability[];
+  max_tokens?: number;
+  context_window?: number;
+  api_version?: string;
+}
+
+interface ProviderConfig {
+  apiKey?: string;
+  url?: string;
+  models: Record<string, ModelConfig>;
+}
+
+interface ModelReference {
+  provider: string;
+  model: string;
+}
+
+interface GlobalSettings {
+  timeout_seconds: number;
+  max_retries: number;
+  log_requests: boolean;
+}
 
 export interface LLMConfiguration {
-  apiType: LLMType;
-  apiKey: string; // API Key
-  model: string; // LLM model
-  label: string; // Model label in the UI, has to be unique
-  url?: string;
-  max_tokens?: number;
-  api_version?: string;
-  vision_enabled?: boolean;
+  providers: Record<string, ProviderConfig>;
+  tasks: Record<TaskType, ModelReference>;
+  settings: GlobalSettings;
 }
