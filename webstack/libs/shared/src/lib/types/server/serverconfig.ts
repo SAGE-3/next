@@ -162,6 +162,8 @@ interface ModelConfig {
   max_tokens?: number;
   context_window?: number;
   api_version?: string;
+  cost_per_1k_input?: number;
+  cost_per_1k_output?: number;
 }
 
 interface ProviderConfig {
@@ -185,4 +187,35 @@ export interface LLMConfiguration {
   providers: Record<string, ProviderConfig>;
   tasks: Record<TaskType, ModelReference>;
   settings: GlobalSettings;
+}
+
+// Helper class for working with the configuration
+class LLMConfigManager {
+  constructor(private config: LLMConfiguration) {}
+
+  getModelForTask(task: TaskType): ModelReference {
+    return this.config.tasks[task];
+  }
+
+  getModelConfig(provider: string, model: string): ModelConfig | undefined {
+    return this.config.providers[provider]?.models[model];
+  }
+
+  hasCapability(provider: string, model: string, capability: LLMCapability): boolean {
+    const modelConfig = this.getModelConfig(provider, model);
+    return modelConfig?.capabilities.includes(capability) ?? false;
+  }
+
+  getProviderConfig(provider: string): ProviderConfig | undefined {
+    return this.config.providers[provider];
+  }
+
+  estimateCost(provider: string, model: string, inputTokens: number, outputTokens: number): number {
+    const modelConfig = this.getModelConfig(provider, model);
+    if (!modelConfig) return 0;
+
+    const inputCost = (inputTokens / 1000) * (modelConfig.cost_per_1k_input || 0);
+    const outputCost = (outputTokens / 1000) * (modelConfig.cost_per_1k_output || 0);
+    return inputCost + outputCost;
+  }
 }
