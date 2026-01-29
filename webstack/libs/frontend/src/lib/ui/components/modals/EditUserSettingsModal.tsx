@@ -33,11 +33,12 @@ import {
   TabPanels,
   Tab,
   TabPanel,
+  useColorMode,
 } from '@chakra-ui/react';
 import { MdInfo } from 'react-icons/md';
 
 // SAGE Imports
-import { ServerConfiguration, LLMConfiguration } from '@sage3/shared/types';
+import { LLMConfiguration } from '@sage3/shared/types';
 import { useUserSettings } from '../../../providers';
 import { useConfigStore } from '../../../stores';
 import { isElectron } from '../../../utils';
@@ -64,6 +65,9 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
   const initialRef = useRef(null);
   const tabIndex = props.tab ? tabDict[props.tab] : 0;
 
+  // Chakra Toggle Color Mode
+  const { toggleColorMode, colorMode } = useColorMode();
+
   // User Settings Provider
   const {
     settings: userSettings,
@@ -88,7 +92,7 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
 
   // SAGE Intelligence Settings
   const config = useConfigStore((state) => state.config);
-  const [models, setModels] = useState<LLMConfiguration[]>([]);
+  const [models, setModels] = useState<LLMConfiguration>();
   const [selectedModel, setSelectedModel] = useState(userSettings.aiModel);
 
   useEffect(() => {
@@ -104,10 +108,13 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
       setSelectedModel(userSettings.aiModel);
     } else {
       // Otherwise, use the first one as default
-      if (models.length > 0) {
-        const val = models[0].label;
-        setSelectedModel(val);
-        setAIModel(val);
+      if (models) {
+        const modelKeys = Object.keys(models.providers || {});
+        if (modelKeys.length > 0) {
+          const val = modelKeys[0];
+          setSelectedModel(val);
+          setAIModel(val);
+        }
       }
     }
   }, [userSettings.aiModel]);
@@ -120,10 +127,10 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
       blockScrollOnMount={false}
       returnFocusOnClose={false}
       initialFocusRef={initialRef}
-      size="lg"
+      size="xl"
     >
       <ModalOverlay />
-      <ModalContent>
+      <ModalContent height={"550px"}>
         <ModalHeader fontSize="3xl" pb="0">
           User Settings
         </ModalHeader>
@@ -231,26 +238,32 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
                 <VStack>
                   <VStack p={1} pt={1} w="100%" align={'left'}>
                     <Text fontSize="lg" mb={1} fontWeight={'bold'}>
-                      Models
+                      AI Providers and Models
                     </Text>
                     <RadioGroup defaultValue={selectedModel} onChange={setAIModel} colorScheme="purple">
-                      <Stack>
-                        {models.map((model, index) => (
-                          <Radio key={index} value={model.label} isDisabled={!model.url && !model.apiKey}>
-                            <b>{model.label}</b>: {model.apiType}
-                          </Radio>
-                        ))}
-
-                        {/* <Radio value="llama" isDisabled={!llama?.url}>
-                          <b>{llama?.label || 'Llama'}</b>: {llama?.model}
-                        </Radio>
-                        <Radio value="openai" isDisabled={!openai?.apiKey}>
-                          <b>{openai?.label || 'OpenAI'}</b>: {openai?.model}
-                        </Radio>
-                        <Radio value="azure" isDisabled={!azure?.text.apiKey}>
-                          <b>{azure?.text.label || 'Azure'}</b>: {azure?.text.model}
-                        </Radio> */}
-
+                      <Stack maxHeight="300px" overflowY="auto">
+                        {models?.providers &&
+                          Object.entries(models.providers).map(([provider, providerData]) => (
+                            <VStack key={provider} align="start" spacing={1} p={1} borderWidth="1px" borderRadius="md" w="100%">
+                              <Radio value={provider}>
+                                <Text fontWeight="bold">{provider}</Text>
+                              </Radio>
+                              {providerData.models && (
+                                <VStack align="start" pl={8} spacing={1}>
+                                  {Object.entries(providerData.models).map(([modelName, modelData]) => (
+                                    <VStack key={modelName} align="start" spacing={0}>
+                                      <Text fontSize="sm" fontWeight="semibold">- {modelName}</Text>
+                                      {modelData.capabilities && (
+                                        <Text pl={2} fontSize="xs" color={colorMode === 'light' ? "gray.600" : "gray.300"}>
+                                          Capabilities: {Array.isArray(modelData.capabilities) ? modelData.capabilities.join(", ") : String(modelData.capabilities)}
+                                        </Text>
+                                      )}
+                                    </VStack>
+                                  ))}
+                                </VStack>
+                              )}
+                            </VStack>
+                          ))}
                       </Stack>
                     </RadioGroup>
                   </VStack>
