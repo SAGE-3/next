@@ -46,7 +46,8 @@ html2text
 pymupdf4llm
 
 # ChromaDB AI vector DB
-chromadb==0.5.16
+#chromadb==0.5.16
+chromadb
 
 #Mesonet
 pandas
