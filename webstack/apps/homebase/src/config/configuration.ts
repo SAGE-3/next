@@ -15,13 +15,45 @@ import * as packageInfo from 'package.json';
 const { version } = packageInfo;
 
 // Import some definitions for the server
-import { ServerConfiguration } from '@sage3/shared/types';
+import { ServerConfiguration, TASK_TYPES, LLMConfigManager, LLMTasks } from '@sage3/shared/types';
 
 /**
  * Server configuration file that can be imported around the app.
  * loadConfig() is the first thing that runs at server start which sets this variable.
  */
 let config: ServerConfiguration;
+
+/**
+ * Validates the server configuration object
+ *
+ * @param conf - The configuration object to validate
+ * @returns boolean indicating if configuration is valid
+ */
+function validateConfig(conf: ServerConfiguration): ServerConfiguration {
+  const tasks = conf.services.models.tasks || ({} as LLMTasks);
+
+  const default_provider = conf.services.models.settings.default_provider;
+  const manager = new LLMConfigManager(conf.services.models);
+
+  // Iterate over all possible tasks and create missing ones with default provider
+  for (const taskType of TASK_TYPES) {
+    if (!tasks[taskType]) {
+      if (manager.canProviderPerformTask(default_provider, taskType)) {
+        const candidateModels = manager.findModelForTask(default_provider, taskType);
+        if (candidateModels.length > 0) {
+          tasks[taskType] = {
+            provider: conf.services.models.settings.default_provider,
+            models: candidateModels.map((model) => model.model_id),
+          };
+        }
+      }
+    }
+  }
+  conf.services.models.tasks = tasks;
+
+  console.log('Configuration> validated LLM tasks', conf.services.models.tasks);
+  return conf;
+}
 
 /**
  * loads the initial configuration file for production or development
@@ -54,6 +86,9 @@ async function loadConfig(): Promise<ServerConfiguration> {
   config.version = version;
 
   console.log('Configuration> loaded from', filename);
+
+  // Validate the configuration
+  config = validateConfig(config);
 
   // Return the typed value
   return conf as ServerConfiguration;

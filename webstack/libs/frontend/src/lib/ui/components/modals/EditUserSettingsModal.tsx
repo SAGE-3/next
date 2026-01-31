@@ -34,11 +34,12 @@ import {
   Tab,
   TabPanel,
   useColorMode,
+  HStack,
 } from '@chakra-ui/react';
 import { MdInfo } from 'react-icons/md';
 
 // SAGE Imports
-import { LLMConfiguration } from '@sage3/shared/types';
+import { LLMConfiguration, LLMConfigManager, TaskType, TASK_TYPES } from '@sage3/shared/types';
 import { useUserSettings } from '../../../providers';
 import { useConfigStore } from '../../../stores';
 import { isElectron } from '../../../utils';
@@ -66,7 +67,7 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
   const tabIndex = props.tab ? tabDict[props.tab] : 0;
 
   // Chakra Toggle Color Mode
-  const { toggleColorMode, colorMode } = useColorMode();
+  const { colorMode } = useColorMode();
 
   // User Settings Provider
   const {
@@ -94,10 +95,13 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
   const config = useConfigStore((state) => state.config);
   const [models, setModels] = useState<LLMConfiguration>();
   const [selectedModel, setSelectedModel] = useState(userSettings.aiModel);
+  const [manager, setManager] = useState<LLMConfigManager>();
 
   useEffect(() => {
     if (config) {
       setModels(config.models);
+      const mgr = new LLMConfigManager(config.models);
+      setManager(mgr);
     }
   }, [config]);
 
@@ -243,27 +247,43 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
                     <RadioGroup defaultValue={selectedModel} onChange={setAIModel} colorScheme="purple">
                       <Stack maxHeight="300px" overflowY="auto">
                         {models?.providers &&
-                          Object.entries(models.providers).map(([provider, providerData]) => (
-                            <VStack key={provider} align="start" spacing={1} p={1} borderWidth="1px" borderRadius="md" w="100%">
-                              <Radio value={provider}>
-                                <Text fontWeight="bold">{provider}</Text>
-                              </Radio>
-                              {providerData.models && (
-                                <VStack align="start" pl={8} spacing={1}>
-                                  {Object.entries(providerData.models).map(([modelName, modelData]) => (
-                                    <VStack key={modelName} align="start" spacing={0}>
-                                      <Text fontSize="sm" fontWeight="semibold">- {modelName}</Text>
-                                      {modelData.capabilities && (
-                                        <Text pl={2} fontSize="xs" color={colorMode === 'light' ? "gray.600" : "gray.300"}>
-                                          Capabilities: {Array.isArray(modelData.capabilities) ? modelData.capabilities.join(", ") : String(modelData.capabilities)}
-                                        </Text>
-                                      )}
-                                    </VStack>
-                                  ))}
-                                </VStack>
-                              )}
-                            </VStack>
-                          ))}
+                          Object.entries(models.providers).map(([provider, providerData]) => {
+
+                            const availableTasks = manager
+                              ? TASK_TYPES.filter((task) => {
+                                const cando = manager.canProviderPerformTask(provider, task);
+                                return cando;
+                              }) : [];
+
+                            return (
+                              <VStack key={provider} align="start" spacing={1} p={1} borderWidth="1px" borderRadius="md" w="100%">
+                                <Radio value={provider}>
+                                  <Text fontWeight="bold">{provider}</Text>
+                                </Radio>
+                                {availableTasks.length > 0 && (
+                                  <Text pl={6} fontSize="sm" color={colorMode === 'light' ? 'gray.600' : 'gray.300'}>
+                                    Tasks enabled: {availableTasks.join(', ')}
+                                  </Text>
+                                )}
+
+
+                                {providerData.models && (
+                                  <VStack align="start" pl={8} spacing={1}>
+                                    {Object.entries(providerData.models).map(([modelName, modelData]) => (
+                                      <VStack key={modelName} align="start" spacing={0}>
+                                        <HStack> <Text fontSize="sm" fontWeight="semibold">- {modelName}</Text><Text fontSize="sm" >({modelData.model_id})</Text></HStack>
+                                        {modelData.capabilities && (
+                                          <Text fontSize="sm" pl={2} color={colorMode === 'light' ? "gray.600" : "gray.300"}>
+                                            capabilities: {Array.isArray(modelData.capabilities) ? modelData.capabilities.join(", ") : String(modelData.capabilities)}
+                                          </Text>
+                                        )}
+                                      </VStack>
+                                    ))}
+                                  </VStack>
+                                )}
+                              </VStack>
+                            );
+                          })}
                       </Stack>
                     </RadioGroup>
                   </VStack>
