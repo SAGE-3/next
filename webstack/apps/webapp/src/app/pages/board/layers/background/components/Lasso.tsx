@@ -41,8 +41,11 @@ export function Lasso(props: LassoProps) {
   const [mousedown, setMouseDown] = useState(false);
   const [modifierAction, setModifierAction] = useState<'none' | 'removal' | 'inverse'>('none');
 
-  // Temporary Fix to Avoid Rerenders
-  const { getBoardCursor } = useCursorBoardPosition();
+  // Use uiToBoard to convert client coordinates to board coordinates.
+  // getBoardCursor only tracks mousemove events and does not update for
+  // touch, so we compute the board position directly from the coordinates
+  // passed by both mouse and touch handlers.
+  const { uiToBoard } = useCursorBoardPosition();
 
   const [last_mousex, set_last_mousex] = useState(0);
   const [last_mousey, set_last_mousey] = useState(0);
@@ -55,9 +58,9 @@ export function Lasso(props: LassoProps) {
   // Drag and Drop On Board
   const { dragProps, renderContent } = useDragAndDropBoard({ roomId: props.roomId, boardId: props.boardId });
 
-  // Get initial position
+  // Get initial position — x, y are client coordinates (from mouse or touch)
   const lassoStart = (x: number, y: number) => {
-    const position = getBoardCursor();
+    const position = uiToBoard(x, y);
     set_last_mousex(position.x);
     set_last_mousey(position.y);
     set_mousex(position.x);
@@ -81,9 +84,9 @@ export function Lasso(props: LassoProps) {
     setIsDragging(false);
   };
 
-  // Get last position
+  // Update lasso position — x, y are client coordinates (from mouse or touch)
   const lassoMove = (x: number, y: number) => {
-    const position = getBoardCursor();
+    const position = uiToBoard(x, y);
     setIsDragging(true);
     set_mousex(position.x);
     set_mousey(position.y);
@@ -142,7 +145,7 @@ export function Lasso(props: LassoProps) {
   return (
     <>
       {/* lassoMode */}
-      <div className="canvas-container">
+      <div className="canvas-container" style={{ touchAction: 'none' }}>
         <svg
           id="lasso"
           className="canvas-layer"
@@ -152,10 +155,7 @@ export function Lasso(props: LassoProps) {
             height: boardHeight + 'px',
             left: 0,
             top: 0,
-            // pointerEvents: 'none',
-            // To keep in theme with other notable whiteboard applications,
-            // the cursor should remain a pointer
-            // cursor: 'crosshair',
+            touchAction: 'none',
           }}
           // Note to future devs, handledeselect behaviour move to BackgroundLayer.tsx
           // onPointerDown={handleDeselect}

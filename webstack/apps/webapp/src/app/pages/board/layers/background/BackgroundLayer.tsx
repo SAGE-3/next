@@ -57,6 +57,12 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   const movementTimeoutRef = useRef<number | null>(null);
   const movementZoomSafetyTimeoutRef = useRef<number | null>(null);
 
+  // Touch pinch-zoom tuning: small distance changes between fingers should not
+  // cause large zoom jumps. Use a deadzone and clamp the per-frame scale ratio.
+  const TOUCH_PINCH_DEADZONE = 10;    // pixels of distance change before zoom engages
+  const TOUCH_PINCH_MIN_RATIO = 0.95; // max zoom-out per frame (5%)
+  const TOUCH_PINCH_MAX_RATIO = 1.05; // max zoom-in per frame (5%)
+
   /////////////////////////////////
   // UI Store Board Syncronizers //
   /////////////////////////////////
@@ -403,16 +409,27 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
               { x: event.touches[0].clientX, y: event.touches[0].clientY },
               { x: event.touches[1].clientX, y: event.touches[1].clientY }
             );
-            const zoomDelta = prevDistance - distance;
+            const zoomDeltaRaw = prevDistance - distance;
             const avgX = (event.touches[0].clientX + event.touches[1].clientX) / 2;
             const avgY = (event.touches[0].clientY + event.touches[1].clientY) / 2;
 
-            if (prevDistance > 0) {
-              if (zoomDelta < 0) {
-                localZoomInDelta(zoomDelta, { x: avgX, y: avgY });
-              } else if (zoomDelta > 0) {
-                localZoomOutDelta(zoomDelta, { x: avgX, y: avgY });
-              }
+            if (prevDistance > 0 && Math.abs(zoomDeltaRaw) > TOUCH_PINCH_DEADZONE) {
+              // Use ratio-based zoom for smooth, continuous pinch behaviour.
+              // This avoids the discrete "stepping" of the wheel-based zoom
+              // helpers which quantize through WheelStepZoom.
+              const rawRatio = distance / prevDistance;
+              // Clamp the per-frame ratio so zoom can't jump too fast
+              const ratio = Math.max(TOUCH_PINCH_MIN_RATIO, Math.min(rawRatio, TOUCH_PINCH_MAX_RATIO));
+
+              setLocalBoardPosition((prevBoard) => {
+                const newScale = Math.max(MinZoom, Math.min(prevBoard.scale * ratio, MaxZoom));
+                return zoomOnLocationNewPosition(
+                  { x: prevBoard.x, y: prevBoard.y },
+                  { x: avgX, y: avgY },
+                  prevBoard.scale,
+                  newScale,
+                );
+              });
             }
 
             setLocalBoardPosition((prevBoard) => {
