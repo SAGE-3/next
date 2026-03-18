@@ -79,7 +79,7 @@ export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
   apiKey: '',
-  model: 'gpt-4o-mini',
+  model: 'gpt-5.4-mini',
   batchSize: 8,
   numDimensions: 2,
   status: 'idle',
