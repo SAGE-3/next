@@ -151,6 +151,13 @@ export function Alfred(props: props) {
     const x = Math.floor(-bx + window.innerWidth / scale / 2);
     const y = Math.floor(-by + window.innerHeight / scale / 2);
 
+    // Per-app size overrides (applied last so they're never clobbered)
+    const appSizeOverrides: Record<string, { w: number; h: number }> = {
+      SageIdeator: { w: 1400, h: 800 },
+    };
+    const sizeOverride = appSizeOverrides[appName as string];
+    if (sizeOverride) { w = sizeOverride.w; h = sizeOverride.h; }
+
     createApp({
       title: appName,
       roomId: props.roomId,

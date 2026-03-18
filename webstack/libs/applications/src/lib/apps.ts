@@ -28,6 +28,7 @@ import { name as PDFViewerName } from './apps/PDFViewer';
 import { name as PluginAppName } from './apps/PluginApp';
 import { name as PollName } from './apps/Poll';
 import { name as RTCChatName } from './apps/RTCChat';
+import { name as SageIdeatorName } from './apps/SageIdeator';
 import { name as SageCellName } from './apps/SageCell';
 import { name as SeerName } from './apps/Seer';
 import { name as SensorOverviewName } from './apps/SensorOverview';
@@ -71,6 +72,7 @@ import PDFViewer from './apps/PDFViewer/PDFViewer';
 import PluginApp from './apps/PluginApp/PluginApp';
 import Poll from './apps/Poll/Poll';
 import RTCChat from './apps/RTCChat/RTCChat';
+import SageIdeator from './apps/SageIdeator/SageIdeator';
 import SageCell from './apps/SageCell/SageCell';
 import Seer from './apps/Seer/Seer';
 import SensorOverview from './apps/SensorOverview/SensorOverview';
@@ -223,6 +225,11 @@ export const Applications = {
     AppComponent: React.memo(RTCChat.AppComponent),
     ToolbarComponent: RTCChat.ToolbarComponent,
     GroupedToolbarComponent: RTCChat.GroupedToolbarComponent,
+  },
+  [SageIdeatorName]: {
+    AppComponent: React.memo(SageIdeator.AppComponent),
+    ToolbarComponent: SageIdeator.ToolbarComponent,
+    GroupedToolbarComponent: SageIdeator.GroupedToolbarComponent,
   },
   [SageCellName]: {
     AppComponent: React.memo(SageCell.AppComponent),

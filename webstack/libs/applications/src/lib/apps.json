@@ -27,6 +27,7 @@
     "PluginApp",
     "Poll",
     "RTCChat",
+    "SageIdeator",
     "SageCell",
     "Seer",
     "SensorOverview",
