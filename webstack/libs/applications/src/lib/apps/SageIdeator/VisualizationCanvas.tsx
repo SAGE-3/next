@@ -475,6 +475,13 @@ export function VisualizationCanvas({
                 onMouseEnter={() => setHoveredNodeId(node.ID)}
                 onMouseLeave={() => setHoveredNodeId(null)}
                 onMouseDown={(e) => e.stopPropagation()}
+                onDoubleClick={(e) => {
+                  e.stopPropagation();
+                  const p = positionsRef.current.get(node.ID);
+                  if (!p) return;
+                  const z = 7.5;
+                  setCamera({ x: -p.x * z, y: -p.y * z, z });
+                }}
               >
                 <NodeBlock
                   node={node}
