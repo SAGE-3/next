@@ -16,11 +16,15 @@ import {
   VStack,
   Select,
   Button,
+  IconButton,
+  Input,
   Spinner,
   Tooltip,
   Badge,
   Center,
 } from '@chakra-ui/react';
+
+import { MdAdd, MdClose, MdCheck } from 'react-icons/md';
 
 import { state as AppState } from './index';
 import { NodeBlock } from './NodeBlock';
@@ -34,6 +38,8 @@ export interface Camera {
   y: number;
   z: number;
 }
+
+type SimNode = SageNode & d3.SimulationNodeDatum;
 
 interface VisualizationCanvasProps {
   nodes: SageNode[];
@@ -53,6 +59,9 @@ interface VisualizationCanvasProps {
   onToggleFav: (nodeId: string) => void;
   onBranch: (node: SageNode) => void;
   onSelectQA: (nodeId: string) => void;
+  onAddDimension: (name: string) => void;
+  onRemoveDimension: (name: string) => void;
+  isAddingDimension: boolean;
 }
 
 export function VisualizationCanvas({
@@ -60,6 +69,7 @@ export function VisualizationCanvas({
   status, statusMessage, askingNodeId, selectedQANodeId, qaPanelOpen,
   positionsRef, hasFitRef,
   onToggleFav, onBranch, onSelectQA,
+  onAddDimension, onRemoveDimension, isAddingDimension,
 }: VisualizationCanvasProps) {
   const [camera, setCamera] = useState<Camera>({ x: 0, y: 0, z: 1 });
   const [xDimName, setXDimName] = useState<string | null>(null);
@@ -67,9 +77,11 @@ export function VisualizationCanvas({
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
+  const [showDimInput, setShowDimInput] = useState(false);
+  const [dimInputValue, setDimInputValue] = useState('');
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const simulationRef = useRef<d3.Simulation<any, undefined> | null>(null);
+  const simulationRef = useRef<d3.Simulation<SimNode, undefined> | null>(null);
   const dragRef = useRef({ active: false, startX: 0, startY: 0, startCamX: 0, startCamY: 0 });
 
   const isGenerating = status === 'generating_dimensions' || status === 'generating_responses';
@@ -151,24 +163,24 @@ export function VisualizationCanvas({
     const xDim = dimensions.find((d) => d.name === xDimName) ?? null;
     const yDim = dimensions.find((d) => d.name === yDimName) ?? null;
 
-    const simNodes: any[] = nodes.map((n) => {
+    const simNodes: SimNode[] = nodes.map((n) => {
       const prev = positionsRef.current.get(n.ID);
       return { ...n, x: prev?.x ?? (Math.random() - 0.5) * 100, y: prev?.y ?? (Math.random() - 0.5) * 100 };
     });
 
     const sim = d3
-      .forceSimulation(simNodes)
-      .force('charge', d3.forceManyBody<any>().strength(-150))
-      .force('collide', d3.forceCollide<any>().radius(22))
-      .force('cx', d3.forceX<any>(0).strength(0.04))
-      .force('cy', d3.forceY<any>(0).strength(0.04))
+      .forceSimulation<SimNode>(simNodes)
+      .force('charge', d3.forceManyBody<SimNode>().strength(-150))
+      .force('collide', d3.forceCollide<SimNode>().radius(22))
+      .force('cx', d3.forceX<SimNode>(0).strength(0.04))
+      .force('cy', d3.forceY<SimNode>(0).strength(0.04))
       .force('cluster', (alpha: number) => {
-        simNodes.forEach((node: any) => {
+        simNodes.forEach((node) => {
           const tx = dimensionClusterTarget('x', xDim, node, containerSize.width * 0.8);
           const ty = dimensionClusterTarget('y', yDim, node, containerSize.height * 0.8);
           if (node.vx !== undefined && node.vy !== undefined) {
-            node.vx += (tx - node.x) * alpha * 0.12;
-            node.vy += (ty - node.y) * alpha * 0.12;
+            node.vx += (tx - (node.x ?? 0)) * alpha * 0.12;
+            node.vy += (ty - (node.y ?? 0)) * alpha * 0.12;
           }
         });
       })
@@ -176,7 +188,7 @@ export function VisualizationCanvas({
       .restart();
 
     sim.on('tick', () => {
-      simNodes.forEach((n: any) => positionsRef.current.set(n.ID, { x: n.x, y: n.y }));
+      simNodes.forEach((n) => positionsRef.current.set(n.ID, { x: n.x ?? 0, y: n.y ?? 0 }));
       forceUpdate();
 
       // Auto-fit once when simulation has settled
@@ -260,33 +272,130 @@ export function VisualizationCanvas({
 
   return (
     <Flex direction="column" flex={1} overflow="hidden">
-      {/* Axis dimension selectors */}
+      {/* Axis toolbar */}
       {dimensions.length > 0 && (
-        <HStack
+        <VStack
           px={2} py={1}
           bg={panelBgHex}
           borderBottom="1px solid"
           borderColor={borderHex}
-          spacing={3}
+          spacing={1}
+          align="stretch"
           flexShrink={0}
         >
-          <Text fontSize="xs" color={textColor} fontWeight="bold">Axes:</Text>
-          <HStack spacing={1}>
-            <Text fontSize="xs" color={textColor}>X:</Text>
-            <Select size="xs" value={xDimName ?? ''} onChange={(e) => setXDimName(e.target.value || null)} w="120px">
-              <option value="">— none —</option>
-              {dimensions.map((d) => <option key={d.name} value={d.name}>{d.name}</option>)}
-            </Select>
+          {/* Row 1: axis selectors */}
+          <HStack spacing={3}>
+            <Text fontSize="xs" color={textColor} fontWeight="bold">Axes:</Text>
+            <HStack spacing={1}>
+              <Text fontSize="xs" color={textColor}>X:</Text>
+              <Select size="xs" value={xDimName ?? ''} onChange={(e) => setXDimName(e.target.value || null)} w="120px">
+                <option value="">— none —</option>
+                {dimensions.map((d) => <option key={d.name} value={d.name}>{d.name}</option>)}
+              </Select>
+            </HStack>
+            <HStack spacing={1}>
+              <Text fontSize="xs" color={textColor}>Y:</Text>
+              <Select size="xs" value={yDimName ?? ''} onChange={(e) => setYDimName(e.target.value || null)} w="120px">
+                <option value="">— none —</option>
+                {dimensions.map((d) => <option key={d.name} value={d.name}>{d.name}</option>)}
+              </Select>
+            </HStack>
+            <Text fontSize="9px" color="gray.400">Scroll to zoom · drag to pan</Text>
           </HStack>
-          <HStack spacing={1}>
-            <Text fontSize="xs" color={textColor}>Y:</Text>
-            <Select size="xs" value={yDimName ?? ''} onChange={(e) => setYDimName(e.target.value || null)} w="120px">
-              <option value="">— none —</option>
-              {dimensions.map((d) => <option key={d.name} value={d.name}>{d.name}</option>)}
-            </Select>
+
+          {/* Row 2: dimension chips + add */}
+          <HStack spacing={1} flexWrap="wrap">
+            <Text fontSize="9px" fontWeight="700" color={textColor} textTransform="uppercase" letterSpacing="0.06em" flexShrink={0}>
+              Dims:
+            </Text>
+            {dimensions.map((d) => (
+              <HStack
+                key={d.name}
+                spacing={0}
+                bg={d.type === 'ordinal' ? 'purple.100' : 'teal.100'}
+                _dark={{ bg: d.type === 'ordinal' ? 'purple.800' : 'teal.800' }}
+                borderRadius="full"
+                px={2}
+                py="1px"
+              >
+                <Text fontSize="9px" color={textColor}>{d.name}</Text>
+                <IconButton
+                  aria-label={`Remove ${d.name}`}
+                  icon={<MdClose />}
+                  size="xs"
+                  variant="ghost"
+                  h="14px"
+                  minW="14px"
+                  fontSize="9px"
+                  ml={0.5}
+                  onClick={() => onRemoveDimension(d.name)}
+                />
+              </HStack>
+            ))}
+
+            {/* Add dimension input */}
+            {showDimInput ? (
+              <HStack spacing={1}>
+                <Input
+                  size="xs"
+                  placeholder="Dimension name…"
+                  value={dimInputValue}
+                  onChange={(e) => setDimInputValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && dimInputValue.trim().length >= 3) {
+                      onAddDimension(dimInputValue.trim());
+                      setDimInputValue('');
+                      setShowDimInput(false);
+                    }
+                    if (e.key === 'Escape') {
+                      setDimInputValue('');
+                      setShowDimInput(false);
+                    }
+                  }}
+                  w="130px"
+                  autoFocus
+                  isDisabled={isAddingDimension}
+                />
+                <Tooltip label="Confirm" hasArrow placement="top">
+                  <IconButton
+                    aria-label="Confirm dimension"
+                    icon={isAddingDimension ? <Spinner size="xs" /> : <MdCheck />}
+                    size="xs"
+                    colorScheme="green"
+                    variant="ghost"
+                    h="20px" minW="20px"
+                    isDisabled={dimInputValue.trim().length < 3 || isAddingDimension}
+                    onClick={() => {
+                      onAddDimension(dimInputValue.trim());
+                      setDimInputValue('');
+                      setShowDimInput(false);
+                    }}
+                  />
+                </Tooltip>
+                <IconButton
+                  aria-label="Cancel"
+                  icon={<MdClose />}
+                  size="xs"
+                  variant="ghost"
+                  h="20px" minW="20px"
+                  onClick={() => { setDimInputValue(''); setShowDimInput(false); }}
+                />
+              </HStack>
+            ) : (
+              <Tooltip label="Add dimension" hasArrow placement="top" openDelay={300}>
+                <IconButton
+                  aria-label="Add dimension"
+                  icon={isAddingDimension ? <Spinner size="xs" /> : <MdAdd />}
+                  size="xs"
+                  variant="ghost"
+                  h="20px" minW="20px"
+                  isDisabled={isAddingDimension}
+                  onClick={() => setShowDimInput(true)}
+                />
+              </Tooltip>
+            )}
           </HStack>
-          <Text fontSize="9px" color="gray.400">Scroll to zoom · drag to pan</Text>
-        </HStack>
+        </VStack>
       )}
 
       {/* Canvas area */}

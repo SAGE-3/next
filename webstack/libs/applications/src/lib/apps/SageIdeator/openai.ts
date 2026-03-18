@@ -148,3 +148,54 @@ export function buildRequirements(dims: {
   });
   return { requirements: req, categorical, ordinal };
 }
+
+// ─── User-defined dimension generation ───────────────────────────────────────
+
+export async function generateUserDimension(
+  dimName: string,
+  prompt: string,
+  nodes: Array<{ ID: string; Title: string; Summary: string }>,
+  apiKey: string,
+  model: string
+): Promise<{
+  type: 'categorical' | 'ordinal';
+  values: string[];
+  assignments: Record<string, string>;
+}> {
+  // Step 1: generate type + values for the new dimension
+  const typeMsg =
+    `Brainstorming topic: "${prompt}"\n` +
+    `A user wants to add a dimension called "${dimName}" to evaluate ideas.\n` +
+    `Decide if it is categorical (distinct qualitative options) or ordinal (ranked low→high).\n` +
+    `Suggest exactly 4 values.\n` +
+    `Return ONLY valid JSON: {"type":"categorical","values":["v1","v2","v3","v4"]}`;
+
+  const typeRaw = await callChatAPI(typeMsg, apiKey, model, 0);
+  let type: 'categorical' | 'ordinal' = 'categorical';
+  let values: string[] = [];
+  try {
+    const j = JSON.parse(extractJSON(typeRaw));
+    type = j.type === 'ordinal' ? 'ordinal' : 'categorical';
+    values = Array.isArray(j.values) ? j.values.slice(0, 4) : [];
+  } catch { /* use defaults */ }
+  if (values.length === 0) values = ['Low', 'Medium', 'High', 'Very High'];
+
+  // Step 2: assign a value to each existing node in one batch call
+  const nodeList = nodes
+    .map((n) => `- ID: ${n.ID} | Title: "${n.Title}" | Summary: "${n.Summary}"`)
+    .join('\n');
+  const assignMsg =
+    `Dimension: "${dimName}" (${type})\n` +
+    `Values: ${JSON.stringify(values)}\n\n` +
+    `Assign each idea exactly one value from the list above.\n` +
+    `Ideas:\n${nodeList}\n\n` +
+    `Return ONLY valid JSON mapping each ID to its assigned value:\n{"<id>":"<value>",...}`;
+
+  const assignRaw = await callChatAPI(assignMsg, apiKey, model, 0);
+  let assignments: Record<string, string> = {};
+  try {
+    assignments = JSON.parse(extractJSON(assignRaw));
+  } catch { /* assignments stay empty — nodes get first value as fallback */ }
+
+  return { type, values, assignments };
+}

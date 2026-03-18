@@ -18,7 +18,7 @@ import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
-import { generateDimensionsFromPrompt, generateNodeContent, abstractNode, buildRequirements, callProseAPI } from './openai';
+import { generateDimensionsFromPrompt, generateNodeContent, abstractNode, buildRequirements, callProseAPI, generateUserDimension } from './openai';
 import { SetupScreen } from './SetupScreen';
 import { ChatPanel } from './ChatPanel';
 import { VisualizationCanvas } from './VisualizationCanvas';
@@ -51,6 +51,7 @@ function AppComponent(props: App): JSX.Element {
   const [selectedQANodeId, setSelectedQANodeId] = useState<string | null>(null);
   const [qaPanelOpen, setQaPanelOpen] = useState(false);
   const [qaInput, setQaInput] = useState('');
+  const [isAddingDimension, setIsAddingDimension] = useState(false);
 
   // Refs shared with VisualizationCanvas
   const positionsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
@@ -265,6 +266,61 @@ function AppComponent(props: App): JSX.Element {
     [user, s, username, askingNodeId, props._id]
   );
 
+  // ── Dimension management ──
+
+  const addDimension = useCallback(
+    async (dimName: string) => {
+      if (!s.apiKey || isAddingDimension || s.nodes.length === 0) return;
+      setIsAddingDimension(true);
+      try {
+        const nodeStubs = s.nodes.map((n) => ({ ID: n.ID, Title: n.Title, Summary: n.Summary }));
+        const { type, values, assignments } = await generateUserDimension(dimName, s.prompt, nodeStubs, s.apiKey, s.model);
+
+        const newDim = { id: s.dimensions.length, name: dimName, type, values };
+
+        const updatedNodes = s.nodes.map((n) => ({
+          ...n,
+          Dimension: {
+            categorical: type === 'categorical'
+              ? { ...n.Dimension.categorical, [dimName]: assignments[n.ID] ?? values[0] }
+              : n.Dimension.categorical,
+            ordinal: type === 'ordinal'
+              ? { ...n.Dimension.ordinal, [dimName]: assignments[n.ID] ?? values[0] }
+              : n.Dimension.ordinal,
+          },
+        }));
+
+        const latest = useAppStore.getState().apps.find((a) => a._id === props._id)?.data.state as AppState | undefined;
+        updateState(props._id, {
+          ...(latest ?? s),
+          dimensions: [...(latest ?? s).dimensions, newDim],
+          nodes: updatedNodes,
+        });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        toast({ title: 'Failed to add dimension', description: msg, status: 'error', duration: 4000, isClosable: true });
+      } finally {
+        setIsAddingDimension(false);
+      }
+    },
+    [s, isAddingDimension, props._id]
+  );
+
+  const removeDimension = useCallback(
+    (dimName: string) => {
+      const updatedDims = s.dimensions.filter((d) => d.name !== dimName);
+      const updatedNodes = s.nodes.map((n) => {
+        const categorical = { ...n.Dimension.categorical };
+        const ordinal = { ...n.Dimension.ordinal };
+        delete categorical[dimName];
+        delete ordinal[dimName];
+        return { ...n, Dimension: { categorical, ordinal } };
+      });
+      updateState(props._id, { ...s, dimensions: updatedDims, nodes: updatedNodes });
+    },
+    [s, props._id]
+  );
+
   // ── Setup screen ──
 
   if (!s.apiKey) {
@@ -333,6 +389,9 @@ function AppComponent(props: App): JSX.Element {
           onToggleFav={toggleFav}
           onBranch={branchFromNode}
           onSelectQA={(nodeId) => { setSelectedQANodeId(nodeId); setQaPanelOpen(true); setQaInput(''); }}
+          onAddDimension={addDimension}
+          onRemoveDimension={removeDimension}
+          isAddingDimension={isAddingDimension}
         />
 
         {qaPanelOpen && (
