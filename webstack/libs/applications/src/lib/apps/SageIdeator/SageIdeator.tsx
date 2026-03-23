@@ -55,6 +55,7 @@ function AppComponent(props: App): JSX.Element {
   const [isAddingDimension, setIsAddingDimension] = useState(false);
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [generatingImageNodeId, setGeneratingImageNodeId] = useState<string | null>(null);
+  const [rerollingNodeId, setRerollingNodeId] = useState<string | null>(null);
   const [chatPanelOpen, setChatPanelOpen] = useState(true);
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
 
@@ -336,6 +337,75 @@ function AppComponent(props: App): JSX.Element {
     [s, isAddingDimension, props._id]
   );
 
+  const rerollNode = useCallback(
+    async (nodeId: string) => {
+      if (rerollingNodeId) return;
+      setRerollingNodeId(nodeId);
+      try {
+        const latest = useAppStore.getState().apps.find((a) => a._id === props._id)?.data.state as AppState | undefined;
+        const cur = latest ?? s;
+        const rawDims = {
+          categorical: Object.fromEntries(cur.dimensions.filter((d) => d.type === 'categorical').map((d) => [d.name, d.values])),
+          ordinal: Object.fromEntries(cur.dimensions.filter((d) => d.type === 'ordinal').map((d) => [d.name, d.values])),
+        };
+        const { requirements, categorical, ordinal } = buildRequirements(rawDims);
+        const text = await generateNodeContent(cur.prompt, requirements, s.apiKey, s.model);
+        const summary = await abstractNode(text, s.apiKey, s.model);
+        const afterGen = useAppStore.getState().apps.find((a) => a._id === props._id)?.data.state as AppState | undefined;
+        const updatedNodes = (afterGen ?? cur).nodes.map((n) =>
+          n.ID === nodeId
+            ? { ...n, Title: summary.Title, Summary: summary.Summary, Keywords: summary.Keywords, Steps: summary.Steps, Result: text, Structure: summary.Structure, Dimension: { categorical, ordinal }, IsMyFav: false, imageUrl: undefined }
+            : n
+        );
+        updateState(props._id, { ...(afterGen ?? cur), nodes: updatedNodes });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        toast({ title: 'Re-roll failed', description: msg, status: 'error', duration: 4000, isClosable: true });
+      } finally {
+        setRerollingNodeId(null);
+      }
+    },
+    [s, rerollingNodeId, props._id]
+  );
+
+  const generateMore = useCallback(
+    async (entry: AppState['chatHistory'][number]) => {
+      const entryDims = entry.dimensions ?? [];
+      if (!user || !s.apiKey || isGenerating || entryDims.length === 0) return;
+      // Restore the entry's snapshot first so the canvas shows the right nodes
+      restoreSnapshot(entry);
+      const rawDims = {
+        categorical: Object.fromEntries(entryDims.filter((d) => d.type === 'categorical').map((d) => [d.name, d.values])),
+        ordinal: Object.fromEntries(entryDims.filter((d) => d.type === 'ordinal').map((d) => [d.name, d.values])),
+      };
+      const latest = useAppStore.getState().apps.find((a) => a._id === props._id)?.data.state as AppState | undefined;
+      updateState(props._id, { ...(latest ?? s), status: 'generating_responses', statusMessage: `Generating ${s.batchSize} more ideas…` });
+      try {
+        const newNodes: AppState['nodes'] = [];
+        await Promise.all(
+          Array.from({ length: s.batchSize }, async () => {
+            const { requirements, categorical, ordinal } = buildRequirements(rawDims);
+            const text = await generateNodeContent(entry.prompt, requirements, s.apiKey, s.model);
+            const summary = await abstractNode(text, s.apiKey, s.model);
+            newNodes.push({ ID: genId(), Title: summary.Title, Summary: summary.Summary, Keywords: summary.Keywords, Steps: summary.Steps, Result: text, Structure: summary.Structure, Dimension: { categorical, ordinal }, IsMyFav: false });
+          })
+        );
+        const afterGen = useAppStore.getState().apps.find((a) => a._id === props._id)?.data.state as AppState | undefined;
+        const combinedNodes = [...(afterGen ?? s).nodes, ...newNodes];
+        const updatedHistory = (afterGen ?? s).chatHistory.map((e) =>
+          e.id === entry.id ? { ...e, nodes: combinedNodes } : e
+        );
+        updateState(props._id, { ...(afterGen ?? s), status: 'ready', statusMessage: '', nodes: combinedNodes, chatHistory: updatedHistory });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        toast({ title: 'Generation failed', description: msg, status: 'error', duration: 5000, isClosable: true });
+        const afterFail = useAppStore.getState().apps.find((a) => a._id === props._id)?.data.state as AppState | undefined;
+        updateState(props._id, { ...(afterFail ?? s), status: 'ready', statusMessage: '' });
+      }
+    },
+    [user, s, isGenerating, props._id, restoreSnapshot]
+  );
+
   const generateImageForNode = useCallback(
     async (nodeId: string) => {
       if (generatingImageNodeId) return;
@@ -471,6 +541,7 @@ function AppComponent(props: App): JSX.Element {
             textColor={textColor}
             onInputChange={setInput}
             onGenerate={() => generate()}
+            onGenerateMore={generateMore}
             onClearAll={clearAll}
             onRestoreSnapshot={restoreSnapshot}
             onEditPrompt={setInput}
@@ -527,6 +598,8 @@ function AppComponent(props: App): JSX.Element {
           isSummarizing={isSummarizing}
           onGenerateImage={generateImageForNode}
           generatingImageNodeId={generatingImageNodeId}
+          onReroll={rerollNode}
+          rerollingNodeId={rerollingNodeId}
         />
 
         {qaPanelOpen && (

@@ -68,6 +68,8 @@ interface VisualizationCanvasProps {
   isSummarizing: boolean;
   onGenerateImage: (nodeId: string) => void;
   generatingImageNodeId: string | null;
+  onReroll: (nodeId: string) => void;
+  rerollingNodeId: string | null;
 }
 
 // ─── Search scoring ───────────────────────────────────────────────────────────
@@ -94,6 +96,7 @@ export function VisualizationCanvas({
   onAddDimension, onRemoveDimension, isAddingDimension,
   onBranchFavorites, onSummarizeFavorites, isSummarizing,
   onGenerateImage, generatingImageNodeId,
+  onReroll, rerollingNodeId,
 }: VisualizationCanvasProps) {
   const [camera, setCamera] = useState<Camera>({ x: 0, y: 0, z: 1 });
   const [xDimName, setXDimName] = useState<string | null>(null);
@@ -175,6 +178,22 @@ export function VisualizationCanvas({
     dragRef.current.active = false;
   }, []);
 
+  const fitToScreen = useCallback((maxZ = 3) => {
+    if (positionsRef.current.size === 0 || containerSize.width === 0) return;
+    const positions = Array.from(positionsRef.current.values());
+    const xs = positions.map((p) => p.x);
+    const ys = positions.map((p) => p.y);
+    const minX = Math.min(...xs); const maxX = Math.max(...xs);
+    const minY = Math.min(...ys); const maxY = Math.max(...ys);
+    const boundsW = maxX - minX + 200;
+    const boundsH = maxY - minY + 120;
+    const padding = 60;
+    const z = Math.min((containerSize.width - padding * 2) / boundsW, (containerSize.height - padding * 2) / boundsH, maxZ);
+    const midX = (minX + maxX) / 2;
+    const midY = (minY + maxY) / 2;
+    setCamera({ x: -midX * z, y: -midY * z, z });
+  }, [containerSize, positionsRef]);
+
   const jumpToZoom = useCallback((targetZ: number) => {
     setCamera((cam) => {
       const scale = targetZ / cam.z;
@@ -221,30 +240,13 @@ export function VisualizationCanvas({
       // Auto-fit once when simulation has settled
       if (!hasFitRef.current && sim.alpha() < 0.05 && containerSize.width > 0 && positionsRef.current.size > 0) {
         hasFitRef.current = true;
-        const positions = Array.from(positionsRef.current.values());
-        const xs = positions.map((p) => p.x);
-        const ys = positions.map((p) => p.y);
-        const minX = Math.min(...xs);
-        const maxX = Math.max(...xs);
-        const minY = Math.min(...ys);
-        const maxY = Math.max(...ys);
-        const boundsW = maxX - minX + 200;
-        const boundsH = maxY - minY + 120;
-        const padding = 60;
-        const z = Math.min(
-          (containerSize.width - padding * 2) / boundsW,
-          (containerSize.height - padding * 2) / boundsH,
-          3
-        );
-        const midX = (minX + maxX) / 2;
-        const midY = (minY + maxY) / 2;
-        setCamera({ x: -midX * z, y: -midY * z, z });
+        fitToScreen();
       }
     });
 
     simulationRef.current = sim;
     return () => { sim.stop(); };
-  }, [nodes, dimensions, xDimName, yDimName, containerSize.width, containerSize.height]);
+  }, [nodes, dimensions, xDimName, yDimName, containerSize.width, containerSize.height, fitToScreen]);
 
   const xDim = dimensions.find((d) => d.name === xDimName) ?? null;
   const yDim = dimensions.find((d) => d.name === yDimName) ?? null;
@@ -668,6 +670,8 @@ export function VisualizationCanvas({
                   onSelectQA={() => onSelectQA(node.ID)}
                   onGenerateImage={() => onGenerateImage(node.ID)}
                   isGeneratingImage={generatingImageNodeId === node.ID}
+                  onReroll={() => onReroll(node.ID)}
+                  isRerolling={rerollingNodeId === node.ID}
                 />
               </Box>
             );
@@ -680,9 +684,9 @@ export function VisualizationCanvas({
             <VStack spacing={1} align="flex-end">
               <Badge fontSize="9px" colorScheme="gray" pointerEvents="none">{camera.z.toFixed(1)}×</Badge>
               <HStack spacing={1}>
-                <Tooltip label="Overview — dots" placement="left" hasArrow openDelay={300}>
+                <Tooltip label="Overview — fit all nodes" placement="left" hasArrow openDelay={300}>
                   <Button size="xs" variant={camera.z < 1.5 ? 'solid' : 'outline'} colorScheme="gray"
-                    onClick={() => jumpToZoom(0.8)} h="18px" minW="18px" px={1} fontSize="9px">●</Button>
+                    onClick={() => fitToScreen(1.4)} h="18px" minW="18px" px={1} fontSize="9px">●</Button>
                 </Tooltip>
                 <Tooltip label="Titles" placement="left" hasArrow openDelay={300}>
                   <Button size="xs" variant={camera.z >= 1.5 && camera.z < 3 ? 'solid' : 'outline'} colorScheme="gray"

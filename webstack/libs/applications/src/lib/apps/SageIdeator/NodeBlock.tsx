@@ -19,7 +19,7 @@ import {
   Spinner,
   Image,
 } from '@chakra-ui/react';
-import { MdAltRoute, MdQuestionAnswer, MdImage } from 'react-icons/md';
+import { MdAltRoute, MdQuestionAnswer, MdImage, MdRefresh } from 'react-icons/md';
 import { BsStarFill, BsStar } from 'react-icons/bs';
 
 import { state as AppState } from './index';
@@ -43,6 +43,8 @@ export interface NodeBlockProps {
   onSelectQA: () => void;
   onGenerateImage: () => void;
   isGeneratingImage: boolean;
+  onReroll: () => void;
+  isRerolling: boolean;
 }
 
 // ─── Drag text helper ─────────────────────────────────────────────────────────
@@ -113,7 +115,7 @@ function AttrsBlock({ node }: { node: SageNode }) {
 
 export function NodeBlock({
   node, zoom, color, isHovered, appId, isAsking, isSelectedQA,
-  onToggleFav, onFocus, onBranch, onSelectQA, onGenerateImage, isGeneratingImage,
+  onToggleFav, onFocus, onBranch, onSelectQA, onGenerateImage, isGeneratingImage, onReroll, isRerolling,
 }: NodeBlockProps) {
   const bg = hexToRgba(color, (isHovered || node.IsMyFav || isSelectedQA) ? 1 : 0.82);
   const ring = isSelectedQA
@@ -194,43 +196,16 @@ export function NodeBlock({
   // ── Level 4: title + summary + steps + attributes ─────────────────
   if (zoom < 10) {
     return (
-      <Box
-        bg={bg} borderRadius="md" px={2} py={2} w="220px"
-        maxH="280px" overflowY="auto" boxShadow={ring || 'lg'} cursor="default"
-      >
-        <HStack justify="space-between" align="flex-start" mb={1.5}>
-          <Text
-            fontSize="11px" fontWeight="700" color="black" lineHeight="1.3" flex={1}
-            cursor="grab" draggable onDragStart={onDragStart} onClick={onFocus}
-          >
-            {node.Title}
-          </Text>
-          <HStack spacing={0}>
-            <Tooltip label="Branch from this idea" placement="top" hasArrow openDelay={300}>
-              <IconButton
-                aria-label="Branch" size="xs" variant="ghost" flexShrink={0}
-                icon={<MdAltRoute />}
-                onClick={(e) => { e.stopPropagation(); onBranch(); }}
-                h="16px" minW="16px" color="black"
-              />
-            </Tooltip>
-            <Tooltip label="Q&A" placement="top" hasArrow openDelay={300}>
-              <IconButton
-                aria-label="Q&A" size="xs" variant="ghost" flexShrink={0}
-                icon={isAsking ? <Spinner size="xs" /> : <MdQuestionAnswer />}
-                onClick={(e) => { e.stopPropagation(); onSelectQA(); }}
-                h="16px" minW="16px" color={isSelectedQA ? 'teal.500' : 'black'}
-              />
-            </Tooltip>
-            <Tooltip label={node.imageUrl ? 'Regenerate image' : 'Generate image'} placement="top" hasArrow openDelay={300}>
-              <IconButton
-                aria-label="Generate image" size="xs" variant="ghost" flexShrink={0}
-                icon={isGeneratingImage ? <Spinner size="xs" /> : <MdImage />}
-                onClick={(e) => { e.stopPropagation(); onGenerateImage(); }}
-                h="16px" minW="16px" color={node.imageUrl ? 'blue.500' : 'black'}
-                isDisabled={isGeneratingImage}
-              />
-            </Tooltip>
+      <Box bg={bg} borderRadius="md" w="220px" boxShadow={ring || 'lg'} cursor="default" overflow="hidden">
+        {/* Scrollable content */}
+        <Box px={2} pt={2} maxH="240px" overflowY="auto">
+          <HStack justify="space-between" align="flex-start" mb={1.5}>
+            <Text
+              fontSize="11px" fontWeight="700" color="black" lineHeight="1.3" flex={1}
+              cursor="grab" draggable onDragStart={onDragStart} onClick={onFocus}
+            >
+              {node.Title}
+            </Text>
             <IconButton
               aria-label="Favourite" size="xs" variant="ghost" flexShrink={0}
               icon={node.IsMyFav ? <BsStarFill color="goldenrod" /> : <BsStar />}
@@ -238,87 +213,71 @@ export function NodeBlock({
               h="16px" minW="16px"
             />
           </HStack>
+          <Text fontSize="8px" fontWeight="700" textTransform="uppercase" letterSpacing="0.08em" color="rgba(0,0,0,0.55)" mb={0.5}>Summary</Text>
+          <Text fontSize="10px" fontWeight="500" color="black" lineHeight="1.5" mb={2}>{node.Summary}</Text>
+          {node.Steps && node.Steps.length > 0 && (
+            <>
+              <Text fontSize="8px" fontWeight="700" textTransform="uppercase" letterSpacing="0.08em" color="rgba(0,0,0,0.55)" mb={0.5}>Steps</Text>
+              <VStack align="stretch" spacing={1} mb={2}>
+                {node.Steps.map((step, i) => (
+                  <HStack key={i} align="flex-start" spacing={1}>
+                    <Text fontSize="9px" fontWeight="700" color="black" lineHeight="1.4" flexShrink={0}>{i + 1}.</Text>
+                    <Text fontSize="9px" fontWeight="500" color="black" lineHeight="1.4">{step}</Text>
+                  </HStack>
+                ))}
+              </VStack>
+            </>
+          )}
+          <AttrsBlock node={node} />
+          {node.imageUrl && (
+            <Box mt={2} borderRadius="md" overflow="hidden">
+              <Image src={node.imageUrl} alt={node.Title} w="100%" objectFit="cover" maxH="160px" />
+            </Box>
+          )}
+        </Box>
+        {/* Action toolbar */}
+        <HStack justify="space-around" borderTop="1px solid rgba(0,0,0,0.12)" px={2} py={1}>
+          <Tooltip label="Re-roll" placement="bottom" hasArrow openDelay={300}>
+            <IconButton aria-label="Re-roll" size="xs" variant="ghost"
+              icon={isRerolling ? <Spinner size="xs" /> : <MdRefresh />}
+              onClick={(e) => { e.stopPropagation(); onReroll(); }}
+              h="18px" minW="18px" color="black" isDisabled={isRerolling} />
+          </Tooltip>
+          <Tooltip label="Branch" placement="bottom" hasArrow openDelay={300}>
+            <IconButton aria-label="Branch" size="xs" variant="ghost"
+              icon={<MdAltRoute />}
+              onClick={(e) => { e.stopPropagation(); onBranch(); }}
+              h="18px" minW="18px" color="black" />
+          </Tooltip>
+          <Tooltip label="Q&A" placement="bottom" hasArrow openDelay={300}>
+            <IconButton aria-label="Q&A" size="xs" variant="ghost"
+              icon={isAsking ? <Spinner size="xs" /> : <MdQuestionAnswer />}
+              onClick={(e) => { e.stopPropagation(); onSelectQA(); }}
+              h="18px" minW="18px" color={isSelectedQA ? 'teal.500' : 'black'} />
+          </Tooltip>
+          <Tooltip label={node.imageUrl ? 'Regenerate image' : 'Generate image'} placement="bottom" hasArrow openDelay={300}>
+            <IconButton aria-label="Generate image" size="xs" variant="ghost"
+              icon={isGeneratingImage ? <Spinner size="xs" /> : <MdImage />}
+              onClick={(e) => { e.stopPropagation(); onGenerateImage(); }}
+              h="18px" minW="18px" color={node.imageUrl ? 'blue.500' : 'black'} isDisabled={isGeneratingImage} />
+          </Tooltip>
         </HStack>
-
-        <Text
-          fontSize="8px" fontWeight="700" textTransform="uppercase"
-          letterSpacing="0.08em" color="rgba(0,0,0,0.55)" mb={0.5}
-        >
-          Summary
-        </Text>
-        <Text fontSize="10px" fontWeight="500" color="black" lineHeight="1.5" mb={2}>
-          {node.Summary}
-        </Text>
-
-        {node.Steps && node.Steps.length > 0 && (
-          <>
-            <Text
-              fontSize="8px" fontWeight="700" textTransform="uppercase"
-              letterSpacing="0.08em" color="rgba(0,0,0,0.55)" mb={0.5}
-            >
-              Steps
-            </Text>
-            <VStack align="stretch" spacing={1} mb={2}>
-              {node.Steps.map((step, i) => (
-                <HStack key={i} align="flex-start" spacing={1}>
-                  <Text fontSize="9px" fontWeight="700" color="black" lineHeight="1.4" flexShrink={0}>{i + 1}.</Text>
-                  <Text fontSize="9px" fontWeight="500" color="black" lineHeight="1.4">{step}</Text>
-                </HStack>
-              ))}
-            </VStack>
-          </>
-        )}
-
-        <AttrsBlock node={node} />
-
-        {node.imageUrl && (
-          <Box mt={2} borderRadius="md" overflow="hidden">
-            <Image src={node.imageUrl} alt={node.Title} w="100%" objectFit="cover" maxH="160px" />
-          </Box>
-        )}
       </Box>
     );
   }
 
   // ── Level 5: full prose + attributes ──────────────────────────────
   return (
-    <Box
-      bg={bg} borderRadius="md" px={3} py={3} w="270px"
-      maxH="340px" overflowY="auto" boxShadow={ring || 'xl'} cursor="default"
-    >
-      <HStack justify="space-between" align="flex-start" mb={2}>
-        <Text
-          fontSize="13px" fontWeight="700" color="black" lineHeight="1.3" flex={1}
-          cursor="grab" draggable onDragStart={onDragStart} onClick={onFocus}
-        >
-          {node.Title}
-        </Text>
-        <HStack spacing={0}>
-          <Tooltip label="Branch from this idea" placement="top" hasArrow openDelay={300}>
-            <IconButton
-              aria-label="Branch" size="xs" variant="ghost" flexShrink={0}
-              icon={<MdAltRoute />}
-              onClick={(e) => { e.stopPropagation(); onBranch(); }}
-              h="18px" minW="18px" color="black"
-            />
-          </Tooltip>
-          <Tooltip label="Q&A" placement="top" hasArrow openDelay={300}>
-            <IconButton
-              aria-label="Q&A" size="xs" variant="ghost" flexShrink={0}
-              icon={isAsking ? <Spinner size="xs" /> : <MdQuestionAnswer />}
-              onClick={(e) => { e.stopPropagation(); onSelectQA(); }}
-              h="18px" minW="18px" color={isSelectedQA ? 'teal.500' : 'black'}
-            />
-          </Tooltip>
-          <Tooltip label={node.imageUrl ? 'Regenerate image' : 'Generate image'} placement="top" hasArrow openDelay={300}>
-            <IconButton
-              aria-label="Generate image" size="xs" variant="ghost" flexShrink={0}
-              icon={isGeneratingImage ? <Spinner size="xs" /> : <MdImage />}
-              onClick={(e) => { e.stopPropagation(); onGenerateImage(); }}
-              h="18px" minW="18px" color={node.imageUrl ? 'blue.500' : 'black'}
-              isDisabled={isGeneratingImage}
-            />
-          </Tooltip>
+    <Box bg={bg} borderRadius="md" w="270px" boxShadow={ring || 'xl'} cursor="default" overflow="hidden">
+      {/* Scrollable content */}
+      <Box px={3} pt={3} maxH="300px" overflowY="auto">
+        <HStack justify="space-between" align="flex-start" mb={2}>
+          <Text
+            fontSize="13px" fontWeight="700" color="black" lineHeight="1.3" flex={1}
+            cursor="grab" draggable onDragStart={onDragStart} onClick={onFocus}
+          >
+            {node.Title}
+          </Text>
           <IconButton
             aria-label="Favourite" size="xs" variant="ghost" flexShrink={0}
             icon={node.IsMyFav ? <BsStarFill color="goldenrod" /> : <BsStar />}
@@ -326,19 +285,43 @@ export function NodeBlock({
             h="18px" minW="18px"
           />
         </HStack>
+        {node.imageUrl && (
+          <Box mb={3} borderRadius="md" overflow="hidden">
+            <Image src={node.imageUrl} alt={node.Title} w="100%" objectFit="cover" maxH="200px" />
+          </Box>
+        )}
+        <Text fontSize="11px" fontWeight="500" color="black" lineHeight="1.6" mb={3}>
+          {node.Result}
+        </Text>
+        <AttrsBlock node={node} />
+      </Box>
+      {/* Action toolbar */}
+      <HStack justify="space-around" borderTop="1px solid rgba(0,0,0,0.12)" px={3} py={1}>
+        <Tooltip label="Re-roll" placement="bottom" hasArrow openDelay={300}>
+          <IconButton aria-label="Re-roll" size="xs" variant="ghost"
+            icon={isRerolling ? <Spinner size="xs" /> : <MdRefresh />}
+            onClick={(e) => { e.stopPropagation(); onReroll(); }}
+            h="20px" minW="20px" color="black" isDisabled={isRerolling} />
+        </Tooltip>
+        <Tooltip label="Branch" placement="bottom" hasArrow openDelay={300}>
+          <IconButton aria-label="Branch" size="xs" variant="ghost"
+            icon={<MdAltRoute />}
+            onClick={(e) => { e.stopPropagation(); onBranch(); }}
+            h="20px" minW="20px" color="black" />
+        </Tooltip>
+        <Tooltip label="Q&A" placement="bottom" hasArrow openDelay={300}>
+          <IconButton aria-label="Q&A" size="xs" variant="ghost"
+            icon={isAsking ? <Spinner size="xs" /> : <MdQuestionAnswer />}
+            onClick={(e) => { e.stopPropagation(); onSelectQA(); }}
+            h="20px" minW="20px" color={isSelectedQA ? 'teal.500' : 'black'} />
+        </Tooltip>
+        <Tooltip label={node.imageUrl ? 'Regenerate image' : 'Generate image'} placement="bottom" hasArrow openDelay={300}>
+          <IconButton aria-label="Generate image" size="xs" variant="ghost"
+            icon={isGeneratingImage ? <Spinner size="xs" /> : <MdImage />}
+            onClick={(e) => { e.stopPropagation(); onGenerateImage(); }}
+            h="20px" minW="20px" color={node.imageUrl ? 'blue.500' : 'black'} isDisabled={isGeneratingImage} />
+        </Tooltip>
       </HStack>
-
-      {node.imageUrl && (
-        <Box mb={3} borderRadius="md" overflow="hidden">
-          <Image src={node.imageUrl} alt={node.Title} w="100%" objectFit="cover" maxH="200px" />
-        </Box>
-      )}
-
-      <Text fontSize="11px" fontWeight="500" color="black" lineHeight="1.6" mb={3}>
-        {node.Result}
-      </Text>
-
-      <AttrsBlock node={node} />
     </Box>
   );
 }

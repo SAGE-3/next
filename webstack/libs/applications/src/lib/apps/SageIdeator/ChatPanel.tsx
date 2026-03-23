@@ -22,7 +22,7 @@ import {
   Badge,
   Divider,
 } from '@chakra-ui/react';
-import { MdSend, MdClear, MdEdit, MdAttachFile, MdDelete } from 'react-icons/md';
+import { MdSend, MdClear, MdEdit, MdAttachFile, MdDelete, MdAdd } from 'react-icons/md';
 
 import { state as AppState } from './index';
 
@@ -40,6 +40,7 @@ interface ChatPanelProps {
   textColor: string;
   onInputChange: (value: string) => void;
   onGenerate: () => void;
+  onGenerateMore: (entry: AppState['chatHistory'][number]) => void;
   onClearAll: () => void;
   onRestoreSnapshot: (entry: AppState['chatHistory'][number]) => void;
   onEditPrompt: (prompt: string) => void;
@@ -51,7 +52,7 @@ interface ChatPanelProps {
 export function ChatPanel({
   chatHistory, nodes, dimensions, status, statusMessage, isGenerating,
   activeEntryId, input, panelBgHex, borderHex, textColor,
-  onInputChange, onGenerate, onClearAll, onRestoreSnapshot, onEditPrompt, onDeleteEntry,
+  onInputChange, onGenerate, onGenerateMore, onClearAll, onRestoreSnapshot, onEditPrompt, onDeleteEntry,
   attachedImage, onAttachImage,
 }: ChatPanelProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -111,7 +112,6 @@ export function ChatPanel({
         )}
         {chatHistory.map((entry) => {
           const entryNodes = entry.nodes ?? [];
-          const entryDims = entry.dimensions ?? [];
           const isActive = entry.id === activeEntryId;
           const hasSnapshot = entryNodes.length > 0;
           const favCount = entryNodes.filter((n) => n.IsMyFav).length;
@@ -119,7 +119,6 @@ export function ChatPanel({
           return (
             <Box
               key={entry.id}
-              role="group"
               mb={1.5}
               ml={isBranch ? 3 : 0}
               p={1.5}
@@ -130,83 +129,63 @@ export function ChatPanel({
               _dark={{ bg: isActive ? 'blue.900' : isBranch ? 'orange.900' : 'gray.700' }}
               cursor={hasSnapshot ? 'pointer' : 'default'}
               opacity={hasSnapshot ? 1 : 0.5}
-              _hover={
-                hasSnapshot
-                  ? { bg: isActive ? 'blue.50' : 'orange.50', _dark: { bg: isActive ? 'blue.900' : 'orange.900' } }
-                  : {}
-              }
+              _hover={hasSnapshot ? { bg: isActive ? 'blue.100' : 'orange.100', _dark: { bg: isActive ? 'blue.800' : 'orange.800' } } : {}}
               onClick={() => onRestoreSnapshot(entry)}
               transition="background 0.15s"
-              position="relative"
             >
-              <Tooltip label="Edit prompt" placement="right" hasArrow openDelay={500}>
-                <IconButton
-                  aria-label="Edit prompt"
-                  icon={<MdEdit />}
-                  size="xs"
-                  variant="ghost"
-                  colorScheme="gray"
-                  position="absolute"
-                  top={1}
-                  right="20px"
-                  h="16px"
-                  minW="16px"
-                  fontSize="10px"
-                  opacity={0}
-                  _groupHover={{ opacity: 1 }}
-                  transition="opacity 0.15s"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEditPrompt(entry.prompt);
-                    setTimeout(() => inputRef.current?.focus(), 50);
-                  }}
-                />
-              </Tooltip>
-              <Tooltip label="Delete entry" placement="right" hasArrow openDelay={500}>
-                <IconButton
-                  aria-label="Delete entry"
-                  icon={<MdDelete />}
-                  size="xs"
-                  variant="ghost"
-                  colorScheme="red"
-                  position="absolute"
-                  top={1}
-                  right={1}
-                  h="16px"
-                  minW="16px"
-                  fontSize="10px"
-                  opacity={0}
-                  _groupHover={{ opacity: 1 }}
-                  transition="opacity 0.15s"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDeleteEntry(entry.id);
-                  }}
-                />
-              </Tooltip>
-              <HStack spacing={1} mb={0.5} pr={8}>
-                <Text fontWeight="bold" fontSize="9px" color="blue.500" _dark={{ color: 'blue.300' }}>
-                  {entry.userName}
-                </Text>
-                {isBranch && (
-                  <Badge colorScheme="orange" fontSize="8px" variant="subtle">⎇ branch</Badge>
-                )}
-                {isBranch && entry.parentNodeTitle && (
-                  <Text fontSize="8px" color="orange.500" _dark={{ color: 'orange.300' }} noOfLines={1}>
-                    from "{entry.parentNodeTitle}"
+              <HStack align="stretch" spacing={1}>
+                {/* Content */}
+                <VStack flex={1} align="stretch" spacing={0.5} minW={0}>
+                  <HStack spacing={1}>
+                    <Text fontWeight="bold" fontSize="9px" color="blue.500" _dark={{ color: 'blue.300' }} noOfLines={1}>
+                      {entry.userName}
+                    </Text>
+                    {isBranch && <Badge colorScheme="orange" fontSize="8px" variant="subtle">⎇</Badge>}
+                  </HStack>
+                  <Text fontSize="10px" fontWeight={isActive ? '600' : '400'} color={textColor} noOfLines={3}>
+                    {entry.prompt}
                   </Text>
-                )}
+                  {hasSnapshot && (
+                    <HStack spacing={1} flexWrap="wrap">
+                      <Badge colorScheme="green" fontSize="8px">{entryNodes.length} ideas</Badge>
+                      {favCount > 0 && <Badge colorScheme="yellow" fontSize="8px">★ {favCount}</Badge>}
+                    </HStack>
+                  )}
+                </VStack>
+                {/* Actions */}
+                <VStack spacing={0} flexShrink={0} justify="center" bg="blackAlpha.100" _dark={{ bg: 'whiteAlpha.100' }} borderRadius="md" px="2px">
+                  {hasSnapshot && (
+                    <Tooltip label="Generate more ideas" placement="left" hasArrow openDelay={400}>
+                      <IconButton
+                        aria-label="Generate more"
+                        icon={<MdAdd />}
+                        size="xs" variant="ghost" colorScheme="teal"
+                        h="16px" minW="16px" fontSize="11px"
+                        isDisabled={isGenerating}
+                        onClick={(e) => { e.stopPropagation(); onGenerateMore(entry); }}
+                      />
+                    </Tooltip>
+                  )}
+                  <Tooltip label="Edit prompt" placement="left" hasArrow openDelay={400}>
+                    <IconButton
+                      aria-label="Edit prompt"
+                      icon={<MdEdit />}
+                      size="xs" variant="ghost" colorScheme="gray"
+                      h="16px" minW="16px" fontSize="10px"
+                      onClick={(e) => { e.stopPropagation(); onEditPrompt(entry.prompt); setTimeout(() => inputRef.current?.focus(), 50); }}
+                    />
+                  </Tooltip>
+                  <Tooltip label="Delete entry" placement="left" hasArrow openDelay={400}>
+                    <IconButton
+                      aria-label="Delete entry"
+                      icon={<MdDelete />}
+                      size="xs" variant="ghost" colorScheme="red"
+                      h="16px" minW="16px" fontSize="10px"
+                      onClick={(e) => { e.stopPropagation(); onDeleteEntry(entry.id); }}
+                    />
+                  </Tooltip>
+                </VStack>
               </HStack>
-              <Text fontSize="10px" fontWeight={isActive ? '600' : '400'} color={textColor} noOfLines={3}>
-                {entry.prompt}
-              </Text>
-              {hasSnapshot && (
-                <HStack spacing={1} mt={1} flexWrap="wrap">
-                  <Badge colorScheme="green" fontSize="8px">{entryNodes.length} ideas</Badge>
-                  <Badge colorScheme="purple" fontSize="8px">{entryDims.length} dims</Badge>
-                  {favCount > 0 && <Badge colorScheme="yellow" fontSize="8px">★ {favCount}</Badge>}
-                </HStack>
-              )}
             </Box>
           );
         })}
@@ -269,7 +248,7 @@ export function ChatPanel({
         fontSize="xs"
         isDisabled={isGenerating}
       />
-      <HStack spacing={1}>
+<HStack spacing={1}>
         <Button
           size="xs"
           colorScheme="blue"
