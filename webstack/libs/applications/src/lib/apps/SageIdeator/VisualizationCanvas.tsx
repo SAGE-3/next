@@ -24,7 +24,8 @@ import {
   Center,
 } from '@chakra-ui/react';
 
-import { MdAdd, MdClose, MdCheck } from 'react-icons/md';
+import { MdAdd, MdClose, MdCheck, MdSearch, MdAltRoute } from 'react-icons/md';
+import { BsStarFill } from 'react-icons/bs';
 
 import { state as AppState } from './index';
 import { NodeBlock } from './NodeBlock';
@@ -62,6 +63,25 @@ interface VisualizationCanvasProps {
   onAddDimension: (name: string) => void;
   onRemoveDimension: (name: string) => void;
   isAddingDimension: boolean;
+  onBranchFavorites: () => void;
+  onSummarizeFavorites: () => void;
+  isSummarizing: boolean;
+}
+
+// ─── Search scoring ───────────────────────────────────────────────────────────
+
+function scoreNode(node: SageNode, query: string): number {
+  if (!query.trim()) return 1;
+  const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+  let score = 0;
+  for (const term of terms) {
+    if (node.Title.toLowerCase().includes(term)) score += 3;
+    if (node.Keywords.some((k) => k.toLowerCase().includes(term))) score += 2;
+    if (node.Summary.toLowerCase().includes(term)) score += 1;
+    if (node.Steps.some((s) => s.toLowerCase().includes(term))) score += 0.5;
+    if (node.Result.toLowerCase().includes(term)) score += 0.5;
+  }
+  return score;
 }
 
 export function VisualizationCanvas({
@@ -70,6 +90,7 @@ export function VisualizationCanvas({
   positionsRef, hasFitRef,
   onToggleFav, onBranch, onSelectQA,
   onAddDimension, onRemoveDimension, isAddingDimension,
+  onBranchFavorites, onSummarizeFavorites, isSummarizing,
 }: VisualizationCanvasProps) {
   const [camera, setCamera] = useState<Camera>({ x: 0, y: 0, z: 1 });
   const [xDimName, setXDimName] = useState<string | null>(null);
@@ -79,6 +100,9 @@ export function VisualizationCanvas({
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
   const [showDimInput, setShowDimInput] = useState(false);
   const [dimInputValue, setDimInputValue] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState<{ dimName: string; value: string } | null>(null);
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const simulationRef = useRef<d3.Simulation<SimNode, undefined> | null>(null);
@@ -400,6 +424,106 @@ export function VisualizationCanvas({
               </Tooltip>
             )}
           </HStack>
+
+          {/* Row 3: search + favorites + active filter */}
+          {(() => {
+            const favCount = nodes.filter((n) => n.IsMyFav).length;
+            return (
+              <HStack spacing={2} pl="18px">
+                <MdSearch size={14} color="gray" />
+                <Input
+                  size="xs"
+                  placeholder="Search nodes…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  variant="flushed"
+                  flex={1}
+                />
+                {searchQuery && (
+                  <IconButton
+                    aria-label="Clear search"
+                    icon={<MdClose />}
+                    size="xs"
+                    variant="ghost"
+                    h="16px" minW="16px"
+                    onClick={() => setSearchQuery('')}
+                  />
+                )}
+                {/* Favorites filter toggle */}
+                <Tooltip label={favoritesOnly ? 'Show all nodes' : 'Show favorites only'} placement="top" hasArrow openDelay={300}>
+                  <Button
+                    size="xs"
+                    variant={favoritesOnly ? 'solid' : 'ghost'}
+                    colorScheme={favoritesOnly ? 'yellow' : 'gray'}
+                    leftIcon={<BsStarFill />}
+                    h="18px"
+                    px={1.5}
+                    fontSize="9px"
+                    isDisabled={favCount === 0}
+                    onClick={() => setFavoritesOnly((v) => !v)}
+                    _disabled={{ opacity: 0.4, cursor: 'default' }}
+                    flexShrink={0}
+                  >
+                    {favCount}
+                  </Button>
+                </Tooltip>
+                {/* Branch from favorites */}
+                {favCount > 0 && (
+                  <Tooltip label={`Branch from ${favCount} favorite${favCount > 1 ? 's' : ''}`} placement="top" hasArrow openDelay={300}>
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      colorScheme="orange"
+                      leftIcon={<MdAltRoute />}
+                      h="18px"
+                      px={1.5}
+                      fontSize="9px"
+                      onClick={onBranchFavorites}
+                      flexShrink={0}
+                    >
+                      Branch ★
+                    </Button>
+                  </Tooltip>
+                )}
+                {/* Summarize favorites → Stickie */}
+                {favCount > 0 && (
+                  <Tooltip label={`Summarize ${favCount} favorite${favCount > 1 ? 's' : ''} as a Stickie`} placement="top" hasArrow openDelay={300}>
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      colorScheme="purple"
+                      leftIcon={isSummarizing ? <Spinner size="xs" /> : <BsStarFill />}
+                      h="18px"
+                      px={1.5}
+                      fontSize="9px"
+                      isDisabled={isSummarizing}
+                      onClick={onSummarizeFavorites}
+                      flexShrink={0}
+                    >
+                      Summarize ★
+                    </Button>
+                  </Tooltip>
+                )}
+                {activeFilter && (
+                  <HStack spacing={0} bg="blue.100" _dark={{ bg: 'blue.800' }} borderRadius="full" px={2} py="1px" flexShrink={0}>
+                    <Text fontSize="9px" color={textColor} noOfLines={1} maxW="80px">
+                      {activeFilter.dimName}: {activeFilter.value}
+                    </Text>
+                    <IconButton
+                      aria-label="Clear filter"
+                      icon={<MdClose />}
+                      size="xs"
+                      variant="ghost"
+                      h="14px" minW="14px"
+                      fontSize="9px"
+                      ml={0.5}
+                      onClick={() => setActiveFilter(null)}
+                    />
+                  </HStack>
+                )}
+              </HStack>
+            );
+          })()}
         </VStack>
       )}
 
@@ -432,35 +556,57 @@ export function VisualizationCanvas({
           </Center>
         )}
 
-        {/* Y axis labels */}
-        {yAxisLabels.map(({ val, y }) => (
-          <Box
-            key={val}
-            position="absolute"
-            left="4px"
-            top={`${y}px`}
-            transform="translateY(-50%)"
-            pointerEvents="none"
-            zIndex={10}
-          >
-            <Badge colorScheme="purple" fontSize="9px" px={1.5} whiteSpace="nowrap">{val}</Badge>
-          </Box>
-        ))}
+        {/* Y axis labels — click to filter */}
+        {yAxisLabels.map(({ val, y }) => {
+          const isActive = activeFilter?.dimName === yDimName && activeFilter?.value === val;
+          return (
+            <Box
+              key={val}
+              position="absolute"
+              left="4px"
+              top={`${y}px`}
+              transform="translateY(-50%)"
+              zIndex={10}
+              cursor="pointer"
+              onClick={() => setActiveFilter(isActive ? null : { dimName: yDimName!, value: val })}
+            >
+              <Badge
+                colorScheme="purple" fontSize="9px" px={1.5} whiteSpace="nowrap"
+                opacity={isActive ? 1 : 0.7}
+                boxShadow={isActive ? '0 0 0 2px var(--chakra-colors-purple-400)' : 'none'}
+                _hover={{ opacity: 1 }}
+              >
+                {val}
+              </Badge>
+            </Box>
+          );
+        })}
 
-        {/* X axis labels */}
-        {xAxisLabels.map(({ val, x }) => (
-          <Box
-            key={val}
-            position="absolute"
-            bottom="4px"
-            left={`${x}px`}
-            transform="translateX(-50%)"
-            pointerEvents="none"
-            zIndex={10}
-          >
-            <Badge colorScheme="teal" fontSize="9px" px={1.5} whiteSpace="nowrap">{val}</Badge>
-          </Box>
-        ))}
+        {/* X axis labels — click to filter */}
+        {xAxisLabels.map(({ val, x }) => {
+          const isActive = activeFilter?.dimName === xDimName && activeFilter?.value === val;
+          return (
+            <Box
+              key={val}
+              position="absolute"
+              bottom="4px"
+              left={`${x}px`}
+              transform="translateX(-50%)"
+              zIndex={10}
+              cursor="pointer"
+              onClick={() => setActiveFilter(isActive ? null : { dimName: xDimName!, value: val })}
+            >
+              <Badge
+                colorScheme="teal" fontSize="9px" px={1.5} whiteSpace="nowrap"
+                opacity={isActive ? 1 : 0.7}
+                boxShadow={isActive ? '0 0 0 2px var(--chakra-colors-teal-400)' : 'none'}
+                _hover={{ opacity: 1 }}
+              >
+                {val}
+              </Badge>
+            </Box>
+          );
+        })}
 
         {/* Nodes canvas (pan/zoom layer) */}
         <Box position="absolute" top={0} left={0} w="100%" h="100%" style={{ willChange: 'transform' }}>
@@ -471,12 +617,26 @@ export function VisualizationCanvas({
             const color = nodeColorHex(node, xDim, yDim);
             const hovered = hoveredNodeId === node.ID;
 
+            // Search + filter visibility
+            const searchMatch = !searchQuery.trim() || scoreNode(node, searchQuery) > 0;
+            const filterMatch = !activeFilter || (() => {
+              const dim = dimensions.find((d) => d.name === activeFilter.dimName);
+              if (!dim) return true;
+              const val = dim.type === 'categorical'
+                ? node.Dimension.categorical[dim.name]
+                : node.Dimension.ordinal[dim.name];
+              return val === activeFilter.value;
+            })();
+            const nodeOpacity = searchMatch && filterMatch && (!favoritesOnly || node.IsMyFav) ? 1 : 0.1;
+
             return (
               <Box
                 key={node.ID}
                 position="absolute"
                 style={{ left: screenX, top: screenY, transform: 'translate(-50%, -50%)' }}
                 zIndex={hovered ? 15 : 5}
+                opacity={nodeOpacity}
+                transition="opacity 0.2s"
                 onMouseEnter={() => setHoveredNodeId(node.ID)}
                 onMouseLeave={() => setHoveredNodeId(null)}
                 onMouseDown={(e) => e.stopPropagation()}

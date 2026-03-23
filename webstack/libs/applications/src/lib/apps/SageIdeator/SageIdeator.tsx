@@ -18,7 +18,7 @@ import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
-import { generateDimensionsFromPrompt, generateNodeContent, abstractNode, buildRequirements, callProseAPI, generateUserDimension, VISION_MODELS } from './openai';
+import { generateDimensionsFromPrompt, generateNodeContent, abstractNode, buildRequirements, callProseAPI, generateUserDimension, VISION_MODELS, summarizeFavorites as summarizeFavoritesAPI } from './openai';
 import { SetupScreen } from './SetupScreen';
 import { ChatPanel } from './ChatPanel';
 import { VisualizationCanvas } from './VisualizationCanvas';
@@ -32,6 +32,7 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const { user } = useUser();
   const updateState = useAppStore((state) => state.updateState);
+  const createApp = useAppStore((state) => state.create);
   const toast = useToast();
 
   // Theme
@@ -52,6 +53,7 @@ function AppComponent(props: App): JSX.Element {
   const [qaPanelOpen, setQaPanelOpen] = useState(false);
   const [qaInput, setQaInput] = useState('');
   const [isAddingDimension, setIsAddingDimension] = useState(false);
+  const [isSummarizing, setIsSummarizing] = useState(false);
   const [chatPanelOpen, setChatPanelOpen] = useState(true);
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
 
@@ -319,6 +321,59 @@ function AppComponent(props: App): JSX.Element {
     [s, isAddingDimension, props._id]
   );
 
+  const summarizeFavorites = useCallback(async () => {
+    const favNodes = s.nodes.filter((n) => n.IsMyFav);
+    if (favNodes.length === 0 || isSummarizing) return;
+    setIsSummarizing(true);
+    try {
+      const summary = await summarizeFavoritesAPI(
+        favNodes.map((n) => ({ Title: n.Title, Summary: n.Summary, Keywords: n.Keywords })),
+        s.prompt,
+        s.apiKey,
+        s.model
+      );
+      const header = `★ Favorites Summary\nTopic: ${s.prompt}\n\n`;
+      const footer = `\n\nFavorites: ${favNodes.map((n) => n.Title).join(', ')}`;
+      await createApp({
+        title: 'Favorites Summary',
+        roomId: props.data.roomId,
+        boardId: props.data.boardId,
+        position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+        size: { width: 420, height: 520, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        type: 'Stickie',
+        state: { text: header + summary + footer, fontSize: 18, color: 'yellow', lock: false, sources: [props._id], executeInfo: { executeFunc: '', params: {} } },
+        raised: true,
+        dragging: false,
+        pinned: false,
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast({ title: 'Summary failed', description: msg, status: 'error', duration: 4000, isClosable: true });
+    } finally {
+      setIsSummarizing(false);
+    }
+  }, [s.nodes, s.prompt, s.apiKey, s.model, isSummarizing, props._id, props.data, createApp]);
+
+  const branchFromFavorites = useCallback(() => {
+    const favNodes = s.nodes.filter((n) => n.IsMyFav);
+    if (favNodes.length === 0) return;
+    const ideasList = favNodes
+      .map((n, i) => `${i + 1}. "${n.Title}": ${n.Summary}`)
+      .join('\n');
+    const aiPrompt = [
+      s.prompt ? `Original topic: ${s.prompt}` : '',
+      `\nThe following ideas were favorited from the previous exploration:\n${ideasList}`,
+      `\nNow generate new ideas that build on, combine, or extend the themes from these favorites. Explore adjacent variations that share their strengths.`,
+    ].filter(Boolean).join('\n');
+    const displayPrompt = `Branch from ${favNodes.length} favorite${favNodes.length > 1 ? 's' : ''}: ${favNodes.map((n) => n.Title).join(', ')}`;
+    generate({
+      displayPrompt,
+      aiPrompt,
+      parentEntryId: activeEntryId ?? undefined,
+    });
+  }, [s.nodes, s.prompt, activeEntryId, generate]);
+
   const removeDimension = useCallback(
     (dimName: string) => {
       const updatedDims = s.dimensions.filter((d) => d.name !== dimName);
@@ -430,6 +485,9 @@ function AppComponent(props: App): JSX.Element {
           onAddDimension={addDimension}
           onRemoveDimension={removeDimension}
           isAddingDimension={isAddingDimension}
+          onBranchFavorites={branchFromFavorites}
+          onSummarizeFavorites={summarizeFavorites}
+          isSummarizing={isSummarizing}
         />
 
         {qaPanelOpen && (

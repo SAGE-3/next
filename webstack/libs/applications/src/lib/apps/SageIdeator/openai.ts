@@ -174,6 +174,26 @@ export function buildRequirements(dims: {
   return { requirements: req, categorical, ordinal };
 }
 
+// ─── Favorites summary ────────────────────────────────────────────────────────
+
+export async function summarizeFavorites(
+  nodes: Array<{ Title: string; Summary: string; Keywords: string[] }>,
+  prompt: string,
+  apiKey: string,
+  model: string
+): Promise<string> {
+  const nodeList = nodes.map((n, i) => `${i + 1}. "${n.Title}": ${n.Summary}`).join('\n');
+  const msg =
+    `Brainstorming topic: "${prompt}"\n\n` +
+    `These ideas were favorited:\n${nodeList}\n\n` +
+    `Write a concise synthesis with three clearly labeled sections (2–3 sentences each):\n` +
+    `Common Themes — what do these ideas share?\n` +
+    `Key Contrasts — how do they meaningfully differ?\n` +
+    `Synthesis — what single direction or key insight emerges from combining them?\n\n` +
+    `Write in flowing prose. Do not use JSON, markdown symbols, or bullet points.`;
+  return callProseAPI(msg, apiKey, model, 0.7);
+}
+
 // ─── User-defined dimension generation ───────────────────────────────────────
 
 export async function generateUserDimension(
