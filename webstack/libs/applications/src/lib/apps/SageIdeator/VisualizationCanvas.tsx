@@ -66,6 +66,8 @@ interface VisualizationCanvasProps {
   onBranchFavorites: () => void;
   onSummarizeFavorites: () => void;
   isSummarizing: boolean;
+  onGenerateImage: (nodeId: string) => void;
+  generatingImageNodeId: string | null;
 }
 
 // ─── Search scoring ───────────────────────────────────────────────────────────
@@ -91,6 +93,7 @@ export function VisualizationCanvas({
   onToggleFav, onBranch, onSelectQA,
   onAddDimension, onRemoveDimension, isAddingDimension,
   onBranchFavorites, onSummarizeFavorites, isSummarizing,
+  onGenerateImage, generatingImageNodeId,
 }: VisualizationCanvasProps) {
   const [camera, setCamera] = useState<Camera>({ x: 0, y: 0, z: 1 });
   const [xDimName, setXDimName] = useState<string | null>(null);
@@ -663,6 +666,8 @@ export function VisualizationCanvas({
                   }}
                   onBranch={() => onBranch(node)}
                   onSelectQA={() => onSelectQA(node.ID)}
+                  onGenerateImage={() => onGenerateImage(node.ID)}
+                  isGeneratingImage={generatingImageNodeId === node.ID}
                 />
               </Box>
             );

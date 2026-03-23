@@ -34,6 +34,7 @@ const SageNodeSchema = z.object({
     ordinal: z.record(z.string()),
   }),
   IsMyFav: z.boolean(),
+  imageUrl: z.string().optional(),
 });
 
 const QAEntrySchema = z.object({

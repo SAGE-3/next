@@ -18,7 +18,7 @@ import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
-import { generateDimensionsFromPrompt, generateNodeContent, abstractNode, buildRequirements, callProseAPI, generateUserDimension, VISION_MODELS, summarizeFavorites as summarizeFavoritesAPI } from './openai';
+import { generateDimensionsFromPrompt, generateNodeContent, abstractNode, buildRequirements, callProseAPI, generateUserDimension, VISION_MODELS, summarizeFavorites as summarizeFavoritesAPI, generateNodeImage } from './openai';
 import { SetupScreen } from './SetupScreen';
 import { ChatPanel } from './ChatPanel';
 import { VisualizationCanvas } from './VisualizationCanvas';
@@ -54,6 +54,7 @@ function AppComponent(props: App): JSX.Element {
   const [qaInput, setQaInput] = useState('');
   const [isAddingDimension, setIsAddingDimension] = useState(false);
   const [isSummarizing, setIsSummarizing] = useState(false);
+  const [generatingImageNodeId, setGeneratingImageNodeId] = useState<string | null>(null);
   const [chatPanelOpen, setChatPanelOpen] = useState(true);
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
 
@@ -209,6 +210,20 @@ function AppComponent(props: App): JSX.Element {
     setActiveEntryId(null);
   };
 
+  const deleteEntry = useCallback(
+    (entryId: string) => {
+      const updated = s.chatHistory.filter((e) => e.id !== entryId);
+      updateState(props._id, { ...s, chatHistory: updated });
+      if (activeEntryId === entryId) {
+        // Switch to the previous remaining entry, if any
+        const idx = s.chatHistory.findIndex((e) => e.id === entryId);
+        const next = updated[idx - 1] ?? updated[idx] ?? null;
+        setActiveEntryId(next?.id ?? null);
+      }
+    },
+    [s, props._id, activeEntryId]
+  );
+
   const restoreSnapshot = useCallback(
     (entry: AppState['chatHistory'][number]) => {
       const entryNodes = entry.nodes ?? [];
@@ -319,6 +334,27 @@ function AppComponent(props: App): JSX.Element {
       }
     },
     [s, isAddingDimension, props._id]
+  );
+
+  const generateImageForNode = useCallback(
+    async (nodeId: string) => {
+      if (generatingImageNodeId) return;
+      const node = s.nodes.find((n) => n.ID === nodeId);
+      if (!node) return;
+      setGeneratingImageNodeId(nodeId);
+      try {
+        const url = await generateNodeImage(node.Title, node.Summary, node.Keywords, s.apiKey);
+        const latest = useAppStore.getState().apps.find((a) => a._id === props._id)?.data.state as AppState | undefined;
+        const updatedNodes = (latest ?? s).nodes.map((n) => (n.ID === nodeId ? { ...n, imageUrl: url } : n));
+        updateState(props._id, { ...(latest ?? s), nodes: updatedNodes });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        toast({ title: 'Image generation failed', description: msg, status: 'error', duration: 4000, isClosable: true });
+      } finally {
+        setGeneratingImageNodeId(null);
+      }
+    },
+    [s, generatingImageNodeId, props._id]
   );
 
   const summarizeFavorites = useCallback(async () => {
@@ -438,6 +474,7 @@ function AppComponent(props: App): JSX.Element {
             onClearAll={clearAll}
             onRestoreSnapshot={restoreSnapshot}
             onEditPrompt={setInput}
+            onDeleteEntry={deleteEntry}
             attachedImage={attachedImage}
             onAttachImage={setAttachedImage}
           />
@@ -488,6 +525,8 @@ function AppComponent(props: App): JSX.Element {
           onBranchFavorites={branchFromFavorites}
           onSummarizeFavorites={summarizeFavorites}
           isSummarizing={isSummarizing}
+          onGenerateImage={generateImageForNode}
+          generatingImageNodeId={generatingImageNodeId}
         />
 
         {qaPanelOpen && (

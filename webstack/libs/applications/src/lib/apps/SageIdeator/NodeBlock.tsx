@@ -17,8 +17,9 @@ import {
   IconButton,
   Tooltip,
   Spinner,
+  Image,
 } from '@chakra-ui/react';
-import { MdAltRoute, MdQuestionAnswer } from 'react-icons/md';
+import { MdAltRoute, MdQuestionAnswer, MdImage } from 'react-icons/md';
 import { BsStarFill, BsStar } from 'react-icons/bs';
 
 import { state as AppState } from './index';
@@ -40,6 +41,8 @@ export interface NodeBlockProps {
   onFocus: () => void;
   onBranch: () => void;
   onSelectQA: () => void;
+  onGenerateImage: () => void;
+  isGeneratingImage: boolean;
 }
 
 // ─── Drag text helper ─────────────────────────────────────────────────────────
@@ -110,7 +113,7 @@ function AttrsBlock({ node }: { node: SageNode }) {
 
 export function NodeBlock({
   node, zoom, color, isHovered, appId, isAsking, isSelectedQA,
-  onToggleFav, onFocus, onBranch, onSelectQA,
+  onToggleFav, onFocus, onBranch, onSelectQA, onGenerateImage, isGeneratingImage,
 }: NodeBlockProps) {
   const bg = hexToRgba(color, (isHovered || node.IsMyFav || isSelectedQA) ? 1 : 0.82);
   const ring = isSelectedQA
@@ -219,6 +222,15 @@ export function NodeBlock({
                 h="16px" minW="16px" color={isSelectedQA ? 'teal.500' : 'black'}
               />
             </Tooltip>
+            <Tooltip label={node.imageUrl ? 'Regenerate image' : 'Generate image'} placement="top" hasArrow openDelay={300}>
+              <IconButton
+                aria-label="Generate image" size="xs" variant="ghost" flexShrink={0}
+                icon={isGeneratingImage ? <Spinner size="xs" /> : <MdImage />}
+                onClick={(e) => { e.stopPropagation(); onGenerateImage(); }}
+                h="16px" minW="16px" color={node.imageUrl ? 'blue.500' : 'black'}
+                isDisabled={isGeneratingImage}
+              />
+            </Tooltip>
             <IconButton
               aria-label="Favourite" size="xs" variant="ghost" flexShrink={0}
               icon={node.IsMyFav ? <BsStarFill color="goldenrod" /> : <BsStar />}
@@ -258,6 +270,12 @@ export function NodeBlock({
         )}
 
         <AttrsBlock node={node} />
+
+        {node.imageUrl && (
+          <Box mt={2} borderRadius="md" overflow="hidden">
+            <Image src={node.imageUrl} alt={node.Title} w="100%" objectFit="cover" maxH="160px" />
+          </Box>
+        )}
       </Box>
     );
   }
@@ -292,6 +310,15 @@ export function NodeBlock({
               h="18px" minW="18px" color={isSelectedQA ? 'teal.500' : 'black'}
             />
           </Tooltip>
+          <Tooltip label={node.imageUrl ? 'Regenerate image' : 'Generate image'} placement="top" hasArrow openDelay={300}>
+            <IconButton
+              aria-label="Generate image" size="xs" variant="ghost" flexShrink={0}
+              icon={isGeneratingImage ? <Spinner size="xs" /> : <MdImage />}
+              onClick={(e) => { e.stopPropagation(); onGenerateImage(); }}
+              h="18px" minW="18px" color={node.imageUrl ? 'blue.500' : 'black'}
+              isDisabled={isGeneratingImage}
+            />
+          </Tooltip>
           <IconButton
             aria-label="Favourite" size="xs" variant="ghost" flexShrink={0}
             icon={node.IsMyFav ? <BsStarFill color="goldenrod" /> : <BsStar />}
@@ -300,6 +327,12 @@ export function NodeBlock({
           />
         </HStack>
       </HStack>
+
+      {node.imageUrl && (
+        <Box mb={3} borderRadius="md" overflow="hidden">
+          <Image src={node.imageUrl} alt={node.Title} w="100%" objectFit="cover" maxH="200px" />
+        </Box>
+      )}
 
       <Text fontSize="11px" fontWeight="500" color="black" lineHeight="1.6" mb={3}>
         {node.Result}

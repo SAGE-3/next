@@ -174,6 +174,34 @@ export function buildRequirements(dims: {
   return { requirements: req, categorical, ordinal };
 }
 
+// ─── Image generation ────────────────────────────────────────────────────────
+
+const DALLE_URL = 'https://api.openai.com/v1/images/generations';
+
+export async function generateNodeImage(
+  title: string,
+  summary: string,
+  keywords: string[],
+  apiKey: string
+): Promise<string> {
+  const prompt =
+    `A conceptual illustration representing an idea titled "${title}". ` +
+    `${summary} ` +
+    `Visual themes: ${keywords.join(', ')}. ` +
+    `Abstract, minimal, clean design. No text, labels, or words.`;
+  const resp = await fetch(DALLE_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({ model: 'dall-e-3', prompt, n: 1, size: '1024x1024', response_format: 'url' }),
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error((err as { error?: { message?: string } })?.error?.message || resp.statusText);
+  }
+  const data = await resp.json();
+  return (data as { data: { url: string }[] }).data[0].url;
+}
+
 // ─── Favorites summary ────────────────────────────────────────────────────────
 
 export async function summarizeFavorites(

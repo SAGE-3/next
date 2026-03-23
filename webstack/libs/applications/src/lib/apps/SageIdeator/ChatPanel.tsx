@@ -22,7 +22,7 @@ import {
   Badge,
   Divider,
 } from '@chakra-ui/react';
-import { MdSend, MdClear, MdEdit, MdAttachFile } from 'react-icons/md';
+import { MdSend, MdClear, MdEdit, MdAttachFile, MdDelete } from 'react-icons/md';
 
 import { state as AppState } from './index';
 
@@ -43,6 +43,7 @@ interface ChatPanelProps {
   onClearAll: () => void;
   onRestoreSnapshot: (entry: AppState['chatHistory'][number]) => void;
   onEditPrompt: (prompt: string) => void;
+  onDeleteEntry: (entryId: string) => void;
   attachedImage: string | null;
   onAttachImage: (dataUrl: string | null) => void;
 }
@@ -50,7 +51,7 @@ interface ChatPanelProps {
 export function ChatPanel({
   chatHistory, nodes, dimensions, status, statusMessage, isGenerating,
   activeEntryId, input, panelBgHex, borderHex, textColor,
-  onInputChange, onGenerate, onClearAll, onRestoreSnapshot, onEditPrompt,
+  onInputChange, onGenerate, onClearAll, onRestoreSnapshot, onEditPrompt, onDeleteEntry,
   attachedImage, onAttachImage,
 }: ChatPanelProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -147,7 +148,7 @@ export function ChatPanel({
                   colorScheme="gray"
                   position="absolute"
                   top={1}
-                  right={1}
+                  right="20px"
                   h="16px"
                   minW="16px"
                   fontSize="10px"
@@ -161,7 +162,29 @@ export function ChatPanel({
                   }}
                 />
               </Tooltip>
-              <HStack spacing={1} mb={0.5} pr={4}>
+              <Tooltip label="Delete entry" placement="right" hasArrow openDelay={500}>
+                <IconButton
+                  aria-label="Delete entry"
+                  icon={<MdDelete />}
+                  size="xs"
+                  variant="ghost"
+                  colorScheme="red"
+                  position="absolute"
+                  top={1}
+                  right={1}
+                  h="16px"
+                  minW="16px"
+                  fontSize="10px"
+                  opacity={0}
+                  _groupHover={{ opacity: 1 }}
+                  transition="opacity 0.15s"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDeleteEntry(entry.id);
+                  }}
+                />
+              </Tooltip>
+              <HStack spacing={1} mb={0.5} pr={8}>
                 <Text fontWeight="bold" fontSize="9px" color="blue.500" _dark={{ color: 'blue.300' }}>
                   {entry.userName}
                 </Text>
