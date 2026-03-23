@@ -7,8 +7,8 @@
  */
 
 import { useRef, useState, useEffect, useCallback } from 'react';
-import { Flex, Button, Tooltip, useToast, useColorModeValue } from '@chakra-ui/react';
-import { MdFileDownload, MdKey, MdChat } from 'react-icons/md';
+import { Flex, Box, Button, IconButton, Tooltip, useToast, useColorModeValue } from '@chakra-ui/react';
+import { MdFileDownload, MdKey, MdChat, MdChevronLeft, MdChevronRight } from 'react-icons/md';
 
 import { format } from 'date-fns/format';
 import { useAppStore, useHexColor, useUser, downloadFile } from '@sage3/frontend';
@@ -18,7 +18,7 @@ import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
-import { generateDimensionsFromPrompt, generateNodeContent, abstractNode, buildRequirements, callProseAPI, generateUserDimension } from './openai';
+import { generateDimensionsFromPrompt, generateNodeContent, abstractNode, buildRequirements, callProseAPI, generateUserDimension, VISION_MODELS } from './openai';
 import { SetupScreen } from './SetupScreen';
 import { ChatPanel } from './ChatPanel';
 import { VisualizationCanvas } from './VisualizationCanvas';
@@ -52,6 +52,8 @@ function AppComponent(props: App): JSX.Element {
   const [qaPanelOpen, setQaPanelOpen] = useState(false);
   const [qaInput, setQaInput] = useState('');
   const [isAddingDimension, setIsAddingDimension] = useState(false);
+  const [chatPanelOpen, setChatPanelOpen] = useState(true);
+  const [attachedImage, setAttachedImage] = useState<string | null>(null);
 
   // Refs shared with VisualizationCanvas
   const positionsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
@@ -87,7 +89,18 @@ function AppComponent(props: App): JSX.Element {
         return;
       }
 
-      if (!branchOpts) setInput('');
+      // Guard: image attached but model doesn't support vision
+      const image = branchOpts ? undefined : attachedImage ?? undefined;
+      if (image && !VISION_MODELS.has(s.model)) {
+        toast({
+          title: 'Model does not support images',
+          description: `Switch to a vision-capable model (e.g. gpt-4o-mini) to use image prompts.`,
+          status: 'warning', duration: 4000, isClosable: true,
+        });
+        return;
+      }
+
+      if (!branchOpts) { setInput(''); setAttachedImage(null); }
       positionsRef.current.clear();
       hasFitRef.current = false;
 
@@ -114,7 +127,7 @@ function AppComponent(props: App): JSX.Element {
       });
 
       try {
-        const rawDims = await generateDimensionsFromPrompt(aiPrompt, s.apiKey, s.model, s.numDimensions);
+        const rawDims = await generateDimensionsFromPrompt(aiPrompt, s.apiKey, s.model, s.numDimensions, image);
 
         const dimensions: AppState['dimensions'] = [
           ...Object.entries(rawDims.categorical).map(([name, values], i) => ({
@@ -140,7 +153,7 @@ function AppComponent(props: App): JSX.Element {
         await Promise.all(
           Array.from({ length: s.batchSize }, async () => {
             const { requirements, categorical, ordinal } = buildRequirements(rawDims);
-            const text = await generateNodeContent(aiPrompt, requirements, s.apiKey, s.model);
+            const text = await generateNodeContent(aiPrompt, requirements, s.apiKey, s.model, image);
             const summary = await abstractNode(text, s.apiKey, s.model);
             newNodes.push({
               ID: genId(),
@@ -352,24 +365,49 @@ function AppComponent(props: App): JSX.Element {
   return (
     <AppWindow app={props} hideBackgroundIcon={MdChat}>
       <Flex h="100%" w="100%" direction="row" bg={bgHex}>
-        <ChatPanel
-          chatHistory={s.chatHistory}
-          nodes={s.nodes}
-          dimensions={s.dimensions}
-          status={s.status}
-          statusMessage={s.statusMessage}
-          isGenerating={isGenerating}
-          activeEntryId={activeEntryId}
-          input={input}
-          panelBgHex={panelBgHex}
-          borderHex={borderHex}
-          textColor={textColor}
-          onInputChange={setInput}
-          onGenerate={() => generate()}
-          onClearAll={clearAll}
-          onRestoreSnapshot={restoreSnapshot}
-          onEditPrompt={setInput}
-        />
+        {chatPanelOpen && (
+          <ChatPanel
+            chatHistory={s.chatHistory}
+            nodes={s.nodes}
+            dimensions={s.dimensions}
+            status={s.status}
+            statusMessage={s.statusMessage}
+            isGenerating={isGenerating}
+            activeEntryId={activeEntryId}
+            input={input}
+            panelBgHex={panelBgHex}
+            borderHex={borderHex}
+            textColor={textColor}
+            onInputChange={setInput}
+            onGenerate={() => generate()}
+            onClearAll={clearAll}
+            onRestoreSnapshot={restoreSnapshot}
+            onEditPrompt={setInput}
+            attachedImage={attachedImage}
+            onAttachImage={setAttachedImage}
+          />
+        )}
+
+        {/* Toggle button pinned to the left edge of the canvas */}
+        <Box position="relative" zIndex={30} flexShrink={0}>
+          <Tooltip label={chatPanelOpen ? 'Hide panel' : 'Show panel'} placement="right" hasArrow openDelay={400}>
+            <IconButton
+              aria-label="Toggle chat panel"
+              icon={chatPanelOpen ? <MdChevronLeft /> : <MdChevronRight />}
+              size="xs"
+              variant="solid"
+              colorScheme="gray"
+              position="absolute"
+              top={2}
+              left={0}
+              h="28px"
+              minW="14px"
+              w="14px"
+              borderRadius="0 4px 4px 0"
+              onClick={() => setChatPanelOpen((v) => !v)}
+            />
+          </Tooltip>
+        </Box>
 
         <VisualizationCanvas
           nodes={s.nodes}

@@ -10,6 +10,7 @@ import { useRef } from 'react';
 import {
   Flex,
   Box,
+  Image,
   Text,
   HStack,
   VStack,
@@ -21,7 +22,7 @@ import {
   Badge,
   Divider,
 } from '@chakra-ui/react';
-import { MdSend, MdClear, MdEdit } from 'react-icons/md';
+import { MdSend, MdClear, MdEdit, MdAttachFile } from 'react-icons/md';
 
 import { state as AppState } from './index';
 
@@ -42,14 +43,46 @@ interface ChatPanelProps {
   onClearAll: () => void;
   onRestoreSnapshot: (entry: AppState['chatHistory'][number]) => void;
   onEditPrompt: (prompt: string) => void;
+  attachedImage: string | null;
+  onAttachImage: (dataUrl: string | null) => void;
 }
 
 export function ChatPanel({
   chatHistory, nodes, dimensions, status, statusMessage, isGenerating,
   activeEntryId, input, panelBgHex, borderHex, textColor,
   onInputChange, onGenerate, onClearAll, onRestoreSnapshot, onEditPrompt,
+  attachedImage, onAttachImage,
 }: ChatPanelProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = ''; // reset so the same file can be re-attached
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const src = ev.target?.result as string;
+      // Resize to max 1024px on longest side, JPEG 80% quality
+      const img = new window.Image();
+      img.onload = () => {
+        const MAX = 1024;
+        let { width, height } = img;
+        if (width > MAX || height > MAX) {
+          if (width >= height) { height = Math.round((height / width) * MAX); width = MAX; }
+          else { width = Math.round((width / height) * MAX); height = MAX; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d')?.drawImage(img, 0, 0, width, height);
+        onAttachImage(canvas.toDataURL('image/jpeg', 0.8));
+      };
+      img.src = src;
+    };
+    reader.readAsDataURL(file);
+  };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onGenerate(); }
@@ -174,6 +207,32 @@ export function ChatPanel({
         </HStack>
       )}
 
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={handleFileChange}
+      />
+
+      {/* Image preview */}
+      {attachedImage && (
+        <Box position="relative" w="100%">
+          <Image src={attachedImage} alt="Attached" borderRadius="md" maxH="80px" objectFit="cover" w="100%" />
+          <IconButton
+            aria-label="Remove image"
+            icon={<MdClear />}
+            size="xs"
+            colorScheme="blackAlpha"
+            position="absolute"
+            top={1}
+            right={1}
+            onClick={() => onAttachImage(null)}
+          />
+        </Box>
+      )}
+
       {/* Input */}
       <Textarea
         ref={inputRef}
@@ -187,16 +246,30 @@ export function ChatPanel({
         fontSize="xs"
         isDisabled={isGenerating}
       />
-      <Button
-        size="xs"
-        colorScheme="blue"
-        leftIcon={<MdSend />}
-        onClick={onGenerate}
-        isLoading={isGenerating}
-        isDisabled={isGenerating || !input.trim()}
-      >
-        Generate
-      </Button>
+      <HStack spacing={1}>
+        <Button
+          size="xs"
+          colorScheme="blue"
+          leftIcon={<MdSend />}
+          onClick={onGenerate}
+          isLoading={isGenerating}
+          isDisabled={isGenerating || !input.trim()}
+          flex={1}
+        >
+          Generate
+        </Button>
+        <Tooltip label="Attach image" placement="top" hasArrow openDelay={400}>
+          <IconButton
+            aria-label="Attach image"
+            icon={<MdAttachFile />}
+            size="xs"
+            variant={attachedImage ? 'solid' : 'ghost'}
+            colorScheme={attachedImage ? 'blue' : 'gray'}
+            isDisabled={isGenerating}
+            onClick={() => fileInputRef.current?.click()}
+          />
+        </Tooltip>
+      </HStack>
       <Button size="xs" variant="ghost" colorScheme="red" leftIcon={<MdClear />} onClick={onClearAll}>
         Clear all
       </Button>

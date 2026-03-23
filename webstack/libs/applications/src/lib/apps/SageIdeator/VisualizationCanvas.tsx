@@ -273,7 +273,7 @@ export function VisualizationCanvas({
   return (
     <Flex direction="column" flex={1} overflow="hidden">
       {/* Axis toolbar */}
-      {dimensions.length > 0 && (
+      {nodes.length > 0 && (
         <VStack
           px={2} py={1}
           bg={panelBgHex}
@@ -283,28 +283,33 @@ export function VisualizationCanvas({
           align="stretch"
           flexShrink={0}
         >
-          {/* Row 1: axis selectors */}
-          <HStack spacing={3}>
-            <Text fontSize="xs" color={textColor} fontWeight="bold">Axes:</Text>
-            <HStack spacing={1}>
-              <Text fontSize="xs" color={textColor}>X:</Text>
-              <Select size="xs" value={xDimName ?? ''} onChange={(e) => setXDimName(e.target.value || null)} w="120px">
-                <option value="">— none —</option>
-                {dimensions.map((d) => <option key={d.name} value={d.name}>{d.name}</option>)}
-              </Select>
-            </HStack>
-            <HStack spacing={1}>
-              <Text fontSize="xs" color={textColor}>Y:</Text>
-              <Select size="xs" value={yDimName ?? ''} onChange={(e) => setYDimName(e.target.value || null)} w="120px">
-                <option value="">— none —</option>
-                {dimensions.map((d) => <option key={d.name} value={d.name}>{d.name}</option>)}
-              </Select>
-            </HStack>
+          {/* Row 1: axis selectors — pl accounts for the collapse toggle button */}
+          <HStack spacing={3} pl="18px">
+            {dimensions.length > 0 ? (
+              <>
+                <Text fontSize="xs" color={textColor} fontWeight="bold">Axes:</Text>
+                <HStack spacing={1}>
+                  <Text fontSize="xs" color={textColor}>X:</Text>
+                  <Select size="xs" value={xDimName ?? ''} onChange={(e) => setXDimName(e.target.value || null)} w="120px">
+                    {dimensions.map((d) => <option key={d.name} value={d.name}>{d.name}</option>)}
+                  </Select>
+                </HStack>
+                <HStack spacing={1}>
+                  <Text fontSize="xs" color={textColor}>Y:</Text>
+                  <Select size="xs" value={yDimName ?? ''} onChange={(e) => setYDimName(e.target.value || null)} w="120px">
+                    <option value="">— none —</option>
+                    {dimensions.map((d) => <option key={d.name} value={d.name}>{d.name}</option>)}
+                  </Select>
+                </HStack>
+              </>
+            ) : (
+              <Text fontSize="xs" color="gray.400" fontStyle="italic">No dimensions — add one below</Text>
+            )}
             <Text fontSize="9px" color="gray.400">Scroll to zoom · drag to pan</Text>
           </HStack>
 
           {/* Row 2: dimension chips + add */}
-          <HStack spacing={1} flexWrap="wrap">
+          <HStack spacing={1} flexWrap="wrap" pl="18px">
             <Text fontSize="9px" fontWeight="700" color={textColor} textTransform="uppercase" letterSpacing="0.06em" flexShrink={0}>
               Dims:
             </Text>

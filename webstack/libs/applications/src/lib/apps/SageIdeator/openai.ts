@@ -12,13 +12,25 @@ const OPENAI_URL = 'https://api.openai.com/v1/chat/completions';
 
 export const MODELS = ['gpt-5.4-mini', 'gpt-5.2', 'gpt-4o-mini', 'gpt-4o', 'gpt-3.5-turbo'];
 
+// Models that support vision (image input)
+export const VISION_MODELS = new Set(['gpt-5.4-mini', 'gpt-5.2', 'gpt-4o-mini', 'gpt-4o']);
+
 async function openAIChat(
   systemPrompt: string,
   userPrompt: string,
   apiKey: string,
   model: string,
-  temperature = 0.7
+  temperature = 0.7,
+  imageBase64?: string
 ): Promise<string> {
+  // Build user message content — plain text or multimodal when image is attached
+  const userContent = imageBase64
+    ? [
+        { type: 'text', text: userPrompt },
+        { type: 'image_url', image_url: { url: imageBase64 } },
+      ]
+    : userPrompt;
+
   const resp = await fetch(OPENAI_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
@@ -26,14 +38,14 @@ async function openAIChat(
       model,
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
+        { role: 'user', content: userContent },
       ],
       temperature,
     }),
   });
   if (!resp.ok) {
     const err = await resp.json().catch(() => ({}));
-    throw new Error((err as any)?.error?.message || resp.statusText);
+    throw new Error((err as { error?: { message?: string } })?.error?.message || resp.statusText);
   }
   const data = await resp.json();
   return data.choices[0].message.content as string;
@@ -45,12 +57,16 @@ const JSON_SYSTEM =
 const PROSE_SYSTEM =
   'You are a creative brainstorming assistant. Generate imaginative, practical, and diverse ideas. Write in clear, engaging, human-readable prose. Do not use JSON, bullet points, or structured formatting — write in natural paragraphs.';
 
-async function callChatAPI(userPrompt: string, apiKey: string, model: string, temperature = 0.7): Promise<string> {
-  return openAIChat(JSON_SYSTEM, userPrompt, apiKey, model, temperature);
+async function callChatAPI(
+  userPrompt: string, apiKey: string, model: string, temperature = 0.7, imageBase64?: string
+): Promise<string> {
+  return openAIChat(JSON_SYSTEM, userPrompt, apiKey, model, temperature, imageBase64);
 }
 
-export async function callProseAPI(userPrompt: string, apiKey: string, model: string, temperature = 0.7): Promise<string> {
-  return openAIChat(PROSE_SYSTEM, userPrompt, apiKey, model, temperature);
+export async function callProseAPI(
+  userPrompt: string, apiKey: string, model: string, temperature = 0.7, imageBase64?: string
+): Promise<string> {
+  return openAIChat(PROSE_SYSTEM, userPrompt, apiKey, model, temperature, imageBase64);
 }
 
 function extractJSON(text: string): string {
@@ -64,22 +80,27 @@ export async function generateDimensionsFromPrompt(
   prompt: string,
   apiKey: string,
   model: string,
-  numDims: number
+  numDims: number,
+  imageBase64?: string
 ): Promise<{ categorical: Record<string, string[]>; ordinal: Record<string, string[]> }> {
   const nominalDef = `A nominal dimension contains categorical values that are qualitative and distinct — no right answer. Good examples for brainstorming: Approach, Stakeholder, Domain, Format, Timeframe, Constraint, Innovation Type. Do NOT use: Quality, Clarity, Grammar, Length.\n\n`;
   const ordinalDef = `An ordinal dimension contains values measured in order (e.g., least → most). Good examples for brainstorming: Feasibility, Novelty, Scope, Risk Level, Resource Intensity. Do NOT use: Quality, Creativity, Length.\n\n`;
 
+  const imageNote = imageBase64
+    ? `An image has been provided for inspiration — use it to inform relevant dimensions, but keep them broadly applicable and diverse.\n\n`
+    : '';
+
   const catMsg =
-    `${nominalDef}List ${numDims} nominal dimensions and 4 possible values each for the prompt: "${prompt}"` +
+    `${imageNote}${nominalDef}List ${numDims} nominal dimensions and 4 possible values each for the prompt: "${prompt}"` +
     `\nReturn ONLY this JSON (${numDims} items):\n{"<dim1>":["v1","v2","v3","v4"],...}`;
 
   const ordMsg =
-    `${ordinalDef}List ${numDims} ordinal dimensions for the prompt: "${prompt}"` +
+    `${imageNote}${ordinalDef}List ${numDims} ordinal dimensions for the prompt: "${prompt}"` +
     `\nReturn ONLY this JSON:\n{"<dim>":["<lowest>","less","neutral","more","<highest>"]}`;
 
   const [catRaw, ordRaw] = await Promise.all([
-    callChatAPI(catMsg, apiKey, model),
-    callChatAPI(ordMsg, apiKey, model),
+    callChatAPI(catMsg, apiKey, model, 0.7, imageBase64),
+    callChatAPI(ordMsg, apiKey, model, 0.7, imageBase64),
   ]);
 
   let categorical: Record<string, string[]> = {};
@@ -94,10 +115,14 @@ export async function generateNodeContent(
   prompt: string,
   requirements: string,
   apiKey: string,
-  model: string
+  model: string,
+  imageBase64?: string
 ): Promise<string> {
-  const msg = `Brainstorming prompt: ${prompt}\n\nIdea constraints:\n${requirements}\n\nDescribe one specific, actionable idea that satisfies all constraints in 1–2 natural paragraphs (up to 150 words). Be concrete and practical. Write as flowing prose, not lists or JSON.`;
-  return callProseAPI(msg, apiKey, model, 0.8);
+  const imageNote = imageBase64
+    ? `An image has been provided for inspiration — let it loosely inform the mood, context, or aesthetic of your idea, but do not describe or analyse it directly. Remain diverse and imaginative.\n\n`
+    : '';
+  const msg = `${imageNote}Brainstorming prompt: ${prompt}\n\nIdea constraints:\n${requirements}\n\nDescribe one specific, actionable idea that satisfies all constraints in 1–2 natural paragraphs (up to 150 words). Be concrete and practical. Write as flowing prose, not lists or JSON.`;
+  return callProseAPI(msg, apiKey, model, 0.8, imageBase64);
 }
 
 export async function abstractNode(
