@@ -7,9 +7,29 @@ export type PaperAppProps = {
   year?: string;
   venue?: string;
   summary?: string;
+  abstract?: string;
+  tldr?: string;
+  citations?: number;
+  url?: string;
+  pdf_url?: string | null;
+  source?: string;
 };
 
-export const PaperApp = ({ topic, title, authors, year, venue, summary }: PaperAppProps) => {
+export const PaperApp = ({
+  topic,
+  title,
+  authors,
+  year,
+  venue,
+  summary,
+  abstract,
+  tldr,
+  citations,
+  url,
+  pdf_url,
+  source,
+}: PaperAppProps) => {
+  const bodyText = abstract || tldr || summary;
   return (
     <div
       style={{
@@ -37,15 +57,44 @@ export const PaperApp = ({ topic, title, authors, year, venue, summary }: PaperA
           overflow: 'auto',
         }}
       >
-        <div style={{ fontSize: 48, fontWeight: 700, color: '#333', marginBottom: 16 }}>{topic}</div>
-        {title && <div style={{ fontSize: 36, fontWeight: 500, color: '#444', marginBottom: 8 }}>{title}</div>}
-        {authors && authors.length > 0 && (
-          <div style={{ fontSize: 28, color: '#666', fontStyle: 'italic', marginBottom: 8 }}>{authors.join(', ')}</div>
+        {/* 1. Title */}
+        <div style={{ fontSize: 48, fontWeight: 700, color: '#333', marginBottom: 16 }}>{title || topic}</div>
+
+        {/* 2. Year and Authors */}
+        {(year || (authors && authors.length > 0)) && (
+          <div style={{ fontSize: 28, color: '#666', fontStyle: 'italic', marginBottom: 8 }}>
+            {[year, authors?.length ? authors.join(', ') : ''].filter(Boolean).join(' • ')}
+          </div>
         )}
-        {(year || venue) && (
-          <div style={{ fontSize: 24, color: '#888', marginBottom: 16 }}>{[year, venue].filter(Boolean).join(' • ')}</div>
+
+        {/* 3. Venue */}
+        {venue && <div style={{ fontSize: 24, color: '#888', marginBottom: 16 }}>{venue}</div>}
+
+        {/* 4. Abstract / TLDR */}
+        {bodyText && <div style={{ fontSize: 28, color: '#444', lineHeight: 1.5 }}>{bodyText}</div>}
+
+        {/* 5. Citations and Source */}
+        {((citations != null && citations > 0) || source) && (
+          <div style={{ fontSize: 22, color: '#666' }}>
+            {[citations != null && citations > 0 ? `Citations: ${citations}` : '', source ? `Source: ${source}` : ''].filter(Boolean).join(' • ')}
+          </div>
         )}
-        {summary && <div style={{ fontSize: 28, color: '#444', lineHeight: 1.5 }}>{summary}</div>}
+
+        {/* 6. URL and PDF URL */}
+        {(url || pdf_url) && (
+          <div style={{ fontSize: 20, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {url && (
+              <a href={url} target="_blank" rel="noopener noreferrer" style={{ color: '#3182ce', wordBreak: 'break-all' }}>
+                Open paper
+              </a>
+            )}
+            {pdf_url && (
+              <a href={pdf_url} target="_blank" rel="noopener noreferrer" style={{ color: '#3182ce', wordBreak: 'break-all' }}>
+                PDF
+              </a>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

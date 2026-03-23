@@ -20,6 +20,12 @@ export const schema = z.object({
   year: z.string().optional(),
   venue: z.string().optional(),
   summary: z.string().optional(),
+  abstract: z.string().optional(),
+  tldr: z.string().optional(),
+  citations: z.number().optional(),
+  url: z.string().optional(),
+  pdf_url: z.string().optional().nullable(),
+  source: z.string().optional(),
 });
 export type state = z.infer<typeof schema>;
 

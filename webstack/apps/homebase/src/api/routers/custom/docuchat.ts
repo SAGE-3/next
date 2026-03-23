@@ -9,109 +9,159 @@
 import * as express from 'express';
 import * as path from 'path';
 import * as fs from 'fs';
-import { exec } from 'child_process';
-import { promisify } from 'util';
-
-const execAsync = promisify(exec);
+import { spawn } from 'child_process';
 
 export function DocuCHATRouter(): express.Router {
   const router = express.Router();
 
-  router.post('/ai-search', async ({ body, user }, res) => {
-    try {
-      // @ts-ignore
-      const userId = user.id;
-      const { query } = body;
-
-      if (!query) {
-        return res.status(400).send({ 
-          success: false, 
-          message: 'Query parameter is required' 
-        });
+  /**
+   * Find the AiSearch.py script by searching known locations.
+   */
+  function findScriptPath(): string | null {
+    const possiblePaths = [
+      path.join(__dirname, '../../../../../../libs/applications/src/lib/apps/DocuCHAT/ai/AiSearch.py'),
+      path.join(process.cwd(), 'libs/applications/src/lib/apps/DocuCHAT/ai/AiSearch.py'),
+      path.join(process.cwd(), 'webstack/libs/applications/src/lib/apps/DocuCHAT/ai/AiSearch.py'),
+      path.resolve('./libs/applications/src/lib/apps/DocuCHAT/ai/AiSearch.py'),
+      path.resolve('./webstack/libs/applications/src/lib/apps/DocuCHAT/ai/AiSearch.py'),
+    ];
+    for (const testPath of possiblePaths) {
+      if (fs.existsSync(testPath)) {
+        return testPath;
       }
+    }
+    return null;
+  }
 
-      // Path to the ai-test.py script - try multiple possible locations
-      const possiblePaths = [
-        path.join(__dirname, '../../../../../../libs/applications/src/lib/apps/DocuCHAT/ai/ai-test.py'),
-        path.join(process.cwd(), 'libs/applications/src/lib/apps/DocuCHAT/ai/ai-test.py'),
-        path.join(process.cwd(), 'webstack/libs/applications/src/lib/apps/DocuCHAT/ai/ai-test.py'),
-        path.resolve('./libs/applications/src/lib/apps/DocuCHAT/ai/ai-test.py'),
-        path.resolve('./webstack/libs/applications/src/lib/apps/DocuCHAT/ai/ai-test.py'),
-      ];
-      
-      let scriptPath = '';
-      for (const testPath of possiblePaths) {
-        console.log('Testing path:', testPath);
-        if (fs.existsSync(testPath)) {
-          scriptPath = testPath;
-          console.log('Found script at:', scriptPath);
-          break;
-        }
-      }
-      
-      // Check if the script exists
-      if (!scriptPath || !fs.existsSync(scriptPath)) {
-        console.log('Script not found. Current working directory:', process.cwd());
-        console.log('__dirname:', __dirname);
-        return res.status(404).send({ 
-          success: false, 
-          message: `AI script not found. Tried paths: ${possiblePaths.join(', ')}` 
-        });
-      }
+  /**
+   * POST /ai-search
+   *
+   * Spawns the AiSearch.py pipeline for the given query, streaming progress
+   * to the client as newline-delimited JSON (NDJSON). Each line is a JSON
+   * object with a "type" field:
+   *
+   *   { "type": "progress", "message": "..." }   – pipeline progress line
+   *   { "type": "result",   "success": true, "data": { ... } }  – final hierarchy
+   *   { "type": "error",    "message": "..." }   – error
+   *   { "type": "done" }                         – stream finished
+   */
+  router.post('/ai-search', (req, res) => {
+    const { query } = req.body;
 
-      // Create a temporary Python script with the user's query
-      const scriptDir = path.dirname(scriptPath);
-      const tempScriptPath = path.join(scriptDir, 'temp_ai_test.py');
-      
-      // Read the original script
-      const originalScript = fs.readFileSync(scriptPath, 'utf8');
-      
-      // Replace the prompt with the user's query
-      const modifiedScript = originalScript.replace(
-        /Please search the web for 50 research papers across all scientific topics that were published after the year 2000\./,
-        query
-      );
-      
-      // Write the modified script
-      fs.writeFileSync(tempScriptPath, modifiedScript);
-
-      // Execute the Python script
-      const { stdout, stderr } = await execAsync(`cd "${scriptDir}" && python3 temp_ai_test.py`);
-      
-      // Clean up the temporary script
-      fs.unlinkSync(tempScriptPath);
-
-      if (stderr) {
-        console.error('Python script stderr:', stderr);
-      }
-
-      // Try to read the output.json file
-      const outputPath = path.join(scriptDir, 'output.json');
-      let result = null;
-      
-      if (fs.existsSync(outputPath)) {
-        const outputData = fs.readFileSync(outputPath, 'utf8');
-        result = JSON.parse(outputData);
-        
-        // Clean up the output file
-        fs.unlinkSync(outputPath);
-      }
-
-      res.status(200).send({ 
-        success: true, 
-        message: 'AI search completed successfully',
-        data: result,
-        stdout: stdout
-      });
-
-    } catch (error) {
-      console.error('DocuCHAT AI Error:', error);
-      res.status(500).send({ 
-        success: false, 
-        message: 'Failed to execute AI search',
-        error: error instanceof Error ? error.message : 'Unknown error'
+    if (!query) {
+      return res.status(400).json({
+        success: false,
+        message: 'Query parameter is required',
       });
     }
+
+    const scriptPath = findScriptPath();
+    if (!scriptPath) {
+      console.error('AiSearch.py not found. cwd:', process.cwd(), '__dirname:', __dirname);
+      return res.status(404).json({
+        success: false,
+        message: 'AiSearch.py script not found',
+      });
+    }
+
+    const scriptDir = path.dirname(scriptPath);
+    const outputDir = path.join(scriptDir, `results_tmp_${Date.now()}`);
+
+    // ---- Set up streaming response ----
+    res.setHeader('Content-Type', 'application/x-ndjson');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('X-Accel-Buffering', 'no'); // disable nginx buffering
+    res.flushHeaders();
+
+    // Helper: send one NDJSON line
+    const send = (obj: Record<string, unknown>) => {
+      res.write(JSON.stringify(obj) + '\n');
+    };
+
+    send({ type: 'progress', message: `Starting AiSearch pipeline for: "${query}"` });
+
+    // ---- Spawn Python process ----
+    const proc = spawn('python3', ['-u', scriptPath, query, outputDir], {
+      cwd: scriptDir,
+      env: { ...process.env, PYTHONUNBUFFERED: '1' },
+    });
+
+    let stderrBuf = '';
+
+    // Stream stdout lines as progress
+    let stdoutBuf = '';
+    proc.stdout.on('data', (chunk: Buffer) => {
+      stdoutBuf += chunk.toString();
+      const lines = stdoutBuf.split('\n');
+      stdoutBuf = lines.pop()!; // keep incomplete last line in buffer
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed) {
+          send({ type: 'progress', message: trimmed });
+        }
+      }
+    });
+
+    // Capture stderr (pip install noise, warnings, etc.)
+    proc.stderr.on('data', (chunk: Buffer) => {
+      stderrBuf += chunk.toString();
+    });
+
+    // Handle process exit
+    proc.on('close', (code) => {
+      // Flush any remaining stdout
+      if (stdoutBuf.trim()) {
+        send({ type: 'progress', message: stdoutBuf.trim() });
+      }
+
+      if (code !== 0) {
+        console.error('AiSearch.py exited with code', code, 'stderr:', stderrBuf);
+        send({ type: 'error', message: `Pipeline exited with code ${code}` });
+        send({ type: 'done' });
+        res.end();
+        return;
+      }
+
+      // Read hierarchy.json from the output directory
+      const hierarchyPath = path.join(outputDir, 'hierarchy.json');
+      if (fs.existsSync(hierarchyPath)) {
+        try {
+          const data = JSON.parse(fs.readFileSync(hierarchyPath, 'utf8'));
+          send({ type: 'result', success: true, data });
+        } catch (e) {
+          send({ type: 'error', message: 'Failed to parse hierarchy.json' });
+        }
+        // Clean up output directory
+        try {
+          fs.rmSync(outputDir, { recursive: true, force: true });
+        } catch { /* ignore cleanup errors */ }
+      } else {
+        send({ type: 'error', message: 'Pipeline did not produce hierarchy.json' });
+      }
+
+      send({ type: 'done' });
+      res.end();
+    });
+
+    proc.on('error', (err) => {
+      console.error('Failed to spawn AiSearch.py:', err);
+      send({ type: 'error', message: `Failed to start pipeline: ${err.message}` });
+      send({ type: 'done' });
+      res.end();
+    });
+
+    // Kill the process if the client disconnects
+    req.on('close', () => {
+      if (!proc.killed) {
+        proc.kill();
+        // Clean up output directory
+        try {
+          if (fs.existsSync(outputDir)) {
+            fs.rmSync(outputDir, { recursive: true, force: true });
+          }
+        } catch { /* ignore */ }
+      }
+    });
   });
 
   return router;

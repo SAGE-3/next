@@ -43,6 +43,12 @@ function AppComponent(props: App): JSX.Element {
         year={s.year}
         venue={s.venue}
         summary={s.summary}
+        abstract={s.abstract}
+        tldr={s.tldr}
+        citations={s.citations}
+        url={s.url}
+        pdf_url={s.pdf_url}
+        source={s.source}
       />
     </AppWindow>
   )

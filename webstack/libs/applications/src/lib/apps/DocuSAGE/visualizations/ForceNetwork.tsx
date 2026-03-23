@@ -59,6 +59,8 @@ export const ForceNetwork = ({
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<SVGGElement>(null);
   const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
+  /** Preserve node positions across rebuilds so background clicks don't reset the layout */
+  const positionsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
 
   // Color mode values for dark/light theme support
   const backgroundColor = useColorModeValue('#f8f9fa', '#1a1a1a');
@@ -78,118 +80,64 @@ export const ForceNetwork = ({
   const firstLevelGroups = fullHierarchy?.children?.map((child) => child.data.topic) || [];
   const colorScale = useMemo(() => d3.scaleOrdinal<string>().domain(firstLevelGroups).range(colors), [firstLevelGroups, colors]);
 
-  const getTopLevelParentTopic = (topic: string): string | null => {
-    const originalNode = fullHierarchy.descendants().find((n) => n.data.topic === topic);
-    let topLevelParent: any = originalNode;
-    while (topLevelParent && topLevelParent.depth > 1) {
-      if (topLevelParent.parent) topLevelParent = topLevelParent.parent; else break;
-    }
-    return topLevelParent ? topLevelParent.data.topic : null;
-  };
-
   const getColorForTopic = (topic: string): string => {
-    const top = getTopLevelParentTopic(topic) || topic;
-    return colorScale(top) as string;
+    return (colorScale(topic) as string) || (colorScale.domain()[0] ? colorScale(colorScale.domain()[0]) as string : '#888');
   };
 
-  // Helper to find path from root to target node
-  const findPathToNode = (root: Tree, target: Tree): Tree[] | null => {
-    if (root === target) return [root];
-    if (!root.children) return null;
-    for (const child of root.children) {
-      const childPath = findPathToNode(child, target);
-      if (childPath) return [root, ...childPath];
-    }
-    return null;
-  };
+  /** Stable signature so effect only runs when data structure actually changes (not on parent re-renders) */
+  const dataSignature = useMemo(() => {
+    const d = s.filteredData || data;
+    const sig = (n: Tree): string =>
+      n.topic + (n.children?.length ? '[' + n.children.map(sig).join(',') + ']' : '');
+    return sig(d);
+  }, [data, s.filteredData]);
 
-  // Extract all nodes (clusters and papers) from the tree - always show all layers
-  const extractNodes = (node: Tree, currentDepth: number = 0): { clusters: Tree[], papers: Tree[] } => {
-    const clusters: Tree[] = [];
-    const papers: Tree[] = [];
+  /**
+   * Single-pass traversal that extracts nodes AND links with guaranteed-unique
+   * IDs. IDs are built from the sibling index at each level (e.g. "root/0/2/1")
+   * so two siblings with the same topic name still get different IDs.
+   */
+  const buildNetwork = useCallback(() => {
+    const displayData = s.filteredData || data;
 
-    const traverse = (n: Tree, depth: number) => {
-      const isLeaf = !n.children || n.children.length === 0;
-      
-      if (isLeaf) {
-        // It's a paper/document
-        papers.push(n);
-      } else {
-        // It's a cluster - always include it
-        clusters.push(n);
-        // Continue traversing all children regardless of depth
-        n.children.forEach(child => traverse(child, depth + 1));
+    const allNodes: NetworkNode[] = [];
+    const allLinks: NetworkLink[] = [];
+
+    const traverse = (node: Tree, parentId: string | null, depth: number, group: string, siblingIdx: number) => {
+      const id = parentId != null ? `${parentId}/${siblingIdx}` : 'root';
+      const isLeaf = !node.children || node.children.length === 0;
+
+      allNodes.push({
+        id,
+        data: node,
+        type: isLeaf ? 'paper' : 'cluster',
+        group,
+        title: isLeaf ? (node.title || node.topic) : node.topic,
+        size: node.size || (node.children ? node.children.length : 0) || 1,
+        depth,
+        x: undefined,
+        y: undefined,
+      });
+
+      if (parentId != null) {
+        allLinks.push({
+          source: parentId,
+          target: id,
+          type: 'hierarchy',
+          strength: 0.8,
+        });
+      }
+
+      if (!isLeaf) {
+        node.children.forEach((child, i) => {
+          // Top-level children (depth 0 → 1) each define their own color group
+          const childGroup = depth === 0 ? child.topic : group;
+          traverse(child, id, depth + 1, childGroup, i);
+        });
       }
     };
 
-    traverse(node, currentDepth);
-    return { clusters, papers };
-  };
-
-  // Build network nodes and links
-  const buildNetwork = useCallback(() => {
-    const displayData = s.filteredData || data;
-    const { clusters, papers } = extractNodes(displayData, 0);
-
-    // Create cluster nodes
-    const clusterNodes: NetworkNode[] = clusters.map(cluster => {
-      const topLevelParent = getTopLevelParentTopic(cluster.topic) || cluster.topic;
-      const path = findPathToNode(data, cluster);
-      const depth = path ? path.length - 1 : 0;
-      
-      return {
-        id: cluster.topic,
-        data: cluster,
-        type: 'cluster',
-        group: topLevelParent,
-        title: cluster.topic,
-        size: cluster.size || (cluster.children ? cluster.children.length : 0),
-        depth: depth,
-        x: undefined,
-        y: undefined,
-      };
-    });
-
-    // Create paper nodes
-    const paperNodes: NetworkNode[] = papers.map(paper => {
-      const topLevelParent = getTopLevelParentTopic(paper.topic) || paper.topic;
-      const path = findPathToNode(data, paper);
-      const depth = path ? path.length - 1 : 0;
-      
-      return {
-        id: paper.topic,
-        data: paper,
-        type: 'paper',
-        group: topLevelParent,
-        title: paper.title || paper.topic,
-        size: paper.size || 1,
-        depth: depth,
-        x: undefined,
-        y: undefined,
-      };
-    });
-
-    const allNodes = [...clusterNodes, ...paperNodes];
-
-    // Build hierarchy links (cluster to sub-cluster or cluster to paper)
-    const hierarchyLinks: NetworkLink[] = [];
-    clusters.forEach(cluster => {
-      if (cluster.children) {
-        cluster.children.forEach(child => {
-          const childNode = allNodes.find(n => n.id === child.topic);
-          if (childNode) {
-            hierarchyLinks.push({
-              source: cluster.topic,
-              target: child.topic,
-              type: 'hierarchy',
-              strength: 0.8,
-            });
-          }
-        });
-      }
-    });
-
-    const allLinks = hierarchyLinks;
+    traverse(displayData, null, 0, displayData.topic, 0);
 
     setNodes(allNodes);
     setLinks(allLinks);
@@ -221,17 +169,22 @@ export const ForceNetwork = ({
       });
     });
 
-    // Initialize node positions near their group centers
+    // Initialize node positions: reuse preserved positions if available, else place near group centers
     nodeData.forEach(node => {
-      const pos = groupPositions.get(node.group);
-      if (pos && (node.x === undefined || node.y === undefined)) {
-        // Add some random offset so nodes don't all start at the exact same point
-        const offset = (Math.random() - 0.5) * 50;
-        node.x = pos.x + offset;
-        node.y = pos.y + offset;
-      } else if (node.x === undefined || node.y === undefined) {
-        node.x = centerX + (Math.random() - 0.5) * 100;
-        node.y = centerY + (Math.random() - 0.5) * 100;
+      const preserved = positionsRef.current.get(node.id);
+      if (preserved) {
+        node.x = preserved.x;
+        node.y = preserved.y;
+      } else {
+        const pos = groupPositions.get(node.group);
+        if (pos) {
+          const offset = (Math.random() - 0.5) * 50;
+          node.x = pos.x + offset;
+          node.y = pos.y + offset;
+        } else {
+          node.x = centerX + (Math.random() - 0.5) * 100;
+          node.y = centerY + (Math.random() - 0.5) * 100;
+        }
       }
     });
 
@@ -251,7 +204,8 @@ export const ForceNetwork = ({
           })
           .strength((d) => {
             const link = d as NetworkLink;
-            return link.strength * 1.0;
+            // Weaker link strength so papers spread around parent instead of forming dense columns
+            return link.strength * 0.5;
           })
       )
       .force('charge', d3.forceManyBody<NetworkNode>()
@@ -260,63 +214,73 @@ export const ForceNetwork = ({
           return d.type === 'cluster' ? forceCharge * 1.5 : forceCharge;
         })
       )
-      // Add group positioning force - pulls nodes toward their group's position
+      // Clusters with children: pull toward centroid of children (hub feeling). Root/others: weak group pull.
+      .force('hub', (alpha) => {
+        const clusterToChildren = new Map<string, string[]>();
+        linkData.forEach((link: NetworkLink) => {
+          const src = typeof link.source === 'string' ? link.source : (link.source as NetworkNode).id;
+          const tgt = typeof link.target === 'string' ? link.target : (link.target as NetworkNode).id;
+          if (!clusterToChildren.has(src)) clusterToChildren.set(src, []);
+          clusterToChildren.get(src)!.push(tgt);
+        });
+        const nodeById = new Map(nodeData.map(n => [n.id, n]));
+        clusterToChildren.forEach((childIds, clusterId) => {
+          const cluster = nodeById.get(clusterId);
+          if (!cluster || cluster.x === undefined || cluster.y === undefined) return;
+          let cx = 0, cy = 0, n = 0;
+          childIds.forEach(cid => {
+            const c = nodeById.get(cid);
+            if (c?.x != null && c?.y != null) {
+              cx += c.x;
+              cy += c.y;
+              n++;
+            }
+          });
+          if (n === 0) return;
+          cx /= n;
+          cy /= n;
+          const strength = 0.2 * alpha;
+          (cluster as any).vx = ((cluster as any).vx || 0) + (cx - cluster.x) * strength;
+          (cluster as any).vy = ((cluster as any).vy || 0) + (cy - cluster.y) * strength;
+        });
+      })
+      // Group force: gently pulls nodes toward their group's circular position
       .force('groupX', d3.forceX<NetworkNode>()
-        .strength(0.15)
+        .strength((d) => {
+          if (d.type === 'cluster') return 0.04;
+          return 0.06;
+        })
         .x((d) => {
           const pos = groupPositions.get(d.group);
           return pos ? pos.x : centerX;
         })
       )
       .force('groupY', d3.forceY<NetworkNode>()
-        .strength(0.15)
+        .strength((d) => {
+          if (d.type === 'cluster') return 0.04;
+          return 0.06;
+        })
         .y((d) => {
           const pos = groupPositions.get(d.group);
           return pos ? pos.y : centerY;
         })
       )
-      // Add repulsion between different groups using a custom force
-      .force('groupRepulsion', (alpha) => {
-        const minDistance = Math.min(width, height) * 0.25; // Minimum distance between groups
-        const strength = 0.3;
-        
-        for (let i = 0; i < nodeData.length; i++) {
-          const nodeA = nodeData[i];
-          if (nodeA.x === undefined || nodeA.y === undefined) continue;
-          
-          for (let j = i + 1; j < nodeData.length; j++) {
-            const nodeB = nodeData[j];
-            if (nodeB.x === undefined || nodeB.y === undefined) continue;
-            if (nodeA.group === nodeB.group) continue; // Skip same group
-            
-            const dx = (nodeB.x as number) - (nodeA.x as number);
-            const dy = (nodeB.y as number) - (nodeA.y as number);
-            const distanceSquared = dx * dx + dy * dy;
-            const distance = Math.sqrt(distanceSquared);
-            
-            if (distance < minDistance && distance > 0) {
-              const force = (minDistance - distance) / distance * strength * alpha;
-              const fx = dx * force;
-              const fy = dy * force;
-              
-              nodeA.vx = (nodeA.vx || 0) - fx;
-              nodeA.vy = (nodeA.vy || 0) - fy;
-              nodeB.vx = (nodeB.vx || 0) + fx;
-              nodeB.vy = (nodeB.vy || 0) + fy;
-            }
-          }
-        }
-      })
       .force('center', d3.forceCenter(width / 2, height / 2).strength(0.1))
       .force('collision', d3.forceCollide<NetworkNode>()
         .radius((d) => {
           if (d.type === 'cluster') {
             return Math.sqrt(d.size) * 15 + 30;
           }
-          return Math.sqrt(d.size) * 5 + 10;
+          return Math.sqrt(d.size) * 8 + 18;
         })
       )
       .on('tick', () => {
+        // Preserve positions for next rebuild (avoids reset on background click)
+        nodeData.forEach(n => {
+          if (n.x != null && n.y != null) {
+            positionsRef.current.set(n.id, { x: n.x, y: n.y });
+          }
+        });
         setNodes([...nodeData]);
       });
 
@@ -325,7 +289,7 @@ export const ForceNetwork = ({
     return () => {
       simulation.stop();
     };
-  }, [buildNetwork, width, height, forceCharge, forceLinkDistance]);
+  }, [dataSignature, width, height, forceCharge, forceLinkDistance]);
 
   // Setup zoom behavior
   useEffect(() => {
@@ -443,9 +407,8 @@ export const ForceNetwork = ({
   const controlTextSize = baseSize * 0.028;
   const controlSpacing = baseSize * 0.01;
 
-  // Get the root node (the one that matches displayData)
-  const displayData = s.filteredData || data;
-  const rootNodeId = displayData.topic;
+  // The root node always has id 'root' (from the single-pass traversal)
+  const rootNodeId = 'root';
 
   // Get unique groups for legend (excluding the root node)
   const uniqueGroups = useMemo(() => {

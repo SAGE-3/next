@@ -41,7 +41,9 @@ function AppComponent(props: App): JSX.Element {
   const updateState = useAppStore(state => state.updateState);
   const createApp = useAppStore(state => state.create);
   const [inputValue, setInputValue] = useState('');
+  const [progressLines, setProgressLines] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const bgColor = useColorModeValue('gray.50', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
@@ -52,7 +54,7 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     scrollToBottom();
-  }, [s.messages]);
+  }, [s.messages, progressLines]);
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || s.isLoading) return;
@@ -64,10 +66,16 @@ function AppComponent(props: App): JSX.Element {
       timestamp: Date.now(),
     };
 
-    // Add user message
+    // Add user message and start loading
     const newMessages = [...s.messages, userMessage];
     updateState(props._id, { messages: newMessages, isLoading: true });
+    const query = inputValue.trim();
     setInputValue('');
+    setProgressLines([]);
+
+    // Create an AbortController so clearChat can cancel this request
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     try {
       const response = await fetch('/api/docuchat/ai-search', {
@@ -75,40 +83,107 @@ function AppComponent(props: App): JSX.Element {
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
         },
-        body: JSON.stringify({ query: inputValue.trim() }),
+        body: JSON.stringify({ query }),
+        signal: controller.signal,
       });
 
-      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
 
-      const assistantMessage = {
-        id: genId(),
-        role: 'assistant' as const,
-        content: result.success 
-          ? `AI Search Results:\n\n${result.data ? 'Research paper hierarchy generated successfully!' : 'No data returned from AI search.'}`
-          : `Error: ${result.message}`,
-        timestamp: Date.now(),
-        jsonData: result.success ? result.data : null, // Store the JSON data separately
-      };
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let resultData: any = null;
+      let errorMsg: string | null = null;
 
-      updateState(props._id, { 
-        messages: [...newMessages, assistantMessage], 
-        isLoading: false 
-      });
+      // Read the NDJSON stream
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop()!; // keep incomplete line in buffer
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const event = JSON.parse(line);
+            if (event.type === 'progress') {
+              setProgressLines((prev) => [...prev, event.message]);
+            } else if (event.type === 'result' && event.success) {
+              resultData = event.data;
+            } else if (event.type === 'error') {
+              errorMsg = event.message;
+            }
+          } catch {
+            // ignore malformed JSON lines
+          }
+        }
+      }
+
+      // Pipeline finished — build the assistant message
+      if (resultData) {
+        const paperCount = countPapers(resultData);
+        const assistantMessage = {
+          id: genId(),
+          role: 'assistant' as const,
+          content: `Research paper hierarchy generated successfully! Found ${paperCount} papers organized into topics.`,
+          timestamp: Date.now(),
+          jsonData: resultData,
+        };
+        updateState(props._id, {
+          messages: [...newMessages, assistantMessage],
+          isLoading: false,
+        });
+      } else {
+        const assistantMessage = {
+          id: genId(),
+          role: 'assistant' as const,
+          content: errorMsg
+            ? `Pipeline error: ${errorMsg}`
+            : 'Pipeline completed but did not produce a hierarchy.',
+          timestamp: Date.now(),
+        };
+        updateState(props._id, {
+          messages: [...newMessages, assistantMessage],
+          isLoading: false,
+        });
+      }
     } catch (error) {
+      // If the request was aborted (e.g. by clearChat), don't add an error message
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        return;
+      }
       const errorMessage = {
         id: genId(),
         role: 'assistant' as const,
         content: `Error: Failed to connect to AI service. ${error instanceof Error ? error.message : 'Unknown error'}`,
         timestamp: Date.now(),
       };
-
-      updateState(props._id, { 
-        messages: [...newMessages, errorMessage], 
-        isLoading: false 
+      updateState(props._id, {
+        messages: [...newMessages, errorMessage],
+        isLoading: false,
       });
+    } finally {
+      abortControllerRef.current = null;
+      setProgressLines([]);
     }
+  };
+
+  /** Count total papers in a hierarchy node recursively */
+  const countPapers = (node: any): number => {
+    if (!node) return 0;
+    let count = 0;
+    if (node.papers) count += node.papers.length;
+    if (node.children) {
+      for (const child of node.children) {
+        count += countPapers(child);
+      }
+    }
+    return count;
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -119,40 +194,65 @@ function AppComponent(props: App): JSX.Element {
   };
 
   const clearChat = () => {
+    // Abort any running AiSearch pipeline (closes the connection,
+    // which triggers the backend to kill the Python subprocess)
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setProgressLines([]);
     updateState(props._id, { messages: [], isLoading: false });
   };
 
   // Function to transform AI response data to DocuSAGE Tree format
+  // Handles both PaperNode format (label, is_document) and
+  // AiSearch HierarchyNode format (name, papers[])
   const transformAIDataToTree = (node: any): any => {
     if (!node) {
       console.error('transformAIDataToTree: node is null or undefined');
-      return {
-        topic: 'Error',
-        size: 0,
-        children: [],
-        summary: 'Error transforming data'
-      };
+      return { topic: 'Error', size: 0, children: [], summary: 'Error transforming data' };
     }
 
     try {
+      // Leaf papers array (AiSearch HierarchyNode format)
+      if (node.papers && node.papers.length > 0 && (!node.children || node.children.length === 0)) {
+        const paperChildren = node.papers.map((p: any) => ({
+          topic: p.title || 'Untitled',
+          size: 1,
+          children: [],
+          title: p.title || '',
+          authors: p.authors || [],
+          year: p.year != null ? String(p.year) : '',
+          venue: p.venue || '',
+          url: p.url || '',
+          abstract: p.abstract || '',
+          tldr: p.tldr || '',
+          citations: p.citations || 0,
+          pdf_url: p.pdf_url || null,
+          source: p.source || '',
+        }));
+        return {
+          topic: node.name || node.label || node.topic || 'Untitled',
+          size: 0,
+          children: paperChildren,
+          summary: node.summary || '',
+        };
+      }
+
+      // Cluster / branch node
       return {
-        topic: node.label || node.topic || 'Untitled',
-        size: node.is_document ? 1 : (node.paper_count || 0),
+        topic: node.name || node.label || node.topic || 'Untitled',
+        size: node.is_document ? 1 : 0,
         children: node.children ? node.children.map(transformAIDataToTree) : [],
         summary: node.summary || '',
         title: node.title || '',
         authors: node.authors || [],
-        year: node.year || '',
-        venue: node.venue || ''
+        year: node.year != null ? String(node.year) : '',
+        venue: node.venue || '',
       };
     } catch (error) {
       console.error('Error transforming node:', error, node);
-      return {
-        topic: 'Error',
-        size: 0,
-        children: [],
-        summary: 'Error transforming data'
-      };
+      return { topic: 'Error', size: 0, children: [], summary: 'Error transforming data' };
     }
   };
 
@@ -387,13 +487,7 @@ function AppComponent(props: App): JSX.Element {
             </Box>
           ) : (
             s.messages.map((message) => {
-              // Check if this is an AI response with data
-              const isAIResponse = message.role === 'assistant' && message.content.includes('AI Search Results:');
-              const hierarchyData = message.jsonData || null;
-              
-              if (isAIResponse && hierarchyData) {
-                console.log('Found hierarchy data in message:', hierarchyData);
-              }
+              const hierarchyData = (message.role === 'assistant' && message.jsonData) ? message.jsonData : null;
 
               return (
                 <Box
@@ -419,7 +513,7 @@ function AppComponent(props: App): JSX.Element {
                     </Text>
                     
                     {/* Action buttons for AI responses with data */}
-                    {isAIResponse && hierarchyData && (
+                    {hierarchyData && (
                       <Box mt={3} pt={2} borderTop="1px" borderColor={borderColor}>
                         <Text fontSize="xs" mb={2} opacity={0.8}>
                           Actions:
@@ -465,7 +559,7 @@ function AppComponent(props: App): JSX.Element {
                         </HStack>
                       </Box>
                     )}
-                    {isAIResponse && hierarchyData && (!hierarchyData.children || hierarchyData.children.length === 0) && (
+                    {hierarchyData && (!hierarchyData.children || hierarchyData.children.length === 0) && (
                       <Box mt={3} pt={2} borderTop="1px" borderColor={borderColor}>
                         <Text fontSize="xs" color="gray.500">
                           No hierarchical data available for visualization
@@ -478,11 +572,32 @@ function AppComponent(props: App): JSX.Element {
             })
           )}
           {s.isLoading && (
-            <Box alignSelf="flex-start">
-              <HStack>
-                <Spinner size="sm" />
-                <Text fontSize="sm" color="gray.500">AI is thinking...</Text>
-              </HStack>
+            <Box alignSelf="flex-start" maxW="90%">
+              <Box
+                bg="white"
+                px={4}
+                py={3}
+                borderRadius="lg"
+                shadow="sm"
+                border="1px"
+                borderColor={borderColor}
+              >
+                {progressLines.length > 0 ? (
+                  <VStack align="stretch" spacing={0} maxH="200px" overflowY="auto">
+                    {progressLines.map((line, i) => (
+                      <Text key={i} fontSize="xs" fontFamily="mono" color="gray.600" lineHeight="1.6">
+                        {line}
+                      </Text>
+                    ))}
+                  </VStack>
+                ) : (
+                  <Text fontSize="sm" color="gray.500">Starting pipeline...</Text>
+                )}
+                <HStack mt={2}>
+                  <Spinner size="xs" color="blue.400" />
+                  <Text fontSize="xs" color="gray.400">Processing...</Text>
+                </HStack>
+              </Box>
             </Box>
           )}
           <div ref={messagesEndRef} />

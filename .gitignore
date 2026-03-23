@@ -17,6 +17,7 @@ webstack/assets/*
 
 
 deployment/.env
+.env
 
 # Mac System Files
 .DS_Store

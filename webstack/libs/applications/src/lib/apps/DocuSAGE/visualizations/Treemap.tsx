@@ -29,6 +29,12 @@ type TooltipData = {
   authors?: string[];
   year?: string;
   venue?: string;
+  abstract?: string;
+  tldr?: string;
+  citations?: number;
+  url?: string;
+  pdf_url?: string | null;
+  source?: string;
 } | null;
 
 export const Treemap = ({
@@ -106,6 +112,12 @@ export const Treemap = ({
   // Add keyboard shortcuts for zooming
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept keys when the user is typing in an input or textarea
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable) {
+        return;
+      }
+
       if (e.key === '=' || e.key === '+') {
         e.preventDefault();
         setZoom(prevZoom => Math.min(3, prevZoom + 0.1));
@@ -191,6 +203,16 @@ export const Treemap = ({
   const firstLevelGroups = fullHierarchy?.children?.map((child) => child.data.topic);
   const colorScale = d3.scaleOrdinal<string>().domain(firstLevelGroups || []).range(colors);
 
+  /** Get top-level (depth 1) topic for color – walk up from this node so duplicate labels get correct color. */
+  function getTopLevelTopicFromNode(hierarchyNode: d3.HierarchyNode<Tree>): string | null {
+    let current: d3.HierarchyNode<Tree> | null = hierarchyNode;
+    while (current && current.depth > 1 && current.parent) {
+      current = current.parent;
+    }
+    return current && current.depth === 1 ? current.data.topic : null;
+  }
+
+  /** Legacy: get top-level topic by topic string (finds first match – avoid for duplicate labels). */
   function getTopLevelParentTopic(topic: string): string | null {
     const originalNode = fullHierarchy.descendants().find((n) => n.data.topic === topic);
     let topLevelParent = originalNode;
@@ -475,11 +497,11 @@ export const Treemap = ({
         )}
         <svg width={squareSize} height={layerHeight}>
           {layerNodes.map((node) => {
-            const topLevelTopic = getTopLevelParentTopic(node.data.topic);
+            const topLevelTopic = getTopLevelTopicFromNode(node);
             const nodeColor = colorScale(topLevelTopic ?? node.data.topic);
 
             return (
-              <g key={node.data.topic}>
+              <g key={`${node.depth}-${node.x0}-${node.y0}`}>
                 <rect
                   x={node.x0}
                   y={node.y0}
@@ -544,11 +566,11 @@ export const Treemap = ({
           ))}
           
           {selectedLayerNodes.map((node) => {
-            const topLevelTopic = getTopLevelParentTopic(node.data.topic);
+            const topLevelTopic = getTopLevelTopicFromNode(node);
             const nodeColor = colorScale(topLevelTopic ?? node.data.topic);
 
             return (
-              <g key={node.data.topic}>
+              <g key={`2d-${node.depth}-${node.x0}-${node.y0}`}>
                 <rect
                   x={node.x0}
                   y={node.y0}
@@ -572,7 +594,13 @@ export const Treemap = ({
                         title: node.data.title,
                         authors: node.data.authors,
                         year: node.data.year,
-                        venue: node.data.venue
+                        venue: node.data.venue,
+                        abstract: node.data.abstract,
+                        tldr: node.data.tldr,
+                        citations: node.data.citations,
+                        url: node.data.url,
+                        pdf_url: node.data.pdf_url,
+                        source: node.data.source,
                       });
                       onTitleHover?.(null); // clear title hover for leaf
                     } else {
@@ -616,7 +644,7 @@ export const Treemap = ({
           zIndex: 1000,
           width: '90%',
           height: '90%',
-          pointerEvents: 'none',
+          pointerEvents: 'auto',
           border: '0.01em solid #eee',
           display: 'flex',
           flexDirection: 'column',
@@ -625,59 +653,48 @@ export const Treemap = ({
           fontSize: `${tooltipFontSize}px`
         }}
       >
-        <div style={{ 
-          fontWeight: 'bold', 
-          fontSize: '1em', 
-          color: '#666',
-          textAlign: 'center',
-          borderBottom: '0.02em solid #eee',
-          paddingBottom: '0.24em'
-        }}>
-          <span>{tooltipData.topic}</span>
+        {/* 1. Title */}
+        <div style={{ fontWeight: 'bold', fontSize: '1em', color: '#333', textAlign: 'center', borderBottom: '0.02em solid #eee', paddingBottom: '0.24em' }}>
+          <span>{tooltipData.title || tooltipData.topic}</span>
         </div>
-        
-        {tooltipData.title && (
-          <div style={{ 
-            fontSize: '0.8em',
-            fontWeight: '500',
-            color: '#333',
-            textAlign: 'center'
-          }}>
-            {tooltipData.title}
+
+        {/* 2. Year and Authors */}
+        {(tooltipData.year || (tooltipData.authors && tooltipData.authors.length > 0)) && (
+          <div style={{ fontSize: '0.6em', color: '#666', textAlign: 'center', fontStyle: 'italic' }}>
+            {[tooltipData.year, tooltipData.authors?.length ? tooltipData.authors.join(', ') : ''].filter(Boolean).join(' • ')}
           </div>
         )}
 
-        {tooltipData.authors && tooltipData.authors.length > 0 && (
-          <div style={{ 
-            fontSize: '0.6em',
-            color: '#666',
-            textAlign: 'center',
-            fontStyle: 'italic'
-          }}>
-            {tooltipData.authors.join(', ')}
+        {/* 3. Venue */}
+        {tooltipData.venue && (
+          <div style={{ fontSize: '0.55em', color: '#888', textAlign: 'center' }}>
+            {tooltipData.venue}
           </div>
         )}
 
-        {(tooltipData.year || tooltipData.venue) && (
-          <div style={{ 
-            fontSize: '0.5em',
-            color: '#888',
-            textAlign: 'center'
-          }}>
-            {[tooltipData.year, tooltipData.venue].filter(Boolean).join(' • ')}
+        {/* 4. Abstract / TLDR */}
+        {(tooltipData.abstract || tooltipData.tldr || tooltipData.summary) && (
+          <div style={{ fontSize: '0.6em', color: '#444', lineHeight: '1.4', textAlign: 'left', marginTop: '0.12em', padding: '0 0.4em' }}>
+            {tooltipData.abstract || tooltipData.tldr || tooltipData.summary}
           </div>
         )}
 
-        {tooltipData.summary && (
-          <div style={{ 
-            fontSize: '0.6em',
-            color: '#444',
-            lineHeight: '1.4',
-            textAlign: 'left',
-            marginTop: '0.24em',
-            padding: '0 0.4em'
-          }}>
-            {tooltipData.summary}
+        {/* 5. Citations and Source */}
+        {(tooltipData.citations != null && tooltipData.citations > 0) || tooltipData.source ? (
+          <div style={{ fontSize: '0.55em', color: '#666' }}>
+            {[tooltipData.citations != null && tooltipData.citations > 0 ? `Citations: ${tooltipData.citations}` : '', tooltipData.source ? `Source: ${tooltipData.source}` : ''].filter(Boolean).join(' • ')}
+          </div>
+        ) : null}
+
+        {/* 6. URL and PDF URL */}
+        {(tooltipData.url || tooltipData.pdf_url) && (
+          <div style={{ fontSize: '0.5em', display: 'flex', flexDirection: 'column', gap: '0.12em' }}>
+            {tooltipData.url && (
+              <a href={tooltipData.url} target="_blank" rel="noopener noreferrer" style={{ color: '#3182ce', wordBreak: 'break-all' }}>Open paper</a>
+            )}
+            {tooltipData.pdf_url && (
+              <a href={tooltipData.pdf_url} target="_blank" rel="noopener noreferrer" style={{ color: '#3182ce', wordBreak: 'break-all' }}>PDF</a>
+            )}
           </div>
         )}
       </div>

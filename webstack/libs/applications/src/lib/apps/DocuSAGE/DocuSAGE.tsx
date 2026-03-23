@@ -10,7 +10,7 @@ import { Button, Select, Slider, SliderTrack, SliderFilledTrack, SliderThumb, Sl
 import { useAppStore } from '@sage3/frontend';
 import { App, AppGroup } from '../../schema';
 import { AppWindow } from '../../components';
-import { data, Tree, transformToTree } from './data';
+import { data, Tree, transformToTree, isHierarchyFormat, transformHierarchyToTree } from './data';
 import { Treemap } from './visualizations/Treemap';
 import { TSNE } from './visualizations/TSNE';
 import { UMAP } from './visualizations/UMAP';
@@ -199,7 +199,13 @@ export const AppComponent = (props: App): JSX.Element => {
         authors: paper.authors,
         year: paper.year,
         venue: paper.venue,
-        summary: paper.summary,
+        summary: paper.summary || paper.abstract || paper.tldr,
+        abstract: paper.abstract,
+        tldr: paper.tldr,
+        citations: paper.citations,
+        url: paper.url,
+        pdf_url: paper.pdf_url,
+        source: paper.source,
       },
       raised: true,
       dragging: false,
@@ -413,16 +419,17 @@ function ToolbarComponent(props: App): JSX.Element {
     reader.onload = (e) => {
       try {
         const jsonData = JSON.parse(e.target?.result as string);
-        const transformedData = transformToTree(jsonData);
-        updateState(props._id, { 
+        const transformedData = isHierarchyFormat(jsonData)
+          ? transformHierarchyToTree(jsonData)
+          : transformToTree(jsonData);
+        updateState(props._id, {
           data: transformedData,
           filteredData: null,
           depth: 1,
-          customColors: s.customColors || [...defaultColors], // Preserve custom colors
+          customColors: s.customColors || [...defaultColors],
         });
       } catch (error) {
         console.error('Error parsing JSON file:', error);
-        // You might want to add error handling/notification here
       }
     };
     reader.readAsText(file);
