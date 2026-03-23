@@ -1,15 +1,14 @@
 /**
- * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Box, useToast, useColorModeValue, Icon, Portal, Button } from '@chakra-ui/react';
 
-import { DraggableData, ResizableDelta, Position, Rnd, RndDragEvent } from 'react-rnd';
 import { MdWindow } from 'react-icons/md';
 import { IconType } from 'react-icons/lib';
 
@@ -18,7 +17,6 @@ import {
   useAppStore,
   useUIStore,
   useHexColor,
-  useThrottleScale,
   useAbility,
   useInsightStore,
   useUserSettings,
@@ -29,7 +27,7 @@ import {
 import { App } from '../../schema';
 import { ProcessingBox, BlockInteraction, WindowTitle, WindowBorder } from './components';
 
-// Consraints on the app window size
+// Constraints on the app window size
 const APP_MIN_WIDTH = 200;
 const APP_MIN_HEIGHT = 100;
 const APP_MAX_WIDTH = 8 * 1024;
@@ -40,10 +38,13 @@ type Side = 'left' | 'right' | 'top' | 'bottom';
 type Corner = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 type HitType = { edge?: Side; corner?: Corner } | null;
 
+// Resize handle directions
+type ResizeDirection = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
+
 type WindowProps = {
   app: App;
   children: JSX.Element;
-  // React Rnd property to control the window aspect ratio (optional)
+  // Control the window aspect ratio (optional)
   lockAspectRatio?: boolean | number;
   lockToBackground?: boolean;
   processing?: boolean;
@@ -54,6 +55,30 @@ type WindowProps = {
   hideBordercolor?: string;
   hideBackgroundIcon?: IconType;
 };
+
+// Resize handle positions: CSS styles keyed by direction
+const RESIZE_HANDLE_SIZE = 10;
+const resizeHandleBaseStyle: React.CSSProperties = {
+  position: 'absolute',
+  zIndex: 10,
+};
+
+function getResizeHandleStyle(dir: ResizeDirection, handleSize: number): React.CSSProperties {
+  const h = handleSize;
+  const half = h / 2;
+  switch (dir) {
+    case 'nw': return { ...resizeHandleBaseStyle, top: -half, left: -half, width: h, height: h, cursor: 'nw-resize' };
+    case 'n':  return { ...resizeHandleBaseStyle, top: -half, left: half, right: half, height: h, cursor: 'n-resize' };
+    case 'ne': return { ...resizeHandleBaseStyle, top: -half, right: -half, width: h, height: h, cursor: 'ne-resize' };
+    case 'e':  return { ...resizeHandleBaseStyle, top: half, bottom: half, right: -half, width: h, cursor: 'e-resize' };
+    case 'se': return { ...resizeHandleBaseStyle, bottom: -half, right: -half, width: h, height: h, cursor: 'se-resize' };
+    case 's':  return { ...resizeHandleBaseStyle, bottom: -half, left: half, right: half, height: h, cursor: 's-resize' };
+    case 'sw': return { ...resizeHandleBaseStyle, bottom: -half, left: -half, width: h, height: h, cursor: 'sw-resize' };
+    case 'w':  return { ...resizeHandleBaseStyle, top: half, bottom: half, left: -half, width: h, cursor: 'w-resize' };
+  }
+}
+
+const RESIZE_DIRECTIONS: ResizeDirection[] = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'];
 
 export function AppWindow(props: WindowProps) {
   // Settings
@@ -75,7 +100,7 @@ export function AppWindow(props: WindowProps) {
   const clearError = useAppStore((state) => state.clearError);
 
   // UI store for global setting
-  const scale = useThrottleScale(250);
+  const scaleRef = useRef(1);
   const zindex = useUIStore((state) => state.zIndex);
   const boardDragging = useUIStore((state) => state.boardDragging);
   const appDragging = useUIStore((state) => state.appDragging);
@@ -85,19 +110,25 @@ export function AppWindow(props: WindowProps) {
   const selectedTag = useUIStore((state) => state.selectedTag);
   const localDeltaMove = useUIStore((state) => state.deltaLocalMove[props.app._id]);
   const setLocalDeltaMove = useUIStore((state) => state.setDeltaLocalMove);
-  const boardSynced = useUIStore((state) => state.boardSynced);
-  const rndSafeForAction = useUIStore((state) => state.rndSafeForAction);
   const { uiToBoard } = useCursorBoardPosition();
+
+  // Keep scaleRef up to date without re-renders
+  useEffect(() => {
+    return useUIStore.subscribe((state) => {
+      scaleRef.current = state.scale;
+    });
+  }, []);
 
   // Selected Apps Info
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
+  const addSelectedApp = useUIStore((state) => state.addSelectedApp);
+  const removeSelectedApp = useUIStore((state) => state.removeSelectedApp);
   const selectedApp = useUIStore((state) => state.selectedAppId);
   const selected = selectedApp === props.app._id;
   const selectedApps = useUIStore((state) => state.selectedAppsIds);
 
   // Tag Highlight
-  // Insight Store
   const insights = useInsightStore((state) => state.insights);
   const myInsights = insights.find((el) => props.app._id == el.data.app_id);
   const myLabels = myInsights ? myInsights.data.labels : [];
@@ -113,6 +144,20 @@ export function AppWindow(props: WindowProps) {
   const [myZ, setMyZ] = useState(zindex);
   const [appWasDragged, setAppWasDragged] = useState(false);
 
+  // Refs for drag — avoids stale closures and prevents position jumps from server updates during drag
+  const dragActiveRef = useRef(false);
+  const dragStartClientRef = useRef({ x: 0, y: 0 });
+  const dragStartPosRef = useRef({ x: 0, y: 0 });
+  const appWasDraggedRef = useRef(false);
+
+  // Refs for resize
+  const resizeActiveRef = useRef(false);
+  const resizeDirRef = useRef<ResizeDirection>('se');
+  const resizeStartRef = useRef({ clientX: 0, clientY: 0, x: 0, y: 0, w: 0, h: 0 });
+
+  // Aspect ratio: false | true (1:1) | number
+  const aspectRatio = props.lockAspectRatio ?? false;
+
   // Colors and Styling
   const bg = useColorModeValue('gray.100', 'gray.700');
   const backgroundColor = useHexColor(bg);
@@ -122,6 +167,8 @@ export function AppWindow(props: WindowProps) {
   const shadowColor = useColorModeValue('rgba(0 0 0 / 25%)', 'rgba(0 0 0 / 50%)');
 
   // Border Radius (https://www.30secondsofcode.org/articles/s/css-nested-border-radius)
+  // scaleRef is used for display only here — just read scale from store for style
+  const scale = useUIStore((state) => state.scale);
   const borderWidth = Math.min(Math.max(4 / scale, 1), selected ? 10 : 4);
   const outerBorderRadius = 12;
   const innerBorderRadius = outerBorderRadius - borderWidth;
@@ -134,7 +181,11 @@ export function AppWindow(props: WindowProps) {
 
   // Make the handles a little bigger when the scale is small
   const invScale = Math.round(1 / scale);
-  const handleScale = Math.max(2, Math.min(invScale, 10));
+  const handlePixelSize = Math.max(RESIZE_HANDLE_SIZE, Math.min(invScale * RESIZE_HANDLE_SIZE, 10 * RESIZE_HANDLE_SIZE));
+
+  // Can this app be dragged / resized right now
+  const canDrag = canMove && !isPinned && primaryActionMode !== 'grab' && primaryActionMode !== 'linker';
+  const canResizeNow = enableResize && canResize && !isPinned && primaryActionMode === 'lasso';
 
   // Display messages
   const toast = useToast();
@@ -143,23 +194,20 @@ export function AppWindow(props: WindowProps) {
   // Track the app store errors
   useEffect(() => {
     if (storeError) {
-      // Display a message'
       if (storeError.id && storeError.id === props.app._id) {
-        // open new toast if the previous one is not active
         if (!toast.isActive(toastID)) {
           toast({ id: toastID, description: 'Error - ' + storeError.msg, status: 'warning', duration: 3000, isClosable: true });
         } else {
-          // or update the existing one
           toast.update(toastID, { description: 'Error - ' + storeError.msg, status: 'warning', duration: 3000, isClosable: true });
         }
       }
-      // Clear the error
       clearError();
     }
   }, [storeError]);
 
-  // If size or position change, update the local state.
+  // If size or position change from server, update local state (but not during active drag/resize)
   useEffect(() => {
+    if (dragActiveRef.current || resizeActiveRef.current) return;
     setSize({ width: props.app.data.size.width, height: props.app.data.size.height });
     setPos({ x: props.app.data.position.x, y: props.app.data.position.y });
   }, [props.app.data.size.width, props.app.data.size.height, props.app.data.position.x, props.app.data.position.y]);
@@ -173,39 +221,88 @@ export function AppWindow(props: WindowProps) {
     }
   }, [localDeltaMove, props.app.data.pinned]);
 
-  // Handle when the window starts to drag
-  function handleDragStart() {
-    setAppDragging(true);
+  // Track raised state
+  useEffect(() => {
+    if (props.app.data.raised) {
+      if (!props.lockToBackground) {
+        setMyZ(zindex + 1);
+        incZ();
+      }
+    }
+  }, [props.app.data.raised]);
+
+  // One-time init: ensure pinned field exists on older apps that predate the field
+  useEffect(() => {
+    if (props.app.data.pinned === undefined) {
+      update(props.app._id, { pinned: false });
+    }
+  }, []);
+
+  // Deselect on unmount so stale selectedAppId doesn't linger
+  useEffect(() => {
+    return () => {
+      if (selectedApp === props.app._id) {
+        setSelectedApp('');
+      }
+    };
+  }, [selectedApp]);
+
+  function handleBringAppForward() {
+    bringForward(props.app._id);
+  }
+
+  // ─── Drag handlers ────────────────────────────────────────────────────────
+
+  function handleDragPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    if (!canDrag) return;
+    // In lasso mode, shift+click toggles selection — let it through to onClick
+    if (primaryActionMode === 'lasso' && e.shiftKey) return;
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    dragActiveRef.current = true;
+    appWasDraggedRef.current = false;
+    dragStartClientRef.current = { x: e.clientX, y: e.clientY };
+    dragStartPosRef.current = { x: pos.x, y: pos.y };
     setAppWasDragged(false);
+    setAppDragging(true);
     handleBringAppForward();
     if (isGrouped) {
-      const selectedAppIds = selectedApps.filter((appId) => appId !== props.app._id);
-      setLocalDeltaMove({ x: 0, y: 0 }, selectedAppIds);
+      const otherIds = selectedApps.filter((id) => id !== props.app._id);
+      setLocalDeltaMove({ x: 0, y: 0 }, otherIds);
     }
   }
 
-  // When the window is being dragged
-  function handleDrag(_e: RndDragEvent, data: DraggableData) {
-    if (!appWasDragged) {
+  function handleDragPointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!dragActiveRef.current) return;
+    const s = scaleRef.current;
+    const dx = (e.clientX - dragStartClientRef.current.x) / s;
+    const dy = (e.clientY - dragStartClientRef.current.y) / s;
+    const newX = dragStartPosRef.current.x + dx;
+    const newY = dragStartPosRef.current.y + dy;
+    setPos({ x: newX, y: newY });
+    if (!appWasDraggedRef.current) {
+      appWasDraggedRef.current = true;
       setAppWasDragged(true);
     }
     if (isGrouped) {
-      const dx = data.x - props.app.data.position.x;
-      const dy = data.y - props.app.data.position.y;
-      const selectedAppIds = selectedApps.filter((appId) => appId !== props.app._id);
-      setLocalDeltaMove({ x: dx, y: dy }, selectedAppIds);
+      const otherIds = selectedApps.filter((id) => id !== props.app._id);
+      setLocalDeltaMove({ x: dx, y: dy }, otherIds);
     }
   }
 
-  // Handle when the app is finished being dragged
-  function handleDragStop(_e: RndDragEvent, data: DraggableData) {
-    const x = data.x;
-    const y = data.y;
-    // If the new positions is way far away from the old positoins, then dont update the position
-    // Calculate the distance
-    const dx = x - props.app.data.position.x;
-    const dy = y - props.app.data.position.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
+  function handleDragPointerUp(e: React.PointerEvent<HTMLDivElement>) {
+    if (!dragActiveRef.current) return;
+    dragActiveRef.current = false;
+    e.currentTarget.releasePointerCapture(e.pointerId);
+    setAppDragging(false);
+
+    if (!appWasDraggedRef.current) return; // tap, no movement
+
+    const x = pos.x;
+    const y = pos.y;
+    const ddx = x - props.app.data.position.x;
+    const ddy = y - props.app.data.position.y;
+    const distance = Math.sqrt(ddx * ddx + ddy * ddy);
     if (distance > 50000) {
       toast({
         title: 'Invalid Position',
@@ -218,172 +315,152 @@ export function AppWindow(props: WindowProps) {
       setLocalDeltaMove({ x: 0, y: 0 }, selectedApps);
       return;
     }
-    setPos({ x, y });
-    setAppDragging(false);
-    // Update the position of the app in the server and all the other apps in the group
+
     if (isGrouped) {
-      updateAppLocationByDelta({ x: dx, y: dy }, selectedApps);
+      updateAppLocationByDelta({ x: ddx, y: ddy }, selectedApps);
       setLocalDeltaMove({ x: 0, y: 0 }, []);
     } else {
       update(props.app._id, { position: { x, y, z: props.app.data.position.z } });
     }
   }
 
-  // Handle when the window starts to resize
-  function handleResizeStart() {
+  // ─── Resize handlers ──────────────────────────────────────────────────────
+
+  function handleResizePointerDown(e: React.PointerEvent<HTMLDivElement>, dir: ResizeDirection) {
+    if (!canResizeNow) return;
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    resizeActiveRef.current = true;
+    resizeDirRef.current = dir;
+    resizeStartRef.current = {
+      clientX: e.clientX,
+      clientY: e.clientY,
+      x: pos.x,
+      y: pos.y,
+      w: size.width,
+      h: size.height,
+    };
     setAppDragging(true);
     handleBringAppForward();
   }
 
-  // Handle when the app is resizing
-  function handleResize(e: MouseEvent | TouchEvent, _direction: any, ref: any, _delta: ResizableDelta, position: Position) {
-    // Get the width and height of the app after the resize
-    const width = parseInt(ref.offsetWidth);
-    const height = parseInt(ref.offsetHeight);
+  function handleResizePointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!resizeActiveRef.current) return;
+    const s = scaleRef.current;
+    const dir = resizeDirRef.current;
+    const start = resizeStartRef.current;
 
-    // Set local state
-    setSize({ width, height });
+    const rawDx = (e.clientX - start.clientX) / s;
+    const rawDy = (e.clientY - start.clientY) / s;
+
+    let newX = start.x;
+    let newY = start.y;
+    let newW = start.w;
+    let newH = start.h;
+
+    // Compute raw new dimensions
+    if (dir.includes('e')) newW = Math.max(APP_MIN_WIDTH, Math.min(APP_MAX_WIDTH, start.w + rawDx));
+    if (dir.includes('s')) newH = Math.max(APP_MIN_HEIGHT, Math.min(APP_MAX_HEIGHT, start.h + rawDy));
+    if (dir.includes('w')) {
+      const proposedW = Math.max(APP_MIN_WIDTH, Math.min(APP_MAX_WIDTH, start.w - rawDx));
+      newX = start.x + start.w - proposedW;
+      newW = proposedW;
+    }
+    if (dir.includes('n')) {
+      const proposedH = Math.max(APP_MIN_HEIGHT, Math.min(APP_MAX_HEIGHT, start.h - rawDy));
+      newY = start.y + start.h - proposedH;
+      newH = proposedH;
+    }
+
+    // Apply aspect ratio lock if needed
+    if (aspectRatio !== false) {
+      const ratio = typeof aspectRatio === 'number' ? aspectRatio : start.w / start.h;
+      // Determine which axis to lock based on drag direction
+      const isHorizontal = dir === 'e' || dir === 'w';
+      const isVertical = dir === 'n' || dir === 's';
+      if (isHorizontal) {
+        newH = newW / ratio;
+      } else if (isVertical) {
+        newW = newH * ratio;
+      } else {
+        // Corner — use whichever dimension changed more
+        if (Math.abs(rawDx) >= Math.abs(rawDy)) {
+          newH = newW / ratio;
+          if (dir.includes('n')) newY = start.y + start.h - newH;
+        } else {
+          newW = newH * ratio;
+          if (dir.includes('w')) newX = start.x + start.w - newW;
+        }
+      }
+    }
+
+    setPos({ x: newX, y: newY });
+    setSize({ width: newW, height: newH });
     setAppWasDragged(true);
-    setPos({ x: position.x, y: position.y });
   }
 
-  // Handle when the app is fnished being resized
-  function handleResizeStop(e: MouseEvent | TouchEvent, _direction: any, ref: any, _delta: ResizableDelta, position: Position) {
-    // Get the width and height of the app after the resize
-    const width = parseInt(ref.offsetWidth);
-    // Subtract the height of the title bar. The title bar is just for the UI, we don't want to save the additional height to the server.
-    const height = parseInt(ref.offsetHeight);
-
-    // Set local state
-    setPos({ x: position.x, y: position.y });
-    setSize({ width, height });
+  function handleResizePointerUp(e: React.PointerEvent<HTMLDivElement>) {
+    if (!resizeActiveRef.current) return;
+    resizeActiveRef.current = false;
+    e.currentTarget.releasePointerCapture(e.pointerId);
     setAppDragging(false);
 
-    // Update the size and position of the app in the server
     update(props.app._id, {
-      position: {
-        ...props.app.data.position,
-        x: position.x,
-        y: position.y,
-      },
-      size: {
-        ...props.app.data.size,
-        width,
-        height,
-      },
+      position: { ...props.app.data.position, x: pos.x, y: pos.y },
+      size: { ...props.app.data.size, width: size.width, height: size.height },
     });
   }
 
-  // Track raised state
-  useEffect(() => {
-    if (props.app.data.raised) {
-      if (!props.lockToBackground) {
-        // raise  my zIndex
-        setMyZ(zindex + 1);
-        // raise the global value
-        incZ();
-      }
-    }
-  }, [props.app.data.raised]);
+  // ─── App click / touch handlers ───────────────────────────────────────────
 
-  async function handleAppClick(e: MouseEvent) {
+  async function handleAppClick(e: React.MouseEvent) {
     e.stopPropagation();
-
-    if (primaryActionMode === 'grab') {
+    if (primaryActionMode === 'grab' || primaryActionMode === 'linker') return;
+    // Shift+click in lasso mode: toggle this app in/out of the lasso selection.
+    // Must be checked before appWasDragged — any mouse movement during the click
+    // would set appWasDragged and swallow the first click otherwise.
+    if (primaryActionMode === 'lasso' && e.shiftKey) {
+      setAppWasDragged(false);
+      if (isGrouped) {
+        removeSelectedApp(props.app._id);
+      } else {
+        addSelectedApp(props.app._id);
+      }
       return;
     }
-    if (primaryActionMode === 'linker') {
+    if (appWasDragged) {
+      setAppWasDragged(false);
       return;
     }
-    // Set the selected app in the UI store
-    if (appWasDragged) setAppWasDragged(false);
-    else {
-      handleBringAppForward();
-      clearSelectedApps();
-      setSelectedApp(props.app._id);
-      // // Uncomment to allow for selection in grab mode to change interaction modes
-      // if (primaryActionMode === 'grab') {
-      //   setPrimaryActionMode('lasso');
-      // }
-    }
+    handleBringAppForward();
+    clearSelectedApps();
+    setSelectedApp(props.app._id);
   }
 
-  function handleAppTouchStart(e: PointerEvent) {
+  function handleAppTouchStart(e: React.PointerEvent) {
     e.stopPropagation();
-
-    // Uncomment me to block selection behaviour on AppWindows
-    if (primaryActionMode === 'grab') {
-      return;
-    }
-
-    if (primaryActionMode === 'linker') {
-      return;
-    }
-
-    // Set the selected app in the UI store
+    if (primaryActionMode === 'grab' || primaryActionMode === 'linker') return;
+    // In lasso mode, shift+click toggle is handled entirely in handleAppClick
+    if (primaryActionMode === 'lasso' && e.shiftKey) return;
     if (appWasDragged) {
       setAppWasDragged(false);
     } else {
       handleBringAppForward();
       clearSelectedApps();
       setSelectedApp(props.app._id);
-      // // Uncomment to allow for selection in grab mode to change interaction modes
-      // if (primaryActionMode === 'grab') {
-      //   setPrimaryActionMode('lasso');
-      // }
     }
   }
 
-  function handleAppTouchMove(e: PointerEvent) {
+  function handleAppTouchMove(e: React.PointerEvent) {
     e.stopPropagation();
-    setAppWasDragged(true);
+    if (!appWasDragged) setAppWasDragged(true);
   }
 
-  function handleBringAppForward() {
-    bringForward(props.app._id);
-  }
+  // ─── Double-click on resize handle to snap to viewport ────────────────────
 
-  useEffect(() => {
-    // Check if the app has the pinned property
-    if (props.app.data.pinned === undefined) {
-      update(props.app._id, { pinned: false });
-    }
-    // When closing the app, deselect it
-    return () => {
-      if (selectedApp === props.app._id) {
-        setSelectedApp('');
-      }
-    };
-  }, [selectedApp]);
-
-  // Caclulate if the app is within the user's Viewport
-  const outsideView = useMemo(() => {
-    const x = pos.x;
-    const y = pos.y;
-    const w = size.width;
-    const h = size.height;
-    const vx = viewport.position.x;
-    const vy = viewport.position.y;
-    const vw = viewport.size.width;
-    const vh = viewport.size.height;
-    return x + w < vx || x > vx + vw || y + h < vy || y > vy + vh;
-  }, [pos.x, pos.y, size.width, size.height, viewport.position.x, viewport.position.y, viewport.size.width, viewport.size.height]);
-
-  const hideApp = outsideView || boardDragging;
-  const hideBackgroundColorHex = useHexColor(props.hideBackgroundColor || backgroundColor);
-
-  const memoizedChildren = useMemo(() => props.children, [props.children]);
-
-  // Handle double click on the app window borders
-  // This will resize the app window to the size of the viewport
-  // If Alt is pressed, it will resize also in the opposite direction
-  const onDoubleClick = (e: any) => {
-    // If not allowed to resize, return
-    if (!canMove || !canResize || isPinned) {
-      return;
-    }
-    // If clicked on the resize handle...
-    if (e.target.className === 'app-window-resize-handle') {
+  const onDoubleClick = (e: React.MouseEvent) => {
+    if (!canMove || !canResize || isPinned) return;
+    if ((e.target as HTMLElement).className === 'app-window-resize-handle') {
       const position = uiToBoard(e.clientX, e.clientY);
       const edge = getRectEdgeAtPoint(
         { x: position.x, y: position.y },
@@ -396,9 +473,7 @@ export function AppWindow(props: WindowProps) {
         let newHeight = size.height;
         const padx = 20;
         const pady = 60;
-        // Check if the edge is a corner
         if (edge.corner) {
-          // Handle corner double click
           if (edge.corner === 'top-left') {
             newOrigin = uiToBoard(padx, pady);
             newWidth = size.width + (pos.x - newOrigin.x);
@@ -443,7 +518,6 @@ export function AppWindow(props: WindowProps) {
           }
         } else if (edge.edge) {
           if (edge.edge === 'left') {
-            // Handle left edge double click
             const topLeft = uiToBoard(padx, pady);
             newOrigin = { x: topLeft.x, y: pos.y };
             newWidth = size.width + (pos.x - topLeft.x);
@@ -453,7 +527,6 @@ export function AppWindow(props: WindowProps) {
               newWidth = topRight.x - topLeft.x;
             }
           } else if (edge.edge === 'right') {
-            // Handle right edge double click
             const topRight = uiToBoard(window.innerWidth - padx, pady);
             newWidth = topRight.x - pos.x;
             if (e.altKey) {
@@ -462,7 +535,6 @@ export function AppWindow(props: WindowProps) {
               newWidth = topRight.x - topLeft.x;
             }
           } else if (edge.edge === 'top') {
-            // Handle top edge double click
             const topLeft = uiToBoard(padx, pady);
             newOrigin = { x: pos.x, y: topLeft.y };
             newWidth = size.width;
@@ -472,7 +544,6 @@ export function AppWindow(props: WindowProps) {
               newHeight = bottomLeft.y - topLeft.y;
             }
           } else if (edge.edge === 'bottom') {
-            // Handle bottom edge double click
             const bottomLeft = uiToBoard(padx, window.innerHeight - pady);
             newHeight = bottomLeft.y - pos.y;
             if (e.altKey) {
@@ -482,24 +553,33 @@ export function AppWindow(props: WindowProps) {
             }
           }
         }
-        // Update the app size and position
         update(props.app._id, {
-          position: {
-            ...props.app.data.position,
-            x: newOrigin.x,
-            y: newOrigin.y,
-          },
-          size: {
-            ...props.app.data.size,
-            width: newWidth,
-            height: newHeight,
-          },
+          position: { ...props.app.data.position, x: newOrigin.x, y: newOrigin.y },
+          size: { ...props.app.data.size, width: newWidth, height: newHeight },
         });
-        // Deselect the app
         setSelectedApp('');
       }
     }
   };
+
+  // ─── Outside viewport check ───────────────────────────────────────────────
+
+  const outsideView = useMemo(() => {
+    const x = pos.x;
+    const y = pos.y;
+    const w = size.width;
+    const h = size.height;
+    const vx = viewport.position.x;
+    const vy = viewport.position.y;
+    const vw = viewport.size.width;
+    const vh = viewport.size.height;
+    return x + w < vx || x > vx + vw || y + h < vy || y > vy + vh;
+  }, [pos.x, pos.y, size.width, size.height, viewport.position.x, viewport.position.y, viewport.size.width, viewport.size.height]);
+
+  const hideApp = outsideView || boardDragging;
+  const hideBackgroundColorHex = useHexColor(props.hideBackgroundColor || backgroundColor);
+
+  const memoizedChildren = useMemo(() => props.children, [props.children]);
 
   const isFocused = useUIStore((state) => state.focusedAppId === props.app._id);
 
@@ -538,64 +618,39 @@ export function AppWindow(props: WindowProps) {
       </Button>
     </Portal>
   ) : (
-    <Rnd
-      bounds="parent"
-      dragHandleClassName="handle"
-      size={{ width: size.width, height: size.height }}
-      position={pos}
-      onDragStart={handleDragStart}
-      onDrag={handleDrag}
-      onDragStop={handleDragStop}
-      onResizeStart={handleResizeStart}
-      onResize={handleResize}
-      onResizeStop={handleResizeStop}
-      onClick={handleAppClick}
-      // Handle double click on the app window borders
-      onDoubleClick={onDoubleClick}
-      // Select an app on touch
-      onPointerDown={handleAppTouchStart}
-      onPointerMove={handleAppTouchMove}
-      enableResizing={enableResize && canResize && !isPinned && primaryActionMode === 'lasso'} // Temporary solution to fix resize while drag -> && (selectedApp !== "")
-      // BoardSync && rndSafeForAction is a temporary solution to prevent the most common type of bug which is zooming followed by a click
-      disableDragging={
-        !canMove || isPinned || !(boardSynced && rndSafeForAction) || primaryActionMode === 'grab' || primaryActionMode === 'linker'
-      }
-      lockAspectRatio={props.lockAspectRatio ? props.lockAspectRatio : false}
+    <div
       style={{
+        position: 'absolute',
+        left: pos.x,
+        top: pos.y,
+        width: size.width,
+        height: size.height,
         zIndex: props.lockToBackground ? 0 : myZ,
         pointerEvents: lassoMode || (!canMove && !canResize) ? 'none' : 'auto',
-        borderRadius: outerBorderRadius, // This is used to prevent selection at very edge of corner in grab mode
-        touchAction: 'none', // needed to prevent pinch to zoom
+        borderRadius: outerBorderRadius,
+        touchAction: 'none',
+        userSelect: 'none',
+        boxSizing: 'border-box',
       }}
-      resizeHandleStyles={{
-        bottom: { transform: `scaleY(${handleScale})` },
-        bottomLeft: { transform: `scale(${handleScale})` },
-        bottomRight: { transform: `scale(${handleScale})` },
-        left: { transform: `scaleX(${handleScale})` },
-        right: { transform: `scaleX(${handleScale})` },
-        top: { transform: `scaleY(${handleScale})` },
-        topLeft: { transform: `scale(${handleScale})` },
-        topRight: { transform: `scale(${handleScale})` },
-      }}
-      resizeHandleClasses={{
-        bottom: 'app-window-resize-handle',
-        bottomLeft: 'app-window-resize-handle',
-        bottomRight: 'app-window-resize-handle',
-        left: 'app-window-resize-handle',
-        right: 'app-window-resize-handle',
-        top: 'app-window-resize-handle',
-        topLeft: 'app-window-resize-handle',
-        topRight: 'app-window-resize-handle',
-      }}
-      // min/max app window dimensions
-      minWidth={APP_MIN_WIDTH}
-      minHeight={APP_MIN_HEIGHT}
-      maxWidth={APP_MAX_WIDTH}
-      maxHeight={APP_MAX_HEIGHT}
-      // Scaling of the board
-      scale={scale}
+      onClick={handleAppClick}
+      onDoubleClick={onDoubleClick}
+      onPointerDown={handleAppTouchStart}
+      onPointerMove={handleAppTouchMove}
     >
-      {/* Title Above app, not when dragging the board */}
+      {/* Resize handles — only rendered when selected and resize is enabled */}
+      {canResizeNow && selected &&
+        RESIZE_DIRECTIONS.map((dir) => (
+          <div
+            key={dir}
+            className="app-window-resize-handle"
+            style={getResizeHandleStyle(dir, handlePixelSize)}
+            onPointerDown={(e) => handleResizePointerDown(e, dir)}
+            onPointerMove={handleResizePointerMove}
+            onPointerUp={handleResizePointerUp}
+          />
+        ))}
+
+      {/* Title above app, not when dragging the board */}
       {!boardDragging && <WindowTitle size={size} scale={scale} title={props.app.data.title} selected={selected} />}
 
       {/* Border Box around app to show it is selected */}
@@ -629,28 +684,23 @@ export function AppWindow(props: WindowProps) {
         {memoizedChildren}
       </Box>
 
-      {/* This div is to allow users to drag anywhere within the window when the app isnt selected*/}
+      {/* Full-window drag overlay when app is NOT selected */}
       {!selected && (
         <Box
-          className="handle" // The CSS name react-rnd latches on to for the drag events
+          className="handle"
           position="absolute"
           left="0px"
           top="0px"
           width="100%"
           height="100%"
           cursor={primaryActionMode === 'grab' ? 'grab' : 'move'}
-          sx={
-            primaryActionMode === 'grab'
-              ? {
-                '&:active': {
-                  cursor: 'grabbing',
-                },
-              }
-              : {}
-          }
+          sx={primaryActionMode === 'grab' ? { '&:active': { cursor: 'grabbing' } } : {}}
           userSelect={'none'}
           zIndex={3}
-        ></Box>
+          onPointerDown={handleDragPointerDown}
+          onPointerMove={handleDragPointerMove}
+          onPointerUp={handleDragPointerUp}
+        />
       )}
 
       {/* If the app is being dragged block interaction with the app */}
@@ -661,7 +711,7 @@ export function AppWindow(props: WindowProps) {
         <ProcessingBox size={size} selected={selected} colors={{ backgroundColor, selectColor, notSelectColor: borderColor }} />
       )}
 
-      {/* Icon when app is dragging */}
+      {/* Placeholder when app is outside viewport or board is dragging */}
       {hideApp && (
         <Box
           position="absolute"
@@ -683,17 +733,12 @@ export function AppWindow(props: WindowProps) {
           {props.hideBackgroundIcon ? <Icon as={props.hideBackgroundIcon} /> : <MdWindow />}
         </Box>
       )}
-    </Rnd>
+    </div>
   );
 }
 
 /**
  * Determines which edge or corner of a rectangle a given point is near, within a specified tolerance.
- *
- * @param point - The point to check, with x and y coordinates.
- * @param rect - The rectangle to check against, with x, y, width, and height properties.
- * @param tolerance - The distance within which the point is considered near an edge or corner (default is 1).
- * @returns An object indicating the edge or corner the point is near, or null if the point is not near any edge or corner.
  */
 function getRectEdgeAtPoint(
   point: { x: number; y: number },
@@ -705,7 +750,6 @@ function getRectEdgeAtPoint(
   const top = rect.y;
   const bottom = rect.y + rect.height;
 
-  // Check if the point is near any of the rectangle's corners
   const nearTopLeft = Math.abs(point.x - left) <= tolerance && Math.abs(point.y - top) <= tolerance;
   const nearTopRight = Math.abs(point.x - right) <= tolerance && Math.abs(point.y - top) <= tolerance;
   const nearBottomLeft = Math.abs(point.x - left) <= tolerance && Math.abs(point.y - bottom) <= tolerance;
@@ -716,7 +760,6 @@ function getRectEdgeAtPoint(
   if (nearBottomLeft) return { corner: 'bottom-left' };
   if (nearBottomRight) return { corner: 'bottom-right' };
 
-  // Edges
   const withinVerticalRange = point.y >= top - tolerance && point.y <= bottom + tolerance;
   const withinHorizontalRange = point.x >= left - tolerance && point.x <= right + tolerance;
 

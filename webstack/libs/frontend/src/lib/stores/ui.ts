@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -257,14 +257,11 @@ export const useUIStore = create<UIState>()((set, get) => ({
     snapshot = structuredClone(snapshot);
     set((state) => ({ ...state, selectedAppsSnapshot: snapshot }));
   },
-  addSelectedApp: (appId: string) => set((state) => ({ ...state, selectedApps: [...state.selectedAppsIds, appId] })),
+  // Deduplicates on add; filters on remove — both return a new array
+  addSelectedApp: (appId: string) =>
+    set((state) => ({ ...state, selectedAppsIds: state.selectedAppsIds.includes(appId) ? state.selectedAppsIds : [...state.selectedAppsIds, appId] })),
   removeSelectedApp: (appId: string) =>
-    set((state) => {
-      const newArray = state.selectedAppsIds;
-      const index = state.selectedAppsIds.indexOf(appId);
-      newArray.splice(index, 1);
-      return { ...state, selectedApps: newArray };
-    }),
+    set((state) => ({ ...state, selectedAppsIds: state.selectedAppsIds.filter((id) => id !== appId) })),
   clearSelectedApps: () => set((state) => ({ ...state, selectedAppsIds: [] })),
 
   savedSelectedAppsIds: [],

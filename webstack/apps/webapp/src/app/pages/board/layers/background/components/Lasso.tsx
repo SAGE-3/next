@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -36,6 +36,9 @@ export function Lasso(props: LassoProps) {
   const setLassoMode = useUIStore((state) => state.setLassoMode);
   const selectedApps = useUIStore((state) => state.selectedAppsIds);
   const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
+  const selectedAppId = useUIStore((state) => state.selectedAppId);
+  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
+  const addSelectedApp = useUIStore((state) => state.addSelectedApp);
 
   // Mouse Positions
   const [mousedown, setMouseDown] = useState(false);
@@ -94,21 +97,30 @@ export function Lasso(props: LassoProps) {
 
   // Mouse Behaviours
   const mouseDown = (ev: React.MouseEvent<SVGElement>) => {
-    if (ev.button == 0) {
-      // Prevent lasso for everyone due to MacOS ctrl + leftclick bringing up context menu
-      if (ev.ctrlKey) {
-        return;
-      }
+    if (ev.button !== 0) return;
+    // macOS ctrl+left-click produces a context menu — skip it
+    if (ev.ctrlKey) return;
 
-      if (ev.shiftKey === false) {
-        clearSelectedApps();
+    if (ev.shiftKey) {
+      // Shift+draw: seed the lasso group from the currently single-selected app (if any)
+      // so the user can extend an existing selection without losing it.
+      // BackgroundLayer skips clearing selectedAppId on shift+mousedown so we can read it here.
+      if (selectedAppId) {
+        addSelectedApp(selectedAppId);
+        setSelectedApp('');
       }
-      setModifierAction(ev.shiftKey ? 'inverse' : 'none');
-      lassoStart(ev.clientX, ev.clientY);
+      // No modifier needed — seeded apps live in clickSelectedApps inside DrawBox
+      setModifierAction('none');
+    } else {
+      clearSelectedApps();
+      setModifierAction('none');
     }
+    lassoStart(ev.clientX, ev.clientY);
   };
 
   const mouseUp = () => {
+    // mousedown may be false if the user released over the SVG after a shift+click on an app
+    if (!mousedown) return;
     lassoEnd();
   };
 
@@ -246,10 +258,7 @@ const DrawBox = (props: BoxProps) => {
       } else {
         // Remove apps if not in box area
         if (rectSelectedApps.includes(app._id)) {
-          const newArray = rectSelectedApps;
-          const index = newArray.indexOf(app._id);
-          newArray.splice(index, 1);
-          setRectSelectedApps([...newArray]);
+          setRectSelectedApps((prev) => prev.filter((id) => id !== app._id));
         }
       }
     }
