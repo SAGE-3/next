@@ -104,8 +104,8 @@ export async function loadCollections(): Promise<void> {
     const apps = await AppsCollection.getAll();
     if (!links || !apps) return;
 
-    const appIds = new Set(apps.map((app) => app._id));
-    const invalidLinks = links.filter((link) => !appIds.has(link.data.sourceAppId) || !appIds.has(link.data.targetAppId));
+    const appIds = new Set(apps.filter(Boolean).map((app) => app._id));
+    const invalidLinks = links.filter((link) => link && (!appIds.has(link.data.sourceAppId) || !appIds.has(link.data.targetAppId)));
 
     if (invalidLinks.length > 0) {
       const invalidLinkIds = invalidLinks.map((link) => link._id);

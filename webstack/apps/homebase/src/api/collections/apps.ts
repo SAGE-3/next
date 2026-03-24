@@ -29,6 +29,7 @@ class SAGE3AppsCollection extends SAGE3Collection<AppSchema> {
         const apps = [] as { position: Position; size: Size; type: AppName; id: string }[];
         docs = await this.collection.query('boardId', boardId);
         docs.forEach((app) => {
+          if (!app) return;
           const aInfo = { position: app.data.position, size: app.data.size, type: app.data.type, id: app._id };
           apps.push(aInfo);
         });

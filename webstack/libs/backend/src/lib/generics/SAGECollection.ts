@@ -116,7 +116,7 @@ export class SAGE3Collection<T extends SBJSON> {
   public async getBatch(ids: string[]): Promise<SBDocument<T>[] | undefined> {
     try {
       const docs = await Promise.all(ids.map((id) => this._collection.docRef(id).read()));
-      return docs.filter((doc) => doc !== undefined) as SBDocument<T>[];
+      return docs.filter((doc) => doc !== undefined && doc !== null) as SBDocument<T>[];
     } catch (error) {
       this.printError(error);
       return undefined;
