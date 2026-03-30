@@ -18,6 +18,12 @@ import {
   Tooltip,
   Spinner,
   Image,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure,
 } from '@chakra-ui/react';
 import { MdAltRoute, MdQuestionAnswer, MdImage, MdRefresh } from 'react-icons/md';
 import { BsStarFill, BsStar } from 'react-icons/bs';
@@ -107,6 +113,30 @@ function AttrsBlock({ node }: { node: SageNode }) {
           </WrapItem>
         ))}
       </Wrap>
+    </>
+  );
+}
+
+// ─── Image lightbox ───────────────────────────────────────────────────────────
+
+function ImageLightbox({ src, alt, previewMaxH }: { src: string; alt: string; previewMaxH: string }) {
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  return (
+    <>
+      <Image
+        src={src} alt={alt} w="100%" objectFit="cover" maxH={previewMaxH}
+        cursor="zoom-in" borderRadius="md"
+        onClick={(e) => { e.stopPropagation(); onOpen(); }}
+      />
+      <Modal isOpen={isOpen} onClose={onClose} size="xl" isCentered>
+        <ModalOverlay />
+        <ModalContent bg="black" maxW="90vw" maxH="90vh">
+          <ModalCloseButton color="white" zIndex={10} />
+          <ModalBody p={0} display="flex" alignItems="center" justifyContent="center">
+            <Image src={src} alt={alt} maxW="100%" maxH="90vh" objectFit="contain" borderRadius="md" />
+          </ModalBody>
+        </ModalContent>
+      </Modal>
     </>
   );
 }
@@ -213,6 +243,11 @@ export function NodeBlock({
               h="16px" minW="16px"
             />
           </HStack>
+          {node.imageUrl && (
+            <Box mb={2} borderRadius="md" overflow="hidden">
+              <ImageLightbox src={node.imageUrl} alt={node.Title} previewMaxH="160px" />
+            </Box>
+          )}
           <Text fontSize="8px" fontWeight="700" textTransform="uppercase" letterSpacing="0.08em" color="rgba(0,0,0,0.55)" mb={0.5}>Summary</Text>
           <Text fontSize="10px" fontWeight="500" color="black" lineHeight="1.5" mb={2}>{node.Summary}</Text>
           {node.Steps && node.Steps.length > 0 && (
@@ -229,11 +264,6 @@ export function NodeBlock({
             </>
           )}
           <AttrsBlock node={node} />
-          {node.imageUrl && (
-            <Box mt={2} borderRadius="md" overflow="hidden">
-              <Image src={node.imageUrl} alt={node.Title} w="100%" objectFit="cover" maxH="160px" />
-            </Box>
-          )}
         </Box>
         {/* Action toolbar */}
         <HStack justify="space-around" borderTop="1px solid rgba(0,0,0,0.12)" px={2} py={1}>
@@ -287,7 +317,7 @@ export function NodeBlock({
         </HStack>
         {node.imageUrl && (
           <Box mb={3} borderRadius="md" overflow="hidden">
-            <Image src={node.imageUrl} alt={node.Title} w="100%" objectFit="cover" maxH="200px" />
+            <ImageLightbox src={node.imageUrl} alt={node.Title} previewMaxH="200px" />
           </Box>
         )}
         <Text fontSize="11px" fontWeight="500" color="black" lineHeight="1.6" mb={3}>

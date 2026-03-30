@@ -72,6 +72,8 @@ export const schema = z.object({
       // Branch provenance — set when this entry was branched from a node
       parentEntryId: z.string().optional(),
       parentNodeTitle: z.string().optional(),
+      // Image attached to this prompt (base64 data URL)
+      imageUrl: z.string().optional(),
     })
   ),
 });

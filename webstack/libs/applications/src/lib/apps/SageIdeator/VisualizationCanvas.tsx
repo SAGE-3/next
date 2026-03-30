@@ -116,13 +116,18 @@ export function VisualizationCanvas({
 
   const isGenerating = status === 'generating_dimensions' || status === 'generating_responses';
 
-  // Sync axis selectors when dimensions arrive
+  // Sync axis selectors only when the set of dimension names actually changes
+  const dimKey = dimensions.map((d) => d.name).join(',');
   useEffect(() => {
     if (dimensions.length > 0) {
-      setXDimName((prev) => prev ?? dimensions[0]?.name ?? null);
-      setYDimName((prev) => prev ?? dimensions[1]?.name ?? null);
+      const names = dimensions.map((d) => d.name);
+      setXDimName((prev) => (prev && names.includes(prev)) ? prev : (dimensions[0]?.name ?? null));
+      setYDimName((prev) => (prev && names.includes(prev)) ? prev : (dimensions[1]?.name ?? null));
+    } else {
+      setXDimName(null);
+      setYDimName(null);
     }
-  }, [dimensions]);
+  }, [dimKey]);
 
   // Measure container size
   useEffect(() => {
@@ -320,6 +325,7 @@ export function VisualizationCanvas({
                 <HStack spacing={1}>
                   <Text fontSize="xs" color={textColor}>X:</Text>
                   <Select size="xs" value={xDimName ?? ''} onChange={(e) => setXDimName(e.target.value || null)} w="120px">
+                    <option value="">— none —</option>
                     {dimensions.map((d) => <option key={d.name} value={d.name}>{d.name}</option>)}
                   </Select>
                 </HStack>

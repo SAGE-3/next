@@ -118,6 +118,7 @@ function AppComponent(props: App): JSX.Element {
         dimensions: [] as AppState['dimensions'],
         parentEntryId: branchOpts?.parentEntryId,
         parentNodeTitle: branchOpts?.parentNodeTitle,
+        imageUrl: image,
       };
 
       updateState(props._id, {

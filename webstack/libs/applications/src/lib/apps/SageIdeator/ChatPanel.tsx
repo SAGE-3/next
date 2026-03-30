@@ -21,6 +21,12 @@ import {
   Tooltip,
   Badge,
   Divider,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure,
 } from '@chakra-ui/react';
 import { MdSend, MdClear, MdEdit, MdAttachFile, MdDelete, MdAdd } from 'react-icons/md';
 
@@ -47,6 +53,28 @@ interface ChatPanelProps {
   onDeleteEntry: (entryId: string) => void;
   attachedImage: string | null;
   onAttachImage: (dataUrl: string | null) => void;
+}
+
+function HistoryImageThumb({ src }: { src: string }) {
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  return (
+    <>
+      <Image
+        src={src} alt="Prompt image" w="100%" borderRadius="sm" maxH="40px" objectFit="cover"
+        cursor="zoom-in" mt={1}
+        onClick={(e) => { e.stopPropagation(); onOpen(); }}
+      />
+      <Modal isOpen={isOpen} onClose={onClose} size="xl" isCentered>
+        <ModalOverlay />
+        <ModalContent bg="black" maxW="90vw" maxH="90vh">
+          <ModalCloseButton color="white" zIndex={10} />
+          <ModalBody p={0} display="flex" alignItems="center" justifyContent="center">
+            <Image src={src} alt="Prompt image" maxW="100%" maxH="90vh" objectFit="contain" borderRadius="md" />
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+    </>
+  );
 }
 
 export function ChatPanel({
@@ -145,6 +173,7 @@ export function ChatPanel({
                   <Text fontSize="10px" fontWeight={isActive ? '600' : '400'} color={textColor} noOfLines={3}>
                     {entry.prompt}
                   </Text>
+                  {entry.imageUrl && <HistoryImageThumb src={entry.imageUrl} />}
                   {hasSnapshot && (
                     <HStack spacing={1} flexWrap="wrap">
                       <Badge colorScheme="green" fontSize="8px">{entryNodes.length} ideas</Badge>
@@ -232,6 +261,9 @@ export function ChatPanel({
             right={1}
             onClick={() => onAttachImage(null)}
           />
+          <Text fontSize="9px" color="gray.400" mt={1} textAlign="center">
+            Inspires the idea space — not described or analyzed directly.
+          </Text>
         </Box>
       )}
 
@@ -260,14 +292,14 @@ export function ChatPanel({
         >
           Generate
         </Button>
-        <Tooltip label="Attach image" placement="top" hasArrow openDelay={400}>
+        <Tooltip label="Attach image to prompt" placement="top" hasArrow openDelay={400}>
           <IconButton
-            aria-label="Attach image"
+            aria-label="Attach image to prompt"
             icon={<MdAttachFile />}
             size="xs"
             variant={attachedImage ? 'solid' : 'ghost'}
             colorScheme={attachedImage ? 'blue' : 'gray'}
-            isDisabled={isGenerating}
+            isDisabled={isGenerating || !input.trim()}
             onClick={() => fileInputRef.current?.click()}
           />
         </Tooltip>
