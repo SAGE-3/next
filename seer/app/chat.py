@@ -15,7 +15,7 @@ from logging import Logger
 from fastapi import HTTPException
 
 # SAGE3 API
-from foresight.Sage3Sugar.pysage3 import PySage3
+from pysage3.client import PySage3
 
 # AI Models
 from langchain_core.output_parsers import StrOutputParser

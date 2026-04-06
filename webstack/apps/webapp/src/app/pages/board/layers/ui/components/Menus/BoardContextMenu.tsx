@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -14,7 +14,7 @@ import { IoSparklesSharp } from 'react-icons/io5';
 import { MdApps, MdArrowBack, MdFolder, MdMap, MdPeople, MdScreenShare } from 'react-icons/md';
 
 import { SAGEColors } from '@sage3/shared';
-import { useUser, useUIStore } from '@sage3/frontend';
+import { useUIStore } from '@sage3/frontend';
 
 import { ContextButton } from './ContextButton';
 import { ScreenshareMenu } from './Menus/ScreenshareMenu';
@@ -32,9 +32,6 @@ type BoardContextProps = {
 };
 
 export function BoardContextMenu(props: BoardContextProps) {
-  // User information
-  const { user } = useUser();
-  const userColor = user ? user.data.color : 'teal';
 
   const contextMenuPosition = useUIStore((state) => state.contextMenuPosition);
   const setContextMenuPosition = useUIStore((state) => state.setContextMenuPosition);
@@ -82,25 +79,25 @@ export function BoardContextMenu(props: BoardContextProps) {
       <Box position="absolute" bottom="-60px" left="-125px" width="250px" height="118px">
         <Flex flexDir={'column'} justifyContent={'center'} alignItems={'center'} gap="3">
           <Flex gap="1" justifyContent={'center'}>
-            <ContextButton bgColor={userColor as SAGEColors} icon={<MdPeople />} tooltip={'Users'} title={'Users'}>
+            <ContextButton bgColor={'teal' as SAGEColors} icon={<MdPeople />} tooltip={'Users'} title={'Users'}>
               <UsersMenu boardId={props.boardId} />
             </ContextButton>
-            <ContextButton bgColor={userColor as SAGEColors} icon={<MdScreenShare />} tooltip={'Screenshares'} title={'Screenshares'}>
+            <ContextButton bgColor={'teal' as SAGEColors} icon={<MdScreenShare />} tooltip={'Screenshares'} title={'Screenshares'}>
               <ScreenshareMenu boardId={props.boardId} roomId={props.roomId} />{' '}
             </ContextButton>
-            <ContextButton bgColor={userColor as SAGEColors} icon={<MdApps />} tooltip={'Applications'} title={'Applications'}>
+            <ContextButton bgColor={'teal' as SAGEColors} icon={<MdApps />} tooltip={'Applications'} title={'Applications'}>
               <ApplicationsMenu roomId={props.roomId} boardId={props.boardId} />
             </ContextButton>
-            <ContextButton bgColor={userColor as SAGEColors} icon={<HiPuzzle />} tooltip={'Plugins'} title={'Plugins'}>
+            <ContextButton bgColor={'teal' as SAGEColors} icon={<HiPuzzle />} tooltip={'Plugins'} title={'Plugins'}>
               <PluginsMenu roomId={props.roomId} boardId={props.boardId} />
             </ContextButton>
-            <ContextButton bgColor={userColor as SAGEColors} icon={<MdFolder />} tooltip={'Assets'} title={'Assets'}>
+            <ContextButton bgColor={'teal' as SAGEColors} icon={<MdFolder />} tooltip={'Assets'} title={'Assets'}>
               <AssetsMenu roomId={props.roomId} boardId={props.boardId} downloadRoomAssets={props.downloadRoomAssets} />{' '}
             </ContextButton>
-            <ContextButton bgColor={userColor as SAGEColors} icon={<HiChip />} tooltip={'Kernels'} title={'Kernels'}>
+            <ContextButton bgColor={'teal' as SAGEColors} icon={<HiChip />} tooltip={'Kernels'} title={'Kernels'}>
               <KernelsMenu roomId={props.roomId} boardId={props.boardId} />
             </ContextButton>
-            <ContextButton bgColor={userColor as SAGEColors} icon={<MdMap />} tooltip={'Map'} title={'Map'}>
+            <ContextButton bgColor={'teal' as SAGEColors} icon={<MdMap />} tooltip={'Map'} title={'Map'}>
               <NavigationMenu />
             </ContextButton>
           </Flex>

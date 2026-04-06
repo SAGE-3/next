@@ -35,7 +35,7 @@ from libs.utils import getModelsInfo
 from playwright.async_api import async_playwright
 
 # SAGE3 API
-from foresight.Sage3Sugar.pysage3 import PySage3
+from pysage3.client import PySage3
 
 # AI
 from langchain_nvidia_ai_endpoints import ChatNVIDIA

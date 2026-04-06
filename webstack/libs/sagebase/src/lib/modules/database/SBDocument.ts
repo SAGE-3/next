@@ -97,7 +97,9 @@ export class SBDocumentRef<Type extends SBJSON> {
   public async read(): Promise<SBDocument<Type> | undefined> {
     try {
       const redisRes = await this.redis.json.get(`${this._path}`);
-      return redisRes as SBDocument<Type>;
+      // redis.json.get() returns null when the key doesn't exist (e.g. deleted between
+      // a keys() scan and this fetch). Normalize to undefined so callers see a consistent type.
+      return redisRes === null ? undefined : (redisRes as SBDocument<Type>);
     } catch (error) {
       this.ERRORLOG(error);
       return undefined;

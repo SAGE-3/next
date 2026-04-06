@@ -131,11 +131,12 @@
     "sessionSecret": "SUPERSECRET!!$$",
     // Max age for a session per user. In milliseconds. 8 days
     "sessionMaxAge": 691200000,
-    // Which login strategies to enable for the server. Available: guest, jwt, google, cilogon
-    // If you enbable them ensure you add the relevant config information below.
+    // Which login strategies to enable for the server. Available: guest, jwt, google, cilogon, keycloak
+    // If you enable them ensure you add the relevant config information below.
     "strategies": [
       "guest",
       "jwt",
+      "keycloak",
       "google" // "spectator"       // "cilogon"
     ],
     // A List of emails to enable those users to be admins.
@@ -182,6 +183,21 @@
       "routeEndpoint": "/auth/cilogon",
       // Callback URL for the cilogon login
       "callbackURL": "/auth/cilogon/redirect"
+    },
+    // Keycloak (or any OpenID Connect provider) configuration
+    // To test locally, run: docker run -p 8080:8080 -e KC_BOOTSTRAP_ADMIN_USERNAME=admin -e KC_BOOTSTRAP_ADMIN_PASSWORD=admin quay.io/keycloak/keycloak:latest start-dev
+    // Then create a realm and client at http://localhost:8080, set redirect URI to http://localhost:3000/auth/keycloak/redirect
+    "keycloakConfig": {
+      // Full Keycloak realm URL — Keycloak will autodiscover all OIDC endpoints from this
+      "issuerURL": "http://localhost:8080/realms/sage3",
+      // Client ID created in the Keycloak realm
+      "clientID": "sage3-local",
+      // Client Secret (leave empty for public clients)
+      "clientSecret": "",
+      // Endpoint to initiate Keycloak login
+      "routeEndpoint": "/auth/keycloak",
+      // Must match the redirect URI configured in your Keycloak client
+      "callbackURL": "/auth/keycloak/redirect"
     }
   },
 

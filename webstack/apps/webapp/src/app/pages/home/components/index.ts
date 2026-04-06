@@ -6,6 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+export * from './BoardListPanel';
 export * from './MembersList';
 export * from './BoardRow';
 export * from './BoardCard';

@@ -29,7 +29,6 @@ import { name as PluginAppName } from './apps/PluginApp';
 import { name as PollName } from './apps/Poll';
 import { name as RTCChatName } from './apps/RTCChat';
 import { name as SageCellName } from './apps/SageCell';
-import { name as SeerName } from './apps/Seer';
 import { name as SensorOverviewName } from './apps/SensorOverview';
 import { name as StickieName } from './apps/Stickie';
 import { name as TimerName } from './apps/Timer';
@@ -72,7 +71,6 @@ import PluginApp from './apps/PluginApp/PluginApp';
 import Poll from './apps/Poll/Poll';
 import RTCChat from './apps/RTCChat/RTCChat';
 import SageCell from './apps/SageCell/SageCell';
-import Seer from './apps/Seer/Seer';
 import SensorOverview from './apps/SensorOverview/SensorOverview';
 import Stickie from './apps/Stickie/Stickie';
 import Timer from './apps/Timer/Timer';
@@ -228,11 +226,6 @@ export const Applications = {
     AppComponent: React.memo(SageCell.AppComponent),
     ToolbarComponent: SageCell.ToolbarComponent,
     GroupedToolbarComponent: SageCell.GroupedToolbarComponent,
-  },
-  [SeerName]: {
-    AppComponent: React.memo(Seer.AppComponent),
-    ToolbarComponent: Seer.ToolbarComponent,
-    GroupedToolbarComponent: Seer.GroupedToolbarComponent,
   },
   [SensorOverviewName]: {
     AppComponent: React.memo(SensorOverview.AppComponent),

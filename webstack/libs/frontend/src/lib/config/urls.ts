@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -12,9 +12,6 @@
 export const apiUrls = {
   config: {
     getConfig: '/api/configuration',
-  },
-  apps: {
-    preview: '/api/apps/preview',
   },
   assets: {
     getAssets: '/api/assets',
@@ -42,6 +39,7 @@ export const apiUrls = {
   boards: {
     getBoards: () => `/api/boards`,
     getBoard: (id: string) => `/api/boards/${id}`,
+    preview: '/api/boards/preview',
   },
   misc: {
     getTime: '/api/time',

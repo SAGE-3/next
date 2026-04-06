@@ -135,7 +135,7 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
       // Check to see if plugin with that name already exists in this room
       // Plugins are unique per room (roomId + name combination)
       const check = await this.collection.query('name', pluginName);
-      const existingPluginInRoom = check.find((p) => p.data.roomId === roomId);
+      const existingPluginInRoom = check.find((p) => p !== null && p.data.roomId === roomId);
       
       if (existingPluginInRoom) {
         // Check if the existing plugin is owned by the user

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -29,12 +29,14 @@ import {
   SBAuthCILogonConfig,
   passportSpectatorSetup,
   SBAuthSpectatorConfig,
+  passportKeycloakSetup,
+  SBAuthKeycloakConfig,
 } from './adapters/';
 
 export type SBAuthConfig = {
   sessionMaxAge: number;
   sessionSecret: string;
-  strategies: ('google' | 'apple' | 'cilogon' | 'guest' | 'jwt' | 'spectator')[];
+  strategies: ('google' | 'apple' | 'cilogon' | 'guest' | 'jwt' | 'spectator' | 'keycloak')[];
   production: boolean;
   googleConfig?: SBAuthGoogleConfig;
   appleConfig?: SBAuthAppleConfig;
@@ -42,6 +44,7 @@ export type SBAuthConfig = {
   guestConfig?: SBAuthGuestConfig;
   cilogonConfig?: SBAuthCILogonConfig;
   spectatorConfig?: SBAuthSpectatorConfig;
+  keycloakConfig?: SBAuthKeycloakConfig;
 };
 
 /**
@@ -226,6 +229,20 @@ export class SBAuth {
             }),
           );
           express.get(config.cilogonConfig.callbackURL, this.createOAuthCallbackHandler('cilogon', 'openidconnect'));
+        }
+      }
+
+      // Keycloak Setup (generic OIDC — works with any Keycloak realm or compatible provider)
+      if (config.strategies.includes('keycloak') && config.keycloakConfig) {
+        const ready = await passportKeycloakSetup(config.keycloakConfig);
+        if (ready) {
+          express.get(
+            config.keycloakConfig.routeEndpoint,
+            passport.authenticate('keycloak', {
+              scope: ['openid', 'email', 'profile'],
+            }),
+          );
+          express.get(config.keycloakConfig.callbackURL, this.createOAuthCallbackHandler('keycloak', 'keycloak'));
         }
       }
     }

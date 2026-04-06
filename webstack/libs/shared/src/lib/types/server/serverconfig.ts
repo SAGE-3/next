@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -110,8 +110,8 @@ export interface AuthConfiguration {
   sessionMaxAge: number;
   sessionSecret: string;
 
-  // List of login strategies: guest, google, jwt, cilogon, ...
-  strategies: ('google' | 'cilogon' | 'guest' | 'jwt')[];
+  // List of login strategies: guest, google, apple, jwt, cilogon, keycloak, spectator
+  strategies: ('google' | 'apple' | 'cilogon' | 'guest' | 'jwt' | 'keycloak' | 'spectator')[];
 
   // Admin users
   admins: string[];
@@ -136,6 +136,15 @@ export interface AuthConfiguration {
   };
   // CILogon credentials
   cilogonConfig?: {
+    clientID: string;
+    clientSecret?: string;
+    routeEndpoint: string;
+    callbackURL: string;
+  };
+  // Keycloak / generic OIDC credentials
+  keycloakConfig?: {
+    // Full Keycloak realm URL, e.g. https://keycloak.example.com/realms/sage3
+    issuerURL: string;
     clientID: string;
     clientSecret?: string;
     routeEndpoint: string;

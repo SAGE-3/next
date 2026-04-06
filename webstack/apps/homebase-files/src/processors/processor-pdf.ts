@@ -14,13 +14,14 @@ import { strict as assert } from 'assert';
 // SAGEBase queue
 import { SBQueue } from '../connectors';
 
-// load legacy pdf build
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const pdfjs = require('pdfjs-dist/legacy/build/pdf.min.js');
+// PDF load legacy pdf build
+const pdfjs = require('pdfjs-dist/legacy/build/pdf.min.mjs');
+// PDF worker for Node.js
+pdfjs.GlobalWorkerOptions.workerSrc = './pdf.worker.min.mjs';
+// PDF fonts
 const CMAP_URL = './node_modules/pdfjs-dist/cmaps/';
 const FONT_URL = './node_modules/pdfjs-dist/standard_fonts/';
 const CMAP_PACKED = true;
-import { createCanvas } from 'canvas';
 
 import { getStaticAssetUrl } from '@sage3/backend';
 import { ExtraPDFType } from '@sage3/shared/types';
@@ -39,25 +40,21 @@ export class PDFProcessor {
   private queue: SBQueue;
   private output: string;
 
-  constructor(redisUrl: string, folder: string, worker = true) {
+  constructor(redisUrl: string, folder: string) {
     this.queue = new SBQueue(redisUrl, 'pdf-queue');
     this.output = folder;
 
     // Add a function to convert PDF
-    if (worker) {
-      this.queue.addProcessorSandboxed('./dist/libs/workers/src/lib/pdf.js');
-    } else {
-      this.queue.addProcessor(async (job) => {
-        const data = await pdfProcessing(job).catch((err) => {
-          return Promise.reject(err);
-        });
-        return Promise.resolve({
-          file: job.data.filename,
-          id: job.data.id,
-          result: data,
-        });
+    this.queue.addProcessor(async (job) => {
+      const data = await pdfProcessing(job).catch((err) => {
+        return Promise.reject(err);
       });
-    }
+      return Promise.resolve({
+        file: job.data.filename,
+        id: job.data.id,
+        result: data,
+      });
+    });
   }
 
   /**
@@ -101,7 +98,7 @@ async function pdfProcessing(job: any): Promise<ExtraPDFType> {
     let pdfTask;
 
     // @ts-ignore
-    const canvasFactory = new NodeCanvasFactory();
+    // const canvasFactory = new NodeCanvasFactory();
 
     // Read the PDF file into a buffer
     const data = new Uint8Array(fs.readFileSync(pathname));
@@ -110,7 +107,7 @@ async function pdfProcessing(job: any): Promise<ExtraPDFType> {
     try {
       pdfTask = pdfjs.getDocument({
         data,
-        canvasFactory,
+        // canvasFactory,
         cMapUrl: CMAP_URL,
         cMapPacked: CMAP_PACKED,
         standardFontDataUrl: FONT_URL,
@@ -161,6 +158,7 @@ async function pdfProcessing(job: any): Promise<ExtraPDFType> {
 
             // Finally, get the viewport with the calculated scale
             const viewport = page.getViewport({ scale: scale });
+            const canvasFactory = pdf.canvasFactory;
 
             const canvasAndContext = canvasFactory.create(viewport.width, viewport.height);
 
@@ -205,7 +203,7 @@ async function pdfProcessing(job: any): Promise<ExtraPDFType> {
                     .clone()
                     .resize({ width, kernel: 'lanczos2' })
                     .webp({ quality, effort: 0 })
-                    .toFile(path.join(directory, `${filenameWithoutExt}-${i}-${width}.webp`))
+                    .toFile(path.join(directory, `${filenameWithoutExt}-${i}-${width}.webp`)),
                 ),
               ]);
             });
@@ -240,45 +238,3 @@ async function pdfProcessing(job: any): Promise<ExtraPDFType> {
       });
   });
 }
-
-////////////////////////////////////////////////////////////////////////////////
-function NodeCanvasFactory() {
-  // pass
-}
-
-NodeCanvasFactory.prototype = {
-  create: function NodeCanvasFactory_create(width: number, height: number) {
-    assert(width > 0 && height > 0, 'Invalid canvas size');
-    // const canvas = new Canvas(width, height);
-    const canvas = createCanvas(width, height);
-
-    const context = canvas.getContext('2d');
-
-    // Rendering quality settings
-    context.patternQuality = 'fast';
-    context.quality = 'fast';
-    // context.imageSmoothingEnabled = false;
-    // context.imageSmoothingQuality = 'low';
-
-    return { canvas, context };
-  },
-
-  reset: function NodeCanvasFactory_reset(canvasAndContext: any, width: number, height: number) {
-    assert(canvasAndContext.canvas, 'Canvas is not specified');
-    assert(width > 0 && height > 0, 'Invalid canvas size');
-    canvasAndContext.canvas.width = width;
-    canvasAndContext.canvas.height = height;
-  },
-
-  destroy: function NodeCanvasFactory_destroy(canvasAndContext: any) {
-    assert(canvasAndContext.canvas, 'Canvas is not specified');
-
-    // Zeroing the width and height cause Firefox to release graphics
-    // resources immediately, which can greatly reduce memory consumption.
-    canvasAndContext.canvas.width = 0;
-    canvasAndContext.canvas.height = 0;
-    canvasAndContext.canvas = null;
-    canvasAndContext.context = null;
-  },
-};
-////////////////////////////////////////////////////////////////////////////////

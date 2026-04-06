@@ -136,6 +136,7 @@
       "cilogon",
       "guest",
       "spectator",
+      // "keycloak",
       "jwt"
     ],
     // A List of emails to enable those users to be admins.
@@ -172,6 +173,19 @@
       // JWT Route endpoint
       "routeEndpoint": "/auth/jwt"
     },
+    // Keycloak (or any OpenID Connect provider) configuration
+    // "keycloakConfig": {
+      // Full Keycloak realm URL — Keycloak will autodiscover all OIDC endpoints from this
+      // "issuerURL": "http://localhost:8080/realms/sage3",
+      // Client ID created in the Keycloak realm
+      // "clientID": "sage3-local",
+      // Client Secret (leave empty for public clients)
+      // "clientSecret": "",
+      // Endpoint to initiate Keycloak login
+      // "routeEndpoint": "/auth/keycloak",
+      // Must match the redirect URI configured in your Keycloak client
+      // "callbackURL": "/auth/keycloak/redirect"
+    // }
     // CILogon configuration
     "cilogonConfig": {
       // Client ID from CILogon

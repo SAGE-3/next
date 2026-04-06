@@ -69,7 +69,7 @@
           hubElement.style.pointerEvents = 'auto';
           if (info.onlineUsers) {
             onlineUsers.innerText = info.onlineUsers + ' Users';
-          } 
+          }
           // On hover style change
           hubElement.onmouseover = () => {
             hubElement.style.backgroundColor = 'rgb(78, 78, 78)';
@@ -84,16 +84,17 @@
           // Server is Offline
           onlineIcon.style.backgroundColor = red;
           hubElement.style.cursor = 'not-allowed';
+          hubElement.style.pointerEvents = 'none';
         }
       });
     }
 
-    // Change the user's page the the given url
+    // Change the user's page to the given url
     async function changePage(url) {
       window.location = url;
     }
 
-    // Function to show a dialog alert box at the bottom of the screen and removes it after 5 seconds
+    // Function to show a notification at the bottom of the screen; removes it after 3 seconds
     function showNotification(message, isError) {
       const notification = document.createElement('div');
       notification.className = 'notification';
@@ -120,14 +121,12 @@
 
     // Show the add hub dialog
     function showAddHubDialog() {
-      const addHub = document.getElementById('add-hub');
-      addHub.style.visibility = 'visible';
+      document.getElementById('add-hub').style.display = 'block';
     }
 
     // Hide the add hub dialog
     function hideAddHubDialog() {
-      const addHub = document.getElementById('add-hub');
-      addHub.style.visibility = 'hidden';
+      document.getElementById('add-hub').style.display = 'none';
     }
 
     // Fetch the sage3 server info from the given url
@@ -147,13 +146,10 @@
           console.log('Error:', response.status);
           return false;
         }
-        const data = await response.json();
       } catch (error) {
         console.error('Error:', error);
         return false;
       }
-
-      return data;
     }
 
     // Listen for messages from the main process to update bookmark list
@@ -196,7 +192,17 @@
       window.electron.send('store-interface', { request: 'get-list' });
     }
 
-    // Somone pastes in a URL and wants to join a board
+    // Show the join board dialog
+    function showJoinBoardDialog() {
+      document.getElementById('join-board').style.display = 'block';
+    }
+
+    // Hide the join board dialog
+    function hideJoinBoardDialog() {
+      document.getElementById('join-board').style.display = 'none';
+    }
+
+    // Someone pastes in a URL and wants to join a board
     async function joinBoard(url) {
       const isSage3 = url.startsWith('sage3://');
       const isHttps = url.startsWith('https://') && url.includes('/#/enter/');
@@ -231,8 +237,8 @@
       let roomId = null;
       try {
         const splitUrl = url.split('/');
-      boardId = splitUrl[splitUrl.length - 1];
-      roomId = splitUrl[splitUrl.length - 2];
+        boardId = splitUrl[splitUrl.length - 1];
+        roomId = splitUrl[splitUrl.length - 2];
       } catch (error) {
         console.error('Error:', error);
         showNotification('Invalid URL', true);
@@ -245,7 +251,7 @@
       }
       // Lets build that Board URL
       const boardURL = `https://${hostname}/#/enter/${roomId}/${boardId}`;
-      // Change the page
+      hideJoinBoardDialog();
       changePage(boardURL);
 
     }
@@ -257,62 +263,68 @@
 
   <div class="container">
     <div class="column">
-      <!-- <div style="height: 200px; width: 500px; display: flex; align-items: center; justify-content: center; pointer-events: none;">
-        <img src="../images/SAGE3_APNG_WhiteText.png" style="transform: translateX(-15px)" alt="logo" width="750px" />
-      </div> -->
-
-
-      <div style="width: 500px; display: flex; align-items: center; justify-content: center; pointer-events: none;">
-        <img src="../images/sage3_banner.webp"  alt="logo" width="100%" />
+      <div class="logo-container">
+        <img src="../images/sage3_banner.webp" alt="logo" width="100%" />
       </div>
 
-      <!-- <div style="height: 40px; width: 100%"></div> -->
-
-      <div style="display: flex;  justify-content: space-between; width:455px; margin-bottom: 8px;">
-        <div style="display: flex; align-items: center ; justify-content: left;">
-          <h2 style="margin:0px; transform: translateX(-20px)">Select a Hub</h2>
+      <div class="header-row">
+        <div class="header-title">
+          <h2>Select a Hub</h2>
         </div>
-        <div style="display: flex; align-items: center ; justify-content: right;">
+        <div class="header-buttons">
           <button class="add-hub-button" onclick="showAddHubDialog()">Add an Unlisted Hub</button>
-          <button class="refresh-hub-button" onclick="refreshHubList()">Refresh</button>
+          <button class="join-board-button" onclick="showJoinBoardDialog()">Join Board</button>
+          <button class="refresh-hub-button" onclick="refreshHubList()" title="Refresh hub list">
+            <svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M23 4v6h-6M1 20v-6h6" />
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+            </svg>
+          </button>
         </div>
-
       </div>
 
-      <!-- vertical list of hubs  -->
-      <div id="hubs-list"></div>
+      <!-- Hub list -->
+      <div class="middle-section">
+        <div id="hubs-list"></div>
+      </div>
 
+      <hr class="bottom-divider" />
 
-      <!-- Divider -->
-      <hr style="width: 400px; margin-top: 20px; margin-bottom: 20px; border: 0; border-top: 1px solid #333;">
-
-
+      <!-- Join board dialog -->
       <div id="join-board">
-        <h3 style="margin: 0px;" >Join a Board</h3>
-        <form id="join-board-form" name="myForm" action="" onsubmit="joinBoard(this.url.value); return false;">
-          <input id="input-join-board" type="text" name="url" value="" placeholder="Enter the URL of the board you wish to join" required />
-          </br>
-          <input id="submit-join-board" type="submit" value="Join" />
-        </form>
+        <div id="join-board-dialog">
+          <h2>Join a Board</h2>
+          <p class="dialog-description">
+            Paste a SAGE3 board URL to join directly.
+          </p>
+          <form id="join-board-form" onsubmit="joinBoard(this.url.value); return false;">
+            <input id="input-join-board" type="text" name="url"
+              placeholder="Enter the URL of the board you wish to join" required />
+            <div class="dialog-buttons">
+              <button type="button" class="cancel-button" onclick="hideJoinBoardDialog()">Cancel</button>
+              <input id="submit-join-board" type="submit" value="Join" />
+            </div>
+          </form>
+        </div>
+        <div id="join-board-dimmer" onclick="hideJoinBoardDialog()"></div>
       </div>
 
       <!-- Add hub dialog -->
       <div id="add-hub">
         <div id="add-hub-dialog">
-          <h2 style="margin-top: 0px; margin-bottom:0px;">Add an Unlisted Hub</h2>
-          <p style="margin-top: 2px; margin-bottom:0px;">URL must contain 'https'. (i.e. https://sage.app)</p>
+          <h2>Add an Unlisted Hub</h2>
+          <p class="dialog-description">URL must contain 'https'. (e.g. https://sage.app)</p>
           <form id="new-hub-form" name="myForm" action="" onsubmit="addNewHub(this); return false;">
             <input id="input-url" type="text" name="serverurl" value=""
               placeholder="Enter the full URL of the hub you want to add" required />
-            </br>
-            <input type="submit" value="Submit" />
+            <div class="dialog-buttons">
+              <button type="button" class="cancel-button" onclick="hideAddHubDialog()">Cancel</button>
+              <input type="submit" value="Add" />
+            </div>
           </form>
         </div>
         <div id="add-hub-dimmer" onclick="hideAddHubDialog()"></div>
-        <div>
-        </div>
       </div>
-      <br />
     </div>
   </div>
 </body>

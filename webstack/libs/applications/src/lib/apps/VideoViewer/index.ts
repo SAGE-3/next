@@ -15,11 +15,10 @@ import { z } from 'zod';
 
 export const schema = z.object({
   assetid: z.string(),
-  currentTime: z.number(),
+  currentTime: z.number(),  // video position (seconds) at the moment syncServerTime was captured
   paused: z.boolean(),
   loop: z.boolean(),
-  syncServerTime: z.number().optional(), // Server timestamp (ms) when sync started - used with syncVideoTime for synchronization
-  syncVideoTime: z.number().optional(), // Video time (seconds) when sync started - used with syncServerTime for synchronization
+  syncServerTime: z.number().optional(), // server epoch (ms) of the last play/pause/seek action
 });
 export type state = z.infer<typeof schema>;
 
@@ -29,7 +28,6 @@ export const init: state = {
   paused: true,
   loop: false,
   syncServerTime: undefined,
-  syncVideoTime: undefined,
 };
 
 export const name = 'VideoViewer';

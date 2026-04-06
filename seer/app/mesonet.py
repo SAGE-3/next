@@ -27,7 +27,7 @@ from libs.mesonet.csv_llm.csv_llm import LLM
 import pandas as pd
 
 # SAGE3 API
-from foresight.Sage3Sugar.pysage3 import PySage3
+from pysage3.client import PySage3
 
 
 # Typing for RPC

@@ -1,9 +1,52 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
+ */
+
+/**
+ * VideoViewer — multi-user synchronized video player
+ *
+ * ── Sync model ────────────────────────────────────────────────────────────────
+ * Three fields in shared state carry all the information needed:
+ *
+ *   currentTime     – video position (seconds) at the moment of the last action
+ *   syncServerTime  – server epoch (ms)  at that same moment
+ *   paused          – whether the video is paused
+ *
+ * When any client receives a state update it runs `apply()`:
+ *   • paused  → pause + seek to currentTime
+ *   • playing → elapsed = (now - syncServerTime) / 1000
+ *               target  = currentTime + elapsed   (mod duration if looping)
+ *               seek to target, then play()
+ *
+ * This means late joiners and rejoining users are handled by exactly the same
+ * code path — no special-case retry logic is needed.
+ *
+ * ── "Act local first" principle ───────────────────────────────────────────────
+ * Every action (play, pause, seek) immediately updates the LOCAL video element
+ * before broadcasting the state change.  When the round-trip echo arrives
+ * back from Redis, `apply()` sees the drift is < threshold and does nothing.
+ * This eliminates the 1-2 second stutter that results from waiting for
+ * the server round-trip before touching the video element.
+ *
+ * ── Clock offset ──────────────────────────────────────────────────────────────
+ * `localServerEpoch()` fetches the server time ONCE on first call, computes
+ * `offset = serverEpoch - Date.now()`, and caches it.  All subsequent calls
+ * return `Date.now() + offset` with no HTTP request.  `clockOffsetMs()` is
+ * the synchronous read of that cached value used inside tight loops / intervals.
+ *
+ * ── What was removed vs. the previous implementation ─────────────────────────
+ * • The 1-second polling interval that called serverTime() per client → replaced
+ *   by the 5-second drift-correction interval which is purely synchronous math.
+ * • The 20-retry late-joiner loop with exponential backoff → handled by a single
+ *   `loadedmetadata` { once: true } listener in `apply()`.
+ * • `syncVideoTime` (redundant with `currentTime`).
+ * • `isSettingTimeRef` race-condition guard → no longer needed because we only
+ *   seek when drift exceeds a meaningful threshold.
+ * ──────────────────────────────────────────────────────────────────────────────
  */
 
 import { useEffect, useRef, useState, useCallback } from 'react';
@@ -30,10 +73,7 @@ import {
   AspectRatio,
 } from '@chakra-ui/react';
 import {
-  MdAccessTime,
   MdArrowRightAlt,
-  MdFastForward,
-  MdFastRewind,
   MdFileDownload,
   MdGraphicEq,
   MdLoop,
@@ -45,687 +85,498 @@ import {
   MdInfoOutline,
   MdMovie,
 } from 'react-icons/md';
-// Time functions
 import { format as formatTime } from 'date-fns';
 
 import { Asset, ExtraImageType, ExtraVideoType } from '@sage3/shared/types';
-import { useAppStore, useAssetStore, downloadFile, useHexColor, useUIStore, serverTime } from '@sage3/frontend';
+import {
+  useAppStore,
+  useAssetStore,
+  downloadFile,
+  useHexColor,
+  useUIStore,
+  localServerEpoch,
+  clockOffsetMs,
+} from '@sage3/frontend';
 
 import { App, AppSchema, AppGroup } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { initialValues } from '../../initialValues';
-import { throttle } from 'throttle-debounce';
 
-/**
- * Return a string for a duration
- *
- * @param {number} n duration in seconds
- * @returns {string} formatted duration
- */
+// ─────────────────────────────────────────────────────────────────────────────
+// Utility
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Converts a duration in seconds to a mm:ss display string. */
 function getDurationString(n: number): string {
   return formatTime(n * 1000, 'mm:ss');
 }
 
 /**
- * Calculate expected video time based on server time sync
- * @param syncServerTime Server timestamp (ms) when sync started
- * @param syncVideoTime Video time (seconds) when sync started
- * @param currentServerTime Current server timestamp
- * @param videoDuration Video duration in seconds
- * @param loop Whether video is looping
- * @returns Expected video time in seconds, or null if stale/invalid
+ * Calculates the position (seconds) a video should be at right now,
+ * accounting for elapsed server time since the last sync point.
+ *
+ * @param currentTime  - video position (s) when the action was taken
+ * @param syncServerTime - server epoch (ms) when the action was taken
+ * @param duration     - total video duration (s), undefined if not yet loaded
+ * @param loop         - whether the video is set to loop
+ * @returns target position in seconds, clamped/wrapped to valid range
  */
-function calculateExpectedTime(
-  syncServerTime: number,
-  syncVideoTime: number,
-  currentServerTime: number,
-  videoDuration: number | undefined,
-  loop: boolean
-): number | null {
-  const elapsedServerTime = (currentServerTime - syncServerTime) / 1000;
-  
-  // Validate that the syncServerTime is recent (within last 5 minutes)
-  if (elapsedServerTime < 0 || elapsedServerTime > 300) {
-    return null; // Stale state
-  }
-  
-  let expectedTime = syncVideoTime + elapsedServerTime;
-  
-  // Handle looping
-  if (loop && videoDuration) {
-    expectedTime = expectedTime % videoDuration;
-  } else if (videoDuration) {
-    expectedTime = Math.min(expectedTime, videoDuration);
-  }
-  
-  return expectedTime;
+function calcTarget(currentTime: number, syncServerTime: number, duration: number | undefined, loop: boolean): number {
+  const elapsed = (Date.now() + clockOffsetMs() - syncServerTime) / 1000;
+  const raw = Math.max(0, currentTime + elapsed);
+  if (!duration) return raw;
+  return loop ? raw % duration : Math.min(raw, duration);
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AppComponent — renders the video element and owns the sync logic
+// ─────────────────────────────────────────────────────────────────────────────
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-  // Navigation and routing
   const { roomId, boardId } = useParams();
-  // App store
+
+  // Shared state write functions
   const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
   const createApp = useAppStore((state) => state.create);
-  // Assets
-  const [url, setUrl] = useState<string>();
-  const [file, setFile] = useState<Asset>();
+
+  // Read-only store subscriptions
   const assets = useAssetStore((state) => state.assets);
-  // Aspect Ratio
-  const [aspectRatio, setAspecRatio] = useState(16 / 9);
-  // Html Ref
-  const videoRef = useRef<HTMLVideoElement>(null);
-  // Div around the pages to capture events
-  const divRef = useRef<HTMLDivElement>(null);
-  // Ref to prevent race conditions when setting currentTime
-  const isSettingTimeRef = useRef(false);
-  // Used to deselect the app
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const boardDragging = useUIStore((state) => state.boardDragging);
 
-  // Get Asset from store
+  // Ref to the <video> element — used for direct DOM reads/writes (currentTime,
+  // play(), pause()).  We never set state from timeupdate here; the toolbar
+  // does that via its own listener so only the toolbar re-renders on tick.
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Ref to the wrapper <div> — receives keyboard events when the app is focused.
+  const divRef = useRef<HTMLDivElement>(null);
+
+  // Local display state — only re-renders AppComponent when asset changes.
+  const [url, setUrl] = useState<string>();
+  const [file, setFile] = useState<Asset>();
+  const [aspectRatio, setAspectRatio] = useState(16 / 9);
+
+  // ── Clock offset warm-up ───────────────────────────────────────────────────
+  // The first call to localServerEpoch() does an HTTP round-trip to measure
+  // the offset between Date.now() and the server clock, then caches it.
+  // We kick that off at mount so the offset is ready before the first action.
   useEffect(() => {
-    const myasset = assets.find((a) => a._id === s.assetid);
-    if (myasset) {
-      setFile(myasset);
-      const extras = myasset.data.derived as ExtraVideoType;
-      setAspecRatio(extras.aspectRatio || 1);
-      // Update the app title
-      update(props._id, { title: myasset?.data.originalfilename });
-    }
+    localServerEpoch();
+  }, []);
+
+  // ── Asset resolution ───────────────────────────────────────────────────────
+  // When the assetid in state changes (or the asset list updates), look up
+  // the video file, extract its metadata, and update the window title.
+  useEffect(() => {
+    const asset = assets.find((a) => a._id === s.assetid);
+    if (!asset) return;
+
+    setFile(asset);
+    const extras = asset.data.derived as ExtraVideoType;
+    setAspectRatio(extras.aspectRatio || 16 / 9);
+    update(props._id, { title: asset.data.originalfilename });
+    setUrl(extras.url);
   }, [s.assetid, assets]);
 
-  // If the file is updated, update the url
+  // ── Loop attribute ─────────────────────────────────────────────────────────
+  // Keep the native <video> loop attribute in sync with shared state.
+  // The browser handles the actual looping; we just flip the flag.
   useEffect(() => {
-    if (file) {
-      const extras = file.data.derived as ExtraVideoType;
-      const video_url = extras.url;
-      setUrl(video_url);
-    }
-  }, [file]);
+    if (videoRef.current) videoRef.current.loop = s.loop;
+  }, [s.loop]);
 
-  // Set pause/play state and handle time sync (fallback for manual control)
+  // ── CORE SYNC ──────────────────────────────────────────────────────────────
+  //
+  // This is the entire synchronization mechanism — one effect, ~20 lines.
+  //
+  // Fires whenever paused, currentTime, or syncServerTime changes, which
+  // covers every action any connected client can take (play, pause, seek).
+  //
+  // `apply()` is either called immediately (if metadata is already loaded)
+  // or deferred via a one-shot 'loadedmetadata' listener.  This handles the
+  // late-joiner / rejoin case with no retry logic: the browser calls apply()
+  // exactly once as soon as it knows the video structure.
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || isSettingTimeRef.current) return;
+    if (!video) return;
 
-    // Handle play/pause
-    if (s.paused) {
-      video.pause();
-    } else {
-      video.play().catch(console.error);
-    }
-
-    // Only set currentTime if we don't have sync markers (manual control)
-    // Server-time sync handles time when syncServerTime exists
-    // IMPORTANT: Don't set currentTime if video is at 0 and not paused - this indicates
-    // a late joiner scenario where we should wait for sync markers to arrive
-    if (!s.syncServerTime || !s.syncVideoTime) {
-      // If video is at 0 and we're trying to play, wait for sync markers (late joiner)
-      // Only sync if video has already started playing (not a fresh load)
-      if (video.currentTime === 0 && !s.paused && video.readyState >= 1) {
-        // This is likely a late joiner - wait a bit for sync markers to arrive
-        // The late joiner useEffect will handle syncing
-        return;
-      }
-      
-      const drift = Math.abs(video.currentTime - s.currentTime);
-      if (drift > 3) {
-        isSettingTimeRef.current = true;
-        video.currentTime = s.currentTime;
-        setTimeout(() => {
-          isSettingTimeRef.current = false;
-        }, 100);
-      }
-    }
-  }, [s.paused, s.currentTime, s.syncServerTime, s.syncVideoTime]);
-
-  // Shared sync function: Calculate expected time and sync if needed
-  const performSync = useCallback(async (shouldPlay: boolean = false) => {
-    const video = videoRef.current;
-    if (!video || !s.syncServerTime || !s.syncVideoTime || isSettingTimeRef.current) return false;
-
-    // Wait for video to have metadata loaded (need duration for sync calculations)
-    if (video.readyState < 1) return false;
-
-    // Check if video is buffering (for continuous sync only, not late joiners)
-    if (!shouldPlay && video.readyState < 3) return false;
-
-    try {
-      const serverTimeData = await serverTime();
-      const expectedTime = calculateExpectedTime(
-        s.syncServerTime,
-        s.syncVideoTime,
-        serverTimeData.epoch,
-        video.duration,
-        s.loop
-      );
-
-      if (expectedTime === null) return false; // Stale state
-
-      const actualTime = video.currentTime;
-      const drift = Math.abs(expectedTime - actualTime);
-
-      // For late joiners (shouldPlay=true), be more aggressive - sync if drift > 0.1 seconds
-      // For continuous sync, use 0.5 second threshold
-      const threshold = shouldPlay ? 0.1 : 0.5;
-      
-      if (drift > threshold) {
-        isSettingTimeRef.current = true;
-        video.currentTime = expectedTime;
-        
-        if (shouldPlay && !s.paused) {
-          video.play().catch(console.error);
+    const apply = () => {
+      if (s.paused) {
+        // ── Paused ────────────────────────────────────────────────────────────
+        video.pause();
+        // Only seek if we're meaningfully off — avoids a needless seek when the
+        // local client's own pause echo arrives back from the server.
+        if (Math.abs(video.currentTime - s.currentTime) > 0.2) {
+          video.currentTime = s.currentTime;
         }
-        
-        setTimeout(() => {
-          isSettingTimeRef.current = false;
-        }, 100);
-        return true;
-      }
-    } catch (error) {
-      console.error('VideoViewer> Error syncing with server time:', error);
-    }
-    return false;
-  }, [s.syncServerTime, s.syncVideoTime, s.paused, s.loop]);
+      } else {
+        // ── Playing ───────────────────────────────────────────────────────────
+        // Calculate where the video *should* be right now based on how much
+        // server time has elapsed since the last play/seek action.
+        const target = s.syncServerTime
+          ? calcTarget(s.currentTime, s.syncServerTime, video.duration, s.loop)
+          : s.currentTime;
 
-  // Server-time-based continuous sync: Calculate expected time and correct drift
-  useEffect(() => {
-    if (!s.syncServerTime || !s.syncVideoTime || s.paused) return;
-
-    const syncInterval = setInterval(() => {
-      performSync(false);
-    }, 1000); // Check every second
-
-    return () => clearInterval(syncInterval);
-  }, [s.syncServerTime, s.syncVideoTime, s.paused, performSync]);
-
-
-  // Set loop state of video
-  useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.loop = s.loop;
-    }
-  }, [s.loop, videoRef]);
-
-  // Track when video element becomes available (triggers re-render)
-  const [videoReady, setVideoReady] = useState(false);
-  
-  // Monitor when video element becomes available
-  useEffect(() => {
-    if (videoRef.current && !videoReady) {
-      setVideoReady(true);
-    }
-  }, [url, videoReady]); // Re-check when URL changes
-
-  // Late joiner handling: Sync when video loads or state changes
-  useEffect(() => {
-    // Early return if we don't have the required state
-    if (!s.syncServerTime || !s.syncVideoTime) return;
-    
-    // Wait for video element to be available
-    if (!videoRef.current) {
-      // Video not ready yet - will retry when videoReady becomes true
-      return;
-    }
-
-    const video = videoRef.current;
-    let retryCount = 0;
-    const maxRetries = 20; // Try for up to ~5 seconds (20 * 250ms)
-    let retryTimeoutId: NodeJS.Timeout | null = null;
-    let isCleanedUp = false;
-
-    const attemptSync = async () => {
-      if (isCleanedUp || !videoRef.current) return;
-      
-      const synced = await performSync(true);
-      
-      // If sync succeeded or we've tried enough times, stop
-      if (synced || retryCount >= maxRetries) {
-        return;
-      }
-      
-      // Retry with exponential backoff (starts at 100ms, max 500ms)
-      retryCount++;
-      const delay = Math.min(100 * Math.pow(1.2, retryCount), 500);
-      retryTimeoutId = setTimeout(attemptSync, delay);
-    };
-
-    // Try to sync on video loading events
-    const events = ['loadedmetadata', 'loadeddata', 'canplay', 'canplaythrough'];
-    events.forEach((event) => {
-      video.addEventListener(event, attemptSync);
-    });
-
-    // Start sync attempts immediately
-    attemptSync();
-
-    return () => {
-      isCleanedUp = true;
-      events.forEach((event) => {
-        video.removeEventListener(event, attemptSync);
-      });
-      if (retryTimeoutId) {
-        clearTimeout(retryTimeoutId);
+        // Only seek if drift exceeds 0.3 s — avoids a re-seek when the local
+        // client's own play echo comes back with near-zero elapsed time.
+        if (Math.abs(video.currentTime - target) > 0.3) {
+          video.currentTime = target;
+        }
+        video.play().catch(console.error);
       }
     };
-  }, [s.syncServerTime, s.syncVideoTime, s.paused, s.loop, videoReady, performSync]);
 
-  // Handle a play action
-  const handlePlay = async () => {
-    if (videoRef.current) {
-      const paused = !s.paused;
-      // Ensure we get the actual current time, defaulting to 0 if not available
-      const time = videoRef.current.currentTime || 0;
-
-      // Get server time and set sync markers for synchronization
-      try {
-        const serverTimeData = await serverTime();
-        updateState(props._id, {
-          currentTime: time,
-          paused: paused,
-          syncServerTime: serverTimeData.epoch,
-          syncVideoTime: time,
-        });
-      } catch (error) {
-        console.error('VideoViewer> Error getting server time:', error);
-        // Fallback to old behavior if server time fails
-        updateState(props._id, { currentTime: time, paused: paused });
-      }
+    // If the browser already has video metadata (duration, seekable ranges) we
+    // can apply immediately.  Otherwise defer until 'loadedmetadata' fires —
+    // this is the late-joiner path with no retries needed.
+    if (video.readyState >= 1) {
+      apply();
+    } else {
+      video.addEventListener('loadedmetadata', apply, { once: true });
     }
-  };
+  }, [s.paused, s.currentTime, s.syncServerTime]);
 
-  // Event handler
-  const handleUserKeyPress = useCallback(
+  // ── DRIFT CORRECTION ───────────────────────────────────────────────────────
+  //
+  // Over time, playback on different clients can drift due to buffering stalls,
+  // tab throttling, or system clock jitter.  This interval checks every 5 s
+  // and re-syncs if drift exceeds 1 second.
+  //
+  // Key properties:
+  //  • Purely synchronous math — uses the cached clockOffsetMs(), zero HTTP.
+  //  • Only active while playing (interval is torn down on pause/seek).
+  //  • Re-created whenever currentTime or syncServerTime change (seek resets it).
+  //  • Uses modulo for loop mode so it never clamps a looped video to its end.
+  useEffect(() => {
+    if (s.paused || !s.syncServerTime) return;
+
+    const interval = setInterval(() => {
+      const video = videoRef.current;
+      if (!video || video.paused) return;
+
+      const target = calcTarget(s.currentTime, s.syncServerTime!, video.duration, s.loop);
+      if (Math.abs(video.currentTime - target) > 1.0) {
+        video.currentTime = target;
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [s.paused, s.currentTime, s.syncServerTime, s.loop]);
+
+  // ── Video end handler ──────────────────────────────────────────────────────
+  // Only fires when loop = false (the browser suppresses 'ended' when looping).
+  // Resets currentTime to 0 so the next play starts from the beginning.
+  const handleEnd = useCallback(async () => {
+    const epoch = await localServerEpoch();
+    updateState(props._id, { paused: true, currentTime: 0, syncServerTime: epoch });
+  }, [props._id]);
+
+  // ── Keyboard shortcuts ─────────────────────────────────────────────────────
+  // Space / P  → toggle play/pause
+  // D          → download the original file
+  // C          → capture the current frame as an ImageViewer app
+  // Escape     → deselect this app
+  //
+  // Uses "act local first": the video element is updated synchronously before
+  // the async updateState broadcast so there is no perceptible delay.
+  const handleKeyDown = useCallback(
     async (evt: KeyboardEvent) => {
       evt.stopPropagation();
+      const video = videoRef.current;
+      if (!video) return;
+
       switch (evt.code) {
         case 'Space':
         case 'KeyP': {
-          handlePlay();
+          const epoch = await localServerEpoch();
+          if (s.paused) {
+            video.play().catch(console.error);
+            updateState(props._id, { paused: false, currentTime: video.currentTime, syncServerTime: epoch });
+          } else {
+            video.pause();
+            updateState(props._id, { paused: true, currentTime: video.currentTime, syncServerTime: epoch });
+          }
           break;
         }
         case 'KeyD': {
-          // Trigger a download
           if (file) {
-            const filename = file.data.originalfilename;
             const extras = file.data.derived as ExtraImageType;
-            const video_url = extras.url;
-            downloadFile(video_url, filename);
+            downloadFile(extras.url, file.data.originalfilename);
           }
           break;
         }
         case 'KeyC': {
-          // Capture a screenshot
-          if (videoRef.current) {
-            const setup = await captureFrame(videoRef.current);
-            if (setup && roomId && boardId) {
-              createApp({
-                ...setup,
-                roomId: roomId,
-                boardId: boardId,
-                position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
-                size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
-              } as AppSchema);
-            }
+          const setup = await captureFrame(video);
+          if (setup && roomId && boardId) {
+            createApp({
+              ...setup,
+              roomId,
+              boardId,
+              position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+              size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
+            } as AppSchema);
           }
           break;
         }
         case 'Escape': {
-          // Deselect the app
           setSelectedApp('');
+          break;
         }
       }
     },
-    [s, file, props.data.position]
+    [s.paused, file, props.data.position, props._id, roomId, boardId]
   );
 
-  // Attach/detach event handler from the div
+  // Attach keyboard + focus/blur handlers to the wrapper div.
+  // Mouse-enter focuses the div so keyboard events land here.
+  // Mouse-leave blurs so global shortcuts still work elsewhere.
   useEffect(() => {
     const div = divRef.current;
-    if (div) {
-      div.addEventListener('keydown', handleUserKeyPress);
-      div.addEventListener('mouseleave', () => {
-        // remove focus onto div
-        div.blur();
-      });
-      div.addEventListener('mouseenter', () => {
-        // Focus on the div for keyboard events
-        div.focus({ preventScroll: true });
-      });
-    }
+    if (!div) return;
+    const onLeave = () => div.blur();
+    const onEnter = () => div.focus({ preventScroll: true });
+    div.addEventListener('keydown', handleKeyDown);
+    div.addEventListener('mouseleave', onLeave);
+    div.addEventListener('mouseenter', onEnter);
     return () => {
-      if (div) div.removeEventListener('keydown', handleUserKeyPress);
+      div.removeEventListener('keydown', handleKeyDown);
+      div.removeEventListener('mouseleave', onLeave);
+      div.removeEventListener('mouseenter', onEnter);
     };
-  }, [divRef, handleUserKeyPress]);
-
-  // Event handler for video end
-  function onVideoEnd() {
-    // Clear sync markers when video ends and set final currentTime
-    const finalTime = videoRef.current?.currentTime || 0;
-    updateState(props._id, {
-      currentTime: finalTime,
-      paused: true,
-      syncServerTime: undefined,
-      syncVideoTime: undefined,
-    });
-  }
-
-  // Handle video looping - reset sync markers when video loops
-  useEffect(() => {
-    if (!videoRef.current || !s.loop || !s.syncServerTime || !s.syncVideoTime) return;
-
-    const handleTimeUpdate = () => {
-      if (!videoRef.current || !s.syncServerTime || !s.syncVideoTime) return;
-      
-      // If video loops back to start (currentTime < 0.5 and we were past the start)
-      if (videoRef.current.currentTime < 0.5 && s.syncVideoTime > 1) {
-        // Video has looped, reset the sync markers (include currentTime for consistency)
-        const loopTime = videoRef.current.currentTime || 0;
-        serverTime()
-          .then((serverTimeData) => {
-            updateState(props._id, {
-              currentTime: loopTime,
-              syncServerTime: serverTimeData.epoch,
-              syncVideoTime: loopTime,
-            });
-          })
-          .catch(console.error);
-      }
-    };
-
-    const video = videoRef.current;
-    video.addEventListener('timeupdate', handleTimeUpdate);
-    return () => {
-      video.removeEventListener('timeupdate', handleTimeUpdate);
-    };
-  }, [videoRef, s.loop, s.syncServerTime, s.syncVideoTime]);
+  }, [handleKeyDown]);
 
   return (
     <AppWindow app={props} lockAspectRatio={aspectRatio} hideBackgroundIcon={MdMovie}>
-      <AspectRatio width={"100%"} ratio={aspectRatio} ref={divRef} tabIndex={1}>
+      {/*
+       * AspectRatio wrapper keeps the video correctly sized inside the app window.
+       * tabIndex={1} is required for the div to be focusable (keyboard events).
+       *
+       * The video is hidden while the board is being dragged (boardDragging) to
+       * avoid expensive paint work during pan/zoom gestures.
+       *
+       * preload="auto" tells the browser to start buffering immediately so that
+       * seeking and late-joiner sync can happen without waiting for a download.
+       *
+       * muted={true} is required by browser autoplay policy — browsers block
+       * autoplay of unmuted video without a user gesture.  Users can unmute via
+       * the toolbar button (local state only, not synced).
+       */}
+      <AspectRatio width="100%" ratio={aspectRatio} ref={divRef} tabIndex={1}>
         <video
           ref={videoRef}
           id={`${props._id}-video`}
           src={url}
           muted={true}
+          preload="auto"
           height="100%"
           width="100%"
-          onEnded={onVideoEnd}
+          onEnded={handleEnd}
           style={{ display: boardDragging ? 'none' : 'block', objectFit: 'contain' }}
-        ></video>
+        />
       </AspectRatio>
     </AppWindow>
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ToolbarComponent — controls rendered in the shared app toolbar bar
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// The toolbar accesses the <video> element by DOM id (rendered in AppComponent)
+// rather than through React props.  This is intentional: it avoids lifting the
+// video ref up through the app framework and keeps the two components decoupled.
+//
+// Every action that affects shared state follows the same pattern:
+//   1. Update the local video element immediately (no round-trip delay).
+//   2. Fetch the current server epoch (cached, no HTTP after first call).
+//   3. Broadcast the new state via updateState.
+//
+// When the state echo arrives back from Redis, the core sync effect in
+// AppComponent sees drift < threshold and does nothing — no double-seek.
+
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-  // Navigation and routing
   const { roomId, boardId } = useParams();
 
-  // Appstore
   const updateState = useAppStore((state) => state.updateState);
   const createApp = useAppStore((state) => state.create);
-
-  // Stores
   const assets = useAssetStore((state) => state.assets);
 
-  // React State
+  // Asset info for download + info popover
   const [file, setFile] = useState<Asset>();
   const [extras, setExtras] = useState<ExtraVideoType>();
 
-  // Local State
-  const [sliderTime, setSliderTime] = useState<number | null>(null);
+  // currentTime drives the seek slider display.
+  // sliderTime shadows it while the user is actively dragging the slider,
+  // so the tooltip follows the thumb without broadcasting every pixel.
   const [currentTime, setCurrentTime] = useState(0);
+  const [sliderTime, setSliderTime] = useState<number | null>(null);
 
-  // Use ref for video element (more efficient than state)
+  // Reference to the <video> element in AppComponent.
+  // Obtained once on mount via getElementById, with a short retry in case
+  // the video element hasn't rendered yet when the toolbar mounts.
   const videoRef = useRef<HTMLVideoElement | null>(null);
-
-  // Color
   const teal = useHexColor('teal');
 
-  // Get video element once when component mounts
+  // ── Video element reference ────────────────────────────────────────────────
   useEffect(() => {
-    const video = document.getElementById(`${props._id}-video`) as HTMLVideoElement;
-    if (video) {
-      videoRef.current = video;
-    }
-    // Also check after a short delay in case video loads later
-    const timeoutId = setTimeout(() => {
-      const videoDelayed = document.getElementById(`${props._id}-video`) as HTMLVideoElement;
-      if (videoDelayed) {
-        videoRef.current = videoDelayed;
-      }
-    }, 500);
-    return () => clearTimeout(timeoutId);
+    const get = () => {
+      const v = document.getElementById(`${props._id}-video`) as HTMLVideoElement;
+      if (v) videoRef.current = v;
+    };
+    get();
+    // Short timeout in case AppComponent hasn't rendered the <video> yet
+    const t = setTimeout(get, 500);
+    return () => clearTimeout(t);
   }, [props._id]);
 
-  // Use timeupdate event listener instead of polling (more efficient)
+  // ── Time display ───────────────────────────────────────────────────────────
+  // Listen to 'timeupdate' events from the video element to keep the slider
+  // position accurate.  This is more efficient than polling via setInterval
+  // and only causes the toolbar (not AppComponent) to re-render on each tick.
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
+    const onTimeUpdate = () => setCurrentTime(video.currentTime);
+    video.addEventListener('timeupdate', onTimeUpdate);
+    return () => video.removeEventListener('timeupdate', onTimeUpdate);
+  }, [props._id]);
 
-    const handleTimeUpdate = () => {
-      setCurrentTime(video.currentTime);
-    };
-
-    video.addEventListener('timeupdate', handleTimeUpdate);
-    setCurrentTime(video.currentTime);
-
-    return () => {
-      video.removeEventListener('timeupdate', handleTimeUpdate);
-    };
-  }, [props._id]); // Re-run when component ID changes
-
-  // Obtain the asset for download functionality
+  // ── Asset resolution ───────────────────────────────────────────────────────
   useEffect(() => {
-    const myasset = assets.find((a) => a._id === s.assetid);
-    if (myasset) {
-      setFile(myasset);
-      setExtras(myasset.data.derived as ExtraVideoType);
-    }
+    const asset = assets.find((a) => a._id === s.assetid);
+    if (!asset) return;
+    setFile(asset);
+    setExtras(asset.data.derived as ExtraVideoType);
   }, [s.assetid, assets]);
 
-  // Handle a play action
+  // ── Play ───────────────────────────────────────────────────────────────────
+  // Start playback locally first, then broadcast.
   const handlePlay = async () => {
     const video = videoRef.current;
     if (!video) return;
-
-    // Ensure video has metadata loaded before getting currentTime
-    // This is critical for first play when video might not be ready
-    if (video.readyState < 1) {
-      // Wait for metadata to load
-      await new Promise<void>((resolve) => {
-        const onLoadedMetadata = () => {
-          video.removeEventListener('loadedmetadata', onLoadedMetadata);
-          resolve();
-        };
-        video.addEventListener('loadedmetadata', onLoadedMetadata);
-        // Fallback timeout in case event never fires
-        setTimeout(resolve, 1000);
-      });
-    }
-
-    let time = video.currentTime;
-    // Ensure we have a valid time (not NaN)
-    if (isNaN(time) || time < 0) {
-      time = 0;
-    }
-
-    // Check if time of video is at the end
-    if (video.duration && time >= video.duration) {
-      time = 0.0;
-      video.currentTime = 0.0;
-    }
-
-    // Start playing the video BEFORE setting sync markers
-    // This ensures the video is actually playing when we capture the time
-    await video.play().catch(console.error);
-
-    // Get server time and set ALL sync values in ONE atomic update
-    // Use the actual currentTime after play() to ensure accuracy
-    const finalTime = video.currentTime || time || 0;
-    try {
-      const serverTimeData = await serverTime();
-      updateState(props._id, {
-        currentTime: finalTime,
-        paused: false,
-        syncServerTime: serverTimeData.epoch,
-        syncVideoTime: finalTime,
-      });
-    } catch (error) {
-      console.error('VideoViewer> Error getting server time:', error);
-      // Fallback: set currentTime and paused if server time fails
-      updateState(props._id, { currentTime: finalTime, paused: false });
-    }
+    video.play().catch(console.error);
+    const epoch = await localServerEpoch();
+    updateState(props._id, { paused: false, currentTime: video.currentTime, syncServerTime: epoch });
   };
 
-  // Handle a pause action
-  const handlePause = () => {
+  // ── Pause ──────────────────────────────────────────────────────────────────
+  // Pause locally first, then broadcast.  Because the video is already paused
+  // when the echo arrives, the core sync effect's drift check is a no-op.
+  const handlePause = async () => {
     const video = videoRef.current;
     if (!video) return;
-
-    updateState(props._id, {
-      currentTime: video.currentTime,
-      paused: true,
-      syncServerTime: undefined,
-      syncVideoTime: undefined,
-    });
+    video.pause();
+    const epoch = await localServerEpoch();
+    updateState(props._id, { paused: true, currentTime: video.currentTime, syncServerTime: epoch });
   };
 
+  // ── Loop toggle ────────────────────────────────────────────────────────────
+  // Flips the loop flag in shared state.  AppComponent's useEffect picks it up
+  // and sets video.loop accordingly on all clients.
+  const handleLoop = () => updateState(props._id, { loop: !s.loop });
 
-  // Handle a loop action
-  const handleLoop = () => {
-    updateState(props._id, { loop: !s.loop });
-  };
-
-  // Handle a mute action, local state only
+  // ── Mute ───────────────────────────────────────────────────────────────────
+  // Mute/unmute is intentionally LOCAL ONLY — each user controls their own
+  // audio.  We do not sync this to avoid one user muting everyone else.
   const handleMute = () => {
-    const video = videoRef.current;
-    if (video) {
-      video.muted = !video.muted;
-    }
+    if (videoRef.current) videoRef.current.muted = !videoRef.current.muted;
   };
 
-  // Download the file
+  // ── Download ───────────────────────────────────────────────────────────────
+  // Triggers a browser download of the original uploaded file.
   const handleDownload = () => {
     if (file) {
-      const filename = file.data.originalfilename;
-      const extras = file.data.derived as ExtraImageType;
-      const video_url = extras.url;
-      downloadFile(video_url, filename);
+      const derived = file.data.derived as ExtraImageType;
+      downloadFile(derived.url, file.data.originalfilename);
     }
   };
 
-  // Screenshot the video and open an image viewer
+  // ── Screenshot ─────────────────────────────────────────────────────────────
+  // Captures the current video frame as a canvas image and opens it in a new
+  // ImageViewer app next to this one.
+  // If playing, we wait for the next decoded frame via requestVideoFrameCallback
+  // so we capture a clean, fully-rendered frame rather than whatever happens
+  // to be in the compositor at click time.
   const handleScreenshot = async () => {
     const video = videoRef.current;
     if (!video) return;
-
-    if (s.paused) {
-      // Just capture now
+    const doCapture = async () => {
       const setup = await captureFrame(video);
       if (setup && roomId && boardId) {
         createApp({
           ...setup,
-          roomId: roomId,
-          boardId: boardId,
+          roomId,
+          boardId,
           position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
           size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
         } as AppSchema);
       }
+    };
+    if (s.paused) {
+      doCapture();
     } else {
-      // Next frame, then capture
-      video.requestVideoFrameCallback(async () => {
-        const setup = await captureFrame(video);
-        if (setup && roomId && boardId) {
-          createApp({
-            ...setup,
-            roomId: roomId,
-            boardId: boardId,
-            position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
-            size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
-          } as AppSchema);
-        }
-      });
+      video.requestVideoFrameCallback(doCapture);
     }
   };
 
-  // When the user is seeking, throttle the updates
-  const throttleSeek = throttle(1000, (value) => {
-    updateState(props._id, { currentTime: value });
-  });
-
-  // Keep a copy of the function
-  const throttleSeekFunc = useRef(throttleSeek);
-
-  // Handle user moving slider
+  // ── Seek (drag) ────────────────────────────────────────────────────────────
+  // While the user drags the slider we update only the LOCAL video position
+  // and the slider tooltip.  We do NOT broadcast here — that would flood every
+  // other client with seek commands on every pixel of drag movement.
   const seekChangeHandle = (value: number) => {
-    const video = videoRef.current;
-    if (video) {
-      video.currentTime = value;
+    if (videoRef.current) {
+      videoRef.current.currentTime = value;
       setSliderTime(value);
-      throttleSeekFunc.current(value);
     }
   };
 
-  // Handle user moving slider
+  // ── Seek (release) ─────────────────────────────────────────────────────────
+  // When the user releases the slider we broadcast the final position.
+  // We also update syncServerTime so other clients calculate elapsed time
+  // from this new reference point (important if the video is playing).
   const seekEndHandle = async (value: number) => {
     const video = videoRef.current;
     if (!video) return;
-
     video.currentTime = value;
     setCurrentTime(value);
     setSliderTime(null);
-
-    // If playing, reset sync markers after seek (all in one atomic update)
-    if (!s.paused) {
-      try {
-        const serverTimeData = await serverTime();
-        updateState(props._id, {
-          currentTime: value,
-          syncServerTime: serverTimeData.epoch,
-          syncVideoTime: value,
-        });
-      } catch (error) {
-        console.error('VideoViewer> Error getting server time:', error);
-        // Fallback: set currentTime only if server time fails
-        updateState(props._id, { currentTime: value });
-      }
-    } else {
-      // If paused, just update currentTime (no sync markers needed)
-      updateState(props._id, { currentTime: value });
-    }
+    const epoch = await localServerEpoch();
+    // paused flag is unchanged — if it was playing it keeps playing from the
+    // new position; if it was paused it stays paused at the new position.
+    updateState(props._id, { currentTime: value, syncServerTime: epoch });
   };
 
+  // The slider shows sliderTime while dragging, currentTime otherwise.
+  const displayTime = sliderTime !== null ? sliderTime : currentTime;
+  const duration = videoRef.current?.duration || 0;
 
   return (
     <>
-      {/* App State with server */}
+      {/* ── Play / Pause ───────────────────────────────────────────────────── */}
       <ButtonGroup isAttached size="xs" colorScheme="teal" mr={1}>
-
-        <Tooltip placement="top" hasArrow={true} label={'Play Video'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label="Play" openDelay={400}>
           <Button onClick={handlePlay} isDisabled={!videoRef.current} size="xs" px={0}>
             <MdPlayArrow size="16px" />
           </Button>
         </Tooltip>
-
-        <Tooltip placement="top" hasArrow={true} label={'Pause Video'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label="Pause" openDelay={400}>
           <Button onClick={handlePause} isDisabled={!videoRef.current} size="xs" px={0}>
             <MdPause size="16px" />
           </Button>
         </Tooltip>
-
       </ButtonGroup>
 
+      {/* ── Loop / Mute ────────────────────────────────────────────────────── */}
       <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
-        <Tooltip placement="top" hasArrow={true} label={'Loop'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label="Loop" openDelay={400}>
           <Button onClick={handleLoop} isDisabled={!videoRef.current} size="xs" px={0}>
-            {videoRef.current?.loop ? <MdLoop size="16px" /> : <MdArrowRightAlt size="16px" />}
+            {/* Show loop icon when looping, arrow icon when not */}
+            {s.loop ? <MdLoop size="16px" /> : <MdArrowRightAlt size="16px" />}
           </Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={videoRef.current?.muted ? 'Unmute' : 'Mute'} openDelay={400}>
@@ -735,71 +586,69 @@ function ToolbarComponent(props: App): JSX.Element {
         </Tooltip>
       </ButtonGroup>
 
+      {/* ── Seek slider ────────────────────────────────────────────────────── */}
+      {/*
+       * onChange fires on every drag pixel → updates local video only.
+       * onChangeEnd fires on mouse-up → broadcasts the final position.
+       * focusThumbOnChange={false} prevents the thumb from stealing keyboard
+       * focus away from the app window.
+       */}
       <Slider
-        aria-label="slider-ex-4"
-        value={sliderTime !== null ? sliderTime : currentTime}
-        max={videoRef.current?.duration}
+        aria-label="video-seek"
+        value={displayTime}
+        max={duration}
         width="200px"
         mx={4}
         onChange={seekChangeHandle}
         onChangeEnd={seekEndHandle}
         focusThumbOnChange={false}
       >
-        <SliderTrack bg={'gray.200'}>
+        <SliderTrack bg="gray.200">
           <SliderFilledTrack bg={teal} />
         </SliderTrack>
+        {/* Start / end time labels fixed to the track edges */}
         <SliderMark value={0} fontSize="xs" mt="1.5" ml="-3">
           {getDurationString(0)}
         </SliderMark>
-        <SliderMark value={videoRef.current?.duration || 0} fontSize="xs" mt="1.5" ml="-5">
-          {getDurationString(videoRef.current?.duration || 0)}
+        <SliderMark value={duration} fontSize="xs" mt="1.5" ml="-5">
+          {getDurationString(duration)}
         </SliderMark>
-        <SliderMark
-          value={sliderTime !== null ? sliderTime : currentTime}
-          textAlign="center"
-          bg={teal}
-          color="white"
-          mt="-9"
-          ml="-5"
-          p="0.5"
-          fontSize="xs"
-          borderRadius="md"
-        >
-          {getDurationString(sliderTime !== null ? sliderTime : currentTime)}
+        {/* Floating tooltip above the thumb showing current position */}
+        <SliderMark value={displayTime} textAlign="center" bg={teal} color="white" mt="-9" ml="-5" p="0.5" fontSize="xs" borderRadius="md">
+          {getDurationString(displayTime)}
         </SliderMark>
         <SliderThumb boxSize={4}>
-          <Box color="teal" as={MdGraphicEq} transition={'all 0.2s'} _hover={{ color: teal }} />
+          <Box color="teal" as={MdGraphicEq} />
         </SliderThumb>
       </Slider>
 
-      {/* Local State Buttons - Only Changes the video state for the local user */}
-      <ButtonGroup isAttached size="xs" colorScheme={'teal'} mx={1}>
-
-        <Tooltip placement="top" hasArrow={true} label={'Download Video'} openDelay={400}>
+      {/* ── Utility buttons ────────────────────────────────────────────────── */}
+      <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
+        <Tooltip placement="top" hasArrow={true} label="Download" openDelay={400}>
           <Button onClick={handleDownload} isDisabled={!videoRef.current} size="xs" px={0}>
             <MdFileDownload size="16px" />
           </Button>
         </Tooltip>
-        <Tooltip placement="top" hasArrow={true} label={'Screenshot'} openDelay={400}>
+        <Tooltip placement="top" hasArrow={true} label="Screenshot" openDelay={400}>
           <Button onClick={handleScreenshot} isDisabled={!videoRef.current} size="xs" px={0}>
             <MdScreenshotMonitor size="16px" />
           </Button>
         </Tooltip>
+
+        {/* Info popover — shows technical metadata from exiftool */}
         <Popover placement="top" trigger="hover">
           <PopoverTrigger>
-                <Button isDisabled={!videoRef.current} size="xs" px={0}>
+            <Button isDisabled={!videoRef.current} size="xs" px={0}>
               <MdInfoOutline size="16px" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent fontSize={'sm'}>
+          <PopoverContent fontSize="sm">
             <PopoverArrow />
             <PopoverCloseButton />
             <PopoverHeader>File: {file?.data.originalfilename}</PopoverHeader>
             <PopoverBody>
               <UnorderedList>
-                <ListItem>
-                  Resolution: {extras?.width} x {extras?.height}
-                </ListItem>
+                <ListItem>Resolution: {extras?.width} x {extras?.height}</ListItem>
                 <ListItem>Duration: {extras?.duration}</ListItem>
                 <ListItem>Bit Rate: {extras?.birate}</ListItem>
                 <ListItem>Audio: {extras?.audioFormat}</ListItem>
@@ -815,48 +664,38 @@ function ToolbarComponent(props: App): JSX.Element {
   );
 }
 
-/**
- * Grouped App toolbar component, this component will display when a group of apps are selected
- * @returns JSX.Element | null
- */
-/**
- * Grouped App toolbar component, this component will display when a group of apps are selected
- * @returns JSX.Element | null
- */
-const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
- return null;
-};
+// ─────────────────────────────────────────────────────────────────────────────
+// GroupedToolbarComponent — shown when multiple apps are selected as a group
+// Not implemented for VideoViewer.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const GroupedToolbarComponent = (_props: { apps: AppGroup }) => null;
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
 
-/**
- * Draw a video into a canvas and return the image
- * @param video: HTMLVideoElement
- * @returns a Partial of AppSchema for an ImageViewer or null
- */
+// ─────────────────────────────────────────────────────────────────────────────
+// captureFrame — draws the current video frame to a canvas and returns the
+// setup object needed to open it as an ImageViewer app.
+// Resolution is capped at 1280 px wide (original resolution can be huge).
+// ─────────────────────────────────────────────────────────────────────────────
+
 async function captureFrame(video: HTMLVideoElement) {
-  if (video) {
-    // Create a canvas
-    const canvas = document.createElement('canvas');
-    canvas.width = 1280; // video.videoWidth;
-    canvas.height = canvas.width / (video.videoWidth / video.videoHeight);
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      // Draw the video into the canvas
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      // Get the image from the canvas
-      const image = await canvas.toDataURL('image/jpg');
-      canvas.remove();
-      // Return app setup
-      const init = { assetid: image };
-      return {
-        title: 'Screenshot',
-        rotation: { x: 0, y: 0, z: 0 },
-        type: 'ImageViewer',
-        state: { ...(initialValues['ImageViewer'] as AppState), ...init },
-        raised: false,
-      };
-    }
+  const canvas = document.createElement('canvas');
+  canvas.width = 1280;
+  canvas.height = canvas.width / (video.videoWidth / video.videoHeight);
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const image = canvas.toDataURL('image/jpg');
+    canvas.remove();
+    return {
+      title: 'Screenshot',
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'ImageViewer',
+      state: { ...(initialValues['ImageViewer'] as AppState), assetid: image },
+      raised: false,
+    };
   }
+  canvas.remove();
   return null;
 }

@@ -43,11 +43,14 @@ import { fetchEventSource } from '@microsoft/fetch-event-source';
 // Ansi library
 import Ansi from 'ansi-to-react';
 // Plotly library
-import Plot, { PlotParams } from 'react-plotly.js';
+import { PlotParams } from 'react-plotly.js';
+import PlotRaw from 'react-plotly.js';
+const Plot = PlotRaw as unknown as React.FC<any>;
 // Vega library
 import { Vega, VisualizationSpec } from 'react-vega';
 // VegaLite library
 import { VegaLite } from 'react-vega';
+
 // Monaco Imports
 import Editor, { OnMount } from '@monaco-editor/react';
 import { editor } from 'monaco-editor';
@@ -198,7 +201,6 @@ function AppComponent(props: App): JSX.Element {
     return () => window.removeEventListener('resize', checkWidth);
   }, [props.data.size.width]);
 
-
   // Memos and errors
   const renderedContent = useMemo(() => processedContent(content || []), [content]);
   const [error, setError] = useState<{ traceback?: string[]; ename?: string; evalue?: string } | null>(null);
@@ -254,7 +256,7 @@ function AppComponent(props: App): JSX.Element {
     const scale = useUIStore.getState().scale;
 
     const handleMouseMove = (e: MouseEvent) => {
-      const deltaY = (e.clientY / scale) - (startY / scale);
+      const deltaY = e.clientY / scale - startY / scale;
       const newHeight = startHeight + deltaY;
       const focused = useUIStore.getState().focusedAppId === props._id;
       const maxHeight = props.data.size.height - 108;
@@ -283,8 +285,6 @@ function AppComponent(props: App): JSX.Element {
   const handlePositionBottom = () => {
     setEditorHeight(props.data.size.height - 108);
   };
-
-
 
   // Monaco editor layout - handle both width and height
   useEffect(() => {
@@ -527,18 +527,21 @@ function AppComponent(props: App): JSX.Element {
       if (result.msg_type === 'error') {
         setContent(null);
         setExecutionCount(0);
-        const error = result.content.reduce((acc, item) => {
-          if ('traceback' in item) {
-            acc.traceback = item.traceback;
-          }
-          if ('ename' in item) {
-            acc.ename = item.ename;
-          }
-          if ('evalue' in item) {
-            acc.evalue = item.evalue;
-          }
-          return acc;
-        }, {} as { traceback?: string[]; ename?: string; evalue?: string });
+        const error = result.content.reduce(
+          (acc, item) => {
+            if ('traceback' in item) {
+              acc.traceback = item.traceback;
+            }
+            if ('ename' in item) {
+              acc.ename = item.ename;
+            }
+            if ('evalue' in item) {
+              acc.evalue = item.evalue;
+            }
+            return acc;
+          },
+          {} as { traceback?: string[]; ename?: string; evalue?: string },
+        );
         setError(error);
         return;
       }
@@ -626,11 +629,11 @@ function AppComponent(props: App): JSX.Element {
                 src={`data:image/png;base64,${value}`}
                 onDragStart={(e) => {
                   // Set the title in the drag transfer data
-                  let title = "SAGEcell Output";
+                  let title = 'SAGEcell Output';
                   if (item['text/plain']) {
                     title = item['text/plain'];
                     // Remove the quotes from the title
-                    title = title.replace(/[<>]/g, "");
+                    title = title.replace(/[<>]/g, '');
                   }
                   const data = JSON.stringify({ title, sources: [props._id] });
                   e.dataTransfer.setData('app_state', data);
@@ -644,11 +647,11 @@ function AppComponent(props: App): JSX.Element {
                 src={`data:image/jpeg;base64,${value}`}
                 onDragStart={(e) => {
                   // Set the title in the drag transfer data
-                  let title = "SAGEcell Output";
+                  let title = 'SAGEcell Output';
                   if (item['text/plain']) {
                     title = item['text/plain'];
                     // Remove the quotes from the title
-                    title = title.replace(/[<>]/g, "");
+                    title = title.replace(/[<>]/g, '');
                   }
                   const data = JSON.stringify({ title, sources: [props._id] });
                   e.dataTransfer.setData('app_state', data);
@@ -675,7 +678,7 @@ function AppComponent(props: App): JSX.Element {
           case 'application/vnd.vega.v3+json':
           case 'application/vnd.vega.v2+json':
           case 'application/vnd.vega.v1+json':
-            return <Vega key={key} spec={value as VisualizationSpec} actions={false} renderer="svg" />;
+            return <VegaLite key={key} spec={value as VisualizationSpec} actions={false} renderer="svg" />;
           case 'application/vnd.plotly.v1+json': {
             // Configure plotly
             const value = item[key] as unknown as PlotParams;
@@ -827,7 +830,6 @@ function AppComponent(props: App): JSX.Element {
   const handleFontDecrease = () => {
     setFontSize((prev) => Math.max(8, prev - 2));
   };
-
 
   /**
    *
@@ -990,9 +992,8 @@ function AppComponent(props: App): JSX.Element {
     <AppWindow app={props} hideBackgroundIcon={FaPython}>
       <>
         <Box className="sc" h="100%" w={'100%'} display="flex" flexDirection="column" backgroundColor={bgColor}>
-
           {/* Toolbar at the top */}
-          <Box p={2} borderBottom="1px solid" backgroundColor={titleBarBgColor} borderColor={titleBarBorderColor} >
+          <Box p={2} borderBottom="1px solid" backgroundColor={titleBarBgColor} borderColor={titleBarBorderColor}>
             <Flex gap={2} align="center">
               {/* Editor label */}
               <Text fontSize="xl" fontWeight="bold" mx="2">
@@ -1003,43 +1004,43 @@ function AppComponent(props: App): JSX.Element {
 
               <Button
                 onClick={handleExecute}
-                leftIcon={!isNarrow ? (s.msgId ? <Spinner size="sm" /> : <MdPlayArrow size="16px" />) : undefined}
+                leftIcon={!isNarrow ? s.msgId ? <Spinner size="sm" /> : <MdPlayArrow size="16px" /> : undefined}
                 isDisabled={!s.kernel || !canExecuteCode}
                 size="xs"
                 variant="ghost"
                 title="Run"
               >
-                {isNarrow ? (s.msgId ? <Spinner size="sm" /> : <MdPlayArrow size="16px" fontWeight='bold' />) : 'Run'}
+                {isNarrow ? s.msgId ? <Spinner size="sm" /> : <MdPlayArrow size="16px" fontWeight="bold" /> : 'Run'}
               </Button>
               <Button
                 onClick={() => handleExecuteChain('all')}
-                leftIcon={!isNarrow ? (s.msgId ? <Spinner size="sm" /> : <VscRunAll size="16px" />) : undefined}
+                leftIcon={!isNarrow ? s.msgId ? <Spinner size="sm" /> : <VscRunAll size="16px" /> : undefined}
                 isDisabled={!s.kernel || !canExecuteCode}
                 size="xs"
                 variant="ghost"
                 title="Run All"
               >
-                {isNarrow ? (s.msgId ? <Spinner size="sm" /> : <VscRunAll size="16px" />) : 'All'}
+                {isNarrow ? s.msgId ? <Spinner size="sm" /> : <VscRunAll size="16px" /> : 'All'}
               </Button>
               <Button
                 onClick={() => handleExecuteChain('up')}
-                leftIcon={!isNarrow ? (s.msgId ? <Spinner size="sm" /> : <VscRunAbove size="16px" />) : undefined}
+                leftIcon={!isNarrow ? s.msgId ? <Spinner size="sm" /> : <VscRunAbove size="16px" /> : undefined}
                 isDisabled={!s.kernel || !canExecuteCode}
                 size="xs"
                 variant="ghost"
                 title="Run To Here"
               >
-                {isNarrow ? (s.msgId ? <Spinner size="sm" /> : <VscRunAbove size="16px" />) : 'To Here'}
+                {isNarrow ? s.msgId ? <Spinner size="sm" /> : <VscRunAbove size="16px" /> : 'To Here'}
               </Button>
               <Button
                 onClick={() => handleExecuteChain('down')}
-                leftIcon={!isNarrow ? (s.msgId ? <Spinner size="sm" /> : <VscRunBelow size="16px" />) : undefined}
+                leftIcon={!isNarrow ? s.msgId ? <Spinner size="sm" /> : <VscRunBelow size="16px" /> : undefined}
                 isDisabled={!s.kernel || !canExecuteCode}
                 size="xs"
                 variant="ghost"
                 title="From Here"
               >
-                {isNarrow ? (s.msgId ? <Spinner size="sm" /> : <VscRunBelow size="16px" />) : 'From Here'}
+                {isNarrow ? s.msgId ? <Spinner size="sm" /> : <VscRunBelow size="16px" /> : 'From Here'}
               </Button>
               <Button
                 onClick={handleInterrupt}
@@ -1063,20 +1064,19 @@ function AppComponent(props: App): JSX.Element {
               </Button>
 
               {/* Kernel Selector */}
-              <Box minW={isNarrow ? "100px" : "180px"}>
+              <Box minW={isNarrow ? '100px' : '180px'}>
                 {myKernels.length === 0 ? (
                   <Button size="sm" colorScheme="teal" variant="outline" isDisabled>
                     {!isNarrow && 'No Kernels'}
                   </Button>
                 ) : (
                   <Select
-                    placeholder={isNarrow ? "Kernel" : "Select Kernel"}
+                    placeholder={isNarrow ? 'Kernel' : 'Select Kernel'}
                     size="md"
                     value={selectedKernel?.kernel_id || ''}
                     onChange={selectKernel}
                     backgroundColor={bgColor}
                     height="33px"
-
                   >
                     {myKernels.map((kernel) => (
                       <option key={kernel.kernel_id} value={kernel.kernel_id}>
@@ -1086,7 +1086,6 @@ function AppComponent(props: App): JSX.Element {
                   </Select>
                 )}
               </Box>
-
             </Flex>
           </Box>
 
@@ -1102,7 +1101,7 @@ function AppComponent(props: App): JSX.Element {
           >
             {/* Editor area */}
             <Box h="100%" w="100%" display="flex" flexDirection="column">
-              <Box flex="1"  w="100%">
+              <Box flex="1" w="100%">
                 <Editor
                   loading={<Spinner />}
                   options={canExecuteCode ? { ...monacoOptions } : { ...monacoOptions, readOnly: true }}
@@ -1180,7 +1179,6 @@ function AppComponent(props: App): JSX.Element {
                 </Flex>
               </Box>
 
-
               <Box w="100%" h="100%" display="flex">
                 <Box w="32px" h="100%" backgroundColor="transparent"></Box>
                 <Box
@@ -1244,14 +1242,10 @@ function AppComponent(props: App): JSX.Element {
             justifyContent="space-between"
             fontSize="xs"
             color="gray.600"
-            _dark={{ color: "gray.400" }}
+            _dark={{ color: 'gray.400' }}
           >
-            <Text>
-              {selectedKernel ? `${selectedKernel.alias} (${selectedKernel.name})` : 'No kernel selected'}
-            </Text>
-            <Text>
-              {cursorPosition.r > 0 && cursorPosition.c > 0 ? `Ln ${cursorPosition.r}, Col ${cursorPosition.c}` : ''}
-            </Text>
+            <Text>{selectedKernel ? `${selectedKernel.alias} (${selectedKernel.name})` : 'No kernel selected'}</Text>
+            <Text>{cursorPosition.r > 0 && cursorPosition.c > 0 ? `Ln ${cursorPosition.r}, Col ${cursorPosition.c}` : ''}</Text>
           </Box>
         </Box>
       </>
