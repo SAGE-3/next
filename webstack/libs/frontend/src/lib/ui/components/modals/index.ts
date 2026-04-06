@@ -27,5 +27,3 @@ export * from './EditUserSettingsModal';
 export * from './BoardInformationModal';
 export * from './FeedbackModal';
 export * from './AccountDeletion';
-export * from './IntelligenceModal';
-export * from './IntelligenceMenu';

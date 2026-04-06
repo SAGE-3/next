@@ -7,7 +7,7 @@
 # -----------------------------------------------------------------------------
 
 # Models
-from typing import List, NamedTuple, Optional
+from typing import List
 from pydantic import BaseModel, Json
 import io
 
@@ -15,8 +15,8 @@ import io
 
 
 class Context(BaseModel):
-    previousQ: str  # previous prompt
-    previousA: str  # previous answer
+    previousQ: List[str]  # previous prompt
+    previousA: List[str]  # previous answer
     pos: List[float]  # position in the board
     roomId: str  # room ID
     boardId: str  # board ID

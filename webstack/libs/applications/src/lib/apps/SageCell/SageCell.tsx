@@ -1009,7 +1009,7 @@ function AppComponent(props: App): JSX.Element {
                 variant="ghost"
                 title="Run"
               >
-                {isNarrow ? (s.msgId ? <Spinner size="sm" /> : <MdPlayArrow size="16px" />) : 'Run'}
+                {isNarrow ? (s.msgId ? <Spinner size="sm" /> : <MdPlayArrow size="16px" fontWeight='bold' />) : 'Run'}
               </Button>
               <Button
                 onClick={() => handleExecuteChain('all')}

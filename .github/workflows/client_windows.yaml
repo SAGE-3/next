@@ -17,14 +17,14 @@ jobs:
 
     steps:
       # Checkout the repository
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       # Setup node
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          node-version: "22"
 
       # Install SAGE3 node dependencies
       - name: Installing SAGE3 Dependencies
@@ -45,7 +45,7 @@ jobs:
         working-directory: webstack/clients/electron
 
       # Upload the installer artifact
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: SAGE3-installer-win64.exe
           path: webstack/clients/electron/windows-installer/SAGE3-Installer.exe

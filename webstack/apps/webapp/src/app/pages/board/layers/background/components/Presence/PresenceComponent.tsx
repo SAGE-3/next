@@ -69,24 +69,27 @@ export function PresenceComponent(props: PresenceProps) {
 
   // Window resize hook
   const { width: winWidth, height: winHeight } = useWindowResize();
-  const { boardCursor } = useCursorBoardPosition();
+  const { getBoardCursor } = useCursorBoardPosition();
 
   // Throttle the Update
-  const throttleCursorUpdate = throttle(MediumUpdateRate, (cx: number, cy: number) => {
-    if (user && cx && cy) {
-      updatePresence(user?._id, { cursor: { x: cx, y: cy, z: 0 } });
-    }
-  });
-  const throttleViewportUpdate = throttle(MediumUpdateRate, (viewport: { position: Position; size: Size }) => {
-    if (user) {
-      updatePresence(user?._id, { viewport: { ...viewport, selfUpdate: true } });
-    }
-    setViewport(viewport.position, viewport.size);
-  });
+  const throttleCursorUpdate = useCallback(
+    throttle(MediumUpdateRate, (cx: number, cy: number) => {
+      if (user && cx && cy) {
+        updatePresence(user?._id, { cursor: { x: cx, y: cy, z: 0 } });
+      }
+    }),
+    [user, updatePresence],
+  );
 
-  // Keep the throttlefunc reference
-  const throttleViewportUpdateFunc = useCallback(throttleViewportUpdate, []);
-  const throttleCursorUpdateFunc = useCallback(throttleCursorUpdate, []);
+  const throttleViewportUpdate = useCallback(
+    throttle(MediumUpdateRate, (viewport: { position: Position; size: Size }) => {
+      if (user) {
+        updatePresence(user?._id, { viewport: { ...viewport, selfUpdate: true } });
+      }
+      setViewport(viewport.position, viewport.size);
+    }),
+    [user, updatePresence, setViewport],
+  );
 
   // Board Pan, zoom, or Window resize
   useEffect(() => {
@@ -94,15 +97,23 @@ export function PresenceComponent(props: PresenceProps) {
       position: { x: -boardPosition.x, y: -boardPosition.y, z: 0 },
       size: { width: winWidth / scale, height: winHeight / scale, depth: 0 },
     };
-    throttleViewportUpdateFunc(viewport);
-  }, [boardPosition.x, boardPosition.y, scale, winWidth, winHeight]);
+    throttleViewportUpdate(viewport);
+  }, [boardPosition.x, boardPosition.y, scale, winWidth, winHeight, throttleViewportUpdate]);
 
-  // Mouse Move
+  // Mouse Move - track cursor position directly via mousemove
   useEffect(() => {
-    if (!boardDragging) {
-      throttleCursorUpdateFunc(boardCursor.x, boardCursor.y);
-    }
-  }, [boardCursor.x, boardCursor.y]);
+    const handleMouseMove = () => {
+      if (!boardDragging) {
+        const cursor = getBoardCursor();
+        throttleCursorUpdate(cursor.x, cursor.y);
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [boardDragging, getBoardCursor, throttleCursorUpdate]);
 
   return (
     <>

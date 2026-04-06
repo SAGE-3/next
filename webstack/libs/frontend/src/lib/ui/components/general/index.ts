@@ -8,4 +8,5 @@
 
 export * from './ColorPicker';
 export * from './Clock';
+export * from './LoadingScreen';
 export * from './MainButton';

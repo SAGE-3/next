@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react';
 import { Routes, Route, Navigate, RouteProps, useParams } from 'react-router-dom';
 
 // Chakra UI
-import { Box, Button, ChakraProvider, CircularProgress, Text, useToast } from '@chakra-ui/react';
+import { Box, Button, ChakraProvider, Text, useToast } from '@chakra-ui/react';
 
 // SAGE3
 import {
@@ -28,6 +28,8 @@ import {
   UserSettingsProvider,
   YjsProvider,
   APIHttp,
+  LoadingScreen,
+  useRouteNav,
 } from '@sage3/frontend';
 import { Board, OpenConfiguration } from '@sage3/shared/types';
 
@@ -199,7 +201,7 @@ export default App;
 export const ProtectedAuthRoute = (props: RouteProps): JSX.Element => {
   const { auth, loading } = useAuth();
   if (loading) {
-    return LoadingSpinner();
+    return <LoadingScreen subtext="Verifying authentication..." />;
   } else {
     return auth ? <> {props.children}</> : <Navigate to="/" replace />;
   }
@@ -228,7 +230,7 @@ export const ProtectedAdminRoute = (props: RouteProps): JSX.Element => {
   const isSignedInUser = user?.data.userRole === 'user' || user?.data.userRole === 'admin';
 
   if (!user || loading || !data) {
-    return LoadingSpinner();
+    return <LoadingScreen subtext="Verifying authentication..." />;
   } else {
     const config = data as OpenConfiguration;
     // In dev mode, everyone can access admin routes
@@ -301,20 +303,8 @@ export const CheckBoardExistsRoute = (props: RouteProps): JSX.Element => {
   }, []);
 
   if (status === 'pending') {
-    return LoadingSpinner();
+    return <LoadingScreen subtext="Checking board..." />;
   } else {
     return status === 'exists' ? <>{props.children}</> : <Navigate to="/home" replace />;
   }
-};
-
-/**
- * Loading spinner component
- */
-export const LoadingSpinner = () => {
-  const teal = useHexColor('teal');
-  return (
-    <Box width="100vw" height="100vh" display="flex" justifyContent={'center'} alignItems={'center'}>
-      <CircularProgress isIndeterminate size={'xl'} color={teal} />
-    </Box>
-  );
 };

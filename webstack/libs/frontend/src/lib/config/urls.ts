@@ -20,6 +20,7 @@ export const apiUrls = {
     getAssets: '/api/assets',
     getAssetById: (id: string) => `/api/assets/static/${id}`,
     getPublicURL: (id: string, token: string) => `/api/files/${id}/${token}`,
+    getDownloadURL: (url: string) => `/api/files/download/${encodeURIComponent(url)}`,
     getNotebookByName: (name: string) => `/api/contents/notebooks/${name}`,
     upload: '/api/assets/upload',
   },

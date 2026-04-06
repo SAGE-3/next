@@ -28,6 +28,7 @@ declare module 'react' {
 /* App component for PluginApp */
 function AppComponent(props: App): JSX.Element {
   const pluginName = (props.data.state as AppState).pluginName;
+  const roomId = props.data.roomId;
   const iRef = useRef<HTMLIFrameElement>(null);
   const { user } = useUser();
 
@@ -70,7 +71,7 @@ function AppComponent(props: App): JSX.Element {
           allow={allow}
           ref={iRef}
           loading="eager"
-          src={`/plugins/apps/${pluginName}`}
+          src={`/plugins/apps/${roomId}_${pluginName}`}
           style={{ width: '100%', height: '100%' }}
         ></iframe>
       </>

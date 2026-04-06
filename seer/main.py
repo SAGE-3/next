@@ -136,16 +136,16 @@ async def code_question(qq: CodeRequest):
 
 
 # SUMMARY FUNCTION
-@app.post("/summary")
-async def summary(qq: Question):
-    try:
-        # do the work
-        val = await summaryAG.process(qq)
-        return val
-    except HTTPException as e:
-        # Get the error message
-        text = e.detail
-        raise HTTPException(status_code=500, detail=text)
+# @app.post("/summary")
+# async def summary(qq: Question):
+#     try:
+#         # do the work
+#         val = await summaryAG.process(qq)
+#         return val
+#     except HTTPException as e:
+#         # Get the error message
+#         text = e.detail
+#         raise HTTPException(status_code=500, detail=text)
 
 
 @app.post("/image")

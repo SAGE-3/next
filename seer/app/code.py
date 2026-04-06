@@ -56,6 +56,7 @@ class CodeAgent:
             llm_llama = ChatNVIDIA(
                 base_url=llama["url"] + "/v1",
                 model=llama["model"],
+                api_key=llama["apiKey"],
                 stream=False,
                 max_tokens=2000,
             )

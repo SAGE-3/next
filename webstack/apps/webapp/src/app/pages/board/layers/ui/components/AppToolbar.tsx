@@ -1023,10 +1023,9 @@ export function AppToolbar(props: AppToolbarProps) {
 
   const links = useLinkStore((state) => state.links);
   const removeLinks = useLinkStore((state) => state.removeLinks);
-  const removeLinkColor = useHexColor('red');
   let thisAppSourceLinks = [] as Link[];
   if (app) {
-    thisAppSourceLinks = links.filter((link) => link.data.sourceAppId === app._id);
+    thisAppSourceLinks = links.filter((link) => link.data.sourceAppId === app._id && link.data.type !== 'provenance');
   }
 
   const deleteLinks = () => {
