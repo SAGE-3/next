@@ -81,21 +81,25 @@ export async function generateDimensionsFromPrompt(
   apiKey: string,
   model: string,
   numDims: number,
-  imageBase64?: string
+  imageBase64?: string,
+  pdfContext?: string
 ): Promise<{ categorical: Record<string, string[]>; ordinal: Record<string, string[]> }> {
   const nominalDef = `A nominal dimension contains categorical values that are qualitative and distinct — no right answer. Good examples for brainstorming: Approach, Stakeholder, Domain, Format, Timeframe, Constraint, Innovation Type. Do NOT use: Quality, Clarity, Grammar, Length.\n\n`;
   const ordinalDef = `An ordinal dimension contains values measured in order (e.g., least → most). Good examples for brainstorming: Feasibility, Novelty, Scope, Risk Level, Resource Intensity. Do NOT use: Quality, Creativity, Length.\n\n`;
 
+  const pdfNote = pdfContext
+    ? `The following document has been provided as context — use it to ground dimensions in the specifics of this material:\n\n${pdfContext}\n\n`
+    : '';
   const imageNote = imageBase64
-    ? `An image has been provided for inspiration — use it to inform relevant dimensions, but keep them broadly applicable and diverse.\n\n`
+    ? `An image has been provided alongside this prompt. Use it to inform the brainstorming where relevant to "${prompt}" — it may represent a problem, context, reference, or aesthetic. Let it ground your ideas without dominating them.\n\n`
     : '';
 
   const catMsg =
-    `${imageNote}${nominalDef}List ${numDims} nominal dimensions and 4 possible values each for the prompt: "${prompt}"` +
+    `${pdfNote}${imageNote}${nominalDef}List ${numDims} nominal dimensions and 4 possible values each for the prompt: "${prompt}"` +
     `\nReturn ONLY this JSON (${numDims} items):\n{"<dim1>":["v1","v2","v3","v4"],...}`;
 
   const ordMsg =
-    `${imageNote}${ordinalDef}List ${numDims} ordinal dimensions for the prompt: "${prompt}"` +
+    `${pdfNote}${imageNote}${ordinalDef}List ${numDims} ordinal dimensions for the prompt: "${prompt}"` +
     `\nReturn ONLY this JSON:\n{"<dim>":["<lowest>","less","neutral","more","<highest>"]}`;
 
   const [catRaw, ordRaw] = await Promise.all([
@@ -116,12 +120,16 @@ export async function generateNodeContent(
   requirements: string,
   apiKey: string,
   model: string,
-  imageBase64?: string
+  imageBase64?: string,
+  pdfContext?: string
 ): Promise<string> {
-  const imageNote = imageBase64
-    ? `An image has been provided for inspiration — let it loosely inform the mood, context, or aesthetic of your idea, but do not describe or analyse it directly. Remain diverse and imaginative.\n\n`
+  const pdfNote = pdfContext
+    ? `The following document has been provided as context — ground your idea in the specifics of this material where relevant:\n\n${pdfContext}\n\n`
     : '';
-  const msg = `${imageNote}Brainstorming prompt: ${prompt}\n\nIdea constraints:\n${requirements}\n\nDescribe one specific, actionable idea that satisfies all constraints in 1–2 natural paragraphs (up to 150 words). Be concrete and practical. Write as flowing prose, not lists or JSON.`;
+  const imageNote = imageBase64
+    ? `An image has been provided alongside this prompt. Use it to inform the brainstorming where relevant to "${prompt}" — it may represent a problem, context, reference, or aesthetic. Let it ground your ideas without dominating them.\n\n`
+    : '';
+  const msg = `${pdfNote}${imageNote}Brainstorming prompt: ${prompt}\n\nIdea constraints:\n${requirements}\n\nDescribe one specific, actionable idea that satisfies all constraints in 1–2 natural paragraphs (up to 150 words). Be concrete and practical. Write as flowing prose, not lists or JSON.`;
   return callProseAPI(msg, apiKey, model, 0.8, imageBase64);
 }
 
@@ -182,11 +190,25 @@ export async function generateNodeImage(
   title: string,
   summary: string,
   keywords: string[],
-  apiKey: string
+  apiKey: string,
+  brainstormingPrompt?: string,
+  dimension?: { categorical: Record<string, string>; ordinal: Record<string, string> }
 ): Promise<string> {
+  const topicLine = brainstormingPrompt
+    ? `Conceptual illustration for a brainstorming idea about: "${brainstormingPrompt}". `
+    : `A conceptual illustration for the following idea. `;
+
+  const dimEntries = dimension
+    ? [...Object.entries(dimension.categorical), ...Object.entries(dimension.ordinal)]
+    : [];
+  const dimLine = dimEntries.length > 0
+    ? `It is characterized as: ${dimEntries.map(([k, v]) => `${k}: ${v}`).join(', ')}. `
+    : '';
+
   const prompt =
-    `A conceptual illustration representing an idea titled "${title}". ` +
-    `${summary} ` +
+    topicLine +
+    `The idea is titled "${title}" — ${summary} ` +
+    dimLine +
     `Visual themes: ${keywords.join(', ')}. ` +
     `Abstract, minimal, clean design. No text, labels, or words.`;
   const resp = await fetch(DALLE_URL, {

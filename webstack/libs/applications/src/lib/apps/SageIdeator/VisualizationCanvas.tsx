@@ -52,6 +52,7 @@ interface VisualizationCanvasProps {
   textColor: string;
   status: AppState['status'];
   statusMessage: string;
+  isGenerating: boolean;
   askingNodeId: string | null;
   selectedQANodeId: string | null;
   qaPanelOpen: boolean;
@@ -90,7 +91,7 @@ function scoreNode(node: SageNode, query: string): number {
 
 export function VisualizationCanvas({
   nodes, dimensions, appId, bgHex, panelBgHex, borderHex, textColor,
-  status, statusMessage, askingNodeId, selectedQANodeId, qaPanelOpen,
+  status, statusMessage, isGenerating, askingNodeId, selectedQANodeId, qaPanelOpen,
   positionsRef, hasFitRef,
   onToggleFav, onBranch, onSelectQA,
   onAddDimension, onRemoveDimension, isAddingDimension,
@@ -113,8 +114,6 @@ export function VisualizationCanvas({
   const containerRef = useRef<HTMLDivElement>(null);
   const simulationRef = useRef<d3.Simulation<SimNode, undefined> | null>(null);
   const dragRef = useRef({ active: false, startX: 0, startY: 0, startCamX: 0, startCamY: 0 });
-
-  const isGenerating = status === 'generating_dimensions' || status === 'generating_responses';
 
   // Sync axis selectors only when the set of dimension names actually changes
   const dimKey = dimensions.map((d) => d.name).join(',');

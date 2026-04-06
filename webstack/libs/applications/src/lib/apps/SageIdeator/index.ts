@@ -59,6 +59,7 @@ export const schema = z.object({
   dimensions: z.array(SageDimensionSchema),
   nodes: z.array(SageNodeSchema),
   qa: z.array(QAEntrySchema).default([]),
+  pdfContext: z.object({ filename: z.string(), text: z.string() }).optional(),
   chatHistory: z.array(
     z.object({
       id: z.string(),
@@ -74,6 +75,8 @@ export const schema = z.object({
       parentNodeTitle: z.string().optional(),
       // Image attached to this prompt (base64 data URL)
       imageUrl: z.string().optional(),
+      // PDF document used as context for this prompt
+      pdfFilename: z.string().optional(),
     })
   ),
 });

@@ -28,7 +28,7 @@ import {
   ModalCloseButton,
   useDisclosure,
 } from '@chakra-ui/react';
-import { MdSend, MdClear, MdEdit, MdAttachFile, MdDelete, MdAdd } from 'react-icons/md';
+import { MdSend, MdClear, MdEdit, MdAttachFile, MdDelete, MdAdd, MdPictureAsPdf } from 'react-icons/md';
 
 import { state as AppState } from './index';
 
@@ -53,6 +53,10 @@ interface ChatPanelProps {
   onDeleteEntry: (entryId: string) => void;
   attachedImage: string | null;
   onAttachImage: (dataUrl: string | null) => void;
+  pdfFilename: string | null;
+  onAttachPdf: (file: File) => void;
+  onClearPdf: () => void;
+  isLoadingPdf?: boolean;
 }
 
 function HistoryImageThumb({ src }: { src: string }) {
@@ -60,8 +64,8 @@ function HistoryImageThumb({ src }: { src: string }) {
   return (
     <>
       <Image
-        src={src} alt="Prompt image" w="100%" borderRadius="sm" maxH="40px" objectFit="cover"
-        cursor="zoom-in" mt={1}
+        src={src} alt="Prompt image" w="100%" borderRadius="sm" maxH="70px" objectFit="cover"
+        cursor="zoom-in" mb={1}
         onClick={(e) => { e.stopPropagation(); onOpen(); }}
       />
       <Modal isOpen={isOpen} onClose={onClose} size="xl" isCentered>
@@ -82,9 +86,11 @@ export function ChatPanel({
   activeEntryId, input, panelBgHex, borderHex, textColor,
   onInputChange, onGenerate, onGenerateMore, onClearAll, onRestoreSnapshot, onEditPrompt, onDeleteEntry,
   attachedImage, onAttachImage,
+  pdfFilename, onAttachPdf, onClearPdf, isLoadingPdf,
 }: ChatPanelProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -170,10 +176,16 @@ export function ChatPanel({
                     </Text>
                     {isBranch && <Badge colorScheme="orange" fontSize="8px" variant="subtle">⎇</Badge>}
                   </HStack>
+                  {entry.imageUrl && <HistoryImageThumb src={entry.imageUrl} />}
                   <Text fontSize="10px" fontWeight={isActive ? '600' : '400'} color={textColor} noOfLines={3}>
                     {entry.prompt}
                   </Text>
-                  {entry.imageUrl && <HistoryImageThumb src={entry.imageUrl} />}
+                  {entry.pdfFilename && (
+                    <HStack spacing={1} mt={0.5}>
+                      <MdPictureAsPdf size={10} color="red" />
+                      <Text fontSize="9px" color="red.400" noOfLines={1}>{entry.pdfFilename}</Text>
+                    </HStack>
+                  )}
                   {hasSnapshot && (
                     <HStack spacing={1} flexWrap="wrap">
                       <Badge colorScheme="green" fontSize="8px">{entryNodes.length} ideas</Badge>
@@ -238,7 +250,7 @@ export function ChatPanel({
         </HStack>
       )}
 
-      {/* Hidden file input */}
+      {/* Hidden file inputs */}
       <input
         ref={fileInputRef}
         type="file"
@@ -246,6 +258,28 @@ export function ChatPanel({
         style={{ display: 'none' }}
         onChange={handleFileChange}
       />
+      <input
+        ref={pdfInputRef}
+        type="file"
+        accept=".pdf"
+        style={{ display: 'none' }}
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) onAttachPdf(f); e.target.value = ''; }}
+      />
+
+      {/* PDF context badge */}
+      {pdfFilename && (
+        <HStack spacing={1} px={1} py={0.5} bg="red.50" _dark={{ bg: 'red.900' }} borderRadius="md">
+          <MdPictureAsPdf size={12} color="red" />
+          <Text fontSize="9px" color="red.600" _dark={{ color: 'red.300' }} flex={1} noOfLines={1}>{pdfFilename}</Text>
+          <IconButton
+            aria-label="Remove PDF context"
+            icon={<MdClear />}
+            size="xs" variant="ghost" colorScheme="red"
+            h="14px" minW="14px" fontSize="10px"
+            onClick={onClearPdf}
+          />
+        </HStack>
+      )}
 
       {/* Image preview */}
       {attachedImage && (
@@ -280,14 +314,14 @@ export function ChatPanel({
         fontSize="xs"
         isDisabled={isGenerating}
       />
-<HStack spacing={1}>
+      <HStack spacing={1}>
         <Button
           size="xs"
           colorScheme="blue"
           leftIcon={<MdSend />}
           onClick={onGenerate}
           isLoading={isGenerating}
-          isDisabled={isGenerating || !input.trim()}
+          isDisabled={isGenerating}
           flex={1}
         >
           Generate
@@ -299,8 +333,19 @@ export function ChatPanel({
             size="xs"
             variant={attachedImage ? 'solid' : 'ghost'}
             colorScheme={attachedImage ? 'blue' : 'gray'}
-            isDisabled={isGenerating || !input.trim()}
+            isDisabled={isGenerating}
             onClick={() => fileInputRef.current?.click()}
+          />
+        </Tooltip>
+        <Tooltip label="Attach PDF as context" placement="top" hasArrow openDelay={400}>
+          <IconButton
+            aria-label="Attach PDF as context"
+            icon={isLoadingPdf ? <Spinner size="xs" /> : <MdPictureAsPdf />}
+            size="xs"
+            variant={pdfFilename ? 'solid' : 'ghost'}
+            colorScheme={pdfFilename ? 'red' : 'gray'}
+            isDisabled={isGenerating || isLoadingPdf}
+            onClick={() => pdfInputRef.current?.click()}
           />
         </Tooltip>
       </HStack>
