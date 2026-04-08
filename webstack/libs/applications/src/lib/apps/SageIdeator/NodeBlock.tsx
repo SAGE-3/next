@@ -29,7 +29,7 @@ import { MdAltRoute, MdQuestionAnswer, MdImage, MdRefresh } from 'react-icons/md
 import { BsStarFill, BsStar } from 'react-icons/bs';
 
 import { state as AppState } from './index';
-import { hexToRgba } from './colors';
+import { hexToRgba, hexToSAGEColor } from './colors';
 
 type SageNode = AppState['nodes'][number];
 
@@ -162,7 +162,7 @@ export function NodeBlock({
     e.dataTransfer.setData('app_state', JSON.stringify({
       text: buildStickyText(node),
       fontSize: 24,
-      color: 'yellow',
+      color: hexToSAGEColor(color),
       sources: [appId],
     }));
   };

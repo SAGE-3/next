@@ -28,7 +28,7 @@ import {
   ModalCloseButton,
   useDisclosure,
 } from '@chakra-ui/react';
-import { MdSend, MdClear, MdEdit, MdAttachFile, MdDelete, MdAdd, MdPictureAsPdf } from 'react-icons/md';
+import { MdSend, MdClear, MdEdit, MdImage, MdDelete, MdAdd, MdPictureAsPdf } from 'react-icons/md';
 
 import { state as AppState } from './index';
 
@@ -329,7 +329,7 @@ export function ChatPanel({
         <Tooltip label="Attach image to prompt" placement="top" hasArrow openDelay={400}>
           <IconButton
             aria-label="Attach image to prompt"
-            icon={<MdAttachFile />}
+            icon={<MdImage />}
             size="xs"
             variant={attachedImage ? 'solid' : 'ghost'}
             colorScheme={attachedImage ? 'blue' : 'gray'}

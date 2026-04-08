@@ -74,6 +74,25 @@ export function nodeColorHex(
   return rgbToHex(...avg);
 }
 
+// ─── Nearest SAGEColors match ────────────────────────────────────────────────
+
+const SAGE_COLOR_HEX: Record<string, string> = {
+  red: '#e53e3e', orange: '#dd6b20', yellow: '#d69e2e', green: '#38a169',
+  teal: '#319795', blue: '#3182ce', cyan: '#00b5d8', purple: '#bec6dc', pink: '#d53f8c',
+};
+
+export function hexToSAGEColor(hex: string): string {
+  const [r1, g1, b1] = hexToRgb(hex);
+  let best = 'yellow';
+  let bestDist = Infinity;
+  for (const [name, sageHex] of Object.entries(SAGE_COLOR_HEX)) {
+    const [r2, g2, b2] = hexToRgb(sageHex);
+    const dist = (r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2;
+    if (dist < bestDist) { bestDist = dist; best = name; }
+  }
+  return best;
+}
+
 // ─── D3 cluster target ───────────────────────────────────────────────────────
 
 export function dimensionClusterTarget(

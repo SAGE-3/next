@@ -17,8 +17,10 @@ import {
   Input,
   Select,
   Button,
+  IconButton,
+  Tooltip,
 } from '@chakra-ui/react';
-import { MdKey } from 'react-icons/md';
+import { MdKey, MdArrowBack } from 'react-icons/md';
 
 import { App } from '../../schema';
 import { state as AppState } from './index';
@@ -30,19 +32,35 @@ interface SetupScreenProps {
   bgHex: string;
   panelBgHex: string;
   textColor: string;
-  onSave: (apiKey: string, model: string, batchSize: number, numDimensions: number) => void;
+  onSave: (apiKey: string, model: string, batchSize: number) => void;
+  onCancel?: () => void;
+  existingApiKey?: string;
 }
 
-export function SetupScreen({ props, bgHex, panelBgHex, textColor, onSave }: SetupScreenProps) {
+export function SetupScreen({ props, bgHex, panelBgHex, textColor, onSave, onCancel, existingApiKey }: SetupScreenProps) {
   const s = props.data.state as AppState;
-  const [apiKeyInput, setApiKeyInput] = useState('');
+  const [apiKeyInput, setApiKeyInput] = useState(existingApiKey ?? '');
   const [modelInput, setModelInput] = useState(s.model || 'gpt-5.4-mini');
   const [batchInput, setBatchInput] = useState(String(s.batchSize || 8));
-  const [numDimsInput, setNumDimsInput] = useState(String(s.numDimensions || 2));
 
   return (
     <AppWindow app={props} hideBackgroundIcon={MdKey}>
-      <Flex h="100%" w="100%" bg={bgHex} align="center" justify="center" p={6}>
+      <Flex h="100%" w="100%" bg={bgHex} align="center" justify="center" p={6} position="relative">
+        {onCancel && (
+          <Tooltip label="Back" placement="left" hasArrow openDelay={400}>
+            <IconButton
+              aria-label="Back"
+              icon={<MdArrowBack />}
+              size="xs"
+              variant="ghost"
+              colorScheme="gray"
+              position="absolute"
+              top={1}
+              right={1}
+              onClick={onCancel}
+            />
+          </Tooltip>
+        )}
         <Flex direction="row" gap={8} w="100%" maxW="800px" align="flex-start">
           {/* Left: key + model */}
           <VStack spacing={4} flex={1} align="stretch">
@@ -69,26 +87,21 @@ export function SetupScreen({ props, bgHex, panelBgHex, textColor, onSave }: Set
             </FormControl>
           </VStack>
 
-          {/* Right: batch + dims + submit */}
+          {/* Right: ideas count + submit */}
           <VStack spacing={4} flex={1} align="stretch" pt={10}>
             <FormControl>
-              <FormLabel color={textColor}>Batch size</FormLabel>
+              <FormLabel color={textColor}>Number of ideas</FormLabel>
               <Select value={batchInput} onChange={(e) => setBatchInput(e.target.value)} bg={panelBgHex}>
                 {[4, 6, 8, 10, 12, 16, 20].map((n) => <option key={n} value={n}>{n}</option>)}
               </Select>
-            </FormControl>
-            <FormControl>
-              <FormLabel color={textColor}>Dimensions</FormLabel>
-              <Select value={numDimsInput} onChange={(e) => setNumDimsInput(e.target.value)} bg={panelBgHex}>
-                {[1, 2, 3].map((n) => <option key={n} value={n}>{n}</option>)}
-              </Select>
+              <FormHelperText>How many ideas to generate per exploration.</FormHelperText>
             </FormControl>
             <Button
               colorScheme="blue"
               w="100%"
               isDisabled={!apiKeyInput.trim()}
               onClick={() =>
-                onSave(apiKeyInput.trim(), modelInput, parseInt(batchInput), parseInt(numDimsInput))
+                onSave(apiKeyInput.trim(), modelInput, parseInt(batchInput))
               }
             >
               Save &amp; Start

@@ -8,7 +8,7 @@
 
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { Flex, Box, Button, IconButton, Tooltip, useToast, useColorModeValue } from '@chakra-ui/react';
-import { MdFileDownload, MdKey, MdChat, MdChevronLeft, MdChevronRight } from 'react-icons/md';
+import { MdFileDownload, MdSettings, MdChat, MdChevronLeft, MdChevronRight } from 'react-icons/md';
 
 import { format } from 'date-fns/format';
 import { useAppStore, useHexColor, useUser, downloadFile } from '@sage3/frontend';
@@ -58,7 +58,7 @@ function AppComponent(props: App): JSX.Element {
   // Theme
   const bgColor = useColorModeValue('gray.100', 'gray.800');
   const bgHex = useHexColor(bgColor);
-  const panelBg = useColorModeValue('white', 'gray.700');
+  const panelBg = useColorModeValue('white', 'gray.800');
   const panelBgHex = useHexColor(panelBg);
   const textColor = useColorModeValue('gray.800', 'gray.100');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
@@ -79,6 +79,7 @@ function AppComponent(props: App): JSX.Element {
   const [chatPanelOpen, setChatPanelOpen] = useState(true);
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const [isLoadingPdf, setIsLoadingPdf] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [localStatusMessage, setLocalStatusMessage] = useState('');
 
@@ -97,8 +98,9 @@ function AppComponent(props: App): JSX.Element {
 
   // ── Setup save ──
 
-  const handleSetupSave = (apiKey: string, model: string, batchSize: number, numDimensions: number) => {
-    updateState(props._id, { ...s, apiKey, model, batchSize, numDimensions });
+  const handleSetupSave = (apiKey: string, model: string, batchSize: number) => {
+    updateState(props._id, { ...s, apiKey, model, batchSize, numDimensions: 2 });
+    setShowSettings(false);
   };
 
   // ── PDF context ──
@@ -553,7 +555,7 @@ function AppComponent(props: App): JSX.Element {
 
   // ── Setup screen ──
 
-  if (!s.apiKey) {
+  if (!s.apiKey || showSettings) {
     return (
       <SetupScreen
         props={props}
@@ -561,6 +563,8 @@ function AppComponent(props: App): JSX.Element {
         panelBgHex={panelBgHex}
         textColor={textColor}
         onSave={handleSetupSave}
+        onCancel={s.apiKey ? () => setShowSettings(false) : undefined}
+        existingApiKey={s.apiKey || undefined}
       />
     );
   }
@@ -581,7 +585,7 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props} hideBackgroundIcon={MdChat}>
-      <Flex h="100%" w="100%" direction="row" bg={bgHex}>
+      <Flex h="100%" w="100%" direction="row" bg={bgHex} position="relative">
         {chatPanelOpen && (
           <ChatPanel
             chatHistory={s.chatHistory}
@@ -663,6 +667,22 @@ function AppComponent(props: App): JSX.Element {
           rerollingNodeId={rerollingNodeId}
         />
 
+        {/* Settings button — top right of app window, avoids QA panel */}
+        <Tooltip label="Settings / change API key" placement="left" hasArrow openDelay={400}>
+          <IconButton
+            aria-label="Settings"
+            icon={<MdSettings />}
+            size="xs"
+            variant="ghost"
+            colorScheme="gray"
+            position="absolute"
+            top={1}
+            right={qaPanelOpen ? '288px' : 1}
+            zIndex={40}
+            onClick={() => setShowSettings(true)}
+          />
+        </Tooltip>
+
         {qaPanelOpen && (
           <QAPanel
             node={qaNode}
@@ -686,8 +706,6 @@ function AppComponent(props: App): JSX.Element {
 
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
-  const toast = useToast();
 
   const downloadTxt = () => {
     const dt = format(new Date(), 'yyyy-MM-dd-HH:mm:ss');
@@ -705,21 +723,11 @@ function ToolbarComponent(props: App): JSX.Element {
     downloadFile(url, `ideator-${dt}.txt`);
   };
 
-  const clearApiKey = () => {
-    updateState(props._id, { ...s, apiKey: '' });
-    toast({ title: 'API key cleared', status: 'info', duration: 2500, isClosable: true });
-  };
-
   return (
     <>
       <Tooltip placement="top" hasArrow label="Download ideas as text" openDelay={400}>
         <Button size="xs" colorScheme="teal" variant="solid" onClick={downloadTxt} px={2} mx={1}>
           <MdFileDownload fontSize="14px" />
-        </Button>
-      </Tooltip>
-      <Tooltip placement="top" hasArrow label="Change API key / settings" openDelay={400}>
-        <Button size="xs" colorScheme="teal" variant="outline" onClick={clearApiKey} px={2} mx={1}>
-          <MdKey fontSize="14px" />
         </Button>
       </Tooltip>
     </>
