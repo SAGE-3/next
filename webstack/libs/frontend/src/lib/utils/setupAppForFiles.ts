@@ -26,6 +26,7 @@ import {
   isFileURL,
   mimeToCode,
   isValid,
+  isMermaid,
 } from '@sage3/shared';
 import { apiUrls } from '@sage3/frontend';
 import { ExtraImageType, ExtraPDFType, FileEntry, User } from '@sage3/shared/types';
@@ -50,10 +51,9 @@ export async function setupAppForFile(
   yDrop: number,
   roomId: string,
   boardId: string,
-  user: User
+  user: User,
 ): Promise<AppSchema | null> {
   const w = 400;
-
   // Check if the file is valid
   if (!isValid(file.type)) {
     // Create a generic asset link
@@ -246,6 +246,20 @@ export async function setupAppForFile(
         rotation: { x: 0, y: 0, z: 0 },
         type: 'GLTFViewer',
         state: { ...initialValues['GLTFViewer'], assetid: file.id },
+        raised: true,
+        dragging: false,
+        pinned: false,
+      };
+    } else if (isMermaid(file.type)) {
+      return {
+        title: file.originalfilename,
+        roomId: roomId,
+        boardId: boardId,
+        position: { x: xDrop - 300, y: yDrop - 300, z: 0 },
+        size: { width: 800, height: 600, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        type: 'Mermaid',
+        state: { ...initialValues['Mermaid'], assetid: file.id },
         raised: true,
         dragging: false,
         pinned: false,

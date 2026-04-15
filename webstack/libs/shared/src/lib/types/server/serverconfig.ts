@@ -52,6 +52,8 @@ export interface ServerConfiguration {
   kernels: { url: string };
   // Python server for agents
   agents: { url: string };
+  // VEO VNC container orchestration server
+  veoServer?: { url: string };
   // Webserver configuration
   webserver: {
     logLevel: 'all' | 'partial' | 'none';
@@ -98,6 +100,7 @@ export type OpenConfiguration = Pick<
   features: ServerConfiguration['features'];
   models: ServerConfiguration['services']['models'];
   fluentd: ServerConfiguration['fluentd'];
+  veoServer: ServerConfiguration['veoServer'];
 };
 
 /**

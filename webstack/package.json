@@ -75,6 +75,7 @@
     "leaflet": "^1.9.2",
     "maplibre-gl": "^5.6.0",
     "markdown-to-jsx": "^7.7.6",
+    "mermaid": "^11.14.0",
     "mime": "^3.0.0",
     "monaco-editor": "^0.52.2",
     "morgan": "^1.10.1",

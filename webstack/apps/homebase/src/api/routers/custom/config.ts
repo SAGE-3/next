@@ -51,6 +51,7 @@ export function ConfigRouter(): express.Router {
       admins: config.auth.admins || [],
       models: config.services.models || [],
       fluentd: config.fluentd || {},
+      veoServer: config.veoServer || {},
     } as OpenConfiguration;
     res.json(configuration);
   });

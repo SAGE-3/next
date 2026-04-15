@@ -36,6 +36,7 @@ import {
   isTiff,
   isSessionFile,
   isCode,
+  isMermaid,
   mimeToCode,
 } from '@sage3/shared';
 import { App, AppName, AppSchema, AppState } from '@sage3/applications/schema';
@@ -235,6 +236,8 @@ async function openApplication(a: Asset, xDrop: number, yDrop: number, roomId: s
       return setupApp('', 'DeepZoomImage', xDrop, yDrop, roomId, boardId, { w: 800, h: 400 }, { assetid: fileID });
     } else if (isGLTF(fileType)) {
       return setupApp('', 'GLTFViewer', xDrop, yDrop, roomId, boardId, { w: 600, h: 600 }, { assetid: fileID });
+    } else if (isMermaid(fileType)) {
+      return setupApp('', 'Mermaid', xDrop, yDrop, roomId, boardId, { w: 800, h: 600 }, { assetid: fileID });
     } else if (isGeoJSON(fileType)) {
       const initialLayer = {
         assetId: fileID,
@@ -515,7 +518,6 @@ export function useFiles(): UseFiles {
       for (let i = 0; i < fileListLength; i++) {
         // check the mime type we got from the browser, and check with mime lib. if needed
         const filetype = input[i].type || getMime(input[i].name) || 'application/octet-stream';
-
         // Get video metadata
         if (isVideo(filetype)) {
           const meta = await fetchMediaMetadata(input[i]);

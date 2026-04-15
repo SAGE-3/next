@@ -22,6 +22,7 @@ import { name as JupyterLabName, init as defaultJupyterLab } from './apps/Jupyte
 import { name as LeafLetName, init as defaultLeafLet } from './apps/LeafLet';
 import { name as LinkerName, init as defaultLinker } from './apps/Linker';
 import { name as MapName, init as defaultMap } from './apps/Map';
+import { name as MermaidName, init as defaultMermaid } from './apps/Mermaid';
 import { name as NotepadName, init as defaultNotepad } from './apps/Notepad';
 import { name as PDFResultName, init as defaultPDFResult } from './apps/PDFResult';
 import { name as PDFViewerName, init as defaultPDFViewer } from './apps/PDFViewer';
@@ -62,6 +63,7 @@ export const initialValues = {
   [LeafLetName]: defaultLeafLet,
   [LinkerName]: defaultLinker,
   [MapName]: defaultMap,
+  [MermaidName]: defaultMermaid,
   [NotepadName]: defaultNotepad,
   [PDFResultName]: defaultPDFResult,
   [PDFViewerName]: defaultPDFViewer,

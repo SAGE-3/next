@@ -28,8 +28,9 @@ mime.define(
     'text/x-csharp': ['cs', 'csharp'],
     'application/typescript': ['ts'],
     'application/r': ['r'],
+    'text/vnd.mermaid': ['mmd', 'mermaid'],
   },
-  true // force
+  true, // force
 );
 
 /**
@@ -104,6 +105,8 @@ export function mimeToCode(code: string) {
       return 'r';
     case 'application/julia':
       return 'julia';
+    case 'text/vnd.mermaid':
+      return 'mermaid';
     default:
       return result;
   }
@@ -363,6 +366,17 @@ export function isGLTF(mimeType: string): boolean {
 }
 
 /**
+ * Test if a given mime type is a Mermaid file
+ *
+ * @export
+ * @param {string} mimeType
+ * @returns {boolean}
+ */
+export function isMermaid(mimeType: string): boolean {
+  return mimeType === 'text/vnd.mermaid';
+}
+
+/**
  * Test if a given mime type is a GLTF binary file
  *
  * @export
@@ -386,6 +400,7 @@ export function isValid(mimeType: string): boolean {
     isPython(mimeType) ||
     isR(mimeType) ||
     isGLTF(mimeType) ||
+    isMermaid(mimeType) ||
     isCode(mimeType)
   );
 }

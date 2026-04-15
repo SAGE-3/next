@@ -22,6 +22,7 @@ import { name as JupyterLabName } from './apps/JupyterLab';
 import { name as LeafLetName } from './apps/LeafLet';
 import { name as LinkerName } from './apps/Linker';
 import { name as MapName } from './apps/Map';
+import { name as MermaidName } from './apps/Mermaid';
 import { name as NotepadName } from './apps/Notepad';
 import { name as PDFResultName } from './apps/PDFResult';
 import { name as PDFViewerName } from './apps/PDFViewer';
@@ -64,6 +65,7 @@ import JupyterLab from './apps/JupyterLab/JupyterLab';
 import LeafLet from './apps/LeafLet/LeafLet';
 import Linker from './apps/Linker/Linker';
 import Map from './apps/Map/Map';
+import Mermaid from './apps/Mermaid/Mermaid';
 import Notepad from './apps/Notepad/Notepad';
 import PDFResult from './apps/PDFResult/PDFResult';
 import PDFViewer from './apps/PDFViewer/PDFViewer';
@@ -191,6 +193,11 @@ export const Applications = {
     AppComponent: React.memo(Map.AppComponent),
     ToolbarComponent: Map.ToolbarComponent,
     GroupedToolbarComponent: Map.GroupedToolbarComponent,
+  },
+  [MermaidName]: {
+    AppComponent: React.memo(Mermaid.AppComponent),
+    ToolbarComponent: Mermaid.ToolbarComponent,
+    GroupedToolbarComponent: Mermaid.GroupedToolbarComponent,
   },
   [NotepadName]: {
     AppComponent: React.memo(Notepad.AppComponent),
