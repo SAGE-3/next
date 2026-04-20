@@ -41,10 +41,52 @@ async function extractPdfText(file: File): Promise<string> {
 }
 import { SetupScreen } from './SetupScreen';
 import { ChatPanel } from './ChatPanel';
-import { VisualizationCanvas } from './VisualizationCanvas';
+import { VisualizationCanvas, DimBlend } from './VisualizationCanvas';
 import { QAPanel } from './QAPanel';
 
 type SageNode = AppState['nodes'][number];
+
+// ─── Blended requirements builder ────────────────────────────────────────────
+
+function buildBlendedRequirements(
+  dims: AppState['dimensions'],
+  xDimName: string | null,
+  xBlend: DimBlend | null,
+  yDimName: string | null,
+  yBlend: DimBlend | null
+): { requirements: string; categorical: Record<string, string>; ordinal: Record<string, string> } {
+  let req = '';
+  const categorical: Record<string, string> = {};
+  const ordinal: Record<string, string> = {};
+
+  for (const dim of dims) {
+    const blend = dim.name === xDimName ? xBlend : dim.name === yDimName ? yBlend : null;
+    let assignedValue: string;
+
+    if (blend) {
+      if (blend.secondary === null || blend.primaryWeight === 1) {
+        req += `${dim.name}: ${blend.primary}\n`;
+        assignedValue = blend.primary;
+      } else if (blend.primaryWeight >= 0.65) {
+        req += `${dim.name}: primarily "${blend.primary}" with some "${blend.secondary}" influence\n`;
+        assignedValue = blend.primary;
+      } else {
+        const pct = Math.round(blend.primaryWeight * 100);
+        const sPct = 100 - pct;
+        req += `${dim.name}: blend of "${blend.primary}" (${pct}%) and "${blend.secondary}" (${sPct}%)\n`;
+        assignedValue = blend.primary;
+      }
+    } else {
+      assignedValue = dim.values[Math.floor(Math.random() * dim.values.length)];
+      req += `${dim.name}: ${assignedValue}\n`;
+    }
+
+    if (dim.type === 'categorical') categorical[dim.name] = assignedValue;
+    else ordinal[dim.name] = assignedValue;
+  }
+
+  return { requirements: req, categorical, ordinal };
+}
 
 // ─── AppComponent ─────────────────────────────────────────────────────────────
 
@@ -76,6 +118,8 @@ function AppComponent(props: App): JSX.Element {
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [generatingImageNodeId, setGeneratingImageNodeId] = useState<string | null>(null);
   const [rerollingNodeId, setRerollingNodeId] = useState<string | null>(null);
+  const [isGeneratingAt, setIsGeneratingAt] = useState(false);
+  const [isAddingManualIdea, setIsAddingManualIdea] = useState(false);
   const [chatPanelOpen, setChatPanelOpen] = useState(true);
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const [isLoadingPdf, setIsLoadingPdf] = useState(false);
@@ -534,6 +578,90 @@ function AppComponent(props: App): JSX.Element {
     });
   }, [localNodes, s.prompt, activeEntryId, generate]);
 
+  const generateAt = useCallback(
+    async ({ worldX, worldY, xDimName, xBlend, yDimName, yBlend }: {
+      worldX: number;
+      worldY: number;
+      xDimName: string | null;
+      xBlend: DimBlend | null;
+      yDimName: string | null;
+      yBlend: DimBlend | null;
+    }) => {
+      if (!s.apiKey || !activeEntryId || localDims.length === 0) return;
+      setIsGeneratingAt(true);
+      try {
+        const { requirements, categorical, ordinal } = buildBlendedRequirements(
+          localDims, xDimName, xBlend, yDimName, yBlend
+        );
+        const text = await generateNodeContent(s.prompt, requirements, s.apiKey, s.model);
+        const summary = await abstractNode(text, s.apiKey, s.model);
+        const newNode: AppState['nodes'][number] = {
+          ID: genId(),
+          Title: summary.Title,
+          Summary: summary.Summary,
+          Keywords: summary.Keywords,
+          Steps: summary.Steps,
+          Result: text,
+          Structure: summary.Structure,
+          Dimension: { categorical, ordinal },
+          IsMyFav: false,
+        };
+        // Seed the position near where the user clicked so the simulation starts there
+        positionsRef.current.set(newNode.ID, { x: worldX, y: worldY });
+        const latest = useAppStore.getState().apps.find((a) => a._id === props._id)?.data.state as AppState | undefined;
+        const cur = latest ?? s;
+        const updatedHistory = cur.chatHistory.map((e) =>
+          e.id === activeEntryId ? { ...e, nodes: [...e.nodes, newNode] } : e
+        );
+        updateState(props._id, { ...cur, chatHistory: updatedHistory });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        toast({ title: 'Generation failed', description: msg, status: 'error', duration: 4000, isClosable: true });
+      } finally {
+        setIsGeneratingAt(false);
+      }
+    },
+    [s, localDims, activeEntryId, props._id, positionsRef]
+  );
+
+  const addManualIdea = useCallback(
+    async (text: string) => {
+      if (!s.apiKey || !activeEntryId) return;
+      setIsAddingManualIdea(true);
+      try {
+        const summary = await abstractNode(text, s.apiKey, s.model);
+        const rawDims = {
+          categorical: Object.fromEntries(localDims.filter((d) => d.type === 'categorical').map((d) => [d.name, d.values])),
+          ordinal: Object.fromEntries(localDims.filter((d) => d.type === 'ordinal').map((d) => [d.name, d.values])),
+        };
+        const { categorical, ordinal } = buildRequirements(rawDims);
+        const newNode: AppState['nodes'][number] = {
+          ID: genId(),
+          Title: summary.Title,
+          Summary: summary.Summary,
+          Keywords: summary.Keywords,
+          Steps: summary.Steps,
+          Result: text,
+          Structure: summary.Structure,
+          Dimension: { categorical, ordinal },
+          IsMyFav: false,
+        };
+        const latest = useAppStore.getState().apps.find((a) => a._id === props._id)?.data.state as AppState | undefined;
+        const cur = latest ?? s;
+        const updatedHistory = cur.chatHistory.map((e) =>
+          e.id === activeEntryId ? { ...e, nodes: [...e.nodes, newNode] } : e
+        );
+        updateState(props._id, { ...cur, chatHistory: updatedHistory });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        toast({ title: 'Failed to add idea', description: msg, status: 'error', duration: 4000, isClosable: true });
+      } finally {
+        setIsAddingManualIdea(false);
+      }
+    },
+    [s, localDims, activeEntryId, props._id]
+  );
+
   const removeDimension = useCallback(
     (dimName: string) => {
       if (!activeEntryId) return;
@@ -665,6 +793,10 @@ function AppComponent(props: App): JSX.Element {
           generatingImageNodeId={generatingImageNodeId}
           onReroll={rerollNode}
           rerollingNodeId={rerollingNodeId}
+          onGenerateAt={generateAt}
+          isGeneratingAt={isGeneratingAt}
+          onAddManualIdea={addManualIdea}
+          isAddingManualIdea={isAddingManualIdea}
         />
 
         {/* Settings button — top right of app window, avoids QA panel */}

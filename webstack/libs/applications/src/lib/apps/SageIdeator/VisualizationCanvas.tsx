@@ -18,13 +18,14 @@ import {
   Button,
   IconButton,
   Input,
+  Textarea,
   Spinner,
   Tooltip,
   Badge,
   Center,
 } from '@chakra-ui/react';
 
-import { MdAdd, MdClose, MdCheck, MdSearch, MdAltRoute } from 'react-icons/md';
+import { MdAdd, MdClose, MdCheck, MdSearch, MdAltRoute, MdEdit } from 'react-icons/md';
 import { BsStarFill } from 'react-icons/bs';
 
 import { state as AppState } from './index';
@@ -40,7 +41,43 @@ export interface Camera {
   z: number;
 }
 
+// Describes how a click position maps to dimension values — single snap or weighted blend
+export type DimBlend = {
+  primary: string;
+  secondary: string | null;
+  primaryWeight: number; // 1.0 = pure snap, 0.5–0.85 = blend
+};
+
 type SimNode = SageNode & d3.SimulationNodeDatum;
+
+// ─── Position → dimension blend ──────────────────────────────────────────────
+
+function blendedDimValues(worldCoord: number, dim: SageDimension, size: number): DimBlend {
+  const n = dim.values.length + 1;
+  const targets = dim.values.map((val, idx) => {
+    const effectiveIdx = dim.type === 'ordinal' ? dim.values.length - idx : idx;
+    const target = effectiveIdx * (size / n) - size / 2 + 0.1 * size;
+    return { val, dist: Math.abs(worldCoord - target) };
+  });
+  targets.sort((a, b) => a.dist - b.dist);
+
+  const first = targets[0];
+  const second = targets[1] ?? null;
+
+  if (!second || first.dist + second.dist === 0) {
+    return { primary: first.val, secondary: null, primaryWeight: 1 };
+  }
+
+  const totalDist = first.dist + second.dist;
+  const primaryWeight = second.dist / totalDist; // closer to first → higher weight
+
+  // Snap when overwhelmingly close to one value
+  if (primaryWeight > 0.85) {
+    return { primary: first.val, secondary: null, primaryWeight: 1 };
+  }
+
+  return { primary: first.val, secondary: second.val, primaryWeight };
+}
 
 interface VisualizationCanvasProps {
   nodes: SageNode[];
@@ -71,6 +108,17 @@ interface VisualizationCanvasProps {
   generatingImageNodeId: string | null;
   onReroll: (nodeId: string) => void;
   rerollingNodeId: string | null;
+  onGenerateAt: (params: {
+    worldX: number;
+    worldY: number;
+    xDimName: string | null;
+    xBlend: DimBlend | null;
+    yDimName: string | null;
+    yBlend: DimBlend | null;
+  }) => void;
+  isGeneratingAt: boolean;
+  onAddManualIdea: (text: string) => void;
+  isAddingManualIdea: boolean;
 }
 
 // ─── Search scoring ───────────────────────────────────────────────────────────
@@ -98,6 +146,8 @@ export function VisualizationCanvas({
   onBranchFavorites, onSummarizeFavorites, isSummarizing,
   onGenerateImage, generatingImageNodeId,
   onReroll, rerollingNodeId,
+  onGenerateAt, isGeneratingAt,
+  onAddManualIdea, isAddingManualIdea,
 }: VisualizationCanvasProps) {
   const [camera, setCamera] = useState<Camera>({ x: 0, y: 0, z: 1 });
   const [xDimName, setXDimName] = useState<string | null>(null);
@@ -110,10 +160,14 @@ export function VisualizationCanvas({
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<{ dimName: string; value: string } | null>(null);
   const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [generateAtMode, setGenerateAtMode] = useState(false);
+  const [showManualInput, setShowManualInput] = useState(false);
+  const [manualInput, setManualInput] = useState('');
 
   const containerRef = useRef<HTMLDivElement>(null);
   const simulationRef = useRef<d3.Simulation<SimNode, undefined> | null>(null);
   const dragRef = useRef({ active: false, startX: 0, startY: 0, startCamX: 0, startCamY: 0 });
+  const didDragRef = useRef(false);
 
   // Sync axis selectors only when the set of dimension names actually changes
   const dimKey = dimensions.map((d) => d.name).join(',');
@@ -163,6 +217,7 @@ export function VisualizationCanvas({
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (e.button !== 0) return;
     e.stopPropagation();
+    didDragRef.current = false;
     setCamera((cam) => {
       dragRef.current = { active: true, startX: e.clientX, startY: e.clientY, startCamX: cam.x, startCamY: cam.y };
       return cam;
@@ -174,12 +229,38 @@ export function VisualizationCanvas({
     e.stopPropagation();
     const dx = e.clientX - dragRef.current.startX;
     const dy = e.clientY - dragRef.current.startY;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+      didDragRef.current = true;
+    }
     setCamera((cam) => ({ ...cam, x: dragRef.current.startCamX + dx, y: dragRef.current.startCamY + dy }));
   }, []);
 
   const handleMouseUp = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     dragRef.current.active = false;
+  }, []);
+
+  const handleCanvasClick = useCallback((e: React.MouseEvent) => {
+    if (!generateAtMode || didDragRef.current) return;
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const screenX = e.clientX - rect.left;
+    const screenY = e.clientY - rect.top;
+    const cx = rect.width / 2;
+    const cy = rect.height / 2;
+    // Convert screen → world coordinates
+    const worldX = (screenX - cx - camera.x) / camera.z;
+    const worldY = (screenY - cy - camera.y) / camera.z;
+    const xDim = dimensions.find((d) => d.name === xDimName) ?? null;
+    const yDim = dimensions.find((d) => d.name === yDimName) ?? null;
+    const xBlend = xDim ? blendedDimValues(worldX, xDim, containerSize.width * 0.8) : null;
+    const yBlend = yDim ? blendedDimValues(worldY, yDim, containerSize.height * 0.8) : null;
+    setGenerateAtMode(false);
+    onGenerateAt({ worldX, worldY, xDimName, xBlend, yDimName, yBlend });
+  }, [generateAtMode, camera, dimensions, xDimName, yDimName, containerSize, onGenerateAt]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Escape') setGenerateAtMode(false);
   }, []);
 
   const fitToScreen = useCallback((maxZ = 3) => {
@@ -543,13 +624,17 @@ export function VisualizationCanvas({
         flex={1}
         position="relative"
         overflow="hidden"
-        cursor={dragRef.current.active ? 'grabbing' : 'grab'}
+        cursor={generateAtMode ? 'crosshair' : dragRef.current.active ? 'grabbing' : 'grab'}
         bg={bgHex}
+        tabIndex={-1}
         onWheel={handleWheel}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
+        onClick={handleCanvasClick}
+        onKeyDown={handleKeyDown}
+        outline="none"
       >
         {/* Idle / loading placeholder */}
         {status === 'idle' && nodes.length === 0 && (
@@ -578,7 +663,7 @@ export function VisualizationCanvas({
               transform="translateY(-50%)"
               zIndex={10}
               cursor="pointer"
-              onClick={() => setActiveFilter(isActive ? null : { dimName: yDimName!, value: val })}
+              onClick={(e) => { e.stopPropagation(); setActiveFilter(isActive ? null : { dimName: yDimName!, value: val }); }}
             >
               <Badge
                 colorScheme="purple" fontSize="9px" px={1.5} whiteSpace="nowrap"
@@ -604,7 +689,7 @@ export function VisualizationCanvas({
               transform="translateX(-50%)"
               zIndex={10}
               cursor="pointer"
-              onClick={() => setActiveFilter(isActive ? null : { dimName: xDimName!, value: val })}
+              onClick={(e) => { e.stopPropagation(); setActiveFilter(isActive ? null : { dimName: xDimName!, value: val }); }}
             >
               <Badge
                 colorScheme="teal" fontSize="9px" px={1.5} whiteSpace="nowrap"
@@ -650,6 +735,7 @@ export function VisualizationCanvas({
                 onMouseEnter={() => setHoveredNodeId(node.ID)}
                 onMouseLeave={() => setHoveredNodeId(null)}
                 onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
                 onDoubleClick={(e) => {
                   e.stopPropagation();
                   const p = positionsRef.current.get(node.ID);
@@ -683,7 +769,7 @@ export function VisualizationCanvas({
           })}
         </Box>
 
-        {/* Semantic zoom controls */}
+        {/* Semantic zoom + generate-at controls */}
         {nodes.length > 0 && (
           <Box position="absolute" top={2} right={2} zIndex={20}>
             <VStack spacing={1} align="flex-end">
@@ -710,7 +796,102 @@ export function VisualizationCanvas({
                     onClick={() => jumpToZoom(11.0)} h="18px" minW="18px" px={1} fontSize="9px">≡</Button>
                 </Tooltip>
               </HStack>
+              {/* Generate-at-position + manual entry tools */}
+              <HStack spacing={1}>
+                <Tooltip
+                  label={generateAtMode ? 'Cancel (Esc)' : 'Generate idea at position'}
+                  placement="left" hasArrow openDelay={300}
+                >
+                  <Button
+                    size="xs"
+                    variant={generateAtMode ? 'solid' : 'outline'}
+                    colorScheme={generateAtMode ? 'blue' : 'gray'}
+                    h="18px" minW="18px" px={1} fontSize="9px" fontWeight="bold"
+                    isDisabled={isGeneratingAt}
+                    onClick={(e) => { e.stopPropagation(); setGenerateAtMode((v) => !v); setShowManualInput(false); }}
+                  >
+                    {isGeneratingAt ? <Spinner size="xs" /> : '+'}
+                  </Button>
+                </Tooltip>
+                <Tooltip label="Add your own idea" placement="left" hasArrow openDelay={300}>
+                  <Button
+                    size="xs"
+                    variant={showManualInput ? 'solid' : 'outline'}
+                    colorScheme={showManualInput ? 'blue' : 'gray'}
+                    h="18px" minW="18px" px={1} fontSize="9px"
+                    isDisabled={isAddingManualIdea}
+                    onClick={(e) => { e.stopPropagation(); setShowManualInput((v) => !v); setGenerateAtMode(false); }}
+                  >
+                    {isAddingManualIdea ? <Spinner size="xs" /> : <MdEdit size={10} />}
+                  </Button>
+                </Tooltip>
+              </HStack>
+              {/* Manual idea input */}
+              {showManualInput && (
+                <Box
+                  bg="white" _dark={{ bg: 'gray.700', borderColor: 'gray.600' }}
+                  borderRadius="md" p={2} boxShadow="lg"
+                  border="1px solid" borderColor="gray.200"
+                  w="200px"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Textarea
+                    size="xs"
+                    placeholder="Describe your idea…"
+                    value={manualInput}
+                    onChange={(e) => setManualInput(e.target.value)}
+                    rows={3}
+                    fontSize="11px"
+                    resize="none"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') { setShowManualInput(false); setManualInput(''); }
+                    }}
+                    autoFocus
+                  />
+                  <HStack mt={1.5} justify="flex-end" spacing={1}>
+                    <Button size="xs" variant="ghost" colorScheme="gray" h="18px" px={2} fontSize="10px"
+                      onClick={() => { setShowManualInput(false); setManualInput(''); }}>
+                      Cancel
+                    </Button>
+                    <Button size="xs" colorScheme="blue" h="18px" px={2} fontSize="10px"
+                      isDisabled={!manualInput.trim() || isAddingManualIdea}
+                      onClick={() => {
+                        if (!manualInput.trim()) return;
+                        onAddManualIdea(manualInput.trim());
+                        setManualInput('');
+                        setShowManualInput(false);
+                      }}>
+                      Add
+                    </Button>
+                  </HStack>
+                </Box>
+              )}
             </VStack>
+          </Box>
+        )}
+
+        {/* Generating-at indicator */}
+        {isGeneratingAt && (
+          <Box
+            position="absolute" bottom={8} left="50%" transform="translateX(-50%)"
+            zIndex={25} bg="blackAlpha.700" borderRadius="md" px={3} py={1}
+            pointerEvents="none"
+          >
+            <HStack spacing={2}>
+              <Spinner size="xs" color="white" />
+              <Text fontSize="xs" color="white">Generating idea…</Text>
+            </HStack>
+          </Box>
+        )}
+
+        {/* Generate-at mode hint */}
+        {generateAtMode && !isGeneratingAt && (
+          <Box
+            position="absolute" bottom={8} left="50%" transform="translateX(-50%)"
+            zIndex={25} bg="blue.600" borderRadius="md" px={3} py={1}
+            pointerEvents="none"
+          >
+            <Text fontSize="xs" color="white">Click anywhere to generate an idea at that position · Esc to cancel</Text>
           </Box>
         )}
       </Box>

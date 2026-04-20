@@ -143,6 +143,30 @@ function ImageLightbox({ src, alt, previewMaxH }: { src: string; alt: string; pr
 
 // ─── NodeBlock ────────────────────────────────────────────────────────────────
 
+// ─── Favorite badge ───────────────────────────────────────────────────────────
+
+function FavBadge({ size = 16, offset = -6 }: { size?: number; offset?: number }) {
+  return (
+    <Box
+      position="absolute"
+      top={`${offset}px`}
+      right={`${offset}px`}
+      zIndex={20}
+      w={`${size}px`}
+      h={`${size}px`}
+      bg="goldenrod"
+      borderRadius="full"
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+      boxShadow="0 0 0 1.5px white, 0 1px 3px rgba(0,0,0,0.4)"
+      pointerEvents="none"
+    >
+      <BsStarFill size={size * 0.55} color="white" />
+    </Box>
+  );
+}
+
 export function NodeBlock({
   node, zoom, color, isHovered, appId, isAsking, isSelectedQA,
   onToggleFav, onFocus, onBranch, onSelectQA, onGenerateImage, isGeneratingImage, onReroll, isRerolling,
@@ -152,9 +176,7 @@ export function NodeBlock({
     ? '0 0 0 2.5px teal, 0 0 8px rgba(0,128,128,0.4)'
     : isHovered
       ? '0 0 0 2.5px rgba(0,0,0,0.75)'
-      : node.IsMyFav
-        ? '0 0 0 2px goldenrod, 0 0 6px rgba(218,165,32,0.5)'
-        : 'none';
+      : 'none';
 
   const onDragStart = (e: React.DragEvent) => {
     e.dataTransfer.clearData();
@@ -170,26 +192,32 @@ export function NodeBlock({
   // ── Level 1: dot ──────────────────────────────────────────────────
   if (zoom < 1.5) {
     return (
-      <Box
-        w="12px" h="12px" borderRadius="50%"
-        bg={bg} boxShadow={ring}
-        cursor="pointer" title={node.Title} onClick={onFocus}
-        draggable onDragStart={onDragStart}
-      />
+      <Box position="relative" display="inline-block">
+        {node.IsMyFav && <FavBadge size={10} offset={-4} />}
+        <Box
+          w="12px" h="12px" borderRadius="50%"
+          bg={bg} boxShadow={ring || undefined}
+          cursor="pointer" title={node.Title} onClick={onFocus}
+          draggable onDragStart={onDragStart}
+        />
+      </Box>
     );
   }
 
   // ── Level 2: title only ───────────────────────────────────────────
   if (zoom < 3) {
     return (
-      <Box
-        bg={bg} borderRadius="md" px={2} py={1.5} w="130px"
-        boxShadow={ring || 'sm'} cursor="grab" onClick={onFocus}
-        draggable onDragStart={onDragStart}
-      >
-        <Text fontSize="10px" fontWeight="700" color="black" lineHeight="1.3" noOfLines={3}>
-          {node.Title}
-        </Text>
+      <Box position="relative" display="inline-block">
+        {node.IsMyFav && <FavBadge size={14} offset={-5} />}
+        <Box
+          bg={bg} borderRadius="md" px={2} py={1.5} w="130px"
+          boxShadow={ring || 'sm'} cursor="grab" onClick={onFocus}
+          draggable onDragStart={onDragStart}
+        >
+          <Text fontSize="10px" fontWeight="700" color="black" lineHeight="1.3" noOfLines={3}>
+            {node.Title}
+          </Text>
+        </Box>
       </Box>
     );
   }
@@ -197,6 +225,8 @@ export function NodeBlock({
   // ── Level 3: title + attributes ───────────────────────────────────
   if (zoom < 6) {
     return (
+      <Box position="relative" display="inline-block">
+        {node.IsMyFav && <FavBadge size={16} offset={-6} />}
       <Box
         bg={bg} borderRadius="md" px={2} py={2} w="160px"
         boxShadow={ring || 'md'} cursor="default"
@@ -220,12 +250,15 @@ export function NodeBlock({
         </HStack>
         <AttrsBlock node={node} />
       </Box>
+      </Box>
     );
   }
 
   // ── Level 4: title + summary + steps + attributes ─────────────────
   if (zoom < 10) {
     return (
+      <Box position="relative" display="inline-block">
+        {node.IsMyFav && <FavBadge size={18} offset={-7} />}
       <Box bg={bg} borderRadius="md" w="220px" boxShadow={ring || 'lg'} cursor="default" overflow="hidden">
         {/* Scrollable content */}
         <Box px={2} pt={2} maxH="240px" overflowY="auto">
@@ -293,11 +326,14 @@ export function NodeBlock({
           </Tooltip>
         </HStack>
       </Box>
+      </Box>
     );
   }
 
   // ── Level 5: full prose + attributes ──────────────────────────────
   return (
+    <Box position="relative" display="inline-block">
+      {node.IsMyFav && <FavBadge size={18} offset={-7} />}
     <Box bg={bg} borderRadius="md" w="270px" boxShadow={ring || 'xl'} cursor="default" overflow="hidden">
       {/* Scrollable content */}
       <Box px={3} pt={3} maxH="300px" overflowY="auto">
@@ -352,6 +388,7 @@ export function NodeBlock({
             h="20px" minW="20px" color={node.imageUrl ? 'blue.500' : 'black'} isDisabled={isGeneratingImage} />
         </Tooltip>
       </HStack>
+    </Box>
     </Box>
   );
 }
