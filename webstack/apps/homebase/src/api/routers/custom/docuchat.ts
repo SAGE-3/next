@@ -15,15 +15,15 @@ export function DocuCHATRouter(): express.Router {
   const router = express.Router();
 
   /**
-   * Find the AiSearch.py script by searching known locations.
+   * Find a script in the DocuCHAT/ai directory by filename.
    */
-  function findScriptPath(): string | null {
+  function findScriptPath(filename = 'AiSearch.py'): string | null {
     const possiblePaths = [
-      path.join(__dirname, '../../../../../../libs/applications/src/lib/apps/DocuCHAT/ai/AiSearch.py'),
-      path.join(process.cwd(), 'libs/applications/src/lib/apps/DocuCHAT/ai/AiSearch.py'),
-      path.join(process.cwd(), 'webstack/libs/applications/src/lib/apps/DocuCHAT/ai/AiSearch.py'),
-      path.resolve('./libs/applications/src/lib/apps/DocuCHAT/ai/AiSearch.py'),
-      path.resolve('./webstack/libs/applications/src/lib/apps/DocuCHAT/ai/AiSearch.py'),
+      path.join(__dirname, `../../../../../../libs/applications/src/lib/apps/DocuCHAT/ai/${filename}`),
+      path.join(process.cwd(), `libs/applications/src/lib/apps/DocuCHAT/ai/${filename}`),
+      path.join(process.cwd(), `webstack/libs/applications/src/lib/apps/DocuCHAT/ai/${filename}`),
+      path.resolve(`./libs/applications/src/lib/apps/DocuCHAT/ai/${filename}`),
+      path.resolve(`./webstack/libs/applications/src/lib/apps/DocuCHAT/ai/${filename}`),
     ];
     for (const testPath of possiblePaths) {
       if (fs.existsSync(testPath)) {
@@ -162,6 +162,65 @@ export function DocuCHATRouter(): express.Router {
         } catch { /* ignore */ }
       }
     });
+  });
+
+  /**
+   * POST /ai-ask
+   *
+   * Answers a follow-up question about a previously-generated hierarchy by
+   * spawning AiAsk.py, which uses the same Azure OpenAI deployment as the
+   * main AiSearch pipeline.
+   *
+   * Body: { question: string, hierarchy: object }
+   * Response: { success: true, answer: string } | { success: false, message: string }
+   */
+  router.post('/ai-ask', (req, res) => {
+    const { question, hierarchy } = req.body || {};
+    if (!question || typeof question !== 'string') {
+      return res.status(400).json({ success: false, message: 'question is required' });
+    }
+    if (!hierarchy || typeof hierarchy !== 'object') {
+      return res.status(400).json({ success: false, message: 'hierarchy is required' });
+    }
+
+    const scriptPath = findScriptPath('AiAsk.py');
+    if (!scriptPath) {
+      return res.status(404).json({ success: false, message: 'AiAsk.py script not found' });
+    }
+    const scriptDir = path.dirname(scriptPath);
+
+    const proc = spawn('python3', ['-u', scriptPath], {
+      cwd: scriptDir,
+      env: { ...process.env, PYTHONUNBUFFERED: '1' },
+    });
+
+    let stdout = '';
+    let stderr = '';
+    proc.stdout.on('data', (c: Buffer) => { stdout += c.toString(); });
+    proc.stderr.on('data', (c: Buffer) => { stderr += c.toString(); });
+
+    proc.on('close', (code) => {
+      if (code !== 0) {
+        console.error('AiAsk.py exited with code', code, 'stderr:', stderr);
+        return res.status(500).json({
+          success: false,
+          message: stderr.trim() || `AiAsk.py exited with code ${code}`,
+        });
+      }
+      return res.json({ success: true, answer: stdout.trim() });
+    });
+
+    proc.on('error', (err) => {
+      console.error('Failed to spawn AiAsk.py:', err);
+      return res.status(500).json({ success: false, message: `Failed to start AiAsk: ${err.message}` });
+    });
+
+    req.on('close', () => {
+      if (!proc.killed) proc.kill();
+    });
+
+    proc.stdin.write(JSON.stringify({ question, hierarchy }));
+    proc.stdin.end();
   });
 
   return router;

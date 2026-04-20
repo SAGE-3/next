@@ -199,6 +199,8 @@ function AppComponent(props: App): JSX.Element {
   const isSelected = useUIStore.getState().selectedAppId === props._id;
   const chatBox = useRef<null | HTMLDivElement>(null);
   const ctrlRef = useRef<null | AbortController>(null);
+  const docuAbortRef = useRef<AbortController | null>(null);
+  const [docuProgress, setDocuProgress] = useState<string[]>([]);
 
   // Display some notifications
   const toast = useToast();
@@ -345,7 +347,8 @@ function AppComponent(props: App): JSX.Element {
     const now = await serverTime();
     // Is it a question to SAGE?
     const isQuestion = new_input.toUpperCase().startsWith('@S');
-    const name = isQuestion ? 'SAGE' : user?.data.name;
+    const isDocuSearch = new_input.toUpperCase().startsWith('@D');
+    const name = isQuestion ? 'SAGE' : isDocuSearch ? 'DocuSAGE' : user?.data.name;
     // Add messages
     const initialAnswer = {
       id: genId(),
@@ -357,6 +360,16 @@ function AppComponent(props: App): JSX.Element {
       response: isQuestion ? 'Working on it...' : '',
     };
     updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
+    if (isDocuSearch) {
+      const request = new_input.slice(2).trim();
+      const priorHierarchy = [...s.messages].reverse().find((m: any) => m.jsonData)?.jsonData;
+      if (priorHierarchy && request) {
+        await handleDocuAsk(request, priorHierarchy, initialAnswer, now);
+      } else {
+        await handleDocuSearch(request, initialAnswer, now);
+      }
+      return;
+    }
     if (isQuestion) {
       setProcessing(true);
       // Remove the @S from the question
@@ -427,6 +440,338 @@ function AppComponent(props: App): JSX.Element {
     }
   };
 
+  const trimHierarchyForContext = (node: any): any => {
+    if (!node) return null;
+    const out: any = {
+      name: node.name,
+      summary: node.summary || '',
+      keywords: node.keywords || [],
+      paper_count: node.paper_count,
+    };
+    if (node.children && node.children.length > 0) {
+      out.children = node.children.map(trimHierarchyForContext);
+    }
+    if (node.papers && node.papers.length > 0) {
+      out.papers = node.papers.map((p: any) => ({
+        title: p.title,
+        authors: (p.authors || []).slice(0, 3),
+        year: p.year,
+        venue: p.venue || '',
+        citations: p.citations || 0,
+        tldr: p.tldr || '',
+      }));
+    }
+    return out;
+  };
+
+  const handleDocuAsk = async (query: string, hierarchy: any, initialAnswer: any, now: any) => {
+    if (!user) return;
+    setProcessing(true);
+    const trimmed = trimHierarchyForContext(hierarchy);
+    try {
+      const response = await fetch('/api/docuchat/ai-ask', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: query, hierarchy: trimmed }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) {
+        toast({
+          title: 'Error',
+          description: result.message || `Error from DocuSAGE (status ${response.status}).`,
+          status: 'error',
+          duration: 4000,
+          isClosable: true,
+        });
+        return;
+      }
+      const new_text = result.answer || '';
+      updateState(props._id, {
+        ...s,
+        messages: [
+          ...s.messages,
+          initialAnswer,
+          {
+            id: genId(),
+            userId: user._id,
+            creationId: '',
+            creationDate: now.epoch + 1,
+            userName: 'DocuSAGE',
+            query: '',
+            response: new_text,
+          },
+        ],
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: `Failed to reach DocuSAGE: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        status: 'error',
+        duration: 4000,
+        isClosable: true,
+      });
+    } finally {
+      setProcessing(false);
+      setStreamText('');
+    }
+  };
+
+  const handleDocuSearch = async (query: string, initialAnswer: any, now: any) => {
+    if (!user) return;
+
+    setProcessing(true);
+    setDocuProgress([]);
+    setActions([]);
+
+    const controller = new AbortController();
+    docuAbortRef.current = controller;
+
+    try {
+      const response = await fetch('/api/docuchat/ai-search', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query }),
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let resultData: any = null;
+      let errorMsg: string | null = null;
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop()!;
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const event = JSON.parse(line);
+            if (event.type === 'progress') {
+              setDocuProgress((prev) => {
+                const updated = [...prev, event.message];
+                setStreamText(updated.join('\n'));
+                return updated;
+              });
+            } else if (event.type === 'result' && event.success) {
+              resultData = event.data;
+            } else if (event.type === 'error') {
+              errorMsg = event.message;
+            }
+          } catch {
+            // ignore malformed JSON lines
+          }
+        }
+      }
+
+      if (resultData) {
+        const paperCount = countPapers(resultData);
+        updateState(props._id, {
+          ...s,
+          messages: [
+            ...s.messages,
+            initialAnswer,
+            {
+              id: genId(),
+              userId: user._id,
+              creationId: '',
+              creationDate: now.epoch + 1,
+              userName: 'DocuSAGE',
+              query: '',
+              response: `Research paper hierarchy generated! Found ${paperCount} papers organized into topics.`,
+              jsonData: resultData,
+            },
+          ],
+        });
+        const docuActions: any[] = [
+          { type: 'docuchat', app: 'JSON', vizType: 'json', jsonData: resultData },
+        ];
+        if (resultData.children && resultData.children.length > 0) {
+          docuActions.unshift(
+            { type: 'docuchat', app: 'Tree Map', vizType: 'treemap', jsonData: resultData },
+            { type: 'docuchat', app: 'Dot Plot', vizType: 'dotplot', jsonData: resultData },
+            { type: 'docuchat', app: 'Line Graph', vizType: 'linegraph', jsonData: resultData },
+          );
+        }
+        setActions(docuActions);
+      } else {
+        updateState(props._id, {
+          ...s,
+          messages: [
+            ...s.messages,
+            initialAnswer,
+            {
+              id: genId(),
+              userId: user._id,
+              creationId: '',
+              creationDate: now.epoch + 1,
+              userName: 'DocuSAGE',
+              query: '',
+              response: errorMsg
+                ? `Pipeline error: ${errorMsg}`
+                : 'Pipeline completed but did not produce a hierarchy.',
+            },
+          ],
+        });
+      }
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        setProcessing(false);
+        setStreamText('');
+        setDocuProgress([]);
+        return;
+      }
+      updateState(props._id, {
+        ...s,
+        messages: [
+          ...s.messages,
+          initialAnswer,
+          {
+            id: genId(),
+            userId: user._id,
+            creationId: '',
+            creationDate: now.epoch + 1,
+            userName: 'SAGE',
+            query: '',
+            response: `Error: Failed to connect to DocuCHAT service. ${error instanceof Error ? error.message : 'Unknown error'}`,
+          },
+        ],
+      });
+    } finally {
+      docuAbortRef.current = null;
+      setProcessing(false);
+      setStreamText('');
+      setDocuProgress([]);
+    }
+  };
+
+  const countPapers = (node: any): number => {
+    if (!node) return 0;
+    let count = 0;
+    if (node.papers) count += node.papers.length;
+    if (node.children) {
+      for (const child of node.children) {
+        count += countPapers(child);
+      }
+    }
+    return count;
+  };
+
+  const transformAIDataToTree = (node: any): any => {
+    if (!node) {
+      return { topic: 'Error', size: 0, children: [], summary: 'Error transforming data' };
+    }
+    try {
+      if (node.papers && node.papers.length > 0 && (!node.children || node.children.length === 0)) {
+        const paperChildren = node.papers.map((p: any) => ({
+          topic: p.title || 'Untitled',
+          size: 1,
+          children: [],
+          title: p.title || '',
+          authors: p.authors || [],
+          year: p.year != null ? String(p.year) : '',
+          venue: p.venue || '',
+          url: p.url || '',
+          abstract: p.abstract || '',
+          tldr: p.tldr || '',
+          citations: p.citations || 0,
+          pdf_url: p.pdf_url || null,
+          source: p.source || '',
+        }));
+        return {
+          topic: node.name || node.label || node.topic || 'Untitled',
+          size: 0,
+          children: paperChildren,
+          summary: node.summary || '',
+        };
+      }
+      return {
+        topic: node.name || node.label || node.topic || 'Untitled',
+        size: node.is_document ? 1 : 0,
+        children: node.children ? node.children.map(transformAIDataToTree) : [],
+        summary: node.summary || '',
+        title: node.title || '',
+        authors: node.authors || [],
+        year: node.year != null ? String(node.year) : '',
+        venue: node.venue || '',
+      };
+    } catch (error) {
+      return { topic: 'Error', size: 0, children: [], summary: 'Error transforming data' };
+    }
+  };
+
+  const createDocuCodeEditorApp = (jsonData: any) => {
+    if (!roomId || !boardId) return;
+    const position = {
+      x: props.data.position.x + props.data.size.width + 20,
+      y: props.data.position.y,
+      z: 0,
+    };
+    createApp({
+      title: 'CodeEditor - output.json',
+      roomId,
+      boardId,
+      position,
+      size: { width: 1000, height: 700, depth: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'CodeEditor',
+      state: {
+        content: JSON.stringify(jsonData, null, 2),
+        language: 'json',
+        fontSize: 14,
+        readonly: true,
+        filename: 'output.json',
+        sources: [],
+      },
+      raised: true,
+      dragging: false,
+      pinned: false,
+    });
+  };
+
+  const createDocuSAGEApp = (hierarchyData: any, visualizationType: 'treemap' | 'tsne' | 'umap' | 'dotplot' | 'linegraph') => {
+    if (!roomId || !boardId) return;
+    const transformedData = transformAIDataToTree(hierarchyData);
+    const position = {
+      x: props.data.position.x + props.data.size.width + 20,
+      y: props.data.position.y,
+      z: 0,
+    };
+    createApp({
+      title: `DocuSAGE - ${visualizationType.charAt(0).toUpperCase() + visualizationType.slice(1)}`,
+      roomId,
+      boardId,
+      position,
+      size: { width: 800, height: 600, depth: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'DocuSAGE',
+      state: {
+        depth: 1,
+        selectedTopic: null,
+        filteredData: null,
+        maxDepth: 3,
+        data: transformedData,
+        customColors: ['#f2c74a', '#7a9ed6', '#b9d98a', '#f06d6d', '#b48ad0', '#b04a6a', '#a0a0a0'],
+        visualizationType,
+        dotPlotAlgorithm: visualizationType === 'dotplot' ? 'tsne' : undefined,
+      },
+      raised: true,
+      dragging: false,
+      pinned: false,
+    });
+  };
+
   const goToBottom = (mode: ScrollBehavior = 'smooth') => {
     // Scroll to bottom of chat box smoothly
     chatBox.current?.scrollTo({
@@ -437,6 +782,13 @@ function AppComponent(props: App): JSX.Element {
 
   const stopSAGE = async () => {
     setProcessing(false);
+    if (docuAbortRef.current) {
+      docuAbortRef.current.abort();
+      docuAbortRef.current = null;
+      setStreamText('');
+      setDocuProgress([]);
+      return;
+    }
     if (ctrlRef.current && user) {
       ctrlRef.current.abort();
       ctrlRef.current = null;
@@ -466,8 +818,13 @@ function AppComponent(props: App): JSX.Element {
 
   // Reset the chat: clear previous question and answer, and all the messages
   const resetSAGE = () => {
+    if (docuAbortRef.current) {
+      docuAbortRef.current.abort();
+      docuAbortRef.current = null;
+    }
     setPreviousQuestion([]);
     setPreviousAnswer([]);
+    setDocuProgress([]);
     updateState(props._id, { ...s, previousA: [], previousQ: [], messages: initialState.messages });
     setProcessing(false);
     setActions([]);
@@ -1469,7 +1826,21 @@ function AppComponent(props: App): JSX.Element {
   }, [s.messages]);
 
   const applyAction = (action: any) => async () => {
-    // Test JSON data
+    if (action.type === 'docuchat') {
+      if (action.vizType === 'json') {
+        createDocuCodeEditorApp(action.jsonData);
+      } else {
+        createDocuSAGEApp(action.jsonData, action.vizType);
+      }
+      toast({
+        title: 'Info',
+        description: 'Action applied.',
+        status: 'info',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
     if (action.type === 'create_app') {
       // Create a new duplicate app
       const type = action.app as AppName;
@@ -1741,14 +2112,16 @@ function AppComponent(props: App): JSX.Element {
             <Box position="relative" my={1} maxWidth={'70%'}>
               <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
                 <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                  AI is typing...
+                  {docuProgress.length > 0 ? 'DocuCHAT processing...' : 'AI is typing...'}
                 </Text>
               </Box>
 
               <Box display={'flex'} justifyContent="left" position={'relative'} top={'15px'} mb={'15px'}>
-                <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={aiTypingColor} p={1} m={3} fontFamily="Arial">
-                  {streamText}
-                </Box>
+              <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={aiTypingColor} p={1} m={3} fontFamily="Arial"
+                whiteSpace="pre-wrap" maxH={docuProgress.length > 0 ? '200px' : undefined} overflowY={docuProgress.length > 0 ? 'auto' : undefined}
+                fontSize={docuProgress.length > 0 ? 'xs' : undefined}>
+                {streamText}
+              </Box>
               </Box>
             </Box>
           )}
@@ -2210,7 +2583,7 @@ function AppComponent(props: App): JSX.Element {
         {/* Input Text */}
         <InputGroup bg={'blackAlpha.100'} maxHeight={'120px'}>
           <Textarea
-            placeholder={'Chat with friends or ask SAGE with @S' + (selectedModel ? ' (' + selectedModel + ' model)' : '')}
+            placeholder={'Chat with friends, ask SAGE with @S, or search papers with @D' + (selectedModel ? ' (' + selectedModel + ' model)' : '')}
             size="md"
             variant="outline"
             _placeholder={{ color: 'inherit' }}

@@ -335,7 +335,7 @@ export function Alfred(props: props) {
           creationDate: Date.now(),
           userName: '',
           query: '',
-          response: 'I am SAGE AI! Ask me anything by directing the question to me (@S), or chat with people in the board',
+          response: 'I am SAGE AI! Ask me anything with @S, search for research papers with @D, or chat with people in the board',
           userId: '',
         };
 

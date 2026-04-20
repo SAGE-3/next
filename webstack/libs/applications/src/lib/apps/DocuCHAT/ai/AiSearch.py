@@ -41,9 +41,9 @@ USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 
 CONFIG = {
     "TOPIC": None,
-    "NUM_SEARCH_QUERIES": 4,
-    "ARXIV_PER_QUERY": 10,
-    "S2_PER_QUERY": 10,
+    "NUM_SEARCH_QUERIES": 2,
+    "ARXIV_PER_QUERY": 4,
+    "S2_PER_QUERY": 4,
     "EXPAND_VIA_RECOMMENDATIONS": True,
     "EXPAND_VIA_CITATIONS": True,
     "EXPAND_VIA_REFERENCES": True,
@@ -611,7 +611,7 @@ def enrich_taxonomy_node(node: TaxonomyNode, papers_dict: Dict, used_names: set,
         node.keywords = []
     else:
         node_papers = get_node_papers(node, papers_dict)
-        if len(node_papers) < 5:
+        if len(node_papers) < 1:
             node.name = f"Small Cluster ({len(node_papers)} papers)"
             node.summary = ""
             node.keywords = []
@@ -768,7 +768,7 @@ def run_pipeline(topic: str, output_dir: str = None) -> dict:
         output_dir = os.path.join(os.getcwd(), f"results_{topic.replace(' ', '_')}_{int(time.time())}")
     CONFIG["OUTPUT_DIR"] = output_dir
     os.makedirs(CONFIG["OUTPUT_DIR"], exist_ok=True)
-    print(f"📁 Output: JSON")
+    print(f"Output: JSON")
 
     azure_client = AzureOpenAI(
         api_key=CONFIG["AZURE_KEY"],
@@ -776,8 +776,11 @@ def run_pipeline(topic: str, output_dir: str = None) -> dict:
         azure_endpoint=CONFIG["AZURE_ENDPOINT"]
     )
 
+    t_pipeline = time.time()
+
     # ---- PHASE 1: PAPER DISCOVERY ----
-    print(f"📚 Phase 1: Paper Discovery")
+    print(f"Phase 1: Paper Discovery")
+    t_phase = time.time()
     queries = generate_diverse_queries(CONFIG['TOPIC'], azure_client, CONFIG['NUM_SEARCH_QUERIES'])
     all_papers = []
     if CONFIG['ARXIV_PER_QUERY'] > 0:
@@ -793,18 +796,21 @@ def run_pipeline(topic: str, output_dir: str = None) -> dict:
     if expanded:
         all_papers.extend(expanded)
         papers = deduplicate_papers(all_papers)
-    print(f"   Found {len(papers)} papers")
+    print(f"   Found {len(papers)} papers  [Phase 1: {time.time() - t_phase:.1f}s]")
 
     # ---- PHASE 2.7: AI2 ENHANCEMENTS ----
-    print(f"🤖 Phase 2: AI2 Enhancements")
+    print(f"Phase 2: AI2 Enhancements")
+    t_phase = time.time()
     if CONFIG.get('USE_AI2_ENHANCEMENTS', True):
         try:
             papers, _, _ = run_ai2_enhancements(papers, None, api_key=CONFIG.get('S2_API_KEY'))
         except Exception as e:
             print(f"   ⚠️ AI2 enhancements failed: {e}")
+    print(f"   [Phase 2: {time.time() - t_phase:.1f}s]")
 
     # ---- PHASE 4: EMBEDDINGS ----
-    print(f"🧠 Phase 3: Embeddings")
+    print(f"Phase 3: Embeddings")
+    t_phase = time.time()
     if CONFIG['USE_SPECTER']:
         n_specter = get_specter_embeddings(papers, CONFIG['S2_API_KEY'])
         papers_without = [p for p in papers if not p.embedding]
@@ -813,22 +819,24 @@ def run_pipeline(topic: str, output_dir: str = None) -> dict:
     else:
         generate_fallback_embeddings(papers)
     n_emb = sum(1 for p in papers if p.embedding)
-    print(f"   Embedded {n_emb}/{len(papers)} papers")
+    print(f"   Embedded {n_emb}/{len(papers)} papers  [Phase 3: {time.time() - t_phase:.1f}s]")
 
     # ---- PHASE 6: TAXONOMY ----
-    print(f"🌳 Phase 4: Taxonomy")
+    print(f"Phase 4: Taxonomy")
+    t_phase = time.time()
     taxonomy = build_hierarchical_taxonomy(papers, azure_client)
     if taxonomy and CONFIG.get('USE_AI2_ENHANCEMENTS', True):
         try:
             enhance_taxonomy_with_s2(taxonomy, papers)
         except Exception as e:
             print(f"   ⚠️ Enhance taxonomy S2: {e}")
+    print(f"   [Phase 4: {time.time() - t_phase:.1f}s]")
 
     # ---- OUTPUT: hierarchy.json ----
     if taxonomy:
         write_hierarchy_json(taxonomy, papers, CONFIG['OUTPUT_DIR'])
         hierarchy_data = taxonomy_to_hierarchy_dict(taxonomy, papers)
-        print(f"✅ Done!")
+        print(f"Done!  [Total: {time.time() - t_pipeline:.1f}s]")
         return hierarchy_data
     else:
         print("\n   ⚠️ No taxonomy built; hierarchy.json not written.")
