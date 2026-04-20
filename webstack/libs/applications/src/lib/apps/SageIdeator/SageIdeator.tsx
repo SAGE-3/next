@@ -174,7 +174,7 @@ function AppComponent(props: App): JSX.Element {
       parentEntryId?: string;
       parentNodeTitle?: string;
     }) => {
-      if (!user || !s.apiKey || isGenerating) return;
+      if (!user || isGenerating) return;
 
       const displayPrompt = branchOpts?.displayPrompt ?? input.trim();
       const aiPrompt = branchOpts?.aiPrompt ?? input.trim();
@@ -343,7 +343,7 @@ function AppComponent(props: App): JSX.Element {
 
   const askNodeQuestion = useCallback(
     async (node: SageNode, question: string) => {
-      if (!user || !s.apiKey || askingNodeId) return;
+      if (!user || askingNodeId) return;
       setAskingNodeId(node.ID);
       try {
         const context = [
@@ -381,7 +381,7 @@ function AppComponent(props: App): JSX.Element {
 
   const addDimension = useCallback(
     async (dimName: string) => {
-      if (!s.apiKey || isAddingDimension || localNodes.length === 0 || !activeEntryId) return;
+      if (isAddingDimension || localNodes.length === 0 || !activeEntryId) return;
       setIsAddingDimension(true);
       try {
         const nodeStubs = localNodes.map((n) => ({ ID: n.ID, Title: n.Title, Summary: n.Summary }));
@@ -455,7 +455,7 @@ function AppComponent(props: App): JSX.Element {
   const generateMore = useCallback(
     async (entry: AppState['chatHistory'][number]) => {
       const entryDims = entry.dimensions ?? [];
-      if (!user || !s.apiKey || isGenerating || entryDims.length === 0) return;
+      if (!user || isGenerating || entryDims.length === 0) return;
       // Restore the entry's snapshot first so the canvas shows the right nodes
       restoreSnapshot(entry);
       const rawDims = {
@@ -587,7 +587,7 @@ function AppComponent(props: App): JSX.Element {
       yDimName: string | null;
       yBlend: DimBlend | null;
     }) => {
-      if (!s.apiKey || !activeEntryId || localDims.length === 0) return;
+      if (!activeEntryId || localDims.length === 0) return;
       setIsGeneratingAt(true);
       try {
         const { requirements, categorical, ordinal } = buildBlendedRequirements(
@@ -626,7 +626,7 @@ function AppComponent(props: App): JSX.Element {
 
   const addManualIdea = useCallback(
     async (text: string) => {
-      if (!s.apiKey || !activeEntryId) return;
+      if (!activeEntryId) return;
       setIsAddingManualIdea(true);
       try {
         const summary = await abstractNode(text, s.apiKey, s.model);
@@ -683,7 +683,7 @@ function AppComponent(props: App): JSX.Element {
 
   // ── Setup screen ──
 
-  if (!s.apiKey || showSettings) {
+  if (showSettings) {
     return (
       <SetupScreen
         props={props}
@@ -691,8 +691,7 @@ function AppComponent(props: App): JSX.Element {
         panelBgHex={panelBgHex}
         textColor={textColor}
         onSave={handleSetupSave}
-        onCancel={s.apiKey ? () => setShowSettings(false) : undefined}
-        existingApiKey={s.apiKey || undefined}
+        onCancel={() => setShowSettings(false)}
       />
     );
   }

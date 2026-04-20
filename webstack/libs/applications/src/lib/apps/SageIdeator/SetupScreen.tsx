@@ -14,13 +14,13 @@ import {
   FormControl,
   FormLabel,
   FormHelperText,
-  Input,
+  // Input,
   Select,
   Button,
   IconButton,
   Tooltip,
 } from '@chakra-ui/react';
-import { MdKey, MdArrowBack } from 'react-icons/md';
+import { MdSettings, MdArrowBack } from 'react-icons/md';
 
 import { App } from '../../schema';
 import { state as AppState } from './index';
@@ -39,12 +39,12 @@ interface SetupScreenProps {
 
 export function SetupScreen({ props, bgHex, panelBgHex, textColor, onSave, onCancel, existingApiKey }: SetupScreenProps) {
   const s = props.data.state as AppState;
-  const [apiKeyInput, setApiKeyInput] = useState(existingApiKey ?? '');
+  // const [apiKeyInput, setApiKeyInput] = useState(existingApiKey ?? '');
   const [modelInput, setModelInput] = useState(s.model || 'gpt-5.4-mini');
   const [batchInput, setBatchInput] = useState(String(s.batchSize || 8));
 
   return (
-    <AppWindow app={props} hideBackgroundIcon={MdKey}>
+    <AppWindow app={props} hideBackgroundIcon={MdSettings}>
       <Flex h="100%" w="100%" bg={bgHex} align="center" justify="center" p={6} position="relative">
         {onCancel && (
           <Tooltip label="Back" placement="left" hasArrow openDelay={400}>
@@ -62,12 +62,14 @@ export function SetupScreen({ props, bgHex, panelBgHex, textColor, onSave, onCan
           </Tooltip>
         )}
         <Flex direction="row" gap={8} w="100%" maxW="800px" align="flex-start">
-          {/* Left: key + model */}
+          {/* Left: model */}
           <VStack spacing={4} flex={1} align="stretch">
             <Text fontWeight="bold" fontSize="xl" color={textColor}>Configure SageIdeator</Text>
             <Text fontSize="sm" color={textColor}>
-              SageIdeator calls OpenAI directly. Your API key is stored in the board state.
+              SageIdeator uses the AI model configured on this SAGE3 server.
             </Text>
+
+            {/* OpenAI API key — hidden; provided by the server
             <FormControl isRequired>
               <FormLabel color={textColor}>OpenAI API Key</FormLabel>
               <Input
@@ -79,6 +81,8 @@ export function SetupScreen({ props, bgHex, panelBgHex, textColor, onSave, onCan
               />
               <FormHelperText>Visible to other board users.</FormHelperText>
             </FormControl>
+            */}
+
             <FormControl>
               <FormLabel color={textColor}>Model</FormLabel>
               <Select value={modelInput} onChange={(e) => setModelInput(e.target.value)} bg={panelBgHex}>
@@ -99,10 +103,7 @@ export function SetupScreen({ props, bgHex, panelBgHex, textColor, onSave, onCan
             <Button
               colorScheme="blue"
               w="100%"
-              isDisabled={!apiKeyInput.trim()}
-              onClick={() =>
-                onSave(apiKeyInput.trim(), modelInput, parseInt(batchInput))
-              }
+              onClick={() => onSave('', modelInput, parseInt(batchInput))}
             >
               Save &amp; Start
             </Button>
