@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -27,7 +27,7 @@ import { MdStar, MdStarOutline } from 'react-icons/md';
 import { Board, PresencePartial, Room } from '@sage3/shared/types';
 import { EnterBoardModal, useHexColor, useUser, copyBoardUrlToClipboard, EditBoardModal, BoardInformationModal } from '@sage3/frontend';
 
-import { BoardPreview } from './BoardPreview';
+import { BoardPreview, AppInfo } from './BoardPreview';
 import { UserPresenceIcons } from './UserPresenceIcons';
 
 // Board Card Props
@@ -37,6 +37,7 @@ interface BoardCardProps {
   selected: boolean;
   onClick: (board: Board) => void;
   usersPresent: PresencePartial[];
+  appInfo: AppInfo[];
 }
 
 export function BoardCard(props: BoardCardProps) {
@@ -169,7 +170,7 @@ export function BoardCard(props: BoardCardProps) {
                 />
               </Box>
             </Box>
-            <BoardPreview board={props.board} width={230} height={120} isSelected={props.selected} />
+            <BoardPreview board={props.board} width={230} height={120} isSelected={props.selected} appInfo={props.appInfo} />
             <Tooltip hasArrow={true} label={isFavorite ? 'Unfavorite this board' : 'Favorite this board'} openDelay={400}>
               <IconButton
                 top="0"

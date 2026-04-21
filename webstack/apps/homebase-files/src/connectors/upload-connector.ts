@@ -37,7 +37,6 @@ export class UploadConnector {
       // use local storage
       storage: multer.diskStorage({
         destination: function (_req: Express.Request, _file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) {
-          console.log('Upload> config', config.public);
           return cb(null, config.public);
         },
         filename: function (_req: Express.Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) {

@@ -9,11 +9,11 @@ configurations/node/keys/*.pem
 configurations/jupyter/conf/keys/*.crt
 configurations/jupyter/conf/keys/*.key
 
-foresight/ai_services
-foresight/media_server
-foresight/message_broker
-foresight/smartbits
-foresight/task_queue
+pysage3/ai_services
+pysage3/media_server
+pysage3/message_broker
+pysage3/smartbits
+pysage3/task_queue
 
 configurations/fluentd/log/*.log
 configurations/fluentd/log/data.*

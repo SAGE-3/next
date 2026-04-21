@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -21,6 +21,8 @@ import {
   useToast,
   Button,
   Checkbox,
+  Box,
+  Text,
 } from '@chakra-ui/react';
 
 import { v5 as uuidv5 } from 'uuid';
@@ -38,6 +40,8 @@ interface CreateBoardModalProps {
   roomId: string;
   onClose: () => void;
 }
+
+const NAME_MAX = 50;
 
 export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
   // Configuration information
@@ -95,8 +99,7 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
 
   const create = async () => {
     if (name && user) {
-      // remove leading and trailing space, and limit name length to 32
-      const cleanedName = name.trim().substring(0, 31);
+      const cleanedName = name.trim().substring(0, NAME_MAX);
       // list of board names in the room
       const roomsBoards = boards.filter((board) => board.data.roomId === props.roomId);
       const boardNames = roomsBoards.map((board) => board.data.name);
@@ -193,20 +196,26 @@ export function CreateBoardModal(props: CreateBoardModalProps): JSX.Element {
       <ModalContent>
         <ModalHeader fontSize="3xl">Create a New Board</ModalHeader>
         <ModalBody>
-          <InputGroup mb="4">
-            <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
-            <Input
-              ref={initialRef}
-              type="text"
-              placeholder={'Board Name'}
-              _placeholder={{ opacity: 1, color: 'gray.600' }}
-              mr={0}
-              value={name}
-              onChange={handleNameChange}
-              onKeyDown={onSubmit}
-              isRequired={true}
-            />
-          </InputGroup>
+          <Box mb="4">
+            <InputGroup>
+              <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
+              <Input
+                ref={initialRef}
+                type="text"
+                placeholder={'Board Name'}
+                _placeholder={{ opacity: 1, color: 'gray.600' }}
+                mr={0}
+                value={name}
+                onChange={handleNameChange}
+                onKeyDown={onSubmit}
+                isRequired={true}
+                maxLength={NAME_MAX}
+              />
+            </InputGroup>
+            <Text fontSize="xs" textAlign="right" mt="1" color={name.length >= NAME_MAX ? 'red.400' : name.length >= NAME_MAX * 0.8 ? 'orange.400' : 'gray.400'}>
+              {name.length} / {NAME_MAX}
+            </Text>
+          </Box>
 
           <ColorPicker selectedColor={color} onChange={handleColorChange}></ColorPicker>
 

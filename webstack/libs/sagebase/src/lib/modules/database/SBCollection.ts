@@ -194,7 +194,7 @@ export class SBCollectionRef<Type extends SBJSON> {
     if (docs) {
       const returnList = [] as SBDocument<Type>[];
       docs.forEach((doc) => {
-        if (doc !== undefined) returnList.push(doc);
+        if (doc !== undefined && doc !== null) returnList.push(doc);
       });
       return returnList;
     } else {
@@ -321,7 +321,7 @@ export class SBCollectionRef<Type extends SBJSON> {
       const docs = await Promise.all([...docRefPromises]);
       const a = [] as SBDocument<Type>[];
       docs.forEach((el) => {
-        if (el !== undefined) a.push(el);
+        if (el !== undefined && el !== null) a.push(el);
       });
       return a;
     } catch (error) {

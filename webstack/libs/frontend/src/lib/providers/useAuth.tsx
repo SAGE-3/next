@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -41,6 +41,14 @@ function appleLogin(): void {
 }
 
 /**
+ * Endpoint to login with Keycloak (or any configured OIDC provider)
+ */
+function keycloakLogin(): void {
+  // return to host with the same protocol (http/https)
+  window.location.replace(`${window.location.protocol}//${window.location.host}/auth/keycloak`);
+}
+
+/**
  * Endpoint to login with Guest
  */
 async function guestLogin(): Promise<void> {
@@ -58,7 +66,7 @@ async function guestLogin(): Promise<void> {
 }
 
 /**
- * Endpoint to login with Guest
+ * Endpoint to login with Spectator
  */
 async function spectatorLogin(): Promise<void> {
   const res = await fetch('/auth/spectator', {
@@ -118,6 +126,7 @@ type AuthenticatedType = {
   googleLogin: () => void;
   appleLogin: () => void;
   ciLogin: () => void;
+  keycloakLogin: () => void;
   guestLogin: () => Promise<void>;
   spectatorLogin: () => Promise<void>;
 };
@@ -140,6 +149,7 @@ export function AuthProvider(props: React.PropsWithChildren<Record<string, unkno
     googleLogin,
     appleLogin,
     ciLogin,
+    keycloakLogin,
     guestLogin,
     spectatorLogin,
   });
@@ -157,11 +167,12 @@ export function AuthProvider(props: React.PropsWithChildren<Record<string, unkno
           googleLogin,
           appleLogin,
           ciLogin,
+          keycloakLogin,
           guestLogin,
           spectatorLogin,
         });
       } else {
-        setAuth({ auth: null, verify, loading: false, expire: 0, logout, googleLogin, appleLogin, ciLogin, guestLogin, spectatorLogin });
+        setAuth({ auth: null, verify, loading: false, expire: 0, logout, googleLogin, appleLogin, ciLogin, keycloakLogin, guestLogin, spectatorLogin });
       }
     }
 

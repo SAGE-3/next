@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -10,59 +10,16 @@ import { useState, useEffect, useRef } from 'react';
 import { Box, Text, Icon, useColorModeValue } from '@chakra-ui/react';
 import { MdLock } from 'react-icons/md';
 
-import { apiUrls, useHexColor } from '@sage3/frontend';
+import { useHexColor } from '@sage3/frontend';
 import { Board, Position, Size } from '@sage3/shared/types';
 import { AppName } from '@sage3/applications/schema';
 
-// Type for app info
-type AppInfo = { position: Position; size: Size; type: AppName; id: string };
+// Minimal app layout info needed to render the spatial preview
+export type AppInfo = { position: Position; size: Size; type: AppName; id: string };
 
-// A Global store to cache apps for each board
-// Has local time stamp to check if cache is expired. 60 seconds
-const cacheTime = 60 * 1000;
+const PADDING = 2;
 
-const appCache = new Map<string, { apps: AppInfo[]; timestamp: number }>();
-
-const getAppInfo = async (boardId: string): Promise<AppInfo[]> => {
-  // Get the apps from the cache
-  const apps = appCache.get(boardId);
-  // Check if cache is expired
-  if (apps) {
-    // Check if cache is expired
-    if (Date.now() - apps.timestamp < cacheTime) {
-      return apps.apps;
-    } else {
-      const newApps = await updateAppInfo(boardId);
-      appCache.set(boardId, { apps: newApps, timestamp: Date.now() });
-      return newApps;
-    }
-  } else {
-    const apps = await updateAppInfo(boardId);
-    appCache.set(boardId, { apps, timestamp: Date.now() });
-    return apps;
-  }
-};
-
-const updateAppInfo = async (boardId: string): Promise<AppInfo[]> => {
-  const response = await fetch(apiUrls.apps.preview, {
-    body: JSON.stringify({ boardId: boardId }),
-    method: 'POST',
-    credentials: 'include',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
-  });
-  const docs = await response.json();
-  if (docs.success && docs.data) {
-    return docs.data;
-  } else {
-    return [];
-  }
-};
-
-export function BoardPreview(props: { board: Board; width: number; height: number; isSelected?: boolean }): JSX.Element {
-  const [appInfo, setAppInfo] = useState<{ position: Position; size: Size; type: AppName; id: string }[]>([]);
+export function BoardPreview(props: { board: Board; width: number; height: number; isSelected?: boolean; appInfo: AppInfo[] }): JSX.Element {
   const [boardWidth, setBoardWidth] = useState(0);
   const [boardHeight, setBoardHeight] = useState(0);
   const [appsX, setAppsX] = useState(0);
@@ -79,11 +36,11 @@ export function BoardPreview(props: { board: Board; width: number; height: numbe
     `linear-gradient(172deg, #2e2e2e, #313131, #292929)`
   );
 
-  const PADDING = 2; // Padding in pixels
+  // Recompute layout whenever the appInfo prop changes
+  useEffect(() => {
+    const apps = props.appInfo;
+    if (!apps || apps.length === 0) return;
 
-  async function updateMap() {
-    const apps = await getAppInfo(props.board._id);
-    if (!apps) return;
     const appsLeft = apps.map((app) => app.position.x);
     const appsRight = apps.map((app) => app.position.x + app.size.width);
     const appsTop = apps.map((app) => app.position.y);
@@ -91,29 +48,21 @@ export function BoardPreview(props: { board: Board; width: number; height: numbe
 
     const width = Math.max(...appsRight) - Math.min(...appsLeft);
     const height = Math.max(...appsBottom) - Math.min(...appsTop);
+    const scale = Math.min((props.width - 2 * PADDING) / width, (props.height - 2 * PADDING) / height) * 0.85;
 
-    const mapScale = Math.min((props.width - 2 * PADDING) / width, (props.height - 2 * PADDING) / height) * 0.85;
-    const x = Math.min(...appsLeft);
-    const y = Math.min(...appsTop);
+    setBoardWidth(width * scale);
+    setBoardHeight(height * scale);
+    setAppsX(Math.min(...appsLeft));
+    setAppsY(Math.min(...appsTop));
+    setMapScale(scale);
+  }, [props.appInfo, props.width, props.height]);
 
-    setBoardHeight(height * mapScale);
-    setBoardWidth(width * mapScale);
-    setAppsX(x);
-    setAppsY(y);
-    setMapScale(mapScale);
-    setAppInfo(apps);
-  }
-
+  // Redraw canvas when layout or colors change
   useEffect(() => {
-    updateMap();
-  }, [props.board._id]);
-
-  useEffect(() => {
-    if (canvasRef.current && appInfo.length > 0) {
+    if (canvasRef.current && props.appInfo.length > 0) {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        // prevent blurry canvas with dpr
         const dpr = window.devicePixelRatio || 1;
         const canvasWidth = boardWidth + 2 * PADDING;
         const canvasHeight = boardHeight + 2 * PADDING;
@@ -128,18 +77,17 @@ export function BoardPreview(props: { board: Board; width: number; height: numbe
         ctx.strokeStyle = appBorderColor;
         ctx.lineWidth = 1;
 
-        appInfo.forEach((app) => {
+        props.appInfo.forEach((app) => {
           const x = (app.position.x - appsX) * mapScale + PADDING;
           const y = (app.position.y - appsY) * mapScale + PADDING;
           const width = app.size.width * mapScale;
           const height = app.size.height * mapScale;
-
           ctx.fillRect(x, y, width, height);
           ctx.strokeRect(x, y, width, height);
         });
       }
     }
-  }, [appInfo, boardColor, appBorderColor, mapScale, appsX, appsY, boardWidth, boardHeight]);
+  }, [props.appInfo, boardColor, appBorderColor, mapScale, appsX, appsY, boardWidth, boardHeight]);
 
   return (
     <Box
@@ -173,7 +121,7 @@ export function BoardPreview(props: { board: Board; width: number; height: numbe
             Private
           </Text>
         </>
-      ) : appInfo.length > 0 ? (
+      ) : props.appInfo.length > 0 ? (
         <canvas ref={canvasRef} style={{ width: `${boardWidth + 2 * PADDING}px`, height: `${boardHeight + 2 * PADDING}px` }} />
       ) : (
         <Text fontSize="xl" mb="2" color={boardColor} fontWeight="bold" css={{ textWrap: 'balance' }}>

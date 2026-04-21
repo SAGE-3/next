@@ -22,6 +22,7 @@ import { name as JupyterLabName } from './apps/JupyterLab';
 import { name as LeafLetName } from './apps/LeafLet';
 import { name as LinkerName } from './apps/Linker';
 import { name as MapName } from './apps/Map';
+import { name as MermaidName } from './apps/Mermaid';
 import { name as NotepadName } from './apps/Notepad';
 import { name as PDFResultName } from './apps/PDFResult';
 import { name as PDFViewerName } from './apps/PDFViewer';
@@ -30,7 +31,6 @@ import { name as PollName } from './apps/Poll';
 import { name as RTCChatName } from './apps/RTCChat';
 import { name as SageIdeatorName } from './apps/SageIdeator';
 import { name as SageCellName } from './apps/SageCell';
-import { name as SeerName } from './apps/Seer';
 import { name as SensorOverviewName } from './apps/SensorOverview';
 import { name as StickieName } from './apps/Stickie';
 import { name as TimerName } from './apps/Timer';
@@ -66,6 +66,7 @@ import JupyterLab from './apps/JupyterLab/JupyterLab';
 import LeafLet from './apps/LeafLet/LeafLet';
 import Linker from './apps/Linker/Linker';
 import Map from './apps/Map/Map';
+import Mermaid from './apps/Mermaid/Mermaid';
 import Notepad from './apps/Notepad/Notepad';
 import PDFResult from './apps/PDFResult/PDFResult';
 import PDFViewer from './apps/PDFViewer/PDFViewer';
@@ -74,7 +75,6 @@ import Poll from './apps/Poll/Poll';
 import RTCChat from './apps/RTCChat/RTCChat';
 import SageIdeator from './apps/SageIdeator/SageIdeator';
 import SageCell from './apps/SageCell/SageCell';
-import Seer from './apps/Seer/Seer';
 import SensorOverview from './apps/SensorOverview/SensorOverview';
 import Stickie from './apps/Stickie/Stickie';
 import Timer from './apps/Timer/Timer';
@@ -196,6 +196,11 @@ export const Applications = {
     ToolbarComponent: Map.ToolbarComponent,
     GroupedToolbarComponent: Map.GroupedToolbarComponent,
   },
+  [MermaidName]: {
+    AppComponent: React.memo(Mermaid.AppComponent),
+    ToolbarComponent: Mermaid.ToolbarComponent,
+    GroupedToolbarComponent: Mermaid.GroupedToolbarComponent,
+  },
   [NotepadName]: {
     AppComponent: React.memo(Notepad.AppComponent),
     ToolbarComponent: Notepad.ToolbarComponent,
@@ -235,11 +240,6 @@ export const Applications = {
     AppComponent: React.memo(SageCell.AppComponent),
     ToolbarComponent: SageCell.ToolbarComponent,
     GroupedToolbarComponent: SageCell.GroupedToolbarComponent,
-  },
-  [SeerName]: {
-    AppComponent: React.memo(Seer.AppComponent),
-    ToolbarComponent: Seer.ToolbarComponent,
-    GroupedToolbarComponent: Seer.GroupedToolbarComponent,
   },
   [SensorOverviewName]: {
     AppComponent: React.memo(SensorOverview.AppComponent),

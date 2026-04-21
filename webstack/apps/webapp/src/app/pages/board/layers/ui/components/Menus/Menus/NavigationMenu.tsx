@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -155,7 +155,7 @@ export function NavigationMenu() {
           )}
         </Box>
       </Box>
-      <Button size="xs" colorScheme={user?.data.color} width="100% " variant="outline" onClick={fitAllApps}>
+      <Button size="xs" colorScheme="teal" width="100% " variant="outline" onClick={fitAllApps}>
         Show All Applications
       </Button>
     </Box>

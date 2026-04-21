@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -144,10 +144,11 @@ export function Interactionbar(props: {
           <IconButton
             borderRadius={'0.5rem 0 0 0.5rem'}
             size="sm"
-            colorScheme={primaryActionMode === 'lasso' ? user?.data.color || 'teal' : 'gray'}
+            colorScheme={primaryActionMode === 'lasso' ? 'teal' : 'gray'}
+
             sx={{
               _dark: {
-                bg: primaryActionMode === 'lasso' ? `${user?.data.color}.200` : 'gray.600',
+                bg: primaryActionMode === 'lasso' ? 'teal.200' : 'gray.600',
               },
             }}
             icon={<LiaMousePointerSolid />}
@@ -165,10 +166,11 @@ export function Interactionbar(props: {
           <IconButton
             borderRadius={0}
             size="sm"
-            colorScheme={primaryActionMode === 'grab' ? user?.data.color || 'teal' : 'gray'}
+            colorScheme={primaryActionMode === 'grab' ? 'teal' : 'gray'}
+
             sx={{
               _dark: {
-                bg: primaryActionMode === 'grab' ? `${user?.data.color}.200` : 'gray.600', // 'inherit' didnt seem to work
+                bg: primaryActionMode === 'grab' ? 'teal.200' : 'gray.600', // 'inherit' didnt seem to work
               },
             }}
             icon={<LiaHandPaperSolid />}
@@ -190,10 +192,11 @@ export function Interactionbar(props: {
               <IconButton
                  borderRadius={'0 0.5rem 0.5rem 0'}
                 size="sm"
-                colorScheme={(primaryActionMode === 'pen' || primaryActionMode === 'eraser' || primaryActionMode === 'rectangle' || primaryActionMode === 'circle' || primaryActionMode === 'arrow' || primaryActionMode === 'doubleArrow') ? user?.data.color || 'teal' : 'gray'}
+                colorScheme={(primaryActionMode === 'pen' || primaryActionMode === 'eraser' || primaryActionMode === 'rectangle' || primaryActionMode === 'circle' || primaryActionMode === 'arrow' || primaryActionMode === 'doubleArrow') ? 'teal' : 'gray'}
+
                 sx={{
                   _dark: {
-                    bg: (primaryActionMode === 'pen' || primaryActionMode === 'eraser' || primaryActionMode === 'rectangle' || primaryActionMode === 'circle' || primaryActionMode === 'arrow' || primaryActionMode === 'doubleArrow') ? `${user?.data.color}.200` : 'gray.600',
+                    bg: (primaryActionMode === 'pen' || primaryActionMode === 'eraser' || primaryActionMode === 'rectangle' || primaryActionMode === 'circle' || primaryActionMode === 'arrow' || primaryActionMode === 'doubleArrow') ? 'teal.200' : 'gray.600',
                   },
                 }}
                 icon={<BiPencil />}
@@ -224,7 +227,8 @@ export function Interactionbar(props: {
                   <ButtonGroup size="sm" isAttached>
                     <Tooltip placement="top" hasArrow label="Marker">
                       <Button
-                        colorScheme={primaryActionMode === 'pen' ? user?.data.color || 'teal' : 'gray'}
+                        colorScheme={primaryActionMode === 'pen' ? 'teal' : 'gray'}
+
                         variant={primaryActionMode === 'pen' ? 'solid' : 'outline'}
                         onClick={() => handleModeChange('pen')}
                         px="3"
@@ -234,7 +238,8 @@ export function Interactionbar(props: {
                     </Tooltip>
                     <Tooltip placement="top" hasArrow label="Rectangle">
                       <Button
-                        colorScheme={primaryActionMode === 'rectangle' ? user?.data.color || 'teal' : 'gray'}
+                        colorScheme={primaryActionMode === 'rectangle' ? 'teal' : 'gray'}
+
                         variant={primaryActionMode === 'rectangle' ? 'solid' : 'outline'}
                         onClick={() => handleModeChange('rectangle')}       // NEED TO CHANGE THIS TO ALLOW SHAPE TO BE A VALID MODE
                         px="3"
@@ -244,7 +249,8 @@ export function Interactionbar(props: {
                     </Tooltip>
                     <Tooltip placement="top" hasArrow label="Circle">
                       <Button
-                        colorScheme={primaryActionMode === 'circle' ? user?.data.color || 'teal' : 'gray'}
+                        colorScheme={primaryActionMode === 'circle' ? 'teal' : 'gray'}
+
                         variant={primaryActionMode === 'circle' ? 'solid' : 'outline'}
                         onClick={() => handleModeChange('circle')}
                         px="3"
@@ -254,7 +260,8 @@ export function Interactionbar(props: {
                     </Tooltip>
                     <Tooltip placement="top" hasArrow label="Arrow">
                       <Button
-                        colorScheme={primaryActionMode === 'arrow' ? user?.data.color || 'teal' : 'gray'}
+                        colorScheme={primaryActionMode === 'arrow' ? 'teal' : 'gray'}
+
                         variant={primaryActionMode === 'arrow' ? 'solid' : 'outline'}
                         onClick={() => handleModeChange('arrow')}
                         px="3"
@@ -264,7 +271,8 @@ export function Interactionbar(props: {
                     </Tooltip>
                     <Tooltip placement="top" hasArrow label="Double Arrow">
                       <Button
-                        colorScheme={primaryActionMode === 'doubleArrow' ? user?.data.color || 'teal' : 'gray'}
+                        colorScheme={primaryActionMode === 'doubleArrow' ? 'teal' : 'gray'}
+
                         variant={primaryActionMode === 'doubleArrow' ? 'solid' : 'outline'}
                         onClick={() => handleModeChange('doubleArrow')}
                         px="3"
@@ -274,7 +282,8 @@ export function Interactionbar(props: {
                     </Tooltip>
                     <Tooltip placement="top" hasArrow label="Eraser">
                       <Button
-                        colorScheme={primaryActionMode === 'eraser' ? user?.data.color || 'teal' : 'gray'}
+                        colorScheme={primaryActionMode === 'eraser' ? 'teal' : 'gray'}
+
                         variant={primaryActionMode === 'eraser' ? 'solid' : 'outline'}
                         onClick={() => handleModeChange('eraser')}
                         px="3"

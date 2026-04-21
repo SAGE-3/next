@@ -54,6 +54,7 @@ export function ConfigRouter(): express.Router {
       azure: config.services.azure || {},
       feedback: config.feedback || {},
       fluentd: config.fluentd || {},
+      veoServer: config.veoServer || {},
     } as OpenConfiguration;
     res.json(configuration);
   });

@@ -22,6 +22,7 @@ import { name as JupyterLabName, init as defaultJupyterLab } from './apps/Jupyte
 import { name as LeafLetName, init as defaultLeafLet } from './apps/LeafLet';
 import { name as LinkerName, init as defaultLinker } from './apps/Linker';
 import { name as MapName, init as defaultMap } from './apps/Map';
+import { name as MermaidName, init as defaultMermaid } from './apps/Mermaid';
 import { name as NotepadName, init as defaultNotepad } from './apps/Notepad';
 import { name as PDFResultName, init as defaultPDFResult } from './apps/PDFResult';
 import { name as PDFViewerName, init as defaultPDFViewer } from './apps/PDFViewer';
@@ -30,7 +31,6 @@ import { name as PollName, init as defaultPoll } from './apps/Poll';
 import { name as RTCChatName, init as defaultRTCChat } from './apps/RTCChat';
 import { name as SageIdeatorName, init as defaultSageIdeator } from './apps/SageIdeator';
 import { name as SageCellName, init as defaultSageCell } from './apps/SageCell';
-import { name as SeerName, init as defaultSeer } from './apps/Seer';
 import { name as SensorOverviewName, init as defaultSensorOverview } from './apps/SensorOverview';
 import { name as StickieName, init as defaultStickie } from './apps/Stickie';
 import { name as TimerName, init as defaultTimer } from './apps/Timer';
@@ -64,6 +64,7 @@ export const initialValues = {
   [LeafLetName]: defaultLeafLet,
   [LinkerName]: defaultLinker,
   [MapName]: defaultMap,
+  [MermaidName]: defaultMermaid,
   [NotepadName]: defaultNotepad,
   [PDFResultName]: defaultPDFResult,
   [PDFViewerName]: defaultPDFViewer,
@@ -72,7 +73,6 @@ export const initialValues = {
   [RTCChatName]: defaultRTCChat,
   [SageIdeatorName]: defaultSageIdeator,
   [SageCellName]: defaultSageCell,
-  [SeerName]: defaultSeer,
   [SensorOverviewName]: defaultSensorOverview,
   [StickieName]: defaultStickie,
   [TimerName]: defaultTimer,

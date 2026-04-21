@@ -6,9 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Box, useColorModeValue, Text } from '@chakra-ui/react';
-import { DraggableData, Rnd, RndDragEvent } from 'react-rnd';
 
 import { useHexColor, useThrottleScale, usePresenceStore, useAuth } from '@sage3/frontend';
 import { PresenceSchema, Position, Size } from '@sage3/shared/types';
@@ -31,7 +30,7 @@ export function Viewports(props: ViewportProps) {
   // Render the Viewports
   return (
     <>
-      {/* Draw the  viewports: filter by board and not myself */}
+      {/* Draw the viewports: filter by board and not myself */}
       {props.users.map((u) => {
         const name = u.user.data.name;
         const color = u.user.data.color;
@@ -89,6 +88,16 @@ function UserViewport(props: UserViewportProps) {
 
   const updatePresence = usePresenceStore((state) => state.update);
 
+  // Drag refs for title bar
+  const titleDragActiveRef = useRef(false);
+  const titleDragStartClientRef = useRef({ x: 0, y: 0 });
+  const titleDragStartPosRef = useRef<Position2D>({ x: 0, y: 0 });
+
+  // Drag refs for corner resize handle
+  const cornerDragActiveRef = useRef(false);
+  const cornerDragStartClientRef = useRef({ x: 0, y: 0 });
+  const cornerDragStartSizeRef = useRef<Size2D>({ width: 0, height: 0 });
+
   // Are you a guest?
   useEffect(() => {
     if (auth) {
@@ -105,41 +114,74 @@ function UserViewport(props: UserViewportProps) {
     setSize2({ width: props.viewport.size.width, height: props.viewport.size.height });
   }, [props.viewport.size.width, props.viewport.size.height]);
 
-  // When the viewport is being dragged
-  function handleDrag(_e: RndDragEvent, data: DraggableData) {
-    // Update the box position to make it interactive
-    setPos2((state) => ({ x: data.x, y: data.y + titleBarHeight }));
+  // ─── Title bar drag handlers ───────────────────────────────────────────────
+
+  function handleTitlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    if (isGuest) return;
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    titleDragActiveRef.current = true;
+    titleDragStartClientRef.current = { x: e.clientX, y: e.clientY };
+    titleDragStartPosRef.current = { x: pos.x, y: pos.y };
   }
-  // Handle when the viewport is finished being dragged
-  function handleDragStop(_e: RndDragEvent, data: DraggableData) {
-    setPos({ x: data.x, y: data.y + titleBarHeight });
-    // Update the remote presence
+
+  function handleTitlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!titleDragActiveRef.current) return;
+    const dx = (e.clientX - titleDragStartClientRef.current.x) / props.scale;
+    const dy = (e.clientY - titleDragStartClientRef.current.y) / props.scale;
+    const newX = titleDragStartPosRef.current.x + dx;
+    const newY = titleDragStartPosRef.current.y + dy;
+    setPos({ x: newX, y: newY });
+    setPos2({ x: newX, y: newY });
+  }
+
+  function handleTitlePointerUp(e: React.PointerEvent<HTMLDivElement>) {
+    if (!titleDragActiveRef.current) return;
+    titleDragActiveRef.current = false;
+    e.currentTarget.releasePointerCapture(e.pointerId);
+    const dx = (e.clientX - titleDragStartClientRef.current.x) / props.scale;
+    const dy = (e.clientY - titleDragStartClientRef.current.y) / props.scale;
+    const newX = titleDragStartPosRef.current.x + dx;
+    const newY = titleDragStartPosRef.current.y + dy;
+    setPos({ x: newX, y: newY });
+    setPos2({ x: newX, y: newY });
     updatePresence(props.userId, {
       status: 'online',
       userId: props.userId,
       viewport: {
-        position: { x: data.x, y: data.y + titleBarHeight, z: props.viewport.position.z },
+        position: { x: newX, y: newY, z: props.viewport.position.z },
         size: props.viewport.size,
         selfUpdate: false,
       },
     });
   }
 
-  // When the viewport is being resized
-  function handleResizeStart(_e: RndDragEvent, data: DraggableData) {
-    setSize2((state) => ({ width: props.viewport.size.width, height: props.viewport.size.height }));
+  // ─── Corner resize drag handlers ──────────────────────────────────────────
+
+  function handleCornerPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    if (isGuest) return;
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    cornerDragActiveRef.current = true;
+    cornerDragStartClientRef.current = { x: e.clientX, y: e.clientY };
+    // Reset to server state at start of resize
+    cornerDragStartSizeRef.current = { width: props.viewport.size.width, height: props.viewport.size.height };
+    setSize2({ width: props.viewport.size.width, height: props.viewport.size.height });
   }
-  function handleResize(_e: RndDragEvent, data: DraggableData) {
-    // Update the box position to make it interactive, keep aspect ratio
+
+  function handleCornerPointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!cornerDragActiveRef.current) return;
     const ar = props.viewport.size.width / props.viewport.size.height;
-    const newW = Math.max(data.x - pos2.x + titleBarHeight, 400); // Limit the width to 400px minimum
+    const dx = (e.clientX - cornerDragStartClientRef.current.x) / props.scale;
+    const newW = Math.max(cornerDragStartSizeRef.current.width + dx, 400);
     const newH = newW / ar;
-    setSize2((state) => ({ width: newW, height: newH }));
+    setSize2({ width: newW, height: newH });
   }
-  // Handle when the viewport is finished being dragged
-  function handleResizeStop(_e: RndDragEvent, data: DraggableData) {
-    setSize2((state) => ({ width: size2.width, height: size2.height }));
-    // Update the remote presence
+
+  function handleCornerPointerUp(e: React.PointerEvent<HTMLDivElement>) {
+    if (!cornerDragActiveRef.current) return;
+    cornerDragActiveRef.current = false;
+    e.currentTarget.releasePointerCapture(e.pointerId);
     updatePresence(props.userId, {
       status: 'online',
       userId: props.userId,
@@ -154,55 +196,56 @@ function UserViewport(props: UserViewportProps) {
   return (
     <>
       {/* Titlebar */}
-      <Rnd
-        size={{ width: size2.width, height: titleBarHeight }}
-        position={{ x: pos.x, y: pos.y - titleBarHeight }}
-        onDrag={handleDrag}
-        onDragStop={handleDragStop}
-        enableResizing={false}
-        disableDragging={isGuest}
-        lockAspectRatio={true}
-        scale={props.scale}
+      <div
         style={{
+          position: 'absolute',
+          left: pos.x,
+          top: pos.y - titleBarHeight,
+          width: size2.width,
+          height: titleBarHeight,
           borderRadius: `${borderRadius}px ${borderRadius}px 0px 0px`,
           background: color,
           zIndex: 3000,
           opacity: opacity,
+          cursor: isGuest ? 'default' : 'move',
+          touchAction: 'none',
+          userSelect: 'none',
+          overflow: 'hidden',
         }}
+        onPointerDown={handleTitlePointerDown}
+        onPointerMove={handleTitlePointerMove}
+        onPointerUp={handleTitlePointerUp}
       >
         <Text align={'center'} fontSize={fontSize + 'px'} textColor={textColor} userSelect={'none'} noOfLines={1}>
           Viewport for {props.name}
         </Text>
-      </Rnd>
+      </div>
 
-      {/* Corner */}
-      <Rnd
-        size={{ width: titleBarHeight, height: titleBarHeight }}
-        position={{
-          x: pos2.x + size2.width - titleBarHeight,
-          y: pos2.y + size2.height - titleBarHeight,
-        }}
-        onDragStart={handleResizeStart}
-        onDrag={handleResize}
-        onDragStop={handleResizeStop}
-        enableResizing={false}
-        disableDragging={isGuest}
-        lockAspectRatio={true}
-        scale={props.scale}
+      {/* Corner resize handle */}
+      <div
         style={{
+          position: 'absolute',
+          left: pos2.x + size2.width - titleBarHeight,
+          top: pos2.y + size2.height - titleBarHeight,
+          width: titleBarHeight,
+          height: titleBarHeight,
           borderRadius: `${borderRadius}px 0px ${borderRadius}px 0px`,
           background: color,
           zIndex: 3000,
           opacity: opacity,
-          cursor: 'nwse-resize',
+          cursor: isGuest ? 'default' : 'nwse-resize',
+          touchAction: 'none',
+          userSelect: 'none',
         }}
+        onPointerDown={handleCornerPointerDown}
+        onPointerMove={handleCornerPointerMove}
+        onPointerUp={handleCornerPointerUp}
       />
 
       {/* Box */}
       <Box
         position="absolute"
         pointerEvents="none"
-        // Update the position to be below the title bar
         left={pos2.x}
         top={pos2.y}
         width={size2.width}

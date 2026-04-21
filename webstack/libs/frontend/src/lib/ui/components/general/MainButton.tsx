@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -57,7 +57,6 @@ import {
   useBoardStore,
   EnterBoardModal,
   useHexColor,
-  UserSearchModal,
   useAbility,
   FeedbackModal,
   useConfigStore,
@@ -84,12 +83,9 @@ type MainButtonProps = {
  */
 export function MainButton(props: MainButtonProps) {
   const { user } = useUser();
-  const longName = user ? truncateWithEllipsis(user.data.name, 20) : '';
+  const longName = user ? user.data.name : '';
   const shortName = user ? truncateWithEllipsis(user.data.name, 10) : '';
   const isWall = user?.data.userType === 'wall';
-
-  const userColorValue = user?.data.color ? user.data.color : 'teal';
-  const userColor = useHexColor(userColorValue);
 
   const config = useConfigStore((state) => state.config);
   const isProduction = config.production;
@@ -106,8 +102,6 @@ export function MainButton(props: MainButtonProps) {
   // Modal panels
   const { isOpen: editIsOpen, onOpen: editOnOpen, onClose: editOnClose } = useDisclosure();
   const { isOpen: aboutIsOpen, onOpen: aboutOnOpen, onClose: aboutOnClose } = useDisclosure();
-  const { isOpen: userSearchIsOpen, onOpen: userSearchOnOpen, onClose: userSearchOnClose } = useDisclosure();
-
   // Alfred Modal
   const { isOpen: alfredIsOpen, onOpen: alfredOnOpen, onClose: alfredOnClose } = useDisclosure();
   // Help modal
@@ -228,7 +222,7 @@ export function MainButton(props: MainButtonProps) {
                 size="sm"
                 // maxWidth="150px"
                 variant={props.buttonStyle ? props.buttonStyle : 'outline'}
-                colorScheme={user?.data.color ? user.data.color : 'white'}
+                colorScheme="teal"
                 p={2}
               >
                 <Box
@@ -248,34 +242,28 @@ export function MainButton(props: MainButtonProps) {
             </Tooltip>
           </Flex>
         ) : (
-          <Flex gap="2">
-            <MenuButton
-              marginTop="auto"
-              display="flex"
-              as={Box}
-              backgroundColor={userColor}
-              height="32px"
-              alignItems={'center'}
-              justifyContent={'left'}
-              borderRadius="10"
-              width="100%"
-              transition={'all 0.5s'}
-              _hover={{ cursor: 'pointer' }}
-              overflow={'hidden'}
-            >
-              <Box display="flex" justifyContent={'space-between'} alignItems={'center'}>
-                <Box display="flex" pl="4" gap="1" alignItems={'center'}>
-                  {isWall ? <RxGrid /> : <MdPerson />}
-                  <Text fontSize="md" fontWeight={'bold'} whiteSpace={'nowrap'} textOverflow={'clip'}>
-                    {longName}
-                  </Text>
-                </Box>
-                <Box pr="3" fontSize="3xl">
-                  {menuOpen ? <BiChevronUp /> : <BiChevronDown />}
-                </Box>
+          <MenuButton
+            as={Button}
+            colorScheme="teal"
+            variant="solid"
+            width="100%"
+            borderRadius="10"
+            size="sm"
+            px={4}
+            overflow="hidden"
+          >
+            <Box display="flex" justifyContent="space-between" alignItems="center" width="100%">
+              <Box display="flex" gap="1" alignItems="center" flex="1" minWidth="0" overflow="hidden">
+                <Box flexShrink={0}>{isWall ? <RxGrid /> : <MdPerson />}</Box>
+                <Text fontWeight="bold" whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">
+                  {longName}
+                </Text>
               </Box>
-            </MenuButton>
-          </Flex>
+              <Box fontSize="2xl" flexShrink={0} ml={2}>
+                {menuOpen ? <BiChevronUp /> : <BiChevronDown />}
+              </Box>
+            </Box>
+          </MenuButton>
         )}
 
         <MenuList
@@ -419,11 +407,6 @@ export function MainButton(props: MainButtonProps) {
 
       <EditUserModal isOpen={editIsOpen} onOpen={editOnOpen} onClose={editOnClose}></EditUserModal>
       <AboutModal isOpen={aboutIsOpen} onClose={aboutOnClose}></AboutModal>
-
-      {
-        // The test forces the recreation of the modal when the userSearchIsOpen state changes
-        userSearchIsOpen && <UserSearchModal isOpen={userSearchIsOpen} onOpen={userSearchOnOpen} onClose={userSearchOnClose} />
-      }
     </>
   );
 }

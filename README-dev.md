@@ -2,99 +2,99 @@
 
 <a href="https://sage3.sagecommons.org/"><img src="https://user-images.githubusercontent.com/19752298/113063377-ed534280-9150-11eb-87c8-e194c46e508c.png" align="left" hspace="10" vspace="6" height="100px"></a>
 
-[SAGE3](https://sage3.sagecommons.org/) is software to enable data-rich collaboration on high-resolution display walls. SAGE2 moved SAGE into cloud computing and SAGE3 ushers in the inclusion of artificial intelligence. Scientists analyzing their data in SAGE3 will collaborate with each other and with artificial intelligence through large interactive visualization spaces, such as multi-monitor workstations, tiled display walls, and virtual reality headsets.
+[SAGE3](https://sage3.sagecommons.org/) is software to enable data-rich collaboration on high-resolution display walls. Scientists analyzing their data in SAGE3 can collaborate with each other and with AI through large interactive visualization spaces — multi-monitor workstations, tiled display walls, and VR headsets.
 
 ---
 
-# Directories
+# Repository Structure
 
-There are three different directories within the root of the repo; deployment, foresight, and webstack.
+| Directory | Description |
+|---|---|
+| `webstack/` | TypeScript/React monorepo — Node.js backend + React frontend |
+| `deployment/` | Docker Compose files, Dockerfiles, and service configuration |
+| `pysage3/` | Python client library for SAGE3 (published as `pysage3` on PyPI) |
+| `seer/` | Python AI/LLM agent service (FastAPI, LangChain) |
 
-## **Deployment**
+## **webstack/**
 
-Deployment contains the [Docker](https://www.docker.com/) files to stand up a Dockerized SAGE3 instance. It also contains configuration files for the various backend services.
+A monorepo containing three server processes and the React frontend:
+- **homebase** (port 3000) — main server, REST API, WebSocket, auth (`apps/homebase/`)
+- **homebase-yjs** (port 3001) — Yjs CRDT server for collaborative editing (`apps/homebase-yjs/`)
+- **homebase-files** (port 3002) — file upload/download/processing (`apps/homebase-files/`)
+- **webapp** — React frontend, the browser client (`apps/webapp/`)
 
-While developing for SAGE3 only a portion of the Docker images will be running while the "Webstack" Node server will be running locally.
+Shared code (types, stores, components, app definitions) lives in `libs/`.
 
-## **Foresight**
+Built with [Nrwl Nx](https://nx.dev/) and [Yarn](https://yarnpkg.com/).
 
-Foresight contains [Python](https://www.python.org/) related code that brings a Python kernel to SAGE3 and various articifical intelligence tools.
+## **deployment/**
 
-## **Webstack**
+Docker Compose files and configuration for running SAGE3 in production. During development, only the backend Docker services run here — the Node.js servers run locally from `webstack/`.
 
-Webstack contains a [Nrwl Nx Monorepo](https://nx.dev/) that contains the [Node.js](https://nodejs.org/en/) backend server and the [React](https://reactjs.org/) frontend web app.
+## **pysage3/**
 
-While developing for SAGE3 it is ideal to run the Node.js server and React WebApp locally instead of within a Docker image.
+Python client library for interacting with SAGE3 programmatically — creating and updating apps on a board, reacting to real-time changes, and executing code in Jupyter kernels. Used by `seer/` and available as a pip package.
+
+## **seer/**
+
+AI agent service that powers SAGE3's intelligence features — answering questions about images, PDFs, code, web pages, and data. Communicates with the frontend via homebase as a proxy.
 
 ---
 
 # Developer Quick Start
 
-## **Setup**
+## Prerequisites
 
-1. Install [Docker Desktop](https://www.docker.com/products/docker-desktop)
-2. Install [Node.js](https://nodejs.org/en/)
-3. Install [Python3](https://www.python.org/downloads/)
+1. [Docker Desktop](https://www.docker.com/products/docker-desktop)
+2. [Node.js](https://nodejs.org/en/)
+3. [Yarn](https://yarnpkg.com/) — `npm install --global yarn`
 
-From a terminal run the following commands to install [yarn](https://yarnpkg.com/) and to start the initial setup of the Webstack.
-
-```bash
-# Change your directory to the webstack folder
-cd ./webstack
-# Install the yarn package manager
-npm install --global yarn
-# Install the Webstack's dependencies
-yarn
-# Stage and create the required folders/files
-yarn stage
-```
-
-## **Running**
-
-To start running the dev environment first run the Docker Backend:
+## Setup
 
 ```bash
-# Change your current directory to the deployment folder
-cd ./deployment
-# Spin up the Docker images
-docker-compose -f docker-compose-backend.yml  up --remove-orphans
+cd webstack
+yarn          # install dependencies
+yarn stage    # create required config files and folders
 ```
 
-Second we will start up the Webstack:
+## Running
+
+**Step 1** — Start the Docker backend services (Redis, Yjs server, files server):
 
 ```bash
-# Open a new terminal and change your current directory to the webstack folder
-cd ./webstack
-# Start the backend Nodejs web server application
-yarn start
-# Start the frontend React web application
-yarn start webapp
+cd deployment
+# Apple Silicon (ARM64)
+docker-compose -f docker-compose-backend-arm64.yml up --remove-orphans
+# Intel/AMD (AMD64)
+docker-compose -f docker-compose-backend-amd64.yml up --remove-orphans
 ```
 
-Open a Chrome browser and navigate to `localhost:4200`
+**Step 2** — Start the Node.js servers locally:
 
-Editing and saving code within `/webstack/apps` or `/webstack/libs` should hot reload the webpage.
+```bash
+cd webstack
+yarn start         # starts homebase (port 3000) and homebase-files (port 3002)
+yarn start webapp  # starts the React frontend (port 4200)
+```
+
+Open a browser and navigate to `http://localhost:4200`
+
+Changes to files in `webstack/apps/` or `webstack/libs/` will hot-reload automatically.
 
 ---
 
 # Branches
 
-## Master
+| Branch | Purpose |
+|---|---|
+| `main` | Stable — runs on production servers |
+| `dev` | Integration branch — deployed to EVL and LAVA test servers |
+| `dev-*` | Feature branches — branch off `dev`, PR back into `dev` |
 
-Stable branch that is for production servers.
-
-## Dev
-
-Development branch used to test new features and will be installed on EVL and LAVA servers
-
-## Feature Branches
-
-Feature branches should branch off of the `dev` branch and explain their purpose in their name. When the branch is ready to be incorporated into `dev` a pull request should be created within GitHub. The branch will be reviewed by core SAGE3 members before being merged into `dev`.
+Feature branches should describe their purpose in the name (e.g. `dev-pdf-viewer-fix`). Open a pull request against `dev` when ready for review.
 
 ---
 
-# Deploying Your own SAGE3 Server
+# Deploying a Production Server
 
-#### **TODO** Needs information on how to setup the SAGE3 Production Server
-
----
+See the [Server Deployment Guide](https://sage-3.github.io/docs/Server-Deployment) and `deployment/README.md`.

@@ -18,7 +18,7 @@ import base64, requests
 from typing import List
 
 # SAGE3 API
-from foresight.Sage3Sugar.pysage3 import PySage3
+from pysage3.client import PySage3
 
 # AI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, BaseMessage
