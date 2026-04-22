@@ -20,6 +20,15 @@ import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
+// PDF load legacy pdf build
+const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.min.mjs');
+// PDF worker for Node.js
+pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.min.mjs';
+// PDF fonts
+const CMAP_URL = './node_modules/pdfjs-dist/cmaps/';
+const FONT_URL = './node_modules/pdfjs-dist/standard_fonts/';
+const CMAP_PACKED = true;
+
 import {
   generateDimensionsFromPrompt,
   generateNodeContent,
@@ -36,15 +45,15 @@ import {
 const MAX_PDF_CHARS = 5000;
 
 async function extractPdfText(file: File): Promise<string> {
-  const pdfjsLib = await import('pdfjs-dist');
-  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.js', import.meta.url).href;
+  // const pdfjsLib = await import('pdfjs-dist');
+  // pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.js', import.meta.url).href;
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   let text = '';
   for (let i = 1; i <= pdf.numPages && text.length < MAX_PDF_CHARS; i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
-    text += content.items.map((item) => ('str' in item ? item.str : '')).join(' ') + '\n';
+    text += content.items.map((item: any) => ('str' in item ? item.str : '')).join(' ') + '\n';
   }
   return text.slice(0, MAX_PDF_CHARS);
 }
