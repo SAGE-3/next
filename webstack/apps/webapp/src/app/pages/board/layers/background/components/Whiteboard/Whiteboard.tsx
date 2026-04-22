@@ -331,10 +331,7 @@ export function Whiteboard(props: WhiteboardProps) {
       if (type === 'line') {
         const nextPoint: [number, number] = [x, y];
         if (shouldAddPoint(current.points, nextPoint)) {
-          console.log(`Adding point: ${nextPoint[0]},${nextPoint[1]}`);
           current.points = [...current.points, nextPoint];
-        } else {
-          console.log(`          Skipping point: ${nextPoint[0]},${nextPoint[1]}`);
         }
         // current.points = [...current.points, [x, y]];
       } else if (type === 'rectangle' || type === 'circle' || type === 'arrow' || type === 'doubleArrow') {
