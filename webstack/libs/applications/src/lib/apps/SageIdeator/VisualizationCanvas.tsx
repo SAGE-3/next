@@ -18,6 +18,9 @@ import {
   Button,
   IconButton,
   Input,
+  InputGroup,
+  InputLeftElement,
+  InputRightElement,
   Textarea,
   Spinner,
   Tooltip,
@@ -414,21 +417,19 @@ export function VisualizationCanvas({
 
   return (
     <Flex direction="column" flex={1} overflow="hidden">
-      {/* Axis toolbar */}
+
+      {/* Toolbar */}
       {nodes.length > 0 && (
         <VStack px={2} py={1} bg={panelBgHex} borderBottom="1px solid" borderColor={borderHex} spacing={1} align="stretch" flexShrink={0}>
-          {/* Row 1: axis selectors — pl accounts for the collapse toggle button */}
+
+          {/* Row 1: axis selectors */}
           <HStack spacing={3} pl="18px">
             {dimensions.length > 0 ? (
               <>
-                <Text fontSize="xs" color={textColor} fontWeight="bold">
-                  Axes:
-                </Text>
+                <Text fontSize="9px" fontWeight="700" color={textColor} textTransform="uppercase" letterSpacing="0.06em" flexShrink={0}>Axes:</Text>
                 <HStack spacing={1}>
-                  <Text fontSize="xs" color={textColor}>
-                    X:
-                  </Text>
-                  <Select size="xs" value={xDimName ?? ''} onChange={(e) => setXDimName(e.target.value || null)} w="120px">
+                  <Text fontSize="xs" color={textColor}>X:</Text>
+                  <Select size="xs" value={xDimName ?? ''} onChange={(e) => setXDimName(e.target.value || null)} w="120px" borderRadius="md">
                     <option value="">— none —</option>
                     {dimensions.map((d) => (
                       <option key={d.name} value={d.name}>
@@ -438,10 +439,8 @@ export function VisualizationCanvas({
                   </Select>
                 </HStack>
                 <HStack spacing={1}>
-                  <Text fontSize="xs" color={textColor}>
-                    Y:
-                  </Text>
-                  <Select size="xs" value={yDimName ?? ''} onChange={(e) => setYDimName(e.target.value || null)} w="120px">
+                  <Text fontSize="xs" color={textColor}>Y:</Text>
+                  <Select size="xs" value={yDimName ?? ''} onChange={(e) => setYDimName(e.target.value || null)} w="120px" borderRadius="md">
                     <option value="">— none —</option>
                     {dimensions.map((d) => (
                       <option key={d.name} value={d.name}>
@@ -452,217 +451,80 @@ export function VisualizationCanvas({
                 </HStack>
               </>
             ) : (
-              <Text fontSize="xs" color="gray.400" fontStyle="italic">
-                No dimensions — add one below
-              </Text>
+              <Text fontSize="xs" color="gray.400" fontStyle="italic">No dimensions yet — add one below</Text>
             )}
-            <Text fontSize="9px" color="gray.400">
-              Scroll to zoom · drag to pan
-            </Text>
           </HStack>
 
-          {/* Row 2: dimension chips + add */}
+          {/* Row 2: dimension chips */}
           <HStack spacing={1} flexWrap="wrap" pl="18px">
-            <Text fontSize="9px" fontWeight="700" color={textColor} textTransform="uppercase" letterSpacing="0.06em" flexShrink={0}>
-              Dims:
-            </Text>
+            <Text fontSize="9px" fontWeight="700" color={textColor} textTransform="uppercase" letterSpacing="0.06em" flexShrink={0}>Dims:</Text>
             {dimensions.map((d) => (
-              <HStack
-                key={d.name}
-                spacing={0}
-                bg={d.type === 'ordinal' ? 'purple.100' : 'teal.100'}
-                _dark={{ bg: d.type === 'ordinal' ? 'purple.800' : 'teal.800' }}
-                borderRadius="full"
-                px={2}
-                py="1px"
-              >
-                <Text fontSize="9px" color={textColor}>
-                  {d.name}
-                </Text>
-                <IconButton
-                  aria-label={`Remove ${d.name}`}
-                  icon={<MdClose />}
-                  size="xs"
-                  variant="ghost"
-                  h="14px"
-                  minW="14px"
-                  fontSize="9px"
-                  ml={0.5}
-                  onClick={() => onRemoveDimension(d.name)}
-                />
-              </HStack>
+              <Tooltip key={d.name} label={d.type === 'ordinal' ? 'Scale (ordered values)' : 'Category (named groups)'} placement="top" hasArrow openDelay={400}>
+                <Badge colorScheme={d.type === 'ordinal' ? 'purple' : 'teal'} borderRadius="full" px={2} py="1px" display="inline-flex" alignItems="center" gap={1}>
+                  <Text fontSize="9px">{d.name}</Text>
+                  <IconButton aria-label={`Remove ${d.name}`} icon={<MdClose />} size="xs" variant="ghost" h="12px" minW="12px" fontSize="9px" ml={0.5} onClick={() => onRemoveDimension(d.name)} />
+                </Badge>
+              </Tooltip>
             ))}
-
-            {/* Add dimension input */}
             {showDimInput ? (
               <HStack spacing={1}>
-                <Input
-                  size="xs"
-                  placeholder="Dimension name…"
-                  value={dimInputValue}
-                  onChange={(e) => setDimInputValue(e.target.value)}
+                <Input size="xs" placeholder="Dimension name…" value={dimInputValue} onChange={(e) => setDimInputValue(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && dimInputValue.trim().length >= 3) {
-                      onAddDimension(dimInputValue.trim());
-                      setDimInputValue('');
-                      setShowDimInput(false);
-                    }
-                    if (e.key === 'Escape') {
-                      setDimInputValue('');
-                      setShowDimInput(false);
-                    }
+                    if (e.key === 'Enter' && dimInputValue.trim().length >= 3) { onAddDimension(dimInputValue.trim()); setDimInputValue(''); setShowDimInput(false); }
+                    if (e.key === 'Escape') { setDimInputValue(''); setShowDimInput(false); }
                   }}
-                  w="130px"
-                  autoFocus
-                  isDisabled={isAddingDimension}
+                  w="130px" autoFocus isDisabled={isAddingDimension}
                 />
                 <Tooltip label="Confirm" hasArrow placement="top">
-                  <IconButton
-                    aria-label="Confirm dimension"
-                    icon={isAddingDimension ? <Spinner size="xs" /> : <MdCheck />}
-                    size="xs"
-                    colorScheme="green"
-                    variant="ghost"
-                    h="20px"
-                    minW="20px"
-                    isDisabled={dimInputValue.trim().length < 3 || isAddingDimension}
-                    onClick={() => {
-                      onAddDimension(dimInputValue.trim());
-                      setDimInputValue('');
-                      setShowDimInput(false);
-                    }}
-                  />
+                  <IconButton aria-label="Confirm dimension" icon={isAddingDimension ? <Spinner size="xs" /> : <MdCheck />} size="xs" colorScheme="green" variant="ghost" h="20px" minW="20px" isDisabled={dimInputValue.trim().length < 3 || isAddingDimension} onClick={() => { onAddDimension(dimInputValue.trim()); setDimInputValue(''); setShowDimInput(false); }} />
                 </Tooltip>
-                <IconButton
-                  aria-label="Cancel"
-                  icon={<MdClose />}
-                  size="xs"
-                  variant="ghost"
-                  h="20px"
-                  minW="20px"
-                  onClick={() => {
-                    setDimInputValue('');
-                    setShowDimInput(false);
-                  }}
-                />
+                <IconButton aria-label="Cancel" icon={<MdClose />} size="xs" variant="ghost" h="20px" minW="20px" onClick={() => { setDimInputValue(''); setShowDimInput(false); }} />
               </HStack>
             ) : (
               <Tooltip label="Add dimension" hasArrow placement="top" openDelay={300}>
-                <IconButton
-                  aria-label="Add dimension"
-                  icon={isAddingDimension ? <Spinner size="xs" /> : <MdAdd />}
-                  size="xs"
-                  variant="ghost"
-                  h="20px"
-                  minW="20px"
-                  isDisabled={isAddingDimension}
-                  onClick={() => setShowDimInput(true)}
-                />
+                <Button size="xs" variant="ghost" colorScheme="gray" leftIcon={isAddingDimension ? <Spinner size="xs" /> : <MdAdd />} h="20px" px={2} fontSize="9px" isDisabled={isAddingDimension} onClick={() => setShowDimInput(true)}>
+                  Add Dimension
+                </Button>
               </Tooltip>
             )}
           </HStack>
 
-          {/* Row 3: search + favorites + active filter */}
+          {/* Row 3: search + filter */}
           {(() => {
             const favCount = nodes.filter((n) => n.IsMyFav).length;
             return (
               <HStack spacing={2} pl="18px">
-                <MdSearch size={14} color="gray" />
-                <Input
-                  size="xs"
-                  placeholder="Search nodes…"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  variant="flushed"
-                  flex={1}
-                />
-                {searchQuery && (
-                  <IconButton
-                    aria-label="Clear search"
-                    icon={<MdClose />}
-                    size="xs"
-                    variant="ghost"
-                    h="16px"
-                    minW="16px"
-                    onClick={() => setSearchQuery('')}
+                <InputGroup size="xs" flex={1}>
+                  <InputLeftElement pointerEvents="none" h="100%">
+                    <MdSearch size={12} color="gray" />
+                  </InputLeftElement>
+                  <Input placeholder="Search nodes…" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+                    bg="gray.100" _dark={{ bg: 'whiteAlpha.200', color: 'gray.100' }} _placeholder={{ opacity: 0.7, color: 'gray.400' }}
+                    border="none" borderRadius="full" _focusVisible={{ outline: 'none', boxShadow: 'none' }} fontSize="xs"
                   />
-                )}
-                {/* Favorites filter toggle */}
+                  {searchQuery && (
+                    <InputRightElement h="100%">
+                      <IconButton aria-label="Clear search" icon={<MdClose />} size="xs" variant="ghost" h="14px" minW="14px" onClick={() => setSearchQuery('')} />
+                    </InputRightElement>
+                  )}
+                </InputGroup>
                 <Tooltip label={favoritesOnly ? 'Show all nodes' : 'Show favorites only'} placement="top" hasArrow openDelay={300}>
-                  <Button
-                    size="xs"
-                    variant={favoritesOnly ? 'solid' : 'ghost'}
-                    colorScheme={favoritesOnly ? 'yellow' : 'gray'}
-                    leftIcon={<BsStarFill />}
-                    h="18px"
-                    px={1.5}
-                    fontSize="9px"
-                    isDisabled={favCount === 0}
-                    onClick={() => setFavoritesOnly((v) => !v)}
-                    _disabled={{ opacity: 0.4, cursor: 'default' }}
-                    flexShrink={0}
-                  >
-                    {favCount}
-                  </Button>
+                  <Button size="xs" variant={favoritesOnly ? 'solid' : 'ghost'} colorScheme={favoritesOnly ? 'yellow' : 'gray'} leftIcon={<BsStarFill />} h="18px" px={1.5} fontSize="9px" isDisabled={favCount === 0} onClick={() => setFavoritesOnly((v) => !v)} _disabled={{ opacity: 0.4, cursor: 'default' }} flexShrink={0}>{favCount}</Button>
                 </Tooltip>
-                {/* Branch from favorites */}
                 {favCount > 0 && (
                   <Tooltip label={`Branch from ${favCount} favorite${favCount > 1 ? 's' : ''}`} placement="top" hasArrow openDelay={300}>
-                    <Button
-                      size="xs"
-                      variant="ghost"
-                      colorScheme="orange"
-                      leftIcon={<MdAltRoute />}
-                      h="18px"
-                      px={1.5}
-                      fontSize="9px"
-                      onClick={onBranchFavorites}
-                      flexShrink={0}
-                    >
-                      Branch ★
-                    </Button>
+                    <Button size="xs" variant="ghost" colorScheme="orange" leftIcon={<MdAltRoute />} h="18px" px={1.5} fontSize="9px" onClick={onBranchFavorites} flexShrink={0}>Branch ★</Button>
                   </Tooltip>
                 )}
-                {/* Summarize favorites → Stickie */}
                 {favCount > 0 && (
-                  <Tooltip
-                    label={`Summarize ${favCount} favorite${favCount > 1 ? 's' : ''} as a Stickie`}
-                    placement="top"
-                    hasArrow
-                    openDelay={300}
-                  >
-                    <Button
-                      size="xs"
-                      variant="ghost"
-                      colorScheme="purple"
-                      leftIcon={isSummarizing ? <Spinner size="xs" /> : <BsStarFill />}
-                      h="18px"
-                      px={1.5}
-                      fontSize="9px"
-                      isDisabled={isSummarizing}
-                      onClick={onSummarizeFavorites}
-                      flexShrink={0}
-                    >
-                      Summarize ★
-                    </Button>
+                  <Tooltip label={`Summarize ${favCount} favorite${favCount > 1 ? 's' : ''} as a Stickie`} placement="top" hasArrow openDelay={300}>
+                    <Button size="xs" variant="ghost" colorScheme="purple" leftIcon={isSummarizing ? <Spinner size="xs" /> : <BsStarFill />} h="18px" px={1.5} fontSize="9px" isDisabled={isSummarizing} onClick={onSummarizeFavorites} flexShrink={0}>Summarize ★</Button>
                   </Tooltip>
                 )}
                 {activeFilter && (
                   <HStack spacing={0} bg="blue.100" _dark={{ bg: 'blue.800' }} borderRadius="full" px={2} py="1px" flexShrink={0}>
-                    <Text fontSize="9px" color={textColor} noOfLines={1} maxW="80px">
-                      {activeFilter.dimName}: {activeFilter.value}
-                    </Text>
-                    <IconButton
-                      aria-label="Clear filter"
-                      icon={<MdClose />}
-                      size="xs"
-                      variant="ghost"
-                      h="14px"
-                      minW="14px"
-                      fontSize="9px"
-                      ml={0.5}
-                      onClick={() => setActiveFilter(null)}
-                    />
+                    <Text fontSize="9px" color={textColor} noOfLines={1} maxW="80px">{activeFilter.dimName}: {activeFilter.value}</Text>
+                    <IconButton aria-label="Clear filter" icon={<MdClose />} size="xs" variant="ghost" h="14px" minW="14px" fontSize="9px" ml={0.5} onClick={() => setActiveFilter(null)} />
                   </HStack>
                 )}
               </HStack>
@@ -772,6 +634,11 @@ export function VisualizationCanvas({
           );
         })}
 
+        {/* Pan/zoom hint */}
+        <Box position="absolute" top={2} left="50%" transform="translateX(-50%)" zIndex={10} pointerEvents="none">
+          <Text fontSize="9px" color="gray.400" whiteSpace="nowrap">Scroll to zoom · drag to pan</Text>
+        </Box>
+
         {/* Nodes canvas (pan/zoom layer) */}
         <Box position="absolute" top={0} left={0} w="100%" h="100%" style={{ willChange: 'transform' }}>
           {nodes.map((node) => {
@@ -824,7 +691,10 @@ export function VisualizationCanvas({
                   onToggleFav={() => onToggleFav(node.ID)}
                   onFocus={() => {
                     const p = positionsRef.current.get(node.ID);
-                    if (p) setCamera((cam) => ({ ...cam, x: -p.x * cam.z, y: -p.y * cam.z }));
+                    if (p) setCamera((cam) => {
+                      const targetZ = cam.z < 1.5 ? 3 : cam.z;
+                      return { x: -p.x * targetZ, y: -p.y * targetZ, z: targetZ };
+                    });
                   }}
                   onBranch={() => onBranch(node)}
                   onSelectQA={() => onSelectQA(node.ID)}
@@ -838,138 +708,78 @@ export function VisualizationCanvas({
           })}
         </Box>
 
-        {/* Semantic zoom + generate-at controls */}
+        {/* Controls overlay */}
         {nodes.length > 0 && (
-          <Box position="absolute" top={2} right={2} zIndex={20}>
-            <VStack spacing={1} align="flex-end">
-              <Badge fontSize="9px" colorScheme="gray" pointerEvents="none">
-                {camera.z.toFixed(1)}×
-              </Badge>
-              <HStack spacing={1}>
-                <Tooltip label="Overview — fit all nodes" placement="left" hasArrow openDelay={300}>
-                  <Button
-                    size="xs"
-                    variant={camera.z < 1.5 ? 'solid' : 'outline'}
-                    colorScheme="gray"
-                    onClick={() => fitToScreen(1.4)}
-                    h="18px"
-                    minW="18px"
-                    px={1}
-                    fontSize="9px"
-                  >
-                    ●
-                  </Button>
-                </Tooltip>
-                <Tooltip label="Titles" placement="left" hasArrow openDelay={300}>
-                  <Button
-                    size="xs"
-                    variant={camera.z >= 1.5 && camera.z < 3 ? 'solid' : 'outline'}
-                    colorScheme="gray"
-                    onClick={() => jumpToZoom(2.0)}
-                    h="18px"
-                    minW="18px"
-                    px={1}
-                    fontSize="9px"
-                  >
-                    T
-                  </Button>
-                </Tooltip>
-                <Tooltip label="Titles + attributes" placement="left" hasArrow openDelay={300}>
-                  <Button
-                    size="xs"
-                    variant={camera.z >= 3 && camera.z < 6 ? 'solid' : 'outline'}
-                    colorScheme="gray"
-                    onClick={() => jumpToZoom(4.0)}
-                    h="18px"
-                    minW="18px"
-                    px={1}
-                    fontSize="9px"
-                  >
-                    A
-                  </Button>
-                </Tooltip>
-                <Tooltip label="Summary + steps" placement="left" hasArrow openDelay={300}>
-                  <Button
-                    size="xs"
-                    variant={camera.z >= 6 && camera.z < 10 ? 'solid' : 'outline'}
-                    colorScheme="gray"
-                    onClick={() => jumpToZoom(7.5)}
-                    h="18px"
-                    minW="18px"
-                    px={1}
-                    fontSize="9px"
-                  >
-                    S
-                  </Button>
-                </Tooltip>
-                <Tooltip label="Full text" placement="left" hasArrow openDelay={300}>
-                  <Button
-                    size="xs"
-                    variant={camera.z >= 10 ? 'solid' : 'outline'}
-                    colorScheme="gray"
-                    onClick={() => jumpToZoom(11.0)}
-                    h="18px"
-                    minW="18px"
-                    px={1}
-                    fontSize="9px"
-                  >
-                    ≡
-                  </Button>
-                </Tooltip>
-              </HStack>
-              {/* Generate-at-position + manual entry tools */}
-              <HStack spacing={1}>
-                <Tooltip label={generateAtMode ? 'Cancel (Esc)' : 'Generate idea at position'} placement="left" hasArrow openDelay={300}>
-                  <Button
-                    size="xs"
-                    variant={generateAtMode ? 'solid' : 'outline'}
-                    colorScheme={generateAtMode ? 'blue' : 'gray'}
-                    h="18px"
-                    minW="18px"
-                    px={1}
-                    fontSize="9px"
-                    fontWeight="bold"
+          <Box position="absolute" top={2} left={0} right={0} zIndex={20} px={2} pointerEvents="none">
+            <HStack justify="space-between" align="flex-start">
+
+              {/* Left: generate-at + manual entry tools */}
+              <VStack spacing={1} align="flex-start" pointerEvents="auto">
+                <Tooltip label={generateAtMode ? 'Cancel (Esc)' : 'Generate idea at position'} placement="right" hasArrow openDelay={300}>
+                  <IconButton aria-label="Generate idea at position"
+                    icon={isGeneratingAt ? <Spinner size="xs" /> : <MdAdd size={14} />}
+                    h="26px" w="26px" minW="26px" fontSize="14px"
+                    variant={generateAtMode ? 'solid' : 'outline'} colorScheme={generateAtMode ? 'blue' : 'gray'}
                     isDisabled={isGeneratingAt}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setGenerateAtMode((v) => !v);
-                      setShowManualInput(false);
-                    }}
-                  >
-                    {isGeneratingAt ? <Spinner size="xs" /> : '+'}
-                  </Button>
+                    onClick={(e) => { e.stopPropagation(); setGenerateAtMode((v) => !v); setShowManualInput(false); }}
+                  />
                 </Tooltip>
-                <Tooltip label="Add your own idea" placement="left" hasArrow openDelay={300}>
-                  <Button
-                    size="xs"
-                    variant={showManualInput ? 'solid' : 'outline'}
-                    colorScheme={showManualInput ? 'blue' : 'gray'}
-                    h="18px"
-                    minW="18px"
-                    px={1}
-                    fontSize="9px"
+                <Tooltip label="Add your own idea" placement="right" hasArrow openDelay={300}>
+                  <IconButton aria-label="Add your own idea"
+                    icon={isAddingManualIdea ? <Spinner size="xs" /> : <MdEdit size={13} />}
+                    h="26px" w="26px" minW="26px"
+                    variant={showManualInput ? 'solid' : 'outline'} colorScheme={showManualInput ? 'blue' : 'gray'}
                     isDisabled={isAddingManualIdea}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowManualInput((v) => !v);
-                      setGenerateAtMode(false);
-                    }}
-                  >
-                    {isAddingManualIdea ? <Spinner size="xs" /> : <MdEdit size={10} />}
-                  </Button>
+                    onClick={(e) => { e.stopPropagation(); setShowManualInput((v) => !v); setGenerateAtMode(false); }}
+                  />
                 </Tooltip>
-              </HStack>
-              {/* Manual idea input */}
+              </VStack>
+
+              {/* Right: zoom controls */}
+              <VStack spacing={1} align="flex-end" pointerEvents="auto">
+                <HStack spacing={1}>
+                  <Tooltip label="Overview — fit all nodes" placement="left" hasArrow openDelay={300}>
+                    <IconButton aria-label="Overview" h="26px" w="26px" minW="26px" fontSize="11px"
+                      icon={<Box as="span" display="inline-flex" alignItems="center" justifyContent="center" lineHeight={1}>●</Box>}
+                      variant={camera.z < 1.5 ? 'solid' : 'outline'} colorScheme={camera.z < 1.5 ? 'teal' : 'gray'}
+                      onClick={() => fitToScreen(1.4)} />
+                  </Tooltip>
+                  <Tooltip label="Titles" placement="left" hasArrow openDelay={300}>
+                    <IconButton aria-label="Titles" h="26px" w="26px" minW="26px" fontSize="11px"
+                      icon={<Box as="span" display="inline-flex" alignItems="center" justifyContent="center" lineHeight={1}>T</Box>}
+                      variant={camera.z >= 1.5 && camera.z < 3 ? 'solid' : 'outline'} colorScheme={camera.z >= 1.5 && camera.z < 3 ? 'teal' : 'gray'}
+                      onClick={() => jumpToZoom(2.0)} />
+                  </Tooltip>
+                  <Tooltip label="Titles + attributes" placement="left" hasArrow openDelay={300}>
+                    <IconButton aria-label="Titles + attributes" h="26px" w="26px" minW="26px" fontSize="11px"
+                      icon={<Box as="span" display="inline-flex" alignItems="center" justifyContent="center" lineHeight={1}>A</Box>}
+                      variant={camera.z >= 3 && camera.z < 6 ? 'solid' : 'outline'} colorScheme={camera.z >= 3 && camera.z < 6 ? 'teal' : 'gray'}
+                      onClick={() => jumpToZoom(4.0)} />
+                  </Tooltip>
+                  <Tooltip label="Summary + steps" placement="left" hasArrow openDelay={300}>
+                    <IconButton aria-label="Summary + steps" h="26px" w="26px" minW="26px" fontSize="11px"
+                      icon={<Box as="span" display="inline-flex" alignItems="center" justifyContent="center" lineHeight={1}>S</Box>}
+                      variant={camera.z >= 6 && camera.z < 10 ? 'solid' : 'outline'} colorScheme={camera.z >= 6 && camera.z < 10 ? 'teal' : 'gray'}
+                      onClick={() => jumpToZoom(7.5)} />
+                  </Tooltip>
+                  <Tooltip label="Full text" placement="left" hasArrow openDelay={300}>
+                    <IconButton aria-label="Full text" h="26px" w="26px" minW="26px" fontSize="11px"
+                      icon={<Box as="span" display="inline-flex" alignItems="center" justifyContent="center" lineHeight={1}>≡</Box>}
+                      variant={camera.z >= 10 ? 'solid' : 'outline'} colorScheme={camera.z >= 10 ? 'teal' : 'gray'}
+                      onClick={() => jumpToZoom(11.0)} />
+                  </Tooltip>
+                </HStack>
+              </VStack>
+
+            </HStack>
+              {/* Manual idea input — anchored to left side */}
               {showManualInput && (
                 <Box
-                  bg="white"
-                  _dark={{ bg: 'gray.700', borderColor: 'gray.600' }}
-                  borderRadius="md"
-                  p={2}
-                  boxShadow="lg"
-                  border="1px solid"
-                  borderColor="gray.200"
-                  w="200px"
+                  position="absolute" top="50px" left={2}
+                  bg="white" _dark={{ bg: 'gray.700', borderColor: 'gray.600' }}
+                  borderRadius="md" p={2} boxShadow="lg"
+                  border="1px solid" borderColor="gray.200"
+                  w="200px" zIndex={30} pointerEvents="auto"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <Textarea
@@ -1022,7 +832,6 @@ export function VisualizationCanvas({
                   </HStack>
                 </Box>
               )}
-            </VStack>
           </Box>
         )}
 

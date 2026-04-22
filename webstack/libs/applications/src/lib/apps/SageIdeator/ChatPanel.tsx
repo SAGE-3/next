@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import {
   Flex,
   Box,
@@ -27,10 +27,13 @@ import {
   ModalBody,
   ModalCloseButton,
   useDisclosure,
+  Select,
+  FormLabel,
 } from '@chakra-ui/react';
 
 import { MdSend, MdClear, MdEdit, MdImage, MdDelete, MdAdd, MdPictureAsPdf } from 'react-icons/md';
 
+import { ConfirmModal } from '@sage3/frontend';
 import { state as AppState } from './index';
 
 interface ChatPanelProps {
@@ -58,6 +61,10 @@ interface ChatPanelProps {
   onAttachPdf: (file: File) => void;
   onClearPdf: () => void;
   isLoadingPdf?: boolean;
+  numDimensions: number;
+  batchSize: number;
+  onNumDimensionsChange: (n: number) => void;
+  onBatchSizeChange: (n: number) => void;
 }
 
 function HistoryImageThumb({ src }: { src: string }) {
@@ -92,34 +99,17 @@ function HistoryImageThumb({ src }: { src: string }) {
 }
 
 export function ChatPanel({
-  chatHistory,
-  nodes,
-  dimensions,
-  status,
-  statusMessage,
-  isGenerating,
-  activeEntryId,
-  input,
-  panelBgHex,
-  borderHex,
-  textColor,
-  onInputChange,
-  onGenerate,
-  onGenerateMore,
-  onClearAll,
-  onRestoreSnapshot,
-  onEditPrompt,
-  onDeleteEntry,
-  attachedImage,
-  onAttachImage,
-  pdfFilename,
-  onAttachPdf,
-  onClearPdf,
-  isLoadingPdf,
+  chatHistory, nodes, dimensions, status, statusMessage, isGenerating,
+  activeEntryId, input, panelBgHex, borderHex, textColor,
+  onInputChange, onGenerate, onGenerateMore, onClearAll, onRestoreSnapshot, onEditPrompt, onDeleteEntry,
+  attachedImage, onAttachImage,
+  pdfFilename, onAttachPdf, onClearPdf, isLoadingPdf,
+  numDimensions, batchSize, onNumDimensionsChange, onBatchSizeChange,
 }: ChatPanelProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
+  const [confirmClearOpen, setConfirmClearOpen] = useState(false);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -166,9 +156,19 @@ export function ChatPanel({
   };
 
   return (
-    <Flex direction="column" w="180px" minW="180px" h="100%" bg={panelBgHex} borderRight="1px solid" borderColor={borderHex} p={2} gap={2}>
+    <Flex
+      direction="column"
+      w="200px"
+      minW="200px"
+      h="100%"
+      bg={panelBgHex}
+      borderRight="1px solid"
+      borderColor={borderHex}
+      p={2}
+      gap={2}
+    >
       {/* History */}
-      <Box flex={1} overflowY="auto" fontSize="xs" color={textColor}>
+      <Box flex={1} overflowY="auto" fontSize="xs" color={textColor} bg="blackAlpha.100" borderRadius="md" p={1}>
         {chatHistory.length === 0 && (
           <Text fontSize="xs" color="gray.400" p={2} textAlign="center">
             Enter a prompt to start exploring ideas.
@@ -189,11 +189,11 @@ export function ChatPanel({
               borderRadius="md"
               borderLeft="3px solid"
               borderLeftColor={isActive ? 'blue.400' : isBranch ? 'orange.400' : 'transparent'}
-              bg={isActive ? 'blue.50' : isBranch ? 'orange.50' : 'gray.50'}
-              _dark={{ bg: isActive ? 'blue.900' : isBranch ? 'orange.900' : 'gray.700' }}
+              bg={isBranch ? 'orange.50' : 'gray.50'}
+              _dark={{ bg: isBranch ? 'orange.700' : 'gray.600' }}
               cursor={hasSnapshot ? 'pointer' : 'default'}
               opacity={hasSnapshot ? 1 : 0.5}
-              _hover={hasSnapshot ? { bg: isActive ? 'blue.100' : 'orange.100', _dark: { bg: isActive ? 'blue.800' : 'orange.800' } } : {}}
+              _hover={hasSnapshot ? { bg: isBranch ? 'orange.100' : 'gray.100', _dark: { bg: isBranch ? 'orange.600' : 'gray.500' } } : {}}
               onClick={() => onRestoreSnapshot(entry)}
               transition="background 0.15s"
             >
@@ -224,14 +224,9 @@ export function ChatPanel({
                   )}
                   {hasSnapshot && (
                     <HStack spacing={1} flexWrap="wrap">
-                      <Badge colorScheme="green" fontSize="8px">
-                        {entryNodes.length} ideas
-                      </Badge>
-                      {favCount > 0 && (
-                        <Badge colorScheme="yellow" fontSize="8px">
-                          ★ {favCount}
-                        </Badge>
-                      )}
+                      <Badge colorScheme="green" fontSize="8px">{entryNodes.length} ideas</Badge>
+                      <Badge colorScheme="purple" fontSize="8px">{(entry.dimensions ?? []).length} dims</Badge>
+                      {favCount > 0 && <Badge colorScheme="yellow" fontSize="8px">★ {favCount}</Badge>}
                     </HStack>
                   )}
                 </VStack>
@@ -312,21 +307,29 @@ export function ChatPanel({
             </HStack>
           </Box>
         )}
+
+        {/* Clear all — pinned to bottom of history */}
+        {chatHistory.length > 0 && (
+          <Box pt={1}>
+            <Button size="xs" variant="ghost" colorScheme="red" leftIcon={<MdClear />} w="100%"
+              onClick={() => setConfirmClearOpen(true)}>
+              Clear all
+            </Button>
+          </Box>
+        )}
       </Box>
 
-      <Divider />
+      <ConfirmModal
+        isOpen={confirmClearOpen}
+        onClose={() => setConfirmClearOpen(false)}
+        onConfirm={() => { onClearAll(); setConfirmClearOpen(false); }}
+        title="Clear all ideas?"
+        message="This will remove all prompts, ideas, and history. This cannot be undone."
+        confirmText="Clear all"
+        confirmColor="red"
+      />
 
-      {/* Status badge */}
-      {status === 'ready' && (
-        <HStack spacing={1} px={1}>
-          <Badge colorScheme="green" fontSize="9px">
-            {nodes.length} ideas
-          </Badge>
-          <Badge colorScheme="purple" fontSize="9px">
-            {dimensions.length} dims
-          </Badge>
-        </HStack>
-      )}
+      <Divider />
 
       {/* Hidden file inputs */}
       <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
@@ -383,56 +386,84 @@ export function ChatPanel({
         </Box>
       )}
 
+      {/* Generation settings */}
+      <HStack spacing={2}>
+        <Box flex={1}>
+          <FormLabel fontSize="9px" color="gray.400" mb="2px">Ideas</FormLabel>
+          <Select
+            size="xs" fontSize="xs" value={batchSize}
+            onChange={(e) => onBatchSizeChange(Number(e.target.value))}
+            isDisabled={isGenerating}
+            borderRadius="md"
+          >
+            {[4, 6, 8, 10, 12, 16, 20].map((n) => <option key={n} value={n}>{n}</option>)}
+          </Select>
+        </Box>
+        <Box flex={1}>
+          <FormLabel fontSize="9px" color="gray.400" mb="2px">Dimensions</FormLabel>
+          <Select
+            size="xs" fontSize="xs" value={numDimensions}
+            onChange={(e) => onNumDimensionsChange(Number(e.target.value))}
+            isDisabled={isGenerating}
+            borderRadius="md"
+          >
+            {[1, 2, 3, 4].map((n) => <option key={n} value={n}>{n}</option>)}
+          </Select>
+        </Box>
+      </HStack>
+
       {/* Input */}
       <Textarea
         ref={inputRef}
         placeholder="Describe your prompt…"
         size="sm"
-        rows={3}
+        rows={5}
         value={input}
         onChange={(e) => onInputChange(e.target.value)}
         onKeyDown={onKeyDown}
         resize="none"
         fontSize="xs"
         isDisabled={isGenerating}
+        bg="blackAlpha.200"
+        _dark={{ bg: 'whiteAlpha.100', color: 'white' }}
+        color="black"
+        _placeholder={{ color: 'black', _dark: { color: 'white' } }}
+        borderRadius="md"
       />
       <HStack spacing={1}>
         <Button
           size="xs"
-          colorScheme="blue"
-          leftIcon={<MdSend />}
-          onClick={onGenerate}
-          isLoading={isGenerating}
+          variant={attachedImage ? 'solid' : 'outline'}
+          colorScheme={attachedImage ? 'blue' : 'gray'}
           isDisabled={isGenerating}
           flex={1}
+          fontSize="9px"
+          onClick={() => fileInputRef.current?.click()}
         >
-          Generate
+          Add Image
         </Button>
-        <Tooltip label="Attach image to prompt" placement="top" hasArrow openDelay={400}>
-          <IconButton
-            aria-label="Attach image to prompt"
-            icon={<MdImage />}
-            size="xs"
-            variant={attachedImage ? 'solid' : 'ghost'}
-            colorScheme={attachedImage ? 'blue' : 'gray'}
-            isDisabled={isGenerating}
-            onClick={() => fileInputRef.current?.click()}
-          />
-        </Tooltip>
-        <Tooltip label="Attach PDF as context" placement="top" hasArrow openDelay={400}>
-          <IconButton
-            aria-label="Attach PDF as context"
-            icon={isLoadingPdf ? <Spinner size="xs" /> : <MdPictureAsPdf />}
-            size="xs"
-            variant={pdfFilename ? 'solid' : 'ghost'}
-            colorScheme={pdfFilename ? 'red' : 'gray'}
-            isDisabled={isGenerating || isLoadingPdf}
-            onClick={() => pdfInputRef.current?.click()}
-          />
-        </Tooltip>
+        <Button
+          size="xs"
+          variant={pdfFilename ? 'solid' : 'outline'}
+          colorScheme={pdfFilename ? 'red' : 'gray'}
+          isDisabled={isGenerating || isLoadingPdf}
+          flex={1}
+          fontSize="9px"
+          onClick={() => pdfInputRef.current?.click()}
+        >
+          {isLoadingPdf ? <Spinner size="xs" /> : 'Add PDF'}
+        </Button>
       </HStack>
-      <Button size="xs" variant="ghost" colorScheme="red" leftIcon={<MdClear />} onClick={onClearAll}>
-        Clear all
+      <Button
+        size="xs"
+        colorScheme="blue"
+        leftIcon={<MdSend />}
+        onClick={onGenerate}
+        isLoading={isGenerating}
+        isDisabled={isGenerating}
+        w="100%"
+      >
+        Generate
       </Button>
     </Flex>
   );

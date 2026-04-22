@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -11,7 +11,7 @@ import { useRef, useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns/format';
 
 import { Flex, Box, Button, IconButton, Tooltip, useToast, useColorModeValue } from '@chakra-ui/react';
-import { MdFileDownload, MdSettings, MdChat, MdChevronLeft, MdChevronRight } from 'react-icons/md';
+import { MdFileDownload, MdChat, MdChevronLeft, MdChevronRight } from 'react-icons/md';
 
 import { useAppStore, useHexColor, useUser, downloadFile } from '@sage3/frontend';
 import { genId } from '@sage3/shared';
@@ -45,8 +45,11 @@ import {
 const MAX_PDF_CHARS = 5000;
 
 async function extractPdfText(file: File): Promise<string> {
-  // const pdfjsLib = await import('pdfjs-dist');
-  // pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.js', import.meta.url).href;
+  const pdfjsLib = await import('pdfjs-dist');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+    'pdfjs-dist/build/pdf.worker.min.mjs',
+    import.meta.url
+  ).href;
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   let text = '';
@@ -57,7 +60,6 @@ async function extractPdfText(file: File): Promise<string> {
   }
   return text.slice(0, MAX_PDF_CHARS);
 }
-import { SetupScreen } from './SetupScreen';
 import { ChatPanel } from './ChatPanel';
 import { VisualizationCanvas, DimBlend } from './VisualizationCanvas';
 import { QAPanel } from './QAPanel';
@@ -116,9 +118,9 @@ function AppComponent(props: App): JSX.Element {
   const toast = useToast();
 
   // Theme
-  const bgColor = useColorModeValue('gray.100', 'gray.800');
+  const bgColor = useColorModeValue('gray.100', 'gray.700');
   const bgHex = useHexColor(bgColor);
-  const panelBg = useColorModeValue('white', 'gray.800');
+  const panelBg = useColorModeValue('gray.50', 'gray.600');
   const panelBgHex = useHexColor(panelBg);
   const textColor = useColorModeValue('gray.800', 'gray.100');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
@@ -141,7 +143,6 @@ function AppComponent(props: App): JSX.Element {
   const [chatPanelOpen, setChatPanelOpen] = useState(true);
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const [isLoadingPdf, setIsLoadingPdf] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [localStatusMessage, setLocalStatusMessage] = useState('');
 
@@ -160,10 +161,6 @@ function AppComponent(props: App): JSX.Element {
 
   // ── Setup save ──
 
-  const handleSetupSave = (apiKey: string, model: string, batchSize: number) => {
-    updateState(props._id, { ...s, apiKey, model, batchSize, numDimensions: 2 });
-    setShowSettings(false);
-  };
 
   // ── PDF context ──
   const handleAttachPdf = useCallback(
@@ -735,19 +732,6 @@ function AppComponent(props: App): JSX.Element {
 
   // ── Setup screen ──
 
-  if (showSettings) {
-    return (
-      <SetupScreen
-        props={props}
-        bgHex={bgHex}
-        panelBgHex={panelBgHex}
-        textColor={textColor}
-        onSave={handleSetupSave}
-        onCancel={() => setShowSettings(false)}
-      />
-    );
-  }
-
   // ── Q&A helpers ──
 
   const qaNode = selectedQANodeId ? (localNodes.find((n) => n.ID === selectedQANodeId) ?? null) : null;
@@ -791,10 +775,14 @@ function AppComponent(props: App): JSX.Element {
             onAttachPdf={handleAttachPdf}
             onClearPdf={handleClearPdf}
             isLoadingPdf={isLoadingPdf}
+            numDimensions={s.numDimensions}
+            batchSize={s.batchSize}
+            onNumDimensionsChange={(n) => updateState(props._id, { ...s, numDimensions: n })}
+            onBatchSizeChange={(n) => updateState(props._id, { ...s, batchSize: n })}
           />
         )}
 
-        {/* Toggle button pinned to the left edge of the canvas */}
+        {/* Toggle button pinned to the left edge of the canvas, vertically centered */}
         <Box position="relative" zIndex={30} flexShrink={0}>
           <Tooltip label={chatPanelOpen ? 'Hide panel' : 'Show panel'} placement="right" hasArrow openDelay={400}>
             <IconButton
@@ -804,7 +792,7 @@ function AppComponent(props: App): JSX.Element {
               variant="solid"
               colorScheme="gray"
               position="absolute"
-              top={2}
+              top={0}
               left={0}
               h="28px"
               minW="14px"
@@ -853,22 +841,6 @@ function AppComponent(props: App): JSX.Element {
           onAddManualIdea={addManualIdea}
           isAddingManualIdea={isAddingManualIdea}
         />
-
-        {/* Settings button — top right of app window, avoids QA panel */}
-        <Tooltip label="Settings / change API key" placement="left" hasArrow openDelay={400}>
-          <IconButton
-            aria-label="Settings"
-            icon={<MdSettings />}
-            size="xs"
-            variant="ghost"
-            colorScheme="gray"
-            position="absolute"
-            top={1}
-            right={qaPanelOpen ? '288px' : 1}
-            zIndex={40}
-            onClick={() => setShowSettings(true)}
-          />
-        </Tooltip>
 
         {qaPanelOpen && (
           <QAPanel

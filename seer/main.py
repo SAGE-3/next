@@ -15,6 +15,13 @@ from libs.localtypes import (
     CodeRequest,
     WebScreenshot,
     MesonetQuery,
+    IdeatorDimensionsRequest,
+    IdeatorNodeRequest,
+    IdeatorAbstractRequest,
+    IdeatorUserDimensionRequest,
+    IdeatorSummarizeRequest,
+    IdeatorImageRequest,
+    IdeatorProseRequest,
 )
 
 # Web API
@@ -39,6 +46,7 @@ from langchain.globals import set_debug, set_verbose
 
 # Modules
 from app.chat import ChatAgent
+from app.ideator import IdeatorAgent
 
 # from app.summary import SummaryAgent
 from app.web import WebAgent
@@ -57,6 +65,7 @@ mesonetAG = MesonetAgent(logger, ps3)
 pdfAG = PDFAgent(logger, ps3)
 webAG = WebAgent(logger, ps3)
 asyncio.ensure_future(webAG.init())
+ideatorAG = IdeatorAgent(logger, ps3)
 
 # set to debug the queries into langchain
 # set_debug(True)
@@ -222,6 +231,67 @@ async def webshot(qq: WebScreenshot):
         # Get the error message
         text = e.detail
         raise HTTPException(status_code=500, detail=text)
+
+
+# ─── Ideator routes ───────────────────────────────────────────────────────────
+
+
+@app.post("/dimensions")
+async def ideator_dimensions(qq: IdeatorDimensionsRequest):
+    try:
+        return await ideatorAG.dimensions(qq)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/node")
+async def ideator_node(qq: IdeatorNodeRequest):
+    try:
+        return await ideatorAG.node(qq)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/abstract")
+async def ideator_abstract(qq: IdeatorAbstractRequest):
+    try:
+        return await ideatorAG.abstract(qq)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/user-dimension")
+async def ideator_user_dimension(qq: IdeatorUserDimensionRequest):
+    try:
+        return await ideatorAG.user_dimension(qq)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/summarize")
+async def ideator_summarize(qq: IdeatorSummarizeRequest):
+    try:
+        return await ideatorAG.summarize(qq)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/image")
+async def ideator_image(qq: IdeatorImageRequest):
+    try:
+        return await asyncio.wait_for(ideatorAG.image(qq), timeout=60)
+    except asyncio.TimeoutError:
+        raise HTTPException(status_code=408, detail="Image generation timed out")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/prose")
+async def ideator_prose(qq: IdeatorProseRequest):
+    try:
+        return await ideatorAG.prose(qq)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":

@@ -53,5 +53,15 @@ export const apiUrls = {
       ask: '/api/agents/ask',
       summary: '/api/agents/summary',
     },
+    ideator: {
+      base: '/api/ideator',
+      dimensions: '/api/ideator/dimensions',
+      node: '/api/ideator/node',
+      abstract: '/api/ideator/abstract',
+      userDimension: '/api/ideator/user-dimension',
+      summarize: '/api/ideator/summarize',
+      image: '/api/ideator/image',
+      prose: '/api/ideator/prose',
+    },
   },
 };
