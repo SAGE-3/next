@@ -222,7 +222,7 @@
     "url-loader": "^3.0.0"
   },
   "engines": {
-    "node": "^18 || ^20 || ^22"
+    "node": "^20 || ^22 || ^24"
   },
   "config": {
     "commitizen": {
