@@ -1,22 +1,12 @@
 /**
- * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
 
-import {
-  Flex,
-  Box,
-  Text,
-  HStack,
-  VStack,
-  Input,
-  IconButton,
-  Spinner,
-  Center,
-} from '@chakra-ui/react';
+import { Flex, Box, Text, HStack, VStack, Input, IconButton, Spinner, Center } from '@chakra-ui/react';
 import { MdSend, MdClear } from 'react-icons/md';
 
 import { state as AppState } from './index';
@@ -38,38 +28,32 @@ interface QAPanelProps {
 }
 
 export function QAPanel({
-  node, qaEntries, askingNodeId, qaInput,
-  panelBgHex, borderHex, textColor,
-  onQaInputChange, onSubmit, onClose,
+  node,
+  qaEntries,
+  askingNodeId,
+  qaInput,
+  panelBgHex,
+  borderHex,
+  textColor,
+  onQaInputChange,
+  onSubmit,
+  onClose,
 }: QAPanelProps) {
   return (
-    <Flex
-      direction="column"
-      w="280px"
-      minW="280px"
-      h="100%"
-      bg={panelBgHex}
-      borderLeft="1px solid"
-      borderColor={borderHex}
-      flexShrink={0}
-    >
+    <Flex direction="column" w="280px" minW="280px" h="100%" bg={panelBgHex} borderLeft="1px solid" borderColor={borderHex} flexShrink={0}>
       {/* Header */}
       <HStack px={3} py={2} borderBottom="1px solid" borderColor={borderHex} flexShrink={0}>
         <Text fontSize="xs" fontWeight="700" color={textColor} flex={1}>
           {node ? node.Title : 'Q&A'}
         </Text>
-        <IconButton
-          aria-label="Close Q&A panel"
-          icon={<MdClear />}
-          size="xs"
-          variant="ghost"
-          onClick={onClose}
-        />
+        <IconButton aria-label="Close Q&A panel" icon={<MdClear />} size="xs" variant="ghost" onClick={onClose} />
       </HStack>
 
       {!node ? (
         <Center flex={1}>
-          <Text fontSize="xs" color="gray.400">Select a node to view Q&amp;A.</Text>
+          <Text fontSize="xs" color="gray.400">
+            Select a node to view Q&amp;A.
+          </Text>
         </Center>
       ) : (
         <>
@@ -80,16 +64,17 @@ export function QAPanel({
             </Text>
             {node.Steps?.length > 0 && (
               <VStack align="stretch" spacing={0.5} mt={2}>
-                <Text
-                  fontSize="9px" fontWeight="700" textTransform="uppercase"
-                  letterSpacing="0.08em" color="gray.400" mb={0.5}
-                >
+                <Text fontSize="9px" fontWeight="700" textTransform="uppercase" letterSpacing="0.08em" color="gray.400" mb={0.5}>
                   Steps
                 </Text>
                 {node.Steps.map((step, i) => (
                   <HStack key={i} align="flex-start" spacing={1.5}>
-                    <Text fontSize="10px" fontWeight="700" color={textColor} flexShrink={0}>{i + 1}.</Text>
-                    <Text fontSize="10px" color={textColor} lineHeight="1.5">{step}</Text>
+                    <Text fontSize="10px" fontWeight="700" color={textColor} flexShrink={0}>
+                      {i + 1}.
+                    </Text>
+                    <Text fontSize="10px" color={textColor} lineHeight="1.5">
+                      {step}
+                    </Text>
                   </HStack>
                 ))}
               </VStack>
@@ -112,13 +97,17 @@ export function QAPanel({
                   <Text fontSize="xs" color={textColor} lineHeight="1.6">
                     {e.answer}
                   </Text>
-                  <Text fontSize="9px" color="gray.400" mt={1}>{e.userName}</Text>
+                  <Text fontSize="9px" color="gray.400" mt={1}>
+                    {e.userName}
+                  </Text>
                 </Box>
               ))}
               {askingNodeId === node.ID && (
                 <HStack spacing={2}>
                   <Spinner size="xs" color="teal.400" />
-                  <Text fontSize="xs" color="teal.500">Answering…</Text>
+                  <Text fontSize="xs" color="teal.500">
+                    Answering…
+                  </Text>
                 </HStack>
               )}
             </VStack>
@@ -133,7 +122,12 @@ export function QAPanel({
                 fontSize="xs"
                 value={qaInput}
                 onChange={(e) => onQaInputChange(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); onSubmit(); } }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    onSubmit();
+                  }
+                }}
                 isDisabled={!!askingNodeId}
               />
               <IconButton

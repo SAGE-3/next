@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -28,6 +28,7 @@ import {
   ModalCloseButton,
   useDisclosure,
 } from '@chakra-ui/react';
+
 import { MdSend, MdClear, MdEdit, MdImage, MdDelete, MdAdd, MdPictureAsPdf } from 'react-icons/md';
 
 import { state as AppState } from './index';
@@ -64,9 +65,18 @@ function HistoryImageThumb({ src }: { src: string }) {
   return (
     <>
       <Image
-        src={src} alt="Prompt image" w="100%" borderRadius="sm" maxH="70px" objectFit="cover"
-        cursor="zoom-in" mb={1}
-        onClick={(e) => { e.stopPropagation(); onOpen(); }}
+        src={src}
+        alt="Prompt image"
+        w="100%"
+        borderRadius="sm"
+        maxH="70px"
+        objectFit="cover"
+        cursor="zoom-in"
+        mb={1}
+        onClick={(e) => {
+          e.stopPropagation();
+          onOpen();
+        }}
       />
       <Modal isOpen={isOpen} onClose={onClose} size="xl" isCentered>
         <ModalOverlay />
@@ -82,11 +92,30 @@ function HistoryImageThumb({ src }: { src: string }) {
 }
 
 export function ChatPanel({
-  chatHistory, nodes, dimensions, status, statusMessage, isGenerating,
-  activeEntryId, input, panelBgHex, borderHex, textColor,
-  onInputChange, onGenerate, onGenerateMore, onClearAll, onRestoreSnapshot, onEditPrompt, onDeleteEntry,
-  attachedImage, onAttachImage,
-  pdfFilename, onAttachPdf, onClearPdf, isLoadingPdf,
+  chatHistory,
+  nodes,
+  dimensions,
+  status,
+  statusMessage,
+  isGenerating,
+  activeEntryId,
+  input,
+  panelBgHex,
+  borderHex,
+  textColor,
+  onInputChange,
+  onGenerate,
+  onGenerateMore,
+  onClearAll,
+  onRestoreSnapshot,
+  onEditPrompt,
+  onDeleteEntry,
+  attachedImage,
+  onAttachImage,
+  pdfFilename,
+  onAttachPdf,
+  onClearPdf,
+  isLoadingPdf,
 }: ChatPanelProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -106,8 +135,13 @@ export function ChatPanel({
         const MAX = 1024;
         let { width, height } = img;
         if (width > MAX || height > MAX) {
-          if (width >= height) { height = Math.round((height / width) * MAX); width = MAX; }
-          else { width = Math.round((width / height) * MAX); height = MAX; }
+          if (width >= height) {
+            height = Math.round((height / width) * MAX);
+            width = MAX;
+          } else {
+            width = Math.round((width / height) * MAX);
+            height = MAX;
+          }
         }
         const canvas = document.createElement('canvas');
         canvas.width = width;
@@ -121,22 +155,18 @@ export function ChatPanel({
   };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onGenerate(); }
-    if (e.key === 'Enter' && e.shiftKey) { e.preventDefault(); onInputChange(input + '\n'); }
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      onGenerate();
+    }
+    if (e.key === 'Enter' && e.shiftKey) {
+      e.preventDefault();
+      onInputChange(input + '\n');
+    }
   };
 
   return (
-    <Flex
-      direction="column"
-      w="180px"
-      minW="180px"
-      h="100%"
-      bg={panelBgHex}
-      borderRight="1px solid"
-      borderColor={borderHex}
-      p={2}
-      gap={2}
-    >
+    <Flex direction="column" w="180px" minW="180px" h="100%" bg={panelBgHex} borderRight="1px solid" borderColor={borderHex} p={2} gap={2}>
       {/* History */}
       <Box flex={1} overflowY="auto" fontSize="xs" color={textColor}>
         {chatHistory.length === 0 && (
@@ -174,7 +204,11 @@ export function ChatPanel({
                     <Text fontWeight="bold" fontSize="9px" color="blue.500" _dark={{ color: 'blue.300' }} noOfLines={1}>
                       {entry.userName}
                     </Text>
-                    {isBranch && <Badge colorScheme="orange" fontSize="8px" variant="subtle">⎇</Badge>}
+                    {isBranch && (
+                      <Badge colorScheme="orange" fontSize="8px" variant="subtle">
+                        ⎇
+                      </Badge>
+                    )}
                   </HStack>
                   {entry.imageUrl && <HistoryImageThumb src={entry.imageUrl} />}
                   <Text fontSize="10px" fontWeight={isActive ? '600' : '400'} color={textColor} noOfLines={3}>
@@ -183,27 +217,50 @@ export function ChatPanel({
                   {entry.pdfFilename && (
                     <HStack spacing={1} mt={0.5}>
                       <MdPictureAsPdf size={10} color="red" />
-                      <Text fontSize="9px" color="red.400" noOfLines={1}>{entry.pdfFilename}</Text>
+                      <Text fontSize="9px" color="red.400" noOfLines={1}>
+                        {entry.pdfFilename}
+                      </Text>
                     </HStack>
                   )}
                   {hasSnapshot && (
                     <HStack spacing={1} flexWrap="wrap">
-                      <Badge colorScheme="green" fontSize="8px">{entryNodes.length} ideas</Badge>
-                      {favCount > 0 && <Badge colorScheme="yellow" fontSize="8px">★ {favCount}</Badge>}
+                      <Badge colorScheme="green" fontSize="8px">
+                        {entryNodes.length} ideas
+                      </Badge>
+                      {favCount > 0 && (
+                        <Badge colorScheme="yellow" fontSize="8px">
+                          ★ {favCount}
+                        </Badge>
+                      )}
                     </HStack>
                   )}
                 </VStack>
                 {/* Actions */}
-                <VStack spacing={0} flexShrink={0} justify="center" bg="blackAlpha.100" _dark={{ bg: 'whiteAlpha.100' }} borderRadius="md" px="2px">
+                <VStack
+                  spacing={0}
+                  flexShrink={0}
+                  justify="center"
+                  bg="blackAlpha.100"
+                  _dark={{ bg: 'whiteAlpha.100' }}
+                  borderRadius="md"
+                  px="2px"
+                >
                   {hasSnapshot && (
                     <Tooltip label="Generate more ideas" placement="left" hasArrow openDelay={400}>
                       <IconButton
                         aria-label="Generate more"
                         icon={<MdAdd />}
-                        size="xs" variant="ghost" colorScheme="teal"
-                        h="16px" minW="16px" fontSize="11px"
+                        size="xs"
+                        variant="ghost"
+                        colorScheme="teal"
+                        h="16px"
+                        minW="16px"
+                        fontSize="11px"
                         isDisabled={isGenerating}
-                        onClick={(e) => { e.stopPropagation(); onGenerateMore(entry); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onGenerateMore(entry);
+                        }}
                       />
                     </Tooltip>
                   )}
@@ -211,18 +268,33 @@ export function ChatPanel({
                     <IconButton
                       aria-label="Edit prompt"
                       icon={<MdEdit />}
-                      size="xs" variant="ghost" colorScheme="gray"
-                      h="16px" minW="16px" fontSize="10px"
-                      onClick={(e) => { e.stopPropagation(); onEditPrompt(entry.prompt); setTimeout(() => inputRef.current?.focus(), 50); }}
+                      size="xs"
+                      variant="ghost"
+                      colorScheme="gray"
+                      h="16px"
+                      minW="16px"
+                      fontSize="10px"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEditPrompt(entry.prompt);
+                        setTimeout(() => inputRef.current?.focus(), 50);
+                      }}
                     />
                   </Tooltip>
                   <Tooltip label="Delete entry" placement="left" hasArrow openDelay={400}>
                     <IconButton
                       aria-label="Delete entry"
                       icon={<MdDelete />}
-                      size="xs" variant="ghost" colorScheme="red"
-                      h="16px" minW="16px" fontSize="10px"
-                      onClick={(e) => { e.stopPropagation(); onDeleteEntry(entry.id); }}
+                      size="xs"
+                      variant="ghost"
+                      colorScheme="red"
+                      h="16px"
+                      minW="16px"
+                      fontSize="10px"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteEntry(entry.id);
+                      }}
                     />
                   </Tooltip>
                 </VStack>
@@ -234,7 +306,9 @@ export function ChatPanel({
           <Box p={1.5} bg="orange.50" borderRadius="md" _dark={{ bg: 'orange.900' }}>
             <HStack spacing={1}>
               <Spinner size="xs" color="orange.400" />
-              <Text fontSize="10px" color="orange.600" _dark={{ color: 'orange.300' }}>{statusMessage}</Text>
+              <Text fontSize="10px" color="orange.600" _dark={{ color: 'orange.300' }}>
+                {statusMessage}
+              </Text>
             </HStack>
           </Box>
         )}
@@ -245,37 +319,45 @@ export function ChatPanel({
       {/* Status badge */}
       {status === 'ready' && (
         <HStack spacing={1} px={1}>
-          <Badge colorScheme="green" fontSize="9px">{nodes.length} ideas</Badge>
-          <Badge colorScheme="purple" fontSize="9px">{dimensions.length} dims</Badge>
+          <Badge colorScheme="green" fontSize="9px">
+            {nodes.length} ideas
+          </Badge>
+          <Badge colorScheme="purple" fontSize="9px">
+            {dimensions.length} dims
+          </Badge>
         </HStack>
       )}
 
       {/* Hidden file inputs */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        style={{ display: 'none' }}
-        onChange={handleFileChange}
-      />
+      <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
       <input
         ref={pdfInputRef}
         type="file"
         accept=".pdf"
         style={{ display: 'none' }}
-        onChange={(e) => { const f = e.target.files?.[0]; if (f) onAttachPdf(f); e.target.value = ''; }}
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) onAttachPdf(f);
+          e.target.value = '';
+        }}
       />
 
       {/* PDF context badge */}
       {pdfFilename && (
         <HStack spacing={1} px={1} py={0.5} bg="red.50" _dark={{ bg: 'red.900' }} borderRadius="md">
           <MdPictureAsPdf size={12} color="red" />
-          <Text fontSize="9px" color="red.600" _dark={{ color: 'red.300' }} flex={1} noOfLines={1}>{pdfFilename}</Text>
+          <Text fontSize="9px" color="red.600" _dark={{ color: 'red.300' }} flex={1} noOfLines={1}>
+            {pdfFilename}
+          </Text>
           <IconButton
             aria-label="Remove PDF context"
             icon={<MdClear />}
-            size="xs" variant="ghost" colorScheme="red"
-            h="14px" minW="14px" fontSize="10px"
+            size="xs"
+            variant="ghost"
+            colorScheme="red"
+            h="14px"
+            minW="14px"
+            fontSize="10px"
             onClick={onClearPdf}
           />
         </HStack>

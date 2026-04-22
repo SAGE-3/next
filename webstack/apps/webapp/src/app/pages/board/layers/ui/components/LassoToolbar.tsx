@@ -695,7 +695,7 @@ for b in bits:
                       >
                         Duplicate to another Board
                       </MenuButton>
-                      <MenuList>
+                      <MenuList maxHeight="300px" overflowY="auto">
                         {roomsBoards.map((b) => {
                           return (
                             <MenuItem key={b._id} onClick={() => duplicate(lassoApps, b)} py="0" m="0">

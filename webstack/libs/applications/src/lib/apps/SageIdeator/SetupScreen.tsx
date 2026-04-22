@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -7,19 +7,7 @@
  */
 
 import { useState } from 'react';
-import {
-  Flex,
-  VStack,
-  Text,
-  FormControl,
-  FormLabel,
-  FormHelperText,
-  // Input,
-  Select,
-  Button,
-  IconButton,
-  Tooltip,
-} from '@chakra-ui/react';
+import { Flex, VStack, Text, FormControl, FormLabel, FormHelperText, Select, Button, IconButton, Tooltip } from '@chakra-ui/react';
 import { MdSettings, MdArrowBack } from 'react-icons/md';
 
 import { App } from '../../schema';
@@ -64,7 +52,9 @@ export function SetupScreen({ props, bgHex, panelBgHex, textColor, onSave, onCan
         <Flex direction="row" gap={8} w="100%" maxW="800px" align="flex-start">
           {/* Left: model */}
           <VStack spacing={4} flex={1} align="stretch">
-            <Text fontWeight="bold" fontSize="xl" color={textColor}>Configure SageIdeator</Text>
+            <Text fontWeight="bold" fontSize="xl" color={textColor}>
+              Configure SageIdeator
+            </Text>
             <Text fontSize="sm" color={textColor}>
               SageIdeator uses the AI model configured on this SAGE3 server.
             </Text>
@@ -86,7 +76,11 @@ export function SetupScreen({ props, bgHex, panelBgHex, textColor, onSave, onCan
             <FormControl>
               <FormLabel color={textColor}>Model</FormLabel>
               <Select value={modelInput} onChange={(e) => setModelInput(e.target.value)} bg={panelBgHex}>
-                {MODELS.map((m) => <option key={m} value={m}>{m}</option>)}
+                {MODELS.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
               </Select>
             </FormControl>
           </VStack>
@@ -96,15 +90,15 @@ export function SetupScreen({ props, bgHex, panelBgHex, textColor, onSave, onCan
             <FormControl>
               <FormLabel color={textColor}>Number of ideas</FormLabel>
               <Select value={batchInput} onChange={(e) => setBatchInput(e.target.value)} bg={panelBgHex}>
-                {[4, 6, 8, 10, 12, 16, 20].map((n) => <option key={n} value={n}>{n}</option>)}
+                {[4, 6, 8, 10, 12, 16, 20].map((n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
               </Select>
               <FormHelperText>How many ideas to generate per exploration.</FormHelperText>
             </FormControl>
-            <Button
-              colorScheme="blue"
-              w="100%"
-              onClick={() => onSave('', modelInput, parseInt(batchInput))}
-            >
+            <Button colorScheme="blue" w="100%" onClick={() => onSave('', modelInput, parseInt(batchInput))}>
               Save &amp; Start
             </Button>
           </VStack>

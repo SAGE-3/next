@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -14,19 +14,43 @@ type SageDimension = AppState['dimensions'][number];
 // ─── Luminate colour palette (31 colours) ────────────────────────────────────
 
 export const COLORS: string[] = [
-  '#FF6E67', '#6AB2FF', '#48D6C1', '#FFC37A', '#C67BF2',
-  '#2ECC71', '#6A7485', '#ADDF71', '#FFA054', '#6AB2FF',
-  '#FFC37A', '#BB72E6', '#FF9350', '#6A7485', '#68DB8E',
-  '#A45CCF', '#FF9350', '#BB72E6', '#6AB2FF', '#FFC37A',
-  '#BB72E6', '#FF9350', '#FF7451', '#FF6E67', '#6AB2FF',
-  '#48D6C1', '#FFC37A', '#C67BF2', '#6A7485', '#4DCFB1',
+  '#FF6E67',
+  '#6AB2FF',
+  '#48D6C1',
+  '#FFC37A',
+  '#C67BF2',
+  '#2ECC71',
+  '#6A7485',
+  '#ADDF71',
+  '#FFA054',
+  '#6AB2FF',
+  '#FFC37A',
+  '#BB72E6',
+  '#FF9350',
+  '#6A7485',
+  '#68DB8E',
+  '#A45CCF',
+  '#FF9350',
+  '#BB72E6',
+  '#6AB2FF',
+  '#FFC37A',
+  '#BB72E6',
+  '#FF9350',
+  '#FF7451',
+  '#FF6E67',
+  '#6AB2FF',
+  '#48D6C1',
+  '#FFC37A',
+  '#C67BF2',
+  '#6A7485',
+  '#4DCFB1',
   '#FFA054',
 ];
 
 // ─── Colour math ─────────────────────────────────────────────────────────────
 
 export function hexToRgb(hex: string): [number, number, number] {
-  const n = parseInt((hex.charAt(0) === '#' ? hex.slice(1) : hex), 16);
+  const n = parseInt(hex.charAt(0) === '#' ? hex.slice(1) : hex, 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
@@ -39,27 +63,17 @@ function rgbToHex(r: number, g: number, b: number): string {
   return '#' + [r, g, b].map((v) => Math.round(v).toString(16).padStart(2, '0')).join('');
 }
 
-function avgRgb(
-  a: [number, number, number],
-  b: [number, number, number]
-): [number, number, number] {
+function avgRgb(a: [number, number, number], b: [number, number, number]): [number, number, number] {
   return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
 }
 
 // ─── Node colour ─────────────────────────────────────────────────────────────
 
-export function nodeColorHex(
-  node: SageNode,
-  xDim: SageDimension | null,
-  yDim: SageDimension | null
-): string {
+export function nodeColorHex(node: SageNode, xDim: SageDimension | null, yDim: SageDimension | null): string {
   if (!xDim) return '#aaaaaa';
 
   const getIdx = (dim: SageDimension) => {
-    const val =
-      dim.type === 'categorical'
-        ? node.Dimension.categorical[dim.name]
-        : node.Dimension.ordinal[dim.name];
+    const val = dim.type === 'categorical' ? node.Dimension.categorical[dim.name] : node.Dimension.ordinal[dim.name];
     return Math.max(0, dim.values.indexOf(val));
   };
 
@@ -77,8 +91,15 @@ export function nodeColorHex(
 // ─── Nearest SAGEColors match ────────────────────────────────────────────────
 
 const SAGE_COLOR_HEX: Record<string, string> = {
-  red: '#e53e3e', orange: '#dd6b20', yellow: '#d69e2e', green: '#38a169',
-  teal: '#319795', blue: '#3182ce', cyan: '#00b5d8', purple: '#bec6dc', pink: '#d53f8c',
+  red: '#e53e3e',
+  orange: '#dd6b20',
+  yellow: '#d69e2e',
+  green: '#38a169',
+  teal: '#319795',
+  blue: '#3182ce',
+  cyan: '#00b5d8',
+  purple: '#bec6dc',
+  pink: '#d53f8c',
 };
 
 export function hexToSAGEColor(hex: string): string {
@@ -88,24 +109,19 @@ export function hexToSAGEColor(hex: string): string {
   for (const [name, sageHex] of Object.entries(SAGE_COLOR_HEX)) {
     const [r2, g2, b2] = hexToRgb(sageHex);
     const dist = (r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2;
-    if (dist < bestDist) { bestDist = dist; best = name; }
+    if (dist < bestDist) {
+      bestDist = dist;
+      best = name;
+    }
   }
   return best;
 }
 
 // ─── D3 cluster target ───────────────────────────────────────────────────────
 
-export function dimensionClusterTarget(
-  axis: 'x' | 'y',
-  dim: SageDimension | null,
-  node: SageNode,
-  size: number
-): number {
+export function dimensionClusterTarget(axis: 'x' | 'y', dim: SageDimension | null, node: SageNode, size: number): number {
   if (!dim) return 0;
-  const val =
-    dim.type === 'categorical'
-      ? node.Dimension.categorical[dim.name]
-      : node.Dimension.ordinal[dim.name];
+  const val = dim.type === 'categorical' ? node.Dimension.categorical[dim.name] : node.Dimension.ordinal[dim.name];
   const idx = dim.values.indexOf(val);
   const n = dim.values.length + 1;
   // Ordinal on Y: reverse so higher values sit higher on screen

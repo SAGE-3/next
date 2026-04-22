@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -138,16 +138,38 @@ function scoreNode(node: SageNode, query: string): number {
 }
 
 export function VisualizationCanvas({
-  nodes, dimensions, appId, bgHex, panelBgHex, borderHex, textColor,
-  status, statusMessage, isGenerating, askingNodeId, selectedQANodeId, qaPanelOpen,
-  positionsRef, hasFitRef,
-  onToggleFav, onBranch, onSelectQA,
-  onAddDimension, onRemoveDimension, isAddingDimension,
-  onBranchFavorites, onSummarizeFavorites, isSummarizing,
-  onGenerateImage, generatingImageNodeId,
-  onReroll, rerollingNodeId,
-  onGenerateAt, isGeneratingAt,
-  onAddManualIdea, isAddingManualIdea,
+  nodes,
+  dimensions,
+  appId,
+  bgHex,
+  panelBgHex,
+  borderHex,
+  textColor,
+  status,
+  statusMessage,
+  isGenerating,
+  askingNodeId,
+  selectedQANodeId,
+  qaPanelOpen,
+  positionsRef,
+  hasFitRef,
+  onToggleFav,
+  onBranch,
+  onSelectQA,
+  onAddDimension,
+  onRemoveDimension,
+  isAddingDimension,
+  onBranchFavorites,
+  onSummarizeFavorites,
+  isSummarizing,
+  onGenerateImage,
+  generatingImageNodeId,
+  onReroll,
+  rerollingNodeId,
+  onGenerateAt,
+  isGeneratingAt,
+  onAddManualIdea,
+  isAddingManualIdea,
 }: VisualizationCanvasProps) {
   const [camera, setCamera] = useState<Camera>({ x: 0, y: 0, z: 1 });
   const [xDimName, setXDimName] = useState<string | null>(null);
@@ -174,8 +196,8 @@ export function VisualizationCanvas({
   useEffect(() => {
     if (dimensions.length > 0) {
       const names = dimensions.map((d) => d.name);
-      setXDimName((prev) => (prev && names.includes(prev)) ? prev : (dimensions[0]?.name ?? null));
-      setYDimName((prev) => (prev && names.includes(prev)) ? prev : (dimensions[1]?.name ?? null));
+      setXDimName((prev) => (prev && names.includes(prev) ? prev : (dimensions[0]?.name ?? null)));
+      setYDimName((prev) => (prev && names.includes(prev) ? prev : (dimensions[1]?.name ?? null)));
     } else {
       setXDimName(null);
       setYDimName(null);
@@ -240,44 +262,52 @@ export function VisualizationCanvas({
     dragRef.current.active = false;
   }, []);
 
-  const handleCanvasClick = useCallback((e: React.MouseEvent) => {
-    if (!generateAtMode || didDragRef.current) return;
-    const rect = containerRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const screenX = e.clientX - rect.left;
-    const screenY = e.clientY - rect.top;
-    const cx = rect.width / 2;
-    const cy = rect.height / 2;
-    // Convert screen → world coordinates
-    const worldX = (screenX - cx - camera.x) / camera.z;
-    const worldY = (screenY - cy - camera.y) / camera.z;
-    const xDim = dimensions.find((d) => d.name === xDimName) ?? null;
-    const yDim = dimensions.find((d) => d.name === yDimName) ?? null;
-    const xBlend = xDim ? blendedDimValues(worldX, xDim, containerSize.width * 0.8) : null;
-    const yBlend = yDim ? blendedDimValues(worldY, yDim, containerSize.height * 0.8) : null;
-    setGenerateAtMode(false);
-    onGenerateAt({ worldX, worldY, xDimName, xBlend, yDimName, yBlend });
-  }, [generateAtMode, camera, dimensions, xDimName, yDimName, containerSize, onGenerateAt]);
+  const handleCanvasClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (!generateAtMode || didDragRef.current) return;
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const screenX = e.clientX - rect.left;
+      const screenY = e.clientY - rect.top;
+      const cx = rect.width / 2;
+      const cy = rect.height / 2;
+      // Convert screen → world coordinates
+      const worldX = (screenX - cx - camera.x) / camera.z;
+      const worldY = (screenY - cy - camera.y) / camera.z;
+      const xDim = dimensions.find((d) => d.name === xDimName) ?? null;
+      const yDim = dimensions.find((d) => d.name === yDimName) ?? null;
+      const xBlend = xDim ? blendedDimValues(worldX, xDim, containerSize.width * 0.8) : null;
+      const yBlend = yDim ? blendedDimValues(worldY, yDim, containerSize.height * 0.8) : null;
+      setGenerateAtMode(false);
+      onGenerateAt({ worldX, worldY, xDimName, xBlend, yDimName, yBlend });
+    },
+    [generateAtMode, camera, dimensions, xDimName, yDimName, containerSize, onGenerateAt],
+  );
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Escape') setGenerateAtMode(false);
   }, []);
 
-  const fitToScreen = useCallback((maxZ = 3) => {
-    if (positionsRef.current.size === 0 || containerSize.width === 0) return;
-    const positions = Array.from(positionsRef.current.values());
-    const xs = positions.map((p) => p.x);
-    const ys = positions.map((p) => p.y);
-    const minX = Math.min(...xs); const maxX = Math.max(...xs);
-    const minY = Math.min(...ys); const maxY = Math.max(...ys);
-    const boundsW = maxX - minX + 200;
-    const boundsH = maxY - minY + 120;
-    const padding = 60;
-    const z = Math.min((containerSize.width - padding * 2) / boundsW, (containerSize.height - padding * 2) / boundsH, maxZ);
-    const midX = (minX + maxX) / 2;
-    const midY = (minY + maxY) / 2;
-    setCamera({ x: -midX * z, y: -midY * z, z });
-  }, [containerSize, positionsRef]);
+  const fitToScreen = useCallback(
+    (maxZ = 3) => {
+      if (positionsRef.current.size === 0 || containerSize.width === 0) return;
+      const positions = Array.from(positionsRef.current.values());
+      const xs = positions.map((p) => p.x);
+      const ys = positions.map((p) => p.y);
+      const minX = Math.min(...xs);
+      const maxX = Math.max(...xs);
+      const minY = Math.min(...ys);
+      const maxY = Math.max(...ys);
+      const boundsW = maxX - minX + 200;
+      const boundsH = maxY - minY + 120;
+      const padding = 60;
+      const z = Math.min((containerSize.width - padding * 2) / boundsW, (containerSize.height - padding * 2) / boundsH, maxZ);
+      const midX = (minX + maxX) / 2;
+      const midY = (minY + maxY) / 2;
+      setCamera({ x: -midX * z, y: -midY * z, z });
+    },
+    [containerSize, positionsRef],
+  );
 
   const jumpToZoom = useCallback((targetZ: number) => {
     setCamera((cam) => {
@@ -330,7 +360,9 @@ export function VisualizationCanvas({
     });
 
     simulationRef.current = sim;
-    return () => { sim.stop(); };
+    return () => {
+      sim.stop();
+    };
   }, [nodes, dimensions, xDimName, yDimName, containerSize.width, containerSize.height, fitToScreen]);
 
   const xDim = dimensions.find((d) => d.name === xDimName) ?? null;
@@ -342,11 +374,9 @@ export function VisualizationCanvas({
   const rawXLabels = xDim
     ? xDim.values.map((val) => {
         const matching = nodes.filter(
-          (n) => (xDim.type === 'categorical' ? n.Dimension.categorical : n.Dimension.ordinal)[xDim.name] === val
+          (n) => (xDim.type === 'categorical' ? n.Dimension.categorical : n.Dimension.ordinal)[xDim.name] === val,
         );
-        const avgX = matching.length
-          ? matching.reduce((sum, n) => sum + (positionsRef.current.get(n.ID)?.x ?? 0), 0) / matching.length
-          : 0;
+        const avgX = matching.length ? matching.reduce((sum, n) => sum + (positionsRef.current.get(n.ID)?.x ?? 0), 0) / matching.length : 0;
         return { val, x: cx + avgX * camera.z + camera.x };
       })
     : [];
@@ -354,11 +384,9 @@ export function VisualizationCanvas({
   const rawYLabels = yDim
     ? yDim.values.map((val) => {
         const matching = nodes.filter(
-          (n) => (yDim.type === 'categorical' ? n.Dimension.categorical : n.Dimension.ordinal)[yDim.name] === val
+          (n) => (yDim.type === 'categorical' ? n.Dimension.categorical : n.Dimension.ordinal)[yDim.name] === val,
         );
-        const avgY = matching.length
-          ? matching.reduce((sum, n) => sum + (positionsRef.current.get(n.ID)?.y ?? 0), 0) / matching.length
-          : 0;
+        const avgY = matching.length ? matching.reduce((sum, n) => sum + (positionsRef.current.get(n.ID)?.y ?? 0), 0) / matching.length : 0;
         return { val, y: cy + avgY * camera.z + camera.y };
       })
     : [];
@@ -388,39 +416,49 @@ export function VisualizationCanvas({
     <Flex direction="column" flex={1} overflow="hidden">
       {/* Axis toolbar */}
       {nodes.length > 0 && (
-        <VStack
-          px={2} py={1}
-          bg={panelBgHex}
-          borderBottom="1px solid"
-          borderColor={borderHex}
-          spacing={1}
-          align="stretch"
-          flexShrink={0}
-        >
+        <VStack px={2} py={1} bg={panelBgHex} borderBottom="1px solid" borderColor={borderHex} spacing={1} align="stretch" flexShrink={0}>
           {/* Row 1: axis selectors — pl accounts for the collapse toggle button */}
           <HStack spacing={3} pl="18px">
             {dimensions.length > 0 ? (
               <>
-                <Text fontSize="xs" color={textColor} fontWeight="bold">Axes:</Text>
+                <Text fontSize="xs" color={textColor} fontWeight="bold">
+                  Axes:
+                </Text>
                 <HStack spacing={1}>
-                  <Text fontSize="xs" color={textColor}>X:</Text>
+                  <Text fontSize="xs" color={textColor}>
+                    X:
+                  </Text>
                   <Select size="xs" value={xDimName ?? ''} onChange={(e) => setXDimName(e.target.value || null)} w="120px">
                     <option value="">— none —</option>
-                    {dimensions.map((d) => <option key={d.name} value={d.name}>{d.name}</option>)}
+                    {dimensions.map((d) => (
+                      <option key={d.name} value={d.name}>
+                        {d.name}
+                      </option>
+                    ))}
                   </Select>
                 </HStack>
                 <HStack spacing={1}>
-                  <Text fontSize="xs" color={textColor}>Y:</Text>
+                  <Text fontSize="xs" color={textColor}>
+                    Y:
+                  </Text>
                   <Select size="xs" value={yDimName ?? ''} onChange={(e) => setYDimName(e.target.value || null)} w="120px">
                     <option value="">— none —</option>
-                    {dimensions.map((d) => <option key={d.name} value={d.name}>{d.name}</option>)}
+                    {dimensions.map((d) => (
+                      <option key={d.name} value={d.name}>
+                        {d.name}
+                      </option>
+                    ))}
                   </Select>
                 </HStack>
               </>
             ) : (
-              <Text fontSize="xs" color="gray.400" fontStyle="italic">No dimensions — add one below</Text>
+              <Text fontSize="xs" color="gray.400" fontStyle="italic">
+                No dimensions — add one below
+              </Text>
             )}
-            <Text fontSize="9px" color="gray.400">Scroll to zoom · drag to pan</Text>
+            <Text fontSize="9px" color="gray.400">
+              Scroll to zoom · drag to pan
+            </Text>
           </HStack>
 
           {/* Row 2: dimension chips + add */}
@@ -438,7 +476,9 @@ export function VisualizationCanvas({
                 px={2}
                 py="1px"
               >
-                <Text fontSize="9px" color={textColor}>{d.name}</Text>
+                <Text fontSize="9px" color={textColor}>
+                  {d.name}
+                </Text>
                 <IconButton
                   aria-label={`Remove ${d.name}`}
                   icon={<MdClose />}
@@ -483,7 +523,8 @@ export function VisualizationCanvas({
                     size="xs"
                     colorScheme="green"
                     variant="ghost"
-                    h="20px" minW="20px"
+                    h="20px"
+                    minW="20px"
                     isDisabled={dimInputValue.trim().length < 3 || isAddingDimension}
                     onClick={() => {
                       onAddDimension(dimInputValue.trim());
@@ -497,8 +538,12 @@ export function VisualizationCanvas({
                   icon={<MdClose />}
                   size="xs"
                   variant="ghost"
-                  h="20px" minW="20px"
-                  onClick={() => { setDimInputValue(''); setShowDimInput(false); }}
+                  h="20px"
+                  minW="20px"
+                  onClick={() => {
+                    setDimInputValue('');
+                    setShowDimInput(false);
+                  }}
                 />
               </HStack>
             ) : (
@@ -508,7 +553,8 @@ export function VisualizationCanvas({
                   icon={isAddingDimension ? <Spinner size="xs" /> : <MdAdd />}
                   size="xs"
                   variant="ghost"
-                  h="20px" minW="20px"
+                  h="20px"
+                  minW="20px"
                   isDisabled={isAddingDimension}
                   onClick={() => setShowDimInput(true)}
                 />
@@ -536,7 +582,8 @@ export function VisualizationCanvas({
                     icon={<MdClose />}
                     size="xs"
                     variant="ghost"
-                    h="16px" minW="16px"
+                    h="16px"
+                    minW="16px"
                     onClick={() => setSearchQuery('')}
                   />
                 )}
@@ -578,7 +625,12 @@ export function VisualizationCanvas({
                 )}
                 {/* Summarize favorites → Stickie */}
                 {favCount > 0 && (
-                  <Tooltip label={`Summarize ${favCount} favorite${favCount > 1 ? 's' : ''} as a Stickie`} placement="top" hasArrow openDelay={300}>
+                  <Tooltip
+                    label={`Summarize ${favCount} favorite${favCount > 1 ? 's' : ''} as a Stickie`}
+                    placement="top"
+                    hasArrow
+                    openDelay={300}
+                  >
                     <Button
                       size="xs"
                       variant="ghost"
@@ -605,7 +657,8 @@ export function VisualizationCanvas({
                       icon={<MdClose />}
                       size="xs"
                       variant="ghost"
-                      h="14px" minW="14px"
+                      h="14px"
+                      minW="14px"
                       fontSize="9px"
                       ml={0.5}
                       onClick={() => setActiveFilter(null)}
@@ -639,14 +692,18 @@ export function VisualizationCanvas({
         {/* Idle / loading placeholder */}
         {status === 'idle' && nodes.length === 0 && (
           <Center h="100%">
-            <Text color="gray.400" fontSize="sm">Enter a prompt to generate ideas</Text>
+            <Text color="gray.400" fontSize="sm">
+              Enter a prompt to generate ideas
+            </Text>
           </Center>
         )}
         {isGenerating && nodes.length === 0 && (
           <Center h="100%">
             <VStack spacing={3}>
               <Spinner size="xl" color="blue.400" />
-              <Text color={textColor} fontSize="sm">{statusMessage}</Text>
+              <Text color={textColor} fontSize="sm">
+                {statusMessage}
+              </Text>
             </VStack>
           </Center>
         )}
@@ -663,10 +720,16 @@ export function VisualizationCanvas({
               transform="translateY(-50%)"
               zIndex={10}
               cursor="pointer"
-              onClick={(e) => { e.stopPropagation(); setActiveFilter(isActive ? null : { dimName: yDimName!, value: val }); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveFilter(isActive ? null : { dimName: yDimName!, value: val });
+              }}
             >
               <Badge
-                colorScheme="purple" fontSize="9px" px={1.5} whiteSpace="nowrap"
+                colorScheme="purple"
+                fontSize="9px"
+                px={1.5}
+                whiteSpace="nowrap"
                 opacity={isActive ? 1 : 0.7}
                 boxShadow={isActive ? '0 0 0 2px var(--chakra-colors-purple-400)' : 'none'}
                 _hover={{ opacity: 1 }}
@@ -689,10 +752,16 @@ export function VisualizationCanvas({
               transform="translateX(-50%)"
               zIndex={10}
               cursor="pointer"
-              onClick={(e) => { e.stopPropagation(); setActiveFilter(isActive ? null : { dimName: xDimName!, value: val }); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveFilter(isActive ? null : { dimName: xDimName!, value: val });
+              }}
             >
               <Badge
-                colorScheme="teal" fontSize="9px" px={1.5} whiteSpace="nowrap"
+                colorScheme="teal"
+                fontSize="9px"
+                px={1.5}
+                whiteSpace="nowrap"
                 opacity={isActive ? 1 : 0.7}
                 boxShadow={isActive ? '0 0 0 2px var(--chakra-colors-teal-400)' : 'none'}
                 _hover={{ opacity: 1 }}
@@ -714,14 +783,14 @@ export function VisualizationCanvas({
 
             // Search + filter visibility
             const searchMatch = !searchQuery.trim() || scoreNode(node, searchQuery) > 0;
-            const filterMatch = !activeFilter || (() => {
-              const dim = dimensions.find((d) => d.name === activeFilter.dimName);
-              if (!dim) return true;
-              const val = dim.type === 'categorical'
-                ? node.Dimension.categorical[dim.name]
-                : node.Dimension.ordinal[dim.name];
-              return val === activeFilter.value;
-            })();
+            const filterMatch =
+              !activeFilter ||
+              (() => {
+                const dim = dimensions.find((d) => d.name === activeFilter.dimName);
+                if (!dim) return true;
+                const val = dim.type === 'categorical' ? node.Dimension.categorical[dim.name] : node.Dimension.ordinal[dim.name];
+                return val === activeFilter.value;
+              })();
             const nodeOpacity = searchMatch && filterMatch && (!favoritesOnly || node.IsMyFav) ? 1 : 0.1;
 
             return (
@@ -773,42 +842,99 @@ export function VisualizationCanvas({
         {nodes.length > 0 && (
           <Box position="absolute" top={2} right={2} zIndex={20}>
             <VStack spacing={1} align="flex-end">
-              <Badge fontSize="9px" colorScheme="gray" pointerEvents="none">{camera.z.toFixed(1)}×</Badge>
+              <Badge fontSize="9px" colorScheme="gray" pointerEvents="none">
+                {camera.z.toFixed(1)}×
+              </Badge>
               <HStack spacing={1}>
                 <Tooltip label="Overview — fit all nodes" placement="left" hasArrow openDelay={300}>
-                  <Button size="xs" variant={camera.z < 1.5 ? 'solid' : 'outline'} colorScheme="gray"
-                    onClick={() => fitToScreen(1.4)} h="18px" minW="18px" px={1} fontSize="9px">●</Button>
+                  <Button
+                    size="xs"
+                    variant={camera.z < 1.5 ? 'solid' : 'outline'}
+                    colorScheme="gray"
+                    onClick={() => fitToScreen(1.4)}
+                    h="18px"
+                    minW="18px"
+                    px={1}
+                    fontSize="9px"
+                  >
+                    ●
+                  </Button>
                 </Tooltip>
                 <Tooltip label="Titles" placement="left" hasArrow openDelay={300}>
-                  <Button size="xs" variant={camera.z >= 1.5 && camera.z < 3 ? 'solid' : 'outline'} colorScheme="gray"
-                    onClick={() => jumpToZoom(2.0)} h="18px" minW="18px" px={1} fontSize="9px">T</Button>
+                  <Button
+                    size="xs"
+                    variant={camera.z >= 1.5 && camera.z < 3 ? 'solid' : 'outline'}
+                    colorScheme="gray"
+                    onClick={() => jumpToZoom(2.0)}
+                    h="18px"
+                    minW="18px"
+                    px={1}
+                    fontSize="9px"
+                  >
+                    T
+                  </Button>
                 </Tooltip>
                 <Tooltip label="Titles + attributes" placement="left" hasArrow openDelay={300}>
-                  <Button size="xs" variant={camera.z >= 3 && camera.z < 6 ? 'solid' : 'outline'} colorScheme="gray"
-                    onClick={() => jumpToZoom(4.0)} h="18px" minW="18px" px={1} fontSize="9px">A</Button>
+                  <Button
+                    size="xs"
+                    variant={camera.z >= 3 && camera.z < 6 ? 'solid' : 'outline'}
+                    colorScheme="gray"
+                    onClick={() => jumpToZoom(4.0)}
+                    h="18px"
+                    minW="18px"
+                    px={1}
+                    fontSize="9px"
+                  >
+                    A
+                  </Button>
                 </Tooltip>
                 <Tooltip label="Summary + steps" placement="left" hasArrow openDelay={300}>
-                  <Button size="xs" variant={camera.z >= 6 && camera.z < 10 ? 'solid' : 'outline'} colorScheme="gray"
-                    onClick={() => jumpToZoom(7.5)} h="18px" minW="18px" px={1} fontSize="9px">S</Button>
+                  <Button
+                    size="xs"
+                    variant={camera.z >= 6 && camera.z < 10 ? 'solid' : 'outline'}
+                    colorScheme="gray"
+                    onClick={() => jumpToZoom(7.5)}
+                    h="18px"
+                    minW="18px"
+                    px={1}
+                    fontSize="9px"
+                  >
+                    S
+                  </Button>
                 </Tooltip>
                 <Tooltip label="Full text" placement="left" hasArrow openDelay={300}>
-                  <Button size="xs" variant={camera.z >= 10 ? 'solid' : 'outline'} colorScheme="gray"
-                    onClick={() => jumpToZoom(11.0)} h="18px" minW="18px" px={1} fontSize="9px">≡</Button>
+                  <Button
+                    size="xs"
+                    variant={camera.z >= 10 ? 'solid' : 'outline'}
+                    colorScheme="gray"
+                    onClick={() => jumpToZoom(11.0)}
+                    h="18px"
+                    minW="18px"
+                    px={1}
+                    fontSize="9px"
+                  >
+                    ≡
+                  </Button>
                 </Tooltip>
               </HStack>
               {/* Generate-at-position + manual entry tools */}
               <HStack spacing={1}>
-                <Tooltip
-                  label={generateAtMode ? 'Cancel (Esc)' : 'Generate idea at position'}
-                  placement="left" hasArrow openDelay={300}
-                >
+                <Tooltip label={generateAtMode ? 'Cancel (Esc)' : 'Generate idea at position'} placement="left" hasArrow openDelay={300}>
                   <Button
                     size="xs"
                     variant={generateAtMode ? 'solid' : 'outline'}
                     colorScheme={generateAtMode ? 'blue' : 'gray'}
-                    h="18px" minW="18px" px={1} fontSize="9px" fontWeight="bold"
+                    h="18px"
+                    minW="18px"
+                    px={1}
+                    fontSize="9px"
+                    fontWeight="bold"
                     isDisabled={isGeneratingAt}
-                    onClick={(e) => { e.stopPropagation(); setGenerateAtMode((v) => !v); setShowManualInput(false); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setGenerateAtMode((v) => !v);
+                      setShowManualInput(false);
+                    }}
                   >
                     {isGeneratingAt ? <Spinner size="xs" /> : '+'}
                   </Button>
@@ -818,9 +944,16 @@ export function VisualizationCanvas({
                     size="xs"
                     variant={showManualInput ? 'solid' : 'outline'}
                     colorScheme={showManualInput ? 'blue' : 'gray'}
-                    h="18px" minW="18px" px={1} fontSize="9px"
+                    h="18px"
+                    minW="18px"
+                    px={1}
+                    fontSize="9px"
                     isDisabled={isAddingManualIdea}
-                    onClick={(e) => { e.stopPropagation(); setShowManualInput((v) => !v); setGenerateAtMode(false); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowManualInput((v) => !v);
+                      setGenerateAtMode(false);
+                    }}
                   >
                     {isAddingManualIdea ? <Spinner size="xs" /> : <MdEdit size={10} />}
                   </Button>
@@ -829,9 +962,13 @@ export function VisualizationCanvas({
               {/* Manual idea input */}
               {showManualInput && (
                 <Box
-                  bg="white" _dark={{ bg: 'gray.700', borderColor: 'gray.600' }}
-                  borderRadius="md" p={2} boxShadow="lg"
-                  border="1px solid" borderColor="gray.200"
+                  bg="white"
+                  _dark={{ bg: 'gray.700', borderColor: 'gray.600' }}
+                  borderRadius="md"
+                  p={2}
+                  boxShadow="lg"
+                  border="1px solid"
+                  borderColor="gray.200"
                   w="200px"
                   onClick={(e) => e.stopPropagation()}
                 >
@@ -844,23 +981,42 @@ export function VisualizationCanvas({
                     fontSize="11px"
                     resize="none"
                     onKeyDown={(e) => {
-                      if (e.key === 'Escape') { setShowManualInput(false); setManualInput(''); }
+                      if (e.key === 'Escape') {
+                        setShowManualInput(false);
+                        setManualInput('');
+                      }
                     }}
                     autoFocus
                   />
                   <HStack mt={1.5} justify="flex-end" spacing={1}>
-                    <Button size="xs" variant="ghost" colorScheme="gray" h="18px" px={2} fontSize="10px"
-                      onClick={() => { setShowManualInput(false); setManualInput(''); }}>
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      colorScheme="gray"
+                      h="18px"
+                      px={2}
+                      fontSize="10px"
+                      onClick={() => {
+                        setShowManualInput(false);
+                        setManualInput('');
+                      }}
+                    >
                       Cancel
                     </Button>
-                    <Button size="xs" colorScheme="blue" h="18px" px={2} fontSize="10px"
+                    <Button
+                      size="xs"
+                      colorScheme="blue"
+                      h="18px"
+                      px={2}
+                      fontSize="10px"
                       isDisabled={!manualInput.trim() || isAddingManualIdea}
                       onClick={() => {
                         if (!manualInput.trim()) return;
                         onAddManualIdea(manualInput.trim());
                         setManualInput('');
                         setShowManualInput(false);
-                      }}>
+                      }}
+                    >
                       Add
                     </Button>
                   </HStack>
@@ -873,13 +1029,22 @@ export function VisualizationCanvas({
         {/* Generating-at indicator */}
         {isGeneratingAt && (
           <Box
-            position="absolute" bottom={8} left="50%" transform="translateX(-50%)"
-            zIndex={25} bg="blackAlpha.700" borderRadius="md" px={3} py={1}
+            position="absolute"
+            bottom={8}
+            left="50%"
+            transform="translateX(-50%)"
+            zIndex={25}
+            bg="blackAlpha.700"
+            borderRadius="md"
+            px={3}
+            py={1}
             pointerEvents="none"
           >
             <HStack spacing={2}>
               <Spinner size="xs" color="white" />
-              <Text fontSize="xs" color="white">Generating idea…</Text>
+              <Text fontSize="xs" color="white">
+                Generating idea…
+              </Text>
             </HStack>
           </Box>
         )}
@@ -887,11 +1052,20 @@ export function VisualizationCanvas({
         {/* Generate-at mode hint */}
         {generateAtMode && !isGeneratingAt && (
           <Box
-            position="absolute" bottom={8} left="50%" transform="translateX(-50%)"
-            zIndex={25} bg="blue.600" borderRadius="md" px={3} py={1}
+            position="absolute"
+            bottom={8}
+            left="50%"
+            transform="translateX(-50%)"
+            zIndex={25}
+            bg="blue.600"
+            borderRadius="md"
+            px={3}
+            py={1}
             pointerEvents="none"
           >
-            <Text fontSize="xs" color="white">Click anywhere to generate an idea at that position · Esc to cancel</Text>
+            <Text fontSize="xs" color="white">
+              Click anywhere to generate an idea at that position · Esc to cancel
+            </Text>
           </Box>
         )}
       </Box>

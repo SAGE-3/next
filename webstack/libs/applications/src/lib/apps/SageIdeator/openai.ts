@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -21,7 +21,7 @@ async function openAIChat(
   apiKey: string,
   model: string,
   temperature = 0.7,
-  imageBase64?: string
+  imageBase64?: string,
 ): Promise<string> {
   // Build user message content — plain text or multimodal when image is attached
   const userContent = imageBase64
@@ -51,20 +51,21 @@ async function openAIChat(
   return data.choices[0].message.content as string;
 }
 
-const JSON_SYSTEM =
-  'You are a helpful assistant. Return ONLY valid JSON with no extra text, markdown, or code fences.';
+const JSON_SYSTEM = 'You are a helpful assistant. Return ONLY valid JSON with no extra text, markdown, or code fences.';
 
 const PROSE_SYSTEM =
   'You are a creative brainstorming assistant. Generate imaginative, practical, and diverse ideas. Write in clear, engaging, human-readable prose. Do not use JSON, bullet points, or structured formatting — write in natural paragraphs.';
 
-async function callChatAPI(
-  userPrompt: string, apiKey: string, model: string, temperature = 0.7, imageBase64?: string
-): Promise<string> {
+async function callChatAPI(userPrompt: string, apiKey: string, model: string, temperature = 0.7, imageBase64?: string): Promise<string> {
   return openAIChat(JSON_SYSTEM, userPrompt, apiKey, model, temperature, imageBase64);
 }
 
 export async function callProseAPI(
-  userPrompt: string, apiKey: string, model: string, temperature = 0.7, imageBase64?: string
+  userPrompt: string,
+  apiKey: string,
+  model: string,
+  temperature = 0.7,
+  imageBase64?: string,
 ): Promise<string> {
   return openAIChat(PROSE_SYSTEM, userPrompt, apiKey, model, temperature, imageBase64);
 }
@@ -82,7 +83,7 @@ export async function generateDimensionsFromPrompt(
   model: string,
   numDims: number,
   imageBase64?: string,
-  pdfContext?: string
+  pdfContext?: string,
 ): Promise<{ categorical: Record<string, string[]>; ordinal: Record<string, string[]> }> {
   const nominalDef = `A nominal dimension contains categorical values that are qualitative and distinct — no right answer. Good examples for brainstorming: Approach, Stakeholder, Domain, Format, Timeframe, Constraint, Innovation Type. Do NOT use: Quality, Clarity, Grammar, Length.\n\n`;
   const ordinalDef = `An ordinal dimension contains values measured in order (e.g., least → most). Good examples for brainstorming: Feasibility, Novelty, Scope, Risk Level, Resource Intensity. Do NOT use: Quality, Creativity, Length.\n\n`;
@@ -109,8 +110,16 @@ export async function generateDimensionsFromPrompt(
 
   let categorical: Record<string, string[]> = {};
   let ordinal: Record<string, string[]> = {};
-  try { categorical = JSON.parse(extractJSON(catRaw)); } catch { /* use empty */ }
-  try { ordinal = JSON.parse(extractJSON(ordRaw)); } catch { /* use empty */ }
+  try {
+    categorical = JSON.parse(extractJSON(catRaw));
+  } catch {
+    /* use empty */
+  }
+  try {
+    ordinal = JSON.parse(extractJSON(ordRaw));
+  } catch {
+    /* use empty */
+  }
 
   return { categorical, ordinal };
 }
@@ -121,7 +130,7 @@ export async function generateNodeContent(
   apiKey: string,
   model: string,
   imageBase64?: string,
-  pdfContext?: string
+  pdfContext?: string,
 ): Promise<string> {
   const pdfNote = pdfContext
     ? `The following document has been provided as context — ground your idea in the specifics of this material where relevant:\n\n${pdfContext}\n\n`
@@ -136,7 +145,7 @@ export async function generateNodeContent(
 export async function abstractNode(
   text: string,
   apiKey: string,
-  model: string
+  model: string,
 ): Promise<{ Title: string; Summary: string; Keywords: string[]; Steps: string[]; Structure: string }> {
   const msg =
     `Given the following idea text, return a structured JSON summary.\nText: ${text}\n` +
@@ -158,10 +167,7 @@ export async function abstractNode(
   }
 }
 
-export function buildRequirements(dims: {
-  categorical: Record<string, string[]>;
-  ordinal: Record<string, string[]>;
-}): {
+export function buildRequirements(dims: { categorical: Record<string, string[]>; ordinal: Record<string, string[]> }): {
   requirements: string;
   categorical: Record<string, string>;
   ordinal: Record<string, string>;
@@ -192,18 +198,14 @@ export async function generateNodeImage(
   keywords: string[],
   apiKey: string,
   brainstormingPrompt?: string,
-  dimension?: { categorical: Record<string, string>; ordinal: Record<string, string> }
+  dimension?: { categorical: Record<string, string>; ordinal: Record<string, string> },
 ): Promise<string> {
   const topicLine = brainstormingPrompt
     ? `Conceptual illustration for a brainstorming idea about: "${brainstormingPrompt}". `
     : `A conceptual illustration for the following idea. `;
 
-  const dimEntries = dimension
-    ? [...Object.entries(dimension.categorical), ...Object.entries(dimension.ordinal)]
-    : [];
-  const dimLine = dimEntries.length > 0
-    ? `It is characterized as: ${dimEntries.map(([k, v]) => `${k}: ${v}`).join(', ')}. `
-    : '';
+  const dimEntries = dimension ? [...Object.entries(dimension.categorical), ...Object.entries(dimension.ordinal)] : [];
+  const dimLine = dimEntries.length > 0 ? `It is characterized as: ${dimEntries.map(([k, v]) => `${k}: ${v}`).join(', ')}. ` : '';
 
   const prompt =
     topicLine +
@@ -230,7 +232,7 @@ export async function summarizeFavorites(
   nodes: Array<{ Title: string; Summary: string; Keywords: string[] }>,
   prompt: string,
   apiKey: string,
-  model: string
+  model: string,
 ): Promise<string> {
   const nodeList = nodes.map((n, i) => `${i + 1}. "${n.Title}": ${n.Summary}`).join('\n');
   const msg =
@@ -251,7 +253,7 @@ export async function generateUserDimension(
   prompt: string,
   nodes: Array<{ ID: string; Title: string; Summary: string }>,
   apiKey: string,
-  model: string
+  model: string,
 ): Promise<{
   type: 'categorical' | 'ordinal';
   values: string[];
@@ -272,13 +274,13 @@ export async function generateUserDimension(
     const j = JSON.parse(extractJSON(typeRaw));
     type = j.type === 'ordinal' ? 'ordinal' : 'categorical';
     values = Array.isArray(j.values) ? j.values.slice(0, 4) : [];
-  } catch { /* use defaults */ }
+  } catch {
+    /* use defaults */
+  }
   if (values.length === 0) values = ['Low', 'Medium', 'High', 'Very High'];
 
   // Step 2: assign a value to each existing node in one batch call
-  const nodeList = nodes
-    .map((n) => `- ID: ${n.ID} | Title: "${n.Title}" | Summary: "${n.Summary}"`)
-    .join('\n');
+  const nodeList = nodes.map((n) => `- ID: ${n.ID} | Title: "${n.Title}" | Summary: "${n.Summary}"`).join('\n');
   const assignMsg =
     `Dimension: "${dimName}" (${type})\n` +
     `Values: ${JSON.stringify(values)}\n\n` +
@@ -290,7 +292,9 @@ export async function generateUserDimension(
   let assignments: Record<string, string> = {};
   try {
     assignments = JSON.parse(extractJSON(assignRaw));
-  } catch { /* assignments stay empty — nodes get first value as fallback */ }
+  } catch {
+    /* assignments stay empty — nodes get first value as fallback */
+  }
 
   return { type, values, assignments };
 }

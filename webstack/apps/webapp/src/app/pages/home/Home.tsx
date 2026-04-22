@@ -1139,7 +1139,7 @@ export function HomePage() {
           display="flex"
           flex="1"
           flexDirection="column"
-          alignItems="center"
+          alignItems="flex-start"
           backgroundColor={sidebarBackgroundColor}
           maxHeight="100svh"
           height="100%"
@@ -1172,7 +1172,6 @@ export function HomePage() {
               },
             }}
             w="full"
-            maxW="2400px"
           >
             <Text fontSize="xx-large" fontWeight="bold" alignSelf="center">
               Good {getTimeBasedGreeting()}, {user?.data.name.split(' ')[0]}
@@ -1284,7 +1283,7 @@ export function HomePage() {
               </Box>
             </Box>
 
-            <VStack spacing="6" mt="4">
+            <VStack spacing="6" mt="4" width="100%">
               {/* Recent Boards Section */}
               <Box width="100%">
                 <Text fontWeight="bold" mb="2" ref={recentBoardsRef}>
