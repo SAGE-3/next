@@ -7,10 +7,12 @@
  */
 
 import { useRef, useState, useEffect, useCallback } from 'react';
+
+import { format } from 'date-fns/format';
+
 import { Flex, Box, Button, IconButton, Tooltip, useToast, useColorModeValue } from '@chakra-ui/react';
 import { MdFileDownload, MdSettings, MdChat, MdChevronLeft, MdChevronRight } from 'react-icons/md';
 
-import { format } from 'date-fns/format';
 import { useAppStore, useHexColor, useUser, downloadFile } from '@sage3/frontend';
 import { genId } from '@sage3/shared';
 
@@ -18,17 +20,24 @@ import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 
-import { generateDimensionsFromPrompt, generateNodeContent, abstractNode, buildRequirements, callProseAPI, generateUserDimension, VISION_MODELS, summarizeFavorites as summarizeFavoritesAPI, generateNodeImage } from './openai';
+import {
+  generateDimensionsFromPrompt,
+  generateNodeContent,
+  abstractNode,
+  buildRequirements,
+  callProseAPI,
+  generateUserDimension,
+  VISION_MODELS,
+  summarizeFavorites as summarizeFavoritesAPI,
+  generateNodeImage,
+} from './openai';
 
 // ─── PDF text extraction ──────────────────────────────────────────────────────
 const MAX_PDF_CHARS = 5000;
 
 async function extractPdfText(file: File): Promise<string> {
   const pdfjsLib = await import('pdfjs-dist');
-  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/build/pdf.worker.min.js',
-    import.meta.url
-  ).href;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.js', import.meta.url).href;
   const arrayBuffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
   let text = '';
@@ -53,7 +62,7 @@ function buildBlendedRequirements(
   xDimName: string | null,
   xBlend: DimBlend | null,
   yDimName: string | null,
-  yBlend: DimBlend | null
+  yBlend: DimBlend | null,
 ): { requirements: string; categorical: Record<string, string>; ordinal: Record<string, string> } {
   let req = '';
   const categorical: Record<string, string> = {};
@@ -148,18 +157,21 @@ function AppComponent(props: App): JSX.Element {
   };
 
   // ── PDF context ──
-  const handleAttachPdf = useCallback(async (file: File) => {
-    setIsLoadingPdf(true);
-    try {
-      const text = await extractPdfText(file);
-      updateState(props._id, { ...s, pdfContext: { filename: file.name, text } });
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      toast({ title: 'PDF extraction failed', description: msg, status: 'error', duration: 4000, isClosable: true });
-    } finally {
-      setIsLoadingPdf(false);
-    }
-  }, [s, props._id]);
+  const handleAttachPdf = useCallback(
+    async (file: File) => {
+      setIsLoadingPdf(true);
+      try {
+        const text = await extractPdfText(file);
+        updateState(props._id, { ...s, pdfContext: { filename: file.name, text } });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        toast({ title: 'PDF extraction failed', description: msg, status: 'error', duration: 4000, isClosable: true });
+      } finally {
+        setIsLoadingPdf(false);
+      }
+    },
+    [s, props._id],
+  );
 
   const handleClearPdf = useCallback(() => {
     updateState(props._id, { ...s, pdfContext: undefined });
@@ -168,12 +180,7 @@ function AppComponent(props: App): JSX.Element {
   // ── Generation ──
 
   const generate = useCallback(
-    async (branchOpts?: {
-      displayPrompt: string;
-      aiPrompt: string;
-      parentEntryId?: string;
-      parentNodeTitle?: string;
-    }) => {
+    async (branchOpts?: { displayPrompt: string; aiPrompt: string; parentEntryId?: string; parentNodeTitle?: string }) => {
       if (!user || isGenerating) return;
 
       const displayPrompt = branchOpts?.displayPrompt ?? input.trim();
@@ -184,17 +191,23 @@ function AppComponent(props: App): JSX.Element {
       }
 
       // Guard: image attached but model doesn't support vision
-      const image = branchOpts ? undefined : attachedImage ?? undefined;
+      const image = branchOpts ? undefined : (attachedImage ?? undefined);
       if (image && !VISION_MODELS.has(s.model)) {
         toast({
           title: 'Model does not support images',
           description: `Switch to a vision-capable model (e.g. gpt-4o-mini) to use image prompts.`,
-          status: 'warning', duration: 4000, isClosable: true,
+          status: 'warning',
+          duration: 4000,
+          isClosable: true,
         });
         return;
       }
 
-      if (!branchOpts) { setInput(''); setAttachedImage(null); updateState(props._id, { ...s, pdfContext: undefined }); }
+      if (!branchOpts) {
+        setInput('');
+        setAttachedImage(null);
+        updateState(props._id, { ...s, pdfContext: undefined });
+      }
       positionsRef.current.clear();
       hasFitRef.current = false;
 
@@ -225,10 +238,16 @@ function AppComponent(props: App): JSX.Element {
 
         const dimensions: AppState['dimensions'] = [
           ...Object.entries(rawDims.categorical).map(([name, values], i) => ({
-            id: i, name, type: 'categorical' as const, values,
+            id: i,
+            name,
+            type: 'categorical' as const,
+            values,
           })),
           ...Object.entries(rawDims.ordinal).map(([name, values], i) => ({
-            id: Object.keys(rawDims.categorical).length + i, name, type: 'ordinal' as const, values,
+            id: Object.keys(rawDims.categorical).length + i,
+            name,
+            type: 'ordinal' as const,
+            values,
           })),
         ];
 
@@ -252,12 +271,12 @@ function AppComponent(props: App): JSX.Element {
               Dimension: { categorical, ordinal },
               IsMyFav: false,
             });
-          })
+          }),
         );
 
         const latest = useAppStore.getState().apps.find((a) => a._id === props._id)?.data.state as AppState | undefined;
         const updatedHistory = (latest?.chatHistory ?? [...s.chatHistory, chatEntry]).map((e) =>
-          e.id === chatEntry.id ? { ...e, nodes: newNodes, dimensions } : e
+          e.id === chatEntry.id ? { ...e, nodes: newNodes, dimensions } : e,
         );
         setIsGenerating(false);
         setLocalStatusMessage('');
@@ -277,19 +296,26 @@ function AppComponent(props: App): JSX.Element {
         updateState(props._id, { ...s, status: 'idle' });
       }
     },
-    [user, s, input, username, isGenerating, props._id, attachedImage]
+    [user, s, input, username, isGenerating, props._id, attachedImage],
   );
 
   const toggleFav = (nodeId: string) => {
     if (!activeEntryId) return;
     const updatedNodes = localNodes.map((n) => (n.ID === nodeId ? { ...n, IsMyFav: !n.IsMyFav } : n));
-    const updatedHistory = s.chatHistory.map((e) => e.id === activeEntryId ? { ...e, nodes: updatedNodes } : e);
+    const updatedHistory = s.chatHistory.map((e) => (e.id === activeEntryId ? { ...e, nodes: updatedNodes } : e));
     updateState(props._id, { ...s, chatHistory: updatedHistory });
   };
 
   const clearAll = () => {
     updateState(props._id, {
-      ...s, status: 'idle', nodes: [], dimensions: [], prompt: '', statusMessage: '', chatHistory: [], qa: [],
+      ...s,
+      status: 'idle',
+      nodes: [],
+      dimensions: [],
+      prompt: '',
+      statusMessage: '',
+      chatHistory: [],
+      qa: [],
     });
     positionsRef.current.clear();
     hasFitRef.current = false;
@@ -307,18 +333,15 @@ function AppComponent(props: App): JSX.Element {
         setActiveEntryId(next?.id ?? null);
       }
     },
-    [s, props._id, activeEntryId]
+    [s, props._id, activeEntryId],
   );
 
-  const restoreSnapshot = useCallback(
-    (entry: AppState['chatHistory'][number]) => {
-      if (!(entry.nodes ?? []).length) return;
-      positionsRef.current.clear();
-      hasFitRef.current = false;
-      setActiveEntryId(entry.id);
-    },
-    []
-  );
+  const restoreSnapshot = useCallback((entry: AppState['chatHistory'][number]) => {
+    if (!(entry.nodes ?? []).length) return;
+    positionsRef.current.clear();
+    hasFitRef.current = false;
+    setActiveEntryId(entry.id);
+  }, []);
 
   const branchFromNode = useCallback(
     (node: SageNode) => {
@@ -338,7 +361,7 @@ function AppComponent(props: App): JSX.Element {
         parentNodeTitle: node.Title,
       });
     },
-    [s.prompt, activeEntryId, generate]
+    [s.prompt, activeEntryId, generate],
   );
 
   const askNodeQuestion = useCallback(
@@ -374,7 +397,7 @@ function AppComponent(props: App): JSX.Element {
         setAskingNodeId(null);
       }
     },
-    [user, s, username, askingNodeId, props._id]
+    [user, s, username, askingNodeId, props._id],
   );
 
   // ── Dimension management ──
@@ -390,18 +413,15 @@ function AppComponent(props: App): JSX.Element {
         const updatedNodes = localNodes.map((n) => ({
           ...n,
           Dimension: {
-            categorical: type === 'categorical'
-              ? { ...n.Dimension.categorical, [dimName]: assignments[n.ID] ?? values[0] }
-              : n.Dimension.categorical,
-            ordinal: type === 'ordinal'
-              ? { ...n.Dimension.ordinal, [dimName]: assignments[n.ID] ?? values[0] }
-              : n.Dimension.ordinal,
+            categorical:
+              type === 'categorical' ? { ...n.Dimension.categorical, [dimName]: assignments[n.ID] ?? values[0] } : n.Dimension.categorical,
+            ordinal: type === 'ordinal' ? { ...n.Dimension.ordinal, [dimName]: assignments[n.ID] ?? values[0] } : n.Dimension.ordinal,
           },
         }));
         const latest = useAppStore.getState().apps.find((a) => a._id === props._id)?.data.state as AppState | undefined;
         const cur = latest ?? s;
         const updatedHistory = cur.chatHistory.map((e) =>
-          e.id === activeEntryId ? { ...e, nodes: updatedNodes, dimensions: [...(e.dimensions ?? []), newDim] } : e
+          e.id === activeEntryId ? { ...e, nodes: updatedNodes, dimensions: [...(e.dimensions ?? []), newDim] } : e,
         );
         updateState(props._id, { ...cur, chatHistory: updatedHistory });
       } catch (err: unknown) {
@@ -411,7 +431,7 @@ function AppComponent(props: App): JSX.Element {
         setIsAddingDimension(false);
       }
     },
-    [s, localNodes, localDims, activeEntryId, isAddingDimension, props._id]
+    [s, localNodes, localDims, activeEntryId, isAddingDimension, props._id],
   );
 
   const rerollNode = useCallback(
@@ -435,12 +455,21 @@ function AppComponent(props: App): JSX.Element {
         if (!afterEntry) return;
         const updatedNodes = afterEntry.nodes.map((n) =>
           n.ID === nodeId
-            ? { ...n, Title: summary.Title, Summary: summary.Summary, Keywords: summary.Keywords, Steps: summary.Steps, Result: text, Structure: summary.Structure, Dimension: { categorical, ordinal }, IsMyFav: false, imageUrl: undefined }
-            : n
+            ? {
+                ...n,
+                Title: summary.Title,
+                Summary: summary.Summary,
+                Keywords: summary.Keywords,
+                Steps: summary.Steps,
+                Result: text,
+                Structure: summary.Structure,
+                Dimension: { categorical, ordinal },
+                IsMyFav: false,
+                imageUrl: undefined,
+              }
+            : n,
         );
-        const updatedHistory = (afterGen ?? cur).chatHistory.map((e) =>
-          e.id === activeEntryId ? { ...e, nodes: updatedNodes } : e
-        );
+        const updatedHistory = (afterGen ?? cur).chatHistory.map((e) => (e.id === activeEntryId ? { ...e, nodes: updatedNodes } : e));
         updateState(props._id, { ...(afterGen ?? cur), chatHistory: updatedHistory });
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -449,7 +478,7 @@ function AppComponent(props: App): JSX.Element {
         setRerollingNodeId(null);
       }
     },
-    [s, localNodes, activeEntryId, rerollingNodeId, props._id]
+    [s, localNodes, activeEntryId, rerollingNodeId, props._id],
   );
 
   const generateMore = useCallback(
@@ -473,16 +502,24 @@ function AppComponent(props: App): JSX.Element {
             const { requirements, categorical, ordinal } = buildRequirements(rawDims);
             const text = await generateNodeContent(entry.prompt, requirements, s.apiKey, s.model, undefined, s.pdfContext?.text);
             const summary = await abstractNode(text, s.apiKey, s.model);
-            newNodes.push({ ID: genId(), Title: summary.Title, Summary: summary.Summary, Keywords: summary.Keywords, Steps: summary.Steps, Result: text, Structure: summary.Structure, Dimension: { categorical, ordinal }, IsMyFav: false });
-          })
+            newNodes.push({
+              ID: genId(),
+              Title: summary.Title,
+              Summary: summary.Summary,
+              Keywords: summary.Keywords,
+              Steps: summary.Steps,
+              Result: text,
+              Structure: summary.Structure,
+              Dimension: { categorical, ordinal },
+              IsMyFav: false,
+            });
+          }),
         );
         const afterGen = useAppStore.getState().apps.find((a) => a._id === props._id)?.data.state as AppState | undefined;
         const cur = afterGen ?? s;
         const existingEntry = cur.chatHistory.find((e) => e.id === entry.id);
         const combinedNodes = [...(existingEntry?.nodes ?? entry.nodes), ...newNodes];
-        const updatedHistory = cur.chatHistory.map((e) =>
-          e.id === entry.id ? { ...e, nodes: combinedNodes } : e
-        );
+        const updatedHistory = cur.chatHistory.map((e) => (e.id === entry.id ? { ...e, nodes: combinedNodes } : e));
         setIsGenerating(false);
         setLocalStatusMessage('');
         updateState(props._id, { ...cur, status: 'ready', chatHistory: updatedHistory });
@@ -495,7 +532,7 @@ function AppComponent(props: App): JSX.Element {
         updateState(props._id, { ...(afterFail ?? s), status: 'ready' });
       }
     },
-    [user, s, isGenerating, props._id, restoreSnapshot]
+    [user, s, isGenerating, props._id, restoreSnapshot],
   );
 
   const generateImageForNode = useCallback(
@@ -508,12 +545,10 @@ function AppComponent(props: App): JSX.Element {
         const url = await generateNodeImage(node.Title, node.Summary, node.Keywords, s.apiKey, s.prompt, node.Dimension);
         const latest = useAppStore.getState().apps.find((a) => a._id === props._id)?.data.state as AppState | undefined;
         const cur = latest ?? s;
-        const updatedNodes = (cur.chatHistory.find((e) => e.id === activeEntryId)?.nodes ?? localNodes).map(
-          (n) => (n.ID === nodeId ? { ...n, imageUrl: url } : n)
+        const updatedNodes = (cur.chatHistory.find((e) => e.id === activeEntryId)?.nodes ?? localNodes).map((n) =>
+          n.ID === nodeId ? { ...n, imageUrl: url } : n,
         );
-        const updatedHistory = cur.chatHistory.map((e) =>
-          e.id === activeEntryId ? { ...e, nodes: updatedNodes } : e
-        );
+        const updatedHistory = cur.chatHistory.map((e) => (e.id === activeEntryId ? { ...e, nodes: updatedNodes } : e));
         updateState(props._id, { ...cur, chatHistory: updatedHistory });
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -522,7 +557,7 @@ function AppComponent(props: App): JSX.Element {
         setGeneratingImageNodeId(null);
       }
     },
-    [s, localNodes, activeEntryId, generatingImageNodeId, props._id]
+    [s, localNodes, activeEntryId, generatingImageNodeId, props._id],
   );
 
   const summarizeFavorites = useCallback(async () => {
@@ -534,7 +569,7 @@ function AppComponent(props: App): JSX.Element {
         favNodes.map((n) => ({ Title: n.Title, Summary: n.Summary, Keywords: n.Keywords })),
         s.prompt,
         s.apiKey,
-        s.model
+        s.model,
       );
       const header = `★ Favorites Summary\nTopic: ${s.prompt}\n\n`;
       const footer = `\n\nFavorites: ${favNodes.map((n) => n.Title).join(', ')}`;
@@ -546,7 +581,14 @@ function AppComponent(props: App): JSX.Element {
         size: { width: 420, height: 520, depth: 0 },
         rotation: { x: 0, y: 0, z: 0 },
         type: 'Stickie',
-        state: { text: header + summary + footer, fontSize: 18, color: 'yellow', lock: false, sources: [props._id], executeInfo: { executeFunc: '', params: {} } },
+        state: {
+          text: header + summary + footer,
+          fontSize: 18,
+          color: 'yellow',
+          lock: false,
+          sources: [props._id],
+          executeInfo: { executeFunc: '', params: {} },
+        },
         raised: true,
         dragging: false,
         pinned: false,
@@ -562,14 +604,14 @@ function AppComponent(props: App): JSX.Element {
   const branchFromFavorites = useCallback(() => {
     const favNodes = localNodes.filter((n) => n.IsMyFav);
     if (favNodes.length === 0) return;
-    const ideasList = favNodes
-      .map((n, i) => `${i + 1}. "${n.Title}": ${n.Summary}`)
-      .join('\n');
+    const ideasList = favNodes.map((n, i) => `${i + 1}. "${n.Title}": ${n.Summary}`).join('\n');
     const aiPrompt = [
       s.prompt ? `Original topic: ${s.prompt}` : '',
       `\nThe following ideas were favorited from the previous exploration:\n${ideasList}`,
       `\nNow generate new ideas that build on, combine, or extend the themes from these favorites. Explore adjacent variations that share their strengths.`,
-    ].filter(Boolean).join('\n');
+    ]
+      .filter(Boolean)
+      .join('\n');
     const displayPrompt = `Branch from ${favNodes.length} favorite${favNodes.length > 1 ? 's' : ''}: ${favNodes.map((n) => n.Title).join(', ')}`;
     generate({
       displayPrompt,
@@ -579,7 +621,14 @@ function AppComponent(props: App): JSX.Element {
   }, [localNodes, s.prompt, activeEntryId, generate]);
 
   const generateAt = useCallback(
-    async ({ worldX, worldY, xDimName, xBlend, yDimName, yBlend }: {
+    async ({
+      worldX,
+      worldY,
+      xDimName,
+      xBlend,
+      yDimName,
+      yBlend,
+    }: {
       worldX: number;
       worldY: number;
       xDimName: string | null;
@@ -590,9 +639,7 @@ function AppComponent(props: App): JSX.Element {
       if (!activeEntryId || localDims.length === 0) return;
       setIsGeneratingAt(true);
       try {
-        const { requirements, categorical, ordinal } = buildBlendedRequirements(
-          localDims, xDimName, xBlend, yDimName, yBlend
-        );
+        const { requirements, categorical, ordinal } = buildBlendedRequirements(localDims, xDimName, xBlend, yDimName, yBlend);
         const text = await generateNodeContent(s.prompt, requirements, s.apiKey, s.model);
         const summary = await abstractNode(text, s.apiKey, s.model);
         const newNode: AppState['nodes'][number] = {
@@ -610,9 +657,7 @@ function AppComponent(props: App): JSX.Element {
         positionsRef.current.set(newNode.ID, { x: worldX, y: worldY });
         const latest = useAppStore.getState().apps.find((a) => a._id === props._id)?.data.state as AppState | undefined;
         const cur = latest ?? s;
-        const updatedHistory = cur.chatHistory.map((e) =>
-          e.id === activeEntryId ? { ...e, nodes: [...e.nodes, newNode] } : e
-        );
+        const updatedHistory = cur.chatHistory.map((e) => (e.id === activeEntryId ? { ...e, nodes: [...e.nodes, newNode] } : e));
         updateState(props._id, { ...cur, chatHistory: updatedHistory });
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -621,7 +666,7 @@ function AppComponent(props: App): JSX.Element {
         setIsGeneratingAt(false);
       }
     },
-    [s, localDims, activeEntryId, props._id, positionsRef]
+    [s, localDims, activeEntryId, props._id, positionsRef],
   );
 
   const addManualIdea = useCallback(
@@ -648,9 +693,7 @@ function AppComponent(props: App): JSX.Element {
         };
         const latest = useAppStore.getState().apps.find((a) => a._id === props._id)?.data.state as AppState | undefined;
         const cur = latest ?? s;
-        const updatedHistory = cur.chatHistory.map((e) =>
-          e.id === activeEntryId ? { ...e, nodes: [...e.nodes, newNode] } : e
-        );
+        const updatedHistory = cur.chatHistory.map((e) => (e.id === activeEntryId ? { ...e, nodes: [...e.nodes, newNode] } : e));
         updateState(props._id, { ...cur, chatHistory: updatedHistory });
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -659,7 +702,7 @@ function AppComponent(props: App): JSX.Element {
         setIsAddingManualIdea(false);
       }
     },
-    [s, localDims, activeEntryId, props._id]
+    [s, localDims, activeEntryId, props._id],
   );
 
   const removeDimension = useCallback(
@@ -674,11 +717,11 @@ function AppComponent(props: App): JSX.Element {
         return { ...n, Dimension: { categorical, ordinal } };
       });
       const updatedHistory = s.chatHistory.map((e) =>
-        e.id === activeEntryId ? { ...e, nodes: updatedNodes, dimensions: updatedDims } : e
+        e.id === activeEntryId ? { ...e, nodes: updatedNodes, dimensions: updatedDims } : e,
       );
       updateState(props._id, { ...s, chatHistory: updatedHistory });
     },
-    [s, localNodes, localDims, activeEntryId, props._id]
+    [s, localNodes, localDims, activeEntryId, props._id],
   );
 
   // ── Setup screen ──
@@ -698,7 +741,7 @@ function AppComponent(props: App): JSX.Element {
 
   // ── Q&A helpers ──
 
-  const qaNode = selectedQANodeId ? localNodes.find((n) => n.ID === selectedQANodeId) ?? null : null;
+  const qaNode = selectedQANodeId ? (localNodes.find((n) => n.ID === selectedQANodeId) ?? null) : null;
   const nodeQAEntries = (s.qa ?? []).filter((e) => e.nodeId === selectedQANodeId);
 
   const submitQA = () => {
@@ -781,7 +824,11 @@ function AppComponent(props: App): JSX.Element {
           hasFitRef={hasFitRef}
           onToggleFav={toggleFav}
           onBranch={branchFromNode}
-          onSelectQA={(nodeId) => { setSelectedQANodeId(nodeId); setQaPanelOpen(true); setQaInput(''); }}
+          onSelectQA={(nodeId) => {
+            setSelectedQANodeId(nodeId);
+            setQaPanelOpen(true);
+            setQaInput('');
+          }}
           onAddDimension={addDimension}
           onRemoveDimension={removeDimension}
           isAddingDimension={isAddingDimension}
