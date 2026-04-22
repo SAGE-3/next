@@ -11,7 +11,6 @@ import { useColorModeValue } from '@chakra-ui/react';
 import { getStroke } from 'perfect-freehand';
 import * as Y from 'yjs';
 
-
 import { useHexColor, useUserSettings, useAnnotationStore, useAppStore } from '@sage3/frontend';
 
 export interface LineProps {
@@ -23,7 +22,7 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
   const { settings } = useUserSettings();
   const primaryActionMode = settings.primaryActionMode;
 
-  const { points, color, isComplete, alpha, size, type, text } = useLine(line);
+  const { points, color, isComplete, alpha, size, type, text, cachedPath } = useLine(line);
 
   const c = useHexColor(color ? color : 'red');
   const hoverColor = useColorModeValue(`${color}.600`, `${color}.100`);
@@ -33,7 +32,7 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
 
   const handleTextChange = (ev: React.ChangeEvent<HTMLInputElement>) => {
     line.set('text', ev.target.value);
-  }
+  };
 
   const handleClick = (ev: any) => {
     // Left-click while in eraser mode deletes this line/shape
@@ -67,23 +66,25 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
             stroke={hover ? hoverC : c}
             strokeOpacity={alpha ?? 0.6}
             strokeWidth={size ?? 5}
-            strokeLinejoin="miter"   // <-- sharp corners
-            strokeLinecap="butt"     // <-- flat line ends
+            strokeLinejoin="miter" // <-- sharp corners
+            strokeLinecap="butt" // <-- flat line ends
             shapeRendering="crispEdges"
             onMouseEnter={() => setHover(true)}
             onMouseLeave={() => setHover(false)}
             onMouseDown={handleClick}
           />
           <foreignObject x={minX} y={minY} width={maxX - minX} height={maxY - minY}>
-            <div style={{
-              width: '100%',
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
+            <div
+              style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
               <input
-                type='text'
+                type="text"
                 value={text}
                 style={{
                   width: '90%',
@@ -93,7 +94,7 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
                   color: c,
                   fontSize: '50px',
                   textAlign: 'center',
-                  outline: 'none'
+                  outline: 'none',
                 }}
                 onChange={handleTextChange}
               />
@@ -102,7 +103,7 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
         </g>
       );
     } catch (error) {
-      console.log(`${error}`)
+      console.log(`${error}`);
     }
   }
 
@@ -112,7 +113,10 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
     if (!points || points.length === 0) return null;
 
     // Compute bounding box from whatever points we have (robust to closed poly or 2-point form)
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    let minX = Infinity,
+      minY = Infinity,
+      maxX = -Infinity,
+      maxY = -Infinity;
     for (const [x, y] of points) {
       if (x < minX) minX = x;
       if (y < minY) minY = y;
@@ -132,23 +136,25 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
           stroke={hover ? hoverC : c}
           strokeOpacity={alpha ?? 0.6}
           strokeWidth={size ?? 5}
-          strokeLinejoin="miter"   // Sharp corners
-          strokeLinecap="butt"     // Flat line ends
+          strokeLinejoin="miter" // Sharp corners
+          strokeLinecap="butt" // Flat line ends
           shapeRendering="crispEdges"
           onMouseEnter={() => setHover(true)}
           onMouseLeave={() => setHover(false)}
           onMouseDown={handleClick}
         />
         <foreignObject x={minX} y={minY} width={width} height={height}>
-          <div style={{
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
             <input
-              type='text'
+              type="text"
               value={text}
               style={{
                 width: '90%',
@@ -158,7 +164,7 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
                 color: c,
                 fontSize: '50px',
                 textAlign: 'center',
-                outline: 'none'
+                outline: 'none',
               }}
               onChange={handleTextChange}
             />
@@ -167,20 +173,6 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
       </g>
     );
   }
-
-  // --- Render freehand lines with LESS rounding ----------------------------
-  // Use perfect-freehand to build the stroke outline, but:
-  //  - Lower smoothing and streamline to reduce roundness
-  //  - Build a polygonal path (M/L + Z) instead of quadratic curves
-  const strokeOutline = getStroke(points, {
-    size: size,
-    thinning: 0.35,     // a bit less 'brushy'
-    smoothing: 0.2,     // LOWER -> less rounding than your 0.6
-    streamline: 0.12,   // LOWER -> tracks pointer more tightly
-    last: isComplete,
-  });
-
-  const pathData = getSvgPathFromStrokePolygon(strokeOutline);
 
   if (type === 'arrow') {
     if (!points || points.length < 2) return null;
@@ -202,7 +194,7 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
               markerWidth="5"
               markerHeight="5"
               viewBox="0 0 10 10"
-              refX="5"   // place the tip (10,5) on the vertex
+              refX="5" // place the tip (10,5) on the vertex
               refY="5"
             >
               <path d="M0 0 L10 5 L0 10 Z" fill={hover ? hoverC : c} />
@@ -214,7 +206,7 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
             d={`M ${x1},${y1}, L ${x2},${y2}`}
             stroke={hover ? hoverC : c}
             strokeWidth={size}
-            strokeLinecap='round'
+            strokeLinecap="round"
             markerEnd={`url(#${x1},${y1},${x2},${y2})`}
             onMouseEnter={() => setHover(true)}
             onMouseLeave={() => setHover(false)}
@@ -223,7 +215,7 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
         </g>
       );
     } catch (e) {
-      console.log("Error rendering arrow:", e);
+      console.log('Error rendering arrow:', e);
     }
   }
 
@@ -247,7 +239,7 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
               markerWidth="5"
               markerHeight="5"
               viewBox="0 0 10 10"
-              refX="4"   // place the tip (10,5) on the vertex
+              refX="4" // place the tip (10,5) on the vertex
               refY="5"
             >
               <path d="M0 0 L10 5 L0 10 Z" fill={hover ? hoverC : c} />
@@ -259,7 +251,7 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
             d={`M ${x1},${y1}, L ${x2},${y2}`}
             stroke={hover ? hoverC : c}
             strokeWidth={size}
-            strokeLinecap='round'
+            strokeLinecap="round"
             markerEnd={`url(#${x1},${y1},${x2},${y2})`}
             markerStart={`url(#${x1},${y1},${x2},${y2})`}
             onMouseEnter={() => setHover(true)}
@@ -269,9 +261,22 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
         </g>
       );
     } catch (e) {
-      console.log("Error rendering double arrow:", e);
+      console.log('Error rendering double arrow:', e);
     }
   }
+
+  const pathData =
+    isComplete && cachedPath
+      ? cachedPath
+      : getSvgPathFromStrokePolygon(
+          getStroke(points, {
+            size: size,
+            thinning: 0.35, // a bit less 'brushy'
+            smoothing: 0.2, // LOWER -> less rounding than your 0.6
+            streamline: 0.12, // LOWER -> tracks pointer more tightly
+            last: isComplete,
+          })
+        );
 
   return (
     <g>
@@ -308,6 +313,7 @@ export function useLine(line: Y.Map<any>) {
   const [size, setSize] = useState<number>(5);
   const [type, setType] = useState<string>('line');
   const [text, setText] = useState<string>('');
+  const [cachedPath, setCachedPath] = useState<string>('');
 
   // Subscribe to changes to the line itself and sync into React state.
   useEffect(() => {
@@ -319,6 +325,7 @@ export function useLine(line: Y.Map<any>) {
       setSize(current.size);
       setType(current.type || 'line'); // read 'type' ('line' | 'rectangle')
       setText(current.text);
+      setCachedPath(current.cachedPath || '');
     }
 
     handleChange();
@@ -348,12 +355,12 @@ export function useLine(line: Y.Map<any>) {
     };
   }, [line]);
 
-  return { points: pts, color, isComplete, alpha, size, type, text };
+  return { points: pts, color, isComplete, alpha, size, type, text, cachedPath };
 }
 
 /**
  * Converts an array into an array of pairs by grouping consecutive elements.
- * 
+ *
  * @template T - The type of elements in the input array
  * @param arr - The input array to be converted into pairs
  * @returns An array of pairs, where each pair is a two-element array containing consecutive elements from the input array
