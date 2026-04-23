@@ -38,7 +38,6 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
     // Left-click while in eraser mode deletes this line/shape
     if (ev.button === 0 && primaryActionMode === 'eraser') {
       onClick(id);
-      console.log(`LINE |click: primaryActionMode=${primaryActionMode}`);
     }
   };
 
@@ -275,7 +274,7 @@ export const Line = memo(function Line({ line, onClick }: LineProps) {
             smoothing: 0.2, // LOWER -> less rounding than your 0.6
             streamline: 0.12, // LOWER -> tracks pointer more tightly
             last: isComplete,
-          })
+          }),
         );
 
   return (

@@ -679,6 +679,7 @@ function DraftLine({ line }: { line: DraftShape }) {
     smoothing: 0.2,
     streamline: 0.12,
     last: line.isComplete,
+    simulatePressure: false,
   });
 
   const pathData = getSvgPathFromStrokePolygon(strokeOutline);
@@ -687,10 +688,18 @@ function DraftLine({ line }: { line: DraftShape }) {
 
 function getSvgPathFromStrokePolygon(stroke: number[][]) {
   if (!stroke || stroke.length === 0) return '';
-  let d = `M${stroke[0][0].toFixed(1)},${stroke[0][1].toFixed(1)}`;
+  const xx = stroke[0][0];
+  const yy = stroke[0][1];
+  let cx = xx;
+  let cy = yy;
+  let d = `M${xx.toFixed(0)},${yy.toFixed(0)}`; // asbolute move to the first point
   for (let i = 1; i < stroke.length; i++) {
     const [x, y] = stroke[i];
-    d += ` L${x.toFixed(1)},${y.toFixed(1)}`;
+    const dx = x - cx; // relative line to the next point
+    const dy = y - cy;
+    d += ` l${dx.toFixed(1)},${dy.toFixed(1)}`;
+    cx = x;
+    cy = y;
   }
   d += ' Z';
   return d;
