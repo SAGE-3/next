@@ -192,7 +192,7 @@ const VNCAudioWrapperComponent = ({
                   <VStack spacing={3}>
                     <Icon as={FaFirefoxBrowser} boxSize={24} color="orange.300" />
                     <Text fontSize="2xl" fontWeight="bold" color="white" alignItems="center" gap={1}>
-                       Click on this app to start Firefox
+                      Click on this app to start Firefox
                     </Text>
                   </VStack>
                 </Box>
@@ -235,14 +235,7 @@ const VNCAudioWrapperComponent = ({
               }
             }}
           />
-          {audioAutoPlay && sAudio && (
-            <AudioVncService
-              // Remount on selection change to fix audio desync
-              key={`audio-${props._id}-${isSelected ? 'selected' : 'deselected'}`}
-              wsUrl={`${veoUrl}${wsUrl}/audio`}
-              enabled={true}
-            />
-          )}
+          {audioAutoPlay && sAudio && <AudioVncService key={`audio-${props._id}`} wsUrl={`${veoUrl}${wsUrl}/audio`} enabled={true} />}
         </div>
       )}
     </>
