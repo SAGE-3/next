@@ -49,7 +49,7 @@ export function ConfigRouter(): express.Router {
       // Jupyter token
       token: token,
       admins: config.auth.admins || [],
-      models: config.services.models || [],
+      // models: config.services.models || [],
       fluentd: config.fluentd || {},
       veoServer: config.veoServer || {},
     } as OpenConfiguration;
