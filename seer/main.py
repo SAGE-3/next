@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from fluent import sender
 from libs.ai_logging import initFluent
 
+
 from libs.localtypes import (
     ImageQuery,
     Question,
@@ -27,6 +28,8 @@ logger = logging.getLogger("uvicorn.error")
 # SAGE3 API
 from pysage3.config import config as conf, prod_type
 from pysage3.client import PySage3
+# Utils
+from libs.utils import getModelsInfo
 
 # SAGE3 handle
 ps3 = PySage3(conf, prod_type)
@@ -48,17 +51,15 @@ from app.code import CodeAgent
 from app.mesonet import MesonetAgent
 
 
-# Instantiate each module's class
-chatAG = ChatAgent(logger, ps3)
-codeAG = CodeAgent(logger, ps3)
-# summaryAG = SummaryAgent(logger, ps3)
-imageAG = ImageAgent(logger, ps3)
-mesonetAG = MesonetAgent(logger, ps3)
-pdfAG = PDFAgent(logger, ps3)
-webAG = WebAgent(logger, ps3)
-asyncio.ensure_future(webAG.init())
+# Instantiate module handles during FastAPI startup after refreshing server config
+chatAG = None
+codeAG = None
+imageAG = None
+mesonetAG = None
+pdfAG = None
+webAG = None
 
-# set to debug the queries into langchain
+# Set to debug the queries into langchain
 # set_debug(True)
 # set_verbose(True)
 
@@ -73,26 +74,35 @@ asyncio.ensure_future(webAG.init())
 #         await asyncio.sleep(3)
 
 
-# @asynccontextmanager
-# async def lifespan(app: FastAPI):
-#     # Start the periodic task
-#     task = asyncio.create_task(my_periodic_task())
-#     yield  # Application runs here
-#     # Cleanup on shutdown
-#     task.cancel()
-#     try:
-#         await task
-#     except asyncio.CancelledError:
-#         print("Periodic task cancelled")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global chatAG, codeAG, imageAG, mesonetAG, pdfAG, webAG
+
+    logger.info("FastAPI App started")
+    web_config = getModelsInfo(ps3)
+    logger.info("Fetched API keys and model configuration from SAGE3 server")
+    print(web_config)
+
+
+    chatAG = ChatAgent(logger, ps3)
+    codeAG = CodeAgent(logger, ps3)
+    imageAG = ImageAgent(logger, ps3)
+    mesonetAG = MesonetAgent(logger, ps3)
+    pdfAG = PDFAgent(logger, ps3)
+    webAG = WebAgent(logger, ps3)
+
+    await webAG.init()
+    yield
 
 
 # Web server
 app = FastAPI(
-    # lifespan=lifespan,
+    lifespan=lifespan,
     title="Seer",
     description="A LangChain proxy for SAGE3.",
     version="0.1.0",
 )
+
 
 
 #
