@@ -102,12 +102,9 @@ def getModelsInfo(ps3):
     Returns:
       dict: A dictionary containing the "llama" and "openai" model information.
     """
-    sage3_config = ps3.s3_comm.web_config
-    openai = sage3_config["openai"]
-    llama = sage3_config["llama"]
-    azure = sage3_config["azure"]
-    return {"llama": llama, "openai": openai, "azure": azure}
-
+    sage3_config = ps3.s3_comm.web_config['models']
+    print(sage3_config)
+    return sage3_config
 
 def getRoomInfo(ps3, room_id):
     """
