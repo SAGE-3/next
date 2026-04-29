@@ -12,7 +12,8 @@ import { App, AppGroup } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { useAppStore, useUser, useUIStore, useConfigStore } from '@sage3/frontend';
-import { FaFirefoxBrowser, FaClipboard } from 'react-icons/fa';
+import { FaClipboard } from 'react-icons/fa';
+import { TbWorld } from 'react-icons/tb';
 import { MdVolumeOff, MdVolumeUp } from 'react-icons/md';
 import { TbMouse, TbMouseOff } from 'react-icons/tb';
 
@@ -26,7 +27,7 @@ function AppComponent(props: App): JSX.Element {
   const veoUrl = useConfigStore((state) => state.config.veoServer?.url || '');
 
   return (
-    <AppWindow app={props} hideBackgroundColor={'orange'} hideBordercolor={'orange'} hideBackgroundIcon={FaFirefoxBrowser}>
+    <AppWindow app={props} hideBackgroundColor={'orange'} hideBordercolor={'orange'} hideBackgroundIcon={TbWorld}>
       <VNCAudioWrapper
         veoUrl={veoUrl}
         container="firefox-audio"

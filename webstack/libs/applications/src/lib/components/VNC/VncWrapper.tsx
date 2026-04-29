@@ -7,7 +7,7 @@
  */
 
 import { useColorMode, Spinner, Box, Image, Text, VStack, Icon } from '@chakra-ui/react';
-import { FaFirefoxBrowser } from 'react-icons/fa';
+import { TbWorld } from 'react-icons/tb';
 import { App } from '../../schema';
 
 import { useEffect, useRef, useState, memo } from 'react';
@@ -190,9 +190,9 @@ const VNCAudioWrapperComponent = ({
                   bg="blackAlpha.500"
                 >
                   <VStack spacing={3}>
-                    <Icon as={FaFirefoxBrowser} boxSize={24} color="orange.300" />
+                    <Icon as={TbWorld} boxSize={24} color="orange.300" />
                     <Text fontSize="2xl" fontWeight="bold" color="white" alignItems="center" gap={1}>
-                      Click on this app to start Firefox
+                      Click on this app to start Browser
                     </Text>
                   </VStack>
                 </Box>
