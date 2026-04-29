@@ -153,7 +153,7 @@ export function BoardListPanel(props: BoardListPanelProps) {
           flexWrap="wrap"
           justifyContent="left"
           style={{ maxHeight: 'calc(100svh - 270px)', width: '100%', maxWidth: '2200px' }}
-          margin="0 auto"
+          margin="0"
           overflowY="scroll"
           overflowX="hidden"
           minWidth="420px"

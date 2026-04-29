@@ -41,7 +41,6 @@
     "@turf/bbox": "^7.2.0",
     "@turf/center": "^7.2.0",
     "ansi-to-react": "^6.1.6",
-    "axios": "^1.13.5",
     "bullmq": "^3.12.0",
     "chakra-dayzed-datepicker": "^0.3.1",
     "chart.js": "^4.2.0",
@@ -68,7 +67,7 @@
     "highlight.js": "^11.10.0",
     "hjson": "^3.2.2",
     "hotkeys-js": "^3.10.0",
-    "http-proxy-middleware": "2",
+    "http-proxy-middleware": "^3.0.5",
     "jsonwebtoken": "^9.0.2",
     "jszip": "^3.10.1",
     "ky": "^1.8.2",
@@ -223,7 +222,7 @@
     "url-loader": "^3.0.0"
   },
   "engines": {
-    "node": "^18 || ^20 || ^22"
+    "node": "^20 || ^22 || ^24"
   },
   "config": {
     "commitizen": {

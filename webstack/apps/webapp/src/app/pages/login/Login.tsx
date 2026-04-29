@@ -320,7 +320,19 @@ export function LoginPage() {
   return (
     <Box display="flex" flexDir={'column'} justifyContent="center" alignItems="center" width="100%" height="100%" position="relative">
       <Box pb={'2rem'} alignItems="center">
-        <Image aspectRatio={2.55} width="20vw" minWidth="400px" maxWidth="35rem" src={logoUrl} alt="SAGE3 Logo" fit="contain" />
+        <Image
+          aspectRatio={2.55}
+          width="20vw"
+          minWidth="400px"
+          maxWidth="35rem"
+          // width="300px"
+          src={logoUrl}
+          alt="SAGE3 Logo"
+          fit="contain"
+          // background={colorMode === 'light' ? 'gray.800' : 'undefined'}
+          mixBlendMode={colorMode === 'light' ? 'difference' : 'normal'}
+          filter={colorMode === 'light' ? 'hue-rotate(200deg)' : 'none'}
+        />
       </Box>
 
       {/* Server Name */}

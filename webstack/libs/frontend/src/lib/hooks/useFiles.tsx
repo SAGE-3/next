@@ -8,12 +8,10 @@
 
 import { useRef, useEffect, useState } from 'react';
 import { ToastId, useToast } from '@chakra-ui/react';
-// Upload with axios and progress event
-import axios, { AxiosProgressEvent, AxiosError } from 'axios';
 // Date manipulation (for filename)
 import { format as dateFormat } from 'date-fns/format';
 // Video metadata
-import { parseMedia } from "@remotion/media-parser";
+import { parseMedia } from '@remotion/media-parser';
 
 // File information
 import {
@@ -70,11 +68,11 @@ async function fetchMediaMetadata(file: File) {
       },
     });
     if (result) {
-      console.log("Video metadata:", result);
+      console.log('Video metadata:', result);
     }
-    return result
+    return result;
   } else {
-    console.log("Failed to parse media metadata");
+    console.log('Failed to parse media metadata');
     return null;
   }
 }
@@ -98,7 +96,7 @@ export function setupApp(
   roomId: string,
   boardId: string,
   { w, h }: { w: number; h: number } = { w: 400, h: 400 },
-  init: Partial<AppState> = {}
+  init: Partial<AppState> = {},
 ): AppSchema {
   return {
     title: title,
@@ -216,7 +214,7 @@ async function openApplication(a: Asset, xDrop: number, yDrop: number, roomId: s
         roomId,
         boardId,
         { w: w, h: w / (extras.aspectRatio || 1) },
-        { assetid: fileID }
+        { assetid: fileID },
       );
     } else if (isVideo(fileType)) {
       // Look for the file in the asset store
@@ -305,7 +303,7 @@ async function openApplication(a: Asset, xDrop: number, yDrop: number, roomId: s
         roomId,
         boardId,
         { w: 850, h: 400 },
-        { content: text, language: lang, filename: a.data.originalfilename }
+        { content: text, language: lang, filename: a.data.originalfilename },
       );
     } else if (isJSON(fileType)) {
       const localurl = apiUrls.assets.getAssetById(a.data.file);
@@ -432,7 +430,7 @@ async function createApplicationAfterUpload(
   xpos: number,
   ypos: number,
   roomId: string,
-  boardId: string
+  boardId: string,
 ): Promise<AppSchema[] | null> {
   const assets = useAssetStore.getState().assets;
   for (const a of assets) {
@@ -521,7 +519,7 @@ export function useFiles(): UseFiles {
         // Get video metadata
         if (isVideo(filetype)) {
           const meta = await fetchMediaMetadata(input[i]);
-          if (meta?.container !== "mp4" || meta?.videoCodec === null) {
+          if (meta?.container !== 'mp4' || meta?.videoCodec === null) {
             toast({
               title: 'Unsupported video format',
               description: 'Only MP4 videos are supported',
@@ -588,53 +586,48 @@ export function useFiles(): UseFiles {
       setConfigDrop({ xDrop: dx, yDrop: dy, roomId: roomId, boardId: boardId });
       setUploadInProgress(true);
 
-      // Upload with a POST request
-      const response = await axios({
-        method: 'post',
-        url: apiUrls.assets.upload,
-        data: fd,
-        // onUploadProgress: (p: AxiosProgressEvent) => {
-        // if (toastIdRef.current && p.progress) {
-        //   const progress = (p.progress * 100).toFixed(0);
-        //   if (p.progress < 1) {
-        //     toast.update(toastIdRef.current, {
-        //       title: 'Upload',
-        //       description: 'Progress: ' + progress + '%',
-        //       isClosable: true,
-        //       duration: 5000,
-        //     });
-        //   }
-        // }
-        // },
-      })
-        .finally(() => {
-          // Some errors with the files
-          if (!filenames) {
-            toast({
-              title: 'Upload with Errors',
-              status: 'warning',
-              duration: 4000,
-              isClosable: true,
-            });
-          }
-          setUploadInProgress(false);
-        })
-        .catch((error: AxiosError) => {
-          // Big error in file handling in backend
-          if (toastIdRef.current) {
-            toast.update(toastIdRef.current, {
-              title: 'Upload',
-              description: 'Upload failed: ' + (error.response?.data || error.code),
-              status: 'error',
-              duration: 4000,
-              isClosable: true,
-            });
-          }
-          setUploadInProgress(false);
+      let responseData: string[] | null = null;
+      try {
+        // Upload with a POST request
+        const response = await fetch(apiUrls.assets.upload, {
+          method: 'POST',
+          body: fd,
         });
-      if (response) {
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || response.statusText || `HTTP ${response.status}`);
+        }
+
+        responseData = (await response.json()) as string[];
+      } catch (error) {
+        // Error in file handling in backend
+        if (toastIdRef.current) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          toast.update(toastIdRef.current, {
+            title: 'Upload',
+            description: 'Upload failed: ' + errorMessage,
+            status: 'error',
+            duration: 4000,
+            isClosable: true,
+          });
+        }
+      } finally {
+        // Some errors with the files
+        if (!filenames) {
+          toast({
+            title: 'Upload with Errors',
+            status: 'warning',
+            duration: 4000,
+            isClosable: true,
+          });
+        }
+        setUploadInProgress(false);
+      }
+
+      if (responseData) {
         // Get the new asset IDs
-        const newids = response.data as string[];
+        const newids = responseData;
         // Refresh the asset store
         await useAssetStore.getState().update(roomId);
         // Show a success message
@@ -647,7 +640,6 @@ export function useFiles(): UseFiles {
         //     isClosable: true,
         //   });
         // }
-        setUploadInProgress(false);
         // Finish the upload by updating with the new asset IDs
         setUploadSuccess(newids);
       }
