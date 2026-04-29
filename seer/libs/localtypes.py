@@ -38,6 +38,20 @@ class Answer(BaseModel):
     actions: List[Json]  # actions to be performed
 
 
+class AlfredToolCall(BaseModel):
+    name: str
+    args: dict
+    summary: str
+
+
+class AlfredAnswer(BaseModel):
+    id: str  # question UUID v4
+    r: str  # answer
+    success: bool = True  # success flag
+    actions: List[dict]
+    toolCalls: List[AlfredToolCall]
+
+
 class CodeRequest(BaseModel):
     ctx: Context  # context
     id: str  # question UUID v4

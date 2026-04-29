@@ -34,6 +34,29 @@ export type AskResponse = {
   actions?: any[];
 };
 
+export type AlfredToolCall = {
+  name: string;
+  args: Record<string, any>;
+  summary: string;
+};
+
+export type AlfredRequest = {
+  ctx: { previousQ: string[]; previousA: string[]; pos: number[]; roomId: string; boardId: string };
+  id: string;
+  user: string;
+  location: string;
+  q: string;
+  model: string;
+};
+
+export type AlfredResponse = {
+  id: string;
+  r: string;
+  success: boolean;
+  actions?: any[];
+  toolCalls?: AlfredToolCall[];
+};
+
 // Web request
 export type WebQuery = {
   ctx: { previousQ: string[]; previousA: string[]; pos: number[]; roomId: string; boardId: string };
@@ -129,6 +152,7 @@ export type CodeResponse = {
 export const AgentRoutes = {
   status: '/status',
   ask: '/ask',
+  alfred: '/mcp-agent',
   summary: '/summary',
   web: '/web',
   webshot: '/webshot',

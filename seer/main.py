@@ -39,6 +39,8 @@ from langchain.globals import set_debug, set_verbose
 
 # Modules
 from app.chat import ChatAgent
+from app.mcp_agent import MCPAgent
+from app.mcp_server import build_mcp_server
 
 # from app.summary import SummaryAgent
 from app.web import WebAgent
@@ -51,12 +53,14 @@ from app.mesonet import MesonetAgent
 # Instantiate each module's class
 chatAG = ChatAgent(logger, ps3)
 codeAG = CodeAgent(logger, ps3)
+mcpAG = MCPAgent(logger, ps3)
 # summaryAG = SummaryAgent(logger, ps3)
 imageAG = ImageAgent(logger, ps3)
 mesonetAG = MesonetAgent(logger, ps3)
 pdfAG = PDFAgent(logger, ps3)
 webAG = WebAgent(logger, ps3)
 asyncio.ensure_future(webAG.init())
+mcp_server = build_mcp_server(ps3, logger)
 
 # set to debug the queries into langchain
 # set_debug(True)
@@ -86,13 +90,20 @@ asyncio.ensure_future(webAG.init())
 #         print("Periodic task cancelled")
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    async with mcp_server.session_manager.run():
+        yield
+
+
 # Web server
 app = FastAPI(
-    # lifespan=lifespan,
+    lifespan=lifespan,
     title="Seer",
     description="A LangChain proxy for SAGE3.",
     version="0.1.0",
 )
+app.mount("/mcp", mcp_server.streamable_http_app())
 
 
 #
@@ -117,6 +128,18 @@ async def ask_question(qq: Question):
 
     except HTTPException as e:
         # Get the error message
+        text = e.detail
+        raise HTTPException(status_code=500, detail=text)
+
+
+# ALFRED / MCP QUESTION
+@app.post("/mcp-agent")
+async def alfred_question(qq: Question):
+    try:
+        val = await mcpAG.process(qq)
+        return val
+
+    except HTTPException as e:
         text = e.detail
         raise HTTPException(status_code=500, detail=text)
 

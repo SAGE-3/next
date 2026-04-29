@@ -15,6 +15,8 @@ import {
   HealthResponse,
   AskRequest,
   AskResponse,
+  AlfredRequest,
+  AlfredResponse,
   WebQuery,
   WebAnswer,
   ImageQuery,
@@ -65,6 +67,10 @@ const askHandler: RpcHandlerPost<AskRequest, AskResponse> = (req) => {
   const route = AgentRoutes.ask;
   return fetchPost(`${config.agents.url}${route}`, req);
 };
+const alfredHandler: RpcHandlerPost<AlfredRequest, AlfredResponse> = (req) => {
+  const route = AgentRoutes.alfred;
+  return fetchPost(`${config.agents.url}${route}`, req);
+};
 const codeHandler: RpcHandlerPost<AskRequest, AskResponse> = (req) => {
   const route = AgentRoutes.code;
   return fetchPost(`${config.agents.url}${route}`, req);
@@ -98,6 +104,7 @@ const mesonetHandler: RpcHandlerPost<MesonetRequest, MesonetResponse> = (req) =>
 const handlers: HandlerStore = {};
 handlers[AgentRoutes.status] = { func: statusHandler, method: 'GET' };
 handlers[AgentRoutes.ask] = { func: askHandler, method: 'POST' };
+handlers[AgentRoutes.alfred] = { func: alfredHandler, method: 'POST' };
 handlers[AgentRoutes.summary] = { func: summaryHandler, method: 'POST' };
 handlers[AgentRoutes.web] = { func: webHandler, method: 'POST' };
 handlers[AgentRoutes.webshot] = { func: webshotHandler, method: 'POST' };

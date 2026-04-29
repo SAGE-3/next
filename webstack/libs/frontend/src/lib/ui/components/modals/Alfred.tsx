@@ -16,6 +16,9 @@ import {
   Input,
   VStack,
   Button,
+  Box,
+  Divider,
+  List,
   useColorMode,
   HStack,
   ListItem,
@@ -30,6 +33,8 @@ import {
   useToast,
   InputLeftAddon,
   useColorModeValue,
+  Spinner,
+  Text,
   Tooltip,
   useDisclosure,
 } from '@chakra-ui/react';
@@ -45,9 +50,11 @@ import {
   MdInfoOutline,
   MdSettings,
   MdMic,
+  MdOpenInNew,
   MdStop,
 } from 'react-icons/md';
 import { v5 as uuidv5 } from 'uuid';
+import Markdown from 'markdown-to-jsx';
 
 import {
   processContentURL,
@@ -70,7 +77,7 @@ import {
 import { AppName, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
 import { Applications } from '@sage3/applications/apps';
-import { getExtension } from '@sage3/shared';
+import { AlfredRequest, AlfredResponse, SError, getExtension } from '@sage3/shared';
 import { FileEntry } from '@sage3/shared/types';
 
 type props = {
@@ -212,7 +219,7 @@ export function Alfred(props: props) {
   // Alfred quick bar response
   const alfredAction = useCallback(
     (term: string) => {
-      if (!user) return;
+      if (!user) return false;
 
       // Get the position of the cursor
       const boardCursor = getBoardCursor();
@@ -231,6 +238,7 @@ export function Alfred(props: props) {
         // Check if it's a valid app name
         if (name in Applications) {
           newApplication(name as AppName);
+          return true;
         }
       } else if (terms[0] === 'w' || terms[0] === 'web' || terms[0] === 'webview') {
         if (terms[1]) {
@@ -251,6 +259,7 @@ export function Alfred(props: props) {
             dragging: false,
             pinned: false,
           });
+          return true;
         }
       } else if (terms[0] === 'g' || terms[0] === 'goo' || terms[0] === 'google') {
         const rest = terms.slice(1).join('+');
@@ -268,6 +277,7 @@ export function Alfred(props: props) {
           dragging: false,
           pinned: false,
         });
+        return true;
       } else if (terms[0] === 's' || terms[0] === 'n' || terms[0] === 'stick' || terms[0] === 'stickie' || terms[0] === 'note') {
         const content = terms.slice(1).join(' ');
         createApp({
@@ -283,18 +293,25 @@ export function Alfred(props: props) {
           dragging: false,
           pinned: false,
         });
+        return true;
       } else if (terms[0] === 'calc' || terms[0] === 'calculator') {
         newApplication('Calculator');
+        return true;
       } else if (terms[0] === 'c' || terms[0] === 'cell') {
         newApplication('SageCell');
+        return true;
       } else if (terms[0] === 'toggleui') {
         toggleShowUI();
+        return true;
       } else if (terms[0] === 'light') {
         if (colorMode !== 'light') toggleColorMode();
+        return true;
       } else if (terms[0] === 'dark') {
         if (colorMode !== 'dark') toggleColorMode();
+        return true;
       } else if (terms[0] === 'save') {
         saveBoard(terms[1]);
+        return true;
       } else if (terms[0] === 'tag') {
         // search apps with tags
         const tags = terms.slice(1);
@@ -311,58 +328,15 @@ export function Alfred(props: props) {
             fitApps(apps.filter((a) => toSelect.includes(a._id)));
           }
         }
+        return true;
       } else if (terms[0] === 'clear' || terms[0] === 'clearall' || terms[0] === 'closeall') {
         // Batch delete all the apps
         const ids = apps.map((a) => a._id);
         deleteApp(ids);
-      } else {
-        // redo the calculations for the position
-        const ww = 820;
-        const hh = 620;
-        // Get around  the center of the board
-        const bx = useUIStore.getState().boardPosition.x;
-        const by = useUIStore.getState().boardPosition.y;
-        const scale = useUIStore.getState().scale;
-        let px = Math.floor(-bx + window.innerWidth / scale / 2); // center
-        let py = Math.floor(-by + window.innerHeight / scale / 3); // 1/3 down
-        px -= ww / 2;
-        py -= hh / 2;
-
-        // Build the question
-        const question = {
-          id: 'starting',
-          creationId: 'starting',
-          creationDate: Date.now(),
-          userName: '',
-          query: '',
-          response: 'I am SAGE AI! Ask me anything by directing the question to me (@S), or chat with people in the board',
-          userId: '',
-        };
-
-        // Send the text to chat
-        createApp({
-          title: 'AI Chat',
-          roomId: props.roomId,
-          boardId: props.boardId,
-          position: { x: px, y: py, z: 0 },
-          size: { width: ww, height: hh, depth: 0 },
-          rotation: { x: 0, y: 0, z: 0 },
-          type: 'Chat',
-          state: {
-            ...(initialValues['Chat'] as AppState),
-            firstQuestion: term,
-            messages: [question],
-            previousQ: [],
-            previousA: [],
-            context: '',
-            token: '',
-            sources: [],
-          },
-          raised: true,
-          dragging: false,
-          pinned: false,
-        });
+        return true;
       }
+
+      return false;
     },
     [user, apps, props.boardId, colorMode]
   );
@@ -377,7 +351,7 @@ export function Alfred(props: props) {
  * from Chakra UI Modal dialog
  */
 type AlfredUIProps = {
-  onAction: (command: string) => void;
+  onAction: (command: string) => boolean | Promise<boolean>;
   roomId: string;
   boardId: string;
   isOpen: boolean;
@@ -393,6 +367,12 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
   // List of elements
   const listRef = useRef<HTMLDivElement>(null);
   const [term, setTerm] = useState<string>();
+  const [lastPrompt, setLastPrompt] = useState('');
+  const [location, setLocation] = useState('');
+  const [response, setResponse] = useState<AlfredResponse | null>(null);
+  const [processingAI, setProcessingAI] = useState(false);
+  const [previousQuestion, setPreviousQuestion] = useState<string[]>([]);
+  const [previousAnswer, setPreviousAnswer] = useState<string[]>([]);
 
   // Apps
   const createApp = useAppStore((state) => state.create);
@@ -404,11 +384,14 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
   const users = useUsersStore((state) => state.users);
   // check if user is a guest
   const { user } = useUser();
+  const { getBoardCursor } = useCursorBoardPosition();
+  const { settings } = useUserSettings();
   const [listIndex, setListIndex] = useState(0);
   const [buttonList, setButtonList] = useState<JSX.Element[]>([]);
   // colors
   const intelligenceColor = useColorModeValue('purple.500', 'purple.300');
   const { isOpen: editSettingsIsOpen, onOpen: editSettingsOnOpen, onClose: editSettingsOnClose } = useDisclosure();
+  const toast = useToast();
   // Default mic color
   const [recording, setRecording] = useState(false);
 
@@ -424,6 +407,163 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
       setListIndex(0);
     }
   };
+
+  useEffect(() => {
+    if (user) {
+      navigator.geolocation.getCurrentPosition(
+        function (coords) {
+          setLocation(coords.coords.latitude + ',' + coords.coords.longitude);
+        },
+        function (e) {
+          console.log('Location> error', e);
+        }
+      );
+    }
+  }, [user]);
+
+  const resetAIState = useCallback(() => {
+    setLastPrompt('');
+    setResponse(null);
+    setProcessingAI(false);
+    setPreviousQuestion([]);
+    setPreviousAnswer([]);
+  }, []);
+
+  const closeAlfred = useCallback(() => {
+    if (recording && recognition) {
+      recognition.stop();
+      setRecording(false);
+    }
+    resetAIState();
+    setTerm('');
+    setListIndex(0);
+    if (initialRef.current) {
+      initialRef.current.value = '';
+    }
+    props.onClose();
+  }, [props, recording, resetAIState]);
+
+  const submitAIRequest = useCallback(
+    async (prompt: string) => {
+      if (!user) return;
+
+      const boardCursor = getBoardCursor();
+      const cursor = boardCursor || { x: 100, y: 100, z: 0 };
+      const body: AlfredRequest = {
+        id: window.crypto?.randomUUID?.() || `alfred-${Date.now()}`,
+        ctx: {
+          previousQ: previousQuestion,
+          previousA: previousAnswer,
+          pos: [cursor.x, cursor.y, 0],
+          roomId: props.roomId,
+          boardId: props.boardId,
+        },
+        q: prompt,
+        user: user.data.name,
+        location,
+        model: settings.aiModel || 'openai',
+      };
+
+      setProcessingAI(true);
+      setLastPrompt(prompt);
+      setResponse(null);
+      setTerm('');
+      setListIndex(0);
+      if (initialRef.current) {
+        initialRef.current.value = '';
+        initialRef.current.focus();
+      }
+
+      try {
+        const raw = await fetch(apiUrls.ai.agents.alfred, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const data = (await raw.json()) as AlfredResponse | SError;
+
+        if ('message' in data) {
+          setResponse({
+            id: body.id,
+            r: data.message,
+            success: false,
+            actions: [],
+            toolCalls: [],
+          });
+          return;
+        }
+
+        setResponse(data);
+        setPreviousQuestion((prev) => [...prev, prompt]);
+        setPreviousAnswer((prev) => [...prev, data.r]);
+      } catch (e) {
+        const message = e instanceof Error ? e.message : 'Unknown error';
+        setResponse({
+          id: body.id,
+          r: `Error from Alfred AI: ${message}`,
+          success: false,
+          actions: [],
+          toolCalls: [],
+        });
+      } finally {
+        setProcessingAI(false);
+      }
+    },
+    [getBoardCursor, location, previousAnswer, previousQuestion, props.boardId, props.roomId, settings.aiModel, user]
+  );
+
+  const normalizeAction = useCallback((action: any) => {
+    if (typeof action === 'string') {
+      try {
+        return JSON.parse(action);
+      } catch (e) {
+        return null;
+      }
+    }
+    return action;
+  }, []);
+
+  const applyAction = useCallback(
+    async (action: any) => {
+      const normalizedAction = normalizeAction(action);
+      if (!normalizedAction || normalizedAction.type !== 'create_app') return;
+
+      const type = normalizedAction.app as AppName;
+      const size = normalizedAction.data.size;
+      const pos = normalizedAction.data.position;
+      const state = normalizedAction.state;
+
+      const res = await createApp({
+        title: normalizedAction.data.title || type,
+        roomId: props.roomId,
+        boardId: props.boardId,
+        position: pos,
+        size: size,
+        rotation: { x: 0, y: 0, z: 0 },
+        type: type,
+        state: { ...(initialValues[type] as AppState), ...state },
+        raised: true,
+        dragging: false,
+        pinned: false,
+      });
+
+      toast({
+        title: res?.success ? 'Action applied' : 'Action failed',
+        description: res?.success ? `${type} added to the board.` : res?.message || 'Unable to apply action.',
+        status: res?.success ? 'success' : 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    },
+    [createApp, normalizeAction, props.boardId, props.roomId, toast]
+  );
+
+  const applyAllActions = useCallback(async () => {
+    if (!response?.actions) return;
+    for (const action of response.actions) {
+      await applyAction(action);
+    }
+  }, [applyAction, response?.actions]);
 
   useEffect(() => {
     if (term) {
@@ -449,15 +589,19 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
   }, [term, assetsList]);
 
   // Keyboard handler: press enter to activate command
-  const onSubmit = (e: React.KeyboardEvent) => {
+  const onSubmit = async (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      props.onClose();
       if (listIndex > 0) {
         const elt = filteredList[listIndex - 1];
-        if (elt) openFile(elt.id);
+        if (elt) await openFile(elt.id);
       } else {
         if (term) {
-          props.onAction(term);
+          const handled = await props.onAction(term);
+          if (handled) {
+            closeAlfred();
+          } else {
+            await submitAIRequest(term);
+          }
         }
       }
     } else if (e.key === 'ArrowDown') {
@@ -516,7 +660,6 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
 
   // Open the file
   const openFile = async (id: string) => {
-    props.onClose();
     if (!user) return;
     // Create the app
     const file = assetsList.find((a) => a.id === id);
@@ -529,7 +672,10 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
       const y = Math.floor(-by + window.innerHeight / scale / 2);
       // Create the app
       const setup = await setupAppForFile(file, x, y, props.roomId, props.boardId, user);
-      if (setup) createApp(setup);
+      if (setup) {
+        createApp(setup);
+        closeAlfred();
+      }
     }
   };
 
@@ -583,6 +729,7 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
       if (recognition) {
         recognition.stop();
       }
+      return;
     }
     if ('webkitSpeechRecognition' in window) {
       recognition = new (window as any).webkitSpeechRecognition();
@@ -623,11 +770,11 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
   };
 
   const handleOnClose = () => {
-    if (recording) {
-      triggerVoice();
-    }
-    props.onClose();
+    closeAlfred();
   };
+
+  const plannedActions = (response?.actions || []).map((action) => normalizeAction(action)).filter(Boolean);
+  const showAISection = processingAI || response !== null;
 
   return (
     <>
@@ -642,7 +789,7 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
 
       >
         <ModalOverlay />
-        <ModalContent maxH={'30vh'} top={'4rem'} minWidth="800px">
+        <ModalContent maxH={showAISection ? '70vh' : '30vh'} top={'4rem'} minWidth="800px">
           <HStack>
             {/* Search box */}
             <InputGroup>
@@ -725,6 +872,7 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
                     <ListItem>
                       <b>clear</b> : Close all applications
                     </ListItem>
+                    <ListItem>Natural language requests stay in Alfred and show proposed board actions before you apply them</ListItem>
                   </UnorderedList>
                 </PopoverBody>
               </PopoverContent>
@@ -739,6 +887,88 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
           <VStack m={'0px 4px 4px 6px'} p={0} overflowY={'auto'} overflowX={'clip'} ref={listRef} spacing={1}>
             {buttonList}
           </VStack>
+          {showAISection && (
+            <>
+              <Divider />
+              <Box p={3} overflowY="auto">
+                {lastPrompt && (
+                  <Box mb={3}>
+                    <Text fontSize="xs" textTransform="uppercase" color="gray.500" fontWeight="bold">
+                      Prompt
+                    </Text>
+                    <Text fontSize="sm">{lastPrompt}</Text>
+                  </Box>
+                )}
+
+                {processingAI && (
+                  <HStack alignItems="center" spacing={3} mb={3}>
+                    <Spinner size="sm" color={intelligenceColor} />
+                    <Text fontSize="sm">Alfred is inspecting the current board and planning your request.</Text>
+                  </HStack>
+                )}
+
+                {response && (
+                  <VStack align="stretch" spacing={3}>
+                    <Box borderWidth="1px" borderRadius="md" p={3}>
+                      <Text fontSize="xs" textTransform="uppercase" color="gray.500" fontWeight="bold" mb={1}>
+                        Response
+                      </Text>
+                      <Box fontSize="sm">
+                        <Markdown>{response.r}</Markdown>
+                      </Box>
+                    </Box>
+
+                    {response.toolCalls && response.toolCalls.length > 0 && (
+                      <Box borderWidth="1px" borderRadius="md" p={3}>
+                        <Text fontSize="xs" textTransform="uppercase" color="gray.500" fontWeight="bold" mb={2}>
+                          Process
+                        </Text>
+                        <VStack align="stretch" spacing={2}>
+                          {response.toolCalls.map((step, index) => (
+                            <Box key={`${step.name}-${index}`} borderWidth="1px" borderRadius="md" p={2}>
+                              <Text fontSize="xs" fontFamily="mono" color="gray.500">
+                                {index + 1}. {step.name}
+                              </Text>
+                              <Text fontSize="sm">{step.summary}</Text>
+                            </Box>
+                          ))}
+                        </VStack>
+                      </Box>
+                    )}
+
+                    {plannedActions.length > 0 && (
+                      <Box borderWidth="1px" borderRadius="md" p={3}>
+                        <HStack justifyContent="space-between" alignItems="center" mb={2}>
+                          <Text fontSize="xs" textTransform="uppercase" color="gray.500" fontWeight="bold">
+                            Proposed Actions
+                          </Text>
+                          {plannedActions.length > 1 && (
+                            <Button size="xs" colorScheme="purple" onClick={applyAllActions}>
+                              Apply all
+                            </Button>
+                          )}
+                        </HStack>
+                        <List spacing={2}>
+                          {plannedActions.map((action: any, index) => (
+                            <Button
+                              key={`action-${index}`}
+                              justifyContent="flex-start"
+                              leftIcon={<MdOpenInNew />}
+                              onClick={() => applyAction(action)}
+                              colorScheme="purple"
+                              variant="outline"
+                            >
+                              {action.app === 'Stickie' ? `Create Stickie ${index + 1}` : `Create ${action.app}`}
+                            </Button>
+                          ))}
+                        </List>
+                      </Box>
+                    )}
+                  </VStack>
+                )}
+              </Box>
+            </>
+          )}
         </ModalContent>
       </Modal>
 

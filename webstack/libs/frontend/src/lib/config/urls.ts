@@ -51,6 +51,7 @@ export const apiUrls = {
       base: '/api/agents',
       status: '/api/agents/status',
       ask: '/api/agents/ask',
+      alfred: '/api/agents/mcp-agent',
       summary: '/api/agents/summary',
     },
   },
