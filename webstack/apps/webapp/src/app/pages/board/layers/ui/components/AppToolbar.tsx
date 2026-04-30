@@ -1091,7 +1091,7 @@ export function AppToolbar(props: AppToolbarProps) {
                 // Is app AiEnabled
                 AI_ENABLED_APPS.includes(app.data.type) && (
                   <Box>
-                    <Tooltip placement="top" hasArrow={true} openDelay={400} ml="1" label={'Chat with SAGE Intelligence'}>
+                    <Tooltip placement="top" hasArrow={true} openDelay={400} ml="1" label={'Chat with SEER'}>
                       <Button
                         onClick={openChat}
                         backgroundColor={intelligenceColor}

@@ -1,7 +1,6 @@
 # python modules
 import logging, asyncio
 from dotenv import load_dotenv
-from contextlib import asynccontextmanager
 
 # logging AI prompts
 from fluent import sender
@@ -39,8 +38,7 @@ from langchain.globals import set_debug, set_verbose
 
 # Modules
 from app.chat import ChatAgent
-from app.mcp_agent import MCPAgent
-from app.mcp_server import build_mcp_server
+from app.seer import SeerAgent
 
 # from app.summary import SummaryAgent
 from app.web import WebAgent
@@ -53,14 +51,13 @@ from app.mesonet import MesonetAgent
 # Instantiate each module's class
 chatAG = ChatAgent(logger, ps3)
 codeAG = CodeAgent(logger, ps3)
-mcpAG = MCPAgent(logger, ps3)
 # summaryAG = SummaryAgent(logger, ps3)
 imageAG = ImageAgent(logger, ps3)
 mesonetAG = MesonetAgent(logger, ps3)
 pdfAG = PDFAgent(logger, ps3)
 webAG = WebAgent(logger, ps3)
+seerAG = SeerAgent(logger, ps3, image_agent=imageAG, pdf_agent=pdfAG)
 asyncio.ensure_future(webAG.init())
-mcp_server = build_mcp_server(ps3, logger)
 
 # set to debug the queries into langchain
 # set_debug(True)
@@ -90,20 +87,12 @@ mcp_server = build_mcp_server(ps3, logger)
 #         print("Periodic task cancelled")
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    async with mcp_server.session_manager.run():
-        yield
-
-
 # Web server
 app = FastAPI(
-    lifespan=lifespan,
     title="Seer",
     description="A LangChain proxy for SAGE3.",
     version="0.1.0",
 )
-app.mount("/mcp", mcp_server.streamable_http_app())
 
 
 #
@@ -132,11 +121,11 @@ async def ask_question(qq: Question):
         raise HTTPException(status_code=500, detail=text)
 
 
-# ALFRED / MCP QUESTION
-@app.post("/mcp-agent")
-async def alfred_question(qq: Question):
+# SEER QUESTION
+@app.post("/seer")
+async def seer_question(qq: Question):
     try:
-        val = await mcpAG.process(qq)
+        val = await seerAG.process(qq)
         return val
 
     except HTTPException as e:

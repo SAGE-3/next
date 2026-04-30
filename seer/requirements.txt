@@ -7,7 +7,6 @@ python-dotenv
 fastapi[standard]
 fastapi-cli
 uvicorn
-mcp==1.27.0
 
 # data models
 pydantic>=2.0.0
@@ -39,4 +38,3 @@ scipy
 
 # Logging
 fluent-logger
-

@@ -21,7 +21,7 @@ export * from './PluginUploadModal';
 export * from './UserSearchModal';
 export * from './CreateKernelModal';
 export * from './HelpModal';
-export * from './Alfred';
+export * from './Seer';
 export * from './ConfirmValueModal';
 export * from './EditUserSettingsModal';
 export * from './BoardInformationModal';

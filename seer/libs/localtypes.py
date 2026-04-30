@@ -7,7 +7,7 @@
 # -----------------------------------------------------------------------------
 
 # Models
-from typing import List
+from typing import Any, List
 from pydantic import BaseModel, Json
 import io
 
@@ -20,6 +20,10 @@ class Context(BaseModel):
     pos: List[float]  # position in the board
     roomId: str  # room ID
     boardId: str  # board ID
+    currentBoardApps: List[dict[str, Any]] | None = None  # current board app snapshot from the client
+    selectedAppId: str | None = None  # selected app id for single-app context
+    focusedAppId: str | None = None  # focused app id when available
+    selectedAppIds: List[str] | None = None  # selected/lasso app ids
 
 
 class Question(BaseModel):
@@ -38,18 +42,18 @@ class Answer(BaseModel):
     actions: List[Json]  # actions to be performed
 
 
-class AlfredToolCall(BaseModel):
+class SeerToolCall(BaseModel):
     name: str
     args: dict
     summary: str
 
 
-class AlfredAnswer(BaseModel):
+class SeerAnswer(BaseModel):
     id: str  # question UUID v4
     r: str  # answer
     success: bool = True  # success flag
     actions: List[dict]
-    toolCalls: List[AlfredToolCall]
+    toolCalls: List[SeerToolCall]
 
 
 class CodeRequest(BaseModel):

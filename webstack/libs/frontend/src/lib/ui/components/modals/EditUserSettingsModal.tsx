@@ -86,7 +86,7 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
   const showLinks = userSettings.showLinks;
   const uiScale = userSettings.uiScale;
 
-  // SAGE Intelligence Settings
+  // SEER settings
   const config = useConfigStore((state) => state.config);
   const [llama, setLlama] = useState<ServerConfiguration['services']['llama']>();
   const [openai, setOpenai] = useState<ServerConfiguration['services']['openai']>();

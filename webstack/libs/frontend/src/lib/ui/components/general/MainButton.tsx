@@ -61,7 +61,7 @@ import {
   FeedbackModal,
   useConfigStore,
   HelpModal,
-  Alfred,
+  Seer,
   truncateWithEllipsis,
   EditUserSettingsModal,
 } from '@sage3/frontend';
@@ -102,8 +102,8 @@ export function MainButton(props: MainButtonProps) {
   // Modal panels
   const { isOpen: editIsOpen, onOpen: editOnOpen, onClose: editOnClose } = useDisclosure();
   const { isOpen: aboutIsOpen, onOpen: aboutOnOpen, onClose: aboutOnClose } = useDisclosure();
-  // Alfred Modal
-  const { isOpen: alfredIsOpen, onOpen: alfredOnOpen, onClose: alfredOnClose } = useDisclosure();
+  // SEER modal
+  const { isOpen: seerIsOpen, onOpen: seerOnOpen, onClose: seerOnClose } = useDisclosure();
   // Help modal
   const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
   // Presence settings modal
@@ -112,8 +112,8 @@ export function MainButton(props: MainButtonProps) {
   const handleHelpOpen = () => {
     helpOnOpen();
   };
-  const handleAlfredOpen = () => {
-    alfredOnOpen();
+  const handleSeerOpen = () => {
+    seerOnOpen();
   };
   const handleEditSettingsOnOpen = () => {
     editSettingsOnOpen();
@@ -205,9 +205,9 @@ export function MainButton(props: MainButtonProps) {
       {/* Presence settings modal dialog */}
       <EditUserSettingsModal isOpen={editSettingsIsOpen} onClose={editSettingsOnClose} />
 
-      {/* Alfred modal dialog */}
+      {/* SEER modal dialog */}
       {props.boardInfo && (
-        <Alfred boardId={props.boardInfo.boardId} roomId={props.boardInfo.roomId} isOpen={alfredIsOpen} onClose={alfredOnClose} />
+        <Seer boardId={props.boardInfo.boardId} roomId={props.boardInfo.roomId} isOpen={seerIsOpen} onClose={seerOnClose} />
       )}
 
       {/* Feedback modal */}

@@ -28,7 +28,7 @@ type BoardContextProps = {
   showAllApps: () => void;
   downloadRoomAssets: (ids: string[]) => void;
   backHomeClick: () => void;
-  openAlfred: () => void;
+  openSeer: () => void;
 };
 
 export function BoardContextMenu(props: BoardContextProps) {
@@ -69,9 +69,9 @@ export function BoardContextMenu(props: BoardContextProps) {
     }
   }, [contextMenuPosition]);
 
-  const handleAlfredOpen = () => {
+  const handleSeerOpen = () => {
     setContextMenuOpen(false);
-    props.openAlfred();
+    props.openSeer();
   };
 
   return (
@@ -119,14 +119,14 @@ export function BoardContextMenu(props: BoardContextProps) {
               />
             </Tooltip>
 
-            <Tooltip label={'SAGE Intelligence'} placement={'top'} hasArrow={true} openDelay={400} shouldWrapChildren={true}>
+            <Tooltip label={'SEER'} placement={'top'} hasArrow={true} openDelay={400} shouldWrapChildren={true}>
               <IconButton
                 colorScheme={'purple'}
                 size="xs"
                 icon={<IoSparklesSharp />}
                 fontSize="sm"
-                aria-label={`Open Alfred Menu`}
-                onClick={handleAlfredOpen}
+                aria-label={`Open SEER`}
+                onClick={handleSeerOpen}
               />
             </Tooltip>
           </Flex>

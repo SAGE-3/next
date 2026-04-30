@@ -642,7 +642,7 @@ for b in bits:
                       hasArrow={true}
                       openDelay={400}
                       ml="1"
-                      label={'Open selected application in Chat with SAGE Intelligence'}
+                      label={'Open selected application in Chat with SEER'}
                     >
                       <Button
                         onClick={openInChat}

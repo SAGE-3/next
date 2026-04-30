@@ -34,14 +34,35 @@ export type AskResponse = {
   actions?: any[];
 };
 
-export type AlfredToolCall = {
+export type SeerToolCall = {
   name: string;
   args: Record<string, any>;
   summary: string;
 };
 
-export type AlfredRequest = {
-  ctx: { previousQ: string[]; previousA: string[]; pos: number[]; roomId: string; boardId: string };
+export type SeerAppContext = {
+  id: string;
+  roomId: string;
+  boardId: string;
+  title: string;
+  type: string;
+  position: { x: number; y: number; z: number };
+  size: { width: number; height: number; depth: number };
+  statePreview?: Record<string, any>;
+};
+
+export type SeerRequest = {
+  ctx: {
+    previousQ: string[];
+    previousA: string[];
+    pos: number[];
+    roomId: string;
+    boardId: string;
+    currentBoardApps?: SeerAppContext[];
+    selectedAppId?: string;
+    focusedAppId?: string;
+    selectedAppIds?: string[];
+  };
   id: string;
   user: string;
   location: string;
@@ -49,12 +70,12 @@ export type AlfredRequest = {
   model: string;
 };
 
-export type AlfredResponse = {
+export type SeerResponse = {
   id: string;
   r: string;
   success: boolean;
   actions?: any[];
-  toolCalls?: AlfredToolCall[];
+  toolCalls?: SeerToolCall[];
 };
 
 // Web request
@@ -152,7 +173,7 @@ export type CodeResponse = {
 export const AgentRoutes = {
   status: '/status',
   ask: '/ask',
-  alfred: '/mcp-agent',
+  seer: '/seer',
   summary: '/summary',
   web: '/web',
   webshot: '/webshot',

@@ -11,7 +11,6 @@ from __future__ import annotations
 from collections import Counter
 from typing import Any
 
-from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel
 
 from pysage3.client import PySage3
@@ -75,7 +74,7 @@ def _state_preview(state: dict[str, Any], include_state: bool) -> dict[str, Any]
     if isinstance(state.get("text"), str):
         preview["text"] = state["text"][:280]
 
-    for key in ("assetid", "currentPage", "url", "pluginName", "language", "page", "pdfCurrentPage"):
+    for key in ("color", "assetid", "currentPage", "url", "pluginName", "language", "page", "pdfCurrentPage"):
         if key in state:
             preview[key] = state[key]
 
@@ -168,72 +167,11 @@ def list_app_summaries(
     apps = ps3.s3_comm.get_apps(room_id=room_id, board_id=board_id, app_id=app_id)
 
     if app_type:
-        apps = [app for app in apps if app.get("data", {}).get("type") == app_type]
+        app_type_filter = app_type.casefold()
+        apps = [app for app in apps if str(app.get("data", {}).get("type", "")).casefold() == app_type_filter]
 
     if title_contains:
         title_filter = title_contains.lower()
         apps = [app for app in apps if title_filter in app.get("data", {}).get("title", "").lower()]
 
     return [_summarize_app(app, include_state=include_state).model_dump() for app in apps]
-
-
-def build_mcp_server(ps3: PySage3, logger) -> FastMCP:
-    mcp = FastMCP(
-        name="SAGE3 MCP",
-        instructions=(
-            "Read-only SAGE3 inspection server for local development. "
-            "Use these tools to inspect rooms, boards, and apps before proposing user-approved actions. "
-            "Do not assume delete or arbitrary mutation tools exist."
-        ),
-        json_response=True,
-        stateless_http=True,
-        streamable_http_path="/",
-    )
-
-    @mcp.tool(description="List rooms visible to Seer. Optionally filter to a single room id.")
-    def get_rooms(room_id: str | None = None) -> list[RoomSummary]:
-        logger.info("MCP> get_rooms room_id=%s", room_id)
-        return [RoomSummary.model_validate(room) for room in list_room_summaries(ps3, room_id=room_id)]
-
-    @mcp.tool(description="List boards visible to Seer. You can filter by room id or board id.")
-    def get_boards(room_id: str | None = None, board_id: str | None = None) -> list[BoardSummary]:
-        logger.info("MCP> get_boards room_id=%s board_id=%s", room_id, board_id)
-        return [BoardSummary.model_validate(board) for board in list_board_summaries(ps3, room_id=room_id, board_id=board_id)]
-
-    @mcp.tool(
-        description=(
-            "List apps visible to Seer. Supports filtering by room, board, app id, app type, or title substring. "
-            "State is summarized by default unless include_state is true."
-        )
-    )
-    def get_apps(
-        room_id: str | None = None,
-        board_id: str | None = None,
-        app_id: str | None = None,
-        app_type: str | None = None,
-        title_contains: str | None = None,
-        include_state: bool = False,
-    ) -> list[AppSummary]:
-        logger.info(
-            "MCP> get_apps room_id=%s board_id=%s app_id=%s app_type=%s title_contains=%s include_state=%s",
-            room_id,
-            board_id,
-            app_id,
-            app_type,
-            title_contains,
-            include_state,
-        )
-        return [
-            AppSummary.model_validate(app)
-            for app in list_app_summaries(
-                ps3,
-                room_id=room_id,
-                board_id=board_id,
-                app_id=app_id,
-                app_type=app_type,
-                title_contains=title_contains,
-                include_state=include_state,
-            )
-        ]
-
-    return mcp

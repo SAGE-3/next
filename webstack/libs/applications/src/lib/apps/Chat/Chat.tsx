@@ -618,7 +618,7 @@ function AppComponent(props: App): JSX.Element {
     if (selectedModel == 'llama') {
       toast({
         title: 'Mesonet Feature not available for current model',
-        description: 'Please switch SAGE Intelligence to OpenAI in User Settings.',
+        description: 'Please switch SEER to OpenAI in User Settings.',
         status: 'error',
         duration: 4000,
         isClosable: true,

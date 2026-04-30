@@ -54,7 +54,7 @@ import {
   useAbility,
   apiUrls,
   useHotkeys,
-  Alfred,
+  Seer,
   HotkeysEvent,
   useUserSettings,
   useHexColor,
@@ -149,8 +149,8 @@ export function UILayer(props: UILayerProps) {
   // Clear board modal
   const { isOpen: clearIsOpen, onOpen: clearOnOpen, onClose: clearOnClose } = useDisclosure();
 
-  // Alfred Modal
-  const { isOpen: alfredIsOpen, onOpen: alfredOnOpen, onClose: alfredOnClose } = useDisclosure();
+  // SEER modal
+  const { isOpen: seerIsOpen, onOpen: seerOnOpen, onClose: seerOnClose } = useDisclosure();
 
   // Connect to Twilio only if there are Screenshares or Webcam apps
   const twilioConnect = apps.filter((el) => el.data.type === 'Screenshare').length > 0;
@@ -280,10 +280,10 @@ export function UILayer(props: UILayerProps) {
     setSelectedAppsIds([]);
   });
 
-  // Open Alfred
+  // Open SEER
   useHotkeys('cmd+k,ctrl+k', (ke: KeyboardEvent, he: HotkeysEvent): void | boolean => {
     // Open the window
-    alfredOnOpen();
+    seerOnOpen();
     return false;
   });
 
@@ -308,8 +308,8 @@ export function UILayer(props: UILayerProps) {
     forward();
   }
 
-  const handleOpenAlfred = () => {
-    alfredOnOpen();
+  const handleOpenSeer = () => {
+    seerOnOpen();
   };
 
   return (
@@ -484,14 +484,14 @@ export function UILayer(props: UILayerProps) {
           <NavigationMenu />
         </ToolbarButton>
         <Divider orientation="vertical" mx="2" />
-        <Tooltip label={'SAGE Intelligence'} placement={'top'} hasArrow={true} openDelay={400} shouldWrapChildren={true}>
+        <Tooltip label={'SEER'} placement={'top'} hasArrow={true} openDelay={400} shouldWrapChildren={true}>
           <IconButton
             colorScheme={'purple'}
             size="sm"
             icon={<IoSparklesSharp />}
             fontSize="lg"
-            aria-label={`Open Alfred Menu`}
-            onClick={alfredOnOpen}
+            aria-label={`Open SEER`}
+            onClick={seerOnOpen}
           />
         </Tooltip>
       </Box>
@@ -523,7 +523,7 @@ export function UILayer(props: UILayerProps) {
           showAllApps={showAllApps}
           downloadRoomAssets={downloadRoomAssets}
           backHomeClick={handleHomeClick}
-          openAlfred={handleOpenAlfred}
+          openSeer={handleOpenSeer}
         />
       </ContextMenu>
 
@@ -538,8 +538,8 @@ export function UILayer(props: UILayerProps) {
       {/* Lasso Toolbar that is shown when apps are selected using the lasso tool */}
       {canLasso && <LassoToolbar downloadAssets={downloadBoardAssets} />}
 
-      {/* Alfred modal dialog */}
-      <Alfred boardId={props.boardId} roomId={props.roomId} isOpen={alfredIsOpen} onClose={alfredOnClose} />
+      {/* SEER modal dialog */}
+      <Seer boardId={props.boardId} roomId={props.roomId} isOpen={seerIsOpen} onClose={seerOnClose} />
 
       {/* Presence Follow Component: Does not render anything */}
       <PresenceFollow />
