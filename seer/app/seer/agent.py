@@ -18,6 +18,7 @@ from langchain_openai import AzureChatOpenAI, ChatOpenAI
 
 from pysage3.client import PySage3
 
+from app.seer.app_support import seer_state_support_hint
 from app.seer.helpers import format_content, step_summary
 from app.seer.tools import build_seer_tools
 from libs.localtypes import Question, SeerAnswer
@@ -102,12 +103,15 @@ class SeerAgent:
             "Use the current-scope tools first for most requests, and only switch to current-board tools when the user explicitly asks about the whole board. "
             "Treat room and board tools as read-only inspection tools. "
             "Never propose deletes. Never claim you already executed an action. "
-            "When the user asks to create stickies, use the planning tool so the UI can show approval buttons. "
+            "When the user asks to create new apps, use the create planning tools so the UI can show approval buttons instead of saying the app type is unsupported. "
+            "Use the generic create planner for new CodeEditor, SageCell, Map, Webview, or Stickie apps, and use the stickie-specific planner when the user wants notes placed relative to an anchor app. "
             "When the user asks to move, align, reorder, grid, cluster, or rearrange existing apps, inspect the current scope apps first and then use the update planning tools. "
+            "For full rewrites of Stickie text, CodeEditor content, or SageCell code, first inspect the current scope apps with include_state=True and then use the Yjs replace planning tool. "
             "Prefer the single-app update planner for focused changes like moving one app, changing one title, or updating one map. "
             "For map-like apps, state patches can include location, zoom, bearing, pitch, baseLayer, and layers. "
             "When the user asks about an image, PDF, or other asset-backed app in the current scope, use the asset analysis tool instead of guessing from titles. "
             "The scope app tools support filtering by app type, title, stickie text, and stickie color. "
+            f"{seer_state_support_hint()} "
             "If the request is ambiguous, ask a short clarifying question instead of guessing. "
             "Keep responses concise and use valid Markdown."
         )

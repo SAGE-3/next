@@ -71,6 +71,15 @@ const baselayers = {
   Satellite: `https://api.maptiler.com/maps/hybrid/style.json?key=${mapTilerAPI}`,
   OpenStreetMap: `https://api.maptiler.com/maps/streets/style.json?key=${mapTilerAPI}`,
 };
+const baseLayerAliases: Record<string, keyof typeof baselayers> = {
+  openstreetmap: 'OpenStreetMap',
+  osm: 'OpenStreetMap',
+  streets: 'OpenStreetMap',
+  street: 'OpenStreetMap',
+  streetmap: 'OpenStreetMap',
+  satellite: 'Satellite',
+  hybrid: 'Satellite',
+};
 const esriKey = 'AAPK74760e71edd04d12ac33fd375e85ba0d4CL8Ho3haHz1cOyUgnYG4UUEW6NG0xj2j1qsmVBAZNupoD44ZiSJ4DP36ksP-t3B';
 
 // Map Event types to track registered listeners
@@ -95,6 +104,12 @@ function registerMapEvent(map: maplibregl.Map, event: keyof MapLayerEventType, l
 // Get a static asset URL
 function getStaticAssetUrl(filename: string): string {
   return apiUrls.assets.getAssetById(filename);
+}
+
+function resolveBaseLayer(baseLayer: unknown): keyof typeof baselayers {
+  // Keep map rendering resilient when older clients or AI-generated updates use friendly aliases.
+  if (typeof baseLayer !== 'string') return 'OpenStreetMap';
+  return baseLayerAliases[baseLayer.trim().toLowerCase()] || 'OpenStreetMap';
 }
 
 // Functon to clear all layers and sources from the map
@@ -148,8 +163,9 @@ async function loadLayersOnMap(
   map: maplibregl.Map,
   assets: Asset[],
   layers: LayerType[],
-  basemap: keyof typeof baselayers = 'OpenStreetMap'
+  basemap: string | undefined = 'OpenStreetMap'
 ) {
+  const resolvedBaseLayer = resolveBaseLayer(basemap);
   // Ensure the map is ready before adding layers
   if (!map || !map.isStyleLoaded()) {
     console.warn('Map is not ready or style is not loaded.');
@@ -200,7 +216,7 @@ async function loadLayersOnMap(
   });
 
   // 7) Kick off the style swap
-  map.setStyle(baselayers[basemap]);
+  map.setStyle(baselayers[resolvedBaseLayer]);
 }
 
 // Add a GeoTIFF layer to the map
@@ -397,6 +413,7 @@ export const useStore = create<MapStore>((set) => ({
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
+  const resolvedBaseLayer = resolveBaseLayer(s.baseLayer);
 
   // Ref to hold the single MapLibre instance
   const mapRef = useRef<maplibregl.Map | null>(null);
@@ -410,7 +427,7 @@ function AppComponent(props: App): JSX.Element {
       return;
     }
     const assets = useAssetStore.getState().assets;
-    loadLayersOnMap(mapRef.current, assets, s.layers, s.baseLayer as any);
+    loadLayersOnMap(mapRef.current, assets, s.layers, resolvedBaseLayer);
   }
 
   // Create a ref to hold the current map instance
@@ -421,7 +438,7 @@ function AppComponent(props: App): JSX.Element {
     const containerId = `map${props._id}`;
     const initialMap = new maplibregl.Map({
       container: containerId,
-      style: baselayers[s.baseLayer as 'OpenStreetMap' | 'Satellite'],
+      style: baselayers[resolvedBaseLayer],
       center: s.location as maplibregl.LngLatLike,
       zoom: s.zoom,
       pitch: s.pitch || 0,
@@ -457,13 +474,21 @@ function AppComponent(props: App): JSX.Element {
     });
 
     saveMap(props._id, initialMap);
-  }, [props._id, saveMap, updateState]);
+  }, [props._id, resolvedBaseLayer, saveMap, updateState]);
+
+  useEffect(() => {
+    // Canonicalize friendly aliases like "streets" once the app loads so
+    // older payloads and SEER-created maps converge onto the same saved value.
+    if (s.baseLayer !== resolvedBaseLayer) {
+      updateState(props._id, { baseLayer: resolvedBaseLayer });
+    }
+  }, [props._id, resolvedBaseLayer, s.baseLayer, updateState]);
 
   useEffect(() => {
     const mapInstance = mapRef.current;
     if (!mapInstance) return;
     refreshLayers();
-  }, [s.baseLayer]);
+  }, [resolvedBaseLayer]);
 
   useEffect(() => {
     const mapInstance = mapRef.current;

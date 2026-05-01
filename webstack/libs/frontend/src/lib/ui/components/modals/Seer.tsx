@@ -56,12 +56,9 @@ import {
 // Icons for file types
 import { IoSparklesSharp } from 'react-icons/io5';
 import {
-  MdOutlinePictureAsPdf,
-  MdOutlineImage,
-  MdOutlineFilePresent,
-  MdOndemandVideo,
-  MdOutlineStickyNote2,
-  MdInfoOutline,
+  MdDeleteSweep,
+  MdHelpOutline,
+  MdNoteAdd,
   MdSettings,
   MdMic,
   MdOpenInNew,
@@ -77,22 +74,30 @@ import {
   useUser,
   useCursorBoardPosition,
   useAssetStore,
-  useUsersStore,
   useConfigStore,
   useThrottleApps,
   useInsightStore,
-  setupAppForFile,
   downloadFile,
+  useYjs,
   useUserSettings,
   EditUserSettingsModal,
 } from '@sage3/frontend';
 import { apiUrls } from '../../../config/urls';
+import { ConfirmModal } from './ConfirmModal';
+import {
+  buildSeerCurrentBoardAppsSnapshot,
+  getSeerScopeLabel,
+  pluralizeSeerCount,
+  summarizeSeerAppliedActions,
+  seerResponseToStickieText,
+  seerYjsReplaceFieldByType,
+  summarizeSeerPlannedActions,
+} from './seerSupport';
 
 import { App, AppName, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
 import { Applications } from '@sage3/applications/apps';
-import { SeerRequest, SeerResponse, SError, getExtension } from '@sage3/shared';
-import { FileEntry } from '@sage3/shared/types';
+import { SeerRequest, SeerResponse, SError } from '@sage3/shared';
 
 type props = {
   boardId: string;
@@ -106,6 +111,12 @@ type SeerHistoryMessage = {
   role: 'user' | 'assistant';
   content: string;
   success?: boolean;
+};
+
+type SeerApplyResult = {
+  success: boolean;
+  action: any | null;
+  message?: string;
 };
 
 type SeerSession = {
@@ -122,7 +133,6 @@ type SeerSessionStore = {
   clearSession: (boardId: string) => void;
 };
 
-const MaxElements = 12;
 const MaxHistoryTurns = 10;
 const MaxHistoryMessages = MaxHistoryTurns * 2;
 const MaxPendingHistoryMessages = MaxHistoryMessages + 1;
@@ -186,90 +196,6 @@ const useSeerSessionStore = create<SeerSessionStore>()((set, get) => ({
     });
   },
 }));
-
-function buildStatePreview(state: AppState | Record<string, any> | undefined) {
-  if (!state || typeof state !== 'object') return undefined;
-
-  const source = state as Record<string, any>;
-  const preview: Record<string, any> = {};
-
-  if (typeof source.text === 'string') {
-    preview.text = source.text.slice(0, 280);
-  }
-
-  for (const key of ['color', 'assetid', 'currentPage', 'url', 'pluginName', 'language', 'page', 'pdfCurrentPage']) {
-    if (key in source) {
-      preview[key] = source[key];
-    }
-  }
-
-  return Object.keys(preview).length > 0 ? preview : undefined;
-}
-
-function buildCurrentBoardAppsSnapshot(apps: App[]) {
-  return apps.map((app) => ({
-    id: app._id,
-    roomId: app.data.roomId,
-    boardId: app.data.boardId,
-    title: app.data.title || '',
-    type: app.data.type,
-    position: {
-      x: app.data.position.x,
-      y: app.data.position.y,
-      z: app.data.position.z,
-    },
-    size: {
-      width: app.data.size.width,
-      height: app.data.size.height,
-      depth: app.data.size.depth,
-    },
-    statePreview: buildStatePreview(app.data.state),
-  }));
-}
-
-function getScopeLabel(apps: App[], selectedAppIds: string[], focusedAppId?: string, selectedAppId?: string) {
-  if (selectedAppIds.length > 0) {
-    if (selectedAppIds.length === 1) {
-      const selected = apps.find((app) => app._id === selectedAppIds[0]);
-      return selected ? `Selection: ${selected.data.title || selected.data.type}` : 'Selection: 1 app';
-    }
-    return `Selection: ${selectedAppIds.length} apps`;
-  }
-
-  const focusedId = focusedAppId || selectedAppId;
-  if (focusedId) {
-    const focused = apps.find((app) => app._id === focusedId);
-    return focused ? `Focused: ${focused.data.title || focused.data.type}` : 'Focused app';
-  }
-
-  return 'Scope: Current board';
-}
-
-function pluralize(count: number, singular: string, plural = `${singular}s`) {
-  return count === 1 ? singular : plural;
-}
-
-function summarizePlannedActions(actions: any[]) {
-  const updates = actions.filter((action) => action?.type === 'update_app').length;
-  const creations = new Map<string, number>();
-
-  actions.forEach((action) => {
-    if (action?.type !== 'create_app') return;
-    const key = action.app || 'App';
-    creations.set(key, (creations.get(key) || 0) + 1);
-  });
-
-  const parts: string[] = [];
-  if (updates > 0) {
-    parts.push(`${updates} ${pluralize(updates, 'app update')}`);
-  }
-
-  creations.forEach((count, appName) => {
-    parts.push(`${count} new ${pluralize(count, appName)}`);
-  });
-
-  return parts.length > 0 ? parts : [`${actions.length} ${pluralize(actions.length, 'planned change')}`];
-}
 
 export function Seer(props: props) {
   // Configuration information
@@ -540,10 +466,6 @@ export function Seer(props: props) {
   );
 }
 
-/**
- * Props for the file manager modal behavior
- * from Chakra UI Modal dialog
- */
 type SeerUIProps = {
   onAction: (command: string) => boolean | Promise<boolean>;
   roomId: string;
@@ -556,14 +478,10 @@ type SeerUIProps = {
   onClose: () => void;
 };
 
-/**
- * React component to get and display the asset list
- */
 function SeerUI(props: SeerUIProps): JSX.Element {
   // Element to set the focus to when opening the dialog
   const initialRef = useRef<HTMLInputElement>(null);
-  // List of elements
-  const listRef = useRef<HTMLDivElement>(null);
+  const conversationEndRef = useRef<HTMLDivElement>(null);
   const [term, setTerm] = useState<string>();
   const [location, setLocation] = useState('');
   const [processingAI, setProcessingAI] = useState(false);
@@ -572,21 +490,20 @@ function SeerUI(props: SeerUIProps): JSX.Element {
   const createApp = useAppStore((state) => state.create);
   const updateApp = useAppStore((state) => state.update);
   const updateAppState = useAppStore((state) => state.updateState);
-  // Assets store
-  const assets = useAssetStore((state) => state.assets);
-  const [assetsList, setAssetsList] = useState<FileEntry[]>([]);
-  const [filteredList, setFilteredList] = useState<FileEntry[]>([]);
-  // Access the list of users
-  const users = useUsersStore((state) => state.users);
-  // check if user is a guest
+  const { yApps } = useYjs();
+  // Pull user/cursor/scope state from the live board session so SEER requests
+  // always reflect the board the user is currently looking at.
   const { user } = useUser();
   const { getBoardCursor } = useCursorBoardPosition();
   const { settings } = useUserSettings();
-  const [listIndex, setListIndex] = useState(0);
-  const [buttonList, setButtonList] = useState<JSX.Element[]>([]);
   // colors
   const intelligenceColor = useColorModeValue('purple.500', 'purple.300');
   const { isOpen: editSettingsIsOpen, onOpen: editSettingsOnOpen, onClose: editSettingsOnClose } = useDisclosure();
+  const {
+    isOpen: clearSessionConfirmIsOpen,
+    onOpen: clearSessionConfirmOnOpen,
+    onClose: clearSessionConfirmOnClose,
+  } = useDisclosure();
   const toast = useToast();
   // Default mic color
   const [recording, setRecording] = useState(false);
@@ -621,7 +538,6 @@ function SeerUI(props: SeerUIProps): JSX.Element {
       setTerm(val.trim());
     } else {
       setTerm('');
-      setListIndex(0);
     }
   };
 
@@ -645,7 +561,6 @@ function SeerUI(props: SeerUIProps): JSX.Element {
     }
     setProcessingAI(false);
     setTerm('');
-    setListIndex(0);
     if (initialRef.current) {
       initialRef.current.value = '';
     }
@@ -658,6 +573,8 @@ function SeerUI(props: SeerUIProps): JSX.Element {
 
       const boardCursor = getBoardCursor();
       const cursor = boardCursor || { x: 100, y: 100, z: 0 };
+      // Keep a short per-board conversation locally so follow-up prompts like
+      // "yes, do that" can be resolved by the backend without server storage.
       startSessionRequest(props.boardId, prompt);
       const body: SeerRequest = {
         id: window.crypto?.randomUUID?.() || `seer-${Date.now()}`,
@@ -667,7 +584,7 @@ function SeerUI(props: SeerUIProps): JSX.Element {
           pos: [cursor.x, cursor.y, 0],
           roomId: props.roomId,
           boardId: props.boardId,
-          currentBoardApps: buildCurrentBoardAppsSnapshot(props.currentBoardApps),
+          currentBoardApps: buildSeerCurrentBoardAppsSnapshot(props.currentBoardApps),
           selectedAppId: props.selectedAppId || undefined,
           focusedAppId: props.focusedAppId || undefined,
           selectedAppIds: props.selectedAppIds.length > 0 ? props.selectedAppIds : undefined,
@@ -680,7 +597,6 @@ function SeerUI(props: SeerUIProps): JSX.Element {
 
       setProcessingAI(true);
       setTerm('');
-      setListIndex(0);
       if (initialRef.current) {
         initialRef.current.value = '';
         initialRef.current.focus();
@@ -752,234 +668,260 @@ function SeerUI(props: SeerUIProps): JSX.Element {
   }, []);
 
   const applyAction = useCallback(
-    async (action: any) => {
+    async (action: any, options?: { silent?: boolean }): Promise<SeerApplyResult> => {
+      const silent = options?.silent ?? false;
       const normalizedAction = normalizeAction(action);
-      if (!normalizedAction) return;
+      if (!normalizedAction) return { success: false as const, action: null, message: 'Unable to read the SEER action payload.' };
 
-      if (normalizedAction.type === 'create_app') {
-        const type = normalizedAction.app as AppName;
-        const size = normalizedAction.data.size;
-        const pos = normalizedAction.data.position;
-        const state = normalizedAction.state;
+      try {
+        if (normalizedAction.type === 'create_app') {
+          const type = normalizedAction.app as AppName;
+          const size = normalizedAction.data.size;
+          const pos = normalizedAction.data.position;
+          const state = normalizedAction.state;
 
-        const res = await createApp({
-          title: normalizedAction.data.title || type,
-          roomId: props.roomId,
-          boardId: props.boardId,
-          position: pos,
-          size: size,
-          rotation: { x: 0, y: 0, z: 0 },
-          type: type,
-          state: { ...(initialValues[type] as AppState), ...state },
-          raised: true,
-          dragging: false,
-          pinned: false,
-        });
+          const res = await createApp({
+            title: normalizedAction.data.title || type,
+            roomId: props.roomId,
+            boardId: props.boardId,
+            position: pos,
+            size: size,
+            rotation: { x: 0, y: 0, z: 0 },
+            type: type,
+            state: { ...(initialValues[type] as AppState), ...state },
+            raised: true,
+            dragging: false,
+            pinned: false,
+          });
 
-        toast({
-          title: res?.success ? 'Action applied' : 'Action failed',
-          description: res?.success ? `${type} added to the board.` : res?.message || 'Unable to apply action.',
-          status: res?.success ? 'success' : 'error',
-          duration: 3000,
-          isClosable: true,
-        });
-        return;
-      }
+          if (!silent) {
+            toast({
+              title: res?.success ? 'Action applied' : 'Action failed',
+              description: res?.success ? `${type} added to the board.` : res?.message || 'Unable to apply action.',
+              status: res?.success ? 'success' : 'error',
+              duration: 3000,
+              isClosable: true,
+            });
+          }
 
-      if (normalizedAction.type === 'update_app') {
-        const appId = normalizedAction.id;
-        const updates = normalizedAction.updates || {};
-        const topLevelUpdates: Record<string, any> = {};
-
-        if (updates.position) topLevelUpdates.position = updates.position;
-        if (updates.size) topLevelUpdates.size = updates.size;
-        if (updates.title) topLevelUpdates.title = updates.title;
-
-        let success = true;
-
-        if (Object.keys(topLevelUpdates).length > 0) {
-          const res = await updateApp(appId, topLevelUpdates as any);
-          success = Boolean(res);
+          return {
+            success: Boolean(res?.success),
+            action: normalizedAction,
+            message: res?.success ? undefined : res?.message || 'Unable to apply action.',
+          };
         }
 
-        if (success && updates.state) {
-          await updateAppState(appId, updates.state);
+        if (normalizedAction.type === 'update_app') {
+          const appId = normalizedAction.id;
+          const updates = normalizedAction.updates || {};
+          const topLevelUpdates: Record<string, any> = {};
+
+          if (updates.position) topLevelUpdates.position = updates.position;
+          if (updates.size) topLevelUpdates.size = updates.size;
+          if (updates.title) topLevelUpdates.title = updates.title;
+
+          let success = true;
+
+          if (Object.keys(topLevelUpdates).length > 0) {
+            const res = await updateApp(appId, topLevelUpdates as any);
+            success = Boolean(res);
+          }
+
+          if (success && updates.state) {
+            await updateAppState(appId, updates.state);
+          }
+
+          if (!silent) {
+            toast({
+              title: success ? 'Action applied' : 'Action failed',
+              description: success ? 'App updated on the board.' : 'Unable to apply update action.',
+              status: success ? 'success' : 'error',
+              duration: 3000,
+              isClosable: true,
+            });
+          }
+
+          return {
+            success,
+            action: normalizedAction,
+            message: success ? undefined : 'Unable to apply update action.',
+          };
         }
 
-        toast({
-          title: success ? 'Action applied' : 'Action failed',
-          description: success ? 'App updated on the board.' : 'Unable to apply update action.',
-          status: success ? 'success' : 'error',
-          duration: 3000,
-          isClosable: true,
-        });
+        if (normalizedAction.type === 'replace_yjs_content') {
+          const appId = normalizedAction.id;
+          const app = props.currentBoardApps.find((currentApp) => currentApp._id === appId);
+          const appType = normalizedAction.appType || app?.data.type;
+          const field = normalizedAction.field || seerYjsReplaceFieldByType[appType];
+          const content = normalizedAction.content;
+
+          if (!yApps) {
+            const message = 'Collaborative editing is not connected for this board right now.';
+            if (!silent) {
+              toast({
+                title: 'Action failed',
+                description: message,
+                status: 'error',
+                duration: 3000,
+                isClosable: true,
+              });
+            }
+            return { success: false as const, action: normalizedAction, message };
+          }
+
+          if (!field || typeof content !== 'string') {
+            const message = 'SEER returned an unsupported collaborative replace action.';
+            if (!silent) {
+              toast({
+                title: 'Action failed',
+                description: message,
+                status: 'error',
+                duration: 3000,
+                isClosable: true,
+              });
+            }
+            return { success: false as const, action: normalizedAction, message };
+          }
+
+          const yText = yApps.doc.getText(appId);
+          // Apply collaborative rewrites through Yjs first so every connected
+          // client sees the same CRDT update instead of a stale state patch.
+          yApps.doc.transact(() => {
+            yText.delete(0, yText.length);
+            yText.insert(0, content);
+          });
+          await updateAppState(appId, { [field]: content } as any);
+
+          if (!silent) {
+            toast({
+              title: 'Action applied',
+              description: `${appType || 'Collaborative app'} content replaced on the board.`,
+              status: 'success',
+              duration: 3000,
+              isClosable: true,
+            });
+          }
+
+          return {
+            success: true as const,
+            action: normalizedAction,
+            message: undefined,
+          };
+        }
+
+        return { success: false as const, action: normalizedAction, message: 'SEER returned an unsupported action type.' };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unable to apply action.';
+        if (!silent) {
+          toast({
+            title: 'Action failed',
+            description: message,
+            status: 'error',
+            duration: 3000,
+            isClosable: true,
+          });
+        }
+        return { success: false as const, action: normalizedAction, message };
       }
     },
-    [createApp, normalizeAction, props.boardId, props.roomId, toast, updateApp, updateAppState]
+    [createApp, normalizeAction, props.boardId, props.currentBoardApps, props.roomId, toast, updateApp, updateAppState, yApps]
   );
 
   const applyAllActions = useCallback(async () => {
     if (!response?.actions) return;
-    for (const action of response.actions) {
-      await applyAction(action);
-    }
-  }, [applyAction, response?.actions]);
+    const appliedActions: any[] = [];
+    let failedCount = 0;
 
-  useEffect(() => {
-    if (term) {
-      // If something to search
-      setFilteredList(
-        assetsList.filter((item) => {
-          // if term is in the filename
-          return (
-            // search in the filename
-            item.originalfilename.toUpperCase().indexOf(term.toUpperCase()) !== -1 ||
-            // search in the type
-            item.type.toUpperCase().indexOf(term.toUpperCase()) !== -1 ||
-            // search in the owner name
-            item.ownerName.toUpperCase().indexOf(term.toUpperCase()) !== -1
-          );
-        })
-      );
-    } else {
-      // Full list if no search term
-      setFilteredList(assetsList);
-      setListIndex(0);
+    // Silence per-action notifications so large batches collapse into one
+    // readable summary toast instead of covering the whole screen.
+    for (const action of response.actions) {
+      const result = await applyAction(action, { silent: true });
+      if (result.success && result.action) {
+        appliedActions.push(result.action);
+      } else {
+        failedCount += 1;
+      }
     }
-  }, [term, assetsList]);
+
+    if (appliedActions.length > 0 && failedCount === 0) {
+      toast({
+        title: 'Actions applied',
+        description: summarizeSeerAppliedActions(appliedActions),
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    if (appliedActions.length > 0 && failedCount > 0) {
+      toast({
+        title: 'Applied with issues',
+        description: `${summarizeSeerAppliedActions(appliedActions)} ${failedCount} ${pluralizeSeerCount(failedCount, 'action')} failed.`,
+        status: 'warning',
+        duration: 4000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    toast({
+      title: 'Unable to apply changes',
+      description: `${failedCount} ${pluralizeSeerCount(failedCount, 'action')} failed.`,
+      status: 'error',
+      duration: 4000,
+      isClosable: true,
+    });
+  }, [applyAction, response?.actions, toast]);
+
+  const createStickieFromResponse = useCallback(
+    async (content: string) => {
+      if (!user) return;
+
+      const boardCursor = getBoardCursor();
+      const cursor = boardCursor || { x: 100, y: 100, z: 0 };
+      const width = 400;
+      const height = 420;
+      const stickieText = seerResponseToStickieText(content);
+
+      const res = await createApp({
+        title: 'SEER',
+        roomId: props.roomId,
+        boardId: props.boardId,
+        position: { x: cursor.x - width / 2, y: cursor.y - height / 2, z: 0 },
+        size: { width, height, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        type: 'Stickie',
+        state: { ...(initialValues['Stickie'] as AppState), text: stickieText, color: 'purple' },
+        raised: true,
+        dragging: false,
+        pinned: false,
+      });
+
+      toast({
+        title: res?.success ? 'Stickie created' : 'Unable to create stickie',
+        description: res?.success ? 'SEER response added to the board as a stickie.' : res?.message || 'The response could not be turned into a stickie.',
+        status: res?.success ? 'success' : 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+    },
+    [createApp, getBoardCursor, props.boardId, props.roomId, toast, user]
+  );
 
   // Keyboard handler: press enter to activate command
   const onSubmit = async (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
-      if (listIndex > 0) {
-        const elt = filteredList[listIndex - 1];
-        if (elt) await openFile(elt.id);
-      } else {
-        if (term) {
-          const handled = await props.onAction(term);
-          if (handled) {
-            closeSeer();
-          } else {
-            await submitAIRequest(term);
-          }
+      if (term) {
+        const handled = await props.onAction(term);
+        if (handled) {
+          closeSeer();
+        } else {
+          await submitAIRequest(term);
         }
-      }
-    } else if (e.key === 'ArrowDown') {
-      setListIndex((prev) => {
-        const limit = Math.min(MaxElements, filteredList.length);
-        const newVal = prev + 1 >= limit ? limit : prev + 1;
-        if (newVal >= 0 && newVal < limit) {
-          // Scroll the list to the selected element
-          listRef.current?.children[newVal].scrollIntoView({ behavior: 'smooth', block: 'end', inline: 'center' });
-        }
-        return newVal;
-      });
-    } else if (e.key === 'ArrowUp') {
-      setListIndex((prev) => {
-        const limit = Math.min(MaxElements, filteredList.length);
-        const newVal = prev - 1 < 0 ? 0 : prev - 1;
-        if (newVal >= 0 && newVal < limit) {
-          // Scroll the list to the selected element
-          listRef.current?.children[newVal].scrollIntoView({ behavior: 'smooth', block: 'end', inline: 'center' });
-        }
-        return newVal;
-      });
-    }
-  };
-
-  useEffect(() => {
-    // Filter the asset keys for this room
-    const filterbyRoom = assets.filter((k) => k.data.room === props.roomId && k.data.owner === user?._id);
-    // Create entries
-    const newList = filterbyRoom
-      .map((item) => {
-        // build an FileEntry object
-        const entry: FileEntry = {
-          id: item._id,
-          owner: item.data.owner,
-          ownerName: users.find((el) => el._id === item.data.owner)?.data.name || '-',
-          filename: item.data.file,
-          originalfilename: item.data.originalfilename,
-          date: new Date(item.data.dateCreated).getTime(),
-          dateAdded: new Date(item.data.dateAdded).getTime(),
-          room: item.data.room,
-          size: item.data.size,
-          type: item.data.mimetype,
-          derived: item.data.derived,
-          metadata: item.data.metadata,
-          selected: false,
-        };
-        return entry;
-      })
-      .sort((a, b) => {
-        // compare dates (number)
-        return b.dateAdded - a.dateAdded;
-      });
-    setAssetsList(newList);
-  }, [assets, props.roomId, user]);
-
-  // Open the file
-  const openFile = async (id: string) => {
-    if (!user) return;
-    // Create the app
-    const file = assetsList.find((a) => a.id === id);
-    if (file) {
-      // Get around  the center of the board
-      const bx = useUIStore.getState().boardPosition.x;
-      const by = useUIStore.getState().boardPosition.y;
-      const scale = useUIStore.getState().scale;
-      const x = Math.floor(-bx + window.innerWidth / scale / 2);
-      const y = Math.floor(-by + window.innerHeight / scale / 2);
-      // Create the app
-      const setup = await setupAppForFile(file, x, y, props.roomId, props.boardId, user);
-      if (setup) {
-        createApp(setup);
-        closeSeer();
       }
     }
   };
-
-  useEffect(() => {
-    // Build the list of actions
-    const actions = filteredList.map((a, idx) => {
-      const extension = getExtension(a.type);
-      return {
-        id: a.id,
-        filename: a.originalfilename,
-        icon: whichIcon(extension),
-        selected: idx === listIndex - 1,
-      };
-    });
-    // Build the list of buttons
-    const buttons = actions.slice(0, MaxElements).map((b, i) => (
-      <Button
-        key={b.id}
-        m={'1px 4px 1px 1px'}
-        p={2}
-        minHeight={'36px'}
-        width={'99%'}
-        leftIcon={b.icon}
-        fontSize="md"
-        justifyContent="flex-start"
-        variant="outline"
-        backgroundColor={b.selected ? 'blue.500' : ''}
-        _hover={{ backgroundColor: 'blue.500' }}
-        onMouseEnter={() => setListIndex(i + 1)}
-        onMouseLeave={() => setListIndex(0)}
-        onClick={() => openFile(b.id)}
-      >
-        {b.filename}
-      </Button>
-    ));
-    setButtonList(buttons);
-  }, [filteredList, listIndex]);
-
-  useEffect(() => {
-    if (filteredList.length === 0) {
-      setListIndex(0);
-    }
-  }, [filteredList]);
-
 
   // Voice command
   const triggerVoice = () => {
@@ -1003,7 +945,6 @@ function SeerUI(props: SeerUIProps): JSX.Element {
         const transcript = event.results[0][0].transcript;
         console.log('Speech recognition result:', transcript);
         setTerm(transcript);
-        setListIndex(0);
         if (initialRef.current) {
           initialRef.current.value = transcript;
           initialRef.current.focus();
@@ -1033,11 +974,28 @@ function SeerUI(props: SeerUIProps): JSX.Element {
     closeSeer();
   };
 
+  const handleClearSession = useCallback(() => {
+    clearSession(props.boardId);
+    clearSessionConfirmOnClose();
+  }, [clearSession, clearSessionConfirmOnClose, props.boardId]);
+
   const plannedActions = (response?.actions || []).map((action) => normalizeAction(action)).filter(Boolean);
-  const plannedActionSummary = summarizePlannedActions(plannedActions);
+  const plannedActionSummary = summarizeSeerPlannedActions(plannedActions);
   const showAISection = processingAI || response !== null || conversation.length > 0;
-  const scopeLabel = getScopeLabel(props.currentBoardApps, props.selectedAppIds, props.focusedAppId, props.selectedAppId);
-  const showAssetResults = buttonList.length > 0 && (!showAISection || Boolean(term));
+  const scopeLabel = getSeerScopeLabel(props.currentBoardApps, props.selectedAppIds, props.focusedAppId, props.selectedAppId);
+
+  useEffect(() => {
+    if (!props.isOpen || !conversationEndRef.current) return;
+
+    const raf = window.requestAnimationFrame(() => {
+      conversationEndRef.current?.scrollIntoView({
+        behavior: conversation.length > 0 ? 'smooth' : 'auto',
+        block: 'end',
+      });
+    });
+
+    return () => window.cancelAnimationFrame(raf);
+  }, [props.isOpen, conversation.length, processingAI, plannedActions.length, response?.id, response?.toolCalls?.length]);
 
   return (
     <>
@@ -1080,7 +1038,7 @@ function SeerUI(props: SeerUIProps): JSX.Element {
           <ModalBody px={0} py={0} overflow="hidden">
             <Box px={4} py={4} overflowY="auto" maxH="56vh">
               {conversation.length > 0 ? (
-                <VStack align="stretch" spacing={3} mb={showAISection || showAssetResults ? 4 : 0}>
+                <VStack align="stretch" spacing={3} mb={showAISection ? 4 : 0}>
                   {conversation.map((message) => (
                     <Flex
                       key={message.id}
@@ -1118,14 +1076,28 @@ function SeerUI(props: SeerUIProps): JSX.Element {
                         >
                           {message.role === 'assistant' ? <Markdown>{message.content}</Markdown> : <Text>{message.content}</Text>}
                         </Box>
+                        {message.role === 'assistant' && message.content.trim().length > 0 && (
+                          <Flex justifyContent="flex-end" mt={3}>
+                            <Tooltip label="Create a stickie from this response" hasArrow openDelay={400}>
+                              <Button
+                                size="xs"
+                                variant="outline"
+                                leftIcon={<MdNoteAdd />}
+                                onClick={() => void createStickieFromResponse(message.content)}
+                              >
+                                Stickie
+                              </Button>
+                            </Tooltip>
+                          </Flex>
+                        )}
                       </Box>
                     </Flex>
                   ))}
                 </VStack>
               ) : (
-                <Box mb={showAssetResults ? 4 : 0}>
+                <Box>
                   <Text fontSize="sm" color={subtleTextColor}>
-                    Ask SEER about the current board, selected apps, or a searched asset.
+                    Ask SEER about the current board or your current selection.
                   </Text>
                 </Box>
               )}
@@ -1147,7 +1119,7 @@ function SeerUI(props: SeerUIProps): JSX.Element {
                         Ready to Apply
                       </Text>
                       <Text fontSize="md" fontWeight="semibold" mb={2} color={plannedTextColor}>
-                        {plannedActions.length} {pluralize(plannedActions.length, 'change')} prepared
+                        {plannedActions.length} {pluralizeSeerCount(plannedActions.length, 'change')} prepared
                       </Text>
                       <Wrap spacing={2}>
                         {plannedActionSummary.map((summary) => (
@@ -1175,7 +1147,7 @@ function SeerUI(props: SeerUIProps): JSX.Element {
                           How SEER Got Here
                         </Text>
                         <Text fontSize="sm" color={subtleTextColor}>
-                          {response.toolCalls.length} {pluralize(response.toolCalls.length, 'step')} used
+                          {response.toolCalls.length} {pluralizeSeerCount(response.toolCalls.length, 'step')} used
                         </Text>
                       </Box>
                       <AccordionIcon />
@@ -1196,16 +1168,8 @@ function SeerUI(props: SeerUIProps): JSX.Element {
                 </Accordion>
               )}
 
-              {showAssetResults && (
-                <Box mt={response?.toolCalls && response.toolCalls.length > 0 ? 4 : 0}>
-                  <Text fontSize="xs" textTransform="uppercase" color={subtleTextColor} fontWeight="bold" mb={2}>
-                    Assets
-                  </Text>
-                  <VStack p={0} overflowY={'auto'} overflowX={'clip'} ref={listRef} spacing={1} align="stretch">
-                    {buttonList}
-                  </VStack>
-                </Box>
-              )}
+              <Box ref={conversationEndRef} h="1px" />
+
             </Box>
           </ModalBody>
 
@@ -1213,21 +1177,40 @@ function SeerUI(props: SeerUIProps): JSX.Element {
           <ModalFooter px={4} py={3}>
             <VStack width="100%" align="stretch" spacing={3}>
               <Flex justifyContent="space-between" alignItems="center" gap={3} wrap="wrap">
-                <HStack spacing={3} flexWrap="wrap">
-                  <Badge colorScheme="purple" variant="subtle" px={2} py={1} borderRadius="md">
-                    {scopeLabel}
-                  </Badge>
-                  {conversation.length > 0 && (
-                    <Button size="sm" variant="outline" colorScheme="red" onClick={() => clearSession(props.boardId)}>
-                      Clear Session
-                    </Button>
-                  )}
-                </HStack>
+                <Flex alignItems="center" gap={3} wrap="wrap" flex="1" minW={0}>
+                  <Tooltip label={scopeLabel} hasArrow placement="top-start" openDelay={500}>
+                    <Badge
+                      colorScheme="purple"
+                      variant="subtle"
+                      px={2}
+                      py={1}
+                      borderRadius="md"
+                      maxW="100%"
+                      display="inline-block"
+                      overflow="hidden"
+                      textOverflow="ellipsis"
+                      whiteSpace="nowrap"
+                    >
+                      {scopeLabel}
+                    </Badge>
+                  </Tooltip>
+                </Flex>
 
                 <HStack spacing={2}>
+                  {conversation.length > 0 && (
+                    <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Clear session'} openDelay={400}>
+                      <IconButton
+                        aria-label="Clear SEER session"
+                        icon={<MdDeleteSweep size="20px" />}
+                        size="sm"
+                        variant="ghost"
+                        onClick={clearSessionConfirmOnOpen}
+                      />
+                    </Tooltip>
+                  )}
                   <Popover trigger="hover">
                     <PopoverTrigger>
-                      <IconButton aria-label="SEER help" icon={<MdInfoOutline fontSize={'20px'} />} size="sm" />
+                      <IconButton aria-label="SEER help" icon={<MdHelpOutline fontSize={'20px'} />} size="sm" variant="ghost" />
                     </PopoverTrigger>
                     <PopoverContent fontSize={'sm'} width={'320px'}>
                       <PopoverArrow />
@@ -1235,7 +1218,6 @@ function SeerUI(props: SeerUIProps): JSX.Element {
                       <PopoverHeader>SEER Quick Actions</PopoverHeader>
                       <PopoverBody>
                         <UnorderedList>
-                          <ListItem>Select an asset to open it</ListItem>
                           <ListItem>
                             <b>app</b> [name]: Create an application
                           </ListItem>
@@ -1275,7 +1257,7 @@ function SeerUI(props: SeerUIProps): JSX.Element {
                     </PopoverContent>
                   </Popover>
                   <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Settings'} openDelay={400}>
-                    <IconButton aria-label="SEER settings" icon={<MdSettings size="20px" />} size="sm" onClick={editSettingsOnOpen} />
+                    <IconButton aria-label="SEER settings" icon={<MdSettings size="20px" />} size="sm" variant="ghost" onClick={editSettingsOnOpen} />
                   </Tooltip>
                 </HStack>
               </Flex>
@@ -1287,7 +1269,7 @@ function SeerUI(props: SeerUIProps): JSX.Element {
                   </InputLeftAddon>
                   <Input
                     ref={initialRef}
-                    placeholder="Ask SEER, search assets, or run a quick command"
+                    placeholder="Ask SEER or run a quick command"
                     _placeholder={{ opacity: 1, color: 'gray.600' }}
                     focusBorderColor="gray.500"
                     _focusVisible={{ borderColor: 'gray.500' }}
@@ -1317,29 +1299,17 @@ function SeerUI(props: SeerUIProps): JSX.Element {
 
       {/* Intelligence settings */}
       <EditUserSettingsModal isOpen={editSettingsIsOpen} onClose={editSettingsOnClose} tab={'intelligence'} />
+      <ConfirmModal
+        isOpen={clearSessionConfirmIsOpen}
+        onClose={clearSessionConfirmOnClose}
+        onConfirm={handleClearSession}
+        title="Clear SEER Session?"
+        message="This will remove the current SEER conversation history for this board. This cannot be undone."
+        confirmText="Clear Session"
+        confirmColor="red"
+      />
     </>
   );
 }
 
 const SeerComponent = React.memo(SeerUI);
-
-/**
- * Pick an icon based on file type (extension string)
- *
- * @param {string} type
- * @returns {JSX.Element}
- */
-function whichIcon(type: string) {
-  switch (type) {
-    case 'pdf':
-      return <MdOutlinePictureAsPdf style={{ color: 'tomato' }} size={'20px'} />;
-    case 'jpeg':
-      return <MdOutlineImage style={{ color: 'lightblue' }} size={'20px'} />;
-    case 'mp4':
-      return <MdOndemandVideo style={{ color: 'lightgreen' }} size={'20px'} />;
-    case 'json':
-      return <MdOutlineStickyNote2 style={{ color: 'darkgray' }} size={'20px'} />;
-    default:
-      return <MdOutlineFilePresent size={'20px'} />;
-  }
-}

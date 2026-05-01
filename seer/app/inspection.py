@@ -13,6 +13,8 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from app.seer.app_support import preview_state_for_app
+from app.seer.helpers import matches_app_type
 from pysage3.client import PySage3
 
 
@@ -62,25 +64,6 @@ class AppSummary(BaseModel):
     state_preview: dict[str, Any] | None = None
 
 
-def _state_preview(state: dict[str, Any], include_state: bool) -> dict[str, Any] | None:
-    if not state:
-        return None
-
-    if include_state:
-        return state
-
-    preview = {}
-
-    if isinstance(state.get("text"), str):
-        preview["text"] = state["text"][:280]
-
-    for key in ("color", "assetid", "currentPage", "url", "pluginName", "language", "page", "pdfCurrentPage"):
-        if key in state:
-            preview[key] = state[key]
-
-    return preview or None
-
-
 def _summarize_room(doc: dict[str, Any], board_count: int) -> RoomSummary:
     data = doc.get("data", {})
     return RoomSummary(
@@ -112,6 +95,7 @@ def _summarize_board(doc: dict[str, Any], room_name: str | None, app_count: int)
 def _summarize_app(doc: dict[str, Any], include_state: bool) -> AppSummary:
     data = doc.get("data", {})
     state = data.get("state", {})
+    app_type = data.get("type", "")
     position = data.get("position", {})
     size = data.get("size", {})
 
@@ -120,15 +104,17 @@ def _summarize_app(doc: dict[str, Any], include_state: bool) -> AppSummary:
         room_id=data.get("roomId", ""),
         board_id=data.get("boardId", ""),
         title=data.get("title", ""),
-        type=data.get("type", ""),
+        type=app_type,
         created_by=doc.get("_createdBy"),
         position=PositionSummary(x=position.get("x", 0), y=position.get("y", 0), z=position.get("z", 0)),
         size=SizeSummary(width=size.get("width", 0), height=size.get("height", 0), depth=size.get("depth", 0)),
-        state_preview=_state_preview(state, include_state),
+        state_preview=preview_state_for_app(app_type, state, include_state),
     )
 
 
 def list_room_summaries(ps3: PySage3, room_id: str | None = None) -> list[dict[str, Any]]:
+    """Return compact room summaries for SEER tool calls."""
+
     rooms = ps3.s3_comm.get_rooms()
     boards = ps3.s3_comm.get_boards()
     board_counts = Counter(board.get("data", {}).get("roomId") for board in boards)
@@ -140,6 +126,8 @@ def list_room_summaries(ps3: PySage3, room_id: str | None = None) -> list[dict[s
 
 
 def list_board_summaries(ps3: PySage3, room_id: str | None = None, board_id: str | None = None) -> list[dict[str, Any]]:
+    """Return compact board summaries with room names and app counts included."""
+
     rooms = ps3.s3_comm.get_rooms()
     boards = ps3.s3_comm.get_boards(room_id=room_id)
     apps = ps3.s3_comm.get_apps(room_id=room_id)
@@ -164,11 +152,12 @@ def list_app_summaries(
     title_contains: str | None = None,
     include_state: bool = False,
 ) -> list[dict[str, Any]]:
+    """Return compact app summaries, optionally with richer state previews for SEER reasoning."""
+
     apps = ps3.s3_comm.get_apps(room_id=room_id, board_id=board_id, app_id=app_id)
 
     if app_type:
-        app_type_filter = app_type.casefold()
-        apps = [app for app in apps if str(app.get("data", {}).get("type", "")).casefold() == app_type_filter]
+        apps = [app for app in apps if matches_app_type(str(app.get("data", {}).get("type", "")), app_type)]
 
     if title_contains:
         title_filter = title_contains.lower()

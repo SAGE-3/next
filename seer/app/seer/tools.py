@@ -11,8 +11,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from langchain_core.tools import tool
-from pydantic import BaseModel, ConfigDict, Field
 
+from app.seer.app_support import get_default_create_payload
 from app.seer.helpers import (
     asset_id_from_app,
     board_bounds,
@@ -21,6 +21,16 @@ from app.seer.helpers import (
     stickie_position,
     summarize_asset_doc,
 )
+from app.seer.planning import (
+    PlannedAppCreate,
+    PlannedAppUpdate,
+    PlannedPositionUpdate,
+    PlannedSizeUpdate,
+    PlannedStatePatch,
+    build_create_action,
+    build_update_action,
+    build_yjs_replace_action,
+)
 from app.inspection import list_app_summaries, list_board_summaries, list_room_summaries
 from libs.localtypes import ImageQuery, PDFQuery, Question
 
@@ -28,80 +38,38 @@ if TYPE_CHECKING:
     from app.seer.agent import SeerAgent
 
 
-class PlannedPositionUpdate(BaseModel):
-    x: float = Field(description="Board x position in pixels.")
-    y: float = Field(description="Board y position in pixels.")
-    z: float | None = Field(default=None, description="Optional z position. Leave unset to preserve the current z value.")
+def infer_requested_asset_kind(question: str) -> str | None:
+    """Infer whether the user is asking about a PDF, image, or video asset."""
+
+    lowered = question.casefold()
+    if "pdf" in lowered or "page" in lowered:
+        return "pdf"
+    if any(token in lowered for token in ("image", "photo", "picture", "diagram", "figure", "screenshot")):
+        return "image"
+    if "video" in lowered:
+        return "video"
+    return None
 
 
-class PlannedSizeUpdate(BaseModel):
-    width: float = Field(description="App width in pixels.")
-    height: float = Field(description="App height in pixels.")
-    depth: float | None = Field(default=None, description="Optional depth. Leave unset to preserve the current depth.")
+def infer_asset_kind(app_type: str, mimetype: str | None = None) -> str | None:
+    """Map a SAGE3 app type or asset mimetype to SEER's coarse asset categories."""
 
+    lowered_mimetype = (mimetype or "").casefold()
+    if "pdf" in lowered_mimetype:
+        return "pdf"
+    if lowered_mimetype.startswith("image/"):
+        return "image"
+    if lowered_mimetype.startswith("video/"):
+        return "video"
 
-class PlannedStatePatch(BaseModel):
-    model_config = ConfigDict(extra="allow")
+    if app_type == "PDFViewer":
+        return "pdf"
+    if app_type in {"ImageViewer", "DeepZoomImage"}:
+        return "image"
+    if app_type == "VideoViewer":
+        return "video"
 
-    location: list[float] | None = Field(
-        default=None,
-        description="Optional location patch. Use the app's native ordering. For Map use [longitude, latitude]. For LeafLet use [latitude, longitude].",
-    )
-    zoom: float | None = Field(default=None, description="Optional zoom value for map-like apps.")
-    bearing: float | None = Field(default=None, description="Optional bearing value for map-like apps.")
-    pitch: float | None = Field(default=None, description="Optional pitch value for map-like apps.")
-    baseLayer: str | None = Field(default=None, description="Optional base layer name for map-like apps.")
-    layers: list[dict[str, Any]] | None = Field(default=None, description="Optional layer list for map-like apps.")
-    text: str | None = Field(default=None, description="Optional text content for note-like apps.")
-    color: str | None = Field(default=None, description="Optional color for note-like apps.")
-    url: str | None = Field(default=None, description="Optional URL for web-like apps.")
-
-
-class PlannedAppUpdate(BaseModel):
-    id: str = Field(description="App id to update on the current board.")
-    position: PlannedPositionUpdate | None = Field(default=None, description="Optional top-level position update.")
-    size: PlannedSizeUpdate | None = Field(default=None, description="Optional top-level size update.")
-    title: str | None = Field(default=None, description="Optional new app title.")
-    state: PlannedStatePatch | None = Field(
-        default=None,
-        description="Optional partial state patch. Use this for map location, zoom, bearing, pitch, baseLayer, note text/color, and similar state updates.",
-    )
-
-
-def _build_update_action(existing: dict[str, Any], update: PlannedAppUpdate) -> dict[str, Any]:
-    action: dict[str, Any] = {
-        "type": "update_app",
-        "id": update.id,
-        "updates": {},
-    }
-
-    if update.position is not None:
-        action["updates"]["position"] = {
-            "x": float(update.position.x),
-            "y": float(update.position.y),
-            "z": float(update.position.z if update.position.z is not None else existing["position"]["z"]),
-        }
-
-    if update.size is not None:
-        action["updates"]["size"] = {
-            "width": float(update.size.width),
-            "height": float(update.size.height),
-            "depth": float(update.size.depth if update.size.depth is not None else existing["size"]["depth"]),
-        }
-
-    if update.title is not None:
-        action["updates"]["title"] = str(update.title)
-
-    if update.state is not None:
-        state_patch = update.state.model_dump(exclude_none=True)
-        if not state_patch:
-            raise ValueError(f"State patch for app {update.id} did not include any values.")
-        action["updates"]["state"] = state_patch
-
-    if not action["updates"]:
-        raise ValueError(f"Update for app {update.id} did not include any supported changes.")
-
-    return action
+    return None
 
 
 def build_seer_tools(agent: "SeerAgent", qq: Question) -> list[Any]:
@@ -118,6 +86,26 @@ def build_seer_tools(agent: "SeerAgent", qq: Question) -> list[Any]:
         normalize_fallback_app(app, current_room_id, current_board_id) for app in (qq.ctx.currentBoardApps or [])
     ]
 
+    def load_asset_summary(asset_id: str) -> dict[str, Any] | None:
+        """
+        Resolve an asset id into the compact SEER summary shape.
+
+        Asset lookups occasionally come back wrapped in a list, so keep the
+        normalization and warning behavior in one place for every asset tool.
+        """
+
+        asset_doc = agent.ps3.s3_comm.get_asset(asset_id)
+        if not asset_doc:
+            return None
+
+        if isinstance(asset_doc, list):
+            agent.logger.warning(
+                "SeerAgent> asset %s resolved to a list-shaped payload; normalizing it",
+                asset_id,
+            )
+
+        return summarize_asset_doc(asset_doc)
+
     def current_scope_ids() -> list[str] | None:
         if selected_app_ids:
             return selected_app_ids
@@ -133,6 +121,8 @@ def build_seer_tools(agent: "SeerAgent", qq: Question) -> list[Any]:
         color: str | None = None,
         include_state: bool = False,
     ) -> list[dict[str, Any]]:
+        # Re-query the server first so SEER reasons over the latest board state.
+        # The client snapshot only exists as a fallback when that lookup fails.
         apps = list_app_summaries(
             agent.ps3,
             board_id=current_board_id,
@@ -182,6 +172,27 @@ def build_seer_tools(agent: "SeerAgent", qq: Question) -> list[Any]:
             color=color,
             include_state=include_state,
         )
+
+    def default_creation_origin() -> tuple[float, float]:
+        """
+        Place new apps near the existing work, not at an arbitrary far-away cursor point.
+
+        Selection/focused scope wins first so "create next to this" style prompts stay
+        visually local. If there is no scope, fall back to the current board cluster,
+        then finally to the incoming cursor position.
+        """
+
+        scope_apps = current_scope_apps()
+        if scope_apps:
+            bounds = board_bounds(scope_apps)
+            return float(bounds["right"] + 64), float(bounds["top"])
+
+        board_apps = current_board_apps()
+        if board_apps:
+            bounds = board_bounds(board_apps)
+            return float(bounds["right"] + 64), float(bounds["top"])
+
+        return float(cursor_x), float(cursor_y)
 
     @tool
     def get_rooms(room_id: str | None = None) -> list[dict[str, Any]]:
@@ -353,11 +364,11 @@ def build_seer_tools(agent: "SeerAgent", qq: Question) -> list[Any]:
 
         assets = []
         for asset_id in asset_ids:
-            asset_doc = agent.ps3.s3_comm.get_asset(asset_id)
-            if asset_doc:
-                asset_summary = summarize_asset_doc(asset_doc)
-                asset_summary["appIds"] = [app["id"] for app in apps if asset_id_from_app(app) == asset_id]
-                assets.append(asset_summary)
+            asset_summary = load_asset_summary(asset_id)
+            if asset_summary is None:
+                continue
+            asset_summary["appIds"] = [app["id"] for app in apps if asset_id_from_app(app) == asset_id]
+            assets.append(asset_summary)
 
         return assets
 
@@ -377,6 +388,27 @@ def build_seer_tools(agent: "SeerAgent", qq: Question) -> list[Any]:
         if not asset_apps:
             raise ValueError("I could not find an asset-backed app in the current SEER scope.")
 
+        requested_kind = infer_requested_asset_kind(question)
+        if requested_kind:
+            # Prefer app-type matches first so selected PDF/Image viewer apps stay unambiguous.
+            narrowed_apps = [app for app in asset_apps if infer_asset_kind(str(app.get("type", ""))) == requested_kind]
+
+            # If the app type alone is not enough (for example AssetLink/CSVViewer), fall back to mimetype checks.
+            if not narrowed_apps:
+                narrowed_apps = []
+                for app in asset_apps:
+                    asset_id = asset_id_from_app(app)
+                    if asset_id is None:
+                        continue
+                    asset_summary = load_asset_summary(asset_id)
+                    if asset_summary is None:
+                        continue
+                    if infer_asset_kind(str(app.get("type", "")), str(asset_summary.get("mimetype", ""))) == requested_kind:
+                        narrowed_apps.append(app)
+
+            if narrowed_apps:
+                asset_apps = narrowed_apps
+
         if len(asset_apps) > 1:
             raise ValueError("There are multiple asset-backed apps in scope. Narrow the selection or pass a specific app id.")
 
@@ -385,14 +417,13 @@ def build_seer_tools(agent: "SeerAgent", qq: Question) -> list[Any]:
         if asset_id is None:
             raise ValueError("The selected app does not reference an asset.")
 
-        asset_doc = agent.ps3.s3_comm.get_asset(asset_id)
-        if not asset_doc:
+        asset_summary = load_asset_summary(asset_id)
+        if asset_summary is None:
             raise ValueError(f"Could not find asset {asset_id}.")
-
-        asset_summary = summarize_asset_doc(asset_doc)
         mimetype = str(asset_summary.get("mimetype", ""))
+        asset_kind = infer_asset_kind(str(target_app.get("type", "")), mimetype)
 
-        if mimetype.startswith("image/"):
+        if asset_kind == "image":
             if agent.image_agent is None:
                 raise ValueError("Image analysis is not configured.")
             result = await agent.image_agent.process(
@@ -400,18 +431,80 @@ def build_seer_tools(agent: "SeerAgent", qq: Question) -> list[Any]:
             )
             return {"app": target_app, "asset": asset_summary, "answer": result.r}
 
-        if "pdf" in mimetype:
+        if asset_kind == "pdf":
             if agent.pdf_agent is None:
                 raise ValueError("PDF analysis is not configured.")
-            result = await agent.pdf_agent.process(
-                PDFQuery(ctx=qq.ctx, assetids=[asset_id], user=qq.user, model=qq.model, q=question)
-            )
-            return {"app": target_app, "asset": asset_summary, "answer": result.r}
+            pdf_query = PDFQuery(ctx=qq.ctx, assetids=[asset_id], user=qq.user, model=qq.model, q=question)
+            try:
+                result = await agent.pdf_agent.process(pdf_query)
+                return {"app": target_app, "asset": asset_summary, "answer": result.r}
+            except Exception as err:
+                agent.logger.warning(
+                    "SeerAgent> PDF analysis failed for asset %s, falling back to direct summary: %s",
+                    asset_id,
+                    err,
+                )
+                try:
+                    answer = await agent.pdf_agent.summarize_pdf_direct(pdf_query, asset_id)
+                    return {"app": target_app, "asset": asset_summary, "answer": answer}
+                except Exception as fallback_err:
+                    agent.logger.exception(
+                        "SeerAgent> PDF fallback also failed for asset %s",
+                        asset_id,
+                    )
+                    raise ValueError(
+                        "PDF analysis failed after the asset was resolved. "
+                        f"Primary error: {err}. Fallback error: {fallback_err}."
+                    ) from fallback_err
 
         return {
             "app": target_app,
             "asset": asset_summary,
             "answer": f"{asset_summary.get('filename', 'This asset')} is a {mimetype or 'file'} asset. Detailed SEER analysis is currently available for images and PDFs.",
+        }
+
+    @tool
+    def plan_create_apps(
+        apps: list[PlannedAppCreate],
+    ) -> dict[str, Any]:
+        """
+        Plan creation of supported apps on the current board without executing them.
+        Use this for new CodeEditor, SageCell, Map, Webview, or Stickie apps.
+        """
+
+        if not apps:
+            raise ValueError("At least one app creation is required.")
+
+        if len(apps) > 12:
+            raise ValueError("Please keep app creation batches to 12 or fewer actions.")
+
+        origin_x, origin_y = default_creation_origin()
+        next_y = origin_y
+        stack_gap = 48
+        planned_actions: list[dict[str, Any]] = []
+        for index, app in enumerate(apps):
+            planned_app = app
+
+            # Auto-place apps in a simple stack near the active scope/board cluster
+            # so SEER-generated content does not appear far away or overlap by default.
+            if app.position is None:
+                _, (default_width, default_height) = get_default_create_payload(app.app)
+                width = float(app.size.width) if app.size is not None else float(default_width)
+                height = float(app.size.height) if app.size is not None else float(default_height)
+                planned_app = app.model_copy(
+                    update={
+                        "position": PlannedPositionUpdate(x=origin_x, y=next_y, z=0),
+                    }
+                )
+                next_y += height + stack_gap
+
+            planned_actions.append(build_create_action(planned_app, origin_x, origin_y, index))
+
+        app_names = ", ".join(action["app"] for action in planned_actions)
+        return {
+            "summary": f"Planned {len(planned_actions)} app creation action(s) on the current board ({app_names}).",
+            "boardId": current_board_id,
+            "actions": planned_actions,
         }
 
     @tool
@@ -517,7 +610,7 @@ def build_seer_tools(agent: "SeerAgent", qq: Question) -> list[Any]:
             raise ValueError(f"Could not find app {id} on the current board.")
 
         update = PlannedAppUpdate(id=id, position=position, size=size, title=title, state=state)
-        action = _build_update_action(existing, update)
+        action = build_update_action(existing, update)
 
         return {
             "summary": f"Planned 1 app update action on the current board.",
@@ -550,12 +643,35 @@ def build_seer_tools(agent: "SeerAgent", qq: Question) -> list[Any]:
             if existing is None:
                 raise ValueError(f"Could not find app {app_id} on the current board.")
 
-            planned_actions.append(_build_update_action(existing, update))
+            planned_actions.append(build_update_action(existing, update))
 
         return {
             "summary": f"Planned {len(planned_actions)} app update action(s) on the current board.",
             "boardId": current_board_id,
             "actions": planned_actions,
+        }
+
+    @tool
+    def plan_replace_yjs_content(
+        id: str,
+        content: str,
+    ) -> dict[str, Any]:
+        """
+        Plan a full Yjs content replacement for a collaborative text/code app on the current board.
+        Use this for full rewrites of Stickie text, CodeEditor content, or SageCell code.
+        """
+
+        board_apps = current_board_apps()
+        app_lookup = {app["id"]: app for app in board_apps}
+        existing = app_lookup.get(id)
+        if existing is None:
+            raise ValueError(f"Could not find app {id} on the current board.")
+
+        action = build_yjs_replace_action(existing, content)
+        return {
+            "summary": f"Planned 1 collaborative content replacement for {existing.get('type', 'the selected app')}.",
+            "boardId": current_board_id,
+            "actions": [action],
         }
 
     return [
@@ -569,7 +685,9 @@ def build_seer_tools(agent: "SeerAgent", qq: Question) -> list[Any]:
         get_current_board_layout_bounds,
         get_scope_assets,
         analyze_scope_asset,
+        plan_create_apps,
         plan_create_stickies,
+        plan_replace_yjs_content,
         plan_update_app,
         plan_update_apps,
     ]
