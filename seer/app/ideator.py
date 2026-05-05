@@ -8,9 +8,10 @@
 
 # Ideator Agent — serves the SageIdeator app's AI endpoints
 
+import asyncio
 import json
 from logging import Logger
-from openai import OpenAI, AzureOpenAI
+from openai import AsyncOpenAI, AsyncAzureOpenAI
 
 from pysage3.client import PySage3
 from libs.utils import getModelsInfo
@@ -65,11 +66,11 @@ class IdeatorAgent:
         self.openai_model = openai_cfg.get("model", "gpt-4o-mini")
 
         if openai_cfg.get("apiKey"):
-            self.openai_client = OpenAI(api_key=openai_cfg["apiKey"])
+            self.openai_client = AsyncOpenAI(api_key=openai_cfg["apiKey"])
             logger.info(f"IdeatorAgent: OpenAI ready, model={self.openai_model}")
 
         if azure_cfg.get("text", {}).get("apiKey"):
-            self.azure_client = AzureOpenAI(
+            self.azure_client = AsyncAzureOpenAI(
                 api_key=azure_cfg["text"]["apiKey"],
                 azure_endpoint=azure_cfg["text"]["url"],
                 api_version=azure_cfg["text"].get("api_version", "2024-02-01"),
@@ -85,7 +86,7 @@ class IdeatorAgent:
             return self.openai_client, self.openai_model
         raise RuntimeError("No AI model configured — check sage3-dev.hjson services.openai.apiKey")
 
-    def _chat(self, system: str, user: str, model: str, temperature: float = 0.7, image_base64: str | None = None) -> str:
+    async def _chat(self, system: str, user: str, model: str, temperature: float = 0.7, image_base64: str | None = None) -> str:
         client, model_name = self._get_client_and_model(model)
         user_content = user
         if image_base64:
@@ -93,7 +94,7 @@ class IdeatorAgent:
                 {"type": "text", "text": user},
                 {"type": "image_url", "image_url": {"url": image_base64}},
             ]
-        response = client.chat.completions.create(
+        response = await client.chat.completions.create(
             model=model_name,
             messages=[
                 {"role": "system", "content": system},
@@ -103,11 +104,11 @@ class IdeatorAgent:
         )
         return response.choices[0].message.content
 
-    def _json_chat(self, user: str, model: str, temperature: float = 0.7, image_base64: str | None = None) -> str:
-        return self._chat(JSON_SYSTEM, user, model, temperature, image_base64)
+    async def _json_chat(self, user: str, model: str, temperature: float = 0.7, image_base64: str | None = None) -> str:
+        return await self._chat(JSON_SYSTEM, user, model, temperature, image_base64)
 
-    def _prose_chat(self, user: str, model: str, temperature: float = 0.7, image_base64: str | None = None) -> str:
-        return self._chat(PROSE_SYSTEM, user, model, temperature, image_base64)
+    async def _prose_chat(self, user: str, model: str, temperature: float = 0.7, image_base64: str | None = None) -> str:
+        return await self._chat(PROSE_SYSTEM, user, model, temperature, image_base64)
 
     # ─── Endpoints ───────────────────────────────────────────────────────────
 
@@ -136,8 +137,10 @@ class IdeatorAgent:
             f'Return ONLY this JSON:\n{{"<dim>":["<lowest>","less","neutral","more","<highest>"]}}'
         )
 
-        cat_raw = self._json_chat(cat_msg, req.model, 0.7, req.imageBase64)
-        ord_raw = self._json_chat(ord_msg, req.model, 0.7, req.imageBase64)
+        cat_raw, ord_raw = await asyncio.gather(
+            self._json_chat(cat_msg, req.model, 0.7, req.imageBase64),
+            self._json_chat(ord_msg, req.model, 0.7, req.imageBase64),
+        )
 
         categorical = {}
         ordinal = {}
@@ -162,7 +165,7 @@ class IdeatorAgent:
             "Describe one specific, actionable idea that satisfies all constraints in 1–2 natural paragraphs (up to 150 words). "
             "Be concrete and practical. Write as flowing prose, not lists or JSON."
         )
-        r = self._prose_chat(msg, req.model, 0.8, req.imageBase64)
+        r = await self._prose_chat(msg, req.model, 0.8, req.imageBase64)
         return IdeatorNodeResponse(r=r)
 
     async def abstract(self, req: IdeatorAbstractRequest) -> IdeatorAbstractResponse:
@@ -172,7 +175,7 @@ class IdeatorAgent:
             "Return ONLY valid JSON:\n"
             '{"Title":"<title>","Summary":"<one sentence>","Steps":["Do X","Do Y","Do Z"],"Key Words":["w1","w2"]}'
         )
-        raw = self._json_chat(msg, req.model, 0)
+        raw = await self._json_chat(msg, req.model, 0)
         try:
             j = json.loads(_extract_json(raw))
             return IdeatorAbstractResponse(
@@ -197,7 +200,7 @@ class IdeatorAgent:
             "Suggest exactly 4 values.\n"
             'Return ONLY valid JSON: {"type":"categorical","values":["v1","v2","v3","v4"]}'
         )
-        type_raw = self._json_chat(type_msg, req.model, 0)
+        type_raw = await self._json_chat(type_msg, req.model, 0)
         dim_type = "categorical"
         values = []
         try:
@@ -217,7 +220,7 @@ class IdeatorAgent:
             f"Ideas:\n{node_list}\n\n"
             'Return ONLY valid JSON mapping each ID to its assigned value:\n{"<id>":"<value>",...}'
         )
-        assign_raw = self._json_chat(assign_msg, req.model, 0)
+        assign_raw = await self._json_chat(assign_msg, req.model, 0)
         assignments = {}
         try:
             assignments = json.loads(_extract_json(assign_raw))
@@ -237,7 +240,7 @@ class IdeatorAgent:
             "Synthesis — what single direction or key insight emerges from combining them?\n\n"
             "Write in flowing prose. Do not use JSON, markdown symbols, or bullet points."
         )
-        r = self._prose_chat(msg, req.model, 0.7)
+        r = await self._prose_chat(msg, req.model, 0.7)
         return IdeatorSummarizeResponse(r=r)
 
     async def image(self, req: IdeatorImageRequest) -> IdeatorImageResponse:
@@ -262,7 +265,7 @@ class IdeatorAgent:
             + f"Visual themes: {', '.join(req.keywords)}. "
             + "Abstract, minimal, clean design. No text, labels, or words."
         )
-        response = client.images.generate(
+        response = await client.images.generate(
             model="dall-e-3",
             prompt=prompt,
             n=1,
@@ -272,5 +275,5 @@ class IdeatorAgent:
         return IdeatorImageResponse(imageUrl=response.data[0].url)
 
     async def prose(self, req: IdeatorProseRequest) -> IdeatorProseResponse:
-        r = self._prose_chat(req.userPrompt, req.model, 0.7)
+        r = await self._prose_chat(req.userPrompt, req.model, 0.7)
         return IdeatorProseResponse(r=r)

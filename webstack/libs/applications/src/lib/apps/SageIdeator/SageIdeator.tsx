@@ -261,12 +261,12 @@ function AppComponent(props: App): JSX.Element {
 
         const newNodes: AppState['nodes'] = [];
 
-        await Promise.all(
+        const results = await Promise.allSettled(
           Array.from({ length: s.batchSize }, async () => {
             const { requirements, categorical, ordinal } = buildRequirements(rawDims);
             const text = await generateNodeContent(aiPrompt, requirements, s.apiKey, s.model, image, s.pdfContext?.text);
             const summary = await abstractNode(text, s.apiKey, s.model);
-            newNodes.push({
+            return {
               ID: genId(),
               Title: summary.Title,
               Summary: summary.Summary,
@@ -276,9 +276,13 @@ function AppComponent(props: App): JSX.Element {
               Structure: summary.Structure,
               Dimension: { categorical, ordinal },
               IsMyFav: false,
-            });
+            };
           }),
         );
+        for (const r of results) {
+          if (r.status === 'fulfilled') newNodes.push(r.value);
+        }
+        if (newNodes.length === 0) throw new Error('All idea generations failed');
 
         const latest = useAppStore.getState().apps.find((a) => a._id === props._id)?.data.state as AppState | undefined;
         const updatedHistory = (latest?.chatHistory ?? [...s.chatHistory, chatEntry]).map((e) =>
@@ -503,12 +507,12 @@ function AppComponent(props: App): JSX.Element {
       updateState(props._id, { ...(latest ?? s) });
       try {
         const newNodes: AppState['nodes'] = [];
-        await Promise.all(
+        const moreResults = await Promise.allSettled(
           Array.from({ length: s.batchSize }, async () => {
             const { requirements, categorical, ordinal } = buildRequirements(rawDims);
             const text = await generateNodeContent(entry.prompt, requirements, s.apiKey, s.model, undefined, s.pdfContext?.text);
             const summary = await abstractNode(text, s.apiKey, s.model);
-            newNodes.push({
+            return {
               ID: genId(),
               Title: summary.Title,
               Summary: summary.Summary,
@@ -518,9 +522,13 @@ function AppComponent(props: App): JSX.Element {
               Structure: summary.Structure,
               Dimension: { categorical, ordinal },
               IsMyFav: false,
-            });
+            };
           }),
         );
+        for (const r of moreResults) {
+          if (r.status === 'fulfilled') newNodes.push(r.value);
+        }
+        if (newNodes.length === 0) throw new Error('All idea generations failed');
         const afterGen = useAppStore.getState().apps.find((a) => a._id === props._id)?.data.state as AppState | undefined;
         const cur = afterGen ?? s;
         const existingEntry = cur.chatHistory.find((e) => e.id === entry.id);

@@ -1,4 +1,4 @@
-const { getWebpackConfig } = require('@nrwl/react/plugins/webpack');
+const getWebpackConfig = require('@nrwl/react/plugins/webpack');
 
 module.exports = (config, context) => {
   config = getWebpackConfig(config, context);
