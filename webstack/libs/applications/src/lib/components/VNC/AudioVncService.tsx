@@ -1,11 +1,3 @@
-/**
- * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
- * University of Hawaii, University of Illinois Chicago, Virginia Tech
- *
- * Distributed under the terms of the SAGE3 License.  The full license is in
- * the file LICENSE, distributed as part of this software.
- */
-
 import React, { useEffect, useRef, useState } from 'react';
 
 interface AudioVncServiceProps {
@@ -18,6 +10,7 @@ const MIME_TYPE = 'audio/webm; codecs="opus"';
 const MAX_LATENCY = 0.5;
 const RECONNECT_DELAY = 2000;
 const MAX_BUFFER_SECONDS = 5;
+const EVICT_BYTES_THRESHOLD = 1 * 1024 * 1024;
 
 export const AudioVncService: React.FC<AudioVncServiceProps> = ({ wsUrl, enabled = true, onConnectionChange }) => {
   const [isConnected, setIsConnected] = useState(false);
@@ -26,6 +19,7 @@ export const AudioVncService: React.FC<AudioVncServiceProps> = ({ wsUrl, enabled
   const mediaSourceRef = useRef<MediaSource | null>(null);
   const sourceBufferRef = useRef<SourceBuffer | null>(null);
   const queueRef = useRef<ArrayBuffer[]>([]);
+  const bytesSinceEvictRef = useRef(0);
   const playStartedRef = useRef(false);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const enabledRef = useRef(enabled);
@@ -76,6 +70,7 @@ export const AudioVncService: React.FC<AudioVncServiceProps> = ({ wsUrl, enabled
     }
 
     queueRef.current = [];
+    bytesSinceEvictRef.current = 0;
     playStartedRef.current = false;
     setIsConnected(false);
     onConnectionChange?.(false);
@@ -88,24 +83,60 @@ export const AudioVncService: React.FC<AudioVncServiceProps> = ({ wsUrl, enabled
     const q = queueRef.current;
     if (q.length === 0) return;
 
-    try {
-      if (q.length === 1) {
-        sb.appendBuffer(q.shift()!);
-      } else {
-        // Batch queued chunks into a single appendBuffer call
-        let totalLen = 0;
-        for (let i = 0; i < q.length; i++) totalLen += q[i].byteLength;
-        const merged = new Uint8Array(totalLen);
-        let offset = 0;
-        for (let i = 0; i < q.length; i++) {
-          merged.set(new Uint8Array(q[i]), offset);
-          offset += q[i].byteLength;
-        }
-        q.length = 0;
-        sb.appendBuffer(merged);
+    let chunk: ArrayBuffer;
+    if (q.length === 1) {
+      chunk = q.shift()!;
+    } else {
+      let totalLen = 0;
+      for (let i = 0; i < q.length; i++) totalLen += q[i].byteLength;
+      const merged = new Uint8Array(totalLen);
+      let offset = 0;
+      for (let i = 0; i < q.length; i++) {
+        merged.set(new Uint8Array(q[i]), offset);
+        offset += q[i].byteLength;
       }
+      q.length = 0;
+      chunk = merged.buffer;
+    }
+
+    // Proactive eviction before we get anywhere near the browser's quota
+    if (bytesSinceEvictRef.current + chunk.byteLength > EVICT_BYTES_THRESHOLD && sb.buffered.length > 0 && !sb.updating) {
+      q.unshift(chunk);
+      evictBuffered();
+      return;
+    }
+
+    try {
+      sb.appendBuffer(chunk);
+      bytesSinceEvictRef.current += chunk.byteLength;
     } catch (e) {
-      console.warn('[audio] appendBuffer error:', e);
+      if ((e as DOMException)?.name === 'QuotaExceededError') {
+        q.unshift(chunk);
+        evictBuffered();
+      } else {
+        console.warn('[audio] appendBuffer error:', e);
+      }
+    }
+  };
+
+  const evictBuffered = () => {
+    console.log('[audio]: buffer clear');
+    const sb = sourceBufferRef.current;
+    const audio = audioRef.current;
+    if (!sb || sb.updating || sb.buffered.length === 0) return;
+    const start = sb.buffered.start(0);
+    const end = sb.buffered.end(sb.buffered.length - 1);
+    // Keep the most recent second; jump playhead forward if needed
+    const removeEnd = Math.max(start, end - 1);
+    if (removeEnd <= start) return;
+    try {
+      sb.remove(start, removeEnd);
+      bytesSinceEvictRef.current = 0;
+      if (audio && audio.currentTime < removeEnd) {
+        audio.currentTime = removeEnd;
+      }
+    } catch {
+      // ignore
     }
   };
 
@@ -132,12 +163,15 @@ export const AudioVncService: React.FC<AudioVncServiceProps> = ({ wsUrl, enabled
       }
     }
 
-    // Trim old data
-    if (audio && sb && !sb.updating && sb.buffered.length > 0) {
-      const removeEnd = audio.currentTime - MAX_BUFFER_SECONDS;
-      if (removeEnd > sb.buffered.start(0)) {
+    // Trim old data — reference live edge so this works even before playback starts
+    if (sb && !sb.updating && sb.buffered.length > 0) {
+      const start = sb.buffered.start(0);
+      const liveEdge = sb.buffered.end(sb.buffered.length - 1);
+      const ref = audio && playStartedRef.current ? audio.currentTime : liveEdge;
+      const removeEnd = ref - MAX_BUFFER_SECONDS;
+      if (removeEnd > start) {
         try {
-          sb.remove(sb.buffered.start(0), removeEnd);
+          sb.remove(start, removeEnd);
           return; // remove triggers another updateend, flush then
         } catch {
           // ignore
