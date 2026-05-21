@@ -128,3 +128,28 @@ export async function uploadHandler(req: express.Request, res: express.Response)
     }
   });
 }
+
+export async function submitHandler(req: express.Request, res: express.Response) {
+  // Signal the start of the upload
+  await MessageCollection.add({ type: 'upload', payload: `Uploading data`, close: false }, req.user.id);
+
+  const hasError = false;
+  const processError = '';
+
+  const body = req.body;
+  const data = body as {
+    url: string;
+    mimetype: string;
+    originalname: string;
+    room: string;
+  };
+  console.log('submitHandler>', data);
+
+  if (hasError && processError) {
+    // Return error with the information
+    res.status(500).send(processError);
+  } else {
+    // Return success with the ids of the new files
+    res.status(200).send([getUUID()]);
+  }
+}
