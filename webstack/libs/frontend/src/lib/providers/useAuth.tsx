@@ -188,10 +188,23 @@ export function AuthProvider(props: React.PropsWithChildren<Record<string, unkno
           keycloakLogin,
           guestLogin,
           spectatorLogin,
-          localLogin
+          localLogin,
         });
       } else {
-        setAuth({ auth: null, verify, loading: false, expire: 0, logout, googleLogin, appleLogin, ciLogin, keycloakLogin, guestLogin, spectatorLogin, localLogin });
+        setAuth({
+          auth: null,
+          verify,
+          loading: false,
+          expire: 0,
+          logout,
+          googleLogin,
+          appleLogin,
+          ciLogin,
+          keycloakLogin,
+          guestLogin,
+          spectatorLogin,
+          localLogin,
+        });
       }
     }
 

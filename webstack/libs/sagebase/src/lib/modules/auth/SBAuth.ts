@@ -9,14 +9,13 @@
 import { RedisClientType } from 'redis';
 import RedisStore from 'connect-redis';
 
-import { Express, NextFunction, Request, RequestHandler, Response } from 'express';
+import { Express, NextFunction, Request, Response } from 'express';
 import * as session from 'express-session';
 import * as passport from 'passport';
 
 import { SBAuthDatabase, SBAuthDB, SBAuthSchema } from './SBAuthDatabase';
 export type { SBAuthSchema } from './SBAuthDatabase';
 export type { JWTPayload } from './adapters';
-import { Strategy as LocalStrategy } from 'passport-local';
 import {
   passportGoogleSetup,
   SBAuthGoogleConfig,
@@ -37,7 +36,6 @@ import {
   passportLDAPSetup,
   SBAuthLDAPConfig,
 } from './adapters/';
-
 
 export type SBAuthConfig = {
   sessionMaxAge: number;
@@ -65,7 +63,7 @@ export class SBAuth {
 
   private _database!: SBAuthDatabase;
 
-  private _sessionParser!: RequestHandler;
+  private _sessionParser!: any;
 
   /**
    * Creates a generalized OAuth callback handler with enhanced error logging and security validation
@@ -298,8 +296,12 @@ export class SBAuth {
    */
   public async authenticate(req: Request, res: Response, next: NextFunction) {
     const user = req.user as SBAuthSchema;
+    const headerToken = req.headers['authorization'];
     if (user) {
       next();
+    } else if (headerToken) {
+      // if there's a header token, try JWT strategy
+      passport.authenticate('jwt', { session: false })(req, res, next);
     } else {
       res.status(403);
       res.send({ success: false, authentication: false, auth: null });

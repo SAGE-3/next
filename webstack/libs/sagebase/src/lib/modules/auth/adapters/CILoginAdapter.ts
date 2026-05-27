@@ -7,8 +7,6 @@
  */
 
 import * as passport from 'passport';
-
-
 import { Issuer, custom } from 'openid-client';
 import { Strategy, VerifyCallback } from 'passport-openidconnect';
 
@@ -71,8 +69,8 @@ export async function passportCILogonSetup(config: SBAuthCILogonConfig) {
           } else {
             done(null, false);
           }
-        }
-      )
+        },
+      ),
     );
     console.log('CILogon> Setup done');
     return true;

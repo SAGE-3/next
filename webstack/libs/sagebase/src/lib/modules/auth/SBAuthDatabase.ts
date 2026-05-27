@@ -98,7 +98,7 @@ class SBAuthDatabase {
       {
         ON: 'JSON',
         PREFIX: this._prefix,
-      }
+      },
     );
     return;
   }
@@ -223,12 +223,7 @@ class SBAuthDatabase {
    * Create a new local user credential record.
    * Returns undefined if the username already exists.
    */
-  public async createLocalUser(
-    username: string,
-    passwordHash: string,
-    displayName = '',
-    email = ''
-  ): Promise<LocalUserRecord | undefined> {
+  public async createLocalUser(username: string, passwordHash: string, displayName = '', email = ''): Promise<LocalUserRecord | undefined> {
     const key = this.localUserKey(username);
     const exists = await this._redisClient.exists(key);
     if (exists) return undefined;

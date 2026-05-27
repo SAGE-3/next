@@ -86,7 +86,7 @@ export function LocalAuthRouter(): express.Router {
   });
 
   // Delete a local user account
-  router.delete('/users/:username', async (req: Request, res: Response) => {
+  router.delete('/users/:username', async (req, res) => {
     const { username } = req.params;
     const existing = await SBAuthDB.getLocalUser(username);
     if (!existing) {

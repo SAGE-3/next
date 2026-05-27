@@ -86,11 +86,7 @@ export function passportLDAPSetup(config: SBAuthLDAPConfig): boolean {
             const email = ldapUser.mail || '';
 
             // Resolve role from memberOf
-            const memberOf: string[] = Array.isArray(ldapUser.memberOf)
-              ? ldapUser.memberOf
-              : ldapUser.memberOf
-                ? [ldapUser.memberOf]
-                : [];
+            const memberOf: string[] = Array.isArray(ldapUser.memberOf) ? ldapUser.memberOf : ldapUser.memberOf ? [ldapUser.memberOf] : [];
 
             const role = resolveRole(memberOf, config.groupMapping, config.defaultRole);
 
@@ -106,8 +102,8 @@ export function passportLDAPSetup(config: SBAuthLDAPConfig): boolean {
             console.error('LDAP> Error processing user:', error);
             done(error instanceof Error ? error : new Error(String(error)));
           }
-        }
-      )
+        },
+      ),
     );
 
     return true;
