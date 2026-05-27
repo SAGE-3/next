@@ -38,7 +38,7 @@ import {
 import { SAGEBase } from '@sage3/sagebase';
 
 // Custom Routes
-import { ConfigRouter, InfoRouter, TimeRouter, NLPRouter, LogsRouter, KernelsRouter, PresenceThrottle, AgentRouter } from './custom';
+import { ConfigRouter, InfoRouter, TimeRouter, NLPRouter, LogsRouter, KernelsRouter, PresenceThrottle, AgentRouter, LocalAuthRouter } from './custom';
 
 import { config } from '../../config';
 
@@ -58,7 +58,7 @@ export function expressAPIRouter(): express.Router {
   router.use('/logs', LogsRouter());
 
   // Authenticate all API Routes
-  router.use(SAGEBase.Auth.authenticate);
+ router.use(SAGEBase.Auth.authenticate);
 
   // Kernels Routes
   router.use('/kernels', KernelsRouter());
@@ -89,6 +89,9 @@ export function expressAPIRouter(): express.Router {
 
   // Agent Routes
   router.use('/agents', AgentRouter());
+
+  // Local auth management (admin only)
+  router.use('/localauth', LocalAuthRouter());
 
   // Initialize Custom Presence Throttle
   PresenceThrottle.init();

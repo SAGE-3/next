@@ -9,13 +9,14 @@
 import { RedisClientType } from 'redis';
 import RedisStore from 'connect-redis';
 
-import { Express, NextFunction, Request, Response } from 'express';
+import { Express, NextFunction, Request, RequestHandler, Response } from 'express';
 import * as session from 'express-session';
 import * as passport from 'passport';
 
 import { SBAuthDatabase, SBAuthDB, SBAuthSchema } from './SBAuthDatabase';
 export type { SBAuthSchema } from './SBAuthDatabase';
 export type { JWTPayload } from './adapters';
+import { Strategy as LocalStrategy } from 'passport-local';
 import {
   passportGoogleSetup,
   SBAuthGoogleConfig,
@@ -27,22 +28,29 @@ import {
   SBAuthGuestConfig,
   passportCILogonSetup,
   SBAuthCILogonConfig,
+  passportLocalSetup,
+  SBAuthLocalConfig,
   passportSpectatorSetup,
   SBAuthSpectatorConfig,
   passportKeycloakSetup,
   SBAuthKeycloakConfig,
+  passportLDAPSetup,
+  SBAuthLDAPConfig,
 } from './adapters/';
+
 
 export type SBAuthConfig = {
   sessionMaxAge: number;
   sessionSecret: string;
-  strategies: ('google' | 'apple' | 'cilogon' | 'guest' | 'jwt' | 'spectator' | 'keycloak')[];
+  strategies: ('google' | 'apple' | 'cilogon' | 'guest' | 'jwt' | 'spectator' | 'keycloak' | 'local' | 'ldap')[];
   production: boolean;
   googleConfig?: SBAuthGoogleConfig;
   appleConfig?: SBAuthAppleConfig;
   jwtConfig?: SBAuthJWTConfig;
   guestConfig?: SBAuthGuestConfig;
   cilogonConfig?: SBAuthCILogonConfig;
+  localConfig?: SBAuthLocalConfig;
+  ldapConfig?: SBAuthLDAPConfig;
   spectatorConfig?: SBAuthSpectatorConfig;
   keycloakConfig?: SBAuthKeycloakConfig;
 };
@@ -57,7 +65,7 @@ export class SBAuth {
 
   private _database!: SBAuthDatabase;
 
-  private _sessionParser!: any;
+  private _sessionParser!: RequestHandler;
 
   /**
    * Creates a generalized OAuth callback handler with enhanced error logging and security validation
@@ -67,16 +75,6 @@ export class SBAuth {
    */
   private createOAuthCallbackHandler(providerName: string, strategyName: string) {
     return (req: Request, res: Response, next: NextFunction) => {
-      // Log OAuth callback details for debugging
-      // console.log(`${providerName}> OAuth callback received:`, {
-      //   query: req.query,
-      //   hasState: !!req.query.state,
-      //   hasCode: !!req.query.code,
-      //   hasError: !!req.query.error,
-      //   sessionId: req.sessionID,
-      //   timestamp: new Date().toISOString()
-      // });
-
       // Check for OAuth error in query parameters
       if (req.query.error) {
         console.error(`${providerName}> OAuth provider returned error:`, req.query.error, req.query.error_description);
@@ -86,7 +84,7 @@ export class SBAuth {
         );
       }
 
-      passport.authenticate(strategyName, (err: any, user: any, info: any) => {
+      passport.authenticate(strategyName, (err: Error | null, user: Express.User | false, info: { message?: string; reason?: string }) => {
         if (err) {
           console.error(`${providerName}> Authentication error:`, err);
           return res.redirect(`/login?error=${providerName}_error&details=` + encodeURIComponent(err.message || 'Unknown error'));
@@ -98,31 +96,14 @@ export class SBAuth {
           return res.redirect(`/login?error=${providerName}_no_user&details=` + encodeURIComponent(details));
         }
 
-        // Log successful authentication with more details
-        // console.log(`${providerName}> Successful authentication:`, {
-        //   userId: user.id,
-        //   email: user.email || user.displayName || 'no-email',
-        //   provider: user.provider,
-        //   sessionId: req.sessionID,
-        //   userAgent: req.get('User-Agent'),
-        //   timestamp: new Date().toISOString(),
-        // });
-
         // Establish user session
-        req.logIn(user, (loginErr: any) => {
+        req.logIn(user, (loginErr: Error) => {
           if (loginErr) {
             console.error(`${providerName}> Session login error:`, loginErr);
             return res.redirect(
               `/login?error=${providerName}_login_failed&details=` + encodeURIComponent(loginErr.message || 'Session creation failed'),
             );
           }
-
-          // console.log(`${providerName}> Session established successfully:`, {
-          //   userId: user.id,
-          //   email: user.email || user.displayName || 'no-email',
-          //   sessionId: req.sessionID,
-          //   timestamp: new Date().toISOString(),
-          // });
 
           return res.redirect('/');
         });
@@ -157,8 +138,10 @@ export class SBAuth {
     express.use(this._sessionParser);
 
     // Initialize passport
-    express.use(passport.initialize());
-    express.use(passport.session());
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    express.use(passport.initialize() as any);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    express.use(passport.session() as any);
 
     // Passport serialize function in order to support login sessions.
     passport.serializeUser(this.serializeUser);
@@ -245,6 +228,53 @@ export class SBAuth {
           express.get(config.keycloakConfig.callbackURL, this.createOAuthCallbackHandler('keycloak', 'keycloak'));
         }
       }
+      // LDAP Auth Setup
+      if (config.strategies.includes('ldap') && config.ldapConfig) {
+        passportLDAPSetup(config.ldapConfig);
+        // Register a dedicated /auth/ldap route when local is not enabled
+        if (!config.strategies.includes('local')) {
+          express.post('/auth/ldap', (req: Request, res: Response, next: NextFunction) => {
+            passport.authenticate('ldapauth', (err: Error | null, user: Express.User | false) => {
+              if (err || !user) {
+                return res.redirect('/?error=ldap_failed');
+              }
+              req.logIn(user, (loginErr: Error) => {
+                if (loginErr) return next(loginErr);
+                return res.redirect('/');
+              });
+            })(req, res, next);
+          });
+        }
+      }
+
+      // Local Auth Setup (with optional LDAP chaining)
+      if (config.strategies.includes('local') && config.localConfig) {
+        if (passportLocalSetup()) {
+          const localEndpoint = config.localConfig.routeEndpoint;
+          const ldapEnabled = config.strategies.includes('ldap') && config.ldapConfig;
+
+          if (ldapEnabled) {
+            // Chain: try LDAP first, fall back to local
+            express.post(localEndpoint, (req: Request, res: Response, next: NextFunction) => {
+              passport.authenticate('ldapauth', (err: Error | null, user: Express.User | false) => {
+                if (user) {
+                  // LDAP auth succeeded
+                  req.logIn(user, (loginErr: Error) => {
+                    if (loginErr) return next(loginErr);
+                    return res.redirect('/');
+                  });
+                } else {
+                  // LDAP failed, try local
+                  passport.authenticate('local', { successRedirect: '/', failureRedirect: '/' })(req, res, next);
+                }
+              })(req, res, next);
+            });
+          } else {
+            // Local only
+            express.post(localEndpoint, passport.authenticate('local', { successRedirect: '/', failureRedirect: '/' }));
+          }
+        }
+      }
     }
 
     // Route to logout
@@ -268,12 +298,8 @@ export class SBAuth {
    */
   public async authenticate(req: Request, res: Response, next: NextFunction) {
     const user = req.user as SBAuthSchema;
-    const headerToken = req.headers['authorization'];
     if (user) {
       next();
-    } else if (headerToken) {
-      // if there's a header token, try JWT strategy
-      passport.authenticate('jwt', { session: false })(req, res, next);
     } else {
       res.status(403);
       res.send({ success: false, authentication: false, auth: null });
@@ -292,17 +318,16 @@ export class SBAuth {
   /**
    * Log the current user out of the session.
    */
-  public logout(req: any, res: Response, next: NextFunction): void {
-    const user = req.user;
+  public logout(req: Request, res: Response, next: NextFunction): void {
+    const user = req.user as SBAuthSchema | undefined;
     if (!user) {
       res.send({ success: true });
       return;
     }
-    if (req.user?.provider == 'guest') {
-      this._database.deleteAuth(req.user.provider, req.user.providerId);
+    if (user.provider === 'guest') {
+      this._database.deleteAuth(user.provider, user.providerId);
     }
-    // req.session.destroy();
-    req.session.user = null;
+    (req.session as any).user = null;
 
     req.logout({ keepSessionInfo: false }, function (err: Error) {
       if (err) {

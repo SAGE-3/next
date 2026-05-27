@@ -42,16 +42,12 @@
   "agents": {
     "url": "http://127.0.0.1:9999"
   },
-  // VEO VNC container orchestration server
-  "veoServer": {
-    "url": "https://sage3-vnc.cis230038.projects.jetstream-cloud.org"
-  },
 
   // Feedback URL
   "feedback": {
     "url": "http://sage3-server-status.cis230038.projects.jetstream-cloud.org:3000/feedback"
   },
-  
+
   // External Services
   "services": {
     "twilio": {
@@ -117,14 +113,10 @@
     "plugins": true,
     // Which Apps to enable
     "apps": [
-      "Chat",
-      "ChartMaker",
-      "Map",
+      "MapGL",
       "Notepad",
       "Poll",
-      "SageCell",
       "Stickie",
-      "Screenshare",
       "Webview"
     ]
   },
@@ -135,13 +127,14 @@
     "sessionSecret": "SUPERSECRET!!$$",
     // Max age for a session per user. In milliseconds. 8 days
     "sessionMaxAge": 691200000,
-    // Which login strategies to enable for the server. Available: guest, jwt, google, cilogon, keycloak
+    // Which login strategies to enable for the server. Available: guest, jwt, google, cilogon, local, ldap
     // If you enable them ensure you add the relevant config information below.
+    // When both "ldap" and "local" are enabled, LDAP is tried first, then local fallback.
     "strategies": [
       "guest",
       "jwt",
-      "keycloak",
-      "google" // "spectator"       // "cilogon"
+      "local",
+      "ldap"
     ],
     // A List of emails to enable those users to be admins.
     "admins": [],
@@ -149,6 +142,35 @@
     "guestConfig": {
        // Endpoint for the guest login. No need to change this
       "routeEndpoint": "/auth/guest"
+    },
+    // Local configuration
+    "localConfig": {
+      // Endpoint for the spectator login. No need to change this
+      "routeEndpoint": "/auth/local"
+    },
+    // LDAP / Active Directory configuration
+    "ldapConfig": {
+      // LDAP server URL
+      "url": "ldap://ldap.example.com:389",
+      // Service account for searching users
+      "bindDN": "cn=admin,dc=example,dc=com",
+      "bindCredentials": "password",
+      // Where to search for users
+      "searchBase": "ou=users,dc=example,dc=com",
+      // Filter to find user. {{username}} is replaced with the login username.
+      "searchFilter": "(uid={{username}})",
+      // Map LDAP group DNs to SAGE3 roles (checked in priority: admin > user > spectator)
+      "groupMapping": {
+        "admin": "cn=sage3-admins,ou=groups,dc=example,dc=com",
+        "user": "cn=sage3-users,ou=groups,dc=example,dc=com",
+        "spectator": "cn=sage3-readonly,ou=groups,dc=example,dc=com"
+      },
+      // Role assigned when authenticated but no group matches
+      "defaultRole": "spectator",
+      // TLS options
+      "tlsOptions": {
+        "rejectUnauthorized": false
+      }
     },
     // Spectator configuration
     "spectatorConfig": {
@@ -187,21 +209,6 @@
       "routeEndpoint": "/auth/cilogon",
       // Callback URL for the cilogon login
       "callbackURL": "/auth/cilogon/redirect"
-    },
-    // Keycloak (or any OpenID Connect provider) configuration
-    // To test locally, run: docker run -p 8080:8080 -e KC_BOOTSTRAP_ADMIN_USERNAME=admin -e KC_BOOTSTRAP_ADMIN_PASSWORD=admin quay.io/keycloak/keycloak:latest start-dev
-    // Then create a realm and client at http://localhost:8080, set redirect URI to http://localhost:3000/auth/keycloak/redirect
-    "keycloakConfig": {
-      // Full Keycloak realm URL — Keycloak will autodiscover all OIDC endpoints from this
-      "issuerURL": "http://localhost:8080/realms/sage3",
-      // Client ID created in the Keycloak realm
-      "clientID": "sage3-local",
-      // Client Secret (leave empty for public clients)
-      "clientSecret": "",
-      // Endpoint to initiate Keycloak login
-      "routeEndpoint": "/auth/keycloak",
-      // Must match the redirect URI configured in your Keycloak client
-      "callbackURL": "/auth/keycloak/redirect"
     }
   },
 

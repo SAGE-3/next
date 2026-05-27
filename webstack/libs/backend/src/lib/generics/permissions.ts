@@ -29,8 +29,10 @@ const providerToRoleMap = {
   apple: 'user',
   jwt: 'user',
   keycloak: 'user',
+  ldap: 'user',
   spectator: 'spectator',
   guest: 'guest',
+  local: 'local',
 };
 
 // Conversion to RoleArg
