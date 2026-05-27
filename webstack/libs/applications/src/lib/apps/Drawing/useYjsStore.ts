@@ -149,9 +149,13 @@ export function useYjsStore({
           name: user.name ?? defaultUserPreferences.name,
         };
       });
+      //  * import { atom } from '@tldraw/state'
+      //  *
+      //  * const userSignal = atom('user', { id: 'user-123', name: 'Alice', color: '#ff0000', meta: {} })
 
       // Create the instance presence derivation
       const presenceId = InstancePresenceRecordType.createId(yClientId);
+
       const presenceDerivation = createPresenceStateDerivation(userPreferences, presenceId)(store);
 
       // Set our initial presence from the derivation's current value
@@ -257,10 +261,10 @@ export function useYjsStore({
           meta.set('schema', ourSchema);
         });
 
-        store.loadSnapshot({
-          store: migrationResult.value,
-          schema: ourSchema,
-        });
+        // store.loadSnapshot({
+        //   store: migrationResult.value,
+        //   schema: ourSchema,
+        // });
       } else {
         // Create the initial store records
         // Sync the store records to the yjs doc
