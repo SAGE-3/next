@@ -11,3 +11,10 @@ services:
       LDAP_DOMAIN: "example.com"
       LDAP_ADMIN_PASSWORD: "admin"
     restart: "no"
+
+  redis:
+    image: redis/redis-stack-server:latest
+    container_name: sage3-test-redis
+    ports:
+      - "6379:6379"
+    restart: "no"

@@ -1,45 +1,50 @@
-# LDAP Test Environment
+# LDAP Integration Test Environment
 
-Spins up a local OpenLDAP server pre-seeded with test users and groups to validate SAGE3 LDAP authentication end-to-end.
+Runs a full SAGE3 LDAP integration test locally:
+
+1. Starts **OpenLDAP** and **Redis** in Docker
+2. Seeds the LDAP directory with test users covering all role mappings
+3. Patches `sage3-dev.hjson` to point at the local LDAP (restored on exit)
+4. Starts **homebase** (port 3000) and the **webapp dev server** (port 4200)
+5. Opens the browser at `http://localhost:4200`
+
+Press **Ctrl+C** to stop everything. The original `sage3-dev.hjson` is restored automatically.
 
 ## Prerequisites
 
-- Docker (no other local dependencies required)
+- Docker
+- `yarn` and project dependencies installed (`cd webstack && yarn install`)
 
 ## Usage
 
 ```bash
-# Start the LDAP server and seed test data
+# From the repo root — start the full stack
 ./deployment/test-ldap/test.sh
 
-# Stop and remove the container + volumes
+# Tear down Docker containers (if needed separately)
 ./deployment/test-ldap/test.sh stop
 ```
 
-The script prints the exact `ldapConfig` block to paste into `sage3-dev.hjson`.
-
 ## Test accounts
 
-| Username | Password  | SAGE3 role            |
-|----------|-----------|-----------------------|
-| alice    | alice123  | admin                 |
-| bob      | bob123    | user                  |
-| carol    | carol123  | spectator             |
-| dave     | dave123   | spectator (defaultRole, no group) |
+| Username | Password  | SAGE3 role |
+|----------|-----------|------------|
+| alice    | alice123  | admin      |
+| bob      | bob123    | user       |
+| carol    | carol123  | spectator  |
+| dave     | dave123   | spectator (defaultRole — no group) |
 
-## Directory structure
+## Log files
 
-| DN | Description |
-|----|-------------|
-| `dc=example,dc=com` | Root |
-| `ou=users,dc=example,dc=com` | User tree |
-| `ou=groups,dc=example,dc=com` | Group tree |
-| `cn=sage3-admins,ou=groups,...` | Maps to `admin` role |
-| `cn=sage3-users,ou=groups,...` | Maps to `user` role |
-| `cn=sage3-readonly,ou=groups,...` | Maps to `spectator` role |
+| File | Content |
+|------|---------|
+| `webstack/homebase-test.log` | homebase stdout/stderr |
+| `webstack/webapp-test.log`   | webpack dev server output |
 
 ## Notes
 
-- LDAP listens on `localhost:3890` (mapped from container port 389)
-- Users carry `memberOf` set directly in the LDIF via `extensibleObject` — this avoids needing the memberOf overlay while still exercising SAGE3's role mapping logic
-- For a production Active Directory setup, `memberOf` is populated automatically by the server; no special configuration is needed
+- LDAP listens on `localhost:3890` (container port 389)
+- Redis listens on `localhost:6379`
+- Users carry `memberOf` set directly in the seed LDIF via `extensibleObject`,
+  which avoids needing the memberOf overlay while exercising SAGE3's role mapping
+- In production Active Directory, `memberOf` is populated automatically by the server
