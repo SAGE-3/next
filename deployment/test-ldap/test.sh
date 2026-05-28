@@ -122,6 +122,19 @@ PYEOF
 
 info "sage3-dev.hjson patched (original saved as .testbak)."
 
+# ── Stub webapp dist (homebase needs favicon.ico at startup) ──────────────────
+step "Preparing dist assets"
+mkdir -p "$WEBSTACK/dist/apps/webapp/assets"
+if [ ! -f "$WEBSTACK/dist/apps/webapp/assets/favicon.ico" ]; then
+  cp "$WEBSTACK/apps/webapp/src/assets/favicon.ico" \
+     "$WEBSTACK/dist/apps/webapp/assets/favicon.ico"
+  info "Copied favicon.ico to dist."
+fi
+
+# ── Reset NX daemon (avoids 'free(): invalid pointer' on some systems) ────────
+step "Resetting NX daemon"
+cd "$WEBSTACK" && yarn nx reset 2>/dev/null || true
+
 # ── Start homebase ────────────────────────────────────────────────────────────
 step "Starting homebase (port 3000)"
 cd "$WEBSTACK"
