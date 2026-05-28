@@ -38,6 +38,7 @@ command -v yarn   &>/dev/null  || fail "yarn is required."
 
 # ── Cleanup handler ───────────────────────────────────────────────────────────
 HOMEBASE_PID=""
+YJS_PID=""
 WEBAPP_PID=""
 
 cleanup() {
@@ -46,6 +47,7 @@ cleanup() {
 
   # Kill SAGE3 processes
   [ -n "$WEBAPP_PID" ]   && kill "$WEBAPP_PID"   2>/dev/null && info "webapp stopped."
+  [ -n "$YJS_PID" ]      && kill "$YJS_PID"      2>/dev/null && info "homebase-yjs stopped."
   [ -n "$HOMEBASE_PID" ] && kill "$HOMEBASE_PID" 2>/dev/null && info "homebase stopped."
 
   # Restore config
@@ -152,8 +154,16 @@ for i in $(seq 1 45); do
   sleep 2
 done
 
+# ── Start homebase-yjs ───────────────────────────────────────────────────────
+step "Starting homebase-yjs (port 3001)"
+cd "$WEBSTACK"
+yarn nx serve homebase-yjs >"$WEBSTACK/yjs-test.log" 2>&1 &
+YJS_PID=$!
+info "homebase-yjs PID=$YJS_PID — logs: webstack/yjs-test.log"
+
 # ── Start webapp dev server ───────────────────────────────────────────────────
 step "Starting webapp dev server (port 4200)"
+cd "$WEBSTACK"
 yarn webapp >"$WEBSTACK/webapp-test.log" 2>&1 &
 WEBAPP_PID=$!
 info "webapp PID=$WEBAPP_PID — logs: webstack/webapp-test.log"
@@ -186,9 +196,10 @@ echo -e "${CYAN} SAGE3 LDAP integration test running${NC}"
 echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 echo "  Browser : $BROWSER_URL"
-echo "  homebase: http://localhost:3000  (log: webstack/homebase-test.log)"
-echo "  LDAP    : ldap://localhost:3890"
-echo "  Redis   : redis://localhost:6379"
+echo "  homebase    : http://localhost:3000  (log: webstack/homebase-test.log)"
+echo "  homebase-yjs: http://localhost:3001  (log: webstack/yjs-test.log)"
+echo "  LDAP        : ldap://localhost:3890"
+echo "  Redis       : redis://localhost:6379"
 echo ""
 echo "  Test accounts:"
 echo "    alice / alice123  → admin role"
