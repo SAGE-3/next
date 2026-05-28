@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  openldap:
+    image: osixia/openldap:1.5.0
+    container_name: sage3-test-ldap
+    ports:
+      - "3890:389"
+    environment:
+      LDAP_ORGANISATION: "SAGE3 Test"
+      LDAP_DOMAIN: "example.com"
+      LDAP_ADMIN_PASSWORD: "admin"
+    restart: "no"

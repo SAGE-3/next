@@ -1,0 +1,66 @@
+# Organizational Units
+dn: ou=users,dc=example,dc=com
+objectClass: organizationalUnit
+ou: users
+
+dn: ou=groups,dc=example,dc=com
+objectClass: organizationalUnit
+ou: groups
+
+# Test users
+# extensibleObject allows setting memberOf explicitly without requiring the
+# memberOf overlay — sufficient for testing SAGE3's group-to-role mapping.
+
+dn: uid=alice,ou=users,dc=example,dc=com
+objectClass: inetOrgPerson
+objectClass: extensibleObject
+uid: alice
+cn: Alice Admin
+sn: Admin
+mail: alice@example.com
+userPassword: alice123
+memberOf: cn=sage3-admins,ou=groups,dc=example,dc=com
+
+dn: uid=bob,ou=users,dc=example,dc=com
+objectClass: inetOrgPerson
+objectClass: extensibleObject
+uid: bob
+cn: Bob User
+sn: User
+mail: bob@example.com
+userPassword: bob123
+memberOf: cn=sage3-users,ou=groups,dc=example,dc=com
+
+dn: uid=carol,ou=users,dc=example,dc=com
+objectClass: inetOrgPerson
+objectClass: extensibleObject
+uid: carol
+cn: Carol Spectator
+sn: Spectator
+mail: carol@example.com
+userPassword: carol123
+memberOf: cn=sage3-readonly,ou=groups,dc=example,dc=com
+
+dn: uid=dave,ou=users,dc=example,dc=com
+objectClass: inetOrgPerson
+uid: dave
+cn: Dave NoGroup
+sn: NoGroup
+mail: dave@example.com
+userPassword: dave123
+
+# Groups
+dn: cn=sage3-admins,ou=groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: sage3-admins
+member: uid=alice,ou=users,dc=example,dc=com
+
+dn: cn=sage3-users,ou=groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: sage3-users
+member: uid=bob,ou=users,dc=example,dc=com
+
+dn: cn=sage3-readonly,ou=groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: sage3-readonly
+member: uid=carol,ou=users,dc=example,dc=com
