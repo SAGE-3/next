@@ -27,7 +27,7 @@ import cilogonLogo from '../../../assets/cilogon.png';
  * Login page with authentication options and board context handling
  */
 export function LoginPage() {
-  const { auth, googleLogin, appleLogin, ciLogin, keycloakLogin, guestLogin, spectatorLogin, localLogin, loading: authLoading } = useAuth();
+  const { auth, googleLogin, appleLogin, ciLogin, keycloakLogin, guestLogin, spectatorLogin, loading: authLoading } = useAuth();
   const { toCreateUser } = useRouteNav();
   const toast = useToast();
   const [serverName, setServerName] = useState<string>('');

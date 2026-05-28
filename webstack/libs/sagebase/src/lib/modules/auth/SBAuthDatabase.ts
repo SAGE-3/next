@@ -17,18 +17,8 @@ export type AuthExtras = {
   role?: string;
 };
 
-// Local user credential record (stored separately from session identity)
-export type LocalUserRecord = {
-  username: string;
-  passwordHash: string;
-  displayName: string;
-  email: string;
-  createdAt: string;
-};
-
 // The Auth Schema
 export type SBAuthSchema = {
-  password: string;
   provider: string;
   providerId: string;
   id: string;
@@ -208,69 +198,6 @@ class SBAuthDatabase {
 
   private ERRORLOG(error: unknown) {
     console.error('SAGEBase SBAuthDatabase ERROR: ', error);
-  }
-
-  // -------------------------------------------------------------------------
-  // Local user credential store (separate from session identity records)
-  // Keys: <prefix>:LOCAL_USERS:<username>  (Redis Hash)
-  // -------------------------------------------------------------------------
-
-  private localUserKey(username: string): string {
-    return `${this._prefix}:LOCAL_USERS:${username}`;
-  }
-
-  /**
-   * Create a new local user credential record.
-   * Returns undefined if the username already exists.
-   */
-  public async createLocalUser(
-    username: string,
-    passwordHash: string,
-    displayName = '',
-    email = ''
-  ): Promise<LocalUserRecord | undefined> {
-    const key = this.localUserKey(username);
-    const exists = await this._redisClient.exists(key);
-    if (exists) return undefined;
-    const record: LocalUserRecord = { username, passwordHash, displayName, email, createdAt: new Date().toISOString() };
-    await this._redisClient.hSet(key, record as unknown as Record<string, string>);
-    return record;
-  }
-
-  /**
-   * Retrieve a local user credential record by username.
-   */
-  public async getLocalUser(username: string): Promise<LocalUserRecord | undefined> {
-    const key = this.localUserKey(username);
-    const data = await this._redisClient.hGetAll(key);
-    if (!data || Object.keys(data).length === 0) return undefined;
-    return data as unknown as LocalUserRecord;
-  }
-
-  /**
-   * Delete a local user credential record.
-   * Also removes the session identity record to invalidate stale sessions.
-   */
-  public async deleteLocalUser(username: string): Promise<boolean> {
-    const credDeleted = await this._redisClient.del(this.localUserKey(username));
-    await this.deleteAuth('local', username);
-    return credDeleted > 0;
-  }
-
-  /**
-   * List all local users (without password hashes).
-   */
-  public async listLocalUsers(): Promise<Omit<LocalUserRecord, 'passwordHash'>[]> {
-    const keys = await this._redisClient.keys(`${this._prefix}:LOCAL_USERS:*`);
-    const users: Omit<LocalUserRecord, 'passwordHash'>[] = [];
-    for (const key of keys) {
-      const data = await this._redisClient.hGetAll(key);
-      if (data && data.username) {
-        const { passwordHash: _omitted, ...safe } = data as unknown as LocalUserRecord;
-        users.push(safe);
-      }
-    }
-    return users;
   }
 }
 
