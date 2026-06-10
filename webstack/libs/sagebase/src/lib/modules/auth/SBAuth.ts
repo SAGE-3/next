@@ -9,7 +9,7 @@
 import { RedisClientType } from 'redis';
 import RedisStore from 'connect-redis';
 
-import { Express, NextFunction, Request, RequestHandler, Response } from 'express';
+import { Express, NextFunction, Request, Response } from 'express';
 import * as session from 'express-session';
 import * as passport from 'passport';
 
@@ -61,7 +61,7 @@ export class SBAuth {
 
   private _database!: SBAuthDatabase;
 
-  private _sessionParser!: RequestHandler;
+  private _sessionParser!: any;
 
   /**
    * Creates a generalized OAuth callback handler with enhanced error logging and security validation
@@ -229,10 +229,16 @@ export class SBAuth {
         passportLDAPSetup(config.ldapConfig);
         express.post('/auth/ldap', (req: Request, res: Response, next: NextFunction) => {
           passport.authenticate('ldapauth', (err: Error | null, user: Express.User | false) => {
+            // ldapauth-fork can emit a late connection 'error' after we've already
+            // responded (e.g. on connection teardown), which re-invokes this callback.
+            // Guard against a double response that otherwise throws
+            // "Cannot set headers after they are sent to the client".
+            if (res.headersSent) return;
             if (err || !user) {
               return res.redirect('/?error=ldap_failed');
             }
             req.logIn(user, (loginErr: Error) => {
+              if (res.headersSent) return;
               if (loginErr) return next(loginErr);
               return res.redirect('/');
             });

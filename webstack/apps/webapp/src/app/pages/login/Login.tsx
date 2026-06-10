@@ -186,6 +186,10 @@ export function LoginPage() {
           title = 'Keycloak OAuth Error';
           description = 'Keycloak returned an authentication error. Please try again.';
           break;
+        case 'ldap_failed':
+          title = 'LDAP Login Failed';
+          description = 'Invalid username or password, or the directory could not be reached. Please try again.';
+          break;
         default:
           title = 'Authentication Error';
           description = `Unknown authentication error: ${error}`;

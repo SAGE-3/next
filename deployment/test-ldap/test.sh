@@ -62,8 +62,8 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-# ── Docker: OpenLDAP + Redis ──────────────────────────────────────────────────
-step "Starting OpenLDAP and Redis"
+# ── Docker: OpenLDAP ──────────────────────────────────────────────────────────
+step "Starting OpenLDAP"
 docker compose -f "$SCRIPT_DIR/docker-compose.yml" up -d
 
 # Wait for LDAP
@@ -78,15 +78,16 @@ for i in $(seq 1 30); do
   sleep 2
 done
 
-# Wait for Redis
-info "Waiting for Redis..."
-for i in $(seq 1 15); do
-  if docker exec sage3-test-redis redis-cli ping &>/dev/null 2>&1; then
-    info "Redis ready."; break
-  fi
-  [ "$i" -eq 15 ] && fail "Redis did not become ready."
-  sleep 2
-done
+# Verify Redis is reachable. test-ldap does NOT start its own Redis — SAGE3's dev
+# backend already provides one on localhost:6379 and a second instance would
+# conflict with it. Reuse the existing Redis instead.
+info "Checking Redis on localhost:6379..."
+if (exec 3<>/dev/tcp/localhost/6379) 2>/dev/null; then
+  exec 3>&- 3<&-
+  info "Redis reachable."
+else
+  fail "Redis not reachable on localhost:6379. Start the SAGE3 dev backend first (it provides Redis), e.g. the deployment/docker-compose-backend-*.yml stack."
+fi
 
 # Seed LDAP
 step "Seeding LDAP test data"
@@ -117,6 +118,10 @@ txt = re.sub(r'"bindCredentials"\s*:\s*"[^"]*"', '"bindCredentials": "admin"', t
 txt = re.sub(r'"searchBase"\s*:\s*"[^"]*"', '"searchBase": "ou=users,dc=example,dc=com"', txt)
 # searchFilter → uid-based (OpenLDAP)
 txt = re.sub(r'"searchFilter"\s*:\s*"[^"]*"', '"searchFilter": "(uid={{username}})"', txt)
+# Enable the "ldap" login strategy so the LDAP/AD box renders on the login page.
+# Without this, config.auth.strategies omits "ldap" and Login.tsx hides the form.
+if not re.search(r'^\s*"ldap"\s*,', txt, re.M):
+    txt = re.sub(r'("strategies"\s*:\s*\[)', r'\1\n      "ldap",', txt, count=1)
 
 open(path, 'w').write(txt)
 print("Config patched.")

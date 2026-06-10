@@ -12,9 +12,6 @@ services:
       LDAP_ADMIN_PASSWORD: "admin"
     restart: "no"
 
-  redis:
-    image: redis/redis-stack-server:latest
-    container_name: sage3-test-redis
-    ports:
-      - "6379:6379"
-    restart: "no"
+  # NOTE: Redis is intentionally NOT defined here. SAGE3's own dev backend
+  # already provides Redis on localhost:6379; starting a second instance here
+  # conflicts with it. test.sh verifies the existing Redis is reachable instead.
