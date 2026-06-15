@@ -63,6 +63,7 @@ async function extractPdfText(file: File): Promise<string> {
 import { ChatPanel } from './ChatPanel';
 import { VisualizationCanvas, DimBlend } from './VisualizationCanvas';
 import { QAPanel } from './QAPanel';
+import { StickyImportDialog, ImportPreview } from './StickyImportDialog';
 
 type SageNode = AppState['nodes'][number];
 
@@ -114,7 +115,9 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const { user } = useUser();
   const updateState = useAppStore((state) => state.updateState);
+  const updateApp = useAppStore((state) => state.update);
   const createApp = useAppStore((state) => state.create);
+  const boardApps = useAppStore((s) => s.apps);
   const toast = useToast();
 
   // Theme
@@ -150,6 +153,19 @@ function AppComponent(props: App): JSX.Element {
   const positionsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
   const hasFitRef = useRef(false);
 
+  // Stickie drag-to-import state
+  const [pendingImport, setPendingImport] = useState<{
+    stickieId: string;
+    text: string;
+    originalPosition: { x: number; y: number; z: number };
+    preview: ImportPreview | null;
+    isLoading: boolean;
+    temperature: number;
+  } | null>(null);
+  // Track previous stickie positions to detect entry into ideator bounds on drag-end
+  const prevPositionsRef = useRef<Record<string, { x: number; y: number }>>({});
+  const importingRef = useRef(false);
+
   // Per-user local view — derived from the active chatHistory entry
   const activeEntry = s.chatHistory.find((e) => e.id === activeEntryId) ?? null;
   const localNodes = activeEntry?.nodes ?? [];
@@ -158,6 +174,104 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     if (user) setUsername(user.data.name.split(' ')[0]);
   }, [user]);
+
+  // ── Stickie drag-to-import detection ──
+
+  // Detect when a Stickie's position changes from outside to inside the ideator bounds.
+  // App dragging in SAGE3 is local-only during the drag; the store position only updates
+  // when the drag ends and the server confirms, so position changes == drag-end events.
+  useEffect(() => {
+    const stickies = boardApps.filter((a) => a.data.type === 'Stickie');
+    const ip = props.data.position;
+    const is = props.data.size;
+
+    for (const stickie of stickies) {
+      const prev = prevPositionsRef.current[stickie._id];
+      const curr = stickie.data.position;
+
+      if (prev && !importingRef.current) {
+        const { width: sw, height: sh } = stickie.data.size;
+        const wasInside = prev.x < ip.x + is.width && prev.x + sw > ip.x && prev.y < ip.y + is.height && prev.y + sh > ip.y;
+        const isInside = curr.x < ip.x + is.width && curr.x + sw > ip.x && curr.y < ip.y + is.height && curr.y + sh > ip.y;
+
+        if (!wasInside && isInside) {
+          const originalPosition = { x: prev.x, y: prev.y, z: curr.z };
+          const text = ((stickie.data.state as { text: string }).text ?? '').trim();
+
+          if (!activeEntryId || localDims.length === 0) {
+            toast({ title: 'No idea space yet', description: 'Generate ideas first, then import a Stickie.', status: 'warning', duration: 3000, isClosable: true });
+          } else if (text) {
+            importingRef.current = true;
+            updateApp(stickie._id, { position: { x: ip.x + is.width + 20, y: ip.y, z: curr.z } });
+            setPendingImport({ stickieId: stickie._id, text, originalPosition, preview: null, isLoading: true, temperature: 0 });
+          }
+        }
+      }
+
+      prevPositionsRef.current[stickie._id] = { x: curr.x, y: curr.y };
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [boardApps]);
+
+  // Run abstractNode whenever a new import preview is needed (initial drop or "Try Again")
+  useEffect(() => {
+    if (!pendingImport?.isLoading) return;
+    const { text, stickieId, originalPosition } = pendingImport;
+    let active = true;
+    abstractNode(text, s.apiKey, s.model, pendingImport.temperature)
+      .then((preview) => {
+        if (active) setPendingImport((prev) => (prev ? { ...prev, preview, isLoading: false } : null));
+      })
+      .catch(() => {
+        if (active) {
+          updateApp(stickieId, { position: originalPosition });
+          setPendingImport(null);
+          importingRef.current = false;
+          toast({ title: 'Preview failed', status: 'error', duration: 3000, isClosable: true });
+        }
+      });
+    return () => { active = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingImport?.isLoading]);
+
+  const handleImportConfirm = useCallback(() => {
+    if (!pendingImport?.preview || !activeEntryId) return;
+    const { preview, text } = pendingImport;
+    const rawDims = {
+      categorical: Object.fromEntries(localDims.filter((d) => d.type === 'categorical').map((d) => [d.name, d.values])),
+      ordinal: Object.fromEntries(localDims.filter((d) => d.type === 'ordinal').map((d) => [d.name, d.values])),
+    };
+    const { categorical, ordinal } = buildRequirements(rawDims);
+    const newNode: AppState['nodes'][number] = {
+      ID: genId(),
+      Title: preview.Title,
+      Summary: preview.Summary,
+      Keywords: preview.Keywords,
+      Steps: preview.Steps,
+      Result: text,
+      Structure: preview.Structure,
+      Dimension: { categorical, ordinal },
+      IsMyFav: false,
+    };
+    const latest = useAppStore.getState().apps.find((a) => a._id === props._id)?.data.state as AppState | undefined;
+    const cur = latest ?? s;
+    const updatedHistory = cur.chatHistory.map((e) => (e.id === activeEntryId ? { ...e, nodes: [...e.nodes, newNode] } : e));
+    updateState(props._id, { ...cur, chatHistory: updatedHistory });
+    setPendingImport(null);
+    importingRef.current = false;
+  }, [pendingImport, activeEntryId, localDims, s, props._id, updateState]);
+
+  const handleImportCancel = useCallback(() => {
+    if (!pendingImport) return;
+    updateApp(pendingImport.stickieId, { position: pendingImport.originalPosition });
+    setPendingImport(null);
+    importingRef.current = false;
+  }, [pendingImport, updateApp]);
+
+  const handleImportRegenerate = useCallback(() => {
+    if (!pendingImport) return;
+    setPendingImport((prev) => (prev ? { ...prev, preview: null, isLoading: true, temperature: 0.7 } : null));
+  }, [pendingImport]);
 
   // ── Setup save ──
 
@@ -848,6 +962,16 @@ function AppComponent(props: App): JSX.Element {
           isGeneratingAt={isGeneratingAt}
           onAddManualIdea={addManualIdea}
           isAddingManualIdea={isAddingManualIdea}
+        />
+
+        <StickyImportDialog
+          isOpen={pendingImport !== null}
+          isLoading={pendingImport?.isLoading ?? false}
+          originalText={pendingImport?.text ?? ''}
+          preview={pendingImport?.preview ?? null}
+          onConfirm={handleImportConfirm}
+          onCancel={handleImportCancel}
+          onRegenerate={handleImportRegenerate}
         />
 
         {qaPanelOpen && (

@@ -178,6 +178,7 @@ class IdeatorNodeResponse(BaseModel):
 class IdeatorAbstractRequest(BaseModel):
     text: str
     model: str
+    temperature: float = 0.0
 
 
 class IdeatorAbstractResponse(BaseModel):

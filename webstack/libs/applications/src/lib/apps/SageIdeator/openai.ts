@@ -48,8 +48,9 @@ export async function abstractNode(
   text: string,
   _apiKey: string,
   model: string,
+  temperature = 0,
 ): Promise<{ Title: string; Summary: string; Keywords: string[]; Steps: string[]; Structure: string }> {
-  const result = await seerIdeator.abstract({ text, model });
+  const result = await seerIdeator.abstract({ text, model, temperature });
   if (isSError(result)) throw new Error(result.message);
   return { ...result, Structure: '' };
 }

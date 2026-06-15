@@ -174,6 +174,7 @@ export function VisualizationCanvas({
   onAddManualIdea,
   isAddingManualIdea,
 }: VisualizationCanvasProps) {
+  const s = (px: number) => `${Math.round(px * 1.5)}px`;
   const [camera, setCamera] = useState<Camera>({ x: 0, y: 0, z: 1 });
   const [xDimName, setXDimName] = useState<string | null>(null);
   const [yDimName, setYDimName] = useState<string | null>(null);
@@ -312,6 +313,10 @@ export function VisualizationCanvas({
     [containerSize, positionsRef],
   );
 
+  useEffect(() => {
+    if (searchQuery.trim()) fitToScreen(2.0);
+  }, [searchQuery, fitToScreen]);
+
   const jumpToZoom = useCallback((targetZ: number) => {
     setCamera((cam) => {
       const scale = targetZ / cam.z;
@@ -394,8 +399,8 @@ export function VisualizationCanvas({
       })
     : [];
 
-  const X_LABEL_W = 70;
-  const Y_LABEL_H = 20;
+  const X_LABEL_W = 120;
+  const Y_LABEL_H = 52;
 
   const xAxisLabels = [...rawXLabels]
     .sort((a, b) => a.x - b.x)
@@ -423,13 +428,13 @@ export function VisualizationCanvas({
         <VStack px={2} py={1} bg={panelBgHex} borderBottom="1px solid" borderColor={borderHex} spacing={1} align="stretch" flexShrink={0}>
 
           {/* Row 1: axis selectors */}
-          <HStack spacing={3} pl="18px">
+          <HStack spacing={2} pl="18px" flexWrap="wrap">
             {dimensions.length > 0 ? (
               <>
-                <Text fontSize="9px" fontWeight="700" color={textColor} textTransform="uppercase" letterSpacing="0.06em" flexShrink={0}>Axes:</Text>
-                <HStack spacing={1}>
-                  <Text fontSize="xs" color={textColor}>X:</Text>
-                  <Select size="xs" value={xDimName ?? ''} onChange={(e) => setXDimName(e.target.value || null)} w="120px" borderRadius="md">
+                <Text fontSize={s(11)} fontWeight="700" color={textColor} textTransform="uppercase" letterSpacing="0.06em" flexShrink={0}>Axes:</Text>
+                <HStack spacing={1} flexShrink={0}>
+                  <Text fontSize={s(12)} color={textColor} flexShrink={0}>X:</Text>
+                  <Select size="sm" fontSize={s(12)} value={xDimName ?? ''} onChange={(e) => setXDimName(e.target.value || null)} minW="150px" w="auto" borderRadius="md">
                     <option value="">— none —</option>
                     {dimensions.map((d) => (
                       <option key={d.name} value={d.name}>
@@ -438,9 +443,9 @@ export function VisualizationCanvas({
                     ))}
                   </Select>
                 </HStack>
-                <HStack spacing={1}>
-                  <Text fontSize="xs" color={textColor}>Y:</Text>
-                  <Select size="xs" value={yDimName ?? ''} onChange={(e) => setYDimName(e.target.value || null)} w="120px" borderRadius="md">
+                <HStack spacing={1} flexShrink={0}>
+                  <Text fontSize={s(12)} color={textColor} flexShrink={0}>Y:</Text>
+                  <Select size="sm" fontSize={s(12)} value={yDimName ?? ''} onChange={(e) => setYDimName(e.target.value || null)} minW="150px" w="auto" borderRadius="md">
                     <option value="">— none —</option>
                     {dimensions.map((d) => (
                       <option key={d.name} value={d.name}>
@@ -451,18 +456,18 @@ export function VisualizationCanvas({
                 </HStack>
               </>
             ) : (
-              <Text fontSize="xs" color="gray.400" fontStyle="italic">No dimensions yet — add one below</Text>
+              <Text fontSize={s(12)} color="gray.400" fontStyle="italic">No dimensions yet — add one below</Text>
             )}
           </HStack>
 
           {/* Row 2: dimension chips */}
           <HStack spacing={1} flexWrap="wrap" pl="18px">
-            <Text fontSize="9px" fontWeight="700" color={textColor} textTransform="uppercase" letterSpacing="0.06em" flexShrink={0}>Dims:</Text>
+            <Text fontSize={s(11)} fontWeight="700" color={textColor} textTransform="uppercase" letterSpacing="0.06em" flexShrink={0}>Dims:</Text>
             {dimensions.map((d) => (
               <Tooltip key={d.name} label={d.type === 'ordinal' ? 'Scale (ordered values)' : 'Category (named groups)'} placement="top" hasArrow openDelay={400}>
                 <Badge colorScheme={d.type === 'ordinal' ? 'purple' : 'teal'} borderRadius="full" px={2} py="1px" display="inline-flex" alignItems="center" gap={1}>
-                  <Text fontSize="9px">{d.name}</Text>
-                  <IconButton aria-label={`Remove ${d.name}`} icon={<MdClose />} size="xs" variant="ghost" h="12px" minW="12px" fontSize="9px" ml={0.5} onClick={() => onRemoveDimension(d.name)} />
+                  <Text fontSize={s(11)}>{d.name}</Text>
+                  <IconButton aria-label={`Remove ${d.name}`} icon={<MdClose />} size="xs" variant="ghost" h="12px" minW="12px" fontSize={s(11)} ml={0.5} onClick={() => onRemoveDimension(d.name)} />
                 </Badge>
               </Tooltip>
             ))}
@@ -482,7 +487,7 @@ export function VisualizationCanvas({
               </HStack>
             ) : (
               <Tooltip label="Add dimension" hasArrow placement="top" openDelay={300}>
-                <Button size="xs" variant="ghost" colorScheme="gray" leftIcon={isAddingDimension ? <Spinner size="xs" /> : <MdAdd />} h="20px" px={2} fontSize="9px" isDisabled={isAddingDimension} onClick={() => setShowDimInput(true)}>
+                <Button size="xs" variant="ghost" colorScheme="gray" leftIcon={isAddingDimension ? <Spinner size="xs" /> : <MdAdd />} h="20px" px={2} fontSize={s(11)} isDisabled={isAddingDimension} onClick={() => setShowDimInput(true)}>
                   Add Dimension
                 </Button>
               </Tooltip>
@@ -509,22 +514,22 @@ export function VisualizationCanvas({
                   )}
                 </InputGroup>
                 <Tooltip label={favoritesOnly ? 'Show all nodes' : 'Show favorites only'} placement="top" hasArrow openDelay={300}>
-                  <Button size="xs" variant={favoritesOnly ? 'solid' : 'ghost'} colorScheme={favoritesOnly ? 'yellow' : 'gray'} leftIcon={<BsStarFill />} h="18px" px={1.5} fontSize="9px" isDisabled={favCount === 0} onClick={() => setFavoritesOnly((v) => !v)} _disabled={{ opacity: 0.4, cursor: 'default' }} flexShrink={0}>{favCount}</Button>
+                  <Button size="xs" variant={favoritesOnly ? 'solid' : 'ghost'} colorScheme={favoritesOnly ? 'yellow' : 'gray'} leftIcon={<BsStarFill />} h="18px" px={1.5} fontSize={s(11)} isDisabled={favCount === 0} onClick={() => setFavoritesOnly((v) => !v)} _disabled={{ opacity: 0.4, cursor: 'default' }} flexShrink={0}>{favCount}</Button>
                 </Tooltip>
                 {favCount > 0 && (
                   <Tooltip label={`Branch from ${favCount} favorite${favCount > 1 ? 's' : ''}`} placement="top" hasArrow openDelay={300}>
-                    <Button size="xs" variant="ghost" colorScheme="orange" leftIcon={<MdAltRoute />} h="18px" px={1.5} fontSize="9px" onClick={onBranchFavorites} flexShrink={0}>Branch ★</Button>
+                    <Button size="xs" variant="ghost" colorScheme="orange" leftIcon={<MdAltRoute />} h="18px" px={1.5} fontSize={s(11)} onClick={onBranchFavorites} flexShrink={0}>Branch ★</Button>
                   </Tooltip>
                 )}
                 {favCount > 0 && (
                   <Tooltip label={`Summarize ${favCount} favorite${favCount > 1 ? 's' : ''} as a Stickie`} placement="top" hasArrow openDelay={300}>
-                    <Button size="xs" variant="ghost" colorScheme="purple" leftIcon={isSummarizing ? <Spinner size="xs" /> : <BsStarFill />} h="18px" px={1.5} fontSize="9px" isDisabled={isSummarizing} onClick={onSummarizeFavorites} flexShrink={0}>Summarize ★</Button>
+                    <Button size="xs" variant="ghost" colorScheme="purple" leftIcon={isSummarizing ? <Spinner size="xs" /> : <BsStarFill />} h="18px" px={1.5} fontSize={s(11)} isDisabled={isSummarizing} onClick={onSummarizeFavorites} flexShrink={0}>Summarize ★</Button>
                   </Tooltip>
                 )}
                 {activeFilter && (
                   <HStack spacing={0} bg="blue.100" _dark={{ bg: 'blue.800' }} borderRadius="full" px={2} py="1px" flexShrink={0}>
-                    <Text fontSize="9px" color={textColor} noOfLines={1} maxW="80px">{activeFilter.dimName}: {activeFilter.value}</Text>
-                    <IconButton aria-label="Clear filter" icon={<MdClose />} size="xs" variant="ghost" h="14px" minW="14px" fontSize="9px" ml={0.5} onClick={() => setActiveFilter(null)} />
+                    <Text fontSize={s(11)} color={textColor} noOfLines={1} maxW="80px">{activeFilter.dimName}: {activeFilter.value}</Text>
+                    <IconButton aria-label="Clear filter" icon={<MdClose />} size="xs" variant="ghost" h="14px" minW="14px" fontSize={s(11)} ml={0.5} onClick={() => setActiveFilter(null)} />
                   </HStack>
                 )}
               </HStack>
@@ -589,9 +594,13 @@ export function VisualizationCanvas({
             >
               <Badge
                 colorScheme="purple"
-                fontSize="9px"
+                fontSize={s(11)}
                 px={1.5}
-                whiteSpace="nowrap"
+                maxW="140px"
+                whiteSpace="normal"
+                overflowWrap="normal"
+                lineHeight="1.3"
+                textAlign="center"
                 opacity={isActive ? 1 : 0.7}
                 boxShadow={isActive ? '0 0 0 2px var(--chakra-colors-purple-400)' : 'none'}
                 _hover={{ opacity: 1 }}
@@ -621,9 +630,13 @@ export function VisualizationCanvas({
             >
               <Badge
                 colorScheme="teal"
-                fontSize="9px"
+                fontSize={s(11)}
                 px={1.5}
-                whiteSpace="nowrap"
+                maxW="140px"
+                whiteSpace="normal"
+                overflowWrap="normal"
+                lineHeight="1.3"
+                textAlign="center"
                 opacity={isActive ? 1 : 0.7}
                 boxShadow={isActive ? '0 0 0 2px var(--chakra-colors-teal-400)' : 'none'}
                 _hover={{ opacity: 1 }}
@@ -636,7 +649,7 @@ export function VisualizationCanvas({
 
         {/* Pan/zoom hint */}
         <Box position="absolute" top={2} left="50%" transform="translateX(-50%)" zIndex={10} pointerEvents="none">
-          <Text fontSize="9px" color="gray.400" whiteSpace="nowrap">Scroll to zoom · drag to pan</Text>
+          <Text fontSize={s(11)} color="gray.400" whiteSpace="nowrap">Scroll to zoom · drag to pan</Text>
         </Box>
 
         {/* Nodes canvas (pan/zoom layer) */}
@@ -711,62 +724,60 @@ export function VisualizationCanvas({
         {/* Controls overlay */}
         {nodes.length > 0 && (
           <Box position="absolute" top={2} left={0} right={0} zIndex={20} px={2} pointerEvents="none">
-            <HStack justify="space-between" align="flex-start">
+            <HStack justify="flex-end" align="flex-start">
 
-              {/* Left: generate-at + manual entry tools */}
-              <VStack spacing={1} align="flex-start" pointerEvents="auto">
-                <Tooltip label={generateAtMode ? 'Cancel (Esc)' : 'Generate idea at position'} placement="right" hasArrow openDelay={300}>
-                  <IconButton aria-label="Generate idea at position"
-                    icon={isGeneratingAt ? <Spinner size="xs" /> : <MdAdd size={14} />}
-                    h="26px" w="26px" minW="26px" fontSize="14px"
-                    variant={generateAtMode ? 'solid' : 'outline'} colorScheme={generateAtMode ? 'blue' : 'gray'}
-                    isDisabled={isGeneratingAt}
-                    onClick={(e) => { e.stopPropagation(); setGenerateAtMode((v) => !v); setShowManualInput(false); }}
-                  />
-                </Tooltip>
-                <Tooltip label="Add your own idea" placement="right" hasArrow openDelay={300}>
-                  <IconButton aria-label="Add your own idea"
-                    icon={isAddingManualIdea ? <Spinner size="xs" /> : <MdEdit size={13} />}
-                    h="26px" w="26px" minW="26px"
-                    variant={showManualInput ? 'solid' : 'outline'} colorScheme={showManualInput ? 'blue' : 'gray'}
-                    isDisabled={isAddingManualIdea}
-                    onClick={(e) => { e.stopPropagation(); setShowManualInput((v) => !v); setGenerateAtMode(false); }}
-                  />
-                </Tooltip>
-              </VStack>
-
-              {/* Right: zoom controls */}
+              {/* Right: zoom controls + action buttons stacked below */}
               <VStack spacing={1} align="flex-end" pointerEvents="auto">
                 <HStack spacing={1}>
                   <Tooltip label="Overview — fit all nodes" placement="left" hasArrow openDelay={300}>
-                    <IconButton aria-label="Overview" h="26px" w="26px" minW="26px" fontSize="11px"
+                    <IconButton aria-label="Overview" h="26px" w="26px" minW="26px" fontSize={s(13)}
                       icon={<Box as="span" display="inline-flex" alignItems="center" justifyContent="center" lineHeight={1}>●</Box>}
                       variant={camera.z < 1.5 ? 'solid' : 'outline'} colorScheme={camera.z < 1.5 ? 'teal' : 'gray'}
                       onClick={() => fitToScreen(1.4)} />
                   </Tooltip>
                   <Tooltip label="Titles" placement="left" hasArrow openDelay={300}>
-                    <IconButton aria-label="Titles" h="26px" w="26px" minW="26px" fontSize="11px"
+                    <IconButton aria-label="Titles" h="26px" w="26px" minW="26px" fontSize={s(13)}
                       icon={<Box as="span" display="inline-flex" alignItems="center" justifyContent="center" lineHeight={1}>T</Box>}
                       variant={camera.z >= 1.5 && camera.z < 3 ? 'solid' : 'outline'} colorScheme={camera.z >= 1.5 && camera.z < 3 ? 'teal' : 'gray'}
                       onClick={() => jumpToZoom(2.0)} />
                   </Tooltip>
                   <Tooltip label="Titles + attributes" placement="left" hasArrow openDelay={300}>
-                    <IconButton aria-label="Titles + attributes" h="26px" w="26px" minW="26px" fontSize="11px"
+                    <IconButton aria-label="Titles + attributes" h="26px" w="26px" minW="26px" fontSize={s(13)}
                       icon={<Box as="span" display="inline-flex" alignItems="center" justifyContent="center" lineHeight={1}>A</Box>}
                       variant={camera.z >= 3 && camera.z < 6 ? 'solid' : 'outline'} colorScheme={camera.z >= 3 && camera.z < 6 ? 'teal' : 'gray'}
                       onClick={() => jumpToZoom(4.0)} />
                   </Tooltip>
                   <Tooltip label="Summary + steps" placement="left" hasArrow openDelay={300}>
-                    <IconButton aria-label="Summary + steps" h="26px" w="26px" minW="26px" fontSize="11px"
+                    <IconButton aria-label="Summary + steps" h="26px" w="26px" minW="26px" fontSize={s(13)}
                       icon={<Box as="span" display="inline-flex" alignItems="center" justifyContent="center" lineHeight={1}>S</Box>}
                       variant={camera.z >= 6 && camera.z < 10 ? 'solid' : 'outline'} colorScheme={camera.z >= 6 && camera.z < 10 ? 'teal' : 'gray'}
                       onClick={() => jumpToZoom(7.5)} />
                   </Tooltip>
                   <Tooltip label="Full text" placement="left" hasArrow openDelay={300}>
-                    <IconButton aria-label="Full text" h="26px" w="26px" minW="26px" fontSize="11px"
+                    <IconButton aria-label="Full text" h="26px" w="26px" minW="26px" fontSize={s(13)}
                       icon={<Box as="span" display="inline-flex" alignItems="center" justifyContent="center" lineHeight={1}>≡</Box>}
                       variant={camera.z >= 10 ? 'solid' : 'outline'} colorScheme={camera.z >= 10 ? 'teal' : 'gray'}
                       onClick={() => jumpToZoom(11.0)} />
+                  </Tooltip>
+                </HStack>
+                <HStack spacing={1}>
+                  <Tooltip label={generateAtMode ? 'Cancel (Esc)' : 'Generate idea at position'} placement="left" hasArrow openDelay={300}>
+                    <IconButton aria-label="Generate idea at position"
+                      icon={isGeneratingAt ? <Spinner size="xs" /> : <MdAdd size={14} />}
+                      h="26px" w="26px" minW="26px" fontSize={s(14)}
+                      variant={generateAtMode ? 'solid' : 'outline'} colorScheme={generateAtMode ? 'blue' : 'gray'}
+                      isDisabled={isGeneratingAt}
+                      onClick={(e) => { e.stopPropagation(); setGenerateAtMode((v) => !v); setShowManualInput(false); }}
+                    />
+                  </Tooltip>
+                  <Tooltip label="Add your own idea" placement="left" hasArrow openDelay={300}>
+                    <IconButton aria-label="Add your own idea"
+                      icon={isAddingManualIdea ? <Spinner size="xs" /> : <MdEdit size={13} />}
+                      h="26px" w="26px" minW="26px"
+                      variant={showManualInput ? 'solid' : 'outline'} colorScheme={showManualInput ? 'blue' : 'gray'}
+                      isDisabled={isAddingManualIdea}
+                      onClick={(e) => { e.stopPropagation(); setShowManualInput((v) => !v); setGenerateAtMode(false); }}
+                    />
                   </Tooltip>
                 </HStack>
               </VStack>
@@ -788,7 +799,7 @@ export function VisualizationCanvas({
                     value={manualInput}
                     onChange={(e) => setManualInput(e.target.value)}
                     rows={3}
-                    fontSize="11px"
+                    fontSize={s(13)}
                     resize="none"
                     onKeyDown={(e) => {
                       if (e.key === 'Escape') {
@@ -805,7 +816,7 @@ export function VisualizationCanvas({
                       colorScheme="gray"
                       h="18px"
                       px={2}
-                      fontSize="10px"
+                      fontSize={s(12)}
                       onClick={() => {
                         setShowManualInput(false);
                         setManualInput('');
@@ -818,7 +829,7 @@ export function VisualizationCanvas({
                       colorScheme="blue"
                       h="18px"
                       px={2}
-                      fontSize="10px"
+                      fontSize={s(12)}
                       isDisabled={!manualInput.trim() || isAddingManualIdea}
                       onClick={() => {
                         if (!manualInput.trim()) return;

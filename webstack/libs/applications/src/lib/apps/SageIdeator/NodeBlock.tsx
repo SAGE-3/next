@@ -74,25 +74,26 @@ export function buildStickyText(node: SageNode): string {
 // ─── Shared sub-components ────────────────────────────────────────────────────
 
 function AttrsBlock({ node }: { node: SageNode }) {
+  const s = (px: number) => `${Math.round(px * 1.5)}px`;
   const allAttrs = [...Object.entries(node.Dimension.categorical), ...Object.entries(node.Dimension.ordinal)];
   if (allAttrs.length === 0) return null;
   return (
     <>
       <Divider borderColor="rgba(0,0,0,0.25)" my={2} />
-      <Text fontSize="8px" fontWeight="700" textTransform="uppercase" letterSpacing="0.08em" color="rgba(0,0,0,0.55)" mb={1.5}>
+      <Text fontSize={s(10)} fontWeight="700" textTransform="uppercase" letterSpacing="0.08em" color="rgba(0,0,0,0.55)" mb={1.5}>
         Attributes
       </Text>
       <Wrap spacing={1}>
         {allAttrs.map(([k, v]) => (
           <WrapItem key={k}>
-            <Box bg="rgba(0,0,0,0.12)" borderRadius="full" px={2} py="2px" display="inline-flex" alignItems="center" gap={1}>
-              <Text fontSize="9px" fontWeight="700" color="black" lineHeight="1.4">
+            <Box bg="rgba(0,0,0,0.12)" borderRadius="lg" px={2} py="2px" display="inline-flex" alignItems="center" gap={1}>
+              <Text fontSize={s(11)} fontWeight="700" color="black" lineHeight="1.4">
                 {k}
               </Text>
-              <Text fontSize="9px" color="rgba(0,0,0,0.45)" lineHeight="1.4">
+              <Text fontSize={s(11)} color="rgba(0,0,0,0.45)" lineHeight="1.4">
                 ·
               </Text>
-              <Text fontSize="9px" fontWeight="500" color="black" lineHeight="1.4">
+              <Text fontSize={s(11)} fontWeight="500" color="black" lineHeight="1.4">
                 {v}
               </Text>
             </Box>
@@ -135,8 +136,6 @@ function ImageLightbox({ src, alt, previewMaxH }: { src: string; alt: string; pr
   );
 }
 
-// ─── NodeBlock ────────────────────────────────────────────────────────────────
-
 // ─── Favorite badge ───────────────────────────────────────────────────────────
 
 function FavBadge({ size = 16, offset = -6 }: { size?: number; offset?: number }) {
@@ -161,6 +160,8 @@ function FavBadge({ size = 16, offset = -6 }: { size?: number; offset?: number }
   );
 }
 
+// ─── NodeBlock ────────────────────────────────────────────────────────────────
+
 export function NodeBlock({
   node,
   zoom,
@@ -178,6 +179,9 @@ export function NodeBlock({
   onReroll,
   isRerolling,
 }: NodeBlockProps) {
+  const s = (px: number) => `${Math.round(px * 1.5)}px`;
+  const w = (base: number) => `${Math.round(base * 1.5)}px`;
+
   const bg = hexToRgba(color, isHovered || node.IsMyFav || isSelectedQA ? 1 : 0.82);
   const ring = isSelectedQA ? '0 0 0 2.5px teal, 0 0 8px rgba(0,128,128,0.4)' : isHovered ? '0 0 0 2.5px rgba(0,0,0,0.75)' : 'none';
 
@@ -226,14 +230,14 @@ export function NodeBlock({
           borderRadius="md"
           px={2}
           py={1.5}
-          w="130px"
+          w={w(140)}
           boxShadow={ring || 'sm'}
           cursor="grab"
           onClick={onFocus}
           draggable
           onDragStart={onDragStart}
         >
-          <Text fontSize="10px" fontWeight="700" color="black" lineHeight="1.3" noOfLines={3}>
+          <Text fontSize={s(12)} fontWeight="700" color="black" lineHeight="1.3" noOfLines={3}>
             {node.Title}
           </Text>
         </Box>
@@ -251,14 +255,14 @@ export function NodeBlock({
           borderRadius="md"
           px={2}
           py={2}
-          w="160px"
+          w={w(175)}
           boxShadow={ring || 'md'}
           cursor="default"
           draggable
           onDragStart={onDragStart}
         >
           <HStack justify="space-between" align="flex-start" mb={1.5}>
-            <Text fontSize="11px" fontWeight="700" color="black" lineHeight="1.3" noOfLines={2} flex={1} cursor="grab" onClick={onFocus}>
+            <Text fontSize={s(13)} fontWeight="700" color="black" lineHeight="1.3" noOfLines={2} flex={1} cursor="grab" onClick={onFocus}>
               {node.Title}
             </Text>
             <Tooltip label="Branch from this idea" placement="top" hasArrow openDelay={300}>
@@ -289,12 +293,12 @@ export function NodeBlock({
     return (
       <Box position="relative" display="inline-block">
         {node.IsMyFav && <FavBadge size={18} offset={-7} />}
-        <Box bg={bg} borderRadius="md" w="220px" boxShadow={ring || 'lg'} cursor="default" overflow="hidden">
+        <Box bg={bg} borderRadius="md" w={w(240)} boxShadow={ring || 'lg'} cursor="default" overflow="hidden">
           {/* Scrollable content */}
-          <Box px={2} pt={2} maxH="240px" overflowY="auto">
+          <Box px={2} pt={2} maxH={w(260)} overflowY="auto" onWheel={(e) => e.stopPropagation()}>
             <HStack justify="space-between" align="flex-start" mb={1.5}>
               <Text
-                fontSize="11px"
+                fontSize={s(13)}
                 fontWeight="700"
                 color="black"
                 lineHeight="1.3"
@@ -325,24 +329,24 @@ export function NodeBlock({
                 <ImageLightbox src={node.imageUrl} alt={node.Title} previewMaxH="160px" />
               </Box>
             )}
-            <Text fontSize="8px" fontWeight="700" textTransform="uppercase" letterSpacing="0.08em" color="rgba(0,0,0,0.55)" mb={0.5}>
+            <Text fontSize={s(10)} fontWeight="700" textTransform="uppercase" letterSpacing="0.08em" color="rgba(0,0,0,0.55)" mb={0.5}>
               Summary
             </Text>
-            <Text fontSize="10px" fontWeight="500" color="black" lineHeight="1.5" mb={2}>
+            <Text fontSize={s(12)} fontWeight="500" color="black" lineHeight="1.5" mb={2}>
               {node.Summary}
             </Text>
             {node.Steps && node.Steps.length > 0 && (
               <>
-                <Text fontSize="8px" fontWeight="700" textTransform="uppercase" letterSpacing="0.08em" color="rgba(0,0,0,0.55)" mb={0.5}>
+                <Text fontSize={s(10)} fontWeight="700" textTransform="uppercase" letterSpacing="0.08em" color="rgba(0,0,0,0.55)" mb={0.5}>
                   Steps
                 </Text>
                 <VStack align="stretch" spacing={1} mb={2}>
                   {node.Steps.map((step, i) => (
                     <HStack key={i} align="flex-start" spacing={1}>
-                      <Text fontSize="9px" fontWeight="700" color="black" lineHeight="1.4" flexShrink={0}>
+                      <Text fontSize={s(11)} fontWeight="700" color="black" lineHeight="1.4" flexShrink={0}>
                         {i + 1}.
                       </Text>
-                      <Text fontSize="9px" fontWeight="500" color="black" lineHeight="1.4">
+                      <Text fontSize={s(11)} fontWeight="500" color="black" lineHeight="1.4">
                         {step}
                       </Text>
                     </HStack>
@@ -426,12 +430,12 @@ export function NodeBlock({
   return (
     <Box position="relative" display="inline-block">
       {node.IsMyFav && <FavBadge size={18} offset={-7} />}
-      <Box bg={bg} borderRadius="md" w="270px" boxShadow={ring || 'xl'} cursor="default" overflow="hidden">
+      <Box bg={bg} borderRadius="md" w={w(295)} boxShadow={ring || 'xl'} cursor="default" overflow="hidden">
         {/* Scrollable content */}
-        <Box px={3} pt={3} maxH="300px" overflowY="auto">
+        <Box px={3} pt={3} maxH={w(320)} overflowY="auto" onWheel={(e) => e.stopPropagation()}>
           <HStack justify="space-between" align="flex-start" mb={2}>
             <Text
-              fontSize="13px"
+              fontSize={s(15)}
               fontWeight="700"
               color="black"
               lineHeight="1.3"
@@ -459,7 +463,7 @@ export function NodeBlock({
               <ImageLightbox src={node.imageUrl} alt={node.Title} previewMaxH="200px" />
             </Box>
           )}
-          <Text fontSize="11px" fontWeight="500" color="black" lineHeight="1.6" mb={3}>
+          <Text fontSize={s(13)} fontWeight="500" color="black" lineHeight="1.6" mb={3}>
             {node.Result}
           </Text>
           <AttrsBlock node={node} />

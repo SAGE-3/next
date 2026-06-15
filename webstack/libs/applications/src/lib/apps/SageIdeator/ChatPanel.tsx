@@ -111,15 +111,16 @@ export function ChatPanel({
   const pdfInputRef = useRef<HTMLInputElement>(null);
   const [confirmClearOpen, setConfirmClearOpen] = useState(false);
 
+  const s = (px: number) => `${Math.round(px * 1.5)}px`;
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    e.target.value = ''; // reset so the same file can be re-attached
+    e.target.value = '';
 
     const reader = new FileReader();
     reader.onload = (ev) => {
       const src = ev.target?.result as string;
-      // Resize to max 1024px on longest side, JPEG 80% quality
       const img = new window.Image();
       img.onload = () => {
         const MAX = 1024;
@@ -158,8 +159,8 @@ export function ChatPanel({
   return (
     <Flex
       direction="column"
-      w="200px"
-      minW="200px"
+      w="220px"
+      minW="220px"
       h="100%"
       bg={panelBgHex}
       borderRight="1px solid"
@@ -168,9 +169,9 @@ export function ChatPanel({
       gap={2}
     >
       {/* History */}
-      <Box flex={1} overflowY="auto" fontSize="xs" color={textColor} bg="blackAlpha.100" borderRadius="md" p={1}>
+      <Box flex={1} overflowY="auto" color={textColor} bg="blackAlpha.100" borderRadius="md" p={1}>
         {chatHistory.length === 0 && (
-          <Text fontSize="xs" color="gray.400" p={2} textAlign="center">
+          <Text fontSize={s(12)} color="gray.400" p={2} textAlign="center">
             Enter a prompt to start exploring ideas.
           </Text>
         )}
@@ -201,32 +202,34 @@ export function ChatPanel({
                 {/* Content */}
                 <VStack flex={1} align="stretch" spacing={0.5} minW={0}>
                   <HStack spacing={1}>
-                    <Text fontWeight="bold" fontSize="9px" color="blue.500" _dark={{ color: 'blue.300' }} noOfLines={1}>
+                    <Text fontWeight="bold" fontSize={s(11)} color="blue.500" _dark={{ color: 'blue.300' }} noOfLines={1}>
                       {entry.userName}
                     </Text>
                     {isBranch && (
-                      <Badge colorScheme="orange" fontSize="8px" variant="subtle">
+                      <Badge colorScheme="orange" fontSize={s(10)} variant="subtle">
                         ⎇
                       </Badge>
                     )}
                   </HStack>
                   {entry.imageUrl && <HistoryImageThumb src={entry.imageUrl} />}
-                  <Text fontSize="10px" fontWeight={isActive ? '600' : '400'} color={textColor} noOfLines={3}>
-                    {entry.prompt}
-                  </Text>
+                  <Box maxH="72px" overflowY="auto">
+                    <Text fontSize={s(12)} fontWeight={isActive ? '600' : '400'} color={textColor}>
+                      {entry.prompt}
+                    </Text>
+                  </Box>
                   {entry.pdfFilename && (
                     <HStack spacing={1} mt={0.5}>
                       <MdPictureAsPdf size={10} color="red" />
-                      <Text fontSize="9px" color="red.400" noOfLines={1}>
+                      <Text fontSize={s(11)} color="red.400" noOfLines={1}>
                         {entry.pdfFilename}
                       </Text>
                     </HStack>
                   )}
                   {hasSnapshot && (
                     <HStack spacing={1} flexWrap="wrap">
-                      <Badge colorScheme="green" fontSize="8px">{entryNodes.length} ideas</Badge>
-                      <Badge colorScheme="purple" fontSize="8px">{(entry.dimensions ?? []).length} dims</Badge>
-                      {favCount > 0 && <Badge colorScheme="yellow" fontSize="8px">★ {favCount}</Badge>}
+                      <Badge colorScheme="green" fontSize={s(10)}>{entryNodes.length} ideas</Badge>
+                      <Badge colorScheme="purple" fontSize={s(10)}>{(entry.dimensions ?? []).length} dims</Badge>
+                      {favCount > 0 && <Badge colorScheme="yellow" fontSize={s(10)}>★ {favCount}</Badge>}
                     </HStack>
                   )}
                 </VStack>
@@ -234,11 +237,13 @@ export function ChatPanel({
                 <VStack
                   spacing={0}
                   flexShrink={0}
-                  justify="center"
+                  justify="space-between"
+                  alignSelf="stretch"
                   bg="blackAlpha.100"
                   _dark={{ bg: 'whiteAlpha.100' }}
                   borderRadius="md"
                   px="2px"
+                  py={1}
                 >
                   {hasSnapshot && (
                     <Tooltip label="Generate more ideas" placement="left" hasArrow openDelay={400}>
@@ -250,7 +255,7 @@ export function ChatPanel({
                         colorScheme="teal"
                         h="16px"
                         minW="16px"
-                        fontSize="11px"
+                        fontSize={s(13)}
                         isDisabled={isGenerating}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -268,7 +273,7 @@ export function ChatPanel({
                       colorScheme="gray"
                       h="16px"
                       minW="16px"
-                      fontSize="10px"
+                      fontSize={s(12)}
                       onClick={(e) => {
                         e.stopPropagation();
                         onEditPrompt(entry.prompt);
@@ -285,7 +290,7 @@ export function ChatPanel({
                       colorScheme="red"
                       h="16px"
                       minW="16px"
-                      fontSize="10px"
+                      fontSize={s(12)}
                       onClick={(e) => {
                         e.stopPropagation();
                         onDeleteEntry(entry.id);
@@ -301,7 +306,7 @@ export function ChatPanel({
           <Box p={1.5} bg="orange.50" borderRadius="md" _dark={{ bg: 'orange.900' }}>
             <HStack spacing={1}>
               <Spinner size="xs" color="orange.400" />
-              <Text fontSize="10px" color="orange.600" _dark={{ color: 'orange.300' }}>
+              <Text fontSize={s(12)} color="orange.600" _dark={{ color: 'orange.300' }}>
                 {statusMessage}
               </Text>
             </HStack>
@@ -349,7 +354,7 @@ export function ChatPanel({
       {pdfFilename && (
         <HStack spacing={1} px={1} py={0.5} bg="red.50" _dark={{ bg: 'red.900' }} borderRadius="md">
           <MdPictureAsPdf size={12} color="red" />
-          <Text fontSize="9px" color="red.600" _dark={{ color: 'red.300' }} flex={1} noOfLines={1}>
+          <Text fontSize={s(11)} color="red.600" _dark={{ color: 'red.300' }} flex={1} noOfLines={1}>
             {pdfFilename}
           </Text>
           <IconButton
@@ -360,7 +365,7 @@ export function ChatPanel({
             colorScheme="red"
             h="14px"
             minW="14px"
-            fontSize="10px"
+            fontSize={s(12)}
             onClick={onClearPdf}
           />
         </HStack>
@@ -380,7 +385,7 @@ export function ChatPanel({
             right={1}
             onClick={() => onAttachImage(null)}
           />
-          <Text fontSize="9px" color="gray.400" mt={1} textAlign="center">
+          <Text fontSize={s(11)} color="gray.400" mt={1} textAlign="center">
             Inspires the idea space — not described or analyzed directly.
           </Text>
         </Box>
@@ -389,9 +394,9 @@ export function ChatPanel({
       {/* Generation settings */}
       <HStack spacing={2}>
         <Box flex={1}>
-          <FormLabel fontSize="9px" color="gray.400" mb="2px">Ideas</FormLabel>
+          <FormLabel fontSize={s(10)} color="gray.400" mb="2px">Ideas</FormLabel>
           <Select
-            size="xs" fontSize="xs" value={batchSize}
+            size="xs" fontSize={s(12)} value={batchSize}
             onChange={(e) => onBatchSizeChange(Number(e.target.value))}
             isDisabled={isGenerating}
             borderRadius="md"
@@ -400,9 +405,9 @@ export function ChatPanel({
           </Select>
         </Box>
         <Box flex={1}>
-          <FormLabel fontSize="9px" color="gray.400" mb="2px">Dimensions</FormLabel>
+          <FormLabel fontSize={s(10)} color="gray.400" mb="2px">Dimensions</FormLabel>
           <Select
-            size="xs" fontSize="xs" value={numDimensions}
+            size="xs" fontSize={s(12)} value={numDimensions}
             onChange={(e) => onNumDimensionsChange(Number(e.target.value))}
             isDisabled={isGenerating}
             borderRadius="md"
@@ -422,7 +427,7 @@ export function ChatPanel({
         onChange={(e) => onInputChange(e.target.value)}
         onKeyDown={onKeyDown}
         resize="none"
-        fontSize="xs"
+        fontSize={s(12)}
         isDisabled={isGenerating}
         bg="blackAlpha.200"
         _dark={{ bg: 'whiteAlpha.100', color: 'white' }}
@@ -437,7 +442,7 @@ export function ChatPanel({
           colorScheme={attachedImage ? 'blue' : 'gray'}
           isDisabled={isGenerating}
           flex={1}
-          fontSize="9px"
+          fontSize={s(11)}
           onClick={() => fileInputRef.current?.click()}
         >
           Add Image
@@ -448,7 +453,7 @@ export function ChatPanel({
           colorScheme={pdfFilename ? 'red' : 'gray'}
           isDisabled={isGenerating || isLoadingPdf}
           flex={1}
-          fontSize="9px"
+          fontSize={s(11)}
           onClick={() => pdfInputRef.current?.click()}
         >
           {isLoadingPdf ? <Spinner size="xs" /> : 'Add PDF'}
@@ -462,6 +467,7 @@ export function ChatPanel({
         isLoading={isGenerating}
         isDisabled={isGenerating}
         w="100%"
+        fontSize={s(11)}
       >
         Generate
       </Button>

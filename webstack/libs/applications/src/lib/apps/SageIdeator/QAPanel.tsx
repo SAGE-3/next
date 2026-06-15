@@ -39,11 +39,13 @@ export function QAPanel({
   onSubmit,
   onClose,
 }: QAPanelProps) {
+  const s = (px: number) => `${Math.round(px * 1.5)}px`;
+
   return (
-    <Flex direction="column" w="280px" minW="280px" h="100%" bg={panelBgHex} borderLeft="1px solid" borderColor={borderHex} flexShrink={0}>
+    <Flex direction="column" w="300px" minW="300px" h="100%" bg={panelBgHex} borderLeft="1px solid" borderColor={borderHex} flexShrink={0}>
       {/* Header */}
       <HStack px={3} py={2} borderBottom="1px solid" borderColor={borderHex} flexShrink={0}>
-        <Text fontSize="xs" fontWeight="700" color={textColor} flex={1}>
+        <Text fontSize={s(13)} fontWeight="700" color={textColor} flex={1}>
           {node ? node.Title : 'Q&A'}
         </Text>
         <IconButton aria-label="Close Q&A panel" icon={<MdClear />} size="xs" variant="ghost" onClick={onClose} />
@@ -51,7 +53,7 @@ export function QAPanel({
 
       {!node ? (
         <Center flex={1}>
-          <Text fontSize="xs" color="gray.400">
+          <Text fontSize={s(13)} color="gray.400">
             Select a node to view Q&amp;A.
           </Text>
         </Center>
@@ -59,20 +61,20 @@ export function QAPanel({
         <>
           {/* Node summary (fixed) */}
           <Box px={3} py={2} borderBottom="1px solid" borderColor={borderHex} flexShrink={0}>
-            <Text fontSize="xs" fontWeight="500" color={textColor} lineHeight="1.6">
+            <Text fontSize={s(13)} fontWeight="500" color={textColor} lineHeight="1.6">
               {node.Summary}
             </Text>
             {node.Steps?.length > 0 && (
               <VStack align="stretch" spacing={0.5} mt={2}>
-                <Text fontSize="9px" fontWeight="700" textTransform="uppercase" letterSpacing="0.08em" color="gray.400" mb={0.5}>
+                <Text fontSize={s(11)} fontWeight="700" textTransform="uppercase" letterSpacing="0.08em" color="gray.400" mb={0.5}>
                   Steps
                 </Text>
                 {node.Steps.map((step, i) => (
                   <HStack key={i} align="flex-start" spacing={1.5}>
-                    <Text fontSize="10px" fontWeight="700" color={textColor} flexShrink={0}>
+                    <Text fontSize={s(12)} fontWeight="700" color={textColor} flexShrink={0}>
                       {i + 1}.
                     </Text>
-                    <Text fontSize="10px" color={textColor} lineHeight="1.5">
+                    <Text fontSize={s(12)} color={textColor} lineHeight="1.5">
                       {step}
                     </Text>
                   </HStack>
@@ -84,20 +86,20 @@ export function QAPanel({
           {/* Q&A list (scrollable) */}
           <Box flex={1} overflowY="auto" px={3} py={2}>
             {qaEntries.length === 0 && !askingNodeId && (
-              <Text fontSize="xs" color="gray.400" textAlign="center" mt={4}>
+              <Text fontSize={s(13)} color="gray.400" textAlign="center" mt={4}>
                 No questions yet. Ask one below.
               </Text>
             )}
             <VStack align="stretch" spacing={3}>
               {qaEntries.map((e) => (
                 <Box key={e.id}>
-                  <Text fontSize="xs" fontWeight="700" color="teal.600" _dark={{ color: 'teal.300' }} mb={1}>
+                  <Text fontSize={s(13)} fontWeight="700" color="teal.600" _dark={{ color: 'teal.300' }} mb={1}>
                     Q: {e.question}
                   </Text>
-                  <Text fontSize="xs" color={textColor} lineHeight="1.6">
+                  <Text fontSize={s(13)} color={textColor} lineHeight="1.6">
                     {e.answer}
                   </Text>
-                  <Text fontSize="9px" color="gray.400" mt={1}>
+                  <Text fontSize={s(11)} color="gray.400" mt={1}>
                     {e.userName}
                   </Text>
                 </Box>
@@ -105,7 +107,7 @@ export function QAPanel({
               {askingNodeId === node.ID && (
                 <HStack spacing={2}>
                   <Spinner size="xs" color="teal.400" />
-                  <Text fontSize="xs" color="teal.500">
+                  <Text fontSize={s(13)} color="teal.500">
                     Answering…
                   </Text>
                 </HStack>
@@ -119,7 +121,7 @@ export function QAPanel({
               <Input
                 placeholder="Ask a question…"
                 size="sm"
-                fontSize="xs"
+                fontSize={s(13)}
                 value={qaInput}
                 onChange={(e) => onQaInputChange(e.target.value)}
                 onKeyDown={(e) => {

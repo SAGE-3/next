@@ -175,7 +175,7 @@ class IdeatorAgent:
             "Return ONLY valid JSON:\n"
             '{"Title":"<title>","Summary":"<one sentence>","Steps":["Do X","Do Y","Do Z"],"Key Words":["w1","w2"]}'
         )
-        raw = await self._json_chat(msg, req.model, 0)
+        raw = await self._json_chat(msg, req.model, req.temperature)
         try:
             j = json.loads(_extract_json(raw))
             return IdeatorAbstractResponse(

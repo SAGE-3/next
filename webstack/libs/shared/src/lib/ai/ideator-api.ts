@@ -38,6 +38,7 @@ export type IdeatorNodeResponse = {
 export type IdeatorAbstractRequest = {
   text: string;
   model: string;
+  temperature?: number;
 };
 
 export type IdeatorAbstractResponse = {

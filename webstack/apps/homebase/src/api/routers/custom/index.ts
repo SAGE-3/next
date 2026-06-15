@@ -14,4 +14,3 @@ export * from './logs';
 export * from './presencethrottle';
 export * from './kernels';
 export * from './ai/agent-router';
-export * from './ai/ideator-router';
