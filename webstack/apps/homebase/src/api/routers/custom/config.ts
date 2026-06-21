@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { PublicInformation, OpenConfiguration } from '@sage3/shared/types';
+import { PublicInformation, OpenConfiguration, sanitizeLLMConfiguration } from '@sage3/shared/types';
 import * as express from 'express';
 import { createClient } from 'redis';
 import { config } from '../../../config';
@@ -49,7 +49,8 @@ export function ConfigRouter(): express.Router {
       // Jupyter token
       token: token,
       admins: config.auth.admins || [],
-      // models: config.services.models || [],
+      // Capability info only — secrets (apiKey/url) are stripped before sending to clients
+      models: sanitizeLLMConfiguration(config.services.models),
       fluentd: config.fluentd || {},
       veoServer: config.veoServer || {},
     } as OpenConfiguration;

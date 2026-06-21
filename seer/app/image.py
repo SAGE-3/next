@@ -23,9 +23,6 @@ from pysage3.client import PySage3
 # AI
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, BaseMessage
 
-from langchain_nvidia_ai_endpoints import ChatNVIDIA
-from langchain_openai import ChatOpenAI, AzureChatOpenAI
-
 # Typing for RPC
 from libs.localtypes import ImageQuery, ImageAnswer
 from libs.utils import (
@@ -36,6 +33,7 @@ from libs.utils import (
     isDataURL,
     parse_openai_error,
 )
+from libs.llm_manager import LLMManager
 
 # AI logging
 from libs.ai_logging import ai_logger, LoggingLLMHandler
@@ -65,57 +63,29 @@ class ImageAgent:
         logger.info("Initializing ImageAgent")
         self.logger = logger
         self.ps3 = ps3
-        models = getModelsInfo(ps3)
-        llama = models["llama"]
-        openai = models["openai"]
-        azure = models["azure"]
-        # Llama model
-        self.server = llama["url"]
-        self.model = llama["model"]
-        # Llama model
-        if llama["url"] and llama["model"]:
-            self.llm_llama = ChatNVIDIA(
-                base_url=llama["url"] + "/v1",
-                model=llama["model"],
-                api_key=llama["apiKey"],
-                stream=False,
-                max_tokens=1500,
-            )
+        # Capability-driven model registry (providers/tasks/settings)
+        self.manager = LLMManager(getModelsInfo(ps3), logger)
+        self.logger.info("Image providers: " + ", ".join(self.manager.list_providers()))
         self.httpx_client = httpx.Client(timeout=None)
-        # OpenAI model
-        if openai["apiKey"] and openai["model"]:
-            self.llm_openai = ChatOpenAI(
-                api_key=openai["apiKey"],
-                # needs to be gpt-4o-mini or better, for image processing
-                model=openai["model"],
-                # max_tokens=1000,
-                streaming=False,
-            )
-
-        # Azure OpenAI model
-        if azure["vision"]["apiKey"] and azure["vision"]["model"]:
-            model = azure["vision"]["model"]
-            endpoint = azure["vision"]["url"]
-            credential = azure["vision"]["apiKey"]
-            api_version = azure["vision"]["api_version"]
-
-            self.llm_azure = AzureChatOpenAI(
-                azure_deployment=model,
-                api_version=api_version,
-                azure_endpoint=endpoint,
-                azure_ad_token=credential,
-                model=model,
-            )
+        # Per-provider vision models, built lazily on first use
+        self._models = {}
 
         ai_logger.emit(
             "init",
             {
                 "agent": "image",
-                "openai": openai["apiKey"] is not None,
-                "llama": llama["url"] is not None,
-                "azure": azure["text"]["apiKey"] is not None,
+                "providers": self.manager.list_providers(),
             },
         )
+
+    def _get_model(self, provider: str):
+        """Build (and cache) a vision-capable model for a provider.
+        Returns None if the provider has no model that can process images."""
+        if provider in self._models:
+            return self._models[provider]
+        llm = self.manager.build_chat_model(provider, ["vision"])
+        self._models[provider] = llm
+        return llm
 
     async def process(self, qq: ImageQuery):
         self.logger.info("Got image> from " + qq.user + ": " + qq.q + " - " + qq.model)
@@ -143,89 +113,44 @@ class ImageAgent:
             ai_handler.setAI(qq.model)
             ai_handler.setPrompt(qq.q)
 
-            if qq.model == "llama":
-                messages: List[BaseMessage] = []
-                messages.append(AIMessage(content=sys_template_str))
-                messages.append(
-                    HumanMessage(
-                        content=[
-                            {"type": "text", "text": qq.q},
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/png;base64,{image_base64}"
-                                },
-                            },
-                        ]
-                    )
+            # Resolve a vision-capable model for the requested provider
+            llm = self._get_model(qq.model)
+            if llm is None:
+                from fastapi import HTTPException
+
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Provider '{qq.model}' has no model capable of vision",
                 )
-                try:
-                    response = await self.llm_llama.ainvoke(
-                        messages,
-                        config={"callbacks": [ai_handler]},
-                    )
-                    description = str(response.content)
-                except Exception as e:
-                    success = False
-                    description = f"Error from Llama AI"
-            elif qq.model == "openai":
-                messages: List[BaseMessage] = []
-                messages.append(SystemMessage(content=sys_template_str))
-                messages.append(
-                    HumanMessage(
-                        content=[
-                            {"type": "text", "text": qq.q},
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/png;base64,{image_base64}"
-                                },
+
+            messages: List[BaseMessage] = []
+            messages.append(SystemMessage(content=sys_template_str))
+            messages.append(
+                HumanMessage(
+                    content=[
+                        {"type": "text", "text": qq.q},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/png;base64,{image_base64}"
                             },
-                        ]
-                    )
+                        },
+                    ]
                 )
-                try:
-                    response = await self.llm_openai.ainvoke(
-                        messages,
-                        config={"callbacks": [ai_handler]},
-                    )
-                    description = str(response.content)
-                except Exception as e:
-                    success = False
-                    code, message = parse_openai_error(e)
-                    if code:
-                        description = f"Error from OpenAI: _{code.replace("_", r"\_")}_"
-                    else:
-                        description = f"Error from OpenAI"
-            elif qq.model == "azure":
-                messages: List[BaseMessage] = []
-                messages.append(SystemMessage(content=sys_template_str))
-                messages.append(
-                    HumanMessage(
-                        content=[
-                            {"type": "text", "text": qq.q},
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/png;base64,{image_base64}"
-                                },
-                            },
-                        ]
-                    )
+            )
+            try:
+                response = await llm.ainvoke(
+                    messages,
+                    config={"callbacks": [ai_handler]},
                 )
-                try:
-                    response = await self.llm_azure.ainvoke(
-                        messages,
-                        config={"callbacks": [ai_handler]},
-                    )
-                    description = str(response.content)
-                except Exception as e:
-                    success = False
-                    code, message = parse_openai_error(e)
-                    if code:
-                        description = f"Error from Azure AI: {code}, {message}"
-                    else:
-                        description = f"Error from Azure AI: {message}"
+                description = str(response.content)
+            except Exception as e:
+                success = False
+                code, message = parse_openai_error(e)
+                if code:
+                    description = f"Error from AI [{qq.model}]: {code}, {message}"
+                else:
+                    description = f"Error from AI [{qq.model}]: {message}"
         else:
             description = "Failed to get image."
 

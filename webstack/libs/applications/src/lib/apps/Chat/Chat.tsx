@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useRef, useState, Fragment, useEffect } from 'react';
+import { useRef, useState, Fragment, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router';
 import {
   ButtonGroup,
@@ -70,8 +70,10 @@ import {
   useLinkStore,
   useAssetStore,
   apiUrls,
+  useConfigStore,
 } from '@sage3/frontend';
 import { genId, AskRequest, ImageQuery, PDFQuery, CodeRequest, WebQuery, WebScreenshot, isGeoJSON } from '@sage3/shared';
+import { LLMConfigManager, TaskType } from '@sage3/shared/types';
 
 import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
@@ -136,6 +138,19 @@ const MdCode: React.FC<{ children: React.ReactNode }> = ({ children, ...props })
 
 type OperationMode = 'chat' | 'text' | 'image' | 'web' | 'pdf' | 'code' | 'map' | 'Hawaii Mesonet';
 
+// Which AI task each request maps to, so we can check the selected model's
+// capabilities (declared in the server config) before sending to the backend.
+const MODE_TASK: Record<OperationMode, TaskType> = {
+  chat: 'chat',
+  text: 'chat',
+  map: 'chat',
+  web: 'chat',
+  image: 'image',
+  pdf: 'pdf_processing',
+  code: 'coding',
+  'Hawaii Mesonet': 'chat',
+};
+
 /* App component for Chat */
 
 function AppComponent(props: App): JSX.Element {
@@ -179,6 +194,14 @@ function AppComponent(props: App): JSX.Element {
   const { settings } = useUserSettings();
   const [selectedModel, setSelectedModel] = useState(settings.aiModel);
 
+  // AI capability config (no secrets) used to gate requests by capability.
+  // Built from the server config; the manager mirrors the backend's matching.
+  const serverConfig = useConfigStore((state) => state.config);
+  const llmManager = useMemo(
+    () => (serverConfig?.models ? new LLMConfigManager(serverConfig.models) : undefined),
+    [serverConfig]
+  );
+
   // Input text for query
   const [input, setInput] = useState<string>('');
   const [streamText, setStreamText] = useState<string>('');
@@ -202,6 +225,24 @@ function AppComponent(props: App): JSX.Element {
 
   // Display some notifications
   const toast = useToast();
+
+  // Capability gate: verify the selected provider can perform `task` before we
+  // send the request to the backend. Returns true when allowed; otherwise warns
+  // the user and returns false so the caller can abort.
+  const canPerform = (task: TaskType): boolean => {
+    const provider = selectedModel;
+    // No capability info or no provider selected yet: don't block
+    if (!llmManager || !provider) return true;
+    if (llmManager.canProviderPerformTask(provider, task)) return true;
+    toast({
+      title: 'Model not capable',
+      description: `The selected model "${provider}" can't handle ${task.replace('_', ' ')} requests. Pick a different model in Settings (gear icon).`,
+      status: 'warning',
+      duration: 6000,
+      isClosable: true,
+    });
+    return false;
+  };
 
   // Sort messages by creation date to display in order
   const sortedMessages = s.messages ? s.messages.sort((a, b) => a.creationDate - b.creationDate) : [];
@@ -345,6 +386,8 @@ function AppComponent(props: App): JSX.Element {
     const now = await serverTime();
     // Is it a question to SAGE?
     const isQuestion = new_input.toUpperCase().startsWith('@S');
+    // Capability check: block questions the selected model can't handle
+    if (isQuestion && !canPerform(MODE_TASK[mode] || 'chat')) return;
     const name = isQuestion ? 'SAGE' : user?.data.name;
     // Add messages
     const initialAnswer = {
@@ -516,6 +559,8 @@ function AppComponent(props: App): JSX.Element {
 
   const onContentImage = async (prompt: string) => {
     if (!user) return;
+    // Capability check: image questions require a vision-capable model
+    if (!canPerform('image')) return;
     if (sourceApps.length > 0) {
       // Update the context
       const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
@@ -615,6 +660,8 @@ function AppComponent(props: App): JSX.Element {
 
   const onContentMesonet = async (prompt: string) => {
     if (!user) return;
+    // Capability check: Mesonet analysis needs a chat-capable model
+    if (!canPerform('chat')) return;
     if (selectedModel == 'llama') {
       toast({
         title: 'Mesonet Feature not available for current model',
@@ -726,6 +773,8 @@ function AppComponent(props: App): JSX.Element {
     if (!user) return;
 
     const isQuestion = prompt.toUpperCase().startsWith('@S');
+    // Capability check: PDF questions require an embeddings + chat-capable model
+    if (isQuestion && !canPerform('pdf_processing')) return;
     const name = isQuestion ? 'SAGE' : user?.data.name;
 
     if (sourceApps.length > 0) {
@@ -836,6 +885,8 @@ function AppComponent(props: App): JSX.Element {
   // Generic code to handle the web content
   const onContentWeb = async (prompt: string) => {
     if (!user) return;
+    // Capability check: web summarization needs a chat-capable model
+    if (!canPerform('chat')) return;
     if (sourceApps.length > 0) {
       // Update the context
       const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
@@ -920,6 +971,8 @@ function AppComponent(props: App): JSX.Element {
   // Generic code to handle the map content
   const onContentMap = async (prompt: string) => {
     if (!user) return;
+    // Capability check: map questions need a chat-capable model
+    if (!canPerform('chat')) return;
     if (sourceApps.length > 0) {
       // Update the context
       const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
@@ -1147,6 +1200,8 @@ function AppComponent(props: App): JSX.Element {
     const now = await serverTime();
     // Is it a question to SAGE?
     const isQuestion = prompt.toUpperCase().startsWith('@S');
+    // Capability check: code questions require a code-capable model
+    if (isQuestion && !canPerform('coding')) return;
     const name = isQuestion ? 'SAGE' : user?.data.name;
     // Add messages
     const initialAnswer = {

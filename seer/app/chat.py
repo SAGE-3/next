@@ -20,12 +20,11 @@ from pysage3.client import PySage3
 # AI Models
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_nvidia_ai_endpoints import ChatNVIDIA
-from langchain_openai import ChatOpenAI, AzureChatOpenAI
 
 # Typing for RPC
 from libs.localtypes import Question, Answer
 from libs.utils import getModelsInfo, extract_code_blocks, parse_openai_error
+from libs.llm_manager import LLMManager
 
 # AI logging
 from libs.ai_logging import ai_logger, LoggingChainHandler
@@ -44,68 +43,15 @@ class ChatAgent:
         self.logger = logger
         self.ps3 = ps3
         self.logger.info("SAGE3 server configuration:")
-        models = getModelsInfo(ps3)
-        openai = models["openai"]
-        llama = models["llama"]
-        azure = models["azure"]
-        self.logger.info(
-            ("openai key: " + openai["apiKey"] + " - model: " + openai["model"]),
-        )
-        self.logger.info(
-            "chat server: url: "
-            + llama["url"]
-            + " - apiKey: "
-            + llama["apiKey"]
-            + " - model: "
-            + llama["model"],
-        )
-        self.logger.info(
-            "chat server: url: "
-            + azure["text"]["url"]
-            + " - model: "
-            + azure["text"]["model"],
-        )
-
-        llm_llama = None
-        llm_openai = None
-        llm_azure = None
-
-        # Llama model
-        if llama["url"] and llama["model"]:
-            llm_llama = ChatNVIDIA(
-                base_url=llama["url"] + "/v1",
-                model=llama["model"],
-                api_key=llama["apiKey"],
-                stream=False,
-                max_tokens=2000,
-            )
-
-        # OpenAI model
-        if openai["apiKey"] and openai["model"]:
-            llm_openai = ChatOpenAI(api_key=openai["apiKey"], model=openai["model"])
-
-        # Azure OpenAI model
-        if azure["text"]["apiKey"] and azure["text"]["model"]:
-            model = azure["text"]["model"]
-            endpoint = azure["text"]["url"]
-            credential = azure["text"]["apiKey"]
-            api_version = azure["text"]["api_version"]
-
-            llm_azure = AzureChatOpenAI(
-                azure_deployment=model,
-                api_version=api_version,
-                azure_endpoint=endpoint,
-                azure_ad_token=credential,
-                model=model,
-            )
+        # Capability-driven model registry (providers/tasks/settings)
+        self.manager = LLMManager(getModelsInfo(ps3), logger)
+        self.logger.info("Chat providers: " + ", ".join(self.manager.list_providers()))
 
         ai_logger.emit(
             "init",
             {
                 "agent": "chat",
-                "openai": openai["apiKey"] is not None,
-                "llama": llama["url"] is not None,
-                "azure": azure["text"]["apiKey"] is not None,
+                "providers": self.manager.list_providers(),
             },
         )
 
@@ -122,7 +68,7 @@ class ChatAgent:
         human_template_str = "{question}"
 
         # For OpenAI / Message API compatible models
-        prompt = ChatPromptTemplate.from_messages(
+        self.prompt = ChatPromptTemplate.from_messages(
             [
                 ("system", sys_template_str),
                 MessagesPlaceholder("history"),
@@ -133,22 +79,24 @@ class ChatAgent:
         # OutputParser that parses LLMResult into the top likely string.
         # Create a new model by parsing and validating input data from keyword arguments.
         # Raises ValidationError if the input data cannot be parsed to form a valid model.
-        output_parser = StrOutputParser()
+        self.output_parser = StrOutputParser()
 
-        self.session_llama = None
-        self.session_openai = None
-        self.session_azure = None
+        # Per-provider chat chains, built lazily on first use
+        self._sessions = {}
 
-        # Session : prompt building and then LLM
-        if llm_openai:
-            self.session_openai = prompt | llm_openai | output_parser
-        if llm_llama:
-            self.session_llama = prompt | llm_llama | output_parser
-        if llm_azure:
-            self.session_azure = prompt | llm_azure | output_parser
+        if not self.manager.list_providers():
+            raise HTTPException(status_code=500, detail="Langchain> No model configured")
 
-        if not self.session_llama and not self.session_openai:
-            raise HTTPException(status_code=500, detail="Langchain> Model unknown")
+    def _get_session(self, provider: str):
+        """Build (and cache) a prompt|llm|parser chain for a provider's
+        chat-capable model. Returns None if the provider can't chat."""
+        if provider in self._sessions:
+            return self._sessions[provider]
+        # 'chat' task needs a chat-capable model
+        llm = self.manager.build_chat_model(provider, ["chat"])
+        session = (self.prompt | llm | self.output_parser) if llm else None
+        self._sessions[provider] = session
+        return session
 
     async def process(self, qq: Question):
         self.logger.info(
@@ -162,75 +110,38 @@ class ChatAgent:
         # Save the ai name for the logs
         ai_handler.setAI(qq.model)
 
-        # Ask the question
-        if qq.model == "llama" and self.session_llama:
-            # Convert previousQ and previousA arrays to message tuples
-            history = []
-            for q, a in zip(qq.ctx.previousQ, qq.ctx.previousA):
-                history.append(("human", q))
-                history.append(("ai", a))
-            try:
-                response = await self.session_llama.ainvoke(
-                    {
-                        "history": history,
-                        "question": qq.q,
-                        "username": qq.user,
-                        "location": qq.location,
-                        "date": today,
-                    },
-                    config={"callbacks": [ai_handler]},
-                )
-            except Exception as e:
-                success = False
-                description = f"Error from Llama AI"
-        elif qq.model == "openai" and self.session_openai:
-            history = []
-            for q, a in zip(qq.ctx.previousQ, qq.ctx.previousA):
-                history.append(("human", q))
-                history.append(("ai", a))
-            try:
-                response = await self.session_openai.ainvoke(
-                    {
-                        "history": history,
-                        "question": qq.q,
-                        "username": qq.user,
-                        "location": qq.location,
-                        "date": today,
-                    },
-                    config={"callbacks": [ai_handler]},
-                )
-            except Exception as e:
-                success = False
-                code, message = parse_openai_error(e)
-                if code:
-                    description = f"Error from OpenAI: _{code.replace("_", r"\_")}_"
-                else:
-                    description = f"Error from OpenAI"
-        elif qq.model == "azure" and self.session_azure:
-            history = []
-            for q, a in zip(qq.ctx.previousQ, qq.ctx.previousA):
-                history.append(("human", q))
-                history.append(("ai", a))
-            try:
-                response = await self.session_azure.ainvoke(
-                    {
-                        "history": history,
-                        "question": qq.q,
-                        "username": qq.user,
-                        "location": qq.location,
-                        "date": today,
-                    },
-                    config={"callbacks": [ai_handler]},
-                )
-            except Exception as e:
-                success = False
-                code, message = parse_openai_error(e)
-                if code:
-                    description = f"Error from Azure AI: {code}, {message}"
-                else:
-                    description = f"Error from Azure AI: {message}"
-        else:
-            raise HTTPException(status_code=500, detail="Langchain> Model unknown")
+        # Resolve a chat session for the requested provider
+        session = self._get_session(qq.model)
+        if session is None:
+            # Defense in depth: the frontend gates this, but reject clearly here
+            raise HTTPException(
+                status_code=400,
+                detail=f"Provider '{qq.model}' has no model capable of chat",
+            )
+
+        # Convert previousQ and previousA arrays to message tuples
+        history = []
+        for q, a in zip(qq.ctx.previousQ, qq.ctx.previousA):
+            history.append(("human", q))
+            history.append(("ai", a))
+        try:
+            response = await session.ainvoke(
+                {
+                    "history": history,
+                    "question": qq.q,
+                    "username": qq.user,
+                    "location": qq.location,
+                    "date": today,
+                },
+                config={"callbacks": [ai_handler]},
+            )
+        except Exception as e:
+            success = False
+            code, message = parse_openai_error(e)
+            if code:
+                description = f"Error from AI [{qq.model}]: {code}, {message}"
+            else:
+                description = f"Error from AI [{qq.model}]: {message}"
 
         if not success:
             return Answer(id=qq.id, r=description, actions=[])

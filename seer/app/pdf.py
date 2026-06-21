@@ -25,16 +25,18 @@ from langchain_core.documents import Document
 # from langchain_nvidia_ai_endpoints import ChatNVIDIA
 from langchain_openai import ChatOpenAI, AzureChatOpenAI
 
+# Web API
+from fastapi import HTTPException
+
 # Typing for RPC
 from libs.localtypes import PDFQuery, PDFAnswer
 from libs.utils import getModelsInfo, getPDFFile
+from libs.llm_manager import LLMManager
 
 # ChromaDB AI vector DB
 import chromadb
 from chromadb.config import Settings
 from langchain_chroma import Chroma
-from langchain_openai.embeddings import OpenAIEmbeddings
-from langchain_openai import AzureOpenAIEmbeddings
 from langchain.vectorstores.base import VectorStoreRetriever
 
 # PDF
@@ -55,46 +57,29 @@ class PDFAgent:
         logger.info("Initializing PDFAgent")
         self.logger = logger
         self.ps3 = ps3
-        models = getModelsInfo(ps3)
+        # Capability-driven model registry (providers/tasks/settings)
+        self.manager = LLMManager(getModelsInfo(ps3), logger)
+        self.logger.info("PDF providers: " + ", ".join(self.manager.list_providers()))
 
-        openai = models["openai"]
-        azure = models["azure"]
+        # Per-provider chat / vision models, built lazily on first use
+        self._chat_models = {}
+        self._vision_models = {}
 
-        # OpenAI model
-        if openai["apiKey"] and openai["model"]:
-            self.llm_openai = ChatOpenAI(
-                api_key=openai["apiKey"],
-                model=openai["model"],
-                streaming=False,
-            )
-            # OpenAI embedding
-            self.embedding_openai = OpenAIEmbeddings(api_key=openai["apiKey"])
-
-        # Azure OpenAI model
-        if azure["text"]["apiKey"] and azure["text"]["model"]:
-            model = azure["text"]["model"]
-            endpoint = azure["text"]["url"]
-            credential = azure["text"]["apiKey"]
-            api_version = azure["text"]["api_version"]
-
-            self.llm_azure = AzureChatOpenAI(
-                azure_deployment=model,
-                api_version=api_version,
-                azure_endpoint=endpoint,
-                azure_ad_token=credential,
-                model=model,
-            )
-            # Azure embedding
-            model = azure["embedding"]["model"]
-            endpoint = azure["embedding"]["url"]
-            credential = azure["embedding"]["apiKey"]
-            api_version = azure["embedding"]["api_version"]
-            self.embedding_azure = AzureOpenAIEmbeddings(
-                model=model,
-                azure_endpoint=endpoint,
-                api_key=credential,
-                api_version=api_version,
-            )
+        # Pick an embeddings provider for the vector store: prefer the default
+        # provider, otherwise the first provider that has an embeddings model.
+        self.embedding_provider = None
+        candidates = [self.manager.default_provider()] + self.manager.list_providers()
+        for prov in candidates:
+            if prov and self.manager.has_capability(prov, "embeddings"):
+                self.embedding_provider = prov
+                break
+        embeddings = (
+            self.manager.build_embeddings(self.embedding_provider)
+            if self.embedding_provider
+            else None
+        )
+        if embeddings is None:
+            self.logger.error("PDFAgent> no embeddings-capable provider configured")
 
         # Create the ChromaDB client
         chromaServer = "127.0.0.1"
@@ -121,22 +106,31 @@ class PDFAgent:
         )
 
         # Langchain Chroma
-        if azure["embedding"]["apiKey"] and azure["embedding"]["model"]:
-            self.vector_store = Chroma(
-                client=self.chroma,
-                collection_name="pdf_docs",
-                embedding_function=self.embedding_azure,
-            )
-        else:
-            self.vector_store = Chroma(
-                client=self.chroma,
-                collection_name="pdf_docs",
-                embedding_function=self.embedding_openai,
-            )
+        self.vector_store = Chroma(
+            client=self.chroma,
+            collection_name="pdf_docs",
+            embedding_function=embeddings,
+        )
 
         # Using Langchain's Chromadb
         # Heartbeat to check the connection
         self.chroma.heartbeat()
+
+    def _get_chat(self, provider: str):
+        """Chat-capable model for a provider (lazy, cached). None if unable."""
+        if provider in self._chat_models:
+            return self._chat_models[provider]
+        llm = self.manager.build_chat_model(provider, ["chat"])
+        self._chat_models[provider] = llm
+        return llm
+
+    def _get_vision(self, provider: str):
+        """Vision-capable model for a provider (lazy, cached). None if unable."""
+        if provider in self._vision_models:
+            return self._vision_models[provider]
+        llm = self.manager.build_chat_model(provider, ["vision"])
+        self._vision_models[provider] = llm
+        return llm
 
     def getMDfromPDFWithImages(self, id, content, model):
         """
@@ -211,12 +205,12 @@ class PDFAgent:
             )
         )
 
-        if model == "openai":
-            response = self.llm_openai.invoke(messages)
-        elif model == "azure":
-            response = self.llm_azure.invoke(messages)
-        else:
-            raise ValueError(f"Unsupported model: {model}")
+        llm = self._get_vision(model)
+        if llm is None:
+            raise ValueError(
+                f"Provider '{model}' has no model capable of vision (PDF OCR)"
+            )
+        response = llm.invoke(messages)
         return {"index": page_num, "content": str(response.content)}
 
     async def process(self, qq: PDFQuery):
@@ -298,22 +292,18 @@ class PDFAgent:
 
                     print(f"\n\ndocument splits: {len(res)}\n\n")
 
-            if qq.model == "openai":
-                answer = await generate_answer(
-                    qq=qq,
-                    llm=self.llm_openai,
-                    retrievers=retrievers,
-                    markdown_files_dict=pdfs_to_md,
+            llm = self._get_chat(qq.model)
+            if llm is None:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Provider '{qq.model}' has no model capable of chat (PDF)",
                 )
-            elif qq.model == "azure":
-                answer = await generate_answer(
-                    qq=qq,
-                    llm=self.llm_azure,
-                    retrievers=retrievers,
-                    markdown_files_dict=pdfs_to_md,
-                )
-            else:
-                raise ValueError(f"Unsupported model: {qq.model}")
+            answer = await generate_answer(
+                qq=qq,
+                llm=llm,
+                retrievers=retrievers,
+                markdown_files_dict=pdfs_to_md,
+            )
 
             text = answer.strip()
             text = text + "\n\n---\n"
