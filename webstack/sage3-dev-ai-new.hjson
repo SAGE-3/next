@@ -166,6 +166,16 @@
       //     ]
       //   }
       // },
+      // NeMo Retriever embeddings NIM — set url to where your embed NIM listens
+      "embed": {
+        "url": "http://localhost:8000",
+        "model": "nvidia/llama-nemotron-embed-1b-v2"
+      },
+      // NeMo Retriever reranking NIM — set url to where your rerank NIM listens
+      "rerank": {
+        "url": "http://localhost:8001",
+        "model": "nvidia/llama-nemotron-rerank-1b-v2"
+      },
       "settings": {
         "default_provider": "azure",
         "timeout_seconds": 60,
