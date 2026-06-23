@@ -13,7 +13,7 @@ import { format } from 'date-fns/format';
 import { Flex, Box, Button, IconButton, Tooltip, useToast, useColorModeValue } from '@chakra-ui/react';
 import { MdFileDownload, MdChat, MdChevronLeft, MdChevronRight } from 'react-icons/md';
 
-import { useAppStore, useHexColor, useUser, downloadFile } from '@sage3/frontend';
+import { useAppStore, useHexColor, useUser, downloadFile, apiUrls, useAssetStore } from '@sage3/frontend';
 import { genId } from '@sage3/shared';
 
 import { App } from '../../schema';
@@ -140,6 +140,7 @@ function AppComponent(props: App): JSX.Element {
   const [isAddingDimension, setIsAddingDimension] = useState(false);
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [generatingImageNodeId, setGeneratingImageNodeId] = useState<string | null>(null);
+  const [localNodeImages, setLocalNodeImages] = useState<Record<string, string>>({});
   const [rerollingNodeId, setRerollingNodeId] = useState<string | null>(null);
   const [isGeneratingAt, setIsGeneratingAt] = useState(false);
   const [isAddingManualIdea, setIsAddingManualIdea] = useState(false);
@@ -169,7 +170,11 @@ function AppComponent(props: App): JSX.Element {
   // Per-user local view — derived from the active chatHistory entry
   const activeEntry = s.chatHistory.find((e) => e.id === activeEntryId) ?? null;
   const favorites = s.favorites ?? {};
-  const localNodes = (activeEntry?.nodes ?? []).map((n) => ({ ...n, IsMyFav: favorites[n.ID] ?? false }));
+  const localNodes = (activeEntry?.nodes ?? []).map((n) => ({
+    ...n,
+    IsMyFav: favorites[n.ID] ?? false,
+    imageUrl: localNodeImages[n.ID] ?? n.imageUrl,
+  }));
   const localDims = activeEntry?.dimensions ?? [];
 
   useEffect(() => {
@@ -440,6 +445,7 @@ function AppComponent(props: App): JSX.Element {
       chatHistory: [],
       qa: [],
       favorites: {},
+      nodeImages: {},
     });
     positionsRef.current.clear();
     hasFitRef.current = false;
@@ -670,14 +676,20 @@ function AppComponent(props: App): JSX.Element {
       if (!node) return;
       setGeneratingImageNodeId(nodeId);
       try {
-        const url = await generateNodeImage(node.Title, node.Summary, node.Keywords, s.apiKey, s.prompt, node.Dimension);
-        const latest = useAppStore.getState().apps.find((a) => a._id === props._id)?.data.state as AppState | undefined;
-        const cur = latest ?? s;
-        const updatedNodes = (cur.chatHistory.find((e) => e.id === activeEntryId)?.nodes ?? localNodes).map((n) =>
-          n.ID === nodeId ? { ...n, imageUrl: url } : n,
-        );
-        const updatedHistory = cur.chatHistory.map((e) => (e.id === activeEntryId ? { ...e, nodes: updatedNodes } : e));
-        updateState(props._id, { ...cur, chatHistory: updatedHistory });
+        const dataUrl = await generateNodeImage(node.Title, node.Summary, node.Keywords, s.apiKey, s.prompt, node.Dimension);
+        // Upload to SAGE3 assets to avoid storing a ~1MB base64 string in app state
+        const blob = await fetch(dataUrl).then((r) => r.blob());
+        const imgFile = new File([blob], `idea-${nodeId}.png`, { type: 'image/png' });
+        const fd = new FormData();
+        fd.append('files', imgFile);
+        fd.append('room', props.data.roomId);
+        const uploadRes = await fetch(apiUrls.assets.upload, { method: 'POST', body: fd, credentials: 'include' });
+        if (!uploadRes.ok) throw new Error('Asset upload failed');
+        const uploadedIds = await uploadRes.json() as string[];
+        const assetDbId = uploadedIds[0];
+        if (!assetDbId) throw new Error('No asset ID returned from upload');
+        // Store the DB id — localNodes resolves it to a URL via useAssetStore
+        updateState(props._id, { nodeImages: { ...(s.nodeImages ?? {}), [nodeId]: assetDbId } });
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         toast({ title: 'Image generation failed', description: msg, status: 'error', duration: 4000, isClosable: true });
@@ -685,7 +697,7 @@ function AppComponent(props: App): JSX.Element {
         setGeneratingImageNodeId(null);
       }
     },
-    [s, localNodes, activeEntryId, generatingImageNodeId, props._id],
+    [s, localNodes, activeEntryId, generatingImageNodeId, props._id, props.data.roomId],
   );
 
   const summarizeFavorites = useCallback(async () => {

@@ -404,7 +404,7 @@ export function NodeBlock({
                 color={isSelectedQA ? 'teal.500' : 'black'}
               />
             </Tooltip>
-            <Tooltip label={node.imageUrl ? 'Regenerate image' : 'Generate image'} placement="bottom" hasArrow openDelay={300}>
+            {/* <Tooltip label={node.imageUrl ? 'Regenerate image' : 'Generate image'} placement="bottom" hasArrow openDelay={300}>
               <IconButton
                 aria-label="Generate image"
                 size="xs"
@@ -419,7 +419,7 @@ export function NodeBlock({
                 color={node.imageUrl ? 'blue.500' : 'black'}
                 isDisabled={isGeneratingImage}
               />
-            </Tooltip>
+            </Tooltip> */}
           </HStack>
         </Box>
       </Box>
@@ -516,7 +516,7 @@ export function NodeBlock({
               color={isSelectedQA ? 'teal.500' : 'black'}
             />
           </Tooltip>
-          <Tooltip label={node.imageUrl ? 'Regenerate image' : 'Generate image'} placement="bottom" hasArrow openDelay={300}>
+          {/* <Tooltip label={node.imageUrl ? 'Regenerate image' : 'Generate image'} placement="bottom" hasArrow openDelay={300}>
             <IconButton
               aria-label="Generate image"
               size="xs"
@@ -531,7 +531,7 @@ export function NodeBlock({
               color={node.imageUrl ? 'blue.500' : 'black'}
               isDisabled={isGeneratingImage}
             />
-          </Tooltip>
+          </Tooltip> */}
         </HStack>
       </Box>
     </Box>
