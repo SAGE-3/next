@@ -453,7 +453,7 @@ export function NodeBlock({
               variant="ghost"
               flexShrink={0}
               icon={node.IsMyFav ? <BsStarFill color="goldenrod" /> : <BsStar />}
-              onClick={onToggleFav}
+              onClick={(e) => { e.stopPropagation(); onToggleFav(); }}
               h="18px"
               minW="18px"
             />

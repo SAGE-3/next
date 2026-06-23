@@ -60,6 +60,7 @@ export const schema = z.object({
   nodes: z.array(SageNodeSchema),
   qa: z.array(QAEntrySchema).default([]),
   pdfContext: z.object({ filename: z.string(), text: z.string() }).optional(),
+  favorites: z.record(z.string(), z.boolean()).default({}),
   chatHistory: z.array(
     z.object({
       id: z.string(),
@@ -94,6 +95,7 @@ export const init: Partial<state> = {
   dimensions: [],
   nodes: [],
   qa: [],
+  favorites: {},
   chatHistory: [],
 };
 

@@ -59,13 +59,14 @@ export function QAPanel({
         </Center>
       ) : (
         <>
-          {/* Node summary (fixed) */}
-          <Box px={3} py={2} borderBottom="1px solid" borderColor={borderHex} flexShrink={0}>
+          {/* Scrollable body: summary + Q&A entries together */}
+          <Box flex={1} overflowY="auto" px={3} py={2} onWheel={(e) => e.stopPropagation()}>
+            {/* Node summary */}
             <Text fontSize={s(13)} fontWeight="500" color={textColor} lineHeight="1.6">
               {node.Summary}
             </Text>
             {node.Steps?.length > 0 && (
-              <VStack align="stretch" spacing={0.5} mt={2}>
+              <VStack align="stretch" spacing={0.5} mt={2} mb={3}>
                 <Text fontSize={s(11)} fontWeight="700" textTransform="uppercase" letterSpacing="0.08em" color="gray.400" mb={0.5}>
                   Steps
                 </Text>
@@ -81,10 +82,11 @@ export function QAPanel({
                 ))}
               </VStack>
             )}
-          </Box>
 
-          {/* Q&A list (scrollable) */}
-          <Box flex={1} overflowY="auto" px={3} py={2}>
+            {/* Divider before Q&A */}
+            <Box borderTop="1px solid" borderColor="gray.200" _dark={{ borderColor: 'gray.600' }} my={2} />
+
+            {/* Q&A entries */}
             {qaEntries.length === 0 && !askingNodeId && (
               <Text fontSize={s(13)} color="gray.400" textAlign="center" mt={4}>
                 No questions yet. Ask one below.

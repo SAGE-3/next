@@ -168,7 +168,8 @@ function AppComponent(props: App): JSX.Element {
 
   // Per-user local view — derived from the active chatHistory entry
   const activeEntry = s.chatHistory.find((e) => e.id === activeEntryId) ?? null;
-  const localNodes = activeEntry?.nodes ?? [];
+  const favorites = s.favorites ?? {};
+  const localNodes = (activeEntry?.nodes ?? []).map((n) => ({ ...n, IsMyFav: favorites[n.ID] ?? false }));
   const localDims = activeEntry?.dimensions ?? [];
 
   useEffect(() => {
@@ -424,10 +425,8 @@ function AppComponent(props: App): JSX.Element {
   );
 
   const toggleFav = (nodeId: string) => {
-    if (!activeEntryId) return;
-    const updatedNodes = localNodes.map((n) => (n.ID === nodeId ? { ...n, IsMyFav: !n.IsMyFav } : n));
-    const updatedHistory = s.chatHistory.map((e) => (e.id === activeEntryId ? { ...e, nodes: updatedNodes } : e));
-    updateState(props._id, { ...s, chatHistory: updatedHistory });
+    const current = (s.favorites ?? {})[nodeId] ?? false;
+    updateState(props._id, { favorites: { ...(s.favorites ?? {}), [nodeId]: !current } });
   };
 
   const clearAll = () => {
@@ -440,6 +439,7 @@ function AppComponent(props: App): JSX.Element {
       statusMessage: '',
       chatHistory: [],
       qa: [],
+      favorites: {},
     });
     positionsRef.current.clear();
     hasFitRef.current = false;

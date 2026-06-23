@@ -244,6 +244,7 @@ class IdeatorAgent:
         return IdeatorSummarizeResponse(r=r)
 
     async def image(self, req: IdeatorImageRequest) -> IdeatorImageResponse:
+        import base64
         client, _ = self._get_client_and_model(req.model)
         topic_line = (
             f'Conceptual illustration for a brainstorming idea about: "{req.brainstormingPrompt}". '
@@ -265,14 +266,21 @@ class IdeatorAgent:
             + f"Visual themes: {', '.join(req.keywords)}. "
             + "Abstract, minimal, clean design. No text, labels, or words."
         )
-        response = await client.images.generate(
-            model="dall-e-3",
-            prompt=prompt,
-            n=1,
-            size="1024x1024",
-            response_format="url",
-        )
-        return IdeatorImageResponse(imageUrl=response.data[0].url)
+        self.logger.info(f"IdeatorAgent.image: prompt length={len(prompt)}, prompt={prompt[:200]}")
+        try:
+            response = await client.images.generate(
+                model="dall-e-3",
+                prompt=prompt,
+                n=1,
+                size="1024x1024",
+                response_format="b64_json",
+            )
+            b64 = response.data[0].b64_json
+            data_url = f"data:image/png;base64,{b64}"
+            return IdeatorImageResponse(imageUrl=data_url)
+        except Exception as e:
+            self.logger.error(f"IdeatorAgent.image: OpenAI error: {e}")
+            raise
 
     async def prose(self, req: IdeatorProseRequest) -> IdeatorProseResponse:
         r = await self._prose_chat(req.userPrompt, req.model, 0.7)
