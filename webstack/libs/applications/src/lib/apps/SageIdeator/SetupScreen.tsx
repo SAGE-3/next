@@ -28,7 +28,7 @@ interface SetupScreenProps {
 export function SetupScreen({ props, bgHex, panelBgHex, textColor, onSave, onCancel, existingApiKey }: SetupScreenProps) {
   const s = props.data.state as AppState;
   // const [apiKeyInput, setApiKeyInput] = useState(existingApiKey ?? '');
-  const [modelInput, setModelInput] = useState(s.model || 'gpt-5.4-mini');
+  const [modelInput, setModelInput] = useState(s.model || 'gpt-4o-mini');
   const [batchInput, setBatchInput] = useState(String(s.batchSize || 8));
 
   return (
