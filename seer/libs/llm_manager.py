@@ -51,7 +51,9 @@ TASK_CAPABILITIES: Dict[str, List[Capability]] = {
     "coding": ["code"],
     "image_generation": ["imagegen"],
     "chat": ["chat"],
-    "pdf_processing": ["embeddings", "chat"],
+    # Embeddings/reranking are shared retrieval infrastructure (models.embed /
+    # models.rerank), not a per-provider capability — PDF only needs chat.
+    "pdf_processing": ["chat"],
 }
 
 
@@ -171,7 +173,35 @@ class LLMManager:
             "base_url": self._normalize_base_url(url) if url else None,
             "api_version": model.get("api_version"),
             "max_tokens": model.get("max_tokens"),
+            "context_window": model.get("context_window"),
         }
+
+    def rerank_config(self) -> Optional[dict]:
+        """Connection info for the reranking service, or None if not configured.
+
+        Read from the optional `rerank` block of the models config:
+            "rerank": { "url": "http://host:8000", "model": "<model_id>" }
+        """
+        rr = self.config.get("rerank") or {}
+        url = rr.get("url")
+        model = rr.get("model")
+        if url and model:
+            return {"url": url.rstrip("/"), "model": model, "apiKey": rr.get("apiKey")}
+        return None
+
+    def embed_config(self) -> Optional[dict]:
+        """Connection info for a dedicated embedding service (NIM), or None.
+
+        Read from the optional `embed` block of the models config:
+            "embed": { "url": "http://host:8000", "model": "<model_id>" }
+        Takes precedence over provider-based embeddings for retrieval.
+        """
+        e = self.config.get("embed") or {}
+        url = e.get("url")
+        model = e.get("model")
+        if url and model:
+            return {"url": url.rstrip("/"), "model": model, "apiKey": e.get("apiKey")}
+        return None
 
     #
     # Client construction

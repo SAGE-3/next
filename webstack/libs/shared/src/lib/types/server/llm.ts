@@ -19,7 +19,9 @@ export const TASK_CAPABILITIES: Record<TaskType, LLMCapability[]> = {
   coding: ['code'],
   image_generation: ['imagegen'],
   chat: ['chat'],
-  pdf_processing: ['embeddings', 'chat'],
+  // Embeddings/reranking are shared retrieval infrastructure (models.embed /
+  // models.rerank), not a per-provider capability — PDF only needs chat.
+  pdf_processing: ['chat'],
 };
 
 interface ModelConfig {

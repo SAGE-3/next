@@ -12,7 +12,7 @@
 
 import json, os
 from logging import Logger
-from typing import Dict, List
+from typing import List
 
 # SAGE3 API
 from pysage3.client import PySage3
@@ -37,14 +37,13 @@ from libs.llm_manager import LLMManager
 import chromadb
 from chromadb.config import Settings
 from langchain_chroma import Chroma
-from langchain.vectorstores.base import VectorStoreRetriever
 
 # PDF
 import pymupdf4llm
 import pymupdf
 from io import BytesIO
 
-from libs.pdf.pdf_v3 import generate_answer
+from libs.pdf.pdf_v3 import generate_answer, make_reranker, NimEmbeddings
 from libs.utils import isValidPDFDocument, convertPDFToImages
 
 
@@ -65,21 +64,22 @@ class PDFAgent:
         self._chat_models = {}
         self._vision_models = {}
 
-        # Pick an embeddings provider for the vector store: prefer the default
-        # provider, otherwise the first provider that has an embeddings model.
-        self.embedding_provider = None
-        candidates = [self.manager.default_provider()] + self.manager.list_providers()
-        for prov in candidates:
-            if prov and self.manager.has_capability(prov, "embeddings"):
-                self.embedding_provider = prov
-                break
-        embeddings = (
-            self.manager.build_embeddings(self.embedding_provider)
-            if self.embedding_provider
-            else None
-        )
+        # Embeddings for the vector store: prefer a dedicated embedding NIM
+        # (models.embed), otherwise fall back to a provider that has an
+        # embeddings-capable model.
+        embeddings = None
+        emb = self.manager.embed_config()
+        if emb:
+            embeddings = NimEmbeddings(emb["url"], emb["model"], emb.get("apiKey"))
+            self.logger.info("PDF embeddings: NIM " + emb["model"])
+        else:
+            for prov in [self.manager.default_provider()] + self.manager.list_providers():
+                if prov and self.manager.has_capability(prov, "embeddings"):
+                    embeddings = self.manager.build_embeddings(prov)
+                    self.logger.info("PDF embeddings: provider " + prov)
+                    break
         if embeddings is None:
-            self.logger.error("PDFAgent> no embeddings-capable provider configured")
+            self.logger.error("PDFAgent> no embeddings configured")
 
         # Create the ChromaDB client
         chromaServer = "127.0.0.1"
@@ -218,79 +218,49 @@ class PDFAgent:
             "Got PDF> from " + qq.user + ": " + qq.q + " using: " + qq.model
         )
 
-        pdfContents = [
-            {"id": assetid, "content": getPDFFile(self.ps3, assetid)}
-            for assetid in qq.assetids
-        ]
-
-        self.logger.info(f"pdfs: {len(pdfContents)}")
-        self.logger.info(
-            f"pdf: {pdfContents[0]['id']}, {len(pdfContents[0]['content'])}"
-        )
-
         self.logger.info(f"\n\nqq, {qq}\n\n")
 
-        # Used to filter documents in the vector DB
-        #   using an array to accomodate for more than 1 pdf in the future
-        sage_asset_ids = qq.assetids
-
-        # Create retrievers for each document
-        retrievers: Dict[str, VectorStoreRetriever] = {
-            sage_asset_id: self.vector_store.as_retriever(
-                search_type="similarity_score_threshold",
-                search_kwargs={
-                    "filter": {"sage_asset_id": sage_asset_id},
-                    "score_threshold": 0.7,
-                },
-            )
-            for sage_asset_id in sage_asset_ids
-        }
-
-        self.logger.info(f"sage retrievers: {retrievers}")
-
-        if len(pdfContents) > 0:
-            # TODO: For now doing the document processing here will need to create endpoint for that. Upon uploading, embeddings should be created and stored in chromadb
-            # TODO: Check token length for context length limits on long documents
-
-            # Convert PDFs to markdown
-            pdfs_to_md = {
-                pdf["id"]: self.getMDfromPDFWithImages(
-                    pdf["id"], pdf["content"], qq.model
-                )
-                for pdf in pdfContents
-            }
-
-            self.logger.info(f"pdfs_to_md, {pdfs_to_md.keys()}")
-
+        text = ""
+        if qq.assetids:
+            # Index each document once. Already-indexed docs are skipped entirely
+            # (no fetch, no conversion, no re-embed) so repeat questions in a
+            # session only pay for retrieval + answering.
             for assetid in qq.assetids:
-                # If asset id is not in vector store, add it
-                if (
+                already = (
                     len(
                         self.vector_store.get(where={"sage_asset_id": assetid})[
                             "documents"
                         ]
                     )
-                    == 0
-                ):
-                    print("\n\nadding to chroma\n\n")
-                    text_splitter = RecursiveCharacterTextSplitter(
-                        chunk_size=1000, chunk_overlap=200
-                    )
+                    > 0
+                )
+                if already:
+                    self.logger.info(f"pdf {assetid}: already indexed, skipping")
+                    continue
 
-                    splits = text_splitter.split_documents(
-                        [
-                            Document(
-                                pdfs_to_md[assetid],
-                                metadata={
-                                    "sage_asset_id": assetid,
-                                },
-                            )
-                        ]
-                    )
+                # First time we see this doc: fetch -> markdown -> chunk -> embed
+                content = getPDFFile(self.ps3, assetid)
+                md = self.getMDfromPDFWithImages(assetid, content, qq.model)
+                splitter = RecursiveCharacterTextSplitter(
+                    chunk_size=1000, chunk_overlap=200
+                )
+                splits = splitter.split_documents(
+                    [Document(md, metadata={"sage_asset_id": assetid})]
+                )
+                # Record chunk order so the full document can be reconstructed
+                for i, d in enumerate(splits):
+                    d.metadata["chunk_index"] = i
+                res = await self.vector_store.aadd_documents(documents=splits)
+                self.logger.info(f"pdf {assetid}: indexed {len(res)} chunks")
 
-                    res = await self.vector_store.aadd_documents(documents=splits)
-
-                    print(f"\n\ndocument splits: {len(res)}\n\n")
+            # One retriever over all selected documents: over-retrieve (k=20),
+            # the reranker narrows down to the most relevant chunks.
+            retriever = self.vector_store.as_retriever(
+                search_kwargs={
+                    "k": 20,
+                    "filter": {"sage_asset_id": {"$in": qq.assetids}},
+                }
+            )
 
             llm = self._get_chat(qq.model)
             if llm is None:
@@ -298,11 +268,39 @@ class PDFAgent:
                     status_code=400,
                     detail=f"Provider '{qq.model}' has no model capable of chat (PDF)",
                 )
+
+            # Chat model context window (used for summary stuffing) + reranker
+            info = self.manager.resolve_model(qq.model, ["chat"]) or {}
+            context_window = info.get("context_window") or 8000
+            rr = self.manager.rerank_config()
+            rerank = (
+                make_reranker(rr["url"], rr["model"], rr.get("apiKey")) if rr else None
+            )
+
+            # Reconstruct full document text from the indexed chunks (in order),
+            # only consulted for summary-style questions or empty retrieval.
+            def get_full_text() -> str:
+                stored = self.vector_store.get(
+                    where={"sage_asset_id": {"$in": qq.assetids}}
+                )
+                docs = stored.get("documents") or []
+                metas = stored.get("metadatas") or []
+                ordered = sorted(
+                    zip(metas, docs),
+                    key=lambda p: (
+                        (p[0] or {}).get("sage_asset_id", ""),
+                        (p[0] or {}).get("chunk_index", 0),
+                    ),
+                )
+                return "\n\n".join(d for _, d in ordered)
+
             answer = await generate_answer(
                 qq=qq,
                 llm=llm,
-                retrievers=retrievers,
-                markdown_files_dict=pdfs_to_md,
+                retriever=retriever,
+                rerank=rerank,
+                get_full_text=get_full_text,
+                context_window=context_window,
             )
 
             text = answer.strip()
