@@ -43,7 +43,7 @@ import pymupdf4llm
 import pymupdf
 from io import BytesIO
 
-from libs.pdf.pdf_v3 import generate_answer, make_reranker, NimEmbeddings
+from libs.pdf.rag import generate_answer, make_reranker, NimEmbeddings
 from libs.utils import isValidPDFDocument, convertPDFToImages
 
 
