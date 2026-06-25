@@ -580,7 +580,8 @@ function AppComponent(props: App): JSX.Element {
           };
           updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
 
-          const assetid = apps[0].data.state.assetid;
+          // All linked images, so the model can describe or compare several at once
+          const assetids = apps.filter((a) => a.data.type === 'ImageViewer').map((a) => a.data.state.assetid);
           // Build the query
           const q: ImageQuery = {
             ctx: {
@@ -592,7 +593,7 @@ function AppComponent(props: App): JSX.Element {
             },
             q: prompt,
             user: username,
-            asset: assetid,
+            assets: assetids,
             model: selectedModel || 'llama',
           };
           setProcessing(true);

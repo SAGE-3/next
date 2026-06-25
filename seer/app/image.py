@@ -87,29 +87,40 @@ class ImageAgent:
         self._models[provider] = llm
         return llm
 
+    def _load_image_b64(self, asset: str):
+        """Fetch an image (SAGE3 asset id, URL, or data URL), scale it, and
+        return base64, or None if it can't be loaded."""
+        if isDataURL(asset):
+            imageContent = BytesIO(base64.b64decode(asset.split(",")[1])).getbuffer()
+        elif isURL(asset):
+            response = requests.get(asset)
+            imageContent = BytesIO(response.content).getbuffer()
+        else:
+            imageContent = getImageFile(self.ps3, asset)
+        if not imageContent:
+            return None
+        return base64.b64encode(scaleImage(imageContent, ImageSize)).decode("utf-8")
+
     async def process(self, qq: ImageQuery):
-        self.logger.info("Got image> from " + qq.user + ": " + qq.q + " - " + qq.model)
+        self.logger.info(
+            "Got image> from "
+            + qq.user
+            + ": "
+            + qq.q
+            + " - "
+            + qq.model
+            + " ("
+            + str(len(qq.assets))
+            + " image(s))"
+        )
         description = "No description available."
         success = True
 
-        if isDataURL(qq.asset):
-            # Load an image from a base64 encoded data URL
-            imageContent = BytesIO(base64.b64decode(qq.asset.split(",")[1])).getbuffer()
-        elif isURL(qq.asset):
-            # Fetch and load an image from a URL
-            response = requests.get(qq.asset)
-            imageContent = BytesIO(response.content).getbuffer()
-        else:
-            # Retrieve the image content from SAGE3
-            imageContent = getImageFile(self.ps3, qq.asset)
+        # Load every selected image
+        image_b64s = [b for b in (self._load_image_b64(a) for a in qq.assets) if b]
 
-        if imageContent:
-            # Scale the image to the desired size
-            image_bytes = scaleImage(imageContent, ImageSize)
-            # Convert the image to base64
-            image_base64 = base64.b64encode(image_bytes).decode("utf-8")
-
-            # Save the ai name anmd prompt for the logs
+        if image_b64s:
+            # Save the ai name and prompt for the logs
             ai_handler.setAI(qq.model)
             ai_handler.setPrompt(qq.q)
 
@@ -123,21 +134,24 @@ class ImageAgent:
                     detail=f"Provider '{qq.model}' has no model capable of vision",
                 )
 
-            messages: List[BaseMessage] = []
-            messages.append(SystemMessage(content=sys_template_str))
-            messages.append(
-                HumanMessage(
-                    content=[
-                        {"type": "text", "text": qq.q},
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/png;base64,{image_base64}"
-                            },
-                        },
-                    ]
+            # One message with the question followed by every image. When there
+            # are several, label them so the model can refer to / compare them.
+            multiple = len(image_b64s) > 1
+            content = [{"type": "text", "text": qq.q}]
+            for i, b64 in enumerate(image_b64s):
+                if multiple:
+                    content.append({"type": "text", "text": f"Image {i + 1}:"})
+                content.append(
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/png;base64,{b64}"},
+                    }
                 )
-            )
+
+            messages: List[BaseMessage] = [
+                SystemMessage(content=sys_template_str),
+                HumanMessage(content=content),
+            ]
             try:
                 response = await llm.ainvoke(
                     messages,

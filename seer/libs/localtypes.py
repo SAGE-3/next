@@ -57,7 +57,7 @@ class CodeAnswer(BaseModel):
 
 class ImageQuery(BaseModel):
     ctx: Context  # context
-    asset: str  # question
+    assets: List[str]  # one or more image assets
     user: str  # user name
     model: str  # AI model: llama, openai, azure
     q: str  # question

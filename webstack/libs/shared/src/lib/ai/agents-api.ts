@@ -64,7 +64,7 @@ export type WebScreenshotAnswer = {
 // Image request
 export type ImageQuery = {
   ctx: { previousQ: string[]; previousA: string[]; pos: number[]; roomId: string; boardId: string };
-  asset: string;
+  assets: string[];
   user: string;
   model: string;
   q: string;
