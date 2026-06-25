@@ -637,6 +637,23 @@ function AppComponent(props: App): JSX.Element {
             if (response.actions) {
               setActions(response.actions);
             }
+            // If the agent picked specific images (filter/select), select the
+            // corresponding ImageViewers on the board.
+            if (response.selected && response.selected.length > 0) {
+              const matchedAppIds = apps
+                .filter((a) => a.data.type === 'ImageViewer' && response.selected!.includes(a.data.state.assetid))
+                .map((a) => a._id);
+              if (matchedAppIds.length > 0) {
+                useUIStore.getState().setSelectedAppsIds(matchedAppIds);
+                toast({
+                  title: 'Selection',
+                  description: `Selected ${matchedAppIds.length} image${matchedAppIds.length > 1 ? 's' : ''} on the board`,
+                  status: 'info',
+                  duration: 3000,
+                  isClosable: true,
+                });
+              }
+            }
           }
         }
       }

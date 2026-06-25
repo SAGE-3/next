@@ -54,6 +54,50 @@ sys_template_str = """You are a helpful and succinct assistant, providing inform
   If you don't know the answer, say "I don't know" and suggest to search the web."""
 
 
+# Keywords indicating the user wants specific images selected/filtered from the
+# set (vs. a description). These trigger structured output with image indices.
+SELECT_KEYWORDS = (
+    "select", "which", "find the", "find all", "contain", "containing",
+    "that have", "that show", "ones with", "images with", "pictures with",
+    "pick", "choose", "identify", "best", "filter", "show me the",
+)
+
+
+def _is_select(question: str) -> bool:
+    q = question.lower()
+    return any(k in q for k in SELECT_KEYWORDS)
+
+
+# System prompt for selection/filtering: the model returns JSON listing the
+# matching image numbers so the frontend can select them on the board.
+SELECT_SYSTEM = """You are shown {n} image(s), labeled "Image 1" through "Image {n}", followed by a request.
+Decide which images satisfy the request.
+Respond with ONLY a JSON object (no markdown, no code fence):
+{{"answer": "<one or two sentence explanation>", "selected": [<matching image numbers>]}}
+Use the labels as the numbers (1-based). If none match, use an empty list."""
+
+
+def _parse_selection(raw: str, num_images: int):
+    """Parse the selection JSON. Returns (answer_text, [valid 1-based indices])."""
+    obj = {}
+    start, end = raw.find("{"), raw.rfind("}")
+    if start != -1 and end > start:
+        try:
+            obj = json.loads(raw[start : end + 1])
+        except Exception:
+            obj = {}
+    answer = obj.get("answer") or raw
+    indices = []
+    for s in obj.get("selected") or []:
+        try:
+            i = int(s)
+        except (TypeError, ValueError):
+            continue
+        if 1 <= i <= num_images and i not in indices:
+            indices.append(i)
+    return answer, indices
+
+
 class ImageAgent:
     def __init__(
         self,
@@ -115,11 +159,17 @@ class ImageAgent:
         )
         description = "No description available."
         success = True
+        selected_assets: List[str] = []
 
-        # Load every selected image
-        image_b64s = [b for b in (self._load_image_b64(a) for a in qq.assets) if b]
+        # Load every selected image, keeping (asset_id, base64) aligned so the
+        # model's "Image N" answers map back to the right asset.
+        loaded = []
+        for a in qq.assets:
+            b64 = self._load_image_b64(a)
+            if b64:
+                loaded.append((a, b64))
 
-        if image_b64s:
+        if loaded:
             # Save the ai name and prompt for the logs
             ai_handler.setAI(qq.model)
             ai_handler.setPrompt(qq.q)
@@ -136,9 +186,9 @@ class ImageAgent:
 
             # One message with the question followed by every image. When there
             # are several, label them so the model can refer to / compare them.
-            multiple = len(image_b64s) > 1
+            multiple = len(loaded) > 1
             content = [{"type": "text", "text": qq.q}]
-            for i, b64 in enumerate(image_b64s):
+            for i, (_, b64) in enumerate(loaded):
                 if multiple:
                     content.append({"type": "text", "text": f"Image {i + 1}:"})
                 content.append(
@@ -148,8 +198,12 @@ class ImageAgent:
                     }
                 )
 
+            # Filter/select questions get structured output (matching indices);
+            # everything else gets the normal prose description.
+            select_mode = _is_select(qq.q)
+            system = SELECT_SYSTEM.format(n=len(loaded)) if select_mode else sys_template_str
             messages: List[BaseMessage] = [
-                SystemMessage(content=sys_template_str),
+                SystemMessage(content=system),
                 HumanMessage(content=content),
             ]
             try:
@@ -157,7 +211,12 @@ class ImageAgent:
                     messages,
                     config={"callbacks": [ai_handler]},
                 )
-                description = str(response.content)
+                raw = str(response.content)
+                if select_mode:
+                    description, idxs = _parse_selection(raw, len(loaded))
+                    selected_assets = [loaded[i - 1][0] for i in idxs]
+                else:
+                    description = raw
             except Exception as e:
                 success = False
                 code, message = parse_openai_error(e)
@@ -188,6 +247,7 @@ class ImageAgent:
                 r=description,
                 success=success,
                 actions=[action1],
+                selected=selected_assets,
             )
         else:
-            return ImageAnswer(r=description, success=success, actions=[])
+            return ImageAnswer(r=description, success=success, actions=[], selected=[])

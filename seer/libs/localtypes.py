@@ -86,6 +86,7 @@ class ImageAnswer(BaseModel):
     r: str  # answer
     success: bool = True  # success flag
     actions: List[Json]  # actions to be performed
+    selected: List[str] = []  # asset ids the answer selects (filter/pick tasks)
 
 
 class PDFQuery(BaseModel):

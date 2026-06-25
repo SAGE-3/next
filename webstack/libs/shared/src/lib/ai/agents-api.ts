@@ -73,6 +73,7 @@ export type ImageAnswer = {
   r: string;
   success: boolean;
   actions?: any[];
+  selected?: string[]; // asset ids the answer selects (filter/pick tasks)
 };
 
 // Image request
