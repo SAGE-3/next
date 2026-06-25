@@ -44,6 +44,7 @@ import pymupdf
 from io import BytesIO
 
 from libs.pdf.rag import generate_answer, make_reranker, NimEmbeddings
+from libs.pdf.ocr import olmocr_to_markdown
 from libs.utils import isValidPDFDocument, convertPDFToImages
 
 
@@ -63,6 +64,12 @@ class PDFAgent:
         # Per-provider chat / vision models, built lazily on first use
         self._chat_models = {}
         self._vision_models = {}
+
+        # Optional olmOCR service for PDF -> Markdown (models.pdf2md). When set,
+        # it's the primary converter; pymupdf4llm remains the fallback.
+        self.ocr = self.manager.ocr_config()
+        if self.ocr:
+            self.logger.info("PDF OCR: olmOCR " + self.ocr["model"])
 
         # Embeddings for the vector store: prefer a dedicated embedding NIM
         # (models.embed), otherwise fall back to a provider that has an
@@ -213,6 +220,30 @@ class PDFAgent:
         response = llm.invoke(messages)
         return {"index": page_num, "content": str(response.content)}
 
+    async def _get_markdown(self, id, content, model):
+        """PDF -> Markdown, cached in /tmp/{id}.md. Prefers olmOCR (models.pdf2md)
+        and falls back to pymupdf4llm (with vision-OCR) if it's unset or fails."""
+        file_path = f"/tmp/{id}.md"
+        if os.path.exists(file_path):
+            with open(file_path, "r") as f:
+                return f.read()
+
+        if self.ocr:
+            try:
+                md = await olmocr_to_markdown(
+                    content, self.ocr["url"], self.ocr["model"], logger=self.logger
+                )
+                if md and md.strip():
+                    with open(file_path, "w") as f:
+                        f.write(md)
+                    return md
+                self.logger.error("olmOCR returned empty output; falling back")
+            except Exception as e:
+                self.logger.error(f"olmOCR failed ({e}); falling back to pymupdf4llm")
+
+        # Fallback path (also handles the /tmp cache + image OCR internally)
+        return self.getMDfromPDFWithImages(id, content, model)
+
     async def process(self, qq: PDFQuery):
         self.logger.info(
             "Got PDF> from " + qq.user + ": " + qq.q + " using: " + qq.model
@@ -240,7 +271,7 @@ class PDFAgent:
 
                 # First time we see this doc: fetch -> markdown -> chunk -> embed
                 content = getPDFFile(self.ps3, assetid)
-                md = self.getMDfromPDFWithImages(assetid, content, qq.model)
+                md = await self._get_markdown(assetid, content, qq.model)
                 splitter = RecursiveCharacterTextSplitter(
                     chunk_size=1000, chunk_overlap=200
                 )
@@ -252,15 +283,6 @@ class PDFAgent:
                     d.metadata["chunk_index"] = i
                 res = await self.vector_store.aadd_documents(documents=splits)
                 self.logger.info(f"pdf {assetid}: indexed {len(res)} chunks")
-
-            # One retriever over all selected documents: over-retrieve (k=20),
-            # the reranker narrows down to the most relevant chunks.
-            retriever = self.vector_store.as_retriever(
-                search_kwargs={
-                    "k": 20,
-                    "filter": {"sage_asset_id": {"$in": qq.assetids}},
-                }
-            )
 
             llm = self._get_chat(qq.model)
             if llm is None:
@@ -277,29 +299,72 @@ class PDFAgent:
                 make_reranker(rr["url"], rr["model"], rr.get("apiKey")) if rr else None
             )
 
-            # Reconstruct full document text from the indexed chunks (in order),
-            # only consulted for summary-style questions or empty retrieval.
+            # Retrieve PER DOCUMENT so every selected PDF is represented — a
+            # single global top-k can be dominated by one document, which is why
+            # cross-document questions ("common topics in the 2 papers") failed.
+            # Each document's candidates are reranked independently, then merged.
+            async def retrieve(query: str):
+                n = max(1, len(qq.assetids))
+                keep = 5 if n == 1 else max(2, 8 // n)
+                fetch = max(keep * 3, 12)
+                results = []
+                for aid in qq.assetids:
+                    docs = await self.vector_store.asimilarity_search(
+                        query, k=fetch, filter={"sage_asset_id": aid}
+                    )
+                    docs = rerank(query, docs, keep) if rerank else docs[:keep]
+                    results.extend(docs)
+                return results
+
+            # Reconstruct full document text from the indexed chunks, grouped and
+            # labeled per document. Used for broad questions and empty retrieval.
             def get_full_text() -> str:
                 stored = self.vector_store.get(
                     where={"sage_asset_id": {"$in": qq.assetids}}
                 )
                 docs = stored.get("documents") or []
                 metas = stored.get("metadatas") or []
-                ordered = sorted(
-                    zip(metas, docs),
-                    key=lambda p: (
-                        (p[0] or {}).get("sage_asset_id", ""),
-                        (p[0] or {}).get("chunk_index", 0),
-                    ),
+                by_doc: dict = {}
+                for meta, doc in zip(metas, docs):
+                    aid = (meta or {}).get("sage_asset_id", "")
+                    by_doc.setdefault(aid, []).append(
+                        ((meta or {}).get("chunk_index", 0), doc)
+                    )
+                sections = []
+                for i, aid in enumerate(qq.assetids):
+                    chunks = sorted(by_doc.get(aid, []), key=lambda p: p[0])
+                    if chunks:
+                        body = "\n\n".join(c for _, c in chunks)
+                        sections.append(f"# Document {i + 1}\n\n{body}")
+                return "\n\n".join(sections)
+
+            # The head (first chunks) of each document — where title, authors and
+            # abstract live — for structural/metadata questions.
+            def get_head(n_per_doc: int = 2):
+                stored = self.vector_store.get(
+                    where={"sage_asset_id": {"$in": qq.assetids}}
                 )
-                return "\n\n".join(d for _, d in ordered)
+                docs = stored.get("documents") or []
+                metas = stored.get("metadatas") or []
+                by_doc: dict = {}
+                for meta, doc in zip(metas, docs):
+                    aid = (meta or {}).get("sage_asset_id", "")
+                    by_doc.setdefault(aid, []).append(
+                        ((meta or {}).get("chunk_index", 0), doc, meta or {})
+                    )
+                head = []
+                for aid in qq.assetids:
+                    first = sorted(by_doc.get(aid, []), key=lambda p: p[0])[:n_per_doc]
+                    for _, doc, meta in first:
+                        head.append(Document(page_content=doc, metadata=meta))
+                return head
 
             answer = await generate_answer(
                 qq=qq,
                 llm=llm,
-                retriever=retriever,
-                rerank=rerank,
+                retrieve=retrieve,
                 get_full_text=get_full_text,
+                get_head=get_head,
                 context_window=context_window,
             )
 

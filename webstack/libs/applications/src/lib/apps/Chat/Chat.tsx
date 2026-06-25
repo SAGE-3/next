@@ -856,7 +856,7 @@ function AppComponent(props: App): JSX.Element {
               // Add messages
               updateState(props._id, {
                 ...s,
-                previousQ: [...s.previousQ, 'Describe the content'],
+                previousQ: [...s.previousQ, q.q],
                 previousA: [...s.previousA, response.r],
                 messages: [
                   ...s.messages,

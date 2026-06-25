@@ -203,6 +203,18 @@ class LLMManager:
             return {"url": url.rstrip("/"), "model": model, "apiKey": e.get("apiKey")}
         return None
 
+    def ocr_config(self) -> Optional[dict]:
+        """Connection info for a PDF->Markdown OCR service (olmOCR vLLM server),
+        or None. Read from the optional `pdf2md` block of the models config:
+            "pdf2md": { "url": "http://host/olmocr", "model": "<model_id>" }
+        """
+        o = self.config.get("pdf2md") or {}
+        url = o.get("url")
+        model = o.get("model")
+        if url and model:
+            return {"url": url.rstrip("/"), "model": model}
+        return None
+
     #
     # Client construction
     #
