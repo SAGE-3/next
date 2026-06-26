@@ -39,3 +39,6 @@ webstack/keys/package-lock.json
 webstack/keys/yarn.lock
 foresight/_env.sh
 sage_seer/_env.sh
+
+# Exported chat transcripts (may contain secrets) — never commit
+dev-model-list.md
