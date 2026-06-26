@@ -425,10 +425,14 @@ function AppComponent(props: App): JSX.Element {
   };
 
   const goToBottom = (mode: ScrollBehavior = 'smooth') => {
-    // Scroll to bottom of chat box smoothly
-    chatBox.current?.scrollTo({
-      top: chatBox.current?.scrollHeight,
-      behavior: mode,
+    // Defer to after layout/paint (two frames) so scrollHeight reflects the
+    // freshly-rendered markdown of an incoming answer — otherwise we measure a
+    // stale, shorter height and the window stops part-way down.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const el = chatBox.current;
+        if (el) el.scrollTo({ top: el.scrollHeight, behavior: mode });
+      });
     });
   };
 
