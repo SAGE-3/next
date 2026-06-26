@@ -1,16 +1,14 @@
 /**
- * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useRef, useState, Fragment, useEffect, useMemo } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router';
 import {
-  ButtonGroup,
-  Button,
   useToast,
   IconButton,
   Box,
@@ -21,39 +19,13 @@ import {
   InputGroup,
   InputRightElement,
   HStack,
-  Divider,
-  Center,
-  AbsoluteCenter,
   List,
   ListIcon,
   ListItem,
   Textarea,
   useDisclosure,
-  Table,
-  Tr,
-  Td,
-  Th,
-  Thead,
-  Tbody,
 } from '@chakra-ui/react';
-import {
-  MdSend,
-  MdExpandCircleDown,
-  MdStopCircle,
-  MdChangeCircle,
-  MdFileDownload,
-  MdChat,
-  MdSettings,
-  MdOpenInNew,
-} from 'react-icons/md';
-import { BsCopy, BsCheck } from 'react-icons/bs';
-import { HiCommandLine } from 'react-icons/hi2';
-
-// Date management
-import { formatDistance } from 'date-fns';
-import { format } from 'date-fns/format';
-// Markdown
-import Markdown from 'markdown-to-jsx';
+import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle, MdChat, MdSettings, MdOpenInNew } from 'react-icons/md';
 
 import { AppName } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
@@ -62,7 +34,6 @@ import {
   useHexColor,
   useUser,
   serverTime,
-  downloadFile,
   useUsersStore,
   useUserSettings,
   useUIStore,
@@ -80,76 +51,10 @@ import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
 
 import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot, callMesonet } from './tRPC';
-
-// Override the default markdown options for lists
-const MdOrderedList: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => (
-  <ol style={{ paddingLeft: '24px' }} {...props}>
-    {children}
-  </ol>
-);
-
-const MdUnorderedList: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => (
-  <ul style={{ paddingLeft: '24px' }} {...props}>
-    {children}
-  </ul>
-);
-
-const MdCode: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => {
-  // @ts-ignore
-  const lang = props.className ? props.className.replace('lang-', '') : 'text';
-  const [copied, setCopied] = useState(false);
-  return <Table variant="unstyled" size="sm" style={{
-    borderSpacing: 0,
-    borderCollapse: 'separate',
-    borderRadius: '10px 10px 10px 10px',
-    border: '1px solid black'
-  }}>
-    <Thead>
-      <Tr backgroundColor="#e5e5e5">
-        <Th style={{ borderRadius: '10px 10px 0 0' }} textTransform={'capitalize'} fontWeight={'normal'}>
-          <Box display={"flex"} justifyContent={'space-between'}>
-            <span><b>{lang}</b></span>
-            <Box display={"flex"} alignItems={'center'} userSelect={'none'} _hover={{ cursor: 'pointer' }}
-              onClick={(e) => {
-                e.stopPropagation();
-                setCopied(true);
-                // Copy the code to clipboard
-                navigator.clipboard.writeText(children as string);
-              }}>
-              {copied ? <BsCheck /> : <BsCopy />} <span> {copied ? 'Copied' : 'Copy'} </span>
-            </Box>
-          </Box>
-        </Th>
-      </Tr>
-    </Thead>
-    <Tbody>
-      <Tr>
-        <Td style={{ padding: 0 }} colSpan={1}>
-          <pre style={{ fontSize: 'smaller', paddingLeft: '24px', backgroundColor: '#fafafa', borderRadius: '0 0 10px 10px' }} {...props}>
-            <code {...props} style={{ userSelect: "text" }}>
-              {children}
-            </code>
-          </pre>
-        </Td>
-      </Tr>
-    </Tbody>
-  </Table >
-};
-
-type OperationMode = 'chat' | 'text' | 'image' | 'web' | 'pdf' | 'code' | 'map' | 'Hawaii Mesonet';
-
-// Which AI task each request maps to, so we can check the selected model's
-// capabilities (declared in the server config) before sending to the backend.
-const MODE_TASK: Record<OperationMode, TaskType> = {
-  chat: 'chat',
-  text: 'chat',
-  map: 'chat',
-  web: 'chat',
-  image: 'image',
-  pdf: 'pdf_processing',
-  code: 'coding',
-  'Hawaii Mesonet': 'chat',
-};
+import { OperationMode, MODE_TASK } from './constants';
+import { ToolbarComponent, GroupedToolbarComponent } from './Toolbar';
+import { MessageItem } from './MessageItem';
+import { PromptBars } from './PromptBars';
 
 /* App component for Chat */
 
@@ -169,7 +74,7 @@ function AppComponent(props: App): JSX.Element {
   // Colors for Dark theme and light theme
   // Chat Bubble Colors
   const myColor = useHexColor(`blue.300`);
-  const sageColor = "#bec6dc"
+  const sageColor = '#bec6dc';
   const aiTypingColor = useHexColor('orange.300');
   const otherUserColor = useHexColor('gray.300');
   // Background, scrollbar, and Foreground Colors
@@ -197,10 +102,7 @@ function AppComponent(props: App): JSX.Element {
   // AI capability config (no secrets) used to gate requests by capability.
   // Built from the server config; the manager mirrors the backend's matching.
   const serverConfig = useConfigStore((state) => state.config);
-  const llmManager = useMemo(
-    () => (serverConfig?.models ? new LLMConfigManager(serverConfig.models) : undefined),
-    [serverConfig]
-  );
+  const llmManager = useMemo(() => (serverConfig?.models ? new LLMConfigManager(serverConfig.models) : undefined), [serverConfig]);
 
   // Input text for query
   const [input, setInput] = useState<string>('');
@@ -329,7 +231,7 @@ function AppComponent(props: App): JSX.Element {
         },
         function (e) {
           console.log('Location> error', e);
-        }
+        },
       );
     }
   }, [user]);
@@ -392,7 +294,15 @@ function AppComponent(props: App): JSX.Element {
         ...s,
         messages: [
           ...s.messages,
-          { id: genId(), userId: user._id, creationId: '', creationDate: now.epoch, userName: user?.data.name, query: new_input, response: '' },
+          {
+            id: genId(),
+            userId: user._id,
+            creationId: '',
+            creationDate: now.epoch,
+            userName: user?.data.name,
+            query: new_input,
+            response: '',
+          },
         ],
       });
       return;
@@ -544,7 +454,10 @@ function AppComponent(props: App): JSX.Element {
     if (sourceApps.length > 0) {
       body = { ...common, q: label, appIds: sourceApps, intent };
     } else if (s.context) {
-      body = { ...common, q: `Please carefully read the following document:\n<document>\n${s.context}\n</document>\n${fallbackInstruction}` };
+      body = {
+        ...common,
+        q: `Please carefully read the following document:\n<document>\n${s.context}\n</document>\n${fallbackInstruction}`,
+      };
     } else {
       return;
     }
@@ -628,7 +541,7 @@ function AppComponent(props: App): JSX.Element {
             // Clear the stream text
             setStreamText('');
             ctrlRef.current = null;
-            setPreviousAnswer(prevItems => [...prevItems, response.r]);
+            setPreviousAnswer((prevItems) => [...prevItems, response.r]);
             // Add messages
             updateState(props._id, {
               ...s,
@@ -752,7 +665,7 @@ function AppComponent(props: App): JSX.Element {
           } else {
             setStreamText('');
             ctrlRef.current = null;
-            setPreviousAnswer(prevItems => [...prevItems, response.summary]);
+            setPreviousAnswer((prevItems) => [...prevItems, response.summary]);
             // Update the Mesonet app's state with the selected stations
             // if (response.stations && response.stations.length > 0) {
             //   const mesonetApp = apps[0];
@@ -792,14 +705,6 @@ function AppComponent(props: App): JSX.Element {
       }
     }
   };
-
-  const mesonetPrompts: { title: string; action: () => void; prompt: string }[] = [
-    // { title: 'Summarize Mesonet Data', action: onMesonetSummary, prompt: 'Summarize key weather patterns from the Mesonet dataset.' },
-    // { title: 'Find Trends', action: onMesonetTrends, prompt: 'Identify key trends in the Mesonet weather data.' },
-    // { title: 'Compare Locations', action: onMesonetComparison, prompt: 'Compare weather conditions between different Mesonet stations.' },
-    // { title: 'Generate Forecast Insights', action: onMesonetForecast, prompt: 'Provide insights based on past data to predict trends.' },
-    // { title: 'Find Extremes', action: onMesonetExtremes, prompt: 'Find the extreme values (highest and lowest) recorded in the dataset.' },
-  ];
 
   const onContentPDF = async (prompt: string) => {
     if (!user) return;
@@ -854,7 +759,7 @@ function AppComponent(props: App): JSX.Element {
             if ('message' in response) {
               const errorMessage = 'There has been an error, please try again or report it through the menu.';
               setStreamText('');
-              setPreviousAnswer(prevItems => [...prevItems, errorMessage]);
+              setPreviousAnswer((prevItems) => [...prevItems, errorMessage]);
               updateState(props._id, {
                 ...s,
                 previousQ: [...s.previousQ, q.q],
@@ -884,7 +789,7 @@ function AppComponent(props: App): JSX.Element {
               // Clear the stream text
               setStreamText('');
               ctrlRef.current = null;
-              setPreviousAnswer(prevItems => [...prevItems, response.r]);
+              setPreviousAnswer((prevItems) => [...prevItems, response.r]);
               // Add messages
               updateState(props._id, {
                 ...s,
@@ -971,7 +876,7 @@ function AppComponent(props: App): JSX.Element {
             // Clear the stream text
             setStreamText('');
             ctrlRef.current = null;
-            setPreviousAnswer(prevItems => [...prevItems, response.r]);
+            setPreviousAnswer((prevItems) => [...prevItems, response.r]);
             // Add messages
             updateState(props._id, {
               ...s,
@@ -1017,7 +922,13 @@ function AppComponent(props: App): JSX.Element {
     if (layers.length > 0) {
       const visibleLayers = layers.filter((l: any) => l.visible).map((l: any) => l.assetId);
       if (visibleLayers.length === 0) {
-        toast({ title: 'No visible layers', description: 'Please select a layer to query.', status: 'warning', duration: 4000, isClosable: true });
+        toast({
+          title: 'No visible layers',
+          description: 'Please select a layer to query.',
+          status: 'warning',
+          duration: 4000,
+          isClosable: true,
+        });
         return;
       }
       const myasset = useAssetStore.getState().assets.find((a) => a._id === visibleLayers[0]);
@@ -1101,7 +1012,7 @@ function AppComponent(props: App): JSX.Element {
             // Clear the stream text
             setStreamText('');
             ctrlRef.current = null;
-            setPreviousAnswer(prevItems => [...prevItems, response.r]);
+            setPreviousAnswer((prevItems) => [...prevItems, response.r]);
             // Add messages
             updateState(props._id, {
               ...s,
@@ -1131,20 +1042,6 @@ function AppComponent(props: App): JSX.Element {
   };
 
   // Array of prompts for Web content
-  const webPrompts = [
-    { title: 'Web Summary', action: onContentWeb, prompt: 'Summarize concisely this webpage.' },
-    { title: 'Find Links', action: onContentWeb, prompt: 'What are the main links that I should read to expand on the subject matter.' },
-    { title: 'Find PDF', action: onContentWeb, prompt: 'Find the PDF in the page.' },
-    {
-      title: 'Generate Keywords',
-      action: onContentWeb,
-      prompt: 'Return a list of 3-5 keywords that best capture the essence and subject matter of the text.',
-    },
-    { title: 'Find Facts', action: onContentWeb, prompt: 'Provide a list of two or three interesting facts from the text.' },
-    { title: 'Screenshot', action: onContentWebScreenshot, prompt: 'Take a screenshot' },
-  ];
-
-  // Code section
   // Shared: send a Code request with the optimistic message + response handling.
   const runCode = async (body: CodeRequest, displayQuery: string) => {
     if (!user) return;
@@ -1231,7 +1128,15 @@ function AppComponent(props: App): JSX.Element {
         ...s,
         messages: [
           ...s.messages,
-          { id: genId(), userId: user._id, creationId: '', creationDate: now.epoch, userName: user?.data.name, query: prompt, response: '' },
+          {
+            id: genId(),
+            userId: user._id,
+            creationId: '',
+            creationDate: now.epoch,
+            userName: user?.data.name,
+            query: prompt,
+            response: '',
+          },
         ],
       });
       return;
@@ -1257,8 +1162,7 @@ function AppComponent(props: App): JSX.Element {
     runCode(body, request);
   };
 
-  const onProsCons = () =>
-    askIntent('proscons', 'Identify pros and cons', 'Identify the pros and cons. Answer in a few sentences.');
+  const onProsCons = () => askIntent('proscons', 'Identify pros and cons', 'Identify the pros and cons. Answer in a few sentences.');
   const onKeywords = () =>
     askIntent('keywords', 'Extract keywords', 'Extract 3-5 keywords that best capture the essence and subject matter. Answer as a list.');
   const onOpinion = () => askIntent('opinion', 'Give an opinion', 'Provide a short opinion on the document.');
@@ -1280,39 +1184,6 @@ function AppComponent(props: App): JSX.Element {
       Find Related Papers
  */
   // Array of prompts for PDFs
-  const pdfPrompts = [
-    {
-      title: 'Generate Summary',
-      action: onContentPDF,
-      prompt:
-        'Provide a summary of the main findings and conclusions of these papers, including the research question, methods used, and key results.',
-    },
-    {
-      title: 'Gaps and Limitations',
-      action: onContentPDF,
-      prompt:
-        'What limitations or gaps does these papers identify in their own studies or in the broader field of research? How do the authors suggest overcoming these issues in future research?.',
-    },
-    {
-      title: 'Literature and References',
-      action: onContentPDF,
-      prompt:
-        'What are the key references and theoretical frameworks that these papers builds upon? Summarize how these studies contributes to existing research in the field.',
-    },
-    {
-      title: 'Methodology Analysis',
-      action: onContentPDF,
-      prompt:
-        'Describe the research methodology used in these papers. What were the sample size, experimental design, data collection methods, and statistical analyses applied used.',
-    },
-    {
-      title: 'Explain implications',
-      action: onContentPDF,
-      prompt:
-        'What are the practical and theoretical implications of these studies findings? How might they influence future research, trends, or real-world applications in the field?.',
-    },
-  ];
-
   const onCodeComment = () =>
     askCode('comment', 'Comment the code', 'Comment this code extensively to explain clearly what each instruction does.');
   const onCodeExplain = () => askCode('explain', 'Explain the code', 'Explain this code.');
@@ -1418,209 +1289,23 @@ function AppComponent(props: App): JSX.Element {
             },
           }}
         >
-          {sortedMessages.map((message, index) => {
-            const isMe = user?._id == message.userId;
-            const time = getDateString(message.creationDate);
-            const previousTime = message.creationDate;
-            const now = Date.now();
-            const diff = now - previousTime - 30 * 60 * 1000; // minus 30 minutes
-            const when = diff > 0 ? formatDistance(previousTime, now, { addSuffix: true }) : '';
-            const last = index === sortedMessages.length - 1;
-
-            // Remove single backticks and replace with double asterisks for bold
-            const response = message.response.replace(/`([^`\n]+)`/g, (match, p1) => {
-              return `**${p1}**`;
-            });
-
-            return (
-              <Fragment key={index}>
-                {/* Start of User Messages */}
-                {message.query && message.query.length ? (
-                  <Box position="relative" my={1}>
-                    {isMe ? (
-                      <Box top="-15px" right={'15px'} position={'absolute'} textAlign={'right'}>
-                        <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                          Me - {time}
-                        </Text>
-                      </Box>
-                    ) : (
-                      <Box top="-15px" left={'15px'} position={'absolute'} textAlign={'right'}>
-                        <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                          {message.userName} - {time}
-                        </Text>
-                      </Box>
-                    )}
-
-                    <Box display={'flex'} justifyContent={isMe ? 'right' : 'left'}>
-                      <Tooltip
-                        whiteSpace={'nowrap'}
-                        textOverflow="ellipsis"
-                        fontSize={'xs'}
-                        placement="top"
-                        hasArrow={true}
-                        // label={time}
-                        label={'Drag to board - Double-click to clipboard'}
-                        openDelay={400}
-                        closeDelay={2000}
-                      >
-                        <Box
-                          color="black"
-                          rounded={'md'}
-                          boxShadow="md"
-                          fontFamily="Arial"
-                          textAlign={isMe ? 'right' : 'left'}
-                          bg={isMe ? myColor : otherUserColor}
-                          px={2}
-                          py={1}
-                          m={3}
-                          maxWidth="70%"
-                          userSelect={isFocused ? 'text' : 'none'}
-                          onDoubleClick={() => {
-                            if (navigator.clipboard) {
-                              // Copy into clipboard
-                              navigator.clipboard.writeText(message.query);
-                              // Notify the user
-                              toast({
-                                title: 'Success',
-                                description: `Content Copied to Clipboard`,
-                                duration: 3000,
-                                isClosable: true,
-                                status: 'success',
-                              });
-                            }
-                          }}
-                          draggable={!isFocused}
-                          // Store the query into the drag/drop events to create stickies
-                          onDragStart={(e) => {
-                            e.dataTransfer.clearData();
-                            // Will create a new sticky
-                            e.dataTransfer.setData('app', 'Stickie');
-                            // Get the color of the user
-                            const colorMessage = isMe
-                              ? user?.data.color
-                              : users.find((u) => u._id === message.userId)?.data.color || 'blue';
-                            // Put the state of the app into the drag/drop events
-                            e.dataTransfer.setData(
-                              'app_state',
-                              JSON.stringify({
-                                color: colorMessage,
-                                text: message.query,
-                                fontSize: 24,
-                                sources: [props._id],
-                              })
-                            );
-                          }}
-                        >
-                          {message.query}
-                        </Box>
-                      </Tooltip>
-                    </Box>
-                  </Box>
-                ) : null}
-
-                {/* Start of SAGE Messages */}
-                {message.response && message.response.length ? (
-                  <Box position="relative" my={1} maxWidth={'70%'}>
-                    <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
-                      <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                        {message.userName} - {time}
-                      </Text>
-                    </Box>
-
-                    <Box display={'flex'} justifyContent="left" position={'relative'} top={'15px'} mb={'15px'}>
-                      <Tooltip
-                        whiteSpace={'nowrap'}
-                        textOverflow="ellipsis"
-                        fontSize={'xs'}
-                        placement="top"
-                        hasArrow={true}
-                        label={'Drag to board - Double-click to clipboard'}
-                        openDelay={400}
-                        closeDelay={2000}
-                      >
-                        <Box
-                          boxShadow="md"
-                          color="black"
-                          rounded={'md'}
-                          textAlign={'left'}
-                          bg={sageColor}
-                          px={2}
-                          py={1}
-                          m={3}
-                          fontFamily="Arial"
-                          onDoubleClick={() => {
-                            if (navigator.clipboard) {
-                              // Copy into clipboard
-                              navigator.clipboard.writeText(message.response);
-                              // Notify the user
-                              toast({
-                                title: 'Success',
-                                description: `Content Copied to Clipboard`,
-                                duration: 3000,
-                                isClosable: true,
-                                status: 'success',
-                              });
-                            }
-                          }}
-                        >
-                          <Box
-                            // pl={3}
-                            draggable={!isFocused}
-                            onDragStart={(e) => {
-                              // Store the response into the drag/drop events to create stickies
-                              e.dataTransfer.clearData();
-                              e.dataTransfer.setData('app', 'Stickie');
-                              e.dataTransfer.setData(
-                                'app_state',
-                                JSON.stringify({
-                                  color: 'purple',
-                                  text: message.response.trim(),
-                                  fontSize: 24,
-                                  sources: [props._id],
-                                })
-                              );
-                            }}
-                          >
-                            <Box>
-                              <Markdown
-                                options={{
-                                  overrides: {
-                                    ol: {
-                                      component: MdOrderedList,
-                                    },
-                                    ul: {
-                                      component: MdUnorderedList,
-                                    },
-                                    code: {
-                                      component: MdCode,
-                                    },
-                                  },
-                                }}
-                                style={{ userSelect: isFocused ? 'text' : 'none' }}
-                              >
-                                {response}
-                              </Markdown>
-                            </Box>
-                          </Box>
-                        </Box>
-                      </Tooltip>
-                    </Box>
-                  </Box>
-                ) : null}
-
-                {when && !last ? (
-                  <Box position="relative" padding="4">
-                    <Center>
-                      <Divider width={'80%'} borderColor={'ActiveBorder'} />
-                      <AbsoluteCenter bg={bgColor} px="4">
-                        {when}
-                      </AbsoluteCenter>
-                    </Center>
-                  </Box>
-                ) : null}
-              </Fragment>
-            );
-          })}
+          {sortedMessages.map((message, index) => (
+            <MessageItem
+              key={index}
+              message={message}
+              isLast={index === sortedMessages.length - 1}
+              user={user}
+              users={users}
+              appId={props._id}
+              isFocused={isFocused}
+              myColor={myColor}
+              otherUserColor={otherUserColor}
+              sageColor={sageColor}
+              textColor={textColor}
+              bgColor={bgColor}
+              toast={toast}
+            />
+          ))}
 
           {/* In progress SAGE Messages */}
           {streamText && (
@@ -1737,361 +1422,28 @@ function AppComponent(props: App): JSX.Element {
           </Tooltip>
         </HStack>
 
-        {mode !== 'chat' && <hr />}
-
-        {mode === 'Hawaii Mesonet' && (
-          <HStack>
-            {mesonetPrompts.map((p, i) => (
-              <Tooltip key={'tip' + i} fontSize={'xs'} placement="top" hasArrow={true} label={p.prompt} openDelay={400}>
-                <Button
-                  key={'button' + i}
-                  aria-label="stop"
-                  size={'xs'}
-                  p={0}
-                  m={0}
-                  colorScheme={'blue'}
-                  variant="ghost"
-                  textAlign={'left'}
-                  onClick={() => p.action()}
-                  width="34%"
-                >
-                  <HiCommandLine fontSize={'24px'} />
-                  <Text key={'text' + i} ml={'2'}>
-                    {p.title}
-                  </Text>
-                </Button>
-              </Tooltip>
-            ))}
-          </HStack>
-        )}
-
-        {/* AI Prompts */}
-        {mode === 'text' && (
-          <HStack>
-            <Tooltip
-              fontSize={'xs'}
-              placement="top"
-              hasArrow={true}
-              label={'Identify the main topics, themes, and key concepts that are covered in the text'}
-              openDelay={400}
-            >
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onSummary}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Generate Summary</Text>
-              </Button>
-            </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Identify the pros and cons of the text'} openDelay={400}>
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onProsCons}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Give feedback</Text>
-              </Button>
-            </Tooltip>
-            <Tooltip
-              fontSize={'xs'}
-              placement="top"
-              hasArrow={true}
-              label={'Extract 3-5 keywords that best capture the essence and subject matter of the text'}
-              openDelay={400}
-            >
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onKeywords}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Generate Keywords</Text>
-              </Button>
-            </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Provide a short opinion on the text'} openDelay={400}>
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onOpinion}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Provide Opinion</Text>
-              </Button>
-            </Tooltip>
-            <Tooltip
-              fontSize={'xs'}
-              placement="top"
-              hasArrow={true}
-              label={'Provide two or three interesting facts from the text'}
-              openDelay={400}
-            >
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onFacts}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Find Facts</Text>
-              </Button>
-            </Tooltip>
-          </HStack>
-        )}
-
-        {mode === 'code' && (
-          <HStack>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Refactor the code'} openDelay={400}>
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onCodeRefactor}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Refactor Code</Text>
-              </Button>
-            </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Explain the code'} openDelay={400}>
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onCodeExplain}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Explain Code</Text>
-              </Button>
-            </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Comment the code'} openDelay={400}>
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onCodeComment}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Comment Code</Text>
-              </Button>
-            </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Generate some code'} openDelay={400}>
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onCodeGenerate}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Generate Code</Text>
-              </Button>
-            </Tooltip>
-          </HStack>
-        )}
-
-        {mode === 'image' && (
-          <HStack>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Describe the image in details'} openDelay={400}>
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onImageSummary}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Describe Image</Text>
-              </Button>
-            </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Generate a caption for the image'} openDelay={400}>
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onImageCaption}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Generate Caption</Text>
-              </Button>
-            </Tooltip>
-            <Tooltip
-              fontSize={'xs'}
-              placement="top"
-              hasArrow={true}
-              label={'Describe the good parts and then the bad parts of the image'}
-              openDelay={400}
-            >
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onImageProsCons}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Give Feedback</Text>
-              </Button>
-            </Tooltip>
-            <Tooltip
-              fontSize={'xs'}
-              placement="top"
-              hasArrow={true}
-              label={'Generate 3-5 keywords that best capture the essence and subject matter of the image'}
-              openDelay={400}
-            >
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onImageKeywords}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Generate Keywords</Text>
-              </Button>
-            </Tooltip>
-            <Tooltip
-              fontSize={'xs'}
-              placement="top"
-              hasArrow={true}
-              label={'Provide two or three interesting facts about the image'}
-              openDelay={400}
-            >
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onImageFacts}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Find Facts</Text>
-              </Button>
-            </Tooltip>
-          </HStack>
-        )}
-        {mode === 'pdf' && (
-          // Generate the prompt and buttons for the PDFs
-          <HStack>
-            {pdfPrompts.map((p, i) => (
-              <Tooltip key={'tip' + i} fontSize={'xs'} placement="top" hasArrow={true} label={p.prompt} openDelay={400}>
-                <Button
-                  key={'button' + i}
-                  aria-label="stop"
-                  size={'xs'}
-                  p={0}
-                  m={0}
-                  colorScheme={'blue'}
-                  variant="ghost"
-                  textAlign={'left'}
-                  onClick={() => p.action('@S ' + p.prompt)}
-                  width="34%"
-                >
-                  <HiCommandLine fontSize={'24px'} />
-                  <Text key={'text' + i} ml={'2'}>
-                    {p.title}
-                  </Text>
-                </Button>
-              </Tooltip>
-            ))}
-          </HStack>
-        )}
-        {mode === 'web' && (
-          // Generate the prompt and buttons for the Webviews
-          <HStack>
-            {webPrompts.map((p, i) => (
-              <Tooltip key={'tip' + i} fontSize={'xs'} placement="top" hasArrow={true} label={p.prompt} openDelay={400}>
-                <Button
-                  key={'button' + i}
-                  aria-label="stop"
-                  size={'xs'}
-                  p={0}
-                  m={0}
-                  colorScheme={'blue'}
-                  variant="ghost"
-                  textAlign={'left'}
-                  onClick={() => p.action('@S ' + p.prompt)}
-                  width="34%"
-                >
-                  <HiCommandLine fontSize={'24px'} />
-                  <Text key={'text' + i} ml={'2'}>
-                    {p.title}
-                  </Text>
-                </Button>
-              </Tooltip>
-            ))}
-          </HStack>
-        )}
+        <PromptBars
+          mode={mode}
+          handlers={{
+            onSummary,
+            onProsCons,
+            onKeywords,
+            onOpinion,
+            onFacts,
+            onCodeRefactor,
+            onCodeExplain,
+            onCodeComment,
+            onCodeGenerate,
+            onImageSummary,
+            onImageCaption,
+            onImageProsCons,
+            onImageKeywords,
+            onImageFacts,
+            onContentPDF,
+            onContentWeb,
+            onContentWebScreenshot,
+          }}
+        />
 
         {/* Input Text */}
         <InputGroup bg={'blackAlpha.100'} maxHeight={'120px'}>
@@ -2123,71 +1475,5 @@ function AppComponent(props: App): JSX.Element {
     </AppWindow>
   );
 }
-
-/* App toolbar component for the app Chat */
-
-function ToolbarComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
-  const { user } = useUser();
-  // Sort messages by creation date to display in order
-  const sortedMessages = s.messages ? s.messages.sort((a, b) => a.creationDate - b.creationDate) : [];
-
-  // Download the content as a text file
-  const downloadTxt = () => {
-    // Rebuid the content as text
-    let content = '';
-    sortedMessages.map((message) => {
-      const isMe = user?._id == message.userId;
-      if (message.query.length) {
-        if (isMe) {
-          content += `Me> ${message.query}\n`;
-        } else {
-          content += `${message.userName}> ${message.query} \n`;
-        }
-      }
-      if (message.response.length) {
-        if (message.response !== 'Working on it...') {
-          content += `SAGE> ${message.response} \n`;
-        }
-      }
-    });
-
-    // Current date
-    const dt = format(new Date(), 'yyyy-MM-dd-HH:mm:ss');
-    // generate a URL containing the text of the note
-    const txturl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
-    // Make a filename with date
-    const filename = 'sage-' + dt + '.txt';
-    // Go for download
-    downloadFile(txturl, filename);
-  };
-
-  return (
-    <>
-      <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
-        <Tooltip placement="top" hasArrow={true} label={'Download Transcript'} openDelay={400}>
-          <Button onClick={downloadTxt} size='xs' px={0}>
-            <MdFileDownload fontSize="16px" />
-          </Button>
-        </Tooltip>
-      </ButtonGroup>
-    </>
-  );
-}
-
-function getDateString(epoch: number): string {
-  // const date = new Date(epoch).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
-  const time = new Date(epoch).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  // return `${date} - ${time}`;
-  return `${time}`;
-}
-
-/**
- * Grouped App toolbar component, this component will display when a group of apps are selected
- * @returns JSX.Element | null
- */
-const GroupedToolbarComponent = () => {
-  return null;
-};
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
