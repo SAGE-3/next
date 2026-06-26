@@ -18,7 +18,7 @@ Whether working side-by-side on expansive shared display walls or contributing r
 - **Hyper Screen Sharing** -- Share multiple laptop/desktop screens simultaneously and wirelessly. No dongles required.
 - **Seamless Content Sharing** -- Upload content at home and present it on a display wall at work. Drag content across boards spanning multiple displays.
 - **Rich Content Types** -- Work with sticky notes, images, videos, PDFs, Google Docs, maps, web pages, and more on an infinite canvas.
-- **AI Collaboration** -- Chat with other users and with AI (OpenAI GPT, Llama, Azure OpenAI) to brainstorm, summarize documents, and ideate visually.
+- **AI Collaboration** -- Chat with other users and with AI to brainstorm, summarize documents, ask questions about PDFs and images, and ideate visually. Models are configurable per server (OpenAI, Azure OpenAI, self-hosted Llama, and other OpenAI-compatible endpoints).
 - **Spatialized Data Science** -- Create 2D data science canvases with SAGECells -- spatialized Python code cells backed by Jupyter kernels. Multiple developers can work on different cells simultaneously.
 - **No-Code Dashboards** -- Build custom data dashboards by dragging and dropping URLs of existing web portals directly into SAGE3.
 

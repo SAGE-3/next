@@ -57,8 +57,7 @@ A simple calculator for performing basic arithmetic. Supports addition, subtract
 
 ## Chat
 
-A messaging application for communicating with other users on the board. Chat windows can be placed anywhere on the canvas, letting you organize multiple conversations spatially alongside your other work.
-
+A messaging application for communicating with other users on the board **and with SAGE Intelligence**, the built-in AI assistant. Chat windows can be placed anywhere on the canvas, letting you organize multiple conversations spatially alongside your other work.
 
 ![Chat](images/applications/applications_chat.jpeg)
 
@@ -67,6 +66,34 @@ A messaging application for communicating with other users on the board. Chat wi
 | Name | Type | Icon | Description |
 |------|------|------|-------------|
 | Download Transcript | Button | <img src="icons/applications/MdFileDownload.svg" width="20"> | Downloads the full chat history as a `.txt` file |
+
+### Asking the AI
+
+Type a message to chat normally; the AI answers questions, brainstorms, and summarizes. The model used depends on your server's configuration and the model you select — see [AI Configuration](Server-Deployment.md#ai-configuration). The AI can only perform a task when the selected model has the matching capability (for example, image questions need a `vision`-capable model), and the Chat app will tell you when a request isn't supported by the current model.
+
+### Asking about content (images, PDFs, sticky notes)
+
+You can ask the AI about content already on the board:
+
+1. Select one or more apps of the **same type** (use the lasso to select several).
+2. Click **Open in Chat** in the lasso toolbar. A Chat opens linked to those apps, and your questions are answered using their content.
+
+This works with **ImageViewer**, **PDFViewer**, and **Stickie** apps. You can also link more apps to an existing Chat later.
+
+#### Images
+
+Link up to **6 images** and ask about them together. Depending on the question, the AI either:
+
+- **Describes or compares** the images (it can refer to "Image 1", "Image 2", … so it attributes details to the right one); or
+- **Filters / selects** — for questions like *"which of these images contain a bird?"* or *"pick the best image for this text"*, the matching images are **selected on the board** for you.
+
+Example prompts: *"Compare these figures — which shows the strongest trend?"*, *"Generate a publication-ready caption for this image."*, *"Extract 3–5 keywords for these images."* Linking more than 6 images prompts you to unlink some, since too many degrade accuracy and exhaust the model's context.
+
+#### PDFs
+
+Link up to **5 PDFs** and ask questions across all of them. Prefix a question with **`@S`** to send it to the AI. The documents are indexed once, then the most relevant passages are retrieved and re-ranked to answer; each excerpt is labeled by document so the AI can compare papers and attribute facts. Title/author/metadata questions read the document head, summary/comparison questions use the full labeled text, and follow-up questions remember the conversation.
+
+Example prompts: *"@S What is the title and who are the authors?"*, *"@S Summarize the key findings of each paper."*, *"@S What topics do these papers have in common?"*, *"@S How does the method in Document 2 differ from Document 1?"* Linking more than 5 PDFs prompts you to unlink some.
 
 ---
 
@@ -185,6 +212,8 @@ A collaborative drawing application built on the TLDraw library. Draw freehand, 
 
 Displays uploaded images in common formats (JPEG, PNG, etc.). After uploading, images are scaled to multiple resolutions and converted to WebP for fast display. The viewer dynamically selects the best resolution based on window size, display DPI, and board zoom level. The original file is preserved for download. Supports AI-generated annotation overlays when available.
 
+Select one or more images and choose **Open in Chat** to ask the AI about them — describe, compare, caption, extract keywords, or filter/select images by content. See [Chat → Images](#images) for details.
+
 <!-- TODO: Screenshot of ImageViewer app -->
 ![ImageViewer](images/applications/applications_imageviewer.jpeg)
 
@@ -252,6 +281,8 @@ A collaborative rich-text editor for writing formatted documents together in rea
 > *Opens automatically when a PDF is uploaded to the board.*
 
 View PDF documents uploaded to the asset manager. PDFs are processed server-side into images at multiple resolutions for fast display. Navigate through pages, display multiple pages simultaneously to maximize screen space, and download the original PDF.
+
+Select one or more PDFs and choose **Open in Chat** to ask the AI questions about them — summaries, titles and authors, comparisons across papers, and follow-up questions. See [Chat → PDFs](#pdfs) for details.
 
 <!-- TODO: Screenshot of PDFViewer app -->
 ![PDFViewer](images/applications/applications_pdfviewer.jpeg)

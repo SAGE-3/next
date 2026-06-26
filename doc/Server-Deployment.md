@@ -36,7 +36,7 @@ To update a server, here are the files to keep/move/backup:
   - CILogin OAuth credentials, for authentication
   - Apple with 'Sign in with Apple' credentials, for authentication
   - Twilio API registration, for screen sharing
-  - OpenAI API key, for AI services
+  - LLM provider credentials (API keys and/or endpoints), for AI services — see [AI Configuration](#ai-configuration)
 
 ## Installation
 
@@ -545,26 +545,78 @@ This file allows you to configure your server to your specific needs.
       // API Secret
       apiSecret: ""
     },
-    "openai": {
-      // API Key
-      "apiKey": "",
-      // Model name: gpt-3.5-turbo, gpt-4, gpt-4o-mini, ...
-      "model": "gpt-4o-mini"
-    },
-    "llama": {
-      "url": "https://arcade.evl.uic.edu/llama32-11B-vision",
-      "model": "meta/llama-3.2-11b-vision-instruct",
-      "apiKey": "",
-      "max_tokens": 1000
-    },
-    "codellama": {
-      "url": "https://arcade.evl.uic.edu/codellama",
-      "apiKey": "",
-      "max_tokens": 400
-    },
-    "yolo": {
-      "url": "https://arcade.evl.uic.edu/yolov8",
-      "apiKey": ""
+    // AI / LLM configuration — a capability-driven model registry.
+    // See the "AI Configuration" section below for details.
+    "models": {
+      // One entry per provider. Each provider lists one or more models, and
+      // each model declares what it can do via "capabilities":
+      //   chat | code | vision | imagegen | embeddings
+      "providers": {
+        "azure": {
+          "apiKey": "",
+          "url": "https://my-resource.openai.azure.com",
+          "models": {
+            "chat": {
+              "model_id": "gpt-5.2-chat",
+              "capabilities": ["chat", "code", "vision"],
+              "max_tokens": 4096,
+              "context_window": 128000,
+              "api_version": "2025-04-01-preview"
+            },
+            "imagegen": {
+              "model_id": "gpt-image-1.5",
+              "capabilities": ["imagegen"],
+              "api_version": "2025-04-01-preview"
+            }
+          }
+        },
+        "openai": {
+          "apiKey": "",
+          "models": {
+            "gpt4": {
+              "model_id": "gpt-4-turbo",
+              "capabilities": ["chat", "code", "vision"],
+              "max_tokens": 4096,
+              "context_window": 128000
+            }
+          }
+        },
+        // Any OpenAI-compatible endpoint (e.g. a LiteLLM / vLLM gateway hosting Llama)
+        "litellm": {
+          "url": "https://my-gateway.example.edu/",
+          "models": {
+            "llama4": {
+              "model_id": "meta/llama-4-scout-17b-16e-instruct",
+              "capabilities": ["chat", "code", "vision"],
+              "max_tokens": 4096,
+              "context_window": 32768
+            }
+          }
+        }
+      },
+      // Shared retrieval infrastructure for PDF question-answering (not a
+      // per-provider capability). NeMo Retriever embedding + reranking NIMs.
+      "embed": {
+        "url": "http://localhost:8000",
+        "model": "nvidia/llama-nemotron-embed-1b-v2"
+      },
+      "rerank": {
+        "url": "http://localhost:8001",
+        "model": "nvidia/llama-nemotron-rerank-1b-v2"
+      },
+      // Optional: olmOCR PDF -> Markdown via a remote vLLM server.
+      // Omit this block to fall back to pymupdf4llm text extraction.
+      "pdf2md": {
+        "url": "https://my-gateway.example.edu/olmocr/v1",
+        "model": "allenai/olmOCR-2-7B-1025-FP8"
+      },
+      "settings": {
+        // Provider used by default when a user has not picked one
+        "default_provider": "azure",
+        "timeout_seconds": 60,
+        "max_retries": 3,
+        "log_requests": true
+      }
     }
   },
 
@@ -660,26 +712,43 @@ This file allows you to configure your server to your specific needs.
 
 ### AI Configuration
 
-- Put your OpenAI key to be used on your server. You can create a key and allocate a budget at (OpenAI)[https://platform.openai.com/api-keys].
-- You can use any of the OpenAI models available. The model name can be found at the OpenAI website.
-- When processing PDF files, we use the OpenAI embedded model. PDF analysis might not work without an OpenAI key at this time (January 2025).
-- The Llama model is hosted at the University of Illinois at Chicago. You can use the model without an API key.
-- To disable AI, leave the openai apiKey empty and leave the llama url empty.
+AI is configured under `services.models` as a **capability-driven model registry**. Instead of one fixed entry per provider, you declare any number of providers, each listing one or more models, and each model advertises what it can do. The web app and the Seer agent then pick a model by matching the **task** to the model's **capabilities** — so adding a provider or model is a config change, not a code change.
 
-```json
-    "openai": {
-      // API Key
-      "apiKey": "",
-      // Model name: gpt-3.5-turbo, gpt-4, gpt-4o-mini, ...
-      "model": "gpt-4o-mini"
-    },
-    "llama": {
-      "url": "https://arcade.evl.uic.edu/llama32-11B-vision",
-      "model": "meta/llama-3.2-11b-vision-instruct",
-      "apiKey": "",
-      "max_tokens": 1000
-    },
-```
+> Migrating from an older server? The previous `openai` / `llama` / `codellama` / `yolo` blocks have been replaced by the single `models` block shown above. Move your keys and endpoints into `models.providers`.
+
+**Capabilities** a model can declare:
+
+| Capability   | Used for                                                        |
+|--------------|-----------------------------------------------------------------|
+| `chat`       | General chat and document (PDF) question-answering              |
+| `code`       | Code generation / explanation (CodeEditor, SageCell)            |
+| `vision`     | Image question-answering (describe, compare, filter/select)     |
+| `imagegen`   | Image generation                                                |
+| `embeddings` | Text embeddings (Azure/OpenAI option for PDF retrieval)         |
+
+**Tasks** are matched to capabilities automatically: `chat` → `chat`, `coding` → `code`, `image` → `vision`, `image_generation` → `imagegen`, and `pdf_processing` → `chat` (PDF retrieval uses the shared `embed`/`rerank` infrastructure below, so it does not require a per-provider `embeddings` model). The web app only offers a task to the user when the selected provider has a model with the required capability.
+
+Each provider entry takes an `apiKey` and/or a `url`:
+
+- `apiKey` only — a hosted service keyed by provider (e.g. OpenAI).
+- `url` only — an unauthenticated or network-local endpoint (e.g. a self-hosted gateway).
+- `url` + `apiKey` — an authenticated custom endpoint (e.g. Azure OpenAI, a LiteLLM/vLLM gateway). Any OpenAI-compatible endpoint works.
+
+Per-model fields: `model_id` (the provider's actual model name), `capabilities` (array), and optional `max_tokens`, `context_window`, `api_version`, `cost_per_1k_input`, `cost_per_1k_output`.
+
+**Shared PDF retrieval infrastructure** (top-level under `models`, not per provider):
+
+- `embed` — NeMo Retriever embedding NIM (`{ url, model }`), used to index and search PDF text.
+- `rerank` — NeMo Retriever reranking NIM (`{ url, model }`), used to re-order retrieved passages.
+- `pdf2md` — *optional* olmOCR PDF→Markdown vLLM server (`{ url, model }`). If omitted, Seer falls back to `pymupdf4llm` text extraction.
+
+> Switching embedding models requires a fresh Chroma collection, because the vector dimension changes.
+
+**`settings`** holds the `default_provider` (used when a user has not chosen one) plus `timeout_seconds`, `max_retries`, and `log_requests`.
+
+**To disable AI**, leave `models.providers` empty (or remove the `models` block).
+
+See the `models` block in the configuration listing above for a complete example.
 
 ### Status and problem solving
 
