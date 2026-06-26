@@ -380,94 +380,48 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [sourceApps]);
 
+  // Handle a chat-box submission: a peer message (posted as-is) or an @S
+  // question to SAGE (sent via runAsk, with linked apps passed as appIds).
   const newMessage = async (new_input: string) => {
     if (!user) return;
-    // Get server time
-    const now = await serverTime();
-    // Is it a question to SAGE?
     const isQuestion = new_input.toUpperCase().startsWith('@S');
-    // Capability check: block questions the selected model can't handle
-    if (isQuestion && !canPerform(MODE_TASK[mode] || 'chat')) return;
-    const name = isQuestion ? 'SAGE' : user?.data.name;
-    // Add messages
-    const initialAnswer = {
-      id: genId(),
-      userId: user._id,
-      creationId: '',
-      creationDate: now.epoch,
-      userName: name,
-      query: new_input,
-      response: isQuestion ? 'Working on it...' : '',
-    };
-    updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
-    if (isQuestion) {
-      setProcessing(true);
-      // Remove the @S from the question
-      const request = isQuestion ? new_input.slice(2) : new_input;
-
-      if (isQuestion) {
-        const ctx = `Please carefully read the following text:
-        <text>
-        ${s.context}
-        </text>
-        ${request}`;
-
-        const body: AskRequest = {
-          ctx: {
-            previousQ: previousQuestion,
-            previousA: previousAnswer,
-            pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
-            roomId: roomId!,
-            boardId: boardId!,
-          },
-          user: username,
-          id: genId(),
-          model: selectedModel || 'llama',
-          location: location,
-          q: s.context ? ctx : request,
-        };
-        const response = await callAsk(body);
-        if ('message' in response) {
-          toast({
-            title: 'Error',
-            description: response.message || 'Error sending query to the agent. Please try again.',
-            status: 'error',
-            duration: 4000,
-            isClosable: true,
-          });
-        } else {
-          const new_text = response.r || '';
-          setProcessing(false);
-          // Clear the stream text
-          setStreamText('');
-          ctrlRef.current = null;
-          setPreviousAnswer((prevItems) => [...prevItems, new_text]);
-          // Add messages
-          updateState(props._id, {
-            ...s,
-            previousQ: [...s.previousQ, request],
-            previousA: [...s.previousA, new_text],
-            messages: [
-              ...s.messages,
-              initialAnswer,
-              {
-                id: genId(),
-                userId: user._id,
-                creationId: '',
-                creationDate: now.epoch + 1,
-                userName: 'SAGE',
-                query: '',
-                response: new_text,
-              },
-            ],
-          });
-          // Check if there are actions to be taken
-          if (response.actions && response.actions.length > 0) {
-            setActions(response.actions);
-          }
-        }
-      }
+    if (!isQuestion) {
+      // Peer chat message — just post it to the transcript
+      const now = await serverTime();
+      updateState(props._id, {
+        ...s,
+        messages: [
+          ...s.messages,
+          { id: genId(), userId: user._id, creationId: '', creationDate: now.epoch, userName: user?.data.name, query: new_input, response: '' },
+        ],
+      });
+      return;
     }
+    // Question to SAGE — let the backend read linked apps' content from appIds;
+    // fall back to s.context only when there are no linked apps.
+    const request = new_input.slice(2);
+    const common = {
+      ctx: {
+        previousQ: previousQuestion,
+        previousA: previousAnswer,
+        pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+        roomId: roomId!,
+        boardId: boardId!,
+      },
+      user: username,
+      id: genId(),
+      model: selectedModel || 'llama',
+      location: location,
+    };
+    let body: AskRequest;
+    if (sourceApps.length > 0) {
+      body = { ...common, q: request, appIds: sourceApps };
+    } else if (s.context) {
+      body = { ...common, q: `Please carefully read the following text:\n<text>\n${s.context}\n</text>\n${request}` };
+    } else {
+      body = { ...common, q: request };
+    }
+    runAsk(body, request);
   };
 
   const goToBottom = (mode: ScrollBehavior = 'smooth') => {
@@ -516,30 +470,86 @@ function AppComponent(props: App): JSX.Element {
     setActions([]);
   };
 
-  const onSummary = async () => {
+  // Shared: send an Ask request with the optimistic "Working on it..." message,
+  // error handling, transcript/state update, and actions. Used by the prompt
+  // helpers below (and available for the other senders to adopt).
+  const runAsk = async (body: AskRequest, displayQuery: string) => {
     if (!user) return;
-    // Get the current context
-    let newctx = s.context;
-    if (!newctx && sourceApps.length > 0) {
-      // Update the context with the stickies
-      const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
-      newctx = apps.reduce((accumulate, app) => {
-        if (app.data.type === 'Stickie') accumulate += app.data.state.text + '\n\n';
-        return accumulate;
-      }, '');
+    if (!canPerform(MODE_TASK[mode] || 'chat')) return;
+    const now = await serverTime();
+    // Optimistic "Working on it..." bubble while the agent runs
+    const placeholder = {
+      id: genId(),
+      userId: user._id,
+      creationId: '',
+      creationDate: now.epoch,
+      userName: 'SAGE',
+      query: displayQuery,
+      response: 'Working on it...',
+    };
+    updateState(props._id, { ...s, messages: [...s.messages, placeholder] });
+    setProcessing(true);
+    const response = await callAsk(body);
+    setProcessing(false);
+    if ('message' in response) {
+      toast({
+        title: 'Error',
+        description: response.message || 'Error sending query to the agent. Please try again.',
+        status: 'error',
+        duration: 4000,
+        isClosable: true,
+      });
+      return;
     }
-    if (newctx) {
-      // Summary prompt
-      const ctx = `@S, Please carefully read the following document text:
-        <document>
-        ${newctx}
-        </document>
-        After reading through the document, identify the main topics, themes, and key concepts that are covered.
-        Provide all your answers in a few sentences.`;
-      newMessage(ctx);
-      setInput('');
-    }
+    // Append the real answer and record the turn in the transcript/history
+    const new_text = response.r || '';
+    setStreamText('');
+    ctrlRef.current = null;
+    setPreviousAnswer((prevItems) => [...prevItems, new_text]);
+    updateState(props._id, {
+      ...s,
+      previousQ: [...s.previousQ, displayQuery],
+      previousA: [...s.previousA, new_text],
+      messages: [
+        ...s.messages,
+        placeholder,
+        { id: genId(), userId: user._id, creationId: '', creationDate: now.epoch + 1, userName: 'SAGE', query: '', response: new_text },
+      ],
+    });
+    if (response.actions && response.actions.length > 0) setActions(response.actions);
   };
+
+  // Ask SAGE about the linked source apps using a server-side prompt template.
+  // The backend reads each app's content from appIds — no client-side extraction
+  // or prompt assembly. Falls back to s.context when there are no linked apps.
+  const askIntent = (intent: string, label: string, fallbackInstruction: string) => {
+    const common = {
+      ctx: {
+        previousQ: previousQuestion,
+        previousA: previousAnswer,
+        pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+        roomId: roomId!,
+        boardId: boardId!,
+      },
+      user: username,
+      id: genId(),
+      model: selectedModel || 'llama',
+      location: location,
+    };
+    let body: AskRequest;
+    if (sourceApps.length > 0) {
+      body = { ...common, q: label, appIds: sourceApps, intent };
+    } else if (s.context) {
+      body = { ...common, q: `Please carefully read the following document:\n<document>\n${s.context}\n</document>\n${fallbackInstruction}` };
+    } else {
+      return;
+    }
+    runAsk(body, label);
+    setInput('');
+  };
+
+  const onSummary = () =>
+    askIntent('summary', 'Summarize the document', 'Identify the main topics, themes, and key concepts. Answer in a few sentences.');
 
   const onImageSummary = async () => {
     return onContentImage('Describe the image in details');
@@ -991,129 +1001,48 @@ function AppComponent(props: App): JSX.Element {
     if (!user) return;
     // Capability check: map questions need a chat-capable model
     if (!canPerform('chat')) return;
-    if (sourceApps.length > 0) {
-      // Update the context
-      const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
+    if (sourceApps.length === 0 || !roomId || !boardId) return;
+    const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
+    if (!apps[0] || apps[0].data.type !== 'Map') return;
 
-      // Check for map
-      if (apps && apps[0].data.type === 'Map') {
-        if (roomId && boardId) {
-          const now = await serverTime();
-          const initialAnswer = {
-            id: genId(),
-            userId: user._id,
-            creationId: '',
-            creationDate: now.epoch,
-            userName: 'SAGE',
-            query: prompt,
-            response: 'Working on it...',
-          };
-          updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
-
-          const request = prompt.slice(2);
-          console.log('Map request', request);
-          console.log('GeoJSON', apps[0].data.state);
-          let ctx = '';
-          const layers = apps[0].data.state.layers || [];
-          if (layers.length > 0) {
-            const visibleLayers = layers.filter((l: any) => l.visible).map((l: any) => l.assetId);
-            if (visibleLayers.length === 0) {
-              toast({
-                title: 'No visible layers',
-                description: 'Please select a layer to query.',
-                status: 'warning',
-                duration: 4000,
-                isClosable: true,
-              });
-              return;
-            }
-            const myasset = useAssetStore.getState().assets.find((a) => a._id === visibleLayers[0]);
-            if (myasset && isGeoJSON(myasset.data.mimetype)) {
-              const newURL = apiUrls.assets.getAssetById(myasset.data.file);
-              // Get the GEOJSON data from the asset
-              const response = await fetch(newURL, {
-                headers: {
-                  'Content-Type': 'application/json',
-                  Accept: 'application/json',
-                },
-              });
-              const geojson = await response.json();
-
-              ctx = `Please read the following GeoJSON data:
-                <text>
-                ${JSON.stringify(geojson, null, 2)}
-                </text>
-                ${request}`;
-            }
-          } else {
-            ctx = `Please check the following map centered on the coordinates:
-              <data>
-              Lng ${apps[0].data.state.location[0]}, Lat ${apps[0].data.state.location[1]}
-              </data>
-              ${request}`;
-          }
-
-          // Build the query
-          const q: AskRequest = {
-            ctx: {
-              previousQ: previousQuestion,
-              previousA: previousAnswer,
-              pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
-              roomId,
-              boardId,
-            },
-
-            user: username,
-            id: genId(),
-            model: selectedModel || 'llama',
-            location: location,
-            q: s.context ? ctx : request,
-          };
-          setProcessing(true);
-          setActions([]);
-          // Invoke the agent
-          const response = await callAsk(q);
-          setProcessing(false);
-
-          if ('message' in response) {
-            toast({
-              title: 'Error',
-              description: response.message || 'Error sending query to the agent. Please try again.',
-              status: 'error',
-              duration: 4000,
-              isClosable: true,
-            });
-          } else {
-            // Clear the stream text
-            setStreamText('');
-            ctrlRef.current = null;
-            setPreviousAnswer(prevItems => [...prevItems, response.r]);
-            // Add messages
-            updateState(props._id, {
-              ...s,
-              previousQ: [...s.previousQ, 'Describe the content'],
-              previousA: [...s.previousA, response.r],
-              messages: [
-                ...s.messages,
-                initialAnswer,
-                {
-                  id: genId(),
-                  userId: user._id,
-                  creationId: '',
-                  creationDate: now.epoch + 1,
-                  userName: 'SAGE',
-                  query: '',
-                  response: response.r,
-                },
-              ],
-            });
-            if (response.actions) {
-              setActions(response.actions);
-            }
-          }
-        }
+    // Map content is derived (a GeoJSON asset or coordinates), so it's assembled
+    // here and passed as the question rather than via appIds.
+    const request = prompt.slice(2);
+    let ctx = '';
+    const layers = apps[0].data.state.layers || [];
+    if (layers.length > 0) {
+      const visibleLayers = layers.filter((l: any) => l.visible).map((l: any) => l.assetId);
+      if (visibleLayers.length === 0) {
+        toast({ title: 'No visible layers', description: 'Please select a layer to query.', status: 'warning', duration: 4000, isClosable: true });
+        return;
       }
+      const myasset = useAssetStore.getState().assets.find((a) => a._id === visibleLayers[0]);
+      if (myasset && isGeoJSON(myasset.data.mimetype)) {
+        const newURL = apiUrls.assets.getAssetById(myasset.data.file);
+        const response = await fetch(newURL, { headers: { 'Content-Type': 'application/json', Accept: 'application/json' } });
+        const geojson = await response.json();
+        ctx = `Please read the following GeoJSON data:\n<text>\n${JSON.stringify(geojson, null, 2)}\n</text>\n${request}`;
+      }
+    } else {
+      ctx = `Please check the following map centered on the coordinates:\n<data>\nLng ${apps[0].data.state.location[0]}, Lat ${apps[0].data.state.location[1]}\n</data>\n${request}`;
     }
+
+    const body: AskRequest = {
+      ctx: {
+        previousQ: previousQuestion,
+        previousA: previousAnswer,
+        pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+        roomId,
+        boardId,
+      },
+      user: username,
+      id: genId(),
+      model: selectedModel || 'llama',
+      location: location,
+      q: ctx || request,
+    };
+    setActions([]);
+    runAsk(body, request);
   };
 
   // Get a screenshot of the web content
@@ -1212,140 +1141,124 @@ function AppComponent(props: App): JSX.Element {
   ];
 
   // Code section
-  const onContentCode = async (prompt: string, method: string) => {
+  // Shared: send a Code request with the optimistic message + response handling.
+  const runCode = async (body: CodeRequest, displayQuery: string) => {
     if (!user) return;
-    // Get server time
+    if (!canPerform('coding')) return;
     const now = await serverTime();
-    // Is it a question to SAGE?
-    const isQuestion = prompt.toUpperCase().startsWith('@S');
-    // Capability check: code questions require a code-capable model
-    if (isQuestion && !canPerform('coding')) return;
-    const name = isQuestion ? 'SAGE' : user?.data.name;
-    // Add messages
-    const initialAnswer = {
+    // Optimistic "Working on it..." bubble while the agent runs
+    const placeholder = {
       id: genId(),
       userId: user._id,
       creationId: '',
       creationDate: now.epoch,
-      userName: name,
-      query: prompt,
-      response: isQuestion ? 'Working on it...' : '',
+      userName: 'SAGE',
+      query: displayQuery,
+      response: 'Working on it...',
     };
-    updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
-    if (isQuestion) {
-      setProcessing(true);
-      // Remove the @S from the question
-      const request = isQuestion ? prompt.slice(2) : prompt;
-
-      if (isQuestion) {
-        const body: CodeRequest = {
-          ctx: {
-            previousQ: previousQuestion,
-            previousA: previousAnswer,
-            pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
-            roomId: roomId!,
-            boardId: boardId!,
-          },
-          user: username,
-          id: genId(),
-          model: selectedModel || 'llama',
-          location: location,
-          q: request,
-          method: method,
-        };
-        const response = await callCode(body);
-        if ('message' in response) {
-          toast({
-            title: 'Error',
-            description: response.message || 'Error sending query to the agent. Please try again.',
-            status: 'error',
-            duration: 4000,
-            isClosable: true,
-          });
-        } else {
-          const new_text = response.r || '';
-          setProcessing(false);
-          // Clear the stream text
-          setStreamText('');
-          ctrlRef.current = null;
-          setPreviousAnswer(prevItems => [...prevItems, new_text]);
-          // Add messages
-          updateState(props._id, {
-            ...s,
-            previousQ: [...s.previousQ, request],
-            previousA: [...s.previousA, new_text],
-            messages: [
-              ...s.messages,
-              initialAnswer,
-              {
-                id: genId(),
-                userId: user._id,
-                creationId: '',
-                creationDate: now.epoch + 1,
-                userName: 'SAGE',
-                query: '',
-                response: new_text,
-              },
-            ],
-          });
-          if (response.actions) {
-            setActions(response.actions);
-          }
-        }
-      }
+    updateState(props._id, { ...s, messages: [...s.messages, placeholder] });
+    setProcessing(true);
+    const response = await callCode(body);
+    setProcessing(false);
+    if ('message' in response) {
+      toast({
+        title: 'Error',
+        description: response.message || 'Error sending query to the agent. Please try again.',
+        status: 'error',
+        duration: 4000,
+        isClosable: true,
+      });
+      return;
     }
+    // Append the real answer and record the turn in the transcript/history
+    const new_text = response.r || '';
+    setStreamText('');
+    ctrlRef.current = null;
+    setPreviousAnswer((prevItems) => [...prevItems, new_text]);
+    updateState(props._id, {
+      ...s,
+      previousQ: [...s.previousQ, displayQuery],
+      previousA: [...s.previousA, new_text],
+      messages: [
+        ...s.messages,
+        placeholder,
+        { id: genId(), userId: user._id, creationId: '', creationDate: now.epoch + 1, userName: 'SAGE', query: '', response: new_text },
+      ],
+    });
+    if (response.actions && response.actions.length > 0) setActions(response.actions);
   };
 
-  const onProsCons = async () => {
-    if (s.context) {
-      // ProsCons prompt
-      const ctx = `@S, Please carefully read the following document text:
-        <document>
-        ${s.context}
-        </document>
-        After reading through the document, identify the pros and cons.
-        Provide all your answers in a few sentences.`;
-      newMessage(ctx);
-      setInput('');
+  // Ask SAGE about the linked CodeEditor(s): the backend reads their content
+  // from appIds and applies the server-side template for `method`.
+  const askCode = (method: string, label: string, fallbackInstruction: string) => {
+    const common = {
+      ctx: {
+        previousQ: previousQuestion,
+        previousA: previousAnswer,
+        pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+        roomId: roomId!,
+        boardId: boardId!,
+      },
+      user: username,
+      id: genId(),
+      model: selectedModel || 'llama',
+      location: location,
+    };
+    let body: CodeRequest;
+    if (sourceApps.length > 0) {
+      body = { ...common, q: label, method, appIds: sourceApps };
+    } else if (s.context) {
+      body = { ...common, q: `Please carefully read the following code:\n<code>\n${s.context}\n</code>\n${fallbackInstruction}`, method };
+    } else {
+      return;
     }
+    runCode(body, label);
+    setInput('');
   };
-  const onKeywords = async () => {
-    if (s.context) {
-      // Keywords prompt
-      const ctx = `@S, Please carefully read the following document text:
-        <document>
-        ${s.context}
-        </document>
-        Extract 3-5 keywords that best capture the essence and subject matter of the document. These keywords should concisely represent the most important and central ideas conveyed by the text.
-        Provide all your answers using a list.`;
-      newMessage(ctx);
-      setInput('');
+
+  // Typed @S question in code mode (from the input box).
+  const onContentCode = async (prompt: string, method: string) => {
+    if (!user) return;
+    const isQuestion = prompt.toUpperCase().startsWith('@S');
+    if (!isQuestion) {
+      // Peer chat message — just post it
+      const now = await serverTime();
+      updateState(props._id, {
+        ...s,
+        messages: [
+          ...s.messages,
+          { id: genId(), userId: user._id, creationId: '', creationDate: now.epoch, userName: user?.data.name, query: prompt, response: '' },
+        ],
+      });
+      return;
     }
+    if (!canPerform('coding')) return;
+    const request = prompt.slice(2);
+    const body: CodeRequest = {
+      ctx: {
+        previousQ: previousQuestion,
+        previousA: previousAnswer,
+        pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+        roomId: roomId!,
+        boardId: boardId!,
+      },
+      user: username,
+      id: genId(),
+      model: selectedModel || 'llama',
+      location: location,
+      q: request,
+      method,
+      appIds: sourceApps,
+    };
+    runCode(body, request);
   };
-  const onOpinion = async () => {
-    if (s.context) {
-      // Opinion prompt
-      const ctx = `@S, Please carefully read the following document text:
-        <document>
-        ${s.context}
-        </document>
-        Provide a short opinion on the document.`;
-      newMessage(ctx);
-      setInput('');
-    }
-  };
-  const onFacts = async () => {
-    if (s.context) {
-      // Facts prompt
-      const ctx = `@S, Please carefully read the following document text:
-        <document>
-        ${s.context}
-        </document>
-        List two or three interesting facts from the document.`;
-      newMessage(ctx);
-      setInput('');
-    }
-  };
+
+  const onProsCons = () =>
+    askIntent('proscons', 'Identify pros and cons', 'Identify the pros and cons. Answer in a few sentences.');
+  const onKeywords = () =>
+    askIntent('keywords', 'Extract keywords', 'Extract 3-5 keywords that best capture the essence and subject matter. Answer as a list.');
+  const onOpinion = () => askIntent('opinion', 'Give an opinion', 'Provide a short opinion on the document.');
+  const onFacts = () => askIntent('facts', 'List interesting facts', 'List two or three interesting facts from the document.');
 
   /*
     Chat with Paper:
@@ -1396,115 +1309,11 @@ function AppComponent(props: App): JSX.Element {
     },
   ];
 
-  const onCodeComment = async () => {
-    if (!user) return;
-    // Get the current context
-    let newctx = s.context;
-    if (!newctx && sourceApps.length > 0) {
-      // Update the context
-      let language = 'python';
-      const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
-      newctx = apps.reduce((accumulate, app) => {
-        if (app.data.type === 'CodeEditor') {
-          accumulate += app.data.state.content + '\n\n';
-          language = app.data.state.language;
-        }
-        return accumulate;
-      }, '');
-      newctx = `Language ${language}:\n\n${newctx}`;
-    }
-    if (newctx) {
-      // Summary prompt
-      const ctx = `@S, Please carefully read the following code:
-        <code>
-        ${newctx}
-        </code>
-        Comment this code extensively to explain clearly what each instruction is supposed to do`;
-      onContentCode(ctx, 'comment');
-      setInput('');
-    }
-  };
-  const onCodeExplain = async () => {
-    if (!user) return;
-    // Get the current context
-    let newctx = s.context;
-    if (!newctx && sourceApps.length > 0) {
-      // Update the context
-      let language = 'python';
-      const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
-      newctx = apps.reduce((accumulate, app) => {
-        if (app.data.type === 'CodeEditor') {
-          accumulate += app.data.state.content + '\n\n';
-          language = app.data.state.language;
-        }
-        return accumulate;
-      }, '');
-      newctx = `Language ${language}:\n\n${newctx}`;
-    }
-    if (newctx) {
-      // Summary prompt
-      const ctx = `@S, Please carefully read the following code:
-        <code>
-        ${newctx}
-        </code>
-        Explain this code`;
-      onContentCode(ctx, 'explain');
-      setInput('');
-    }
-  };
-  const onCodeGenerate = async () => {
-    if (!user) return;
-    // Get the current context
-    let newctx = s.context;
-    if (sourceApps.length > 0) {
-      // Update the context
-      let language = 'python';
-      const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
-      newctx = apps.reduce((accumulate, app) => {
-        if (app.data.type === 'CodeEditor') {
-          accumulate += app.data.state.content + '\n\n';
-          language = app.data.state.language;
-        }
-        return accumulate;
-      }, '');
-      newctx = `Generate the best solution in ${language} code according to the following prompt: ${newctx}`;
-    }
-    if (newctx) {
-      // Summary prompt
-      const ctx = `@S, Generate the best solution according to the following prompt: ${newctx}`;
-      onContentCode(ctx, 'refactor');
-      setInput('');
-    }
-  };
-
-  const onCodeRefactor = async () => {
-    if (!user) return;
-    // Get the current context
-    let newctx = s.context;
-    if (!newctx && sourceApps.length > 0) {
-      // Update the context
-      let language = 'python';
-      const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
-      newctx = apps.reduce((accumulate, app) => {
-        if (app.data.type === 'CodeEditor') {
-          accumulate += app.data.state.content + '\n\n';
-          language = app.data.state.language;
-        }
-        return accumulate;
-      }, '');
-      newctx = `Language ${language}:\n\n${newctx}`;
-    }
-    if (newctx) {
-      // Summary prompt
-      const ctx = `@S, Please carefully read the following code:
-        <code>
-        ${newctx}
-        </code>
-        Can you refactor this code`;
-      onContentCode(ctx, 'refactor');
-      setInput('');
-    }
-  };
+  const onCodeComment = () =>
+    askCode('comment', 'Comment the code', 'Comment this code extensively to explain clearly what each instruction does.');
+  const onCodeExplain = () => askCode('explain', 'Explain the code', 'Explain this code.');
+  const onCodeGenerate = () => askCode('generate', 'Generate code', 'Generate the best solution for this code/request.');
+  const onCodeRefactor = () => askCode('refactor', 'Refactor the code', 'Refactor this code.');
 
   useEffect(() => {
     // Scroll to bottom of chat box immediately

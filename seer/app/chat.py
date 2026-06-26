@@ -23,7 +23,22 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 # Typing for RPC
 from libs.localtypes import Question, Answer
-from libs.utils import getModelsInfo, extract_code_blocks, parse_openai_error
+from libs.utils import (
+    getModelsInfo,
+    extract_code_blocks,
+    parse_openai_error,
+    buildContextFromApps,
+)
+
+# Server-side prompt templates for text-app intents (moved out of the frontend).
+# The frontend now sends `intent` + `appIds` instead of assembling these.
+PROMPTS = {
+    "summary": "Identify the main topics, themes, and key concepts covered. Answer in a few sentences.",
+    "proscons": "Identify the pros and cons. Answer in a few sentences.",
+    "keywords": "Extract 3-5 keywords that best capture the essence and subject matter. Answer as a list.",
+    "opinion": "Provide a short opinion on the document.",
+    "facts": "List two or three interesting facts from the document.",
+}
 from libs.llm_manager import LLMManager
 
 # AI logging
@@ -119,6 +134,18 @@ class ChatAgent:
                 detail=f"Provider '{qq.model}' has no model capable of chat",
             )
 
+        # Build context from linked apps server-side (frontend sends app ids
+        # instead of shipping their content), and pick an optional template.
+        context = buildContextFromApps(self.ps3, qq.appIds) if qq.appIds else ""
+        instruction = PROMPTS.get(qq.intent, qq.q) if qq.intent else qq.q
+        if context:
+            question = (
+                "Please carefully read the following document:\n"
+                f"<document>\n{context}\n</document>\n{instruction}"
+            )
+        else:
+            question = instruction
+
         # Convert previousQ and previousA arrays to message tuples
         history = []
         for q, a in zip(qq.ctx.previousQ, qq.ctx.previousA):
@@ -128,7 +155,7 @@ class ChatAgent:
             response = await session.ainvoke(
                 {
                     "history": history,
-                    "question": qq.q,
+                    "question": question,
                     "username": qq.user,
                     "location": qq.location,
                     "date": today,

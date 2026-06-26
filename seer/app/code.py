@@ -23,8 +23,17 @@ from langchain_core.prompts import ChatPromptTemplate
 
 # Typing for RPC
 from libs.localtypes import CodeRequest, Context, Question, Answer
-from libs.utils import getModelsInfo
+from libs.utils import getModelsInfo, buildContextFromApps
 from libs.llm_manager import LLMManager
+
+# Server-side instructions per code method (moved out of the frontend, which
+# now sends `appIds` + `method` instead of assembling the prompt).
+CODE_PROMPTS = {
+    "comment": "Comment this code extensively to explain clearly what each instruction does.",
+    "explain": "Explain this code.",
+    "refactor": "Refactor this code.",
+    "generate": "Generate the best solution for the following request.",
+}
 
 # AI logging
 from libs.ai_logging import ai_logger
@@ -109,9 +118,21 @@ class CodeAgent:
                 status_code=400,
                 detail=f"Provider '{qq.model}' has no model capable of coding",
             )
+
+        # Read the code from linked apps server-side (frontend sends app ids).
+        context = buildContextFromApps(self.ps3, qq.appIds) if qq.appIds else ""
+        instruction = CODE_PROMPTS.get(qq.method, qq.q)
+        if context:
+            question = (
+                "Please carefully read the following code:\n"
+                f"<code>\n{context}\n</code>\n{instruction}"
+            )
+        else:
+            question = qq.q
+
         response = await session.ainvoke(
             {
-                "question": qq.q,
+                "question": question,
                 "username": qq.user,
                 "location": qq.location,
                 "date": today,

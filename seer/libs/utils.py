@@ -128,6 +128,53 @@ def getRoomInfo(ps3, room_id):
     return None
 
 
+# How to read the text content out of each app type's state. Mirrors the
+# frontend app schemas; keep in sync if an app's state shape changes.
+APP_CONTENT_FIELDS = {
+    "Stickie": "text",
+    "CodeEditor": "content",
+    "SageCell": "code",
+    "Notepad": "text",
+}
+
+
+def getApp(ps3, app_id):
+    """Fetch a single app document by id from the SAGE3 server, or None."""
+    url = (
+        ps3.s3_comm.conf[ps3.s3_comm.prod_type]["web_server"] + "/api/apps/" + app_id
+    )
+    headers = ps3.s3_comm._SageCommunication__headers
+    r = ps3.s3_comm.httpx_client.get(url, headers=headers)
+    if r.is_success:
+        data = r.json().get("data") or []
+        return data[0] if data else None
+    return None
+
+
+def getAppContent(ps3, app_id):
+    """Return (app_type, text) for an app's content, or (type, '') / (None, '')."""
+    app = getApp(ps3, app_id)
+    if not app:
+        return None, ""
+    atype = app.get("data", {}).get("type")
+    field = APP_CONTENT_FIELDS.get(atype)
+    if not field:
+        return atype, ""
+    text = app.get("data", {}).get("state", {}).get(field) or ""
+    return atype, text
+
+
+def buildContextFromApps(ps3, app_ids):
+    """Concatenate the text content of the given apps (server-side), so the
+    frontend can send app ids instead of extracting and shipping content."""
+    parts = []
+    for aid in app_ids or []:
+        _atype, text = getAppContent(ps3, aid)
+        if text:
+            parts.append(text)
+    return "\n\n".join(parts)
+
+
 def getBoardInfo(ps3, board_id):
     """
     Retrieve board information from the SAGE3 server based on the provided board ID.

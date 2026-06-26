@@ -26,6 +26,8 @@ export type AskRequest = {
   location: string;
   q: string;
   model: string;
+  appIds?: string[]; // source apps whose content the backend reads server-side
+  intent?: string; // optional prompt template: summary|proscons|keywords|opinion|facts
 };
 export type AskResponse = {
   id: string;
@@ -118,6 +120,7 @@ export type CodeRequest = {
   q: string;
   model: string;
   method: string;
+  appIds?: string[]; // source CodeEditor apps the backend reads server-side
 };
 export type CodeResponse = {
   id: string;
