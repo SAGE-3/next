@@ -51,7 +51,7 @@ import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
 
 import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot, callMesonet } from './tRPC';
-import { OperationMode, MODE_TASK } from './constants';
+import { OperationMode, MODE_TASK, MAX_IMAGES, MAX_PDFS } from './constants';
 import { ToolbarComponent, GroupedToolbarComponent } from './Toolbar';
 import { MessageItem } from './MessageItem';
 import { PromptBars } from './PromptBars';
@@ -495,6 +495,19 @@ function AppComponent(props: App): JSX.Element {
       // Check for image
       if (apps && apps[0].data.type === 'ImageViewer') {
         if (roomId && boardId) {
+          // All linked images, so the model can describe or compare several at once
+          const assetids = apps.filter((a) => a.data.type === 'ImageViewer').map((a) => a.data.state.assetid);
+          // Too many images overwhelm the vision model: block before posting anything to the transcript
+          if (assetids.length > MAX_IMAGES) {
+            toast({
+              title: 'Too many images',
+              description: `You can ask about at most ${MAX_IMAGES} images at once (${assetids.length} selected). Please unlink some and try again.`,
+              status: 'warning',
+              duration: 5000,
+              isClosable: true,
+            });
+            return;
+          }
           const now = await serverTime();
           const initialAnswer = {
             id: genId(),
@@ -507,8 +520,6 @@ function AppComponent(props: App): JSX.Element {
           };
           updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
 
-          // All linked images, so the model can describe or compare several at once
-          const assetids = apps.filter((a) => a.data.type === 'ImageViewer').map((a) => a.data.state.assetid);
           // Build the query
           const q: ImageQuery = {
             ctx: {
@@ -721,6 +732,18 @@ function AppComponent(props: App): JSX.Element {
       // Check for image
       if (apps && apps[0].data.type === 'PDFViewer') {
         if (roomId && boardId) {
+          // Too many PDFs overwhelm the context: block the question before posting anything to the transcript
+          const assetids = apps.map((d) => d.data.state.assetid);
+          if (isQuestion && assetids.length > MAX_PDFS) {
+            toast({
+              title: 'Too many PDFs',
+              description: `You can ask about at most ${MAX_PDFS} PDFs at once (${assetids.length} selected). Please unlink some and try again.`,
+              status: 'warning',
+              duration: 5000,
+              isClosable: true,
+            });
+            return;
+          }
           const now = await serverTime();
           const initialAnswer = {
             id: genId(),
@@ -735,7 +758,6 @@ function AppComponent(props: App): JSX.Element {
 
           if (isQuestion) {
             const request = isQuestion ? prompt.slice(2) : prompt;
-            const assetids = apps.map((d) => d.data.state.assetid);
             // Build the query
             const q: PDFQuery = {
               ctx: {
