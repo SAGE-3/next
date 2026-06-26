@@ -34,8 +34,9 @@ class NimEmbeddings(Embeddings):
             self.headers["Authorization"] = f"Bearer {api_key}"
 
     def _embed(self, texts: List[str], input_type: str) -> List[List[float]]:
+        endpoint = f"{self.url}/v1/embeddings"
         resp = httpx.post(
-            f"{self.url}/v1/embeddings",
+            endpoint,
             json={
                 "input": texts,
                 "model": self.model,
@@ -45,8 +46,24 @@ class NimEmbeddings(Embeddings):
             headers=self.headers,
             timeout=60,
         )
-        resp.raise_for_status()
-        data = sorted(resp.json()["data"], key=lambda d: d["index"])
+        if resp.status_code != 200:
+            raise RuntimeError(
+                f"embeddings POST {endpoint} -> HTTP {resp.status_code}: {resp.text[:300]}"
+            )
+        try:
+            payload = resp.json()
+        except Exception:
+            ctype = resp.headers.get("content-type", "")
+            raise RuntimeError(
+                f"embeddings POST {endpoint} returned non-JSON "
+                f"(content-type {ctype!r}): {resp.text[:300]!r}"
+            )
+        data = payload.get("data")
+        if not data:
+            raise RuntimeError(
+                f"embeddings POST {endpoint} returned no 'data': {str(payload)[:300]}"
+            )
+        data = sorted(data, key=lambda d: d["index"])
         return [d["embedding"] for d in data]
 
     def embed_documents(self, texts: List[str]) -> List[List[float]]:

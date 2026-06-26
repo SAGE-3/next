@@ -103,7 +103,6 @@ def getModelsInfo(ps3):
       dict: A dictionary containing the "llama" and "openai" model information.
     """
     sage3_config = ps3.s3_comm.web_config['models']
-    print(sage3_config)
     return sage3_config
 
 def getRoomInfo(ps3, room_id):
@@ -464,12 +463,19 @@ def scaleImage(imageContent, imageSize):
     # Convert the image to RGB format
     img = img.convert("RGB")
 
-    # Check if the width is zero to avoid division by zero error
-    if width == 0:
-        raise ValueError("Image width cannot be zero.")
+    # Check if dimensions are zero to avoid invalid resize operations
+    if width == 0 or height == 0:
+      raise ValueError("Image dimensions cannot be zero.")
 
-    # Resize the image while maintaining the aspect ratio
-    img = img.resize((imageSize, int(imageSize / (width / height))))
+    # Resize only if necessary, while maintaining aspect ratio so the longest side is imageSize
+    if max(width, height) > imageSize:
+      if width >= height:
+        new_width = imageSize
+        new_height = max(1, int(round((height / width) * imageSize)))
+      else:
+        new_height = imageSize
+        new_width = max(1, int(round((width / height) * imageSize)))
+      img = img.resize((new_width, new_height))
 
     # Save the resized image to a bytes buffer in JPEG format
     buffered = BytesIO()
