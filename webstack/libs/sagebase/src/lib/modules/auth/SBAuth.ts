@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -29,12 +29,14 @@ import {
   SBAuthCILogonConfig,
   passportSpectatorSetup,
   SBAuthSpectatorConfig,
+  passportKeycloakSetup,
+  SBAuthKeycloakConfig,
 } from './adapters/';
 
 export type SBAuthConfig = {
   sessionMaxAge: number;
   sessionSecret: string;
-  strategies: ('google' | 'apple' | 'cilogon' | 'guest' | 'jwt' | 'spectator')[];
+  strategies: ('google' | 'apple' | 'cilogon' | 'guest' | 'jwt' | 'spectator' | 'keycloak')[];
   production: boolean;
   googleConfig?: SBAuthGoogleConfig;
   appleConfig?: SBAuthAppleConfig;
@@ -42,6 +44,7 @@ export type SBAuthConfig = {
   guestConfig?: SBAuthGuestConfig;
   cilogonConfig?: SBAuthCILogonConfig;
   spectatorConfig?: SBAuthSpectatorConfig;
+  keycloakConfig?: SBAuthKeycloakConfig;
 };
 
 /**
@@ -65,19 +68,22 @@ export class SBAuth {
   private createOAuthCallbackHandler(providerName: string, strategyName: string) {
     return (req: Request, res: Response, next: NextFunction) => {
       // Log OAuth callback details for debugging
-      console.log(`${providerName}> OAuth callback received:`, {
-        query: req.query,
-        hasState: !!req.query.state,
-        hasCode: !!req.query.code,
-        hasError: !!req.query.error,
-        sessionId: req.sessionID,
-        timestamp: new Date().toISOString()
-      });
+      // console.log(`${providerName}> OAuth callback received:`, {
+      //   query: req.query,
+      //   hasState: !!req.query.state,
+      //   hasCode: !!req.query.code,
+      //   hasError: !!req.query.error,
+      //   sessionId: req.sessionID,
+      //   timestamp: new Date().toISOString()
+      // });
 
       // Check for OAuth error in query parameters
       if (req.query.error) {
         console.error(`${providerName}> OAuth provider returned error:`, req.query.error, req.query.error_description);
-        return res.redirect(`/login?error=${providerName}_oauth_error&details=` + encodeURIComponent(req.query.error_description as string || req.query.error as string));
+        return res.redirect(
+          `/login?error=${providerName}_oauth_error&details=` +
+            encodeURIComponent((req.query.error_description as string) || (req.query.error as string)),
+        );
       }
 
       passport.authenticate(strategyName, (err: any, user: any, info: any) => {
@@ -85,37 +91,39 @@ export class SBAuth {
           console.error(`${providerName}> Authentication error:`, err);
           return res.redirect(`/login?error=${providerName}_error&details=` + encodeURIComponent(err.message || 'Unknown error'));
         }
-        
+
         if (!user) {
           console.error(`${providerName}> Authentication failed - no user returned:`, info);
           const details = info?.message || info?.reason || 'No user data received';
           return res.redirect(`/login?error=${providerName}_no_user&details=` + encodeURIComponent(details));
         }
-        
+
         // Log successful authentication with more details
-        console.log(`${providerName}> Successful authentication:`, {
-          userId: user.id,
-          email: user.email || user.displayName || 'no-email',
-          provider: user.provider,
-          sessionId: req.sessionID,
-          userAgent: req.get('User-Agent'),
-          timestamp: new Date().toISOString()
-        });
-        
+        // console.log(`${providerName}> Successful authentication:`, {
+        //   userId: user.id,
+        //   email: user.email || user.displayName || 'no-email',
+        //   provider: user.provider,
+        //   sessionId: req.sessionID,
+        //   userAgent: req.get('User-Agent'),
+        //   timestamp: new Date().toISOString(),
+        // });
+
         // Establish user session
         req.logIn(user, (loginErr: any) => {
           if (loginErr) {
             console.error(`${providerName}> Session login error:`, loginErr);
-            return res.redirect(`/login?error=${providerName}_login_failed&details=` + encodeURIComponent(loginErr.message || 'Session creation failed'));
+            return res.redirect(
+              `/login?error=${providerName}_login_failed&details=` + encodeURIComponent(loginErr.message || 'Session creation failed'),
+            );
           }
-          
-          console.log(`${providerName}> Session established successfully:`, {
-            userId: user.id,
-            email: user.email || user.displayName || 'no-email',
-            sessionId: req.sessionID,
-            timestamp: new Date().toISOString()
-          });
-          
+
+          // console.log(`${providerName}> Session established successfully:`, {
+          //   userId: user.id,
+          //   email: user.email || user.displayName || 'no-email',
+          //   sessionId: req.sessionID,
+          //   timestamp: new Date().toISOString(),
+          // });
+
           return res.redirect('/');
         });
       })(req, res, next);
@@ -164,11 +172,11 @@ export class SBAuth {
         if (passportGoogleSetup(config.googleConfig)) {
           express.get(
             config.googleConfig.routeEndpoint,
-            passport.authenticate('google', { 
-              prompt: 'select_account', 
-              scope: ['profile', 'email']
+            passport.authenticate('google', {
+              prompt: 'select_account',
+              scope: ['profile', 'email'],
               // Note: State parameter validation handled by passport strategy
-            })
+            }),
           );
           express.get(config.googleConfig.callbackURL, this.createOAuthCallbackHandler('google', 'google'));
         }
@@ -203,7 +211,7 @@ export class SBAuth {
         if (passportSpectatorSetup()) {
           express.post(
             config.spectatorConfig.routeEndpoint,
-            passport.authenticate('spectator', { successRedirect: '/', failureRedirect: '/' })
+            passport.authenticate('spectator', { successRedirect: '/', failureRedirect: '/' }),
           );
         }
       }
@@ -214,16 +222,27 @@ export class SBAuth {
         if (ready) {
           express.get(
             config.cilogonConfig.routeEndpoint,
-            passport.authenticate('openidconnect', { 
-              prompt: 'consent', 
-              scope: ['openid', 'email', 'profile']
+            passport.authenticate('openidconnect', {
+              prompt: 'consent',
+              scope: ['openid', 'email', 'profile'],
               // Note: State parameter validation handled by OpenID Connect strategy
-            })
+            }),
           );
+          express.get(config.cilogonConfig.callbackURL, this.createOAuthCallbackHandler('cilogon', 'openidconnect'));
+        }
+      }
+
+      // Keycloak Setup (generic OIDC — works with any Keycloak realm or compatible provider)
+      if (config.strategies.includes('keycloak') && config.keycloakConfig) {
+        const ready = await passportKeycloakSetup(config.keycloakConfig);
+        if (ready) {
           express.get(
-            config.cilogonConfig.callbackURL,
-            this.createOAuthCallbackHandler('cilogon', 'openidconnect')
+            config.keycloakConfig.routeEndpoint,
+            passport.authenticate('keycloak', {
+              scope: ['openid', 'email', 'profile'],
+            }),
           );
+          express.get(config.keycloakConfig.callbackURL, this.createOAuthCallbackHandler('keycloak', 'keycloak'));
         }
       }
     }

@@ -35,5 +35,11 @@
       "type": "image/webp",
       "label": "Board view"
     }
+  ],
+  "protocol_handlers": [
+    {
+      "protocol": "web+sage3",
+      "url": "/%s"
+    }
   ]
 }

@@ -1,0 +1,9 @@
+# Update the volume path to point to your local pysage3 checkout
+version: "3.8"
+
+services:
+  sage-proxy:
+    image: "python:3.11-slim-bookworm"
+    volumes:
+      - /path/to/next/pysage3:/pysage3
+    command: /pysage3/scripts/start-proxy.sh ${ROOM_ID}

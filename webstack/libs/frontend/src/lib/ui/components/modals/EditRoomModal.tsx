@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -22,6 +22,7 @@ import {
   Checkbox,
   useDisclosure,
   useToast,
+  Text,
 } from '@chakra-ui/react';
 
 import { v5 as uuidv5 } from 'uuid';
@@ -38,6 +39,9 @@ interface EditRoomModalProps {
   onClose: () => void;
   room: Room;
 }
+
+const NAME_MAX = 50;
+const DESC_MAX = 150;
 
 export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
   const { toHome } = useRouteNav();
@@ -153,8 +157,7 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
   };
 
   function cleanNameCheckDoubles(name: string): string | null {
-    // Remove leading and trailing space, and limit name length to 32
-    const cleanedName = name.trim().substring(0, 31);
+    const cleanedName = name.trim().substring(0, NAME_MAX);
     const roomNames = rooms.filter((r) => r._id !== props.room._id).map((room) => room.data.name);
     if (cleanedName.split(' ').join('').length === 0) {
       toast({
@@ -238,33 +241,45 @@ export function EditRoomModal(props: EditRoomModalProps): JSX.Element {
       <ModalContent>
         <ModalHeader fontSize="3xl">Edit Room: {props.room.data.name}</ModalHeader>
         <ModalBody>
-          <InputGroup mb={4}>
-            <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
-            <Input
-              ref={initialRef}
-              type="text"
-              placeholder={'Room Name'}
-              _placeholder={{ opacity: 1, color: 'gray.600' }}
-              mr={0}
-              value={name}
-              onChange={handleNameChange}
-              onKeyDown={onSubmit}
-              isRequired={true}
-            />
-          </InputGroup>
-          <InputGroup my={4}>
-            <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
-            <Input
-              type="text"
-              placeholder={'Room Description (optional)'}
-              _placeholder={{ opacity: 1, color: 'gray.600' }}
-              mr={0}
-              value={description}
-              onChange={handleDescriptionChange}
-              onKeyDown={onSubmit}
-              isRequired={false}
-            />
-          </InputGroup>
+          <Box mb={4}>
+            <InputGroup>
+              <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
+              <Input
+                ref={initialRef}
+                type="text"
+                placeholder={'Room Name'}
+                _placeholder={{ opacity: 1, color: 'gray.600' }}
+                mr={0}
+                value={name}
+                onChange={handleNameChange}
+                onKeyDown={onSubmit}
+                isRequired={true}
+                maxLength={NAME_MAX}
+              />
+            </InputGroup>
+            <Text fontSize="xs" textAlign="right" mt="1" color={name.length >= NAME_MAX ? 'red.400' : name.length >= NAME_MAX * 0.8 ? 'orange.400' : 'gray.400'}>
+              {name.length} / {NAME_MAX}
+            </Text>
+          </Box>
+          <Box my={4}>
+            <InputGroup>
+              <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
+              <Input
+                type="text"
+                placeholder={'Room Description (optional)'}
+                _placeholder={{ opacity: 1, color: 'gray.600' }}
+                mr={0}
+                value={description}
+                onChange={handleDescriptionChange}
+                onKeyDown={onSubmit}
+                isRequired={false}
+                maxLength={DESC_MAX}
+              />
+            </InputGroup>
+            <Text fontSize="xs" textAlign="right" mt="1" color={description.length >= DESC_MAX ? 'red.400' : description.length >= DESC_MAX * 0.8 ? 'orange.400' : 'gray.400'}>
+              {description.length} / {DESC_MAX}
+            </Text>
+          </Box>
 
           <ColorPicker selectedColor={color} onChange={handleColorChange}></ColorPicker>
 

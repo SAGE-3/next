@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -36,13 +36,19 @@ export function Lasso(props: LassoProps) {
   const setLassoMode = useUIStore((state) => state.setLassoMode);
   const selectedApps = useUIStore((state) => state.selectedAppsIds);
   const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
+  const selectedAppId = useUIStore((state) => state.selectedAppId);
+  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
+  const addSelectedApp = useUIStore((state) => state.addSelectedApp);
 
   // Mouse Positions
   const [mousedown, setMouseDown] = useState(false);
   const [modifierAction, setModifierAction] = useState<'none' | 'removal' | 'inverse'>('none');
 
-  // Temporary Fix to Avoid Rerenders
-  const { getBoardCursor } = useCursorBoardPosition();
+  // Use uiToBoard to convert client coordinates to board coordinates.
+  // getBoardCursor only tracks mousemove events and does not update for
+  // touch, so we compute the board position directly from the coordinates
+  // passed by both mouse and touch handlers.
+  const { uiToBoard } = useCursorBoardPosition();
 
   const [last_mousex, set_last_mousex] = useState(0);
   const [last_mousey, set_last_mousey] = useState(0);
@@ -55,9 +61,9 @@ export function Lasso(props: LassoProps) {
   // Drag and Drop On Board
   const { dragProps, renderContent } = useDragAndDropBoard({ roomId: props.roomId, boardId: props.boardId });
 
-  // Get initial position
+  // Get initial position — x, y are client coordinates (from mouse or touch)
   const lassoStart = (x: number, y: number) => {
-    const position = getBoardCursor();
+    const position = uiToBoard(x, y);
     set_last_mousex(position.x);
     set_last_mousey(position.y);
     set_mousex(position.x);
@@ -81,9 +87,9 @@ export function Lasso(props: LassoProps) {
     setIsDragging(false);
   };
 
-  // Get last position
+  // Update lasso position — x, y are client coordinates (from mouse or touch)
   const lassoMove = (x: number, y: number) => {
-    const position = getBoardCursor();
+    const position = uiToBoard(x, y);
     setIsDragging(true);
     set_mousex(position.x);
     set_mousey(position.y);
@@ -91,21 +97,30 @@ export function Lasso(props: LassoProps) {
 
   // Mouse Behaviours
   const mouseDown = (ev: React.MouseEvent<SVGElement>) => {
-    if (ev.button == 0) {
-      // Prevent lasso for everyone due to MacOS ctrl + leftclick bringing up context menu
-      if (ev.ctrlKey) {
-        return;
-      }
+    if (ev.button !== 0) return;
+    // macOS ctrl+left-click produces a context menu — skip it
+    if (ev.ctrlKey) return;
 
-      if (ev.shiftKey === false) {
-        clearSelectedApps();
+    if (ev.shiftKey) {
+      // Shift+draw: seed the lasso group from the currently single-selected app (if any)
+      // so the user can extend an existing selection without losing it.
+      // BackgroundLayer skips clearing selectedAppId on shift+mousedown so we can read it here.
+      if (selectedAppId) {
+        addSelectedApp(selectedAppId);
+        setSelectedApp('');
       }
-      setModifierAction(ev.shiftKey ? 'inverse' : 'none');
-      lassoStart(ev.clientX, ev.clientY);
+      // No modifier needed — seeded apps live in clickSelectedApps inside DrawBox
+      setModifierAction('none');
+    } else {
+      clearSelectedApps();
+      setModifierAction('none');
     }
+    lassoStart(ev.clientX, ev.clientY);
   };
 
   const mouseUp = () => {
+    // mousedown may be false if the user released over the SVG after a shift+click on an app
+    if (!mousedown) return;
     lassoEnd();
   };
 
@@ -142,7 +157,7 @@ export function Lasso(props: LassoProps) {
   return (
     <>
       {/* lassoMode */}
-      <div className="canvas-container">
+      <div className="canvas-container" style={{ touchAction: 'none' }}>
         <svg
           id="lasso"
           className="canvas-layer"
@@ -152,10 +167,7 @@ export function Lasso(props: LassoProps) {
             height: boardHeight + 'px',
             left: 0,
             top: 0,
-            // pointerEvents: 'none',
-            // To keep in theme with other notable whiteboard applications,
-            // the cursor should remain a pointer
-            // cursor: 'crosshair',
+            touchAction: 'none',
           }}
           // Note to future devs, handledeselect behaviour move to BackgroundLayer.tsx
           // onPointerDown={handleDeselect}
@@ -246,10 +258,7 @@ const DrawBox = (props: BoxProps) => {
       } else {
         // Remove apps if not in box area
         if (rectSelectedApps.includes(app._id)) {
-          const newArray = rectSelectedApps;
-          const index = newArray.indexOf(app._id);
-          newArray.splice(index, 1);
-          setRectSelectedApps([...newArray]);
+          setRectSelectedApps((prev) => prev.filter((id) => id !== app._id));
         }
       }
     }

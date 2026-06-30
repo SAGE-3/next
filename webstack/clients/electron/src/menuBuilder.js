@@ -419,7 +419,7 @@ function buildSageMenu(window, commander) {
         {
           label: 'Quick Start Guide',
           click: function () {
-            shell.openExternal('https://sage-3.github.io/pdf/SAGE3-v1.0.16-2024a.pdf');
+            shell.openExternal('https://sage-3.github.io/pdf/SAGE3-v1.0.57-2026.pdf');
           },
         },
         {
@@ -513,7 +513,7 @@ function buildSageMenu(window, commander) {
         {
           label: 'Bring All to Front',
           role: 'front',
-        }
+        },
       );
     }
   }

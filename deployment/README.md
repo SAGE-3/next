@@ -1,50 +1,52 @@
 # SAGE3: Deployment
 
-This folder contains the necessary files to start up a SAGE3 Server Instance and run the backend end dev docker images.
+This folder contains the Docker configuration and scripts needed to run a SAGE3 server instance.
 
-# Docker
+## Requirements
 
-Docker is a platform that uses OS-level virtualization to deliver software and applications within standalone packages called containers. This allows SAGE3 servers to be installed on any computer without developers worrying about various OS idiosyncrasies. Users wanting to set up their own SAGE3 server would only have to install Docker and run the SAGE3 containers. Docker runs on Windows, MacOS, CentOS, Ubuntu, and many Unix variants. Being able to target all these OSs enables SAGE3 to be installed on more systems, and frees developers from worrying about the differences among the various OSs.
+- [Docker Desktop](https://www.docker.com/products/docker-desktop)
 
-# Install Docker Desktop
+## Docker Compose Files
 
-[Docker Desktop](https://www.docker.com/products/docker-desktop)
+| File | Purpose |
+|---|---|
+| `docker-compose-arm64.yml` | Full stack for ARM64 (Apple Silicon, ARM servers) |
+| `docker-compose-amd64.yml` | Full stack for AMD64 (Intel/AMD servers) |
+| `docker-compose-backend-arm64.yml` | Backend services only, ARM64 |
+| `docker-compose-backend-amd64.yml` | Backend services only, AMD64 |
 
-# Run Development Backend
+## Running
 
-Require the whole `git clone` files.
-
-## Starting
+Use the compose file matching your architecture. For example on Apple Silicon:
 
 ```bash
-docker-compose -f docker-compose-light.yml  up --remove-orphans
+docker-compose -f docker-compose-arm64.yml up --remove-orphans
 ```
 
 ## Stopping
 
 ```bash
-# Stop running the containers
-docker-compose -f docker-compose-light.yml stop
-# Remove stopped containers
-docker-compose -f docker-compose-light.yml rm -f
+docker-compose -f docker-compose-arm64.yml stop
+docker-compose -f docker-compose-arm64.yml rm -f
 ```
 
-# Setup SAGE3 Production Server Instance
+## Building and Pushing Images
 
-Requires a limited configuration file set (deployment folder)
-
-## Regular server
-
-Using the main `docker-compose.yml` file
+Use the `Build-Push` script to build all service images and push to GHCR:
 
 ```bash
-docker-compose -f docker-compose.yml  up --remove-orphans
+./Build-Push
 ```
 
-## Advanced server: with Foresight
+## Services
 
-Using the main `docker-compose-foresight.yml` file: it adds the python backend (foresight engine with the SAGE3 proxy) using the docker hub image `sage3/foresight`.
+| Service | Image | Description |
+|---|---|---|
+| homebase | `ghcr.io/sage-3/next` | Main Node.js server |
+| homebase-yjs | `ghcr.io/sage-3/next_yjs` | Yjs collaboration server |
+| homebase-files | `ghcr.io/sage-3/next_files` | File upload/download server |
+| seer | `ghcr.io/sage-3/agents` | Python AI/LLM agent service |
 
-```bash
-docker-compose -f docker-compose-foresight.yml  up --remove-orphans
-```
+## More
+
+- Full deployment guide: https://sage-3.github.io/docs/Server-Deployment

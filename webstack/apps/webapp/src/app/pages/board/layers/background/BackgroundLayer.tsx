@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -9,10 +9,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { Box } from '@chakra-ui/react';
-import { Rnd } from 'react-rnd';
 
 import { useUIStore, useAbility, WheelStepZoom, MinZoom, MaxZoom, useUserSettings } from '@sage3/frontend';
-import { Background, Apps, Whiteboard, Lasso, PresenceComponent, RndSafety, Links, CursorArrow, LinkerMode } from './components';
+import { Background, Apps, Whiteboard, Lasso, PresenceComponent, Links, CursorArrow, LinkerMode } from './components';
 
 type BackgroundLayerProps = {
   boardId: string;
@@ -56,6 +55,12 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
   const movementTimeoutRef = useRef<number | null>(null);
   const movementZoomSafetyTimeoutRef = useRef<number | null>(null);
+
+  // Touch pinch-zoom tuning: small distance changes between fingers should not
+  // cause large zoom jumps. Use a deadzone and clamp the per-frame scale ratio.
+  const TOUCH_PINCH_DEADZONE = 10;    // pixels of distance change before zoom engages
+  const TOUCH_PINCH_MIN_RATIO = 0.95; // max zoom-out per frame (5%)
+  const TOUCH_PINCH_MAX_RATIO = 1.05; // max zoom-in per frame (5%)
 
   /////////////////////////////////
   // UI Store Board Syncronizers //
@@ -120,15 +125,17 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   /////////////////////////////////
   // User Target Element Checker //
   /////////////////////////////////
-  const draggedOnCheck = (target: HTMLElement) => {
-    // const target = event.target as HTMLElement;
-    // Target.id was done because of the following assumption: using ids is faster than using classList.contains(...)
+  // Classifies where a mousedown landed so move handlers know whether to pan the board.
+  // Runs in the capture phase (before element handlers), so it sees every click first.
+  // shiftKey: when shift is held on the lasso SVG, preserve selectedAppId so Lasso.tsx
+  // can seed it into the new lasso group before clearing it.
+  const draggedOnCheck = (target: HTMLElement, shiftKey = false) => {
     if (target.id === 'board') {
       setStartedDragOn('board');
       setSelectedApp('');
-    } else if ([target.id === 'lasso', target.id === 'whiteboard'].some((condition) => condition)) {
+    } else if (target.id === 'lasso' || target.id === 'whiteboard') {
       setStartedDragOn('board-actions');
-      setSelectedApp('');
+      if (!shiftKey) setSelectedApp('');
     } else if (target.classList.contains('handle')) {
       setStartedDragOn('app');
     } else if (target.classList.contains('app-window-resize-handle')) {
@@ -215,7 +222,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       if (event.ctrlKey && event.buttons & 1) {
         setStartedDragOn('other');
       } else {
-        draggedOnCheck(event.target as HTMLElement);
+        draggedOnCheck(event.target as HTMLElement, event.shiftKey);
       }
     };
 
@@ -403,16 +410,27 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
               { x: event.touches[0].clientX, y: event.touches[0].clientY },
               { x: event.touches[1].clientX, y: event.touches[1].clientY }
             );
-            const zoomDelta = prevDistance - distance;
+            const zoomDeltaRaw = prevDistance - distance;
             const avgX = (event.touches[0].clientX + event.touches[1].clientX) / 2;
             const avgY = (event.touches[0].clientY + event.touches[1].clientY) / 2;
 
-            if (prevDistance > 0) {
-              if (zoomDelta < 0) {
-                localZoomInDelta(zoomDelta, { x: avgX, y: avgY });
-              } else if (zoomDelta > 0) {
-                localZoomOutDelta(zoomDelta, { x: avgX, y: avgY });
-              }
+            if (prevDistance > 0 && Math.abs(zoomDeltaRaw) > TOUCH_PINCH_DEADZONE) {
+              // Use ratio-based zoom for smooth, continuous pinch behaviour.
+              // This avoids the discrete "stepping" of the wheel-based zoom
+              // helpers which quantize through WheelStepZoom.
+              const rawRatio = distance / prevDistance;
+              // Clamp the per-frame ratio so zoom can't jump too fast
+              const ratio = Math.max(TOUCH_PINCH_MIN_RATIO, Math.min(rawRatio, TOUCH_PINCH_MAX_RATIO));
+
+              setLocalBoardPosition((prevBoard) => {
+                const newScale = Math.max(MinZoom, Math.min(prevBoard.scale * ratio, MaxZoom));
+                return zoomOnLocationNewPosition(
+                  { x: prevBoard.x, y: prevBoard.y },
+                  { x: avgX, y: avgY },
+                  prevBoard.scale,
+                  newScale,
+                );
+              });
             }
 
             setLocalBoardPosition((prevBoard) => {
@@ -446,26 +464,20 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
 
   return (
     <Box transform={`scale(${localBoardPosition.scale})`} transformOrigin={'top left'}>
-      {/* Board. Uses lib react-rnd for drag events. Draggable Background below is the actual target for drag events.*/}
-      <Rnd
-        // Remember board position and size
-        default={{
-          x: boardPosition.x,
-          y: boardPosition.y,
+      {/* Board container — positioned absolutely, all pan/zoom via window event listeners */}
+      <div
+        style={{
+          position: 'absolute',
+          left: localBoardPosition.x,
+          top: localBoardPosition.y,
           width: boardWidth,
           height: boardHeight,
         }}
-        scale={localBoardPosition.scale}
-        position={{ x: localBoardPosition.x, y: localBoardPosition.y }}
-        enableResizing={false}
-        dragHandleClassName={'board-handle'}
-        disableDragging={true}
       >
         {primaryActionMode === 'linker' && <LinkerMode />}
 
         {/* The board's apps */}
         <Apps />
-
 
         {/* Whiteboard */}
         <WhiteboardMemo roomId={props.roomId} boardId={props.boardId} />
@@ -476,20 +488,15 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
         <Links />
         <CursorArrow />
 
-
         {/* Presence of the users */}
         <PresenceComponent boardId={props.boardId} />
 
         {/* Draggable Background */}
         <Background boardId={props.boardId} roomId={props.roomId} />
-
-        {/* Rnd Safety to Mitigate app click dissapear issue when using new movement scheme */}
-        <RndMemo />
-      </Rnd>
+      </div>
     </Box>
   );
 }
-const RndMemo = React.memo(RndSafety);
 const LassoMemo = React.memo(Lasso);
 const WhiteboardMemo = React.memo(Whiteboard);
 

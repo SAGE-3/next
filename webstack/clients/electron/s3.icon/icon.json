@@ -1,18 +1,17 @@
 {
-  "fill" : {
-    "automatic-gradient" : "extended-srgb:0.00000,0.53333,1.00000,1.00000"
-  },
+  "fill" : "system-light",
   "groups" : [
     {
       "layers" : [
         {
-          "image-name" : "s3 2.png",
-          "name" : "s3 2",
+          "glass" : false,
+          "image-name" : "s3a.png",
+          "name" : "s3a",
           "position" : {
-            "scale" : 2.9,
+            "scale" : 1.8,
             "translation-in-points" : [
-              20.299999999999955,
-              0.06093750000002274
+              0,
+              0
             ]
           }
         }
@@ -28,9 +27,6 @@
     }
   ],
   "supported-platforms" : {
-    "circles" : [
-      "watchOS"
-    ],
     "squares" : "shared"
   }
 }

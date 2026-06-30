@@ -30,7 +30,7 @@ jobs:
       - name: Install
         run: yarn install --frozen-lockfile --silent
       - name: Build
-        run: npx electron-packager ./ --platform=linux --arch=x64 --icon=s3.icns --overwrite --appCopyright="SAGE3 Team"
+        run: npx electron-packager ./ SAGE3 --platform=linux --arch=x64 --icon=s3.icns --overwrite --appCopyright="SAGE3 Team" --executable-name=SAGE3
       - name: Chmod
         run: chmod +x SAGE3-linux-x64/SAGE3
       - name: Readme

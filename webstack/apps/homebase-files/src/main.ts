@@ -33,7 +33,7 @@ export function createApp(): express.Express {
   // Cookies
   app.use(cookieParser());
   // using express to parse JSON bodies into JS objects
-  app.use(express.json({ limit: '5mb' }));
+  app.use(express.json({ limit: '50mb' }));
   app.use(express.urlencoded({ extended: true }));
 
   // adding Helmet to enhance your API's security

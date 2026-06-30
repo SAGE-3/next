@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2025. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -72,7 +72,6 @@ export function PartyButton(props: PartyIconProps): JSX.Element {
 
   // Styling
   const iconSize = props.iconSize || 'md';
-  const iconColor = 'teal';
   const fontSize = iconSize === 'xs' ? 'sm' : iconSize === 'sm' ? 'md' : 'lg';
   const badgeColor = useColorModeValue('red.500', 'red.200');
   const badgeHex = useHexColor(badgeColor);
@@ -136,7 +135,7 @@ export function PartyButton(props: PartyIconProps): JSX.Element {
             onClick={handleOnToggle}
             size={iconSize}
             fontSize={fontSize}
-            colorScheme={iconColor}
+            colorScheme="teal"
             icon={<LuPartyPopper fontSize="24px" />}
             aria-label="Party"
           />

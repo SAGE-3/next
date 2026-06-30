@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2024. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -38,6 +38,7 @@ import {
   AlertIcon,
   AlertDescription,
   Spacer,
+  Badge,
 } from '@chakra-ui/react';
 import { keyframes } from '@emotion/react';
 
@@ -458,8 +459,8 @@ export function LassoToolbar(props: LassoToolbarProps) {
       if (isAllOfSameType && selectedApps[0].data.type === 'CSVViewer') {
         code = `# Load all the CSV files
 import pandas as pd
-from foresight.config import config as conf, prod_type
-from foresight.Sage3Sugar.pysage3 import PySage3
+from pysage3.config import config as conf, prod_type
+from pysage3.client import PySage3
 room_id = %%sage_room_id
 board_id = %%sage_board_id
 app_id = %%sage_app_id
@@ -474,8 +475,8 @@ for b in bits:
     print(frame)`;
       } else {
         code = `# Setup SAGE3 API
-from foresight.config import config as conf, prod_type
-from foresight.Sage3Sugar.pysage3 import PySage3
+from pysage3.config import config as conf, prod_type
+from pysage3.client import PySage3
 room_id = %%sage_room_id
 board_id = %%sage_board_id
 app_id = %%sage_app_id
@@ -624,6 +625,11 @@ for b in bits:
                 Actions
               </Text>
 
+              {/* Selection count — updates live as apps are added/removed */}
+              <Badge ml={2} colorScheme="teal" borderRadius="full" fontSize="11px" alignSelf="center" userSelect="none">
+                {lassoApps.length} {selectedAppNames()}
+              </Badge>
+
               <Spacer />
 
               {/* Sage Intelligence */}
@@ -689,7 +695,7 @@ for b in bits:
                       >
                         Duplicate to another Board
                       </MenuButton>
-                      <MenuList>
+                      <MenuList maxHeight="300px" overflowY="auto">
                         {roomsBoards.map((b) => {
                           return (
                             <MenuItem key={b._id} onClick={() => duplicate(lassoApps, b)} py="0" m="0">

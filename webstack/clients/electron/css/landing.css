@@ -5,50 +5,202 @@ body {
   color: white;
 }
 
-#hubs-list {
-  margin-top: 8px;
+/* Logo - hidden on short viewports to prioritize hub list */
+.logo-container {
   width: 500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+@media (max-height: 500px) {
+  .logo-container,
+  .bottom-divider {
+    display: none;
+  }
+}
+
+/* Header row */
+.header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 500px;
+  margin-bottom: 8px;
+}
+
+.header-title h2 {
+  margin: 0;
+}
+
+.header-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Middle section */
+.middle-section {
+  flex: 1;
+  min-height: 0;
+  width: 500px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+#hubs-list {
   display: flex;
   flex-direction: column;
   overflow-y: scroll;
   overflow-x: hidden;
   gap: 10px;
+  flex: 1;
+  min-height: 0;
 }
+/* Always reserve scrollbar space so header buttons and list align */
 #hubs-list::-webkit-scrollbar {
   width: 10px;
+  background: rgba(58, 58, 58, 0.3);
 }
 #hubs-list::-webkit-scrollbar-thumb {
   background: rgb(58, 58, 58);
   border-radius: 12px;
-  /* width:3px */
-}
-#hubs-list::-webkit-scrollbar {
-  background: transparent;
-  border-radius: '12px';
 }
 
 .hub {
   background: rgb(58, 58, 58);
   border-radius: 8px;
-  /* border: 1px solid rgb(209, 209, 209); */
   padding: 12px;
   height: 32px;
   align-items: center;
   display: flex;
   justify-content: space-between;
-  width: 100%;
-  cursor: pointer;
   width: 455px;
+  cursor: pointer;
   transition: all 0.15s ease-in-out;
 }
 
-#join-board {
-  height: 160px;
+.bottom-divider {
   width: 500px;
+  margin: 24px 0 0 0;
+  border: 0;
+  border-top: 1px solid #444;
+}
+
+/* Join board dialog (popup) */
+#join-board {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 110vh;
+  display: none;
+}
+
+/* Shared dialog styles */
+#join-board-dialog,
+#add-hub-dialog {
+  width: 600px;
+  height: 220px;
+  border-radius: 12px;
+  z-index: 101;
+  position: absolute;
+  top: calc(50% - 110px);
+  left: calc(50% - 300px);
+  background: #4e4e4e;
+  padding: 18px;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  width: 500px;
-  align-items: left;
+}
+
+#join-board-dialog h2,
+#add-hub-dialog h2 {
+  margin: 0 0 8px 0;
+}
+
+.dialog-description {
+  color: #aaa;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+
+.dialog-description code {
+  background: rgb(58, 58, 58);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+/* Dialog form - flex to push buttons to bottom */
+#join-board-form,
+#new-hub-form {
+  width: 100%;
+  box-sizing: border-box;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+#join-board-form #input-join-board,
+#new-hub-form #input-url {
+  width: 100%;
+  max-width: 100%;
+  height: 32px;
+  padding: 8px;
+  box-sizing: border-box;
+  margin: 0 0 12px 0;
+  font-size: 16px;
+}
+
+/* Dialog button row - at bottom, Cancel left, primary action right */
+.dialog-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 12px;
+}
+
+.dialog-buttons .cancel-button {
+  background: transparent;
+  color: #aaa;
+  border: 1px solid #666;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+}
+
+.dialog-buttons .cancel-button:hover {
+  color: white;
+  border-color: #888;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dialog-buttons input[type='submit'] {
+  width: auto;
+  min-width: 100px;
+  margin: 0;
+  padding: 8px 24px;
+}
+
+#join-board-form #submit-join-board {
+  margin: 0;
+}
+
+#join-board-dimmer {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.25);
+  z-index: 100;
 }
 
 .container {
@@ -64,15 +216,8 @@ body {
   max-height: 80vh;
   width: 100%;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
-}
-
-.submit-button {
-  border: none;
-  border-radius: 0.325rem;
-  font-size: 18px;
-  cursor: pointer;
 }
 
 .add-hub-button {
@@ -87,18 +232,16 @@ body {
   height: 28px;
   cursor: pointer;
   transition: all ease-in-out 0.15s;
-  scale: 1;
   padding-left: 8px;
   padding-right: 8px;
 }
 
 .add-hub-button:hover {
   background: rgb(144, 207, 150);
-  scale: 1;
   transition: all ease-in-out 0.15s;
 }
 
-.refresh-hub-button {
+.join-board-button {
   background: rgb(75, 129, 95);
   color: white;
   font-size: 14px;
@@ -107,19 +250,41 @@ body {
   align-items: center;
   border: none;
   border-radius: 8px;
-  margin-left: 8px;
   height: 28px;
   cursor: pointer;
   transition: all ease-in-out 0.15s;
-  scale: 1;
   padding-left: 8px;
   padding-right: 8px;
 }
 
+.join-board-button:hover {
+  background: rgb(144, 207, 150);
+  transition: all ease-in-out 0.15s;
+}
+
+.refresh-hub-button {
+  background: rgb(75, 129, 95);
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: none;
+  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  transition: all ease-in-out 0.15s;
+  padding: 0;
+}
+
 .refresh-hub-button:hover {
   background: rgb(144, 207, 150);
-  scale: 1;
   transition: all ease-in-out 0.15s;
+}
+
+.refresh-icon {
+  width: 16px;
+  height: 16px;
 }
 
 input[type='text'],
@@ -133,6 +298,14 @@ select {
   font-size: 18px;
   width: 600px;
   margin-top: 24px;
+}
+
+/* Dialog inputs override global width to stay contained */
+#join-board-dialog input[type='text'],
+#add-hub-dialog input[type='text'] {
+  width: 100%;
+  max-width: 100%;
+  margin-top: 0;
 }
 
 input[type='url'],
@@ -155,7 +328,6 @@ input[type='submit'] {
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  transform: scale(1);
   transition: all ease-in-out 0.15s;
   font-weight: bold;
 }
@@ -164,43 +336,15 @@ input::placeholder {
   color: darkgray;
 }
 
-#input-join-board {
-  width: calc(100% - 20px);
-  height: 32px;
-  padding: 8px;
-  border-radius: 4px;
-  border: none;
-  font-size: 18px;
-  margin-top: 12px;
-}
-
-#submit-join-board {
-  width: calc(100% - 20px);
-}
-
 #add-hub {
   position: absolute;
   left: 0px;
   top: 0px;
   width: 100vw;
   height: 110vh;
-  visibility: hidden;
-  transition: visibility 0s, opacity 0.5s linear;
+  display: none;
 }
 
-#add-hub-dialog {
-  width: 600px;
-  height: 170px;
-  border-radius: 12px;
-  z-index: 101;
-  position: absolute;
-  top: calc(50% - 100px);
-  left: calc(50% - 300px);
-  background: #4e4e4e;
-  display: 'flex';
-  flex-direction: 'column';
-  padding: 18px;
-}
 #add-hub-dimmer {
   position: absolute;
   width: 100%;

@@ -76,6 +76,7 @@ const languageExtensions = [
   { name: 'java', extension: 'java' },
   { name: 'r', extension: 'R' },
   { name: 'julia', extension: 'jl' },
+  { name: 'mermaid', extension: 'mmd' },
 ].sort((a, b) => {
   return a.name.localeCompare(b.name);
 });
@@ -415,7 +416,7 @@ function ToolbarComponent(props: App): JSX.Element {
       <ButtonGroup isAttached size="xs" colorScheme="teal" ml={1}>
         <Tooltip placement="top" hasArrow={true} label={'Decrease Font Size'} openDelay={400}>
           <Button isDisabled={s.fontSize <= 6} onClick={() => handleDecreaseFont()} size='xs' px={0}>
-            <MdRemove size="16px"/>
+            <MdRemove size="16px" />
           </Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={'Current Font Size'} openDelay={400}>
@@ -425,28 +426,28 @@ function ToolbarComponent(props: App): JSX.Element {
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
           <Button isDisabled={s.fontSize >= 86} onClick={() => handleIncreaseFont()} size='xs' px={0}>
-            <MdAdd size="16px"/>
+            <MdAdd size="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>
 
       <ButtonGroup isAttached size="xs" colorScheme="teal" ml={1}>
         <Tooltip placement="top" hasArrow={true} label={s.readonly ? 'Read only' : 'Edit'} openDelay={400}>
-          <Button onClick={handleReadonly}   mx="2px" colorScheme={'teal'} size='xs' px={0}>
-            {s.readonly ? <MdLock size="16px"/> : <MdLockOpen size="16px"/>}
+          <Button onClick={handleReadonly} mx="2px" colorScheme={'teal'} size='xs' px={0}>
+            {s.readonly ? <MdLock size="16px" /> : <MdLockOpen size="16px" />}
           </Button>
         </Tooltip>
       </ButtonGroup>
       <ButtonGroup isAttached size="xs" colorScheme="teal" ml={1}>
         <Tooltip placement="top" hasArrow={true} label={'Save Code in Asset Manager'} openDelay={400}>
           <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }} isDisabled={s.content.length === 0} size='xs' px={0}>
-            <MdFileUpload size="16px"/>
+            <MdFileUpload size="16px" />
           </Button>
         </Tooltip>
 
         <Tooltip placement="top" hasArrow={true} label={'Download Code'} openDelay={400}>
           <Button onClick={downloadCode} _hover={{ opacity: 0.7 }} size='xs' px={0}>
-            <MdFileDownload size="16px"/>
+            <MdFileDownload size="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>

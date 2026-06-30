@@ -92,6 +92,7 @@ export function Whiteboard(props: WhiteboardProps) {
   const [yLines, setYlines] = useState<Y.Array<Y.Map<any>> | null>(null);
   const [lines, setLines] = useState<Y.Map<any>[]>([]);
   const rCurrentLine = useRef<Y.Map<any>>();
+  const activeTouchCount = useRef(0);
 
   // Preview cursor state
   const [cursorPosition, setCursorPosition] = useState<{ x: number; y: number } | null>(null);
@@ -109,6 +110,26 @@ export function Whiteboard(props: WhiteboardProps) {
       const serialized = yLines.toJSON();
       updateAnnotation(props.boardId, { whiteboardLines: serialized });
     }
+  }
+
+  /**
+   * Cancel and remove the in-progress stroke (if any).  Called when a second
+   * touch finger arrives so the initial single-finger touch doesn't leave a
+   * tiny dot behind during a pan/zoom gesture.
+   */
+  function cancelInProgressStroke() {
+    const current = rCurrentLine.current;
+    if (!current || !yLines) {
+      rCurrentLine.current = undefined;
+      return;
+    }
+    // Remove the incomplete shape from the Yjs array
+    const index = yLines.toArray().indexOf(current);
+    if (index >= 0) {
+      yLines.delete(index, 1);
+    }
+    rCurrentLine.current = undefined;
+    setCursorPosition(null);
   }
 
   /**
@@ -214,6 +235,19 @@ export function Whiteboard(props: WhiteboardProps) {
    */
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
+      // Track active touch pointers to distinguish between single-finger draw
+      // and multi-touch gestures (handled by BackgroundLayer for pan/zoom).
+      if (e.pointerType === 'touch') {
+        activeTouchCount.current += 1;
+      }
+
+      // When a second finger arrives, cancel any in-progress stroke from the
+      // first finger so it doesn't leave a tiny dot behind.  Multi-touch is
+      // used for pan/zoom and should not create or modify strokes.
+      if (e.pointerType === 'touch' && activeTouchCount.current > 1) {
+        cancelInProgressStroke();
+        return;
+      }
       // Determine type based on current tool
       const type = primaryActionMode === 'rectangle' ? 'rectangle' : primaryActionMode === 'pen' ? 'line' : primaryActionMode === 'circle' ? 'circle' : primaryActionMode === 'arrow' ? 'arrow' : primaryActionMode === 'doubleArrow' ? 'doubleArrow' : 'eraser';
       if (type === 'eraser') return;
@@ -264,7 +298,15 @@ export function Whiteboard(props: WhiteboardProps) {
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
       if (!rCurrentLine.current) return;
-      if (!e.currentTarget.hasPointerCapture(e.pointerId) || e.pointerType === 'touch') return;
+      // For mouse / pen / touch we require an active pointer capture to avoid stray moves.
+      if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
+
+      // If multiple touch points are active, cancel the in-progress stroke
+      // and delegate to background pan/zoom logic.
+      if (e.pointerType === 'touch' && activeTouchCount.current > 1) {
+        cancelInProgressStroke();
+        return;
+      }
       const [x, y] = getPoint(e.clientX, e.clientY);
       setCursorPosition(primaryActionMode !== 'eraser' ? { x, y } : null);
 
@@ -302,6 +344,9 @@ export function Whiteboard(props: WhiteboardProps) {
    */
   const handlePointerUp = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
+      if (e.pointerType === 'touch' && activeTouchCount.current > 0) {
+        activeTouchCount.current -= 1;
+      }
       e.currentTarget.releasePointerCapture(e.pointerId);
       const current = rCurrentLine.current;
       if (!current) return;
@@ -543,7 +588,8 @@ export function Whiteboard(props: WhiteboardProps) {
           left: 0,
           top: 0,
           zIndex: 1000,
-          cursor: primaryActionMode === 'pen' ? 'crosshair' : 'eraser',
+        // Use a consistent crosshair cursor for all annotation tools
+        cursor: 'crosshair',
         }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}

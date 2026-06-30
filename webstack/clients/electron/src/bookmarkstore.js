@@ -29,11 +29,6 @@ const defaultBookmarks = [
     url: 'https://mini.sage3.app',
   },
   {
-    name: 'Chicago CodeCell',
-    id: genId(),
-    url: 'https://sagecell.evl.uic.edu',
-  },
-  {
     name: 'Hawaii',
     id: genId(),
     url: 'https://manoa.sage3.app',
@@ -56,6 +51,11 @@ const currentList = store.get('bookmarks', defaultBookmarks);
 const jsIdx = currentList.findIndex((el) => el.url == 'https://jetsage3.cis230038.projects.jetstream-cloud.org');
 if (jsIdx > -1) {
   currentList.splice(jsIdx, 1);
+}
+// Remove CodeCell if it exists
+const ccIdx = currentList.findIndex((el) => el.url == 'https://sagecell.evl.uic.edu');
+if (ccIdx > -1) {
+  currentList.splice(ccIdx, 1);
 }
 // Add it back to the store
 store.set('bookmarks', currentList);

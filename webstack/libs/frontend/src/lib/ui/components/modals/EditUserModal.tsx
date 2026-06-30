@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -18,6 +18,7 @@ import {
   InputLeftElement,
   Input,
   Button,
+  Box,
   Text,
   RadioGroup,
   Stack,
@@ -42,6 +43,8 @@ interface EditUserModalProps {
   onOpen: () => void;
   onClose: () => void;
 }
+
+const NAME_MAX = 50;
 
 export function EditUserModal(props: EditUserModalProps): JSX.Element {
   const { user, update } = useUser();
@@ -85,7 +88,7 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
   };
 
   const updateAccount = () => {
-    const newname = name.trim();
+    const newname = name.trim().substring(0, NAME_MAX);
     if (newname !== user?.data.name && update) {
       update({ name: newname });
     }
@@ -107,21 +110,26 @@ export function EditUserModal(props: EditUserModalProps): JSX.Element {
         <ModalBody>
           <FormControl mt="2">
             <FormLabel htmlFor="color">Name</FormLabel>
-
-            <InputGroup>
-              <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
-              <Input
-                ref={initialRef}
-                type="string"
-                placeholder={'Enter a username'}
-                _placeholder={{ opacity: 1, color: 'gray.600' }}
-                mr={0}
-                value={name}
-                onChange={handleNameChange}
-                onKeyDown={onSubmit}
-                isRequired={true}
-              />
-            </InputGroup>
+            <Box>
+              <InputGroup>
+                <InputLeftElement pointerEvents="none" children={<MdPerson size={'24px'} />} />
+                <Input
+                  ref={initialRef}
+                  type="string"
+                  placeholder={'Enter a username'}
+                  _placeholder={{ opacity: 1, color: 'gray.600' }}
+                  mr={0}
+                  value={name}
+                  onChange={handleNameChange}
+                  onKeyDown={onSubmit}
+                  isRequired={true}
+                  maxLength={NAME_MAX}
+                />
+              </InputGroup>
+              <Text fontSize="xs" textAlign="right" mt="1" color={name.length >= NAME_MAX ? 'red.400' : name.length >= NAME_MAX * 0.8 ? 'orange.400' : 'gray.400'}>
+                {name.length} / {NAME_MAX}
+              </Text>
+            </Box>
           </FormControl>
 
           <FormControl mt="2">

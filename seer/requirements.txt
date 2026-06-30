@@ -1,21 +1,6 @@
-# temp dependencies for pysage3
-httpx
-rectpack
-networkx
-graphviz
-pydantic>=2
-websocket-client
-redis
-requests
-ws4py
-celery~=5.2.2
-requests>=2.32.0 # not directly required, pinned by Snyk to avoid a vulnerability
-numpy>=1.22.2 # not directly required, pinned by Snyk to avoid a vulnerability
-urllib3>=2.2.2 # not directly required, pinned by Snyk to avoid a vulnerability
-
 # SAGE3
-git+https://github.com/SAGE-3/next.git@dev#subdirectory=foresight
-#pysage3
+#git+https://github.com/SAGE-3/next.git@dev#subdirectory=pysage3
+pysage3
 python-dotenv
 
 # Web API
@@ -27,7 +12,6 @@ uvicorn
 pydantic>=2.0.0
 
 # AI with langchain
-langchain_huggingface==0.1.0
 langchain-nvidia-ai-endpoints==0.3.3
 langchain_openai
 langchain_experimental
@@ -50,8 +34,7 @@ chromadb==0.5.16
 
 #Mesonet
 pandas
-matplotlib
-seaborn
+scipy
 
 # Logging
 fluent-logger

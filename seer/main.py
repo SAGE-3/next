@@ -25,8 +25,8 @@ load_dotenv()  # take environment variables from .env.
 logger = logging.getLogger("uvicorn.error")
 
 # SAGE3 API
-from foresight.config import config as conf, prod_type
-from foresight.Sage3Sugar.pysage3 import PySage3
+from pysage3.config import config as conf, prod_type
+from pysage3.client import PySage3
 
 # SAGE3 handle
 ps3 = PySage3(conf, prod_type)

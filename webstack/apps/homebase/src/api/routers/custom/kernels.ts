@@ -12,6 +12,20 @@ import { createProxyMiddleware } from 'http-proxy-middleware';
 
 import { config } from '../../../config';
 
+// Custom logger to control the logging of the proxy
+const logger = {
+  info: (...args: any[]) => {
+    // console.log('[PROXY][INFO]', ...args);
+    return; // Disable info logging for proxy
+  },
+  warn: (...args: any[]) => {
+    console.warn('[Kernels Proxy][WARN]', ...args);
+  },
+  error: (...args: any[]) => {
+    console.error('[Kernels Proxy][ERROR]', ...args);
+  },
+};
+
 /**
  * Route forwarding the kernels calls to the sage kernels server
  */
@@ -22,41 +36,42 @@ export function KernelsRouter() {
     target: config.kernels.url,
     changeOrigin: true,
     pathRewrite: { '^/api/kernels': '' },
-    logLevel: 'warn', // 'debug' | 'info' | 'warn' | 'error' | 'silent'
-    logProvider: () => console,
+    logger: logger,
     selfHandleResponse: true, // Add this to handle the response manually
     // request handler making sure the body is parsed before proxying
-    onProxyReq: restream,
-    onProxyRes: (proxyRes, req, res) => {
-      let data = '';
+    on: {
+      proxyReq: restream,
+      proxyRes: (proxyRes, req, res) => {
+        let data = '';
 
-      // Only for SSE routes
-      if (req.path.includes('stream')) {
-        res.writeHead(200, {
-          'Cache-Control': 'no-cache',
-          Connection: 'keep-alive',
-          'Content-Type': 'text/event-stream',
-        });
-        proxyRes.on('data', (chunk) => {
-          data += chunk;
-          res.write(chunk);
-          res.flush();
-        });
+        // Only for SSE routes
+        if (req.path.includes('stream')) {
+          res.writeHead(200, {
+            'Cache-Control': 'no-cache',
+            Connection: 'keep-alive',
+            'Content-Type': 'text/event-stream',
+          });
+          proxyRes.on('data', (chunk) => {
+            data += chunk;
+            res.write(chunk);
+            // res.flush();
+          });
 
-        proxyRes.on('end', () => {
-          res.write(data);
-          res.end();
-        });
-      } else {
-        // Handle other routes normally
-        proxyRes.on('data', (chunk) => {
-          res.write(chunk);
-        });
+          proxyRes.on('end', () => {
+            res.write(data);
+            res.end();
+          });
+        } else {
+          // Handle other routes normally
+          proxyRes.on('data', (chunk) => {
+            res.write(chunk);
+          });
 
-        proxyRes.on('end', () => {
-          res.end();
-        });
-      }
+          proxyRes.on('end', () => {
+            res.end();
+          });
+        }
+      },
     },
   });
 

@@ -210,8 +210,17 @@ function ToolbarComponent(props: App): JSX.Element {
                 downloadFile(dl, filename);
               } else {
                 const url = s.assetid;
-                const filename = getFilenameFromUrl(url) || "image.jpg";
-                downloadViaProxy(url, filename);
+                // Check if url is a data URL
+                if (url.startsWith('data:image/png;base64,')) {
+                  const title = props.data.title || "image.png";
+                  downloadFile(url, title);
+                } else if (url.startsWith('data:image/jpeg;base64,')) {
+                  const title = props.data.title || "image.jpg";
+                  downloadFile(url, title);
+                } else {
+                  const filename = getFilenameFromUrl(url) || "image.jpg";
+                  downloadViaProxy(url, filename);
+                }
               }
             }}
             size='xs'
