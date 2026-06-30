@@ -59,6 +59,9 @@ pipeline {
                         ssh ${DEPLOY_USER}@${STAGING_HOST} '
                             mkdir -p ${APP_DIR} &&
                             cd ${APP_DIR} &&
+                            [ -f .env ] || (echo "ERREUR: .env absent — SAGE3_SERVER et LDAP_BIND_PASSWORD requis" && exit 1) &&
+                            grep -q LDAP_BIND_PASSWORD .env || (echo "ERREUR: LDAP_BIND_PASSWORD absent du .env" && exit 1) &&
+                            git config --global --add safe.directory ${APP_DIR} 2>/dev/null || true &&
                             if [ -d .git ]; then
                                 git fetch origin ${BRANCH} && git checkout ${BRANCH} && git pull origin ${BRANCH}
                             else
@@ -66,6 +69,12 @@ pipeline {
                                 cp -r /tmp/sage3-stg/. . &&
                                 rm -rf /tmp/sage3-stg
                             fi &&
+                            LDAP_PASS=\$(grep LDAP_BIND_PASSWORD .env | cut -d= -f2) &&
+                            cp deployment/configurations/node/sage3-staging.hjson deployment/configurations/node/sage3-prod.hjson &&
+                            sed -i "s/CHANGE_ME_LDAP_PASS/\${LDAP_PASS}/" deployment/configurations/node/sage3-prod.hjson &&
+                            cp .env deployment/.env &&
+                            grep -q NODE_SERVER_REPLICAS deployment/.env    || echo NODE_SERVER_REPLICAS=1     >> deployment/.env &&
+                            grep -q NODE_FILE_SERVER_REPLICAS deployment/.env || echo NODE_FILE_SERVER_REPLICAS=1 >> deployment/.env &&
                             docker compose -f deployment/docker-compose-amd64.yml \
                                 -f deployment/docker-compose.registry-override.yml pull &&
                             docker compose -f deployment/docker-compose-amd64.yml \
