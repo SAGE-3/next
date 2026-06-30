@@ -32,7 +32,6 @@ const providerToRoleMap = {
   ldap: 'user',
   spectator: 'spectator',
   guest: 'guest',
-  local: 'local',
 };
 
 // Conversion to RoleArg

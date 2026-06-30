@@ -31,21 +31,57 @@ import {
   SBAuthSpectatorConfig,
   passportKeycloakSetup,
   SBAuthKeycloakConfig,
+  passportLDAPSetup,
+  SBAuthLDAPConfig,
 } from './adapters/';
 
 export type SBAuthConfig = {
   sessionMaxAge: number;
   sessionSecret: string;
-  strategies: ('google' | 'apple' | 'cilogon' | 'guest' | 'jwt' | 'spectator' | 'keycloak')[];
+  strategies: ('google' | 'apple' | 'cilogon' | 'guest' | 'jwt' | 'spectator' | 'keycloak' | 'ldap')[];
   production: boolean;
   googleConfig?: SBAuthGoogleConfig;
   appleConfig?: SBAuthAppleConfig;
   jwtConfig?: SBAuthJWTConfig;
   guestConfig?: SBAuthGuestConfig;
   cilogonConfig?: SBAuthCILogonConfig;
+  ldapConfig?: SBAuthLDAPConfig;
   spectatorConfig?: SBAuthSpectatorConfig;
   keycloakConfig?: SBAuthKeycloakConfig;
 };
+
+/** Minimal passport surface needed by the LDAP route handler (eases testing). */
+type LdapAuthenticator = { authenticate: typeof passport.authenticate };
+
+/**
+ * Builds the POST /auth/ldap route handler.
+ *
+ * Extracted from init() so the double-response guard is unit-testable:
+ * ldapauth-fork can emit a late connection 'error' that re-invokes the
+ * passport callback after we've already responded, which would otherwise
+ * throw "Cannot set headers after they are sent to the client".
+ *
+ * @param passportInstance passport, or a test double exposing `authenticate`
+ */
+export function makeLdapAuthHandler(passportInstance: LdapAuthenticator) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    passportInstance.authenticate('ldapauth', (err: Error | null, user: Express.User | false) => {
+      // ldapauth-fork can emit a late connection 'error' after we've already
+      // responded (e.g. on connection teardown), which re-invokes this callback.
+      // Guard against a double response that otherwise throws
+      // "Cannot set headers after they are sent to the client".
+      if (res.headersSent) return;
+      if (err || !user) {
+        return res.redirect('/?error=ldap_failed');
+      }
+      req.logIn(user, (loginErr: Error) => {
+        if (res.headersSent) return;
+        if (loginErr) return next(loginErr);
+        return res.redirect('/');
+      });
+    })(req, res, next);
+  };
+}
 
 /**
  * The SBAuth instance.
@@ -244,6 +280,12 @@ export class SBAuth {
           );
           express.get(config.keycloakConfig.callbackURL, this.createOAuthCallbackHandler('keycloak', 'keycloak'));
         }
+      }
+
+      // LDAP / Active Directory Setup
+      if (config.strategies.includes('ldap') && config.ldapConfig) {
+        passportLDAPSetup(config.ldapConfig);
+        express.post('/auth/ldap', makeLdapAuthHandler(passport));
       }
     }
 
