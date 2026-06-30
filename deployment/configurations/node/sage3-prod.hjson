@@ -174,7 +174,7 @@
     },
     // LDAP / Active Directory configuration
     "ldapConfig": {
-      "url": "ldap://192.168.1.37",
+      "url": "ldaps://192.168.1.37",
       "bindDN": "CN=svc-sage3,CN=Users,DC=lab,DC=local",
       "bindCredentials": "CHANGE_ME_LDAP_PASS",
       "searchBase": "DC=lab,DC=local",
