@@ -75,6 +75,7 @@
       "text": {
         "url": "https://dev-sage3-us2.openai.azure.com",
         "model": "gpt-4.1-mini",
+        "apiKey": "",
         "api_version": "2024-12-01-preview"
       },
       "embedding": {

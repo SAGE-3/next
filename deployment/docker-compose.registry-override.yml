@@ -17,3 +17,12 @@ services:
       - IS_PERSISTENT=TRUE
       - CHROMA_SERVER_AUTHN_PROVIDER=
       - CHROMA_SERVER_AUTHN_CREDENTIALS=
+  seer:
+    # Désactiver l'auth chromadb côté client (pas de credentials)
+    environment:
+      - ENVIRONMENT=production
+      - SAGE3_SERVER=${SAGE3_SERVER}
+      - TOKEN=${TOKEN}
+      - CHROMA_SERVER_AUTHN_PROVIDER=
+      - CHROMA_CLIENT_AUTH_PROVIDER=
+      - CHROMA_CLIENT_AUTH_CREDENTIALS=
