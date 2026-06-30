@@ -136,7 +136,7 @@
       "guest",
       "spectator",
       "jwt",
-      "ldapauth"
+      "ldap"
     ],
     // A List of emails to enable those users to be admins.
     "admins": [],
