@@ -59,7 +59,13 @@ pipeline {
                         ssh ${DEPLOY_USER}@${STAGING_HOST} '
                             mkdir -p ${APP_DIR} &&
                             cd ${APP_DIR} &&
-                            git pull 2>/dev/null || git clone --branch ${BRANCH} ${GITEA_REPO} . &&
+                            if [ -d .git ]; then
+                                git fetch origin ${BRANCH} && git checkout ${BRANCH} && git pull origin ${BRANCH}
+                            else
+                                git clone --branch ${BRANCH} ${GITEA_REPO} /tmp/sage3-stg &&
+                                cp -r /tmp/sage3-stg/. . &&
+                                rm -rf /tmp/sage3-stg
+                            fi &&
                             docker compose -f deployment/docker-compose-amd64.yml \
                                 -f deployment/docker-compose.registry-override.yml pull &&
                             docker compose -f deployment/docker-compose-amd64.yml \
@@ -92,7 +98,13 @@ pipeline {
                             cd ${APP_DIR} &&
                             [ -f .env ] || (echo "ERREUR: .env absent — SAGE3_SERVER et LDAP_BIND_PASSWORD requis" && exit 1) &&
                             grep -q LDAP_BIND_PASSWORD .env || (echo "ERREUR: LDAP_BIND_PASSWORD absent du .env" && exit 1) &&
-                            git pull 2>/dev/null || git clone --branch ${BRANCH} ${GITEA_REPO} . &&
+                            if [ -d .git ]; then
+                                git fetch origin ${BRANCH} && git checkout ${BRANCH} && git pull origin ${BRANCH}
+                            else
+                                git clone --branch ${BRANCH} ${GITEA_REPO} /tmp/sage3-deploy &&
+                                cp -r /tmp/sage3-deploy/. . &&
+                                rm -rf /tmp/sage3-deploy
+                            fi &&
                             LDAP_PASS=\$(grep LDAP_BIND_PASSWORD .env | cut -d= -f2) &&
                             sed -i "s/CHANGE_ME_LDAP_PASS/\${LDAP_PASS}/" deployment/configurations/node/sage3-prod.hjson &&
                             docker compose -f deployment/docker-compose-amd64.yml \
