@@ -8,7 +8,7 @@
   "port_files": 3002,
 
    // Name of the server to show in the UI
-  "serverName": "My Local Server",
+  "serverName": "SAGE3 - Hospilibre",
 
   // These can be left alone, they are used to find the assets
   "root": ".",
@@ -132,12 +132,10 @@
     // Which login strategies to enable for the server. 
     // If you enbable them ensure you add the relevant config information below.
     "strategies": [
-      "google",
-      "cilogon",
       "guest",
       "spectator",
-      // "keycloak",
-      "jwt"
+      "jwt",
+      "ldapauth"
     ],
     // A List of emails to enable those users to be admins.
     "admins": [],
@@ -173,29 +171,21 @@
       // JWT Route endpoint
       "routeEndpoint": "/auth/jwt"
     },
-    // Keycloak (or any OpenID Connect provider) configuration
-    // "keycloakConfig": {
-      // Full Keycloak realm URL — Keycloak will autodiscover all OIDC endpoints from this
-      // "issuerURL": "http://localhost:8080/realms/sage3",
-      // Client ID created in the Keycloak realm
-      // "clientID": "sage3-local",
-      // Client Secret (leave empty for public clients)
-      // "clientSecret": "",
-      // Endpoint to initiate Keycloak login
-      // "routeEndpoint": "/auth/keycloak",
-      // Must match the redirect URI configured in your Keycloak client
-      // "callbackURL": "/auth/keycloak/redirect"
-    // }
-    // CILogon configuration
-    "cilogonConfig": {
-      // Client ID from CILogon
-      "clientID": "",
-      // Client Secret from CILogon
-      "clientSecret": "",
-      // Endpoint for the cilogon login
-      "routeEndpoint": "/auth/cilogon",
-      // Callback URL for the cilogon login
-      "callbackURL": "/auth/cilogon/redirect"
+    // LDAP / Active Directory configuration
+    "ldapConfig": {
+      "url": "ldap://192.168.1.37",
+      "bindDN": "CN=Administrator,CN=Users,DC=lab,DC=local",
+      "bindCredentials": "CHANGE_ME_LDAP_PASS",
+      "searchBase": "DC=lab,DC=local",
+      "searchFilter": "(sAMAccountName={{username}})",
+      "groupMapping": {
+        "admin": "CN=Domain Admins,CN=Users,DC=lab,DC=local",
+        "user": "CN=Domain Users,CN=Users,DC=lab,DC=local"
+      },
+      "defaultRole": "user",
+      "tlsOptions": {
+        "rejectUnauthorized": false
+      }
     }
   },
   // Namespace for signing UUID v5 keys: generate yours or https://www.uuidtools.com/generate/v4

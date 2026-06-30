@@ -1,0 +1,9 @@
+# Override des images custom SAGE3 vers le registry local Gitea
+# Usage : docker compose -f deployment/docker-compose-amd64.yml -f deployment/docker-compose.registry-override.yml up -d
+services:
+  node-server:
+    image: 192.168.1.30:3000/gitea-admin/sage3-node-server:latest
+  yjs-server:
+    image: 192.168.1.30:3000/gitea-admin/sage3-yjs:latest
+  files-server:
+    image: 192.168.1.30:3000/gitea-admin/sage3-files:latest
