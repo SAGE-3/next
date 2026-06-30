@@ -190,5 +190,5 @@
     }
   },
   // Namespace for signing UUID v5 keys: generate yours or https://www.uuidtools.com/generate/v4
-  "namespace": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+  "namespace": "748d8e16-1775-4057-bd1e-08cacd5066ad"
 }
