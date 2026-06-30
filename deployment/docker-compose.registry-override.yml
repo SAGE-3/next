@@ -12,17 +12,15 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
   chromadb:
-    # Désactiver l'auth chromadb pour le déploiement local (pas de credentials configurés)
     environment:
       - IS_PERSISTENT=TRUE
-      - CHROMA_SERVER_AUTHN_PROVIDER=
-      - CHROMA_SERVER_AUTHN_CREDENTIALS=
+      - CHROMA_SERVER_AUTHN_PROVIDER=chromadb.auth.basic_authn.BasicAuthenticationServerProvider
+      - CHROMA_SERVER_AUTHN_CREDENTIALS=sage3:$2b$04$6tt3ybouU/e9CMP/C68i2OPS5ywhhzoG7yPiaa4bHLrCGU5dn1AUa
   seer:
-    # Désactiver l'auth chromadb côté client (pas de credentials)
     environment:
       - ENVIRONMENT=production
       - SAGE3_SERVER=${SAGE3_SERVER}
       - TOKEN=${TOKEN}
       - CHROMA_SERVER_AUTHN_PROVIDER=
-      - CHROMA_CLIENT_AUTH_PROVIDER=
-      - CHROMA_CLIENT_AUTH_CREDENTIALS=
+      - CHROMA_CLIENT_AUTH_PROVIDER=chromadb.auth.basic_authn.BasicAuthClientProvider
+      - CHROMA_CLIENT_AUTH_CREDENTIALS=sage3:ChromaDB2026!
