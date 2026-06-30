@@ -98,6 +98,7 @@ pipeline {
                             cd ${APP_DIR} &&
                             [ -f .env ] || (echo "ERREUR: .env absent — SAGE3_SERVER et LDAP_BIND_PASSWORD requis" && exit 1) &&
                             grep -q LDAP_BIND_PASSWORD .env || (echo "ERREUR: LDAP_BIND_PASSWORD absent du .env" && exit 1) &&
+                            git config --global --add safe.directory ${APP_DIR} 2>/dev/null || true &&
                             if [ -d .git ]; then
                                 git fetch origin ${BRANCH} && git checkout ${BRANCH} && git pull origin ${BRANCH}
                             else
