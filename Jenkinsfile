@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    parameters {
+        choice(name: 'DEPLOY_TARGET', choices: ['staging', 'production', 'none'], description: 'Cible de déploiement')
+    }
+
     environment {
         BUILDER_HOST = '192.168.1.38'
         STAGING_HOST = '192.168.1.33'
@@ -46,13 +50,7 @@ pipeline {
         }
 
         stage('Deploy Staging') {
-            when {
-                anyOf {
-                    branch 'staging'
-                    branch 'staging/*'
-                    branch 'feature/*'
-                }
-            }
+            when { expression { params.DEPLOY_TARGET == 'staging' } }
             steps {
                 sshagent(credentials: ['jenkins-deploy-key']) {
                     sh """
@@ -86,15 +84,7 @@ pipeline {
         }
 
         stage('Deploy Production') {
-            when {
-                not {
-                    anyOf {
-                        branch 'staging'
-                        branch 'staging/*'
-                        branch 'feature/*'
-                    }
-                }
-            }
+            when { expression { params.DEPLOY_TARGET == 'production' } }
             input {
                 message 'Déployer SAGE3 en production ?'
                 ok 'Déployer'
@@ -132,7 +122,7 @@ pipeline {
     }
 
     post {
-        success { echo "Pipeline SAGE3 OK — branche ${env.BRANCH_NAME}" }
-        failure { echo "Pipeline SAGE3 ECHEC — branche ${env.BRANCH_NAME}" }
+        success { echo "Pipeline SAGE3 OK — cible: ${params.DEPLOY_TARGET}" }
+        failure { echo "Pipeline SAGE3 ECHEC — cible: ${params.DEPLOY_TARGET}" }
     }
 }
