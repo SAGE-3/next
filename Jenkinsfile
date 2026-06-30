@@ -72,9 +72,12 @@ pipeline {
 
         stage('Deploy Production') {
             when {
-                anyOf {
-                    branch 'main'
-                    branch 'pr/ldap-local-auth'
+                not {
+                    anyOf {
+                        branch 'staging'
+                        branch 'staging/*'
+                        branch 'feature/*'
+                    }
                 }
             }
             input {
