@@ -8,15 +8,11 @@
 
 import { useEffect, useCallback, useState } from 'react';
 
-import {
-  Button, ButtonGroup, IconButton, Box, useColorMode, Image, Text, VStack, useToast,
-  Input, FormControl, FormLabel, InputGroup, InputRightElement,
-} from '@chakra-ui/react';
+import { Button, ButtonGroup, IconButton, Box, useColorMode, Image, Text, VStack, useColorModeValue, useToast } from '@chakra-ui/react';
 
 import { FcGoogle } from 'react-icons/fc';
-import { FaGhost, FaApple, FaLock } from 'react-icons/fa';
+import { FaGhost, FaApple } from 'react-icons/fa';
 import { SiKeycloak } from 'react-icons/si';
-import { MdLogin } from 'react-icons/md';
 
 import { isElectron, useAuth, useRouteNav, GetServerInfo } from '@sage3/frontend';
 
@@ -30,6 +26,7 @@ export function LoginPage() {
   const { auth, googleLogin, appleLogin, ciLogin, keycloakLogin, guestLogin, spectatorLogin, loading: authLoading } = useAuth();
   const { toCreateUser } = useRouteNav();
   const toast = useToast();
+
   const [serverName, setServerName] = useState<string>('');
   const [shouldDisable, setShouldDisable] = useState(false);
   const [logins, setLogins] = useState<string[]>([]);
@@ -62,18 +59,25 @@ export function LoginPage() {
 
       if (savedContext) {
         const context = JSON.parse(savedContext);
+        console.log('Board Context: Retrieved from localStorage:', context);
 
         // Check if context is not too old (24 hours)
         const isRecent = Date.now() - context.timestamp < 24 * 60 * 60 * 1000;
+        const age = Date.now() - context.timestamp;
 
         if (isRecent && context.roomId && context.boardId) {
+          console.log(`Board Context: Valid context found (age: ${Math.round(age / 1000)}s)`);
           return context;
         } else {
+          // Remove old context
+          console.log(`Board Context: Removing stale context (age: ${Math.round(age / 1000)}s, isRecent: ${isRecent})`);
           localStorage.removeItem('sage3_pending_board');
         }
+      } else {
+        console.log('Board Context: No saved context found');
       }
     } catch (error) {
-      console.error('Board Context: Error reading saved context:', error);
+      console.warn('Board Context: Error reading saved context:', error);
       localStorage.removeItem('sage3_pending_board');
     }
     return null;
@@ -101,8 +105,9 @@ export function LoginPage() {
 
         try {
           localStorage.setItem('sage3_pending_board', JSON.stringify(boardContext));
+          console.log('Board Context: Preserved from returnTo parameter:', boardContext);
         } catch (error) {
-          console.error('Board Context: Failed to preserve context:', error);
+          console.warn('Board Context: Failed to preserve context:', error);
         }
       }
     }
@@ -186,10 +191,6 @@ export function LoginPage() {
           title = 'Keycloak OAuth Error';
           description = 'Keycloak returned an authentication error. Please try again.';
           break;
-        case 'ldap_failed':
-          title = 'LDAP Login Failed';
-          description = 'Invalid username or password, or the directory could not be reached. Please try again.';
-          break;
         default:
           title = 'Authentication Error';
           description = `Unknown authentication error: ${error}`;
@@ -230,14 +231,20 @@ export function LoginPage() {
    * Initializes page and retrieves server information
    */
   useEffect(() => {
+    console.log('Login Page: Initializing');
     document.title = 'SAGE3 - Login';
 
     GetServerInfo().then((conf) => {
+      console.log('Login Page: Server info received:', { serverName: conf.serverName, logins: conf.logins });
       if (conf.serverName) setServerName(conf.serverName);
       if (conf.logins) setLogins(conf.logins);
     });
 
+    // Preserve board context from URL parameters before checking for errors
     preserveBoardContext();
+
+    // Check for authentication errors on page load
+    console.log('Login Page: Checking for auth errors in URL:', window.location.search);
     checkAuthErrors();
   }, [checkAuthErrors, preserveBoardContext]);
 
@@ -260,47 +267,48 @@ export function LoginPage() {
    * Handles authentication state changes - ONLY checks for auth, not user accounts
    */
   const authNavCheck = useCallback(() => {
-    if (authLoading) return;
+    // Log authentication state for debugging
+    console.log('Auth State Check:', {
+      auth: auth ? { id: auth.id, provider: auth.provider, email: auth.email } : null,
+      authLoading,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Don't make decisions while still loading auth
+    if (authLoading) {
+      console.log('Auth Check: Still loading auth state, waiting...');
+      return;
+    }
 
     if (auth) {
-      // Preserve saved board context — let account page handle it
-      getSavedBoardContext();
+      console.log('Auth Success: Authentication present, redirecting to account creation/validation');
 
+      // Check for saved board context first to preserve it
+      const savedContext = getSavedBoardContext();
+      if (savedContext) {
+        console.log('Auth Success: Found saved board context, preserving for account page');
+        // Keep the context - don't remove it here, let account page handle it
+      }
+
+      // Check for returnTo URL parameter
       const returnTo = getReturnToUrl();
       if (returnTo) {
+        console.log('Auth Success: Found returnTo parameter, passing to account creation');
         toCreateUser(returnTo);
       } else {
+        console.log('Auth Success: No returnTo, going to account creation page');
         toCreateUser();
       }
+    } else if (!auth && !authLoading) {
+      console.log('Auth Check: No authentication present (normal unauthenticated state)');
+    } else {
+      console.log('Auth Check: Auth loading in progress');
     }
   }, [auth, authLoading, toCreateUser]);
 
   useEffect(() => {
     authNavCheck();
   }, [authNavCheck]);
-
-  const [ldapUsername, setLdapUsername] = useState('');
-  const [ldapPassword, setLdapPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [ldapLoading, setLdapLoading] = useState(false);
-
-  const handleLdapLogin = async () => {
-    if (!ldapUsername || !ldapPassword) return;
-    setLdapLoading(true);
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = '/auth/ldap';
-    const u = document.createElement('input');
-    u.name = 'username';
-    u.value = ldapUsername;
-    const p = document.createElement('input');
-    p.name = 'password';
-    p.value = ldapPassword;
-    form.appendChild(u);
-    form.appendChild(p);
-    document.body.appendChild(form);
-    form.submit();
-  };
 
   const { colorMode } = useColorMode();
 
@@ -428,81 +436,20 @@ export function LoginPage() {
             </ButtonGroup>
           )}
 
-          {/* LDAP / Active Directory Login */}
-          {logins.includes('ldap') && (
-            <VStack spacing={2} width="100%">
-              <FormControl>
-                <FormLabel fontSize="sm">Username</FormLabel>
-                <InputGroup>
-                  <Input
-                    placeholder="username"
-                    value={ldapUsername}
-                    onChange={(e) => setLdapUsername(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleLdapLogin()}
-                    autoComplete="username"
-                  />
-                </InputGroup>
-              </FormControl>
-              <FormControl>
-                <FormLabel fontSize="sm">Password</FormLabel>
-                <InputGroup>
-                  <Input
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="password"
-                    value={ldapPassword}
-                    onChange={(e) => setLdapPassword(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleLdapLogin()}
-                    autoComplete="current-password"
-                  />
-                  <InputRightElement>
-                    <IconButton
-                      aria-label="Show password"
-                      icon={<FaLock />}
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => setShowPassword(!showPassword)}
-                    />
-                  </InputRightElement>
-                </InputGroup>
-              </FormControl>
-              <ButtonGroup isAttached size="lg" width="100%">
-                <IconButton
-                  width="80px"
-                  aria-label="Login with AD"
-                  icon={<MdLogin size="26" />}
-                  pointerEvents="none"
-                  borderRight={`3px solid`}
-                  borderColor={colorMode === 'light' ? 'gray.50' : 'gray.800'}
-                />
-                <Button
-                  width="100%"
-                  justifyContent="left"
-                  isLoading={ldapLoading}
-                  isDisabled={shouldDisable || !ldapUsername || !ldapPassword}
-                  onClick={handleLdapLogin}
-                >
-                  Login with AD
-                </Button>
-              </ButtonGroup>
-            </VStack>
-          )}
-
           {/* Guest Auth Service */}
-          {logins.includes('guest') && (
-            <ButtonGroup isAttached size="lg" width="100%">
-              <IconButton
-                width="80px"
-                aria-label="Login with Guest"
-                icon={<FaGhost size="30" width="50px" />}
-                pointerEvents="none"
-                borderRight={`3px solid`}
-                borderColor={colorMode === 'light' ? 'gray.50' : 'gray.800'}
-              />
-              <Button width="100%" isDisabled={shouldDisable} justifyContent="left" onClick={guestLogin}>
-                Login as Guest
-              </Button>
-            </ButtonGroup>
-          )}
+          <ButtonGroup isAttached size="lg" width="100%">
+            <IconButton
+              width="80px"
+              aria-label="Login with Guest"
+              icon={<FaGhost size="30" width="50px" />}
+              pointerEvents="none"
+              borderRight={`3px solid`}
+              borderColor={colorMode === 'light' ? 'gray.50' : 'gray.800'}
+            />
+            <Button width="100%" isDisabled={shouldDisable || !logins.includes('guest')} justifyContent="left" onClick={guestLogin}>
+              Login as Guest
+            </Button>
+          </ButtonGroup>
         </VStack>
       </Box>
     </Box>

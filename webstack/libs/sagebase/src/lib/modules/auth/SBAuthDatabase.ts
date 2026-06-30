@@ -9,14 +9,6 @@
 import { RedisClientType, SchemaFieldTypes } from 'redis';
 import { v4 } from 'uuid';
 
-// Extra profile data passed from auth providers when creating/finding auth records
-export type AuthExtras = {
-  displayName?: string;
-  email?: string;
-  picture?: string;
-  role?: string;
-};
-
 // The Auth Schema
 export type SBAuthSchema = {
   provider: string;
@@ -49,15 +41,17 @@ class SBAuthDatabase {
   }
 
   public async deleteAllTemporaryAccounts(): Promise<void> {
-    // Delete all keys with the prefix 'guest'
+    // Delte all keys with the prefix 'guest'
     const guestKeys = await this._redisClient.keys(`${this._prefix}:guest*`);
     for (const key of guestKeys) {
       await this._redisClient.del(key);
     }
+    console.log('SBAuth> Deleted all guest accounts. Count:', guestKeys.length);
     const spectatorKeys = await this._redisClient.keys(`${this._prefix}:spectator*`);
     for (const key of spectatorKeys) {
       await this._redisClient.del(key);
     }
+    console.log('SBAuth> Deleted all spectator accounts. Count:', spectatorKeys.length);
   }
 
   /**
@@ -66,8 +60,8 @@ class SBAuthDatabase {
   private async createIndex(): Promise<void> {
     try {
       await this._redisClient.ft.dropIndex(this._indexName);
-    } catch {
-      // Index does not exist yet — will be created below
+    } catch (error) {
+      console.log('Index doesnt exist yet, creating it now.');
     }
     await this._redisClient.ft.create(
       this._indexName,
@@ -100,7 +94,7 @@ class SBAuthDatabase {
    * @param providerId The unique id for the provider
    * @returns {SBAuthSchema|undered} returns an SBAuthSchema if one was found or added succesfully.
    */
-  public async findOrAddAuth(provider: string, providerId: string, extras?: AuthExtras): Promise<SBAuthSchema | undefined> {
+  public async findOrAddAuth(provider: string, providerId: string, extras?: any): Promise<SBAuthSchema | undefined> {
     let auth = await this.readAuth(provider, providerId);
     if (auth != undefined) {
       return auth;
@@ -116,14 +110,14 @@ class SBAuthDatabase {
    * @param providerId The unique id for the provider
    * @returns {SBAuthSchema|undered} returns an SBAuthscema if add was successful
    */
-  public async addAuth(provider: string, providerId: string, extras?: AuthExtras): Promise<SBAuthSchema | undefined> {
+  public async addAuth(provider: string, providerId: string, extras: any): Promise<SBAuthSchema | undefined> {
     const doc = {
       provider,
       providerId,
       id: v4(),
-      displayName: extras?.displayName,
-      email: extras?.email,
-      picture: extras?.picture,
+      displayName: extras.displayName,
+      email: extras.email,
+      picture: extras.picture,
     } as SBAuthSchema;
     const key = provider + providerId;
     const redisRes = await this._redisClient.json.set(`${this._prefix}:${key}`, '.', doc);
@@ -146,7 +140,7 @@ class SBAuthDatabase {
       const response = await this._redisClient.json.get(`${this._prefix}:${key}`);
       return response as SBAuthSchema;
     } catch (error) {
-      this.ERRORLOG(error);
+      console.log('SAGEBase SBAuthDatabase error> ', error);
       return undefined;
     }
   }
@@ -161,22 +155,30 @@ class SBAuthDatabase {
       const response = await this._redisClient.ft.search(this._indexName, `@email:{${escapedQuery}}`);
       const docs = response.documents;
       if (docs.length > 1) {
-        console.error('SBAuth> Multiple auth records found for email:', email);
+        console.log('SBAuth> Error Found Multiple Auths with the same email');
+        console.log(docs);
         return undefined;
       } else if (docs.length == 0) {
         return undefined;
       } else {
+        // Delete the auth
         const provider = docs[0].value.provider as string;
         const providerId = docs[0].value.providerId as string;
         if (provider && providerId) {
           const result = await this.deleteAuth(provider, providerId);
-          return result ? (docs[0].value as SBAuthSchema) : undefined;
+          if (result) {
+            console.log('SBAuth> Auth Deleted', provider, providerId);
+            return docs[0].value as SBAuthSchema;
+          } else {
+            return undefined;
+          }
         } else {
+          console.log('SBAuth> Error Auth not found');
           return undefined;
         }
       }
     } catch (error) {
-      this.ERRORLOG(error);
+      console.log('SAGEBase> SBAuthDatabase error', error);
       return undefined;
     }
   }
@@ -197,9 +199,9 @@ class SBAuthDatabase {
   }
 
   private ERRORLOG(error: unknown) {
-    console.error('SAGEBase SBAuthDatabase ERROR: ', error);
+    console.log('SAGEBase SBAuthDatabase ERROR: ', error);
   }
 }
 
-export { SBAuthDatabase };
+export type { SBAuthDatabase };
 export const SBAuthDB = new SBAuthDatabase();

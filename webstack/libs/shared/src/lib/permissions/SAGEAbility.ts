@@ -59,10 +59,19 @@ const config: AbilityConfig = {
   abilites: [
     { role: ['admin'], resource: ['all'], action: ['all'] },
     { role: ['user'], resource: ['all'], action: ['all'] },
-    { role: ['guest'], resource: ['presence', 'users'], action: ['create', 'read', 'update', 'sub', 'unsub'] },
-    { role: ['guest'], resource: ['all'], action: ['read', 'sub', 'unsub'] },
+    { role: ['guest'], resource: ['apps', 'presence', 'users'], action: ['create', 'read', 'update', 'sub', 'unsub'] },
+    { role: ['guest'], resource: ['apps'], action: ['resize', 'move', 'lasso'] },
+    {
+      role: ['guest'],
+      resource: ['all'],
+      action: ['read', 'sub', 'unsub'],
+    },
     { role: ['guest'], resource: ['assets'], action: ['download'] },
-    { role: ['spectator'], resource: ['all'], action: ['read', 'sub', 'unsub'] },
+    {
+      role: ['spectator'],
+      resource: ['all'],
+      action: ['read', 'sub', 'unsub'],
+    },
     { role: ['spectator'], resource: ['assets'], action: ['download'] },
   ],
 };

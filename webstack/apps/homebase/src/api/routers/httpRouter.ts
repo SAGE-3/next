@@ -58,7 +58,7 @@ export function expressAPIRouter(): express.Router {
   router.use('/logs', LogsRouter());
 
   // Authenticate all API Routes
- router.use(SAGEBase.Auth.authenticate);
+  router.use(SAGEBase.Auth.authenticate);
 
   // Kernels Routes
   router.use('/kernels', KernelsRouter());

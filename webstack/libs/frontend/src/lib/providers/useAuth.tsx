@@ -83,6 +83,7 @@ async function spectatorLogin(): Promise<void> {
 }
 
 /**
+ * Logout the user out of the current session and user
  */
 async function logout(): Promise<void> {
   const res = await fetch('/auth/logout', {

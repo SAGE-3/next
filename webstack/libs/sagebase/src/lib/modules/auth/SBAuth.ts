@@ -31,22 +31,18 @@ import {
   SBAuthSpectatorConfig,
   passportKeycloakSetup,
   SBAuthKeycloakConfig,
-  passportLDAPSetup,
-  SBAuthLDAPConfig,
 } from './adapters/';
-
 
 export type SBAuthConfig = {
   sessionMaxAge: number;
   sessionSecret: string;
-  strategies: ('google' | 'apple' | 'cilogon' | 'guest' | 'jwt' | 'spectator' | 'keycloak' | 'ldap')[];
+  strategies: ('google' | 'apple' | 'cilogon' | 'guest' | 'jwt' | 'spectator' | 'keycloak')[];
   production: boolean;
   googleConfig?: SBAuthGoogleConfig;
   appleConfig?: SBAuthAppleConfig;
   jwtConfig?: SBAuthJWTConfig;
   guestConfig?: SBAuthGuestConfig;
   cilogonConfig?: SBAuthCILogonConfig;
-  ldapConfig?: SBAuthLDAPConfig;
   spectatorConfig?: SBAuthSpectatorConfig;
   keycloakConfig?: SBAuthKeycloakConfig;
 };
@@ -71,6 +67,16 @@ export class SBAuth {
    */
   private createOAuthCallbackHandler(providerName: string, strategyName: string) {
     return (req: Request, res: Response, next: NextFunction) => {
+      // Log OAuth callback details for debugging
+      // console.log(`${providerName}> OAuth callback received:`, {
+      //   query: req.query,
+      //   hasState: !!req.query.state,
+      //   hasCode: !!req.query.code,
+      //   hasError: !!req.query.error,
+      //   sessionId: req.sessionID,
+      //   timestamp: new Date().toISOString()
+      // });
+
       // Check for OAuth error in query parameters
       if (req.query.error) {
         console.error(`${providerName}> OAuth provider returned error:`, req.query.error, req.query.error_description);
@@ -80,7 +86,7 @@ export class SBAuth {
         );
       }
 
-      passport.authenticate(strategyName, (err: Error | null, user: Express.User | false, info: { message?: string; reason?: string }) => {
+      passport.authenticate(strategyName, (err: any, user: any, info: any) => {
         if (err) {
           console.error(`${providerName}> Authentication error:`, err);
           return res.redirect(`/login?error=${providerName}_error&details=` + encodeURIComponent(err.message || 'Unknown error'));
@@ -92,14 +98,31 @@ export class SBAuth {
           return res.redirect(`/login?error=${providerName}_no_user&details=` + encodeURIComponent(details));
         }
 
+        // Log successful authentication with more details
+        // console.log(`${providerName}> Successful authentication:`, {
+        //   userId: user.id,
+        //   email: user.email || user.displayName || 'no-email',
+        //   provider: user.provider,
+        //   sessionId: req.sessionID,
+        //   userAgent: req.get('User-Agent'),
+        //   timestamp: new Date().toISOString(),
+        // });
+
         // Establish user session
-        req.logIn(user, (loginErr: Error) => {
+        req.logIn(user, (loginErr: any) => {
           if (loginErr) {
             console.error(`${providerName}> Session login error:`, loginErr);
             return res.redirect(
               `/login?error=${providerName}_login_failed&details=` + encodeURIComponent(loginErr.message || 'Session creation failed'),
             );
           }
+
+          // console.log(`${providerName}> Session established successfully:`, {
+          //   userId: user.id,
+          //   email: user.email || user.displayName || 'no-email',
+          //   sessionId: req.sessionID,
+          //   timestamp: new Date().toISOString(),
+          // });
 
           return res.redirect('/');
         });
@@ -134,10 +157,8 @@ export class SBAuth {
     express.use(this._sessionParser);
 
     // Initialize passport
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    express.use(passport.initialize() as any);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    express.use(passport.session() as any);
+    express.use(passport.initialize());
+    express.use(passport.session());
 
     // Passport serialize function in order to support login sessions.
     passport.serializeUser(this.serializeUser);
@@ -224,27 +245,6 @@ export class SBAuth {
           express.get(config.keycloakConfig.callbackURL, this.createOAuthCallbackHandler('keycloak', 'keycloak'));
         }
       }
-      // LDAP Auth Setup
-      if (config.strategies.includes('ldap') && config.ldapConfig) {
-        passportLDAPSetup(config.ldapConfig);
-        express.post('/auth/ldap', (req: Request, res: Response, next: NextFunction) => {
-          passport.authenticate('ldapauth', (err: Error | null, user: Express.User | false) => {
-            // ldapauth-fork can emit a late connection 'error' after we've already
-            // responded (e.g. on connection teardown), which re-invokes this callback.
-            // Guard against a double response that otherwise throws
-            // "Cannot set headers after they are sent to the client".
-            if (res.headersSent) return;
-            if (err || !user) {
-              return res.redirect('/?error=ldap_failed');
-            }
-            req.logIn(user, (loginErr: Error) => {
-              if (res.headersSent) return;
-              if (loginErr) return next(loginErr);
-              return res.redirect('/');
-            });
-          })(req, res, next);
-        });
-      }
     }
 
     // Route to logout
@@ -292,16 +292,17 @@ export class SBAuth {
   /**
    * Log the current user out of the session.
    */
-  public logout(req: Request, res: Response, next: NextFunction): void {
-    const user = req.user as SBAuthSchema | undefined;
+  public logout(req: any, res: Response, next: NextFunction): void {
+    const user = req.user;
     if (!user) {
       res.send({ success: true });
       return;
     }
-    if (user.provider === 'guest') {
-      this._database.deleteAuth(user.provider, user.providerId);
+    if (req.user?.provider == 'guest') {
+      this._database.deleteAuth(req.user.provider, req.user.providerId);
     }
-    (req.session as any).user = null;
+    // req.session.destroy();
+    req.session.user = null;
 
     req.logout({ keepSessionInfo: false }, function (err: Error) {
       if (err) {

@@ -7,8 +7,6 @@
  */
 
 import * as passport from 'passport';
-
-
 import { Issuer, custom } from 'openid-client';
 import { Strategy, VerifyCallback } from 'passport-openidconnect';
 
