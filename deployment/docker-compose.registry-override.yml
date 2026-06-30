@@ -11,3 +11,9 @@ services:
     # host.docker.internal ne résout pas sur Linux sans extra_hosts
     extra_hosts:
       - "host.docker.internal:host-gateway"
+  chromadb:
+    # Désactiver l'auth chromadb pour le déploiement local (pas de credentials configurés)
+    environment:
+      - IS_PERSISTENT=TRUE
+      - CHROMA_SERVER_AUTHN_PROVIDER=
+      - CHROMA_SERVER_AUTHN_CREDENTIALS=
