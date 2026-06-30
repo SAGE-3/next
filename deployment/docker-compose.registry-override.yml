@@ -7,3 +7,7 @@ services:
     image: 192.168.1.30:3000/gitea-admin/sage3-yjs:latest
   files-server:
     image: 192.168.1.30:3000/gitea-admin/sage3-files:latest
+  kernelserver:
+    # host.docker.internal ne résout pas sur Linux sans extra_hosts
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
