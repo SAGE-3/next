@@ -107,6 +107,9 @@ pipeline {
                             fi &&
                             LDAP_PASS=\$(grep LDAP_BIND_PASSWORD .env | cut -d= -f2) &&
                             sed -i "s/CHANGE_ME_LDAP_PASS/\${LDAP_PASS}/" deployment/configurations/node/sage3-prod.hjson &&
+                            cp .env deployment/.env &&
+                            grep -q NODE_SERVER_REPLICAS deployment/.env    || echo NODE_SERVER_REPLICAS=3     >> deployment/.env &&
+                            grep -q NODE_FILE_SERVER_REPLICAS deployment/.env || echo NODE_FILE_SERVER_REPLICAS=1 >> deployment/.env &&
                             docker compose -f deployment/docker-compose-amd64.yml \
                                 -f deployment/docker-compose.registry-override.yml pull &&
                             docker compose -f deployment/docker-compose-amd64.yml \
