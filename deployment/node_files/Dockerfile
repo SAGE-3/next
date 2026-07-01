@@ -37,6 +37,7 @@ RUN apt-get update && apt-get install -y curl exiftool libcairo2 libjpeg62 librs
 COPY --from=builder /app/node_modules ./node_modules
 COPY webstack/package.json ./
 # Reinstall sharp prebuilt binary for the current linux-x64 runtime
+RUN npm install --os=linux --cpu=x64 sharp
 COPY --from=builder /app/dist ./dist
 
 CMD ["node", "dist/apps/homebase-files/main.js"]

@@ -155,6 +155,8 @@ services:
       - ENVIRONMENT=production
       - SAGE3_SERVER=${SAGE3_SERVER}
       - TOKEN=${TOKEN}
+    extra_hosts:
+      - "${SAGE3_SERVER}:host-gateway"
     restart: always
     working_dir: /app
     command: python src/main.py --url http://jupyter:8888
@@ -182,6 +184,8 @@ services:
       - TOKEN=${TOKEN}
       - CHROMA_SERVER_AUTHN_PROVIDER=chromadb.auth.basic_authn.BasicAuthenticationServerProvider
       - CHROMA_CLIENT_AUTH_CREDENTIALS=${CHROMA_CLIENT_AUTH_CREDENTIALS}
+    extra_hosts:
+      - "${SAGE3_SERVER}:host-gateway"
     restart: always
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9999/status"]
