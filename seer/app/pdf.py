@@ -53,6 +53,11 @@ from libs.utils import isValidPDFDocument, convertPDFToImages
 # irrelevant passages (which the model would answer from as if relevant).
 RELEVANCE_THRESHOLD = 0.7
 
+# Fallback chat-model context window (tokens) when a model config omits
+# "context_window". Used to budget how much document text is stuffed for broad
+# summary questions; too small silently truncates long/multi-PDF summaries.
+DEFAULT_CONTEXT_WINDOW = 32768
+
 
 class PDFAgent:
     def __init__(
@@ -299,7 +304,14 @@ class PDFAgent:
 
             # Chat model context window (used for summary stuffing) + reranker
             info = self.manager.resolve_model(qq.model, ["chat"]) or {}
-            context_window = info.get("context_window") or 8000
+            context_window = info.get("context_window")
+            if not context_window:
+                self.logger.warning(
+                    f"Model '{qq.model}' has no context_window in config; "
+                    f"falling back to {DEFAULT_CONTEXT_WINDOW}. Set it to avoid "
+                    "truncating long/multi-PDF summaries."
+                )
+                context_window = DEFAULT_CONTEXT_WINDOW
             rr = self.manager.rerank_config()
             rerank = (
                 make_reranker(rr["url"], rr["model"], rr.get("apiKey")) if rr else None

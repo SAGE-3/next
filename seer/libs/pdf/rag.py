@@ -181,7 +181,7 @@ async def generate_answer(
     retrieve: Callable[[str], Awaitable[List[Document]]],
     get_full_text: Optional[Callable[[], str]] = None,
     get_head: Optional[Callable[[], List[Document]]] = None,
-    context_window: int = 8000,
+    context_window: int = 32768,
 ) -> str:
     """Answer a question over the indexed PDFs.
 
