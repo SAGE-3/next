@@ -48,6 +48,13 @@ from libs.pdf.ocr import olmocr_to_markdown
 from libs.utils import isValidPDFDocument, convertPDFToImages
 
 
+# Minimum vector-store relevance score (0..1) for a chunk to be considered a
+# real match. Chunks below this are dropped so an off-topic question retrieves
+# nothing and falls back to full-text, instead of surfacing the nearest but
+# irrelevant passages (which the model would answer from as if relevant).
+RELEVANCE_THRESHOLD = 0.7
+
+
 class PDFAgent:
     def __init__(
         self,
@@ -309,9 +316,13 @@ class PDFAgent:
                 fetch = max(keep * 3, 12)
                 results = []
                 for aid in qq.assetids:
-                    docs = await self.vector_store.asimilarity_search(
+                    scored = await self.vector_store.asimilarity_search_with_relevance_scores(
                         query, k=fetch, filter={"sage_asset_id": aid}
                     )
+                    # Keep only chunks that clear the relevance floor; below it we
+                    # treat retrieval as empty so generate_answer falls back to
+                    # full-text rather than answering from irrelevant passages.
+                    docs = [doc for doc, score in scored if score >= RELEVANCE_THRESHOLD]
                     docs = rerank(query, docs, keep) if rerank else docs[:keep]
                     results.extend(docs)
                 return results
