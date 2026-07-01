@@ -276,7 +276,7 @@ async def ideator_summarize(qq: IdeatorSummarizeRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/image")
+@app.post("/image-generation")
 async def ideator_image(qq: IdeatorImageRequest):
     try:
         return await asyncio.wait_for(ideatorAG.image(qq), timeout=60)

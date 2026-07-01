@@ -40,6 +40,7 @@ import {
   IdeatorImageResponse,
   IdeatorProseRequest,
   IdeatorProseResponse,
+  ImageGenerationRoutes,
 } from '@sage3/shared';
 
 // Define a general RPC handler type
@@ -121,7 +122,7 @@ const ideatorUserDimensionHandler: RpcHandlerPost<IdeatorUserDimensionRequest, I
 const ideatorSummarizeHandler: RpcHandlerPost<IdeatorSummarizeRequest, IdeatorSummarizeResponse> = (req) =>
   fetchPost(`${config.agents.url}${IdeatorRoutes.summarize}`, req);
 const ideatorImageHandler: RpcHandlerPost<IdeatorImageRequest, IdeatorImageResponse> = (req) =>
-  fetchPost(`${config.agents.url}${IdeatorRoutes.image}`, req);
+  fetchPost(`${config.agents.url}${ImageGenerationRoutes.generate}`, req);
 const ideatorProseHandler: RpcHandlerPost<IdeatorProseRequest, IdeatorProseResponse> = (req) =>
   fetchPost(`${config.agents.url}${IdeatorRoutes.prose}`, req);
 
