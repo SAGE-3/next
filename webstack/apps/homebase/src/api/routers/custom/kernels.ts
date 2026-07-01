@@ -52,8 +52,6 @@ export function KernelsRouter() {
 
   // selfHandleResponse: relay the upstream response ourselves
   proxy.on('proxyRes', (proxyRes: IncomingMessage, req: IncomingMessage, res: ServerResponse) => {
-    let data = '';
-
     // Only for SSE routes
     if ((req as Request).path.includes('stream')) {
       res.writeHead(200, {
@@ -61,14 +59,13 @@ export function KernelsRouter() {
         Connection: 'keep-alive',
         'Content-Type': 'text/event-stream',
       });
+      // Relay each chunk as it arrives. Do NOT also buffer and re-write on end,
+      // or the client receives the whole stream twice (duplicated SSE output).
       proxyRes.on('data', (chunk) => {
-        data += chunk;
         res.write(chunk);
-        // res.flush();
       });
 
       proxyRes.on('end', () => {
-        res.write(data);
         res.end();
       });
     } else {
