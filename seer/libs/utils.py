@@ -7,6 +7,7 @@
 # -----------------------------------------------------------------------------
 
 import json
+import logging
 
 # Image
 from PIL import Image
@@ -100,9 +101,18 @@ def getModelsInfo(ps3):
       ps3: SAGE3 API handle.
 
     Returns:
-      dict: A dictionary containing the "llama" and "openai" model information.
+      dict: The "models" configuration block, or an empty dict if the server
+      config has not been migrated to the unified models schema. Returning {}
+      lets LLMManager degrade gracefully instead of crashing Seer at startup.
     """
-    sage3_config = ps3.s3_comm.web_config['models']
+    web_config = ps3.s3_comm.web_config or {}
+    sage3_config = web_config.get('models')
+    if not sage3_config:
+        logging.getLogger(__name__).warning(
+            "SAGE3 server config has no 'models' block; AI features will be "
+            "unavailable until the server is migrated to the unified models schema."
+        )
+        return {}
     return sage3_config
 
 def getRoomInfo(ps3, room_id):

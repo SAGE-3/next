@@ -100,7 +100,9 @@ class ChatAgent:
         self._sessions = {}
 
         if not self.manager.list_providers():
-            raise HTTPException(status_code=500, detail="Langchain> No model configured")
+            # Don't crash startup on an un-migrated/empty config: boot without a
+            # provider and let process() return a clear per-request error.
+            self.logger.warning("ChatAgent> no model configured; chat requests will fail until models are set")
 
     def _get_session(self, provider: str):
         """Build (and cache) a prompt|llm|parser chain for a provider's
