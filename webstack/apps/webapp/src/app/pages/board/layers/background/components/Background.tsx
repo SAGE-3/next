@@ -68,9 +68,10 @@ export function Background(props: BackgroundProps) {
   const gc = useColorModeValue('gray.100', 'gray.700');
   const gridColor = useHexColor(gc);
 
-  // Hide the background grid when the UI is hidden
+  // Hide the background grid when the UI is hidden or the grid toggle is off
   const { settings } = useUserSettings();
   const showUI = settings.showUI;
+  const showGrid = settings.showGrid;
 
   // Subscribe to messages
   useEffect(() => {
@@ -207,7 +208,7 @@ export function Background(props: BackgroundProps) {
         height="100%"
         backgroundSize={'100px 100px'}
         bgImage={
-          showUI
+          showUI && showGrid
             ? `linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${
                 1 / scale
               }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`
@@ -234,7 +235,7 @@ export function Background(props: BackgroundProps) {
         <InteractionbarShortcuts />
       </Box>
     );
-  }, [gridColor, scale, showUI, dragProps, helpOnClose, helpIsOpen, renderContent]);
+  }, [gridColor, scale, showUI, showGrid, dragProps, helpOnClose, helpIsOpen, renderContent]);
 
   return MemoizedBoard;
 }
