@@ -6,11 +6,27 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { ClientRequest } from 'http';
-import { Request } from 'express';
-import { createProxyMiddleware } from 'http-proxy-middleware';
+import { ClientRequest, IncomingMessage, ServerResponse } from 'http';
+import { Socket } from 'net';
+import * as express from 'express';
+import { Request, Response } from 'express';
+import { createProxyServer } from 'http-proxy-3';
 
 import { config } from '../../../config';
+
+// Custom logger to control the logging of the proxy
+const logger = {
+  info: (...args: any[]) => {
+    // console.log('[PROXY][INFO]', ...args);
+    return; // Disable info logging for proxy
+  },
+  warn: (...args: any[]) => {
+    console.warn('[Kernels Proxy][WARN]', ...args);
+  },
+  error: (...args: any[]) => {
+    console.error('[Kernels Proxy][ERROR]', ...args);
+  },
+};
 
 /**
  * Route forwarding the kernels calls to the sage kernels server
@@ -18,46 +34,69 @@ import { config } from '../../../config';
 export function KernelsRouter() {
   console.log('Kernels> router for sage kernels', config.kernels.url);
 
-  const router = createProxyMiddleware({
+  // The router is mounted at /api/kernels, so Express strips that prefix and the
+  // proxy forwards req.url (e.g. /execute) onto the target — same effect as the
+  // previous pathRewrite of '^/api/kernels' -> ''.
+  const router = express.Router();
+
+  const proxy = createProxyServer({
     target: config.kernels.url,
     changeOrigin: true,
-    pathRewrite: { '^/api/kernels': '' },
-    logLevel: 'warn', // 'debug' | 'info' | 'warn' | 'error' | 'silent'
-    logProvider: () => console,
-    selfHandleResponse: true, // Add this to handle the response manually
-    // request handler making sure the body is parsed before proxying
-    onProxyReq: restream,
-    onProxyRes: (proxyRes, req, res) => {
-      let data = '';
+    selfHandleResponse: true, // handle the response manually
+  });
 
-      // Only for SSE routes
-      if (req.path.includes('stream')) {
-        res.writeHead(200, {
-          'Cache-Control': 'no-cache',
-          Connection: 'keep-alive',
-          'Content-Type': 'text/event-stream',
-        });
-        proxyRes.on('data', (chunk) => {
-          data += chunk;
-          res.write(chunk);
-          res.flush();
-        });
+  // request handler making sure the body is parsed before proxying
+  proxy.on('proxyReq', (proxyReq: ClientRequest, req: IncomingMessage) => {
+    restream(proxyReq, req as Request);
+  });
 
-        proxyRes.on('end', () => {
-          res.write(data);
-          res.end();
-        });
-      } else {
-        // Handle other routes normally
-        proxyRes.on('data', (chunk) => {
-          res.write(chunk);
-        });
+  // selfHandleResponse: relay the upstream response ourselves
+  proxy.on('proxyRes', (proxyRes: IncomingMessage, req: IncomingMessage, res: ServerResponse) => {
+    // Only for SSE routes
+    if ((req as Request).path.includes('stream')) {
+      res.writeHead(200, {
+        'Cache-Control': 'no-cache',
+        Connection: 'keep-alive',
+        'Content-Type': 'text/event-stream',
+      });
+      // Relay each chunk as it arrives. Do NOT also buffer and re-write on end,
+      // or the client receives the whole stream twice (duplicated SSE output).
+      proxyRes.on('data', (chunk) => {
+        res.write(chunk);
+      });
 
-        proxyRes.on('end', () => {
-          res.end();
-        });
+      proxyRes.on('end', () => {
+        res.end();
+      });
+    } else {
+      // Handle other routes normally
+      proxyRes.on('data', (chunk) => {
+        res.write(chunk);
+      });
+
+      proxyRes.on('end', () => {
+        res.end();
+      });
+    }
+  });
+
+  proxy.on('error', (err: Error, _req: IncomingMessage, res: ServerResponse | Socket) => {
+    logger.error(err);
+    // Errors can come from HTTP proxying (ServerResponse) or a ws upgrade (Socket)
+    if (res instanceof ServerResponse) {
+      if (!res.headersSent) {
+        res.writeHead(502, { 'Content-Type': 'text/plain' });
       }
-    },
+      res.end('Bad Gateway');
+    } else {
+      res.destroy();
+    }
+  });
+
+  // http-proxy-3's web() is callback/event-based; failures surface via the
+  // 'error' handler above rather than a rejected promise.
+  router.use((req: Request, res: Response) => {
+    proxy.web(req, res);
   });
 
   return router;

@@ -310,6 +310,39 @@ export function HomePage() {
     return map;
   }, [partialPrescences]);
 
+  // Keep preview fetching aligned with the exact board cards visible on screen.
+  // This avoids first-load races where memberships or presence arrive after boards.
+  const previewBoardIds = useMemo(() => {
+    if (selectedRoom) {
+      return boards.filter((b) => b.data.roomId === selectedRoom._id).map((b) => b._id);
+    }
+
+    const ids = new Set<string>();
+    const isGuestLike = user?.data.userRole === 'guest' || user?.data.userRole === 'spectator';
+    const recentOrStarred = new Set([...recentBoards, ...savedBoards]);
+
+    boards.forEach((board) => {
+      const roomMembership = members.find((m) => m.data.roomId === board.data.roomId);
+      const isMember = roomMembership && roomMembership.data.members ? roomMembership.data.members.includes(userId) : false;
+      const isRecent = recentBoards.includes(board._id);
+      const isSaved = savedBoards.includes(board._id);
+      const userCount = (presenceByBoard.get(board._id) ?? []).length;
+
+      if (isGuestLike) {
+        if (isRecent || isSaved || (recentOrStarred.has(board._id) && userCount > 0)) {
+          ids.add(board._id);
+        }
+        return;
+      }
+
+      if (isMember && (isRecent || isSaved || userCount > 0)) {
+        ids.add(board._id);
+      }
+    });
+
+    return [...ids];
+  }, [selectedRoom?._id, boards, members, recentBoards, savedBoards, presenceByBoard, user?.data.userRole, userId]);
+
   // Fetch batch previews for the given boardIds, merging results into state.
   // Pass force=true to bypass the server-side cache (used by the refresh button).
   const fetchPreviews = async (boardIds: string[], force = false) => {
@@ -339,13 +372,7 @@ export function HomePage() {
 
   // Re-fetch previews for the current context (room view or home view), bypassing cached entries
   const refreshPreviews = async () => {
-    const idsToRefresh = selectedRoom
-      ? boards.filter((b) => b.data.roomId === selectedRoom._id).map((b) => b._id)
-      : [...new Set([
-          ...boards.filter(recentBoardsFilter),
-          ...boards.filter(boardStarredFilter),
-          ...boards.filter(boardActiveFilter),
-        ].map((b) => b._id))];
+    const idsToRefresh = previewBoardIds;
 
     // Clear existing entries so fetchPreviews treats them as missing
     setBoardPreviews((prev) => {
@@ -462,28 +489,11 @@ export function HomePage() {
     }
   }, [selectedRoom]);
 
-  // Fetch board previews when the selected room changes (or on home view).
-  // recentBoards.length and savedBoards.length are included in deps to handle the race condition
-  // where user data (recentBoards/savedBoards) arrives after boards are already loaded — without
-  // them the effect would run with empty filter results and never re-trigger.
+  // Fetch previews for whichever board cards are currently visible.
   useEffect(() => {
-    if (selectedRoom) {
-      // Only fetch boardIds not already in state
-      const ids = boards
-        .filter((b) => b.data.roomId === selectedRoom._id)
-        .map((b) => b._id)
-        .filter((id) => !boardPreviews.has(id));
-      fetchPreviews(ids);
-    } else {
-      // Home view: fetch for recent, starred, and active boards
-      const ids = [...new Set([
-        ...boards.filter(recentBoardsFilter),
-        ...boards.filter(boardStarredFilter),
-        ...boards.filter(boardActiveFilter),
-      ].map((b) => b._id))].filter((id) => !boardPreviews.has(id));
-      fetchPreviews(ids);
-    }
-  }, [selectedRoom?._id, boards.length, recentBoards.length, savedBoards.length]);
+    const ids = previewBoardIds.filter((id) => !boardPreviews.has(id));
+    fetchPreviews(ids);
+  }, [previewBoardIds, boardPreviews]);
 
   // Scroll selected board into view
   useEffect(() => {

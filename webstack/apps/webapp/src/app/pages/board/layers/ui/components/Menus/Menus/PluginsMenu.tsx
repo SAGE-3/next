@@ -15,6 +15,7 @@ import { MenuButton } from './MenuButton';
 export interface PluginsMenuProps {
   boardId: string;
   roomId: string;
+  onActionComplete?: () => void;
 }
 
 /**
@@ -43,7 +44,7 @@ export function PluginsMenu(props: PluginsMenuProps) {
   const { isOpen: pluginIsOpen, onOpen: pluginOnOpen, onClose: pluginOnClose } = useDisclosure();
 
   // Create a new app from a plugin
-  const newApplication = (pluginName: string) => {
+  const newApplication = async (pluginName: string) => {
     if (!user) return;
 
     const x = Math.floor(-boardPosition.x + window.innerWidth / 2 / scale - 200);
@@ -52,7 +53,7 @@ export function PluginsMenu(props: PluginsMenuProps) {
     let w = 400;
     let h = 400;
 
-    createApp({
+    const result = await createApp({
       title: pluginName,
       roomId: props.roomId,
       boardId: props.boardId,
@@ -65,6 +66,10 @@ export function PluginsMenu(props: PluginsMenuProps) {
       dragging: false,
       pinned: false,
     });
+
+    if (result?.success) {
+      props.onActionComplete?.();
+    }
   };
 
   return (

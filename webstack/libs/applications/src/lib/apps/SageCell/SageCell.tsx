@@ -511,8 +511,8 @@ function AppComponent(props: App): JSX.Element {
   };
 
   const handleInsertAPI = (ed: editor.ICodeEditor) => {
-    let code = 'from foresight.config import config as conf, prod_type\n';
-    code += 'from foresight.Sage3Sugar.pysage3 import PySage3\n';
+    let code = 'from pysage3.config import config as conf, prod_type\n';
+    code += 'from pysage3.client import PySage3\n';
     code += `sage_room_id = %%sage_room_id\nsage_board_id = %%sage_board_id\nsage_app_id = %%sage_app_id\nsage_selected_apps = %%sage_selected_apps\n`;
     code += 'ps3 = PySage3(conf, prod_type)\n\n';
     ed.focus();

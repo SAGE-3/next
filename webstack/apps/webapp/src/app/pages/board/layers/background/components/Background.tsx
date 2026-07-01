@@ -20,6 +20,7 @@ import {
   useCursorBoardPosition,
   setupApp,
   HelpModal,
+  useUserSettings,
 } from '@sage3/frontend';
 
 import { useDragAndDropBoard } from './DragAndDropBoard';
@@ -66,6 +67,11 @@ export function Background(props: BackgroundProps) {
   // Chakra Color Mode for grid color
   const gc = useColorModeValue('gray.100', 'gray.700');
   const gridColor = useHexColor(gc);
+
+  // Hide the background grid when the UI is hidden or the grid toggle is off
+  const { settings } = useUserSettings();
+  const showUI = settings.showUI;
+  const showGrid = settings.showGrid;
 
   // Subscribe to messages
   useEffect(() => {
@@ -117,7 +123,7 @@ export function Background(props: BackgroundProps) {
       return false;
     },
     // Depends on the cursor to get the correct position
-    { dependencies: [] }
+    { dependencies: [] },
   );
 
   // Move the board with the arrow keys
@@ -139,7 +145,7 @@ export function Background(props: BackgroundProps) {
       return false;
     },
     // Depends on the cursor to get the correct position
-    { dependencies: [selectedAppId, boardPosition.x, boardPosition.y] }
+    { dependencies: [selectedAppId, boardPosition.x, boardPosition.y] },
   );
 
   // Zoom in/out of the board with the -/+ keys
@@ -157,14 +163,14 @@ export function Background(props: BackgroundProps) {
       return false;
     },
     // Depends on the cursor to get the correct position
-    { dependencies: [selectedAppId] }
+    { dependencies: [selectedAppId] },
   );
 
   // Throttle stickie hotkey event
   const throttleStickieCreation = throttle(1000, (x: number, y: number) => {
     if (!user) return;
     createApp(
-      setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 420 }, { color: user.data.color || 'yellow' })
+      setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 420 }, { color: user.data.color || 'yellow' }),
     );
   });
   const throttleStickieCreationRef = useCallback(throttleStickieCreation, [user]);
@@ -191,7 +197,7 @@ export function Background(props: BackgroundProps) {
       }
     },
     // Depends on the cursor to get the correct position
-    { dependencies: [] }
+    { dependencies: [] },
   );
 
   const MemoizedBoard = useMemo(() => {
@@ -201,9 +207,13 @@ export function Background(props: BackgroundProps) {
         width="100%"
         height="100%"
         backgroundSize={'100px 100px'}
-        bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${
-          1 / scale
-        }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
+        bgImage={
+          showUI && showGrid
+            ? `linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${
+                1 / scale
+              }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`
+            : 'none'
+        }
         id="board"
         userSelect={'none'}
         draggable={false}
@@ -225,7 +235,7 @@ export function Background(props: BackgroundProps) {
         <InteractionbarShortcuts />
       </Box>
     );
-  }, [gridColor, scale, dragProps, helpOnClose, helpIsOpen, renderContent]);
+  }, [gridColor, scale, showUI, showGrid, dragProps, helpOnClose, helpIsOpen, renderContent]);
 
   return MemoizedBoard;
 }

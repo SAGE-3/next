@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { ReactNode, JSXElementConstructor, ReactElement } from 'react';
+import { ReactNode, JSXElementConstructor, ReactElement, Children, cloneElement, isValidElement } from 'react';
 import {
   IconButton,
   Tooltip,
@@ -33,9 +33,18 @@ interface ToolbarButtonProps {
   colorActiveAlways?: boolean;
 }
 
+interface ClosableToolbarMenuProps {
+  onActionComplete?: () => void;
+}
+
 export function ToolbarButton(props: ToolbarButtonProps) {
   const { onOpen, onClose, isOpen } = useDisclosure();
   const bgColor = useHexColor(`${props.bgColor}.200`);
+
+  const childrenWithCloseBehavior = Children.map(props.children, (child) => {
+    if (!isValidElement(child)) return child;
+    return cloneElement(child as ReactElement<ClosableToolbarMenuProps>, { onActionComplete: onClose });
+  });
 
   const handleClick = () => {
     isOpen ? onClose() : onOpen();
@@ -85,7 +94,7 @@ export function ToolbarButton(props: ToolbarButtonProps) {
         {props.stayActive && <PopoverCloseButton onClick={handleClick} />}
         <PopoverHeader>{props.title}</PopoverHeader>
         <PopoverBody p={1} m={1}>
-          {props.children}
+          {childrenWithCloseBehavior}
         </PopoverBody>
       </PopoverContent>
     </Popover>

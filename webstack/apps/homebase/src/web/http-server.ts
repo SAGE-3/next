@@ -48,7 +48,7 @@ export function createApp(assetPath: string, config: ServerConfiguration): expre
         skip: function (req: express.Request, res: express.Response) {
           return res.statusCode === 200 || res.statusCode === 304;
         },
-      })
+      }),
     );
   } else if (level === 'all') {
     // Standard Apache common log output.
@@ -70,7 +70,7 @@ export function createApp(assetPath: string, config: ServerConfiguration): expre
   // Cookies
   app.use(cookieParser());
   // using express to parse JSON bodies into JS objects
-  app.use(express.json({ limit: '5mb' }));
+  app.use(express.json({ limit: '50mb' }));
   app.use(express.urlencoded({ extended: true }));
 
   // adding Helmet to enhance your API's security
@@ -84,7 +84,7 @@ export function createApp(assetPath: string, config: ServerConfiguration): expre
       // Cross-Origin-Embedder-Policy: disable to enable map images and zoom images to load
       crossOriginEmbedderPolicy: false,
       crossOriginResourcePolicy: false,
-    })
+    }),
   );
 
   // Enabling CORS for all requests
