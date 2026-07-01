@@ -102,23 +102,17 @@ class WebAgent:
         # Raises ValidationError if the input data cannot be parsed to form a valid model.
         self.output_parser = StrOutputParser()
 
-        # Per-provider chains, built lazily on first use
-        self._sessions = {}
-
         if not self.manager.list_providers():
             # Don't crash startup on an un-migrated/empty config: boot without a
             # provider and let process() return a clear per-request error.
             self.logger.warning("WebAgent> no model configured; web requests will fail until models are set")
 
     def _get_session(self, provider: str):
-        """Build (and cache) a prompt|llm|parser chain for a provider's
-        chat-capable model. Returns None if the provider can't chat."""
-        if provider in self._sessions:
-            return self._sessions[provider]
+        """Build a prompt|llm|parser chain for a provider's chat-capable model,
+        or None if the provider can't chat. The model itself is cached by
+        LLMManager, so the chain is cheap to recompose per request."""
         llm = self.manager.build_chat_model(provider, ["chat"])
-        session = (self.prompt | llm | self.output_parser) if llm else None
-        self._sessions[provider] = session
-        return session
+        return (self.prompt | llm | self.output_parser) if llm else None
 
     async def init(self):
         playwright = await async_playwright().start()

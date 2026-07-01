@@ -72,10 +72,6 @@ class PDFAgent:
         self.manager = LLMManager(getModelsInfo(ps3), logger)
         self.logger.info("PDF providers: " + ", ".join(self.manager.list_providers()))
 
-        # Per-provider chat / vision models, built lazily on first use
-        self._chat_models = {}
-        self._vision_models = {}
-
         # Optional olmOCR service for PDF -> Markdown (models.pdf2md). When set,
         # it's the primary converter; pymupdf4llm remains the fallback.
         self.ocr = self.manager.ocr_config()
@@ -133,22 +129,6 @@ class PDFAgent:
         # Using Langchain's Chromadb
         # Heartbeat to check the connection
         self.chroma.heartbeat()
-
-    def _get_chat(self, provider: str):
-        """Chat-capable model for a provider (lazy, cached). None if unable."""
-        if provider in self._chat_models:
-            return self._chat_models[provider]
-        llm = self.manager.build_chat_model(provider, ["chat"])
-        self._chat_models[provider] = llm
-        return llm
-
-    def _get_vision(self, provider: str):
-        """Vision-capable model for a provider (lazy, cached). None if unable."""
-        if provider in self._vision_models:
-            return self._vision_models[provider]
-        llm = self.manager.build_chat_model(provider, ["vision"])
-        self._vision_models[provider] = llm
-        return llm
 
     def getMDfromPDFWithImages(self, id, content, model):
         """
@@ -223,7 +203,7 @@ class PDFAgent:
             )
         )
 
-        llm = self._get_vision(model)
+        llm = self.manager.build_chat_model(model, ["vision"])
         if llm is None:
             raise ValueError(
                 f"Provider '{model}' has no model capable of vision (PDF OCR)"
@@ -295,7 +275,7 @@ class PDFAgent:
                 res = await self.vector_store.aadd_documents(documents=splits)
                 self.logger.info(f"pdf {assetid}: indexed {len(res)} chunks")
 
-            llm = self._get_chat(qq.model)
+            llm = self.manager.build_chat_model(qq.model, ["chat"])
             if llm is None:
                 raise HTTPException(
                     status_code=400,

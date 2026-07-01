@@ -111,8 +111,6 @@ class ImageAgent:
         self.manager = LLMManager(getModelsInfo(ps3), logger)
         self.logger.info("Image providers: " + ", ".join(self.manager.list_providers()))
         self.httpx_client = httpx.Client(timeout=None)
-        # Per-provider vision models, built lazily on first use
-        self._models = {}
 
         ai_logger.emit(
             "init",
@@ -121,15 +119,6 @@ class ImageAgent:
                 "providers": self.manager.list_providers(),
             },
         )
-
-    def _get_model(self, provider: str):
-        """Build (and cache) a vision-capable model for a provider.
-        Returns None if the provider has no model that can process images."""
-        if provider in self._models:
-            return self._models[provider]
-        llm = self.manager.build_chat_model(provider, ["vision"])
-        self._models[provider] = llm
-        return llm
 
     def _load_image_b64(self, asset: str):
         """Fetch an image (SAGE3 asset id, URL, or data URL), scale it, and
@@ -175,7 +164,7 @@ class ImageAgent:
             ai_handler.setPrompt(qq.q)
 
             # Resolve a vision-capable model for the requested provider
-            llm = self._get_model(qq.model)
+            llm = self.manager.build_chat_model(qq.model, ["vision"])
             if llm is None:
                 from fastapi import HTTPException
 
