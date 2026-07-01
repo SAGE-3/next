@@ -100,7 +100,7 @@ export function AppWindow(props: WindowProps) {
   const clearError = useAppStore((state) => state.clearError);
 
   // UI store for global setting
-  const scaleRef = useRef(1);
+  const scaleRef = useRef(useUIStore.getState().scale);
   const zindex = useUIStore((state) => state.zIndex);
   const boardDragging = useUIStore((state) => state.boardDragging);
   const appDragging = useUIStore((state) => state.appDragging);
