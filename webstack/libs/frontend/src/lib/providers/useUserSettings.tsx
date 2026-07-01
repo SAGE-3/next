@@ -23,7 +23,7 @@ import { isElectron } from 'libs/applications/src/lib/apps/Cobrowse/util';
  * @property {boolean} showTags - Indicates whether tags should be displayed.
  * @property {'grid' | 'list'} selectedBoardListView - The view mode for the board list, either 'grid' or 'list'.
  * @property {'lasso' | 'grab' | 'pen' | 'eraser' | 'linker' | 'shape' | 'circle' | 'rectangle'} primaryActionMode - The primary action mode, which can be 'lasso', 'grab', 'pen', or 'eraser'.
- * @property {string} aiModel - The AI model label to be used, for example 'llama' or 'openai'.
+ * @property {string} aiModel - The AI provider label to be used, for example 'azure' or 'openai'.
  */
 type UserSettings = {
   showCursors: boolean;
@@ -55,7 +55,7 @@ const defaultSettings: UserSettings = {
   showTags: false,
   selectedBoardListView: 'grid',
   primaryActionMode: 'lasso',
-  aiModel: 'llama',
+  aiModel: 'azure',
   uiScale: 'md',
 };
 
@@ -79,18 +79,18 @@ type UserSettingsContextType = {
 
 const UserSettingsContext = createContext<UserSettingsContextType>({
   settings: defaultSettings,
-  toggleShowCursors: () => { },
-  toggleShowViewports: () => { },
-  toggleShowAppTitles: () => { },
-  setShowLinks: (value: UserSettings['showLinks']) => { },
-  toggleShowUI: () => { },
-  toggleShowTags: () => { },
-  setBoardListView: (value: UserSettings['selectedBoardListView']) => { },
-  setPrimaryActionMode: (value: UserSettings['primaryActionMode']) => { },
-  setDefaultPrimaryActionMode: () => { },
-  restoreDefaultSettings: () => { },
-  setAIModel: (value: UserSettings['aiModel']) => { },
-  setUIScale: (value: UserSettings['uiScale']) => { },
+  toggleShowCursors: () => {},
+  toggleShowViewports: () => {},
+  toggleShowAppTitles: () => {},
+  setShowLinks: (value: UserSettings['showLinks']) => {},
+  toggleShowUI: () => {},
+  toggleShowTags: () => {},
+  setBoardListView: (value: UserSettings['selectedBoardListView']) => {},
+  setPrimaryActionMode: (value: UserSettings['primaryActionMode']) => {},
+  setDefaultPrimaryActionMode: () => {},
+  restoreDefaultSettings: () => {},
+  setAIModel: (value: UserSettings['aiModel']) => {},
+  setUIScale: (value: UserSettings['uiScale']) => {},
 });
 
 /**
@@ -185,7 +185,7 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
         return newSettings;
       });
     },
-    [setSettings]
+    [setSettings],
   );
 
   const toggleShowTags = useCallback(() => {
@@ -206,7 +206,7 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
         return newSettings;
       });
     },
-    [setSettings]
+    [setSettings],
   );
 
   const setPrimaryActionMode = useCallback(
@@ -218,7 +218,7 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
         return newSettings;
       });
     },
-    [setSettings]
+    [setSettings],
   );
 
   const setAIModel = useCallback(
@@ -230,7 +230,7 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
         return newSettings;
       });
     },
-    [setSettings]
+    [setSettings],
   );
 
   const setDefaultPrimaryActionMode = useCallback(() => {
@@ -258,7 +258,7 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
         return newSettings;
       });
     },
-    [setSettings]
+    [setSettings],
   );
 
   return (

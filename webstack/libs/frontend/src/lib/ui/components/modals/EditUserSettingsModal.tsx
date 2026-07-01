@@ -106,22 +106,20 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
   }, [config]);
 
   useEffect(() => {
-    // Look for a previously set model
-    if (userSettings.aiModel) {
-      // If value previously set, use it
+    // Wait for the provider list to load before validating the saved model
+    if (!models) return;
+    const providerKeys = Object.keys(models.providers || {});
+    if (userSettings.aiModel && providerKeys.includes(userSettings.aiModel)) {
+      // Saved provider still exists in the config: keep it
       setSelectedModel(userSettings.aiModel);
-    } else {
-      // Otherwise, use the first one as default
-      if (models) {
-        const modelKeys = Object.keys(models.providers || {});
-        if (modelKeys.length > 0) {
-          const val = modelKeys[0];
-          setSelectedModel(val);
-          setAIModel(val);
-        }
-      }
+    } else if (providerKeys.length > 0) {
+      // Saved provider is missing or invalid (e.g. a legacy 'llama' value in
+      // localStorage): fall back to the first available provider and persist it
+      const val = providerKeys[0];
+      setSelectedModel(val);
+      setAIModel(val);
     }
-  }, [userSettings.aiModel]);
+  }, [userSettings.aiModel, models]);
 
   return (
     <Modal

@@ -42,7 +42,10 @@
   "agents": {
     "url": "http://127.0.0.1:9999"
   },
-
+  // VEO VNC container orchestration server
+  "veoServer": {
+    "url": "https://sage3-vnc.cis230038.projects.jetstream-cloud.org"
+  },
   // Feedback URL
   "feedback": {
     "url": "http://sage3-server-status.cis230038.projects.jetstream-cloud.org:3000/feedback"
@@ -117,11 +120,12 @@
             }
           }
         },
-        "litellm": {
-          "url": "https://sage200.evl.uic.edu/",
+        "llama4": {
+          "url": "https://localhost/",
+          "apiKey": "",
           "models": {
             "llama4": {
-              "model_id": "meta/llama-4-scout-17b-16e-instruct",
+              "model_id": "llama4",
               "capabilities": [
                 "chat",
                 "code",
@@ -131,41 +135,38 @@
               "context_window": 32768
             }
           }
-        }
+        },
+        "gemma4": {
+          "url": "https://localhost/",
+          "apiKey": "",
+          "models": {
+            "gemma4": {
+              "model_id": "gemma4",
+              "capabilities": [
+                "chat",
+                "code",
+                "vision"
+              ],
+              "max_tokens": 131072,
+              "context_window": 131072
+            }
+          }
+        }      },
+      // NeMo Retriever embeddings NIM — set url to where your embed NIM listens
+      "embed": {
+        "url": "http://localhost:8000",
+        "model": "nvidia/llama-nemotron-embed-1b-v2"
       },
-      // "tasks": {
-      //   "image": {
-      //     "provider": "azure",
-      //     "model": [
-      //       "gpt-5.2-chat"
-      //     ]
-      //   },
-      //   "image_generation": {
-      //     "provider": "azure",
-      //     "model": [
-      //       "gpt-image-1.5"
-      //     ]
-      //   },
-      //   "chat": {
-      //     "provider": "meta",
-      //     "model": [
-      //       "meta/llama-4-scout-17b-16e-instruct"
-      //     ]
-      //   },
-      //   "coding": {
-      //     "provider": "azure",
-      //     "model": [
-      //       "gpt-4-turbo"
-      //     ]
-      //   },
-      //   "pdf_processing": {
-      //     "provider": "azure",
-      //     "model": [
-      //       "gpt-5.2-chat",
-      //       "text-embedding-3-small"
-      //     ]
-      //   }
-      // },
+      // NeMo Retriever reranking NIM — set url to where your rerank NIM listens
+      "rerank": {
+        "url": "http://localhost:8001",
+        "model": "nvidia/llama-nemotron-rerank-1b-v2"
+      },
+      // OLM model to convert PDF
+      "pdftomd": {
+        "url": "http://localhost:8002",
+        "model": "allenai/olmOCR-2-7B-1025-FP8"
+      },
       "settings": {
         "default_provider": "azure",
         "timeout_seconds": 60,

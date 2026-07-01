@@ -59,6 +59,7 @@ export function ConfigRouter(): express.Router {
       // Service caller (JWT) gets the full config; browser users get capability
       // info only — secrets (apiKey/url) are stripped before sending to them.
       models: isService ? config.services.models : sanitizeLLMConfiguration(config.services.models),
+      feedback: config.feedback || {},
       fluentd: config.fluentd || {},
       veoServer: config.veoServer || {},
     } as OpenConfiguration;
