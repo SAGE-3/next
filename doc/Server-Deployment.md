@@ -734,7 +734,7 @@ Each provider entry takes an `apiKey` and/or a `url`:
 - `url` only — an unauthenticated or network-local endpoint (e.g. a self-hosted gateway).
 - `url` + `apiKey` — an authenticated custom endpoint (e.g. Azure OpenAI, a LiteLLM/vLLM gateway). Any OpenAI-compatible endpoint works.
 
-Per-model fields: `model_id` (the provider's actual model name), `capabilities` (array), and optional `max_tokens`, `context_window`, `api_version`, `cost_per_1k_input`, `cost_per_1k_output`.
+Per-model fields: `model_id` (the provider's actual model name), `capabilities` (array), and optional `max_tokens`, `api_version`, `cost_per_1k_input`, `cost_per_1k_output`. `context_window` is optional but **recommended for chat models** — it budgets how much PDF text is stuffed for summary questions. If unset it defaults to `32768` (with a warning in the Seer log), and long or multi-PDF summaries may be truncated.
 
 **Shared PDF retrieval infrastructure** (top-level under `models`, not per provider):
 

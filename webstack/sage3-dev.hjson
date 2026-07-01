@@ -162,8 +162,9 @@
         "url": "http://localhost:8001",
         "model": "nvidia/llama-nemotron-rerank-1b-v2"
       },
-      // OLM model to convert PDF
-      "pdftomd": {
+      // OLM model to convert PDF -> Markdown (key must be "pdf2md"; Seer reads
+      // this via LLMManager.ocr_config())
+      "pdf2md": {
         "url": "http://localhost:8002",
         "model": "allenai/olmOCR-2-7B-1025-FP8"
       },
