@@ -42,3 +42,6 @@ sage_seer/_env.sh
 
 # Exported chat transcripts (may contain secrets) — never commit
 dev-model-list.md
+
+# Local-only AI config — kept out of git
+webstack/sage3-dev-ai-new.hjson
