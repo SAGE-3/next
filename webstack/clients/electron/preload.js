@@ -64,3 +64,17 @@ contextBridge.exposeInMainWorld('electron', {
     }
   },
 });
+
+// Claude Code monitor bridge. Mirrors the data layer described in the canvas
+// design brief: an initial pull plus throttled live snapshots from the
+// ClaudeSessionStore in main.
+contextBridge.exposeInMainWorld('claude', {
+  // Initial pull: resolves to SessionState[].
+  getSessions: () => ipcRenderer.invoke('claude:getSessions'),
+  // Live snapshots (~100ms throttled). Returns an unsubscribe function.
+  onSessions: (callback) => {
+    const listener = (_event, data) => callback(data);
+    ipcRenderer.on('claude:sessions', listener);
+    return () => ipcRenderer.removeListener('claude:sessions', listener);
+  },
+});

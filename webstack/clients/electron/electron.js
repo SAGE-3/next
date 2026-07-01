@@ -50,6 +50,10 @@ const windowStore = require('./src/windowstore');
 const windowState = windowStore.getWindow();
 const bookmarkStore = require('./src/bookmarkstore');
 
+// Claude Code monitor (Unix socket -> ClaudeSessionStore -> IPC). Headless for
+// now: it captures hook events and exposes them over window.claude, with no UI.
+const claudeMonitor = require('./src/claude');
+
 // SAGE3 Google maps APIKEY needed for user geo-location service
 // Stupid way to hide the key (I know)
 process.env.GOOGLE_API_KEY = Buffer.from('QUl6YVN5RGNOWjNCbzY1RmJtUzBOaVJ6WEdaekNjSFJIdm9ncURn', 'base64').toString('ascii');
@@ -1100,4 +1104,26 @@ app.on('before-quit', async function (event) {
  * This method will be called when Electron has finished
  * initialization and is ready to create a browser window.
  */
-app.on('ready', createWindow);
+app.on('ready', () => {
+  // Start the Claude Code monitor pipeline before the window so events are
+  // captured even if the renderer isn't listening yet. Never let a socket
+  // failure block app startup.
+  try {
+    claudeMonitor.start({
+      ipcMain,
+      getWindows: () => BrowserWindow.getAllWindows(),
+      log: (msg) => console.log(msg),
+    });
+  } catch (e) {
+    console.log('[claude] monitor failed to start:', e.message);
+  }
+  createWindow();
+});
+
+app.on('will-quit', () => {
+  try {
+    claudeMonitor.stop();
+  } catch (e) {
+    /* ignore */
+  }
+});

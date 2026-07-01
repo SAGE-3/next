@@ -62,6 +62,8 @@ import {
   useThrottleScale,
   MainButton,
   PartyButton,
+  ClaudeButton,
+  ClaudeStickies,
 } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 
@@ -496,10 +498,14 @@ export function UILayer(props: UILayerProps) {
         </Tooltip>
       </Box>
 
-      {/* Party Button */}
-      <Box position="absolute" right="2" bottom="2" zIndex="1000" display={showUI ? 'initial' : 'none'}>
+      {/* Party + Claude Buttons */}
+      <Box position="absolute" right="2" bottom="2" zIndex="1000" display={showUI ? 'flex' : 'none'} gap="2">
+        <ClaudeButton iconSize="sm" />
         <PartyButton iconSize="sm" />
       </Box>
+
+      {/* Headless: turns live Claude Code events into stickies on the board */}
+      <ClaudeStickies />
 
       {/* Hub-Room-Board Name Top Left */}
       <Box position="absolute" left="1" top="1" display={showUI ? 'initial' : 'none'} backdropFilter="blur(5px)">
