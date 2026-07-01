@@ -163,7 +163,7 @@ async def image(qq: ImageQuery):
     try:
         # do the work
         # val = await imageAG.process(qq)
-        val = await asyncio.wait_for(imageAG.process(qq), timeout=30)
+        val = await asyncio.wait_for(imageAG.process(qq), timeout=60)
         return val
     except asyncio.TimeoutError as e:
         print("Timeout error")
