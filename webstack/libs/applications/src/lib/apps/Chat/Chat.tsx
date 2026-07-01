@@ -729,11 +729,14 @@ function AppComponent(props: App): JSX.Element {
       // Update the context
       const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
 
-      // Check for image
-      if (apps && apps[0].data.type === 'PDFViewer') {
+      // Only consider linked PDFViewer apps: a Chat can be linked to a mix of
+      // app types, so mapping asset ids over all apps would inflate the PDF
+      // count and send undefined ids for non-PDF apps.
+      const pdfApps = apps.filter((a) => a.data.type === 'PDFViewer');
+      if (pdfApps.length > 0) {
         if (roomId && boardId) {
           // Too many PDFs overwhelm the context: block the question before posting anything to the transcript
-          const assetids = apps.map((d) => d.data.state.assetid);
+          const assetids = pdfApps.map((d) => d.data.state.assetid);
           if (isQuestion && assetids.length > MAX_PDFS) {
             toast({
               title: 'Too many PDFs',
