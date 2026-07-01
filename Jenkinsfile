@@ -86,7 +86,10 @@ pipeline {
         }
 
         stage('Deploy Production') {
-            when { expression { params.DEPLOY_TARGET == 'production' } }
+            when {
+                expression { params.DEPLOY_TARGET == 'production' }
+                beforeInput true
+            }
             input {
                 message 'Déployer SAGE3 en production ?'
                 ok 'Déployer'

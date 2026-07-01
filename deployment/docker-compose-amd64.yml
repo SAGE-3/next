@@ -159,7 +159,11 @@ services:
       - "${SAGE3_SERVER}:host-gateway"
     restart: always
     working_dir: /app
-    command: python src/main.py --url http://jupyter:8888
+    volumes:
+      - ./configurations/traefik/certs/certificate.crt:/certs/sage3-staging.crt:ro
+    command: >
+      sh -c "cat /certs/sage3-staging.crt >> $$(python3 -c 'import certifi; print(certifi.where())') &&
+             python src/main.py --url http://jupyter:8888"
     depends_on:
       node-server:
         condition: service_healthy
@@ -187,6 +191,11 @@ services:
     extra_hosts:
       - "${SAGE3_SERVER}:host-gateway"
     restart: always
+    volumes:
+      - ./configurations/traefik/certs/certificate.crt:/certs/sage3-staging.crt:ro
+    command: >
+      sh -c "cat /certs/sage3-staging.crt >> $$(python3 -c 'import certifi; print(certifi.where())') &&
+             uvicorn main:app --proxy-headers --host 0.0.0.0 --port 9999 --workers 1"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9999/status"]
       interval: 30s
