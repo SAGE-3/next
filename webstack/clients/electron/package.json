@@ -13,7 +13,6 @@
     "electron-log": "^5.1.5",
     "electron-prompt": "^1.7.0",
     "electron-store": "^8",
-    "node-fetch": "^2.6.8",
     "semver": "^7",
     "update-electron-app": "^3.0.0",
     "uuid": "8.3.2"

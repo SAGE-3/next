@@ -16,9 +16,6 @@ const { sanitizeUrl } = require('@braintree/sanitize-url');
 // Dialog
 const { dialog } = require('electron');
 
-// Node-Fetch
-const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
-
 // Prompt  tools
 const prompt = require('electron-prompt');
 

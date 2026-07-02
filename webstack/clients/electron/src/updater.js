@@ -18,11 +18,42 @@ const path = require('path');
 // NPM modules
 const electron = require('electron');
 // HTTP query
-const fetch = require('node-fetch');
 const https = require('https');
+const http = require('http');
+// Update servers may use self-signed certificates
 const agent = new https.Agent({
   rejectUnauthorized: false,
 });
+
+// GET a URL and parse the JSON response. Uses node's http/https directly
+// (rather than the global fetch) so the permissive agent above can tolerate
+// self-signed certificates on https update servers.
+function getJSON(url) {
+  return new Promise((resolve, reject) => {
+    const isHttps = url.protocol === 'https:';
+    const lib = isHttps ? https : http;
+    const options = isHttps ? { agent } : undefined;
+    lib
+      .get(url, options, (res) => {
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          res.resume();
+          reject(new Error(`Request failed with status ${res.statusCode}`));
+          return;
+        }
+        let body = '';
+        res.setEncoding('utf8');
+        res.on('data', (chunk) => (body += chunk));
+        res.on('end', () => {
+          try {
+            resolve(JSON.parse(body));
+          } catch (err) {
+            reject(err);
+          }
+        });
+      })
+      .on('error', reject);
+  });
+}
 
 // Versions
 const semver = require('semver');
@@ -37,8 +68,7 @@ async function checkForUpdates(server, opendialog = false) {
   const update_url = new URL(update_path, update_server);
 
   try {
-    const response = await fetch(update_url, update_server.startsWith('https') ? { agent } : undefined);
-    const data = await response.json();
+    const data = await getJSON(update_url);
     console.log('Updater> release', data.releases[0]);
     // if not the expected data structure, stop
     if (!data.currentRelease) return;

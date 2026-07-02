@@ -8,7 +8,6 @@
 
 const { screen } = require('electron');
 const os = require('os');
-const fetch = require('node-fetch');
 const { v4 } = require('uuid');
 
 const server_url = 'https://sage3.evl.uic.edu/events';
