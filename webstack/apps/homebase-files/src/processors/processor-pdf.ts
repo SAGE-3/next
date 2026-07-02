@@ -144,19 +144,24 @@ async function mapWithConcurrency<T>(count: number, concurrency: number, mapper:
   return results;
 }
 
+// Fixed mid/thumbnail widths (px) added below the full render.
+const PDF_TIER_WIDTHS = [1000, 500];
+
 function getPDFResolutionOptions(maxWidth: number): { width: number; quality: number }[] {
-  const highWidth = Math.max(1, Math.floor(maxWidth));
-  const lowWidth = Math.max(1, Math.floor(highWidth / 2));
-
-  if (lowWidth === highWidth) {
-    return [{ width: highWidth, quality: 70 }];
+  const fullWidth = Math.max(1, Math.floor(maxWidth));
+  // Explicit tiers so every page yields a predictable set of sizes regardless of
+  // orientation. (Halving the width stopped after one step for portrait pages,
+  // whose width is the short edge, giving 2 tiers vs 3 for landscape.)
+  // The top tier is always the full render (keeps max quality); the fixed widths
+  // are added below it, skipping any that meet or exceed the full width so we
+  // never upscale or emit duplicate sizes.
+  const options: { width: number; quality: number }[] = [{ width: fullWidth, quality: 70 }];
+  for (const tierWidth of PDF_TIER_WIDTHS) {
+    if (tierWidth < fullWidth) {
+      options.push({ width: tierWidth, quality: 75 });
+    }
   }
-
-  // PDFs can have thousands of pages, so keep this to two variants per page.
-  return [
-    { width: highWidth, quality: 70 },
-    { width: lowWidth, quality: 75 },
-  ];
+  return options;
 }
 
 /**
