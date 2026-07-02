@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@braintree/sanitize-url": "^6.0.2",
-    "commander": "^7",
+    "commander": "^15.0.0",
     "electron-log": "^5.1.5",
     "electron-prompt": "^1.7.0",
     "electron-store": "^8",

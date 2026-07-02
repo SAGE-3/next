@@ -27,7 +27,7 @@ var os = require('os');
 const electron = require('electron');
 
 // parsing command-line arguments
-var program = require('commander');
+const { program } = require('commander');
 
 // URL received from protocol sage3://
 var gotoURL = '';
