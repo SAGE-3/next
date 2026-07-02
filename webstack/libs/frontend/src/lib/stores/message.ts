@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -62,15 +62,23 @@ const MessageStore = create<MessageState>()((set, get) => {
       if (msgSub) {
         msgSub();
         msgSub = null;
-        const interval = get().interval;
-        if (interval) window.clearInterval(interval);
       }
+      const interval = get().interval;
+      if (interval) window.clearInterval(interval);
+      set({ interval: null });
     },
     subscribe: async () => {
       if (!SAGE3Ability.canCurrentUser('read', 'message')) return;
-      set({ ...get(), messages: [] });
+      if (msgSub) {
+        msgSub();
+        msgSub = null;
+      }
+      const existingInterval = get().interval;
+      if (existingInterval) window.clearInterval(existingInterval);
+      set({ ...get(), messages: [], interval: null });
 
-      const msg = await APIHttp.GET<Message>('/message');
+      const route = '/message';
+      const msg = await APIHttp.GET<Message>(route);
       if (msg.success) {
         set({ messages: msg.data });
       } else {
@@ -96,15 +104,6 @@ const MessageStore = create<MessageState>()((set, get) => {
       }, 5 * 1000);
       set({ interval: interval });
 
-      // Unsubscribe old subscription
-      if (msgSub) {
-        msgSub();
-        msgSub = null;
-        if (interval) window.clearInterval(interval);
-      }
-
-      // Socket Subscribe Message
-      const route = '/message';
       // Socket Listenting to updates from server
       msgSub = await SocketAPI.subscribe<Message>(route, (message) => {
         switch (message.type) {

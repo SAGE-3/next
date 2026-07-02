@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -187,14 +187,23 @@ class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
   /**
    * Process a file for conversion: pdf/image processing
    */
-  public async processFile(id: string, file: string, fileType: string) {
+  public async processFile(
+    id: string,
+    file: string,
+    fileType: string,
+    userId?: string,
+    originalFilename?: string,
+    uploadId?: string,
+    fileId?: string,
+    roomId?: string,
+  ) {
     let t2;
     // convert image to multiple sizes
     if (isImage(fileType) && !isGIF(fileType)) {
       t2 = await this.imgQ.addFile(id, file);
     } else if (isPDF(fileType)) {
       // convert PDF to images
-      t2 = await this.pdfQ.addFile(id, file).catch((err) => {
+      t2 = await this.pdfQ.addFile(id, file, userId, originalFilename, uploadId, fileId, roomId).catch((err) => {
         return Promise.reject(err);
       });
     }

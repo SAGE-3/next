@@ -84,6 +84,7 @@ import {
   UsersMenu,
   AssetsMenu,
   EscapeApp,
+  UploadNotificationCenter,
 } from './components';
 
 type UILayerProps = {
@@ -509,6 +510,11 @@ export function UILayer(props: UILayerProps) {
       {/* The clock Top Right */}
       <Box position="absolute" right="1" top="1" backdropFilter="blur(5px)">
         <Clock isBoard={true} />
+      </Box>
+
+      {/* Upload notifications under the clock */}
+      <Box position="absolute" right="1" top="42px" zIndex="1000" display={showUI ? 'initial' : 'none'}>
+        <UploadNotificationCenter roomId={props.roomId} boardId={props.boardId} />
       </Box>
 
       {/* App Toolbar to show when the user selects an app */}
