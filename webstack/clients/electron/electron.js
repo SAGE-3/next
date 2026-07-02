@@ -171,7 +171,6 @@ program
   .option('-x, --xorigin <n>', 'Window position x (int)', myParseInt, windowState.x)
   .option('-y, --yorigin <n>', 'Window position y (int)', myParseInt, windowState.y)
   .option('-c, --clear', 'Clear window preferences', false)
-  .option('--allowDisplayingInsecure', 'Allow displaying of insecure content (http on https)', true)
   .option('--allowRunningInsecure', 'Allow running insecure content (scripts accessed on http vs https)', true)
   .option('--cache', 'Clear the cache at startup', false)
   .option('--console', 'Open the devtools console', false)
@@ -462,18 +461,16 @@ function createWindow() {
     backgroundColor: '#565656',
     // resizable: !commander.fullscreen,
     webPreferences: {
-      nativeWindowOpen: true,
       // Enable webviews
       webviewTag: true,
       // Disable alert and confirm dialogs
       disableDialogs: true,
-      // nodeIntegration: true,
-      // contextIsolation: false,
-      nodeIntegration: true,
+      // Renderer talks to main only through the contextBridge in preload.js,
+      // so node stays out of the renderer.
+      nodeIntegration: false,
       contextIsolation: true,
       webSecurity: true,
       backgroundThrottling: false,
-      allowDisplayingInsecureContent: commander.allowDisplayingInsecure,
       allowRunningInsecureContent: commander.allowRunningInsecure,
       // this enables things like the CSS grid. add a commander option up top for enable / disable on start.
       experimentalFeatures: commander.experimentalFeatures ? true : false,
@@ -1100,4 +1097,4 @@ app.on('before-quit', async function (event) {
  * This method will be called when Electron has finished
  * initialization and is ready to create a browser window.
  */
-app.on('ready', createWindow);
+app.whenReady().then(createWindow);
