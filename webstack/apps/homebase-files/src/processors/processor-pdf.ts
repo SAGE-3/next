@@ -144,6 +144,21 @@ async function mapWithConcurrency<T>(count: number, concurrency: number, mapper:
   return results;
 }
 
+function getPDFResolutionOptions(maxWidth: number): { width: number; quality: number }[] {
+  const highWidth = Math.max(1, Math.floor(maxWidth));
+  const lowWidth = Math.max(1, Math.floor(highWidth / 2));
+
+  if (lowWidth === highWidth) {
+    return [{ width: highWidth, quality: 70 }];
+  }
+
+  // PDFs can have thousands of pages, so keep this to two variants per page.
+  return [
+    { width: highWidth, quality: 70 },
+    { width: lowWidth, quality: 75 },
+  ];
+}
+
 /**
  * Converting PDF to multiple resolutions using pdfjs and sharp
  *
@@ -310,15 +325,7 @@ async function pdfProcessing(job: any): Promise<ExtraPDFType> {
 
         canvasAndContext = canvasFactory.create(viewport.width, viewport.height);
 
-        const maxWidth = Math.floor(viewport.width);
-        // Maximum resolution
-        const options: { width: number; quality: number }[] = [{ width: maxWidth, quality: 70 }];
-        // Calculating downscale sizes down to 500pixel
-        let curW = Math.floor(maxWidth / 2);
-        while (curW > 500) {
-          options.push({ width: curW, quality: 75 });
-          curW = Math.floor(curW / 2);
-        }
+        const options = getPDFResolutionOptions(viewport.width);
 
         const renderContext = {
           canvasContext: canvasAndContext.context,
