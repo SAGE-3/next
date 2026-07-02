@@ -8,7 +8,7 @@
 
 const { screen } = require('electron');
 const os = require('os');
-const { v4 } = require('uuid');
+const { randomUUID } = require('crypto');
 
 const server_url = 'https://sage3.evl.uic.edu/events';
 
@@ -101,7 +101,7 @@ async function analyticsOnStop(userId) {
 }
 
 function genUserId() {
-  return v4();
+  return randomUUID();
 }
 
 module.exports = {

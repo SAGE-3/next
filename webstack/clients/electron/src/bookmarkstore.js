@@ -8,8 +8,7 @@
 
 // Persistent storage for electron app: used for window position
 const Store = require('electron-store');
-const uuid = require('uuid');
-const genId = uuid.v4;
+const { randomUUID: genId } = require('crypto');
 
 // Persistent data store to store window postion/size
 // stored by default in app.getPath('userData')

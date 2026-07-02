@@ -8,13 +8,12 @@
     "url": "https://github.com/SAGE-3/next"
   },
   "dependencies": {
-    "@braintree/sanitize-url": "^6.0.2",
+    "@braintree/sanitize-url": "^7.1.2",
     "commander": "^15.0.0",
     "electron-log": "^5.1.5",
     "electron-prompt": "^1.7.0",
     "electron-store": "^8",
-    "update-electron-app": "^3.0.0",
-    "uuid": "8.3.2"
+    "update-electron-app": "^3.0.0"
   },
   "devDependencies": {
     "@electron/notarize": "^2.3.2",
