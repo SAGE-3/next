@@ -24,11 +24,11 @@
     "electron": "^43.0.0"
   },
   "optionalDependencies": {
-    "electron-installer-debian": "latest",
+    "electron-installer-debian": "^4.0.0",
     "electron-installer-dmg": "^5.0.0",
-    "electron-installer-redhat": "latest",
+    "electron-installer-redhat": "^4.0.0",
     "electron-squirrel-startup": "latest",
-    "electron-winstaller": "latest"
+    "electron-winstaller": "^5.4.4"
   },
   "scripts": {
     "electron": "electron electron.js -s https://chicago.sage3.app/",
