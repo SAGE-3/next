@@ -32,12 +32,8 @@ var program = require('commander');
 // URL received from protocol sage3://
 var gotoURL = '';
 
-// update system
-const updater = require('./src/updater');
 // Get the version from the package file
 var version = require('./package.json').version;
-// First run
-var firstRun = true;
 
 // Utilities
 const { checkServerIsSage, myParseInt, takeScreenshot, updateLandingPage } = require('./src/utils');
@@ -681,14 +677,6 @@ function createWindow() {
     if (mainWindow.isFullScreen()) {
       mainWindow.setMenuBarVisibility(false);
     }
-
-    // Check for updates
-    if (firstRun) {
-      const currentURL = mainWindow.webContents.getURL();
-      const parsedURL = new URL(currentURL);
-      // updater.checkForUpdates(parsedURL.origin, false);
-      firstRun = false;
-    }
   });
 
   mainWindow.webContents.on('did-stop-loading', function () {
@@ -957,9 +945,6 @@ function createWindow() {
 
   // Request from user to check for updates to the client
   ipcMain.on('client-update-check', () => {
-    const currentURL = mainWindow.webContents.getURL();
-    const parsedURL = new URL(currentURL);
-    // updater.checkForUpdates(parsedURL.origin, true);
     autoUpdater.checkForUpdates();
   });
 

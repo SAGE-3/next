@@ -18,7 +18,6 @@ const bookmarkStore = require('./bookmarkstore');
 
 // Utils
 const { updateLandingPage, dialogUserTextInput, checkServerIsSage, takeScreenshot } = require('./utils');
-// const updater = require('./updater');
 
 /**
  * Build a menu template for a window
