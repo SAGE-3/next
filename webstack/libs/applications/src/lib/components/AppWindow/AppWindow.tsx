@@ -67,14 +67,22 @@ function getResizeHandleStyle(dir: ResizeDirection, handleSize: number): React.C
   const h = handleSize;
   const half = h / 2;
   switch (dir) {
-    case 'nw': return { ...resizeHandleBaseStyle, top: -half, left: -half, width: h, height: h, cursor: 'nw-resize' };
-    case 'n':  return { ...resizeHandleBaseStyle, top: -half, left: half, right: half, height: h, cursor: 'n-resize' };
-    case 'ne': return { ...resizeHandleBaseStyle, top: -half, right: -half, width: h, height: h, cursor: 'ne-resize' };
-    case 'e':  return { ...resizeHandleBaseStyle, top: half, bottom: half, right: -half, width: h, cursor: 'e-resize' };
-    case 'se': return { ...resizeHandleBaseStyle, bottom: -half, right: -half, width: h, height: h, cursor: 'se-resize' };
-    case 's':  return { ...resizeHandleBaseStyle, bottom: -half, left: half, right: half, height: h, cursor: 's-resize' };
-    case 'sw': return { ...resizeHandleBaseStyle, bottom: -half, left: -half, width: h, height: h, cursor: 'sw-resize' };
-    case 'w':  return { ...resizeHandleBaseStyle, top: half, bottom: half, left: -half, width: h, cursor: 'w-resize' };
+    case 'nw':
+      return { ...resizeHandleBaseStyle, top: -half, left: -half, width: h, height: h, cursor: 'nw-resize' };
+    case 'n':
+      return { ...resizeHandleBaseStyle, top: -half, left: half, right: half, height: h, cursor: 'n-resize' };
+    case 'ne':
+      return { ...resizeHandleBaseStyle, top: -half, right: -half, width: h, height: h, cursor: 'ne-resize' };
+    case 'e':
+      return { ...resizeHandleBaseStyle, top: half, bottom: half, right: -half, width: h, cursor: 'e-resize' };
+    case 'se':
+      return { ...resizeHandleBaseStyle, bottom: -half, right: -half, width: h, height: h, cursor: 'se-resize' };
+    case 's':
+      return { ...resizeHandleBaseStyle, bottom: -half, left: half, right: half, height: h, cursor: 's-resize' };
+    case 'sw':
+      return { ...resizeHandleBaseStyle, bottom: -half, left: -half, width: h, height: h, cursor: 'sw-resize' };
+    case 'w':
+      return { ...resizeHandleBaseStyle, top: half, bottom: half, left: -half, width: h, cursor: 'w-resize' };
   }
 }
 
@@ -454,7 +462,11 @@ export function AppWindow(props: WindowProps) {
   }
 
   function handleAppTouchMove(e: React.PointerEvent) {
-    e.stopPropagation();
+    // Don't swallow pointer moves for the selected app — its content may need them.
+    // e.g. Drawing/tldraw draws on pointermove; stopping here leaves only a single dot.
+    // (The board pans on mouse/touch/wheel events, not pointer events, so letting
+    // pointer moves through here does not trigger board panning.)
+    if (!selected) e.stopPropagation();
     if (!appWasDragged) setAppWasDragged(true);
   }
 
@@ -467,7 +479,7 @@ export function AppWindow(props: WindowProps) {
       const edge = getRectEdgeAtPoint(
         { x: position.x, y: position.y },
         { x: pos.x, y: pos.y, width: size.width, height: size.height },
-        20 * invScale
+        20 * invScale,
       );
       if (edge) {
         let newOrigin = { x: pos.x, y: pos.y };
@@ -640,7 +652,8 @@ export function AppWindow(props: WindowProps) {
       onPointerMove={handleAppTouchMove}
     >
       {/* Resize handles — only rendered when selected and resize is enabled */}
-      {canResizeNow && selected &&
+      {canResizeNow &&
+        selected &&
         RESIZE_DIRECTIONS.map((dir) => (
           <div
             key={dir}
@@ -745,7 +758,7 @@ export function AppWindow(props: WindowProps) {
 function getRectEdgeAtPoint(
   point: { x: number; y: number },
   rect: { x: number; y: number; width: number; height: number },
-  tolerance: number = 1
+  tolerance: number = 1,
 ): HitType {
   const left = rect.x;
   const right = rect.x + rect.width;
