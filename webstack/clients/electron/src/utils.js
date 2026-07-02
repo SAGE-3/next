@@ -29,16 +29,16 @@ const bookmarkStore = require('./bookmarkstore');
  * @returns {Promise<boolean | string>} false if not a sage3, a parsed url if it is a sage3 server
  */
 async function checkServerIsSage(input_url) {
-  // Sanitize the URL
+  // Sanitize the URL (strips javascript:, data: and other unsafe schemes -> 'about:blank')
   const sanitzedUrl = sanitizeUrl(input_url);
   if (sanitzedUrl === 'about:blank') {
     console.log('SAGE3> URL failed sanitizsation test');
     return false;
   }
-  // Parse the URL
+  // Derive https + http variants of the URL, then probe each one
   const parsedUrls = updateUrl(sanitzedUrl);
   const checkSecure = await verifySage3Server(parsedUrls.secured);
-  // Check https
+  // Prefer https; fall back to http only if the secure probe fails
   if (checkSecure) {
     console.log('SAGE3> This is a SAGE3 server.', parsedUrls.secured);
     return parsedUrls.secured;
@@ -62,8 +62,9 @@ async function checkServerIsSage(input_url) {
  */
 async function verifySage3Server(url) {
   try {
-    // First test the secure url
+    // Temporarily accept self-signed certs so local/dev servers can be probed
     process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0;
+    // A SAGE3 server answers /api/info with { isSage3: true }
     const response = await fetch(url + 'api/info', { method: 'GET', mode: 'cors' });
     const response_json = await response.json();
     return response_json.isSage3;
@@ -72,6 +73,7 @@ async function verifySage3Server(url) {
     process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 1;
     return false;
   } finally {
+    // Always restore strict TLS checking, whatever the outcome
     process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 1;
   }
 }
@@ -87,6 +89,7 @@ function updateUrl(url) {
   let secured = '';
   let unsecured = '';
 
+  // Build both scheme variants depending on what (if any) scheme the input has
   if (!/^https?:\/\//i.test(url)) {
     secured = 'https://' + url;
     unsecured = 'http://' + url;
@@ -98,6 +101,7 @@ function updateUrl(url) {
     secured = url.replace(/^http:\/\//i, 'https://');
   }
 
+  // Reduce each URL to its origin only (drop path/query/hash)
   const securedParsed = new URL(secured);
   securedParsed.pathname = '';
   securedParsed.search = '';
@@ -181,8 +185,9 @@ function takeScreenshot(window) {
   if (window) {
     // Capture the Electron window
     window.capturePage().then(function (img) {
-      // convert to JPEG
+      // convert to JPEG (quality 90)
       const imageData = img.toJPEG(90);
+      // Build a timestamp suffix for a unique default filename
       const now = new Date();
       const year = now.getFullYear();
       const month = now.getMonth() + 1;
@@ -196,7 +201,7 @@ function takeScreenshot(window) {
         title: 'Save current board as a JPEG file',
         defaultPath: electron.app.getPath('downloads') + '/screenshot' + dt + '.jpg',
       };
-      // Open the save dialog
+      // Ask the user where to save, then write the JPEG bytes
       electron.dialog.showSaveDialog(window, options).then((obj) => {
         if (!obj.canceled) {
           // write the file
@@ -257,6 +262,7 @@ function getFallback() {
  */
 function getAppDataPath(file_name) {
   let appDataPath = '';
+  // Pick the per-OS data directory; getFallback() covers any unknown platform
   switch (platform()) {
     case 'win32':
       appDataPath = getWindowPath();
@@ -282,6 +288,7 @@ function getAppDataPath(file_name) {
  * @param  {Electron.BrowserWindow} the electron browser window containing the landing page
  */
 function updateLandingPage(window) {
+  // Push the current bookmark list to the landing page renderer over IPC
   const bookmarks = bookmarkStore.getBookmarks();
   window.webContents.send('store-interface', { response: 'bookmarks-list', bookmarks });
 }

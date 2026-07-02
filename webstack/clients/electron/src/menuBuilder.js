@@ -25,6 +25,7 @@ const { updateLandingPage, dialogUserTextInput, checkServerIsSage, takeScreensho
  * @returns
  */
 function buildSageMenu(window, commander) {
+  // System tray (menubar) icon with its own quick-access context menu, built once the app is ready
   let tray = null;
   app.whenReady().then(() => {
     tray = new Tray(nativeImage.createFromPath(path.join(__dirname, '..', 'images', 'trayTemplate.png')));
@@ -44,6 +45,7 @@ function buildSageMenu(window, commander) {
       {
         label: 'Check for Updates...',
         click() {
+          // Trigger the electron auto-updater; only show a dialog when already up to date
           const autoUpdater = electron.autoUpdater;
           autoUpdater.once('update-not-available', (e) => {
             const version = electron.app.getVersion();
@@ -71,6 +73,9 @@ function buildSageMenu(window, commander) {
     tray.setContextMenu(contextMenu);
   });
 
+  // Bookmarks == saved "Hubs" (SAGE3 servers). Reused as menu items in the Hubs menu below.
+  // After any change, rebuild the whole menu and refresh the landing page so both stay in sync.
+
   // Clear Bookmarks button
   const clearBookmarks = {
     label: 'Restore Default Hub List',
@@ -85,6 +90,7 @@ function buildSageMenu(window, commander) {
   const addBookmark = {
     label: 'Save current Hub',
     click: async () => {
+      // Only bookmark the current page if it is actually a SAGE3 server
       const url = window.webContents.getURL();
       const isSage = await checkServerIsSage(url);
       if (!isSage) return;
@@ -97,7 +103,7 @@ function buildSageMenu(window, commander) {
     },
   };
 
-  // Create bookmarks submenu
+  // Create bookmarks submenu: clicking a Hub navigates the window to that server
   const bookmarks = bookmarkStore.getBookmarks().map((el) => {
     return {
       label: `${el.name}`,
@@ -121,12 +127,13 @@ function buildSageMenu(window, commander) {
     };
   });
 
-  // Menu template
+  // Menu template: array of top-level menus (File, Edit, View, Hubs, Window, Help)
   const template = [
     {
       label: 'File',
       submenu: [
         {
+          // Go back to the local landing page listing all saved Hubs
           label: 'Return To Hub List',
           click() {
             if (window) {
@@ -158,6 +165,7 @@ function buildSageMenu(window, commander) {
           },
         },
         {
+          // Reset stored prefs/bookmarks and wipe browser session data (login cookies, etc.)
           label: 'Clear Caches',
           click: function () {
             windowStore.default();
@@ -177,6 +185,7 @@ function buildSageMenu(window, commander) {
           },
         },
         {
+          // Checkbox toggle: persist a flag so prefs are wiped on next quit
           label: 'Clear Preferences on Quit',
           type: 'checkbox',
           checked: windowStore.getClean(),
@@ -206,6 +215,7 @@ function buildSageMenu(window, commander) {
       ],
     },
     {
+      // Standard edit actions handled by Electron built-in roles (no custom click needed)
       label: 'Edit',
       submenu: [
         {
@@ -247,6 +257,7 @@ function buildSageMenu(window, commander) {
       label: 'View',
       submenu: [
         {
+          // Reload the page and reset zoom back to 100%
           label: 'Refresh Content',
           accelerator: 'CommandOrControl+R',
           click: function (item, focusedWindow) {
@@ -302,6 +313,7 @@ function buildSageMenu(window, commander) {
         // },
         {
           label: 'Toggle Full Screen',
+          // Platform-specific shortcut: Ctrl+Cmd+F on macOS, F11 elsewhere
           accelerator: (function () {
             if (process.platform === 'darwin') {
               return 'Ctrl+Command+F';
@@ -311,6 +323,7 @@ function buildSageMenu(window, commander) {
           })(),
           click: function (item, focusedWindow) {
             if (focusedWindow) {
+              // Hide the menu bar while fullscreen, restore it when exiting
               // focusedWindow.fullScreenable = !focusedWindow.isFullScreen();
               focusedWindow.fullScreenable = true;
               if (focusedWindow.isFullScreen()) {
@@ -328,6 +341,7 @@ function buildSageMenu(window, commander) {
         },
         {
           label: 'Toggle Developer Tools',
+          // Platform-specific shortcut: Alt+Cmd+I on macOS, Ctrl+Shift+I elsewhere
           accelerator: (function () {
             if (process.platform === 'darwin') {
               return 'Alt+Command+I';
@@ -342,6 +356,7 @@ function buildSageMenu(window, commander) {
           },
         },
         {
+          // Dev convenience: load a locally running SAGE3 server
           label: 'Open local server (http://localhost:4200)',
           click() {
             if (window) {
@@ -352,6 +367,7 @@ function buildSageMenu(window, commander) {
       ],
     },
     {
+      // Hubs menu: static navigation plus the dynamic saved-Hub items assembled above
       label: 'Hubs',
       role: 'bookmarks',
       submenu: [
@@ -402,6 +418,7 @@ function buildSageMenu(window, commander) {
       role: 'help',
       submenu: [
         {
+          // Show an about dialog with the current app version; the rest open external URLs
           label: 'About SAGE3',
           click() {
             const version = electron.app.getVersion();
@@ -455,6 +472,8 @@ function buildSageMenu(window, commander) {
     },
   ];
 
+  // macOS only: prepend the standard app menu (About/Hide/Quit) as the first item,
+  // and add "Bring All to Front" to the Window menu to match native Mac conventions
   if (process.platform === 'darwin') {
     const name = electron.app.name;
     template.unshift({
@@ -525,6 +544,7 @@ function buildSageMenu(window, commander) {
  * @param {Electron.BrowserWindow} The electron browser window menu to build
  */
 function buildMenu(window, commander) {
+  // Build the template and install it as the application-wide menu
   const menu = buildSageMenu(window, commander);
   electron.Menu.setApplicationMenu(electron.Menu.buildFromTemplate(menu));
 }
