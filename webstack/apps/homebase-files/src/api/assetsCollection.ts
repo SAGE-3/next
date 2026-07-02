@@ -47,6 +47,15 @@ class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
     UploadConnector.getInstance();
     // call the base class method
     await super.initialize(clear, ttl);
+    // This service owns the asset files on disk, but asset records are created
+    // and deleted by the main server. Subscribe to the shared ASSETS collection
+    // so that when a record is deleted (from any service), we remove its files
+    // (original upload + derived PDF pages / image sizes / extracted text / metadata).
+    await this.subscribeAll((message) => {
+      if (message.type === 'DELETE') {
+        this.deleteAssetFiles(message.doc.map((doc) => doc.data));
+      }
+    });
     // Upload files: POST /api/assets/upload
     this.router().post('/upload', uploadHandler);
     // Access to uploaded files: GET /api/assets/static/:filename
@@ -231,6 +240,35 @@ class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
     const assetIds = roomAssets ? roomAssets.map((asset) => asset._id) : [];
     const assetsDeleted = await this.deleteBatch(assetIds);
     return assetsDeleted ? assetsDeleted.length : 0;
+  }
+
+  /**
+   * Remove asset files from disk. Every file belonging to an asset is named after
+   * the original's UUID: "<uuid>.<ext>" (original), "<uuid>.<ext>.json" (metadata),
+   * and "<uuid>-...webp/.json" (rendered PDF pages, image sizes, extracted text).
+   * Best-effort: missing files are ignored and errors are logged, never thrown, so
+   * a filesystem problem can't block the (already committed) database delete.
+   */
+  private deleteAssetFiles(assets: AssetSchema[]): void {
+    if (assets.length === 0) return;
+    const dir = config.public;
+    // UUID basenames whose files should be removed (e.g. "<uuid>" from "<uuid>.pdf")
+    const bases = assets.map((a) => path.basename(a.file, path.extname(a.file)));
+    try {
+      if (!fs.existsSync(dir)) return;
+      for (const entry of fs.readdirSync(dir)) {
+        // "<uuid>." matches the original + metadata; "<uuid>-" matches derived files
+        if (bases.some((base) => entry.startsWith(`${base}.`) || entry.startsWith(`${base}-`))) {
+          try {
+            fs.unlinkSync(path.join(dir, entry));
+          } catch (err) {
+            console.warn('Assets> could not remove file', entry, err);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Assets> failed to clean up asset files', err);
+    }
   }
 
   // Transfer all the assets of a user to another user
