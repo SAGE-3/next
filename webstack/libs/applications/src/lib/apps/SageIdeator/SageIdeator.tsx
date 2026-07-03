@@ -6,15 +6,16 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 
 import { format } from 'date-fns/format';
 
 import { Flex, Box, Button, IconButton, Tooltip, useToast, useColorModeValue } from '@chakra-ui/react';
 import { MdFileDownload, MdChat, MdChevronLeft, MdChevronRight } from 'react-icons/md';
 
-import { useAppStore, useHexColor, useUser, downloadFile, apiUrls, useAssetStore } from '@sage3/frontend';
+import { useAppStore, useHexColor, useUser, downloadFile, apiUrls, useAssetStore, useConfigStore, useUserSettings } from '@sage3/frontend';
 import { genId } from '@sage3/shared';
+import { LLMConfigManager } from '@sage3/shared/types';
 
 import { App } from '../../schema';
 import { state as AppState } from './index';
@@ -36,7 +37,6 @@ import {
   buildRequirements,
   callProseAPI,
   generateUserDimension,
-  VISION_MODELS,
   summarizeFavorites as summarizeFavoritesAPI,
   generateNodeImage,
 } from './openai';
@@ -119,6 +119,15 @@ function AppComponent(props: App): JSX.Element {
   const createApp = useAppStore((state) => state.create);
   const boardApps = useAppStore((s) => s.apps);
   const toast = useToast();
+
+  // The AI provider comes from the user's global setting, resolved against the
+  // server's LLM configuration (mirrors the Chat app). We send the provider
+  // name to Seer, which maps it to a concrete model per task; capability checks
+  // gate features the provider can't do (e.g. image input / image generation).
+  const serverConfig = useConfigStore((state) => state.config);
+  const llmManager = useMemo(() => (serverConfig?.models ? new LLMConfigManager(serverConfig.models) : undefined), [serverConfig]);
+  const { settings } = useUserSettings();
+  const aiProvider = settings.aiModel || serverConfig?.models?.settings?.default_provider || '';
 
   // Theme
   const bgColor = useColorModeValue('gray.100', 'gray.700');
@@ -224,7 +233,7 @@ function AppComponent(props: App): JSX.Element {
     if (!pendingImport?.isLoading) return;
     const { text, stickieId, originalPosition } = pendingImport;
     let active = true;
-    abstractNode(text, s.apiKey, s.model, pendingImport.temperature)
+    abstractNode(text, aiProvider, pendingImport.temperature)
       .then((preview) => {
         if (active) setPendingImport((prev) => (prev ? { ...prev, preview, isLoading: false } : null));
       })
@@ -316,12 +325,12 @@ function AppComponent(props: App): JSX.Element {
         return;
       }
 
-      // Guard: image attached but model doesn't support vision
+      // Guard: image attached but the selected provider can't do vision
       const image = branchOpts ? undefined : (attachedImage ?? undefined);
-      if (image && !VISION_MODELS.has(s.model)) {
+      if (image && !llmManager?.canProviderPerformTask(aiProvider, 'image')) {
         toast({
-          title: 'Model does not support images',
-          description: `Switch to a vision-capable model (e.g. gpt-4o-mini) to use image prompts.`,
+          title: 'Provider does not support images',
+          description: `Your AI provider (${aiProvider || 'none'}) can't process images. Pick a vision-capable provider in your user settings.`,
           status: 'warning',
           duration: 4000,
           isClosable: true,
@@ -360,7 +369,7 @@ function AppComponent(props: App): JSX.Element {
       });
 
       try {
-        const rawDims = await generateDimensionsFromPrompt(aiPrompt, s.apiKey, s.model, s.numDimensions, image, s.pdfContext?.text);
+        const rawDims = await generateDimensionsFromPrompt(aiPrompt, aiProvider, s.numDimensions, image, s.pdfContext?.text);
 
         const dimensions: AppState['dimensions'] = [
           ...Object.entries(rawDims.categorical).map(([name, values], i) => ({
@@ -384,8 +393,8 @@ function AppComponent(props: App): JSX.Element {
         const results = await Promise.allSettled(
           Array.from({ length: s.batchSize }, async () => {
             const { requirements, categorical, ordinal } = buildRequirements(rawDims);
-            const text = await generateNodeContent(aiPrompt, requirements, s.apiKey, s.model, image, s.pdfContext?.text);
-            const summary = await abstractNode(text, s.apiKey, s.model);
+            const text = await generateNodeContent(aiPrompt, requirements, aiProvider, image, s.pdfContext?.text);
+            const summary = await abstractNode(text, aiProvider);
             return {
               ID: genId(),
               Title: summary.Title,
@@ -507,7 +516,7 @@ function AppComponent(props: App): JSX.Element {
         ]
           .filter(Boolean)
           .join('\n');
-        const answer = await callProseAPI(`${context}\n\nQuestion: ${question}`, s.apiKey, s.model);
+        const answer = await callProseAPI(`${context}\n\nQuestion: ${question}`, aiProvider);
         const qaEntry = {
           id: genId(),
           nodeId: node.ID,
@@ -538,7 +547,7 @@ function AppComponent(props: App): JSX.Element {
       setIsAddingDimension(true);
       try {
         const nodeStubs = localNodes.map((n) => ({ ID: n.ID, Title: n.Title, Summary: n.Summary }));
-        const { type, values, assignments } = await generateUserDimension(dimName, s.prompt, nodeStubs, s.apiKey, s.model);
+        const { type, values, assignments } = await generateUserDimension(dimName, s.prompt, nodeStubs, aiProvider);
         const newDim = { id: localDims.length, name: dimName, type, values };
         const updatedNodes = localNodes.map((n) => ({
           ...n,
@@ -578,8 +587,8 @@ function AppComponent(props: App): JSX.Element {
           ordinal: Object.fromEntries(curEntry.dimensions.filter((d) => d.type === 'ordinal').map((d) => [d.name, d.values])),
         };
         const { requirements, categorical, ordinal } = buildRequirements(rawDims);
-        const text = await generateNodeContent(curEntry.prompt, requirements, s.apiKey, s.model, undefined, s.pdfContext?.text);
-        const summary = await abstractNode(text, s.apiKey, s.model);
+        const text = await generateNodeContent(curEntry.prompt, requirements, aiProvider, undefined, s.pdfContext?.text);
+        const summary = await abstractNode(text, aiProvider);
         const afterGen = useAppStore.getState().apps.find((a) => a._id === props._id)?.data.state as AppState | undefined;
         const afterEntry = (afterGen ?? cur).chatHistory.find((e) => e.id === activeEntryId);
         if (!afterEntry) return;
@@ -630,8 +639,8 @@ function AppComponent(props: App): JSX.Element {
         const moreResults = await Promise.allSettled(
           Array.from({ length: s.batchSize }, async () => {
             const { requirements, categorical, ordinal } = buildRequirements(rawDims);
-            const text = await generateNodeContent(entry.prompt, requirements, s.apiKey, s.model, undefined, s.pdfContext?.text);
-            const summary = await abstractNode(text, s.apiKey, s.model);
+            const text = await generateNodeContent(entry.prompt, requirements, aiProvider, undefined, s.pdfContext?.text);
+            const summary = await abstractNode(text, aiProvider);
             return {
               ID: genId(),
               Title: summary.Title,
@@ -676,7 +685,7 @@ function AppComponent(props: App): JSX.Element {
       if (!node) return;
       setGeneratingImageNodeId(nodeId);
       try {
-        const dataUrl = await generateNodeImage(node.Title, node.Summary, node.Keywords, s.apiKey, s.prompt, node.Dimension);
+        const dataUrl = await generateNodeImage(node.Title, node.Summary, node.Keywords, aiProvider, s.prompt, node.Dimension);
         // Upload to SAGE3 assets to avoid storing a ~1MB base64 string in app state
         const blob = await fetch(dataUrl).then((r) => r.blob());
         const imgFile = new File([blob], `idea-${nodeId}.png`, { type: 'image/png' });
@@ -708,8 +717,7 @@ function AppComponent(props: App): JSX.Element {
       const summary = await summarizeFavoritesAPI(
         favNodes.map((n) => ({ Title: n.Title, Summary: n.Summary, Keywords: n.Keywords })),
         s.prompt,
-        s.apiKey,
-        s.model,
+        aiProvider,
       );
       const header = `★ Favorites Summary\nTopic: ${s.prompt}\n\n`;
       const footer = `\n\nFavorites: ${favNodes.map((n) => n.Title).join(', ')}`;
@@ -739,7 +747,7 @@ function AppComponent(props: App): JSX.Element {
     } finally {
       setIsSummarizing(false);
     }
-  }, [localNodes, s.prompt, s.apiKey, s.model, isSummarizing, props._id, props.data, createApp]);
+  }, [localNodes, s.prompt, aiProvider, isSummarizing, props._id, props.data, createApp]);
 
   const branchFromFavorites = useCallback(() => {
     const favNodes = localNodes.filter((n) => n.IsMyFav);
@@ -780,8 +788,8 @@ function AppComponent(props: App): JSX.Element {
       setIsGeneratingAt(true);
       try {
         const { requirements, categorical, ordinal } = buildBlendedRequirements(localDims, xDimName, xBlend, yDimName, yBlend);
-        const text = await generateNodeContent(s.prompt, requirements, s.apiKey, s.model);
-        const summary = await abstractNode(text, s.apiKey, s.model);
+        const text = await generateNodeContent(s.prompt, requirements, aiProvider);
+        const summary = await abstractNode(text, aiProvider);
         const newNode: AppState['nodes'][number] = {
           ID: genId(),
           Title: summary.Title,
@@ -814,7 +822,7 @@ function AppComponent(props: App): JSX.Element {
       if (!activeEntryId) return;
       setIsAddingManualIdea(true);
       try {
-        const summary = await abstractNode(text, s.apiKey, s.model);
+        const summary = await abstractNode(text, aiProvider);
         const rawDims = {
           categorical: Object.fromEntries(localDims.filter((d) => d.type === 'categorical').map((d) => [d.name, d.values])),
           ordinal: Object.fromEntries(localDims.filter((d) => d.type === 'ordinal').map((d) => [d.name, d.values])),
