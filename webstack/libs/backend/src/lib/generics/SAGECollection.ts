@@ -260,7 +260,7 @@ export class SAGE3Collection<T extends SBJSON> {
   public async subscribeByQuery(
     field: keyof T,
     value: string,
-    callback: (message: SBDocumentMessage<T>) => void
+    callback: (message: SBDocumentMessage<T>) => void,
   ): Promise<(() => Promise<void>) | undefined> {
     try {
       const unsubscribe = await this._collection.subscribeToQuery(field, value, callback);
