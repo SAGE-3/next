@@ -3,6 +3,8 @@ import {
   TLAnyShapeUtilConstructor,
   TLInstancePresence,
   TLRecord,
+  TLUser,
+  UserRecordType,
   TLStoreWithStatus,
   computed,
   createPresenceStateDerivation,
@@ -137,22 +139,21 @@ export function useYjsStore({
       const yClientId = room.awareness.clientID.toString();
       setUserPreferences({ id: yClientId });
 
-      const userPreferences = computed<{
-        id: string;
-        color: string;
-        name: string;
-      }>('userPreferences', () => {
+      // tldraw v5: the derivation expects a Signal<TLUser>, not the old
+      // TLUserPreferences shape. Build a proper TLUser record from prefs.
+      const userPreferences = computed<TLUser>('userPreferences', () => {
         const user = getUserPreferences();
-        return {
-          id: user.id,
+        return UserRecordType.create({
+          id: UserRecordType.createId(user.id),
           color: user.color ?? defaultUserPreferences.color,
           name: user.name ?? defaultUserPreferences.name,
-        };
+        });
       });
 
       // Create the instance presence derivation
       const presenceId = InstancePresenceRecordType.createId(yClientId);
-      const presenceDerivation = createPresenceStateDerivation(userPreferences, presenceId)(store);
+      // tldraw v5: the 2nd arg is now an options object, not a bare presence id
+      const presenceDerivation = createPresenceStateDerivation(userPreferences, { instanceId: presenceId })(store);
 
       // Set our initial presence from the derivation's current value
       room.awareness.setLocalStateField('presence', presenceDerivation.get());
@@ -257,7 +258,8 @@ export function useYjsStore({
           meta.set('schema', ourSchema);
         });
 
-        store.loadSnapshot({
+        // tldraw v5: Store.loadSnapshot was renamed to loadStoreSnapshot
+        store.loadStoreSnapshot({
           store: migrationResult.value,
           schema: ourSchema,
         });
