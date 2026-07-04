@@ -23,7 +23,7 @@ export type SBAuthSchema = {
 /**
  * The SAGEBase Database interface for the SBAuth Class
  */
-class SBAuthDatabase {
+export class SBAuthDatabase {
   private _redisClient!: RedisClientType;
 
   private _prefix!: string;
@@ -203,5 +203,4 @@ class SBAuthDatabase {
   }
 }
 
-export type { SBAuthDatabase };
 export const SBAuthDB = new SBAuthDatabase();
