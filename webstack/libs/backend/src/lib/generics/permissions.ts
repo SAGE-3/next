@@ -72,7 +72,15 @@ export function checkPermissionsREST(subj: AuthSubject): Middleware {
     const auth = req.user as SBAuthSchema;
     // Get Role
     const role = convertProviderToRole(auth.provider);
-    if (!role) return false;
+    if (!role) {
+      // `return false;` here previously did neither — Middleware's return
+      // type is void, so this was a silent no-op: no next(), no response.
+      // Any auth record with a provider missing from providerToRoleMap
+      // (e.g. a provider added without updating the map) made the request
+      // hang forever. Respond the same way an unauthorized role does.
+      res.status(403).json({ message: 'Forbidden user' });
+      return;
+    }
     // Convert Method to Action
     const action = convertMethodToAction(req.method as AuthAction);
     // Convert Subject to Resource
