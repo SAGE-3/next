@@ -1,6 +1,6 @@
 {
   "name": "SAGE3",
-  "version": "1.0.62",
+  "version": "1.0.63",
   "description": "Electron-based SAGE3 client",
   "main": "electron.js",
   "repository": {
@@ -8,27 +8,24 @@
     "url": "https://github.com/SAGE-3/next"
   },
   "dependencies": {
-    "@braintree/sanitize-url": "^6.0.2",
-    "commander": "^7",
+    "@braintree/sanitize-url": "^7.1.2",
+    "commander": "^15.0.0",
     "electron-log": "^5.1.5",
     "electron-prompt": "^1.7.0",
     "electron-store": "^8",
-    "node-fetch": "^2.6.8",
-    "semver": "^7",
-    "update-electron-app": "^3.0.0",
-    "uuid": "8.3.2"
+    "update-electron-app": "^3.0.0"
   },
   "devDependencies": {
     "@electron/notarize": "^2.3.2",
     "@electron/packager": "^18.4.4",
-    "electron": "^40.9.1"
+    "electron": "^43.0.0"
   },
   "optionalDependencies": {
-    "electron-installer-debian": "latest",
+    "electron-installer-debian": "^4.0.0",
     "electron-installer-dmg": "^5.0.0",
-    "electron-installer-redhat": "latest",
+    "electron-installer-redhat": "^4.0.0",
     "electron-squirrel-startup": "latest",
-    "electron-winstaller": "latest"
+    "electron-winstaller": "^5.4.4"
   },
   "scripts": {
     "electron": "electron electron.js -s https://chicago.sage3.app/",
