@@ -1,10 +1,17 @@
+/**
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
+ *
+ * Distributed under the terms of the SAGE3 License.  The full license is in
+ * the file LICENSE, distributed as part of this software.
+ */
+
 import {
   InstancePresenceRecordType,
   TLAnyShapeUtilConstructor,
   TLInstancePresence,
   TLRecord,
-  TLUser,
-  UserRecordType,
+  TLPresenceUserInfo,
   TLStoreWithStatus,
   computed,
   createPresenceStateDerivation,
@@ -139,21 +146,19 @@ export function useYjsStore({
       const yClientId = room.awareness.clientID.toString();
       setUserPreferences({ id: yClientId });
 
-      // tldraw v5: the derivation expects a Signal<TLUser>, not the old
-      // TLUserPreferences shape. Build a proper TLUser record from prefs.
-      const userPreferences = computed<TLUser>('userPreferences', () => {
+      // tldraw v5 presence derivation uses lightweight user info, not a TLUser record.
+      const userPreferences = computed<TLPresenceUserInfo>('userPreferences', () => {
         const user = getUserPreferences();
-        return UserRecordType.create({
-          id: UserRecordType.createId(user.id),
+        return {
+          id: user.id,
           color: user.color ?? defaultUserPreferences.color,
           name: user.name ?? defaultUserPreferences.name,
-        });
+        };
       });
 
       // Create the instance presence derivation
       const presenceId = InstancePresenceRecordType.createId(yClientId);
-      // tldraw v5: the 2nd arg is now an options object, not a bare presence id
-      const presenceDerivation = createPresenceStateDerivation(userPreferences, { instanceId: presenceId })(store);
+      const presenceDerivation = createPresenceStateDerivation(userPreferences, presenceId)(store);
 
       // Set our initial presence from the derivation's current value
       room.awareness.setLocalStateField('presence', presenceDerivation.get());

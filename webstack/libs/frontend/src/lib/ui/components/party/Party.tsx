@@ -31,6 +31,8 @@ import { PartyHub, PartyInstance, usePartyStore } from './components';
 interface PartyIconProps {
   iconSize?: 'xs' | 'sm' | 'md';
   isBoard?: boolean;
+  placement?: 'top' | 'bottom' | 'left' | 'right';
+  neutral?: boolean;
 }
 
 // Popover open state persisted across mounts
@@ -73,8 +75,10 @@ export function PartyButton(props: PartyIconProps): JSX.Element {
   // Styling
   const iconSize = props.iconSize || 'md';
   const fontSize = iconSize === 'xs' ? 'sm' : iconSize === 'sm' ? 'md' : 'lg';
+  const activeColorScheme = 'teal';
   const badgeColor = useColorModeValue('red.500', 'red.200');
   const badgeHex = useHexColor(badgeColor);
+  const activeBg = useHexColor(`${activeColorScheme}.200`);
   const badgeTextColor = useColorModeValue('white', 'black');
   const isOwner = currentParty?.ownerId === user?._id;
 
@@ -128,16 +132,24 @@ export function PartyButton(props: PartyIconProps): JSX.Element {
   );
 
   return (
-    <Popover isOpen={isOpen} onClose={handleOnClose} closeOnBlur={false} closeOnEsc>
+    <Popover
+      isOpen={isOpen}
+      onClose={handleOnClose}
+      closeOnBlur={false}
+      closeOnEsc
+      placement={props.placement || 'bottom'}
+    >
       <PopoverTrigger>
         <Box position="relative">
           <IconButton
             onClick={handleOnToggle}
             size={iconSize}
             fontSize={fontSize}
-            colorScheme="teal"
-            icon={<LuPartyPopper fontSize="24px" />}
+            p={props.neutral ? 2 : undefined}
+            colorScheme={props.neutral && !isOpen ? 'gray' : activeColorScheme}
+            icon={props.neutral ? <LuPartyPopper /> : <LuPartyPopper fontSize="24px" />}
             aria-label="Party"
+            sx={props.neutral ? { _dark: { bg: isOpen ? activeBg : 'gray.600' } } : undefined}
           />
           {currentParty && (
             <Box
