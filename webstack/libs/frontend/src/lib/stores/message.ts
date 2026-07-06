@@ -88,11 +88,6 @@ const MessageStore = create<MessageState>()((set, get) => {
 
       const interval = window.setInterval(async () => {
         const now = new Date();
-        const msgs = get().messages;
-        const newMsgs = msgs.filter((m) => {
-          const diff = now.getTime() - m._createdAt;
-          return diff < 30 * 1000;
-        });
         const last = get().lastone;
         if (last) {
           const diff = now.getTime() - last._createdAt;
@@ -100,7 +95,6 @@ const MessageStore = create<MessageState>()((set, get) => {
             set({ lastone: null });
           }
         }
-        set({ messages: newMsgs });
       }, 5 * 1000);
       set({ interval: interval });
 

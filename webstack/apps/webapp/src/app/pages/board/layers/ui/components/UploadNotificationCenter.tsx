@@ -152,6 +152,52 @@ function noticeFromMessage(message: Message, roomId: string): UploadNotice | nul
   };
 }
 
+function mergeUploadNotices(currentNotices: UploadNotice[], incomingNotices: UploadNotice[], dismissedKeys: string[]): UploadNotice[] {
+  const byKey = new Map<string, UploadNotice>();
+
+  for (const notice of currentNotices) {
+    if (!dismissedKeys.includes(notice.key)) byKey.set(notice.key, notice);
+  }
+
+  for (const notice of incomingNotices) {
+    if (dismissedKeys.includes(notice.key)) continue;
+
+    const existing = byKey.get(notice.key);
+    if (!existing || notice.updatedAt >= existing.updatedAt) {
+      byKey.set(notice.key, {
+        ...notice,
+        assetId: notice.assetId || existing?.assetId,
+        startedAt: existing ? Math.min(existing.startedAt, notice.startedAt) : notice.startedAt,
+      });
+    }
+  }
+
+  return Array.from(byKey.values()).sort((a, b) => a.startedAt - b.startedAt);
+}
+
+function groupUploadNotices(notices: UploadNotice[], dismissedKeys: string[]): UploadNotice[] {
+  const uploadIdsWithFileMessages = new Set<string>();
+  let hasLegacyFileMessage = false;
+
+  for (const notice of notices) {
+    if (notice.key.startsWith('file:')) {
+      hasLegacyFileMessage = true;
+      if (notice.uploadId) uploadIdsWithFileMessages.add(notice.uploadId);
+    }
+  }
+
+  // Keep file-level cards as the source of truth once they exist.
+  return notices
+    .filter((notice) => {
+      if (dismissedKeys.includes(notice.key)) return false;
+      const isUploadNotice = notice.key === 'upload' || notice.key.startsWith('upload:');
+      if (!isUploadNotice) return true;
+      if (notice.uploadId) return !uploadIdsWithFileMessages.has(notice.uploadId);
+      return !hasLegacyFileMessage;
+    })
+    .sort((a, b) => a.startedAt - b.startedAt);
+}
+
 function StatusIcon(props: { status: UploadNoticeStatus }) {
   if (props.status === 'loading') return <Spinner size="xs" />;
   if (props.status === 'error') return <MdError size="16px" />;
@@ -170,6 +216,7 @@ export function UploadNotificationCenter(props: UploadNotificationCenterProps) {
   const [dismissedKeys, setDismissedKeys] = useState<string[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [creatingKeys, setCreatingKeys] = useState<string[]>([]);
+  const [retainedNotices, setRetainedNotices] = useState<UploadNotice[]>([]);
   const previousLoadingNoticeKeysRef = useRef<Set<string> | null>(null);
 
   const bg = useColorModeValue('whiteAlpha.900', 'gray.800');
@@ -189,6 +236,7 @@ export function UploadNotificationCenter(props: UploadNotificationCenterProps) {
   useEffect(() => {
     setDismissedKeys(readDismissedKeys(user?._id, props.roomId));
     setIsOpen(false);
+    setRetainedNotices([]);
     previousLoadingNoticeKeysRef.current = null;
   }, [props.roomId, user?._id]);
 
@@ -210,44 +258,24 @@ export function UploadNotificationCenter(props: UploadNotificationCenterProps) {
     });
   }, [messages, props.roomId, user]);
 
-  const notices = useMemo(() => {
-    const byKey = new Map<string, UploadNotice>();
-    const uploadIdsWithFileMessages = new Set<string>();
-    let hasLegacyFileMessage = false;
+  const incomingNotices = useMemo(() => {
+    const nextNotices: UploadNotice[] = [];
 
     for (const message of messages) {
       if (!user || message._createdBy !== user._id) continue;
       const notice = noticeFromMessage(message, props.roomId);
-      if (!notice) continue;
-      if (notice.key.startsWith('file:')) {
-        hasLegacyFileMessage = true;
-        if (notice.uploadId) uploadIdsWithFileMessages.add(notice.uploadId);
-      }
-      if (dismissedKeys.includes(notice.key)) continue;
-
-      const existing = byKey.get(notice.key);
-      if (!existing || notice.updatedAt >= existing.updatedAt) {
-        byKey.set(notice.key, {
-          ...notice,
-          assetId: notice.assetId || existing?.assetId,
-          startedAt: existing ? Math.min(existing.startedAt, notice.startedAt) : notice.startedAt,
-        });
-      }
+      if (notice) nextNotices.push(notice);
     }
 
-    const groupedNotices = Array.from(byKey.values());
+    return nextNotices;
+  }, [messages, props.roomId, user]);
 
-    // Keep file-level cards as the source of truth once they exist, even if the user dismisses them.
-    return groupedNotices
-      .filter((notice) => {
-        const isUploadNotice = notice.key === 'upload' || notice.key.startsWith('upload:');
-        if (!isUploadNotice) return true;
-        if (notice.uploadId) return !uploadIdsWithFileMessages.has(notice.uploadId);
-        return !hasLegacyFileMessage;
-      })
-      .sort((a, b) => a.startedAt - b.startedAt)
-      .slice(0, 8);
-  }, [dismissedKeys, messages, props.roomId, user]);
+  useEffect(() => {
+    // Retain what this panel has seen so users control when upload notices disappear.
+    setRetainedNotices((currentNotices) => mergeUploadNotices(currentNotices, incomingNotices, dismissedKeys));
+  }, [dismissedKeys, incomingNotices]);
+
+  const notices = useMemo(() => groupUploadNotices(retainedNotices, dismissedKeys), [dismissedKeys, retainedNotices]);
 
   useEffect(() => {
     // Keep the panel closed for historical uploads, but surface active work immediately.
