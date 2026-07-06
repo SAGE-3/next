@@ -484,7 +484,9 @@ export function UILayer(props: UILayerProps) {
         <ToolbarButton bgColor={usersColor as SAGEColors} icon={<MdMap />} tooltip={'Map'} title={'Map'} offset={[-97, 6]} stayActive>
           <NavigationMenu />
         </ToolbarButton>
-        <Divider orientation="vertical" mx="2" />
+        <Box mx="1">
+          <PartyButton iconSize="sm" placement="top" neutral />
+        </Box>
         <Tooltip label={'SAGE Intelligence'} placement={'top'} hasArrow={true} openDelay={400} shouldWrapChildren={true}>
           <IconButton
             colorScheme={'purple'}
@@ -497,11 +499,6 @@ export function UILayer(props: UILayerProps) {
         </Tooltip>
       </Box>
 
-      {/* Party Button */}
-      <Box position="absolute" right="2" bottom="2" zIndex="1000" display={showUI ? 'initial' : 'none'}>
-        <PartyButton iconSize="sm" />
-      </Box>
-
       {/* Hub-Room-Board Name Top Left */}
       <Box position="absolute" left="1" top="1" display={showUI ? 'initial' : 'none'} backdropFilter="blur(5px)">
         <BoardTitle room={room} board={board} config={config} />
@@ -512,8 +509,8 @@ export function UILayer(props: UILayerProps) {
         <Clock isBoard={true} />
       </Box>
 
-      {/* Upload notifications under the clock */}
-      <Box position="absolute" right="1" top="42px" zIndex="1000" display={showUI ? 'initial' : 'none'}>
+      {/* Upload notifications bottom right */}
+      <Box position="absolute" right="2" bottom="2" zIndex="1000" display={showUI ? 'initial' : 'none'}>
         <UploadNotificationCenter roomId={props.roomId} boardId={props.boardId} />
       </Box>
 

@@ -168,9 +168,9 @@ export function UploadNotificationCenter(props: UploadNotificationCenterProps) {
   const createApp = useAppStore((state) => state.create);
   const { openAppForFile } = useFiles();
   const [dismissedKeys, setDismissedKeys] = useState<string[]>([]);
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [creatingKeys, setCreatingKeys] = useState<string[]>([]);
-  const previousNoticeKeysRef = useRef<Set<string> | null>(null);
+  const previousLoadingNoticeKeysRef = useRef<Set<string> | null>(null);
 
   const bg = useColorModeValue('whiteAlpha.900', 'gray.800');
   const border = useColorModeValue('gray.200', 'whiteAlpha.300');
@@ -188,7 +188,8 @@ export function UploadNotificationCenter(props: UploadNotificationCenterProps) {
 
   useEffect(() => {
     setDismissedKeys(readDismissedKeys(user?._id, props.roomId));
-    previousNoticeKeysRef.current = null;
+    setIsOpen(false);
+    previousLoadingNoticeKeysRef.current = null;
   }, [props.roomId, user?._id]);
 
   useEffect(() => {
@@ -249,18 +250,21 @@ export function UploadNotificationCenter(props: UploadNotificationCenterProps) {
   }, [dismissedKeys, messages, props.roomId, user]);
 
   useEffect(() => {
-    const currentKeys = new Set(notices.map((notice) => notice.key));
-    const previousKeys = previousNoticeKeysRef.current;
-    if (!previousKeys) {
-      if (notices.some((notice) => notice.status === 'loading')) setIsOpen(true);
-      previousNoticeKeysRef.current = currentKeys;
+    // Keep the panel closed for historical uploads, but surface active work immediately.
+    const loadingKeys = new Set(
+      notices.filter((notice) => notice.status === 'loading').map((notice) => notice.key),
+    );
+    const previousLoadingKeys = previousLoadingNoticeKeysRef.current;
+    if (!previousLoadingKeys) {
+      if (loadingKeys.size > 0) setIsOpen(true);
+      previousLoadingNoticeKeysRef.current = loadingKeys;
       return;
     }
 
-    if (notices.some((notice) => notice.status === 'loading' && !previousKeys.has(notice.key))) {
+    if ([...loadingKeys].some((key) => !previousLoadingKeys.has(key))) {
       setIsOpen(true);
     }
-    previousNoticeKeysRef.current = currentKeys;
+    previousLoadingNoticeKeysRef.current = loadingKeys;
   }, [notices]);
 
   const dismissNotice = useCallback((key: string) => {
