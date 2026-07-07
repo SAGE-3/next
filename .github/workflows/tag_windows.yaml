@@ -15,7 +15,7 @@ jobs:
     steps:
       # Required Digicert libraries
       - name: Code signing with Software Trust Manager
-        uses: digicert/code-signing-software-trust-action@v1.0.0
+        uses: digicert/ssm-code-signing@v1.0.1
 
       # Get cert info from github secrets and decode into a file
       - name: Setting Up Certificate
