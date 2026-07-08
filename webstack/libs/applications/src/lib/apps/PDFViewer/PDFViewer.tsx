@@ -29,8 +29,18 @@ import {
 import { BsFiletypePdf } from 'react-icons/bs';
 
 // SAGE3 utility functions and types
-import { useAssetStore, useAppStore, useUser, downloadFile, apiUrls, useUIStore, useHexColor } from '@sage3/frontend';
-import { Asset, ExtraPDFType } from '@sage3/shared/types';
+import {
+  useAssetStore,
+  useAppStore,
+  useUser,
+  downloadFile,
+  apiUrls,
+  useUIStore,
+  useHexColor,
+  useMeasure,
+  useThrottleScale,
+} from '@sage3/frontend';
+import { Asset, ExtraPDFType, ImageInfoType } from '@sage3/shared/types';
 
 // App components and types
 import { App, AppGroup } from '../../schema';
@@ -49,10 +59,13 @@ function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   
   // Local state for PDF rendering
-  const [urls, setUrls] = useState([] as string[]);
+  const [pages, setPages] = useState<ExtraPDFType>([]);
   const [file, setFile] = useState<Asset>();
   const [aspectRatio, setAspectRatio] = useState(1);
   const [displayRatio, setDisplayRatio] = useState(1);
+  const [failedPageUrls, setFailedPageUrls] = useState<Record<string, boolean>>({});
+  const scale = useThrottleScale(250);
+  const [displayRef, displaySize] = useMeasure<HTMLDivElement>();
   
   // App creation function for spawning new apps
   const createApp = useAppStore((state) => state.create);
@@ -64,6 +77,7 @@ function AppComponent(props: App): JSX.Element {
   // UI state management
   const [processing, setProcessing] = useState(false);
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
+  const boardDragging = useUIStore((state) => state.boardDragging);
   const backgroundColor = useHexColor('gray.400');
   const [navigating, setNavigating] = useState("");
 
@@ -114,25 +128,24 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [s.assetid, assets, user]);
 
-  // Effect: Process PDF pages and extract image URLs
+  // Effect: Store PDF pages and calculate aspect ratio
   useEffect(() => {
     if (file) {
-      const pages = file.data.derived as ExtraPDFType;
-      if (pages) {
-        // Extract highest resolution image URL for each page
-        const allurls = pages.map((page) => {
-          const res = page.reduce(function (p, v) {
-            return p.width > v.width ? p : v;
-          });
-          return res.url;
-        });
-        setUrls(allurls);
+      const derivedPages = file.data.derived as ExtraPDFType;
+      if (derivedPages) {
+        setPages(derivedPages);
+        setFailedPageUrls({});
         
         // Calculate aspect ratio from first page
-        const firstpage = pages[0];
-        const ar = firstpage[0].width / firstpage[0].height;
-        setAspectRatio(ar);
-        setDisplayRatio(ar * Math.max(1, s.displayPages));
+        const firstpage = derivedPages[0];
+        if (firstpage && firstpage.length > 0) {
+          const firstResolution = firstpage.reduce(function (p, v) {
+            return p.width > v.width ? p : v;
+          });
+          const ar = firstResolution.width / firstResolution.height;
+          setAspectRatio(ar);
+          setDisplayRatio(ar * Math.max(1, s.displayPages));
+        }
       }
     }
   }, [file]);
@@ -212,6 +225,14 @@ function AppComponent(props: App): JSX.Element {
       });
     }
   }, [s.analyzed]);
+
+  const handlePDFImageError = useCallback((url?: string) => {
+    if (!url) return;
+    setFailedPageUrls((prev) => {
+      if (prev[url]) return prev;
+      return { ...prev, [url]: true };
+    });
+  }, []);
 
   // Keyboard event handler for navigation and actions
   const handleUserKeyPress = useCallback(
@@ -376,7 +397,7 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props} lockAspectRatio={displayRatio} processing={processing} hideBackgroundIcon={BsFiletypePdf}>
-      <Box m={0} p={0} width="100%" height="100%">
+      <Box ref={displayRef} m={0} p={0} width="100%" height="100%">
         {/* Navigation animation overlay - forward direction */}
         <Fade in={navigating === "forward"} transition={{ exit: { duration: 0.5 } }} unmountOnExit={true}>
           <Box
@@ -435,28 +456,64 @@ function AppComponent(props: App): JSX.Element {
           onTouchEnd={ontouchend}
         >
           {/* Render PDF pages based on current page and display count */}
-          {urls
-            .filter((u, i) => i >= s.currentPage && i < s.currentPage + s.displayPages)
-            .map((url, idx) => (
-              <Box id={'pane~' + props._id + idx} key={idx} p={1} m={1}
-                rounded="lg" bg="white" color="gray.800" shadow="base"
-                width="100%" height="100%"
-              >
-                <Image
-                  src={url}
-                  userSelect={'none'}
-                  draggable={false}
+          {pages
+            .map((page, pageIndex) => ({ page, pageIndex }))
+            .filter(({ pageIndex }) => pageIndex >= s.currentPage && pageIndex < s.currentPage + s.displayPages)
+            .map(({ page, pageIndex }, idx) => {
+              const targetWidth = getPDFTargetPageWidth(displaySize.width, s.displayPages, scale, boardDragging);
+              const selectedImage = getPDFPageImage(page, targetWidth, failedPageUrls);
+              const url = selectedImage?.url;
+              return (
+                <Box
+                  id={'pane~' + props._id + idx}
+                  key={pageIndex}
+                  p={1}
+                  m={1}
+                  rounded="lg"
+                  bg="white"
+                  color="gray.800"
+                  shadow="base"
                   width="100%"
                   height="100%"
-                  objectFit="contain"
-                  alt={file?.data.originalfilename}
-                />
-              </Box>
-            ))}
+                >
+                  <Image
+                    src={url}
+                    onError={() => handlePDFImageError(url)}
+                    userSelect={'none'}
+                    draggable={false}
+                    width="100%"
+                    height="100%"
+                    objectFit="contain"
+                    alt={file?.data.originalfilename}
+                  />
+                </Box>
+              );
+            })}
         </HStack>
       </Box>
     </AppWindow >
   );
+}
+
+function getPDFTargetPageWidth(totalDisplayWidth: number, displayPages: number, scale: number, boardDragging: boolean): number {
+  if (boardDragging) return 1;
+  const safeDisplayPages = Math.max(1, displayPages);
+  const pageWidth = totalDisplayWidth > 0 ? totalDisplayWidth / safeDisplayPages : 0;
+  const devicePixelRatio = typeof window === 'undefined' ? 1 : window.devicePixelRatio;
+  return Math.max(1, pageWidth * devicePixelRatio * scale);
+}
+
+function getPDFPageImage(page: ImageInfoType[] | undefined, targetWidth: number, failedUrls: Record<string, boolean>): ImageInfoType | undefined {
+  if (!page || page.length === 0) return undefined;
+
+  const candidates = page.filter((image) => image.url && Number.isFinite(image.width));
+  if (candidates.length === 0) return undefined;
+
+  // Old PDFs may have one or many variants. Pick the closest usable image and
+  // fall back to another variant when the selected file is missing.
+  const sorted = [...candidates].sort((a, b) => Math.abs(a.width - targetWidth) - Math.abs(b.width - targetWidth));
+  const available = sorted.find((image) => !failedUrls[image.url]);
+  return available || sorted[0];
 }
 
 /**

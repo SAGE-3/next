@@ -61,4 +61,3 @@ config = {
         "ws_server": f"ws://{server}:3000",
     },
 }
-

@@ -71,6 +71,7 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
     toggleShowViewports,
     toggleShowAppTitles,
     toggleShowUI,
+    toggleShowGrid,
     setShowLinks,
     toggleShowTags,
     setAIModel,
@@ -82,6 +83,7 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
   const showViewports = userSettings.showViewports;
   const showAppTitles = userSettings.showAppTitles;
   const showUI = userSettings.showUI;
+  const showGrid = userSettings.showGrid;
   const showTags = userSettings.showTags;
   const showLinks = userSettings.showLinks;
   const uiScale = userSettings.uiScale;
@@ -196,6 +198,14 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
                   </FormLabel>
 
                   <Switch id="other-cursors" colorScheme="teal" isChecked={showAppTitles} onChange={toggleShowAppTitles} />
+                </FormControl>
+
+                <FormControl display="flex" my="2" alignItems="center" justifyContent="space-between">
+                  <FormLabel htmlFor="hide-grid" mb="0">
+                    Background Grid
+                    <InfoTooltip label={'Show/Hide the background grid. Must enable User Interface.'} />
+                  </FormLabel>
+                  <Switch id="hide-grid" colorScheme="teal" isChecked={showGrid} onChange={toggleShowGrid} isDisabled={!showUI} />
                 </FormControl>
 
                 <FormControl display="flex" mt="2" alignItems="center" justifyContent="space-between">

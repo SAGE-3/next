@@ -54,5 +54,15 @@ export const apiUrls = {
       seer: '/api/agents/seer',
       summary: '/api/agents/summary',
     },
+    ideator: {
+      base: '/api/agents/ideator',
+      dimensions: '/api/agents/ideator/dimensions',
+      node: '/api/agents/ideator/node',
+      abstract: '/api/agents/ideator/abstract',
+      userDimension: '/api/agents/ideator/user-dimension',
+      summarize: '/api/agents/ideator/summarize',
+      image: '/api/agents/ideator/image',
+      prose: '/api/agents/ideator/prose',
+    },
   },
 };

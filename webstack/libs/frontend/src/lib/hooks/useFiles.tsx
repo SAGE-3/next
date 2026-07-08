@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -385,7 +385,7 @@ async function openSession(a: Asset, xDrop: number, yDrop: number, roomId: strin
         // Add fields to the upload form
         fd.append('room', roomId);
         // Upload with a POST request
-        const up = await fetch(apiUrls.assets.upload, { method: 'POST', body: fd });
+        const up = await fetch(apiUrls.assets.upload, { method: 'POST', headers: { 'x-sage3-room': roomId }, body: fd });
         const result = await up.json();
         const newasset = result[0];
         // Rebuild the app with the new asset
@@ -455,8 +455,6 @@ export function useFiles(): UseFiles {
   const toastIdRef = useRef<ToastId>();
   // User store
   const { user } = useUser();
-  // Assets store
-  const assets = useAssetStore((state) => state.assets);
   // Upload success
   const [uploadSuccess, setUploadSuccess] = useState<string[]>([]);
   // Save the drop position
@@ -591,6 +589,7 @@ export function useFiles(): UseFiles {
         // Upload with a POST request
         const response = await fetch(apiUrls.assets.upload, {
           method: 'POST',
+          headers: { 'x-sage3-room': roomId },
           body: fd,
         });
 
@@ -658,7 +657,7 @@ export function useFiles(): UseFiles {
    */
   async function openAppForFile(fileID: string, xDrop: number, yDrop: number, roomId: string, boardId: string): Promise<AppSchema | null> {
     if (!user) return null;
-    for (const a of assets) {
+    for (const a of useAssetStore.getState().assets) {
       if (a._id === fileID) {
         return openApplication(a, xDrop, yDrop, roomId, boardId);
       }

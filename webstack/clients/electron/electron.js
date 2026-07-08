@@ -27,17 +27,13 @@ var os = require('os');
 const electron = require('electron');
 
 // parsing command-line arguments
-var program = require('commander');
+const { program } = require('commander');
 
-// URL received from protocol sage3://
+// URL received from protocol sage3:// while no window exists yet; loaded once the window opens
 var gotoURL = '';
 
-// update system
-const updater = require('./src/updater');
 // Get the version from the package file
 var version = require('./package.json').version;
-// First run
-var firstRun = true;
 
 // Utilities
 const { checkServerIsSage, myParseInt, takeScreenshot, updateLandingPage } = require('./src/utils');
@@ -60,7 +56,8 @@ var analytics_enabled = true;
 // random user id
 const userId = genUserId();
 
-// handle install/update for Windows
+// Windows installer (Squirrel) fires the app briefly during install/update/uninstall;
+// bail out early so we don't spin up a real window during those events.
 const { handleSquirrelEvent } = require('./src/squirrelEvent');
 if (require('electron-squirrel-startup')) {
   return;
@@ -81,7 +78,7 @@ const shell = electron.shell;
 // Module to handle ipc with Browser Window
 const ipcMain = electron.ipcMain;
 
-// Restore the network order
+// Prefer IPv4 addresses (Node changed the default in v17+, which broke some connections)
 dns.setDefaultResultOrder('ipv4first');
 
 // Enable SharedArrayBuffer for Zoom
@@ -128,6 +125,7 @@ const autoUpdater = electron.autoUpdater;
 
 // Auto update
 // require('update-electron-app')({ repo: 'SAGE-3/next' });
+// Poll GitHub releases (via Electron's public update service) and self-update in the background
 const { updateElectronApp, UpdateSourceType } = require('update-electron-app');
 
 updateElectronApp({
@@ -141,7 +139,7 @@ updateElectronApp({
 });
 /////////////////////////////////////////////////////////////////
 
-// Registering a custom protocol sage3://
+// Register this app as the OS handler for sage3:// links (see 'open-url'/'second-instance' below)
 if (process.defaultApp) {
   if (process.argv.length >= 2) {
     app.setAsDefaultProtocolClient('sage3', process.execPath, [path.resolve(process.argv[1])]);
@@ -150,7 +148,7 @@ if (process.defaultApp) {
   app.setAsDefaultProtocolClient('sage3');
 }
 
-// Store current site informations
+// Track the currently-connected SAGE3 server; used to fence navigation and header rewrites
 var currentDomain;
 var currentServer;
 var isAtBoard = false;
@@ -171,7 +169,6 @@ program
   .option('-x, --xorigin <n>', 'Window position x (int)', myParseInt, windowState.x)
   .option('-y, --yorigin <n>', 'Window position y (int)', myParseInt, windowState.y)
   .option('-c, --clear', 'Clear window preferences', false)
-  .option('--allowDisplayingInsecure', 'Allow displaying of insecure content (http on https)', true)
   .option('--allowRunningInsecure', 'Allow running insecure content (scripts accessed on http vs https)', true)
   .option('--cache', 'Clear the cache at startup', false)
   .option('--console', 'Open the devtools console', false)
@@ -187,6 +184,7 @@ program.parse(args);
 // Get the results
 const commander = program.opts();
 
+// --profile points userData at a custom dir, so several clients can run with isolated settings/caches
 if (commander.profile) {
   console.log('Profile>', commander.profile);
   const profilePath = path.resolve(commander.profile);
@@ -241,6 +239,7 @@ app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 // This fix is from here: https://github.com/electron/electron/issues/25469
 app.commandLine.appendSwitch('disable-features', 'CrossOriginOpenerPolicy');
 
+// Lift Chrome's ~6-connections-per-host cap for the SAGE3 server (boards open many sockets at once)
 if (commander.server) {
   // Remove the limit on the number of connections per domain
   //  the usual value is around 6
@@ -290,6 +289,7 @@ app.setAboutPanelOptions({
  */
 var mainWindow;
 
+// Offer to hide the SAGE3 window during screen sharing so it isn't captured (renderer sends 'hide-main-window')
 function showHidingWindow() {
   const res = electron.dialog.showMessageBoxSync(mainWindow, {
     title: 'Notification from SAGE3',
@@ -315,7 +315,7 @@ function showHidingWindow() {
 function openWindow() {
   mainWindow.show();
 
-  // if server is specified, used the URL
+  // For display-wall clients (a monitor is pinned), force fullscreen and lock it there
   if (commander.server) {
     if (commander.monitor !== null) {
       mainWindow.on('show', function () {
@@ -371,7 +371,7 @@ function enableGeolocation(session) {
   });
 }
 
-// Size and position of the window
+// Window size/position: defaults from CLI options, later merged with the persisted state below
 let state = {};
 const defaultSize = {
   frame: !commander.no_decoration,
@@ -462,18 +462,16 @@ function createWindow() {
     backgroundColor: '#565656',
     // resizable: !commander.fullscreen,
     webPreferences: {
-      nativeWindowOpen: true,
       // Enable webviews
       webviewTag: true,
       // Disable alert and confirm dialogs
       disableDialogs: true,
-      // nodeIntegration: true,
-      // contextIsolation: false,
-      nodeIntegration: true,
+      // Security: renderer talks to main only through the contextBridge in preload.js,
+      // so node stays out of the renderer.
+      nodeIntegration: false,
       contextIsolation: true,
       webSecurity: true,
       backgroundThrottling: false,
-      allowDisplayingInsecureContent: commander.allowDisplayingInsecure,
       allowRunningInsecureContent: commander.allowRunningInsecure,
       // this enables things like the CSS grid. add a commander option up top for enable / disable on start.
       experimentalFeatures: commander.experimentalFeatures ? true : false,
@@ -495,7 +493,7 @@ function createWindow() {
     return windowState;
   };
 
-  // Restore the state
+  // Restore the last saved geometry, snapping back to defaults if it lands off-screen
   state = ensureVisibleOnSomeDisplay(restore());
 
   // Deny geolocation on Mac, it causes a crash in Electron v13
@@ -523,6 +521,7 @@ function createWindow() {
   // Create the browser window with state and options mixed in
   mainWindow = new BrowserWindow({ ...state, ...options });
 
+  // Pick the initial page: saved server, then --server flag, then any pending sage3:// URL
   let location = windowState.server || 'file://html/landing.html';
   if (commander.server) location = commander.server;
   if (gotoURL) location = gotoURL;
@@ -540,6 +539,8 @@ function createWindow() {
     }
   });
 
+  // Persist where the user is so relaunching reopens the same board/server (SPA route changes
+  // fire did-navigate-in-page rather than a full did-navigate)
   mainWindow.webContents.on('did-navigate-in-page', (event, url) => {
     // If URL Contains /board we are within a board and lets save the url as a board url
     let savedURL = null;
@@ -588,7 +589,7 @@ function createWindow() {
     openWindow();
   }
 
-  // When the webview tries to download something
+  // When the webview tries to download something: let it through, but notify the renderer on completion
   electron.session.defaultSession.on('will-download', (event, item, webContents) => {
     // Commenting out the restrictions for now
     // const aURL = new URL(item.getURL());
@@ -629,6 +630,7 @@ function createWindow() {
     });
   });
 
+  // Landing page (renderer) manages server bookmarks and redirects through this channel
   ipcMain.on('store-interface', (event, args) => {
     const request = args.request;
     switch (request) {
@@ -684,16 +686,9 @@ function createWindow() {
     if (mainWindow.isFullScreen()) {
       mainWindow.setMenuBarVisibility(false);
     }
-
-    // Check for updates
-    if (firstRun) {
-      const currentURL = mainWindow.webContents.getURL();
-      const parsedURL = new URL(currentURL);
-      // updater.checkForUpdates(parsedURL.origin, false);
-      firstRun = false;
-    }
   });
 
+  // Track whether we're currently on a board (used by will-navigate to fence the user in)
   mainWindow.webContents.on('did-stop-loading', function () {
     let aURL = mainWindow.webContents.getURL();
     // Need to use did-stop-loading, react router does not trigger
@@ -718,6 +713,7 @@ function createWindow() {
     }
   });
 
+  // While on a board, block links that would navigate away from the current server
   mainWindow.webContents.on('will-navigate', function (ev, destinationUrl) {
     const aURL = new URL(destinationUrl);
     const destinationHostname = aURL.hostname;
@@ -739,7 +735,8 @@ function createWindow() {
     }
   });
 
-  // New webview going to be added
+  // A <webview> (embedded web page inside a board) is about to be created.
+  // Also wires up the "pixel streaming" IPC used to mirror a webview into the board as JPEG frames.
   mainWindow.webContents.on('will-attach-webview', function (event, webPreferences, params) {
     console.log('will-attach-webview');
     // Disable alert and confirm dialogs
@@ -749,11 +746,13 @@ function createWindow() {
     // webPreferences.nodeIntegration = true;
     // params.nodeIntegration = true;
 
+    // Stop mirroring frames for a given webview
     ipcMain.on('streamview_stop', (e, args) => {
       // Message for the webview pixel streaming
       const viewContent = electron.webContents.fromId(args.id);
       if (viewContent) viewContent.endFrameSubscription();
     });
+    // Start mirroring a webview: subscribe to its frames and push each as a base64 JPEG ('paint')
     ipcMain.on('streamview', (e, args) => {
       // console.log('Webview>    message', channel, args);
       // console.log('Webview> IPC Message', args.id, args.width, args.height);
@@ -769,6 +768,7 @@ function createWindow() {
       viewContent.beginFrameSubscription(false, (image, dirty) => {
         let dataenc;
         let neww, newh;
+        // Downscale by the device pixel ratio to keep the streamed frame at logical size
         const devicePixelRatio = 2;
         const quality = 60;
         if (devicePixelRatio > 1) {
@@ -805,7 +805,7 @@ function createWindow() {
 
       // NEW API
       contents.on('dom-ready', () => {
-        // Block creating new windows from webviews
+        // Instead of a popup, tell the renderer to open the link as another webview inside the board
         contents.setWindowOpenHandler((details) => {
           // tell the renderer to create another webview
           mainWindow.webContents.send('open-webview', { url: details.url });
@@ -821,7 +821,7 @@ function createWindow() {
     }
   });
 
-  // Handle the new window event now
+  // Main window: never open popups; only hand off explicit external links to the OS browser
   mainWindow.webContents.setWindowOpenHandler((details) => {
     if (details.frameName === 'sage3') {
       shell.openExternal(details.url);
@@ -833,7 +833,7 @@ function createWindow() {
     return { action: 'deny' };
   });
 
-  // New webview added
+  // Once a webview is attached, spoof its Referer for YouTube so embedded videos play
   mainWindow.webContents.on('did-attach-webview', function (event, webContents) {
     // disableGeolocation(webContents.session);
 
@@ -862,7 +862,7 @@ function createWindow() {
     if (arg === 'version') event.reply('version', version);
   });
 
-  // Catch remote URL to connect to
+  // Renderer asks to connect to a different SAGE3 server (e.g. from the server list)
   ipcMain.on('connect-url', (e, aURL) => {
     var location = aURL;
     var parsedURL = new URL(aURL);
@@ -884,7 +884,7 @@ function createWindow() {
     mainWindow.webContents.setZoomLevel(arg);
   });
 
-  // Retrieve media sources for desktop sharing
+  // Desktop screen-share picker: list screens/windows with thumbnails, return via 'set-source'
   ipcMain.on('request-sources', () => {
     // Get list of the monitors and windows, requesting thumbnails for each.
     // available types are screen and window
@@ -928,6 +928,7 @@ function createWindow() {
   ipcMain.on('show-main-window', () => {
     mainWindow.show();
   });
+  // Report which physical display the window sits on (renderer uses it to pick the right screen)
   ipcMain.on('request-current-display', () => {
     const winBounds = mainWindow.getBounds();
     const whichScreen = electron.screen.getDisplayNearestPoint({ x: winBounds.x, y: winBounds.y });
@@ -960,9 +961,6 @@ function createWindow() {
 
   // Request from user to check for updates to the client
   ipcMain.on('client-update-check', () => {
-    const currentURL = mainWindow.webContents.getURL();
-    const parsedURL = new URL(currentURL);
-    // updater.checkForUpdates(parsedURL.origin, true);
     autoUpdater.checkForUpdates();
   });
 
@@ -980,6 +978,8 @@ function createWindow() {
  * Dealing with certificate issues
  * used to be done in Webview app but seems to work better here now
  */
+// Tolerate self-signed / transparency cert errors so display clients can reach local SAGE3 servers;
+// anything more serious is still rejected below.
 app.on('certificate-error', function (event, webContent, url, error, certificate, callback) {
   // This doesnt seem like a security risk yet
   if (error === 'net::ERR_CERTIFICATE_TRANSPARENCY_REQUIRED') {
@@ -1007,6 +1007,8 @@ app.on('certificate-error', function (event, webContent, url, error, certificate
   }
 });
 
+// Windows sage3:// handling: the OS launches a new process with the URL as the last arg.
+// Enforce a single instance and route that URL to the already-running window (see 'second-instance').
 if (process.platform === 'win32') {
   const gotTheLock = app.requestSingleInstanceLock();
 
@@ -1048,6 +1050,7 @@ if (process.platform === 'win32') {
 // Handle the custom protocol
 //
 // Protocol handler for osx while application is not running in the background.
+// macOS delivers sage3:// links through 'open-url' (rather than argv as on Windows)
 app.on('open-url', (event, url) => {
   event.preventDefault();
   // Parsing the URL to find if there is a port number
@@ -1086,6 +1089,8 @@ app.on('activate', function () {
   }
 });
 
+// Save window state and flush analytics before exiting; preventDefault + process.exit ensures
+// the async work finishes before the app actually quits.
 app.on('before-quit', async function (event) {
   event.preventDefault();
   saveState();
@@ -1100,4 +1105,4 @@ app.on('before-quit', async function (event) {
  * This method will be called when Electron has finished
  * initialization and is ready to create a browser window.
  */
-app.on('ready', createWindow);
+app.whenReady().then(createWindow);

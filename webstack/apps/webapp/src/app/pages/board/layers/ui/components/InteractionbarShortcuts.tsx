@@ -11,6 +11,20 @@ import { useUserSettings, useHotkeys, useUIStore, useKeyPress, useLinkStore } fr
 
 // keywords: interaction hotkeys
 
+// True when the user is typing into an editable element, so global single-key
+// shortcuts (1/2/3/4) must not fire. Covers plain inputs/textareas/contentEditable
+// and the Monaco code editor, whose focused element slips past hotkeys-js's
+// default form-tag filter (unlike the Stickie textarea, which it blocks).
+function isEditingTarget(): boolean {
+  const el = document.activeElement as HTMLElement | null;
+  if (!el) return false;
+  const tag = el.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
+  if (el.isContentEditable) return true;
+  if (el.closest && el.closest('.monaco-editor')) return true;
+  return false;
+}
+
 export function InteractionbarShortcuts() {
   // Settings
   const { settings, setPrimaryActionMode } = useUserSettings();
@@ -54,6 +68,7 @@ export function InteractionbarShortcuts() {
   useHotkeys(
     '1',
     (event: KeyboardEvent): void | boolean => {
+      if (isEditingTarget()) return;
       event.stopPropagation();
       setPrimaryActionMode('lasso');
       clearLinkAppId();
@@ -64,6 +79,7 @@ export function InteractionbarShortcuts() {
   useHotkeys(
     '2',
     (event: KeyboardEvent): void | boolean => {
+      if (isEditingTarget()) return;
       event.stopPropagation();
       setPrimaryActionMode('grab');
       setSelectedApp('');
@@ -75,6 +91,7 @@ export function InteractionbarShortcuts() {
   useHotkeys(
     '3',
     (event: KeyboardEvent): void | boolean => {
+      if (isEditingTarget()) return;
       event.stopPropagation();
       setPrimaryActionMode('pen');
       setSelectedApp('');
@@ -87,6 +104,7 @@ export function InteractionbarShortcuts() {
   useHotkeys(
     '4',
     (event: KeyboardEvent): void | boolean => {
+      if (isEditingTarget()) return;
       event.stopPropagation();
       setPrimaryActionMode('eraser');
       setSelectedApp('');

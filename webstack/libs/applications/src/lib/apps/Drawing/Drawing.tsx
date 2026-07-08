@@ -10,7 +10,7 @@ import { ButtonGroup, Button, Tooltip, Box } from '@chakra-ui/react';
 // Data store
 import { create } from 'zustand';
 // Drawing
-import { Tldraw, TLUiComponents, Editor, exportToBlob } from 'tldraw';
+import { Tldraw, TLUiComponents, Editor } from 'tldraw';
 import { throttle } from 'throttle-debounce';
 
 import { useYjsStore } from './useYjsStore'
@@ -23,8 +23,8 @@ import { AppWindow } from '../../components';
 
 // Styling
 import { MdUndo, MdRedo, MdSaveAlt, MdZoomInMap, MdZoomOutMap } from 'react-icons/md';
-import { RiUserFollowFill } from "react-icons/ri";
-import 'tldraw/tldraw.css'
+import { RiUserFollowFill } from 'react-icons/ri';
+import 'tldraw/tldraw.css';
 
 // Default tick rate is 3 times per second
 const defaultTickRate = 1000 / 3;
@@ -38,7 +38,6 @@ const useStore = create<DrawStore>()((set) => ({
   ed: {},
   saveEditor: (id: string, ed: Editor) => set((state) => ({ ed: { ...state.ed, ...{ [id]: ed } } })),
 }));
-
 
 /* App component for Drawing */
 function AppComponent(props: App): JSX.Element {
@@ -75,9 +74,8 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     if (user && ed) {
-      ed.user.updateUserPreferences({ color: user.data.color, name: "" });
+      ed.user.updateUserPreferences({ color: user.data.color, name: '' });
     }
-
   }, [ed, user]);
 
   // Slow down the updates
@@ -89,11 +87,10 @@ function AppComponent(props: App): JSX.Element {
   // Keep the reference
   const updateCameraRef = useCallback(updateCamera, [ed]);
 
-
   useEffect(() => {
     if (!ed) return;
 
-    const cb = ed.sideEffects.registerAfterChangeHandler("camera", (prev, next, source) => {
+    const cb = ed.sideEffects.registerAfterChangeHandler('camera', (prev, next, source) => {
       if (s.follow === user?._id) {
         updateCameraRef(next.x, next.y, next.z);
         // updateState(props._id, { camera: { x: next.x, y: next.y, z: next.z } });
@@ -149,12 +146,19 @@ function AppComponent(props: App): JSX.Element {
 
   return (
     <AppWindow app={props}>
-      <Box position="fixed" inset={0} borderRadius={8} overflow="hidden"
-        transform={`scale(${1 / scale})`} transformOrigin={'top left'}
-        width={props.data.size.width * scale} height={props.data.size.height * scale}>
+      <Box
+        // position="fixed"
+        inset={0}
+        borderRadius={8}
+        overflow="hidden"
+        transform={`scale(${1 / scale})`}
+        transformOrigin={'top left'}
+        width={props.data.size.width * scale}
+        height={props.data.size.height * scale}
+      >
         <Tldraw components={components} store={store} onMount={onMount} hideUi={!selected} />
       </Box>
-    </AppWindow >
+    </AppWindow>
   );
 }
 
@@ -174,14 +178,25 @@ const ToolbarComponent = (props: App) => {
   };
   const handleExport = async () => {
     const shapes = ed.getCurrentPageShapes().map((shape) => shape.id);
-    const blob = await exportToBlob({ editor: ed, format: "png", ids: shapes, });
+    // tldraw v5: exportToBlob was removed in favor of editor.toImage()
+    const { blob } = await ed.toImage(shapes, { format: 'png' });
     const file = new File([blob], blob.type);
-    const b64Data = await blobToBase64(file) as string;
+    const b64Data = (await blobToBase64(file)) as string;
     getImageDimensionsFromBase64(b64Data).then((size) => {
       const xdrop = props.data.position.x + props.data.size.width + 20;
       const ydrop = props.data.position.y;
-      createApp(setupApp('Drawing.png', 'ImageViewer', xdrop, ydrop, props.data.roomId, props.data.boardId,
-        { w: size.w, h: size.h }, { assetid: b64Data }));
+      createApp(
+        setupApp(
+          'Drawing.png',
+          'ImageViewer',
+          xdrop,
+          ydrop,
+          props.data.roomId,
+          props.data.boardId,
+          { w: size.w, h: size.h },
+          { assetid: b64Data },
+        ),
+      );
     });
   };
 
@@ -247,7 +262,7 @@ const ToolbarComponent = (props: App) => {
       </ButtonGroup>
     </>
   );
-}
+};
 
 /**
  * Grouped App toolbar component, this component will display when a group of apps are selected
@@ -266,7 +281,7 @@ export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
  */
 const blobToBase64 = (blob: Blob) => {
   const reader = new FileReader();
-  reader.readAsDataURL(blob)
+  reader.readAsDataURL(blob);
   return new Promise((resolve) => {
     reader.onloadend = () => {
       resolve(reader.result);

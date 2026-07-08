@@ -6,16 +6,15 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-// Persistent storage for electron app: used for window position
+// Persistent store of SAGE3 server bookmarks the user can connect to.
 const Store = require('electron-store');
-const uuid = require('uuid');
-const genId = uuid.v4;
+const { randomUUID: genId } = require('crypto');
 
-// Persistent data store to store window postion/size
-// stored by default in app.getPath('userData')
+// On-disk store (bookmark-store.json in app.getPath('userData'))
 // Create a store
 const store = new Store({ name: 'bookmark-store' });
 
+// Bookmarks seeded on first run (each gets a stable random id)
 // Default ServerList
 const defaultBookmarks = [
   {
@@ -45,6 +44,7 @@ const defaultBookmarks = [
   },
 ];
 
+// Load saved bookmarks (or seed defaults), then prune retired servers on startup
 // Current list of bookmarks
 const currentList = store.get('bookmarks', defaultBookmarks);
 // Remove JetStream if it exists
@@ -61,10 +61,12 @@ if (ccIdx > -1) {
 store.set('bookmarks', currentList);
 
 module.exports = {
+  // Return all saved bookmarks
   getBookmarks: function () {
     const list = store.get('bookmarks', defaultBookmarks);
     return list;
   },
+  // Add a bookmark; removes any existing entry with the same url first (de-dupe)
   addBookmark: function (name, url) {
     const currentList = store.get('bookmarks', defaultBookmarks);
     const idx = currentList.findIndex((el) => el.url == url);
@@ -74,6 +76,7 @@ module.exports = {
     currentList.push({ name, url, id: genId() });
     return store.set('bookmarks', currentList);
   },
+  // Remove the bookmark with the given id
   removeBookmark: function (id) {
     const currentList = store.get('bookmarks', defaultBookmarks);
     const idx = currentList.findIndex((el) => el.id == id);
@@ -82,6 +85,7 @@ module.exports = {
     }
     return store.set('bookmarks', currentList);
   },
+  // Reset the list back to the built-in defaults
   clear: function () {
     store.set('bookmarks', defaultBookmarks);
   },

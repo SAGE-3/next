@@ -1,4 +1,4 @@
-FROM node:20-bookworm-slim AS builder
+FROM node:22-bookworm-slim AS builder
 
 # Install in that directory
 WORKDIR /app
@@ -26,7 +26,7 @@ ENV NODE_OPTIONS=--max-old-space-size=8192
 RUN yarn prod-yjs && yarn cache clean
 
 # Stage 2: Production Image
-FROM node:20-bookworm-slim
+FROM node:22-bookworm-slim
 
 WORKDIR /app
 

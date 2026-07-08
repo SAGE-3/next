@@ -511,5 +511,3 @@ class PySage3:
             for board_id in self.rooms[room_id].boards.keys():
                 for app_info in self.rooms[room_id].boards[board_id].smartbits:
                     app_info[1].clean_up()
-
-

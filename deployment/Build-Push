@@ -18,7 +18,7 @@ if [[ $OSTYPE == 'darwin'* ]]; then
   if [[ `uname -m` == 'x86_64' ]]; then
     docker buildx build --push -f node_server/Dockerfile --platform linux/amd64 --tag ghcr.io/sage-3/next:dev_amd64 ..
     docker buildx build --push -f node_yjs/Dockerfile   --platform linux/amd64 --tag ghcr.io/sage-3/next_yjs:dev_amd64 ..
-    docker buildx build --push -f node_files/Dockerfile   --platform linux/arm64 --tag ghcr.io/sage-3/next_files:dev_amd64 ..
+    docker buildx build --push -f node_files/Dockerfile   --platform linux/amd64 --tag ghcr.io/sage-3/next_files:dev_amd64 ..
     docker buildx build --push -f seer/Dockerfile   --platform linux/amd64 --tag ghcr.io/sage-3/agents:dev_amd64 ..
   fi
 
@@ -28,8 +28,7 @@ fi
 if [[ $OSTYPE == 'linux'* ]]; then
   docker buildx build --push -f node_server/Dockerfile --platform linux/amd64 --tag ghcr.io/sage-3/next:dev_amd64 ..
   docker buildx build --push -f node_yjs/Dockerfile   --platform linux/amd64 --tag ghcr.io/sage-3/next_yjs:dev_amd64 ..
-  docker buildx build --push -f node_files/Dockerfile   --platform linux/arm64 --tag ghcr.io/sage-3/next_files:dev_amd64 ..
+  docker buildx build --push -f node_files/Dockerfile   --platform linux/amd64 --tag ghcr.io/sage-3/next_files:dev_amd64 ..
   docker buildx build --push -f seer/Dockerfile   --platform linux/amd64 --tag ghcr.io/sage-3/agents:dev_amd64 ..
 fi
-
 

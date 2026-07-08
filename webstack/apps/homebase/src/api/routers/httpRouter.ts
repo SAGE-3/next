@@ -87,7 +87,7 @@ export function expressAPIRouter(): express.Router {
   // Experimental NLP route
   router.use('/nlp', NLPRouter());
 
-  // Agent Routes
+  // Agent Routes (includes ideator routes under /agents/ideator/...)
   router.use('/agents', AgentRouter());
 
   // Initialize Custom Presence Throttle

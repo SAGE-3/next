@@ -26,12 +26,12 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v6
         with:
-          node-version: "24"
+          node-version: "22"
       - name: Install
         run: yarn install --frozen-lockfile --silent
         working-directory: webstack/clients/electron
       - name: Packager
-        run: npx electron-packager ./ --platform=darwin --arch=x64 --icon=s3.icns --overwrite --appCopyright="SAGE3 Team"
+        run: npx electron-packager ./ SAGE3 --platform=darwin --arch=x64 --icon=s3.icns --overwrite --appCopyright="SAGE3 Team" --executable-name=SAGE3
         working-directory: webstack/clients/electron
       - name: Cleanup
         run: |
@@ -53,6 +53,7 @@ jobs:
           security unlock-keychain -p blabla123 build.keychain
           security import certificate.p12 -k build.keychain -P $MACOS_CERTIFICATE_PWD -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k blabla123 build.keychain
+          security find-identity -v -p codesigning build.keychain
           #/usr/bin/codesign --force --deep -s 1B03EB588B2B36D12500F0B9B5D1F0C131060E33 SAGE3-darwin-x64/SAGE3.app -v
           # Sign
           npx electron-osx-sign --type=development --signature-flags=library --hardened-runtime --entitlements=entitlements.mac.plist --entitlements-inherit=entitlements.mac.plist SAGE3-darwin-x64/SAGE3.app

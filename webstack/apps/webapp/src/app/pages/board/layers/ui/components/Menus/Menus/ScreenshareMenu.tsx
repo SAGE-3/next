@@ -20,6 +20,7 @@ import { useAppStore, useHexColor, useUIStore, useUser, useUsersStore, truncateW
 interface ScreensharesMenuProps {
   roomId: string;
   boardId: string;
+  onActionComplete?: () => void;
 }
 
 /**
@@ -71,7 +72,7 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
   };
 
   // Start your screenshare
-  const startYourScreenshare = () => {
+  const startYourScreenshare = async () => {
     if (!user) return;
     const width = 1280;
     const height = 720;
@@ -79,7 +80,7 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
     const x = Math.floor(-boardPosition.x + window.innerWidth / 2 / scale - height / 2);
     const y = Math.floor(-boardPosition.y + window.innerHeight / 2 / scale - width / 2);
     const position = { x, y, z: 0 };
-    createApp({
+    const result = await createApp({
       title: 'Screenshare by ' + user.data.name,
       roomId: props.roomId,
       boardId: props.boardId,
@@ -92,14 +93,18 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
       dragging: false,
       pinned: false,
     });
+
+    if (result?.success) {
+      props.onActionComplete?.();
+    }
   };
 
   // Handle starting and stopping your screenshare
-  const handleStartStop = () => {
+  const handleStartStop = async () => {
     if (yourScreenshare) {
       stopYourScreenshare();
     } else {
-      startYourScreenshare();
+      await startYourScreenshare();
     }
   };
 

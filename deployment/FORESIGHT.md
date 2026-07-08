@@ -10,4 +10,5 @@ In deployment directory:
 
 # Add it to compose (if compose already running)
 
-- docker compose -f docker-compose-foresight.yml run pysage3 bash
+The standalone Foresight compose file has been removed. Use the current
+architecture-specific compose files in this directory for deployed services.
