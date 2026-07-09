@@ -52,6 +52,13 @@
         "{workspaceRoot}/tools/eslint-rules/**/*"
       ],
       "cache": true
+    },
+    "typecheck": {
+      "cache": true,
+      "inputs": [
+        "default",
+        "^default"
+      ]
     }
   },
   "parallel": 1,

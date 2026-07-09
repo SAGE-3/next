@@ -8,7 +8,7 @@
 
 import { useCallback, createContext, useContext, useState, useEffect } from 'react';
 
-import { isElectron } from 'libs/applications/src/lib/apps/Cobrowse/util';
+import { isElectron } from '../../../../applications/src/lib/apps/Cobrowse/util';
 
 /**
  * Represents the user preferences for the application.

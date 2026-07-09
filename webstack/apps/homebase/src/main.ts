@@ -23,7 +23,7 @@ import { IncomingMessage } from 'http';
 import * as dns from 'node:dns';
 
 // Websocket
-import { WebSocket } from 'ws';
+import { WebSocket, WebSocketServer } from 'ws';
 import { SAGEnlp, SAGE_PRESENCE, SocketPresence, SubscriptionCache } from '@sage3/backend';
 import { setupWsforLogs } from './api/routers/custom';
 
@@ -130,9 +130,9 @@ async function startServer() {
   app.use('/api', expressAPIRouter());
 
   // Websocket setup
-  const apiWebSocketServer = new WebSocket.Server({ noServer: true });
+  const apiWebSocketServer = new WebSocketServer({ noServer: true });
 
-  const logsServer = new WebSocket.Server({ noServer: true });
+  const logsServer = new WebSocketServer({ noServer: true });
 
   logsServer.on('connection', (socket: WebSocket) => {
     setupWsforLogs(socket);

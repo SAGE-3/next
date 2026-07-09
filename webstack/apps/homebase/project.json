@@ -30,6 +30,13 @@
       "outputs": [
         "{options.outputFile}"
       ]
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node ../../node_modules/typescript-native/bin/tsc -p tsconfig.check.json --noEmit",
+        "cwd": "apps/homebase"
+      }
     }
   },
   "tags": []
