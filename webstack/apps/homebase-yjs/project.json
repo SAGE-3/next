@@ -3,34 +3,26 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/homebase-yjs/src",
   "projectType": "application",
+  "tags": [],
   "targets": {
     "build": {
-      "executor": "@nx/webpack:webpack",
-      "outputs": ["{options.outputPath}"],
-      "options": {
-        "target": "node",
-        "compiler": "tsc",
-        "outputPath": "dist/apps/homebase-yjs",
-        "main": "apps/homebase-yjs/src/main.ts",
-        "tsConfig": "apps/homebase-yjs/tsconfig.app.json",
-        "assets": ["apps/homebase-yjs/src/assets"],
-        "webpackConfig": "apps/homebase-yjs/webpack.config.js",
-        "isolatedConfig": true,
-        "babelUpwardRootMode": true
-      },
       "configurations": {
-        "production": {
-          "optimization": true,
-          "extractLicenses": true,
-          "inspect": false,
-          "fileReplacements": [
-            {
-              "replace": "apps/homebase-yjs/src/environments/environment.ts",
-              "with": "apps/homebase-yjs/src/environments/environment.prod.ts"
-            }
-          ]
+        "production": {},
+        "development": {
+          "env": {
+            "NODE_ENV": "development"
+          }
         }
-      }
+      },
+      "outputs": [
+        "{workspaceRoot}/dist/apps/homebase-yjs"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ]
     },
     "serve": {
       "executor": "@nx/js:node",
@@ -42,11 +34,6 @@
           "buildTarget": "homebase-yjs:build:production"
         }
       }
-    },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
     }
-  },
-  "tags": []
+  }
 }

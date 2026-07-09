@@ -5,61 +5,24 @@
   "projectType": "application",
   "targets": {
     "build": {
-      "executor": "@nx/webpack:webpack",
-      "outputs": ["{options.outputPath}"],
       "defaultConfiguration": "development",
-      "options": {
-        "outputPath": "dist/apps/webapp",
-        "index": "apps/webapp/src/index.html",
-        "baseHref": "",
-        "main": "apps/webapp/src/main.tsx",
-        "polyfills": "apps/webapp/src/polyfills.ts",
-        "tsConfig": "apps/webapp/tsconfig.app.json",
-        "assets": ["apps/webapp/src/favicon.ico", "apps/webapp/src/assets"],
-        "styles": ["apps/webapp/src/styles.scss"],
-        "scripts": [],
-        "webpackConfig": "apps/webapp/webpack.config.js",
-        "isolatedConfig": true,
-        "compiler": "babel"
-      },
       "configurations": {
-        "production": {
-          "fileReplacements": [
-            {
-              "replace": "apps/webapp/src/environments/environment.ts",
-              "with": "apps/webapp/src/environments/environment.prod.ts"
-            }
-          ],
-          "optimization": true,
-          "outputHashing": "all",
-          "sourceMap": false,
-          "namedChunks": false,
-          "extractLicenses": true,
-          "vendorChunk": false
-        }
-      }
-    },
-    "serve": {
-      "executor": "@nx/webpack:dev-server",
-      "options": {
-        "buildTarget": "webapp:build",
-        "hmr": true,
-        "proxyConfig": "apps/webapp/proxy.conf.json"
-      },
-      "configurations": {
-        "production": {
-          "buildTarget": "webapp:build:production",
-          "hmr": false
-        },
+        "production": {},
         "development": {
-          "buildTarget": "webapp:build:development"
+          "env": {
+            "NODE_ENV": "development"
+          }
         }
       },
-      "defaultConfiguration": "development"
+      "outputs": [
+        "{workspaceRoot}/dist/apps/webapp"
+      ]
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      "outputs": [
+        "{options.outputFile}"
+      ]
     }
   },
   "tags": []

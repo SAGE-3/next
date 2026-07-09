@@ -1,10 +1,30 @@
-const { composePlugins, withNx } = require('@nx/webpack');
+const { NxAppWebpackPlugin } = require('@nx/webpack/app-plugin');
 
-// Nx plugins for webpack.
-module.exports = composePlugins(withNx(), (config) => {
-  // Update the webpack config as needed here.
-  // e.g. config.plugins.push(new MyPlugin())
-  // For more information on webpack config and Nx see:
-  // https://nx.dev/packages/webpack/documents/webpack-config-setup
-  return config;
-});
+// Options migrated from the former @nx/webpack:webpack executor target;
+// the production block applies when building with --configuration=production.
+const configValues = {
+  default: {
+    target: 'node',
+    compiler: 'tsc',
+    outputPath: '../../dist/apps/homebase',
+    main: './src/main.ts',
+    tsConfig: './tsconfig.app.json',
+    assets: ['./src/assets'],
+    babelUpwardRootMode: true,
+  },
+  production: {
+    optimization: true,
+    extractLicenses: true,
+    fileReplacements: [{ replace: './src/environments/environment.ts', with: './src/environments/environment.prod.ts' }],
+  },
+};
+
+const configuration = process.env.NX_TASK_TARGET_CONFIGURATION || 'default';
+const buildOptions = {
+  ...configValues.default,
+  ...(configValues[configuration] || {}),
+};
+
+module.exports = {
+  plugins: [new NxAppWebpackPlugin(buildOptions)],
+};

@@ -7,32 +7,17 @@
   "generators": {},
   "targets": {
     "build": {
-      "executor": "@nx/webpack:webpack",
-      "options": {
-        "outputPath": "dist/apps/homebase",
-        "main": "apps/homebase/src/main.ts",
-        "tsConfig": "apps/homebase/tsconfig.app.json",
-        "assets": ["apps/homebase/src/assets"],
-        "target": "node",
-        "compiler": "tsc",
-        "webpackConfig": "apps/homebase/webpack.config.js",
-        "isolatedConfig": true,
-        "babelUpwardRootMode": true
-      },
       "configurations": {
-        "production": {
-          "optimization": true,
-          "extractLicenses": true,
-          "inspect": false,
-          "fileReplacements": [
-            {
-              "replace": "apps/homebase/src/environments/environment.ts",
-              "with": "apps/homebase/src/environments/environment.prod.ts"
-            }
-          ]
+        "production": {},
+        "development": {
+          "env": {
+            "NODE_ENV": "development"
+          }
         }
       },
-      "outputs": ["{options.outputPath}"]
+      "outputs": [
+        "{workspaceRoot}/dist/apps/homebase"
+      ]
     },
     "serve": {
       "executor": "@nx/js:node",
@@ -42,7 +27,9 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      "outputs": [
+        "{options.outputFile}"
+      ]
     }
   },
   "tags": []

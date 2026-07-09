@@ -5,32 +5,17 @@
   "projectType": "application",
   "targets": {
     "build": {
-      "executor": "@nx/webpack:webpack",
-      "outputs": ["{options.outputPath}"],
-      "options": {
-        "target": "node",
-        "compiler": "tsc",
-        "outputPath": "dist/apps/homebase-files",
-        "main": "apps/homebase-files/src/main.ts",
-        "tsConfig": "apps/homebase-files/tsconfig.app.json",
-        "assets": ["apps/homebase-files/src/assets"],
-        "webpackConfig": "apps/homebase-files/webpack.config.js",
-        "isolatedConfig": true,
-        "babelUpwardRootMode": true
-      },
       "configurations": {
-        "production": {
-          "optimization": true,
-          "extractLicenses": true,
-          "inspect": false,
-          "fileReplacements": [
-            {
-              "replace": "apps/homebase-files/src/environments/environment.ts",
-              "with": "apps/homebase-files/src/environments/environment.prod.ts"
-            }
-          ]
+        "production": {},
+        "development": {
+          "env": {
+            "NODE_ENV": "development"
+          }
         }
-      }
+      },
+      "outputs": [
+        "{workspaceRoot}/dist/apps/homebase-files"
+      ]
     },
     "serve": {
       "executor": "@nx/js:node",
@@ -45,7 +30,9 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      "outputs": [
+        "{options.outputFile}"
+      ]
     }
   },
   "tags": []
