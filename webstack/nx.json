@@ -7,21 +7,17 @@
     "default": {
       "runner": "nx/tasks-runners/default",
       "options": {
-        "cacheableOperations": [
-          "build",
-          "lint",
-          "e2e"
-        ],
+        "cacheableOperations": ["build", "lint", "e2e"],
         "parallel": 1
       }
     }
   },
   "cli": {
-    "defaultCollection": "@nrwl/express"
+    "defaultCollection": "@nx/express"
   },
   "defaultProject": "homebase",
   "generators": {
-    "@nrwl/react": {
+    "@nx/react": {
       "application": {
         "style": "scss",
         "linter": "eslint",
@@ -37,32 +33,27 @@
     }
   },
   "namedInputs": {
-    "default": [
-      "{projectRoot}/**/*",
-      "sharedGlobals"
-    ],
-    "sharedGlobals": [
-      "{workspaceRoot}/tsconfig.base.json",
-      "{workspaceRoot}/nx.json",
-      "{workspaceRoot}/babel.config.json"
-    ],
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "sharedGlobals": ["{workspaceRoot}/tsconfig.base.json", "{workspaceRoot}/nx.json", "{workspaceRoot}/babel.config.json"],
     "production": [
       "default",
-      "!{projectRoot}/.eslintrc"
+      "!{projectRoot}/.eslintrc",
+      "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
+      "!{projectRoot}/tsconfig.spec.json",
+      "!{projectRoot}/jest.config.[jt]s",
+      "!{projectRoot}/src/test-setup.[jt]s",
+      "!{projectRoot}/test-setup.[jt]s"
     ]
   },
   "targetDefaults": {
     "build": {
-      "inputs": [
-        "production",
-        "^production"
-      ]
+      "inputs": ["production", "^production"]
     },
     "lint": {
-      "inputs": [
-        "default",
-        "{workspaceRoot}/.eslintrc"
-      ]
+      "inputs": ["default", "{workspaceRoot}/.eslintrc"]
+    },
+    "test": {
+      "inputs": ["default", "^production", "{workspaceRoot}/jest.preset.js"]
     }
   }
 }

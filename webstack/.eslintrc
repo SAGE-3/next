@@ -7,7 +7,7 @@
     "project": "./tsconfig.*?.json"
   },
   "ignorePatterns": ["**/*"],
-  "plugins": ["@typescript-eslint", "@nrwl/nx", "eslint-plugin-tsdoc"],
+  "plugins": ["@typescript-eslint", "@nx", "eslint-plugin-tsdoc"],
   "extends": ["eslint:recommended", "plugin:@typescript-eslint/eslint-recommended", "plugin:@typescript-eslint/recommended", "prettier"],
   "rules": {
     "@typescript-eslint/explicit-member-accessibility": "off",
@@ -16,7 +16,7 @@
     "@typescript-eslint/no-shadow": "error",
     "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
     "tsdoc/syntax": "off",
-    "@nrwl/nx/enforce-module-boundaries": [
+    "@nx/enforce-module-boundaries": [
       "error",
       {
         "enforceBuildableLibDependency": true,

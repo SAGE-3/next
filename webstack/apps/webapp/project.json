@@ -5,10 +5,8 @@
   "projectType": "application",
   "targets": {
     "build": {
-      "executor": "@nrwl/webpack:webpack",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
       "defaultConfiguration": "development",
       "options": {
         "outputPath": "dist/apps/webapp",
@@ -17,13 +15,8 @@
         "main": "apps/webapp/src/main.tsx",
         "polyfills": "apps/webapp/src/polyfills.ts",
         "tsConfig": "apps/webapp/tsconfig.app.json",
-        "assets": [
-          "apps/webapp/src/favicon.ico",
-          "apps/webapp/src/assets"
-        ],
-        "styles": [
-          "apps/webapp/src/styles.scss"
-        ],
+        "assets": ["apps/webapp/src/favicon.ico", "apps/webapp/src/assets"],
+        "styles": ["apps/webapp/src/styles.scss"],
         "scripts": [],
         "webpackConfig": "apps/webapp/webpack.config.js",
         "isolatedConfig": true,
@@ -47,7 +40,7 @@
       }
     },
     "serve": {
-      "executor": "@nrwl/webpack:dev-server",
+      "executor": "@nx/webpack:dev-server",
       "options": {
         "buildTarget": "webapp:build",
         "hmr": true,
@@ -65,14 +58,10 @@
       "defaultConfiguration": "development"
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "apps/webapp/**/*.{ts,tsx,js,jsx}"
-        ]
+        "lintFilePatterns": ["apps/webapp/**/*.{ts,tsx,js,jsx}"]
       }
     }
   },

@@ -1,0 +1,14 @@
+{
+  "generators": {
+    "newapp": {
+      "implementation": "./src/generators/newapp",
+      "schema": "./src/generators/newapp/schema.json",
+      "description": "Generator newapp"
+    },
+    "regen": {
+      "implementation": "./src/generators/regen",
+      "schema": "./src/generators/regen/schema.json",
+      "description": "Generator regen"
+    }
+  }
+}

@@ -5,29 +5,22 @@
   "projectType": "library",
   "targets": {
     "lint": {
-      "executor": "@nrwl/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "libs/sageplugin/**/*.ts"
-        ]
+        "lintFilePatterns": ["libs/sageplugin/**/*.ts"]
       }
     },
     "build": {
-      "executor": "@nrwl/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
       "options": {
         "outputPath": "dist/libs/sageplugin",
         "tsConfig": "libs/sageplugin/tsconfig.lib.json",
         "packageJson": "libs/sageplugin/package.json",
         "main": "libs/sageplugin/src/index.ts",
-        "assets": [
-          "libs/sageplugin/*.md"
-        ]
+        "assets": ["libs/sageplugin/*.md"],
+        "updateBuildableProjectDepsInPackageJson": true
       }
     }
   },

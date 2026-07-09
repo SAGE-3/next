@@ -1,5 +1,5 @@
-const { composePlugins, withNx } = require('@nrwl/webpack');
-const { withReact } = require('@nrwl/react');
+const { composePlugins, withNx } = require('@nx/webpack');
+const { withReact } = require('@nx/react');
 
 module.exports = composePlugins(withNx(), withReact(), (config) => {
   // Silence the Dart Sass legacy JS API deprecation warning (sass-loader

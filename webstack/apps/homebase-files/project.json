@@ -5,19 +5,15 @@
   "projectType": "application",
   "targets": {
     "build": {
-      "executor": "@nrwl/webpack:webpack",
-      "outputs": [
-        "{options.outputPath}"
-      ],
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
       "options": {
         "target": "node",
         "compiler": "tsc",
         "outputPath": "dist/apps/homebase-files",
         "main": "apps/homebase-files/src/main.ts",
         "tsConfig": "apps/homebase-files/tsconfig.app.json",
-        "assets": [
-          "apps/homebase-files/src/assets"
-        ],
+        "assets": ["apps/homebase-files/src/assets"],
         "webpackConfig": "apps/homebase-files/webpack.config.js",
         "isolatedConfig": true,
         "babelUpwardRootMode": true
@@ -37,7 +33,7 @@
       }
     },
     "serve": {
-      "executor": "@nrwl/js:node",
+      "executor": "@nx/js:node",
       "options": {
         "buildTarget": "homebase-files:build"
       },
@@ -48,14 +44,10 @@
       }
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "apps/homebase-files/**/*.ts"
-        ]
+        "lintFilePatterns": ["apps/homebase-files/**/*.ts"]
       }
     }
   },

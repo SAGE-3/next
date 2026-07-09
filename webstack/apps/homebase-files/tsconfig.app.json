@@ -4,7 +4,7 @@
     "allowJs": true,
     "resolveJsonModule": true,
     "outDir": "../../dist/out-tsc",
-    "types": ["node", "express"]
+    "types": ["node", "express", "@nx/react/typings/cssmodule.d.ts", "@nx/react/typings/image.d.ts"]
   },
   "exclude": ["**/*.spec.ts"],
   "include": ["**/*.ts"]

@@ -7,14 +7,12 @@
   "generators": {},
   "targets": {
     "build": {
-      "executor": "@nrwl/webpack:webpack",
+      "executor": "@nx/webpack:webpack",
       "options": {
         "outputPath": "dist/apps/homebase",
         "main": "apps/homebase/src/main.ts",
         "tsConfig": "apps/homebase/tsconfig.app.json",
-        "assets": [
-          "apps/homebase/src/assets"
-        ],
+        "assets": ["apps/homebase/src/assets"],
         "target": "node",
         "compiler": "tsc",
         "webpackConfig": "apps/homebase/webpack.config.js",
@@ -34,25 +32,19 @@
           ]
         }
       },
-      "outputs": [
-        "{options.outputPath}"
-      ]
+      "outputs": ["{options.outputPath}"]
     },
     "serve": {
-      "executor": "@nrwl/js:node",
+      "executor": "@nx/js:node",
       "options": {
         "buildTarget": "homebase:build"
       }
     },
     "lint": {
-      "executor": "@nrwl/linter:eslint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
       "options": {
-        "lintFilePatterns": [
-          "apps/homebase/**/*.ts"
-        ]
+        "lintFilePatterns": ["apps/homebase/**/*.ts"]
       }
     }
   },
