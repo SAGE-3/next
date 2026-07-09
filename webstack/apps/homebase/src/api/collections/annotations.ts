@@ -12,7 +12,10 @@ import { BoardsCollection } from './boards';
 
 class SAGE3AnnotationsCollection extends SAGE3Collection<AnnotationSchema> {
   constructor() {
-    super('ANNOTATIONS', {});
+    // Live annotation sync is handled by Yjs; the collection is only cold
+    // storage.  Opt out of per-update broadcasts so a stroke commit doesn't
+    // re-broadcast the entire whiteboardLines array to every subscriber.
+    super('ANNOTATIONS', {}, { publishUpdates: false });
     const router = sageRouter<AnnotationSchema>(this);
     this.httpRouter = router;
   }

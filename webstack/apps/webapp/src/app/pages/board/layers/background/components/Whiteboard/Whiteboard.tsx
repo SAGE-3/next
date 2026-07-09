@@ -41,8 +41,50 @@ import {
   useYjs,
 } from '@sage3/frontend';
 
-import { Line } from './Line';
+import { Line, ShapeView } from './Line';
 import { useDragAndDropBoard } from '../DragAndDropBoard';
+
+/**
+ * Minimum pointer travel (in screen pixels) between stored samples while a
+ * freehand stroke is in progress.  Larger values yield a smaller/cheaper draft
+ * path at the cost of finer detail; the pointer-up Simplify pass runs regardless.
+ */
+const MIN_DRAFT_SAMPLE_PX = 2;
+
+/**
+ * Freehand simplification tolerance, expressed in SCREEN pixels and converted to
+ * board units at commit time (divided by the current scale).  A fixed board-unit
+ * tolerance would over-simplify strokes drawn while zoomed in (discarding the
+ * detail the draft decimation preserved) and under-simplify strokes drawn while
+ * zoomed out.  0.5px matches the previous hard-coded 0.5 board-unit value at 1x.
+ */
+const SIMPLIFY_TOL_PX = 0.5;
+
+/**
+ * Trailing debounce (ms) for persisting annotations.  Rapid stroke commits are
+ * coalesced into a single save; forced flushes on tab-hide/unload and tool/board
+ * change guarantee durability.  Persisting each stroke immediately would PUT the
+ * entire whiteboardLines array (O(board)) on every stroke.
+ */
+const SAVE_DEBOUNCE_MS = 1500;
+
+/**
+ * Round to 0.1 board units — matching the stroke renderer's own `toFixed(1)`
+ * precision.  Finer than integer rounding so strokes stay smooth when zoomed in
+ * (up to 6x, 0.1 unit ≈ 0.6 screen px), while not exceeding what the SVG path
+ * can represent.  Rendered path size is unaffected (it depends on point count).
+ */
+const round1 = (n: number) => Math.round(n * 10) / 10;
+
+/** Metadata for the shape currently being drawn (kept local until finalized). */
+type DraftShape = {
+  id: string;
+  type: string;
+  userColor: string;
+  alpha: number;
+  size: number;
+  userId?: string;
+};
 
 type WhiteboardProps = {
   boardId: string;
@@ -91,8 +133,15 @@ export function Whiteboard(props: WhiteboardProps) {
   const [yDoc, setYdoc] = useState<Y.Doc | null>(null);
   const [yLines, setYlines] = useState<Y.Array<Y.Map<any>> | null>(null);
   const [lines, setLines] = useState<Y.Map<any>[]>([]);
-  const rCurrentLine = useRef<Y.Map<any>>();
   const activeTouchCount = useRef(0);
+
+  // In-progress stroke: held entirely in local state so that pointer moves do
+  // NOT write to the Yjs document.  The shape is committed to Yjs exactly once,
+  // on pointer-up.  rDraftPoints is the authoritative point list (read on
+  // finalize); draftPoints mirrors it into state to drive the live preview.
+  const rDraft = useRef<DraftShape | null>(null);
+  const rDraftPoints = useRef<number[][]>([]);
+  const [draftPoints, setDraftPoints] = useState<number[][]>([]);
 
   // Preview cursor state
   const [cursorPosition, setCursorPosition] = useState<{ x: number; y: number } | null>(null);
@@ -112,23 +161,81 @@ export function Whiteboard(props: WhiteboardProps) {
     }
   }
 
+  // Debounced persistence.  updateBoardLines() serializes and PUTs the whole
+  // whiteboardLines array, so calling it on every stroke is O(board) per stroke.
+  // We coalesce rapid edits into a single trailing save and force a flush on
+  // tab-hide/unload and tool/board change so nothing is lost.
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveDirty = useRef(false);
+  // Latest-ref so the stable save helpers below always call the current closure.
+  const updateBoardLinesRef = useRef(updateBoardLines);
+  useEffect(() => {
+    updateBoardLinesRef.current = updateBoardLines;
+  });
+
+  // Schedule a trailing save — used for high-frequency stroke commits.
+  const scheduleSave = useCallback(() => {
+    saveDirty.current = true;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      saveTimer.current = null;
+      if (!saveDirty.current) return;
+      saveDirty.current = false;
+      updateBoardLinesRef.current();
+    }, SAVE_DEBOUNCE_MS);
+  }, []);
+
+  // Flush a pending save immediately, if any — used for tab-hide/unload/unmount.
+  const flushSave = useCallback(() => {
+    if (!saveDirty.current) return;
+    if (saveTimer.current) {
+      clearTimeout(saveTimer.current);
+      saveTimer.current = null;
+    }
+    saveDirty.current = false;
+    updateBoardLinesRef.current();
+  }, []);
+
+  // Save immediately — used for infrequent destructive ops (clear/undo/erase).
+  const saveNow = useCallback(() => {
+    if (saveTimer.current) {
+      clearTimeout(saveTimer.current);
+      saveTimer.current = null;
+    }
+    saveDirty.current = false;
+    updateBoardLinesRef.current();
+  }, []);
+
+  // Force a flush when the tab is hidden or the page is unloaded.
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') flushSave();
+    };
+    window.addEventListener('beforeunload', flushSave);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('beforeunload', flushSave);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [flushSave]);
+
+  // Flush pending saves when the drawing tool changes or the component unmounts.
+  useEffect(() => {
+    return () => {
+      flushSave();
+    };
+  }, [primaryActionMode, flushSave]);
+
   /**
-   * Cancel and remove the in-progress stroke (if any).  Called when a second
+   * Cancel and discard the in-progress stroke (if any).  Called when a second
    * touch finger arrives so the initial single-finger touch doesn't leave a
-   * tiny dot behind during a pan/zoom gesture.
+   * tiny dot behind during a pan/zoom gesture.  Since the in-progress stroke
+   * lives only in local state, this never touches the Yjs document.
    */
   function cancelInProgressStroke() {
-    const current = rCurrentLine.current;
-    if (!current || !yLines) {
-      rCurrentLine.current = undefined;
-      return;
-    }
-    // Remove the incomplete shape from the Yjs array
-    const index = yLines.toArray().indexOf(current);
-    if (index >= 0) {
-      yLines.delete(index, 1);
-    }
-    rCurrentLine.current = undefined;
+    rDraft.current = null;
+    rDraftPoints.current = [];
+    setDraftPoints([]);
     setCursorPosition(null);
   }
 
@@ -222,6 +329,8 @@ export function Whiteboard(props: WhiteboardProps) {
       connect(yAnnotations);
     }
     return () => {
+      // Persist any pending edits before tearing down (e.g. board switch).
+      flushSave();
       unsubAnnotations();
     };
   }, [yAnnotations, props.boardId]);
@@ -260,30 +369,11 @@ export function Whiteboard(props: WhiteboardProps) {
       // Capture pointer events
       e.currentTarget.setPointerCapture(e.pointerId);
 
-      // Prepare a shared Yjs array for storing points
-      const pts = new Y.Array<number>();
-      pts.push([x0, y0]);
-      // Circle needs to have at least two points to correctly render
-      // Extra point gets deleted when the pointer moves
-      if (type === 'circle' || type === 'arrow' || type === 'doubleArrow') {
-        pts.push([x0 + .000001, y0 + .000001]);
-      }
-      // Create a Yjs map for this shape
-      const yShape = new Y.Map();
-
-      yDoc.transact(() => {
-        yShape.set('id', id);
-        yShape.set('type', type);
-        yShape.set('points', pts);
-        yShape.set('userColor', color);
-        yShape.set('alpha', markerOpacity);
-        yShape.set('size', markerSize);
-        yShape.set('isComplete', false);
-        yShape.set('userId', user?._id);
-        yShape.set('text', '');
-      });
-      rCurrentLine.current = yShape;
-      yLines.push([yShape]);
+      // Keep the in-progress shape in local state only.  Nothing is written to
+      // Yjs until the stroke is finalized in handlePointerUp.
+      rDraft.current = { id, type, userColor: color, alpha: markerOpacity, size: markerSize, userId: user?._id };
+      rDraftPoints.current = [[x0, y0]];
+      setDraftPoints(rDraftPoints.current);
       setCursorPosition({ x: x0, y: y0 });
     },
     [yLines, yDoc, canAnnotate, boardSynced, primaryActionMode, color, markerOpacity, markerSize, user, getPoint]
@@ -297,7 +387,7 @@ export function Whiteboard(props: WhiteboardProps) {
    */
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
-      if (!rCurrentLine.current) return;
+      if (!rDraft.current) return;
       // For mouse / pen / touch we require an active pointer capture to avoid stray moves.
       if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
 
@@ -310,29 +400,33 @@ export function Whiteboard(props: WhiteboardProps) {
       const [x, y] = getPoint(e.clientX, e.clientY);
       setCursorPosition(primaryActionMode !== 'eraser' ? { x, y } : null);
 
-      const current = rCurrentLine.current;
-      const type = current.get('type') as string;
-      const pts = current.get('points') as Y.Array<number>;
-      if (!pts) return;
-
+      const type = rDraft.current.type;
       if (type === 'line') {
-        // Append new point for freehand line
-        pts.push([x, y]);
+        // Decimate the freehand draft: only append a sample once the pointer has
+        // travelled at least MIN_DRAFT_SAMPLE_PX (in screen space) from the last
+        // stored point, and round to integer board coords.  This keeps the
+        // in-progress SVG path small and cheap to re-tessellate on each move; the
+        // pointer-up Simplify pass still cleans up the committed stroke.
+        const pts = rDraftPoints.current;
+        const last = pts[pts.length - 1];
+        const minDist = MIN_DRAFT_SAMPLE_PX / scale; // screen px -> board units
+        const dx = x - last[0];
+        const dy = y - last[1];
+        if (dx * dx + dy * dy < minDist * minDist) return; // too close; skip
+        rDraftPoints.current = [...pts, [round1(x), round1(y)]];
+        setDraftPoints(rDraftPoints.current);
       }
-      // use same logic to track circle and rectangle movements 
+      // Rectangle / circle / arrow track start + current drag-end point
       else if (type === 'rectangle' || type === 'circle' || type === 'arrow' || type === 'doubleArrow') {
-        // Replace the last end point (if exists) with the current coordinates
-        // A rectangle stores two points: start and current drag end
-        if (pts.length >= 4) {
-          pts.delete(2, 2);
-        }
-        pts.push([x, y]);
+        const start = rDraftPoints.current[0];
+        rDraftPoints.current = [start, [x, y]];
+        setDraftPoints(rDraftPoints.current);
       }
       else {
         setCursorPosition(null);
       }
     },
-    [primaryActionMode, getPoint, rCurrentLine.current]
+    [primaryActionMode, getPoint, scale]
   );
 
   /**
@@ -342,93 +436,85 @@ export function Whiteboard(props: WhiteboardProps) {
    * including the starting point repeated).  After finalisation, the
    * shape is marked complete and persisted to the annotation store.
    */
+  /**
+   * Commit a finalized shape to the Yjs document in a single transaction.  The
+   * points are stored flat ([x, y, x, y, ...]) to match the persisted format.
+   */
+  function commitShape(draft: DraftShape, finalPairs: number[][]) {
+    if (!yLines || !yDoc) return;
+    const flat: number[] = [];
+    for (const [px, py] of finalPairs) flat.push(px, py);
+    const pts = new Y.Array<number>();
+    pts.push(flat);
+    const yShape = new Y.Map();
+    yDoc.transact(() => {
+      yShape.set('id', draft.id);
+      yShape.set('type', draft.type);
+      yShape.set('points', pts);
+      yShape.set('userColor', draft.userColor);
+      yShape.set('alpha', draft.alpha);
+      yShape.set('size', draft.size);
+      yShape.set('isComplete', true);
+      yShape.set('userId', draft.userId);
+      yShape.set('text', '');
+    });
+    yLines.push([yShape]);
+  }
+
   const handlePointerUp = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
       if (e.pointerType === 'touch' && activeTouchCount.current > 0) {
         activeTouchCount.current -= 1;
       }
       e.currentTarget.releasePointerCapture(e.pointerId);
-      const current = rCurrentLine.current;
-      if (!current) return;
+      const draft = rDraft.current;
+      const points = rDraftPoints.current;
+      // Clear the local draft up front so an early return can't leave it dangling.
+      rDraft.current = null;
+      rDraftPoints.current = [];
+      setDraftPoints([]);
+      if (!draft) return;
 
-      const type = current.get('type') as string;
-      const pts = current.get('points') as Y.Array<number>;
-      if (!pts) {
-        rCurrentLine.current = undefined;
-        return;
-      }
+      const type = draft.type;
+      let committed = false;
 
       if (type === 'line') {
-        // Simplify freehand stroke
-        if (pts.length >= 4) {
-          const xyPoints: { x: number; y: number }[] = [];
-          for (let i = 0; i < pts.length / 2; i++) {
-            xyPoints.push({ x: pts.get(i * 2), y: pts.get(i * 2 + 1) });
-          }
-          // Simplify the stroke; tolerance 0.5, high quality
-          const simpler = Simplify.default(xyPoints, 0.5, true);
-          pts.delete(0, pts.length);
-          for (const p of simpler) {
-            pts.push([Math.round(p.x), Math.round(p.y)]);
-          }
+        // Simplify freehand stroke (tolerance 0.5, high quality)
+        let finalPairs = points;
+        if (points.length >= 2) {
+          const xyPoints = points.map(([x, y]) => ({ x, y }));
+          // Scale-aware tolerance: keep simplification consistent with the
+          // screen-space draft decimation (equals 0.5 board units at 1x zoom).
+          const tolerance = SIMPLIFY_TOL_PX / scale;
+          const simpler = Simplify.default(xyPoints, tolerance, true);
+          finalPairs = simpler.map((p) => [round1(p.x), round1(p.y)]);
         }
-        current.set('isComplete', true);
+        commitShape(draft, finalPairs);
+        committed = true;
       } else if (type === 'rectangle') {
-        // Finalise rectangle: convert two endpoints to a closed rectangle
-        // If the user never moved, remove the shape
-        if (pts.length < 4) {
-          // Remove incomplete rectangle
-          const index = yLines?.toArray().indexOf(current) ?? -1;
-          if (index >= 0 && yLines) {
-            yLines.delete(index, 1);
-          }
-        } else {
-          const x0 = pts.get(0);
-          const y0 = pts.get(1);
-          const x1 = pts.get(2);
-          const y1 = pts.get(3);
-          // Determine top-left corner and dimensions【992428044196702†L130-L147】
+        // Need a start + drag-end point; otherwise the shape never formed.
+        if (points.length >= 2) {
+          const [x0, y0] = points[0];
+          const [x1, y1] = points[1];
           const xMin = Math.min(x0, x1);
           const yMin = Math.min(y0, y1);
           const width = Math.abs(x1 - x0);
           const height = Math.abs(y1 - y0);
-          // Build a closed rectangle path: TL, TR, BR, BL, back to TL
-          const rectPoints = [
-            xMin,
-            yMin,
-            xMin + width,
-            yMin,
-            xMin + width,
-            yMin + height,
-            xMin,
-            yMin + height,
-            xMin,
-            yMin,
+          // Closed rectangle path: TL, TR, BR, BL, back to TL
+          const rectPairs: number[][] = [
+            [xMin, yMin],
+            [xMin + width, yMin],
+            [xMin + width, yMin + height],
+            [xMin, yMin + height],
+            [xMin, yMin],
           ];
-          pts.delete(0, pts.length);
-          for (let i = 0; i < rectPoints.length; i += 2) {
-            pts.push([rectPoints[i], rectPoints[i + 1]]);
-          }
-          current.set('isComplete', true);
+          commitShape(draft, rectPairs);
+          committed = true;
         }
-      }
-      else if (type === 'circle') {
-        if (pts.length < 4) {
-          try {
-            const index = yLines?.toArray().indexOf(current) ?? -1;
-            if (index >= 0 && yLines) {
-              yLines.delete(index, 1);
-            }
-          }
-          catch {
-            console.log(`array not long enough circle points: ${pts}`)
-          }
-        }
-        else {
-          const x0 = pts.get(0);
-          const y0 = pts.get(1);
-          const x1 = pts.get(2);
-          const y1 = pts.get(3);
+      } else if (type === 'circle') {
+        if (points.length >= 2) {
+          const [x0, y0] = points[0];
+          const [x1, y1] = points[1];
           const maxX = Math.max(x0, x1);
           const minX = Math.min(x0, x1);
           const maxY = Math.max(y0, y1);
@@ -441,48 +527,27 @@ export function Whiteboard(props: WhiteboardProps) {
           const vert1y = cy + ry * Math.sin(Math.PI / 2);
           const vert2x = cx + rx * Math.cos((3 * Math.PI) / 2);
           const vert2y = cy + ry * Math.sin((3 * Math.PI) / 2);
-          const circlePoints = [
-            x0,
-            y0,
-            x1,
-            y1,
-            vert1x,
-            vert1y,
-            vert2x,
-            vert2y,
+          const circlePairs: number[][] = [
+            [x0, y0],
+            [x1, y1],
+            [vert1x, vert1y],
+            [vert2x, vert2y],
           ];
-          pts.delete(0, pts.length);
-          for (let i = 0; i < circlePoints.length; i += 2) {
-            pts.push([circlePoints[i], circlePoints[i + 1]]);
-          }
-          current.set('isComplete', true);
+          commitShape(draft, circlePairs);
+          committed = true;
+        }
+      } else if (type === 'arrow' || type === 'doubleArrow') {
+        if (points.length >= 2) {
+          commitShape(draft, [points[0], points[1]]);
+          committed = true;
         }
       }
-      else if (type === 'arrow' || type === 'doubleArrow') {
-        console.log(type)
-        if (pts.length < 4) {
-          const index = yLines?.toArray().indexOf(current) ?? -1;
-          if (index >= 0 && yLines) {
-            yLines.delete(index, 1);
-          }
-        }
-        else {
-          const x0 = pts.get(0);
-          const y0 = pts.get(1);
-          const x1 = pts.get(2);
-          const y1 = pts.get(3);
-          const points = [x0, y0, x1, y1];
-          pts.delete(0, pts.length);
-          for (let i = 0; i < points.length; i += 2) {
-            pts.push([points[i], points[i + 1]]);
-          }
-          current.set('isComplete', true);
-        }
-      }
-      updateBoardLines();
-      rCurrentLine.current = undefined;
+
+      // Persist to the annotation store only when a shape was actually added.
+      // Debounced so a burst of strokes coalesces into a single save.
+      if (committed) scheduleSave();
     },
-    [updateBoardLines, yLines]
+    [scheduleSave, yLines, yDoc, scale]
   );
 
   /**
@@ -492,7 +557,7 @@ export function Whiteboard(props: WhiteboardProps) {
     if (yLines && clearAllMarkers) {
       yLines.delete(0, yLines.length);
       setClearAllMarkers(false);
-      updateBoardLines();
+      saveNow();
     }
   }, [clearAllMarkers]);
 
@@ -507,7 +572,7 @@ export function Whiteboard(props: WhiteboardProps) {
           yLines.delete(index, 1);
         }
       }
-      updateBoardLines();
+      saveNow();
       setClearMarkers(false);
     }
   }, [clearMarkers]);
@@ -524,7 +589,7 @@ export function Whiteboard(props: WhiteboardProps) {
           break;
         }
       }
-      updateBoardLines();
+      saveNow();
       setUndoLastMarker(false);
     }
   }, [undoLastMarker]);
@@ -543,7 +608,7 @@ export function Whiteboard(props: WhiteboardProps) {
         break;
       }
     }
-    if (deleted) updateBoardLines();
+    if (deleted) saveNow();
   };
 
   // Hotkeys: undo last line (Pen only)
@@ -616,6 +681,18 @@ export function Whiteboard(props: WhiteboardProps) {
           {lines.map((line, i) => (
             <Line key={i} line={line} onClick={lineClicked} />
           ))}
+          {/* In-progress (local, non-persisted) draft stroke preview */}
+          {rDraft.current && draftPoints.length > 0 && (
+            <ShapeView
+              points={draftPoints}
+              color={rDraft.current.userColor}
+              isComplete={false}
+              alpha={rDraft.current.alpha}
+              size={rDraft.current.size}
+              type={rDraft.current.type}
+              interactive={false}
+            />
+          )}
           {/* Preview cursor for pen */}
           {cursorPosition && primaryActionMode === 'pen' && (
             <circle
