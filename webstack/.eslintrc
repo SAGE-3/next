@@ -3,8 +3,7 @@
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "ecmaVersion": 2018,
-    "sourceType": "module",
-    "project": "./tsconfig.*?.json"
+    "sourceType": "module"
   },
   "ignorePatterns": ["**/*"],
   "plugins": ["@typescript-eslint", "@nx", "eslint-plugin-tsdoc"],
