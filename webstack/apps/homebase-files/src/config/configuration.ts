@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import * as hjson from 'hjson';
+import hjson from 'hjson';
 import * as fsModule from 'fs';
 const fs = fsModule.promises;
 

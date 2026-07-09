@@ -12,10 +12,10 @@ import { SAGE3Collection, sageRouter } from '@sage3/backend';
 // Node modules
 import * as fs from 'fs';
 import { promises as fsPromises } from 'fs';
-import * as multer from 'multer';
+import multer from 'multer';
 import * as path from 'path';
 
-import * as jszip from 'jszip';
+import jszip from 'jszip';
 import { isZip } from '@sage3/shared';
 
 // Plugin Paths

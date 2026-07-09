@@ -9,7 +9,7 @@
 // Node Imports
 import { IncomingMessage, createServer } from 'http';
 import { WebSocket, WebSocketServer } from 'ws';
-import * as express from 'express';
+import express from 'express';
 
 // SAGE3 Imports
 import { loadConfig } from './config';

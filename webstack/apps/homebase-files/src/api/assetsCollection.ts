@@ -18,7 +18,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 // Express web server framework
-import * as express from 'express';
+import express from 'express';
 
 // SAGE3 modules
 import { AssetSchema, ExtraVideoType, ExtraImageType } from '@sage3/shared/types';

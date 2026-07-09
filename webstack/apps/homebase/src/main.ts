@@ -47,7 +47,7 @@ import { SBAuthDB, JWTPayload } from '@sage3/sagebase';
 
 // SAGE Twilio Helper Import
 import { SAGETwilio } from '@sage3/backend';
-import * as express from 'express';
+import express from 'express';
 
 // Exception handling
 process.on('unhandledRejection', (reason: Error) => {

@@ -12,7 +12,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 // Image processing tool
-import * as sharp from 'sharp';
+import sharp from 'sharp';
 
 // SAGEBase queue
 import { SBQueue } from '../connectors';

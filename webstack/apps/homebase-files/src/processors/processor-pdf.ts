@@ -33,7 +33,7 @@ import { getStaticAssetUrl } from '@sage3/backend';
 import { ExtraPDFType } from '@sage3/shared/types';
 
 // Image processing tool
-import * as sharp from 'sharp';
+import sharp from 'sharp';
 
 function parsePositiveInteger(value: string | undefined): number | undefined {
   if (!value) return undefined;

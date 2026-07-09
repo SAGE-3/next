@@ -9,7 +9,7 @@
 import * as passport from 'passport';
 import * as jwt from 'jsonwebtoken';
 // @ts-ignore
-import * as AppleStrategy from 'passport-apple';
+import AppleStrategy from 'passport-apple';
 
 import { SBAuthDB } from '../SBAuthDatabase';
 
