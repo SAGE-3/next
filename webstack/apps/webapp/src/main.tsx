@@ -7,7 +7,7 @@
  */
 
 import { createRoot } from 'react-dom/client';
-import { HashRouter } from 'react-router-dom';
+import { HashRouter } from 'react-router';
 
 import App from './app/app';
 
@@ -18,7 +18,7 @@ const container = document.getElementById('root');
 if (container) {
   const root = createRoot(container);
   root.render(
-    <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <HashRouter>
       <ColorModeScript initialColorMode={theme.config.initialColorMode} />
       <App />
     </HashRouter>
