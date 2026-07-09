@@ -56,3 +56,4 @@ Thumbs.db
 /clients/pycli/output.jpg
 
 .nx/cache
+.nx/workspace-data

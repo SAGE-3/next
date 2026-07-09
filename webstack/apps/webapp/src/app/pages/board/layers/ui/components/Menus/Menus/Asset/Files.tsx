@@ -419,7 +419,6 @@ export function Files(props: FilesProps): JSX.Element {
             behavior: 'auto',
           });
         } else if (e.key === 'ArrowUp') {
-          // @ts-expect-error
           const last = filesList.findLastIndex((k) => k.selected);
           if (last > 0) {
             prev[last - 1] = { ...prev[last - 1], selected: true };
