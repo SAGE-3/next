@@ -21,8 +21,7 @@ Can't select and move lines/shapes
 <--------------------------------------------------------------------------------------------TODO-------------------------------------------------------------------------------------------->
 */
 
-
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as Simplify from 'simplify-js';
 
 // Yjs Imports
@@ -85,6 +84,68 @@ type DraftShape = {
   size: number;
   userId?: string;
 };
+
+/**
+ * Extra viewport margin (fraction of the visible board rect) used when culling
+ * off-screen annotations, so shapes are rendered slightly before they scroll
+ * into view during a pan.
+ */
+const VIEWPORT_CULL_MARGIN = 0.25;
+
+type ShapeBBox = { minX: number; minY: number; maxX: number; maxY: number };
+
+/** An indexed shape: the live Y.Map plus its cached bounding box for culling. */
+type IndexedLine = { line: Y.Map<any>; bbox: ShapeBBox | null };
+
+/**
+ * Compute the (board-space) bounding box of a shape from its stored points,
+ * expanded by half the stroke width so the outline is fully covered.  Reads the
+ * Yjs points array directly — no React subscription — so off-screen shapes can
+ * be culled without mounting a component for each.
+ */
+function computeShapeBBox(line: Y.Map<any>): ShapeBBox | null {
+  const pts = line.get('points') as Y.Array<number> | undefined;
+  if (!pts || pts.length < 2) return null;
+  const arr = pts.toArray();
+  const size = (line.get('size') as number) ?? 5;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (let i = 0; i + 1 < arr.length; i += 2) {
+    const x = arr[i];
+    const y = arr[i + 1];
+    if (x < minX) minX = x;
+    if (y < minY) minY = y;
+    if (x > maxX) maxX = x;
+    if (y > maxY) maxY = y;
+  }
+  const m = size / 2 + 1;
+  return { minX: minX - m, minY: minY - m, maxX: maxX + m, maxY: maxY + m };
+}
+
+/** Reference-equality comparison of two Y.Map arrays (same length, same items). */
+function sameLineArray(a: Y.Map<any>[], b: Y.Map<any>[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+  return true;
+}
+
+/**
+ * The committed (finalized) annotations layer.  Memoized and keyed by stable
+ * shape id so that drawing an in-progress stroke (which re-renders the parent on
+ * every pointer move) does NOT reconcile the potentially-thousands of finalized
+ * shapes.  It only re-renders when the visible set or erase handler changes.
+ */
+const CommittedAnnotations = memo(function CommittedAnnotations(props: {
+  lines: Y.Map<any>[];
+  onErase: (id: string) => void;
+}) {
+  return (
+    <>
+      {props.lines.map((line) => (
+        <Line key={line.get('id')} line={line} onClick={props.onErase} />
+      ))}
+    </>
+  );
+});
 
 type WhiteboardProps = {
   boardId: string;
@@ -226,6 +287,60 @@ export function Whiteboard(props: WhiteboardProps) {
     };
   }, [primaryActionMode, flushSave]);
 
+  // DEV-ONLY: generate N freehand strokes for performance testing at scale.
+  // Pushes generated shapes straight into the Yjs array (same path a real
+  // stroke commit uses), spread over a grid so both zoomed-in (culling) and
+  // zoomed-out (all-visible) regimes can be exercised.  Persists via the normal
+  // debounced save, so a reload cold-loads them.  Call from the browser
+  // console: seedStrokes(3000).  Stripped from production builds.
+  function seedTestStrokes(count: number) {
+    if (!yLines || !yDoc) return;
+    const colors = ['red', 'blue', 'green', 'orange', 'purple', 'teal', 'pink', 'cyan'];
+    const cols = Math.ceil(Math.sqrt(count));
+    const spacing = 400; // board units between strokes
+    const ox = boardWidth / 2 - (cols * spacing) / 2;
+    const oy = boardHeight / 2 - (cols * spacing) / 2;
+    yDoc.transact(() => {
+      for (let i = 0; i < count; i++) {
+        const gx = ox + (i % cols) * spacing;
+        const gy = oy + Math.floor(i / cols) * spacing;
+        const n = 8 + Math.floor(Math.random() * 20); // ~8–28 points per squiggle
+        let x = gx;
+        let y = gy;
+        const flat: number[] = [];
+        for (let p = 0; p < n; p++) {
+          x += (Math.random() - 0.5) * 60;
+          y += (Math.random() - 0.5) * 60;
+          flat.push(Math.round(x * 10) / 10, Math.round(y * 10) / 10);
+        }
+        const pts = new Y.Array<number>();
+        pts.push(flat);
+        const yShape = new Y.Map<any>();
+        yShape.set('id', `seed-${Date.now()}-${i}`);
+        yShape.set('type', 'line');
+        yShape.set('points', pts);
+        yShape.set('userColor', colors[i % colors.length]);
+        yShape.set('alpha', 0.8);
+        yShape.set('size', 15);
+        yShape.set('isComplete', true);
+        yShape.set('userId', user?._id);
+        yShape.set('text', '');
+        yLines.push([yShape]);
+      }
+    });
+    scheduleSave();
+    console.log(`[seedStrokes] generated ${count} freehand strokes`);
+  }
+
+  // Expose the seeder on window in development builds only.
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'development') return;
+    (window as any).seedStrokes = seedTestStrokes;
+    return () => {
+      delete (window as any).seedStrokes;
+    };
+  }, [yLines, yDoc, boardWidth, boardHeight, user, scheduleSave]);
+
   /**
    * Cancel and discard the in-progress stroke (if any).  Called when a second
    * touch finger arrives so the initial single-finger touch doesn't leave a
@@ -249,7 +364,7 @@ export function Whiteboard(props: WhiteboardProps) {
       const localY = y / scale - boardPosition.y;
       return [localX, localY];
     },
-    [boardPosition.x, boardPosition.y, scale]
+    [boardPosition.x, boardPosition.y, scale],
   );
 
   /**
@@ -358,7 +473,18 @@ export function Whiteboard(props: WhiteboardProps) {
         return;
       }
       // Determine type based on current tool
-      const type = primaryActionMode === 'rectangle' ? 'rectangle' : primaryActionMode === 'pen' ? 'line' : primaryActionMode === 'circle' ? 'circle' : primaryActionMode === 'arrow' ? 'arrow' : primaryActionMode === 'doubleArrow' ? 'doubleArrow' : 'eraser';
+      const type =
+        primaryActionMode === 'rectangle'
+          ? 'rectangle'
+          : primaryActionMode === 'pen'
+            ? 'line'
+            : primaryActionMode === 'circle'
+              ? 'circle'
+              : primaryActionMode === 'arrow'
+                ? 'arrow'
+                : primaryActionMode === 'doubleArrow'
+                  ? 'doubleArrow'
+                  : 'eraser';
       if (type === 'eraser') return;
       if (!yLines || !yDoc || !canAnnotate || !boardSynced) return;
       if (!e.isPrimary || e.button !== 0) return;
@@ -376,7 +502,7 @@ export function Whiteboard(props: WhiteboardProps) {
       setDraftPoints(rDraftPoints.current);
       setCursorPosition({ x: x0, y: y0 });
     },
-    [yLines, yDoc, canAnnotate, boardSynced, primaryActionMode, color, markerOpacity, markerSize, user, getPoint]
+    [yLines, yDoc, canAnnotate, boardSynced, primaryActionMode, color, markerOpacity, markerSize, user, getPoint],
   );
 
   /**
@@ -421,12 +547,11 @@ export function Whiteboard(props: WhiteboardProps) {
         const start = rDraftPoints.current[0];
         rDraftPoints.current = [start, [x, y]];
         setDraftPoints(rDraftPoints.current);
-      }
-      else {
+      } else {
         setCursorPosition(null);
       }
     },
-    [primaryActionMode, getPoint, scale]
+    [primaryActionMode, getPoint, scale],
   );
 
   /**
@@ -547,7 +672,7 @@ export function Whiteboard(props: WhiteboardProps) {
       // Debounced so a burst of strokes coalesces into a single save.
       if (committed) scheduleSave();
     },
-    [scheduleSave, yLines, yDoc, scale]
+    [scheduleSave, yLines, yDoc, scale],
   );
 
   /**
@@ -595,21 +720,60 @@ export function Whiteboard(props: WhiteboardProps) {
   }, [undoLastMarker]);
 
   /**
-   * Remove a shape when clicked on.
+   * Remove a shape when clicked on.  Stable identity (useCallback) so the
+   * memoized committed-annotations layer isn't re-rendered by drawing.
    */
-  const lineClicked = (id: string) => {
-    if (!yLines) return;
-    let deleted = false;
-    for (let index = yLines.length - 1; index >= 0; index--) {
-      const line = yLines.get(index);
-      if (line.get('id') === id) {
-        yLines.delete(index, 1);
-        deleted = true;
-        break;
+  const lineClicked = useCallback(
+    (id: string) => {
+      if (!yLines) return;
+      let deleted = false;
+      for (let index = yLines.length - 1; index >= 0; index--) {
+        const line = yLines.get(index);
+        if (line.get('id') === id) {
+          yLines.delete(index, 1);
+          deleted = true;
+          break;
+        }
+      }
+      if (deleted) saveNow();
+    },
+    [yLines, saveNow]
+  );
+
+  // Bounding-box index over all committed shapes.  Rebuilt only when the set of
+  // shapes changes (commit/delete) — not on pan/zoom or while drawing.
+  const bboxIndex = useMemo<IndexedLine[]>(
+    () => lines.map((line) => ({ line, bbox: computeShapeBBox(line) })),
+    [lines]
+  );
+
+  // Visible subset: shapes whose bbox intersects the (margin-expanded) viewport.
+  // Recomputed on pan/zoom, but returns the SAME array reference when the visible
+  // set is unchanged, so the memoized committed layer doesn't re-render
+  // needlessly (and never re-renders during drawing, when the viewport is fixed).
+  const prevVisible = useRef<Y.Map<any>[]>([]);
+  const visibleLines = useMemo(() => {
+    const winW = typeof window !== 'undefined' ? window.innerWidth : 1920;
+    const winH = typeof window !== 'undefined' ? window.innerHeight : 1080;
+    const viewW = winW / scale;
+    const viewH = winH / scale;
+    const marginX = viewW * VIEWPORT_CULL_MARGIN;
+    const marginY = viewH * VIEWPORT_CULL_MARGIN;
+    const vMinX = -boardPosition.x - marginX;
+    const vMaxX = -boardPosition.x + viewW + marginX;
+    const vMinY = -boardPosition.y - marginY;
+    const vMaxY = -boardPosition.y + viewH + marginY;
+    const next: Y.Map<any>[] = [];
+    for (const { line, bbox } of bboxIndex) {
+      // Shapes with no computable bbox (e.g. degenerate) are always kept.
+      if (!bbox || (bbox.maxX >= vMinX && bbox.minX <= vMaxX && bbox.maxY >= vMinY && bbox.minY <= vMaxY)) {
+        next.push(line);
       }
     }
-    if (deleted) saveNow();
-  };
+    if (sameLineArray(next, prevVisible.current)) return prevVisible.current;
+    prevVisible.current = next;
+    return next;
+  }, [bboxIndex, boardPosition.x, boardPosition.y, scale]);
 
   // Hotkeys: undo last line (Pen only)
   useHotkeys(
@@ -619,7 +783,7 @@ export function Whiteboard(props: WhiteboardProps) {
         setUndoLastMarker(true);
       }
     },
-    { dependencies: [primaryActionMode] }
+    { dependencies: [primaryActionMode] },
   );
   useHotkeys(
     'cmd+z',
@@ -628,19 +792,15 @@ export function Whiteboard(props: WhiteboardProps) {
         setUndoLastMarker(true);
       }
     },
-    { dependencies: [primaryActionMode] }
+    { dependencies: [primaryActionMode] },
   );
 
   return (
     <div
       className="canvas-container"
       style={{
-        pointerEvents: ['pen', 'eraser', 'rectangle', 'circle', 'arrow', 'doubleArrow'].includes(primaryActionMode)
-          ? 'auto'
-          : 'none',
-        touchAction: ['pen', 'eraser', 'rectangle', 'circle', 'arrow', 'doubleArrow'].includes(primaryActionMode)
-          ? 'none'
-          : 'auto',
+        pointerEvents: ['pen', 'eraser', 'rectangle', 'circle', 'arrow', 'doubleArrow'].includes(primaryActionMode) ? 'auto' : 'none',
+        touchAction: ['pen', 'eraser', 'rectangle', 'circle', 'arrow', 'doubleArrow'].includes(primaryActionMode) ? 'none' : 'auto',
       }}
     >
       <svg
@@ -653,8 +813,8 @@ export function Whiteboard(props: WhiteboardProps) {
           left: 0,
           top: 0,
           zIndex: 1000,
-        // Use a consistent crosshair cursor for all annotation tools
-        cursor: 'crosshair',
+          // Use a consistent crosshair cursor for all annotation tools
+          cursor: 'crosshair',
         }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -677,10 +837,9 @@ export function Whiteboard(props: WhiteboardProps) {
         {...dragProps}
       >
         <g>
-          {/* Render all shapes */}
-          {lines.map((line, i) => (
-            <Line key={i} line={line} onClick={lineClicked} />
-          ))}
+          {/* Render committed shapes — culled to the viewport and isolated in a
+              memoized subtree so drawing/panning stays cheap at scale. */}
+          <CommittedAnnotations lines={visibleLines} onErase={lineClicked} />
           {/* In-progress (local, non-persisted) draft stroke preview */}
           {rDraft.current && draftPoints.length > 0 && (
             <ShapeView
