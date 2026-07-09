@@ -152,5 +152,14 @@ module.exports = {
     port: 4200,
     proxy: require('./proxy.conf.json'),
   },
+  // Third-party packages (fetch-event-source, plotly.js, monaco) reference
+  // source maps or sources they don't publish; source-map-loader warns on
+  // every dev build. Only silence that specific case for node_modules.
+  ignoreWarnings: [
+    {
+      module: /node_modules/,
+      message: /Failed to parse source map/,
+    },
+  ],
   plugins: [new NxAppWebpackPlugin(buildOptions), new NxReactWebpackPlugin(), sageStyleTweaksPlugin, svgrPlugin],
 };
