@@ -17,7 +17,38 @@ class SAGE3AnnotationsCollection extends SAGE3Collection<AnnotationSchema> {
     // re-broadcast the entire whiteboardLines array to every subscriber.
     super('ANNOTATIONS', {}, { publishUpdates: false });
     const router = sageRouter<AnnotationSchema>(this);
+
+    // Incremental append: add whiteboard strokes without rewriting the whole
+    // array.  Committing a stroke sends only the new shape(s) (O(stroke))
+    // instead of the full whiteboardLines array (O(board)).  Removes/clears
+    // still go through the generic full-array PUT, which also reconciles drift.
+    router.post('/:id/lines', async ({ params, body, user }, res) => {
+      const userId = (user as { id?: string })?.id || '-';
+      const lines = body?.lines;
+      if (!Array.isArray(lines) || lines.length === 0) {
+        res.status(400).send({ success: false, message: 'Body must include a non-empty "lines" array.' });
+        return;
+      }
+      const ok = await this.appendLines(params.id, lines, userId);
+      if (ok) res.status(200).send({ success: true, message: 'Successfully appended lines.' });
+      else res.status(500).send({ success: false, message: 'Failed to append lines.' });
+    });
+
     this.httpRouter = router;
+  }
+
+  /**
+   * Append whiteboard strokes to a board's annotation document without
+   * rewriting the existing array.  Broadcast is suppressed (live sync is Yjs).
+   */
+  public async appendLines(id: string, lines: unknown[], by: string): Promise<boolean> {
+    try {
+      const response = await this.collection.docRef(id).arrayAppend('whiteboardLines', lines, by, false);
+      return !!response.success;
+    } catch (error) {
+      console.error('AnnotationsCollection appendLines error:', error);
+      return false;
+    }
   }
 
   /**

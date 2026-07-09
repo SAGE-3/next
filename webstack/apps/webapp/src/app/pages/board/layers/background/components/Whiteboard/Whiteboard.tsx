@@ -185,6 +185,7 @@ export function Whiteboard(props: WhiteboardProps) {
 
   // Annotations Store
   const updateAnnotation = useAnnotationStore((state) => state.update);
+  const appendLines = useAnnotationStore((state) => state.appendLines);
   const subAnnotations = useAnnotationStore((state) => state.subscribeToBoard);
   const unsubAnnotations = useAnnotationStore((state) => state.unsubscribe);
   const getAnnotations = useAnnotationStore((state) => state.getAnnotations);
@@ -211,9 +212,9 @@ export function Whiteboard(props: WhiteboardProps) {
   const { dragProps, renderContent } = useDragAndDropBoard({ roomId: props.roomId, boardId: props.boardId });
 
   /**
-   * Persist the Yjs lines array to the SAGE annotation store.  Called after
-   * completing a stroke or clearing markers.  Only runs when yLines and
-   * boardId are defined.
+   * Full save: serialize the entire Yjs lines array and PUT it.  O(board).  Used
+   * for destructive ops (clear/undo/erase) and as reconciliation if an
+   * incremental append ever fails.  Only runs when yLines and boardId are set.
    */
   function updateBoardLines() {
     if (yLines && props.boardId) {
@@ -222,16 +223,40 @@ export function Whiteboard(props: WhiteboardProps) {
     }
   }
 
-  // Debounced persistence.  updateBoardLines() serializes and PUTs the whole
-  // whiteboardLines array, so calling it on every stroke is O(board) per stroke.
-  // We coalesce rapid edits into a single trailing save and force a flush on
-  // tab-hide/unload and tool/board change so nothing is lost.
+  // Incremental persistence.  New strokes are queued and appended with a single
+  // O(stroke) request per debounce window; only destructive ops (or a failed
+  // append) fall back to the O(board) full save.  Rapid commits coalesce, and a
+  // flush is forced on tab-hide/unload and tool/board change so nothing is lost.
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveDirty = useRef(false);
+  const pendingAppends = useRef<any[]>([]); // serialized shapes awaiting append
+  const needsFullSave = useRef(false); // a remove/clear (or append failure) occurred
+
+  // Decide append-vs-full and execute.  A pending full save supersedes queued
+  // appends (they are already present in the serialized array).
+  function persist() {
+    if (needsFullSave.current) {
+      needsFullSave.current = false;
+      pendingAppends.current = [];
+      updateBoardLines();
+    } else if (pendingAppends.current.length > 0 && props.boardId) {
+      const batch = pendingAppends.current;
+      pendingAppends.current = [];
+      appendLines(props.boardId, batch).then((ok) => {
+        if (!ok) {
+          // Re-queue as a reconciling full save on the next flush.
+          needsFullSave.current = true;
+          saveDirty.current = true;
+          scheduleSave();
+        }
+      });
+    }
+  }
+
   // Latest-ref so the stable save helpers below always call the current closure.
-  const updateBoardLinesRef = useRef(updateBoardLines);
+  const persistRef = useRef(persist);
   useEffect(() => {
-    updateBoardLinesRef.current = updateBoardLines;
+    persistRef.current = persist;
   });
 
   // Schedule a trailing save — used for high-frequency stroke commits.
@@ -242,7 +267,7 @@ export function Whiteboard(props: WhiteboardProps) {
       saveTimer.current = null;
       if (!saveDirty.current) return;
       saveDirty.current = false;
-      updateBoardLinesRef.current();
+      persistRef.current();
     }, SAVE_DEBOUNCE_MS);
   }, []);
 
@@ -254,7 +279,7 @@ export function Whiteboard(props: WhiteboardProps) {
       saveTimer.current = null;
     }
     saveDirty.current = false;
-    updateBoardLinesRef.current();
+    persistRef.current();
   }, []);
 
   // Save immediately — used for infrequent destructive ops (clear/undo/erase).
@@ -264,8 +289,15 @@ export function Whiteboard(props: WhiteboardProps) {
       saveTimer.current = null;
     }
     saveDirty.current = false;
-    updateBoardLinesRef.current();
+    persistRef.current();
   }, []);
+
+  // Force a full (reconciling) save immediately — for destructive ops that
+  // change existing shapes, where an incremental append cannot express the change.
+  const saveFullNow = useCallback(() => {
+    needsFullSave.current = true;
+    saveNow();
+  }, [saveNow]);
 
   // Force a flush when the tab is hidden or the page is unloaded.
   useEffect(() => {
@@ -328,7 +360,9 @@ export function Whiteboard(props: WhiteboardProps) {
         yLines.push([yShape]);
       }
     });
-    scheduleSave();
+    // Seeded shapes are pushed straight into yLines (not queued as appends), so
+    // persist the whole array once.
+    saveFullNow();
     console.log(`[seedStrokes] generated ${count} freehand strokes`);
   }
 
@@ -584,6 +618,8 @@ export function Whiteboard(props: WhiteboardProps) {
       yShape.set('text', '');
     });
     yLines.push([yShape]);
+    // Queue the plain snapshot for an incremental append (persisted on save).
+    pendingAppends.current.push(yShape.toJSON());
   }
 
   const handlePointerUp = useCallback(
@@ -682,7 +718,7 @@ export function Whiteboard(props: WhiteboardProps) {
     if (yLines && clearAllMarkers) {
       yLines.delete(0, yLines.length);
       setClearAllMarkers(false);
-      saveNow();
+      saveFullNow();
     }
   }, [clearAllMarkers]);
 
@@ -697,7 +733,7 @@ export function Whiteboard(props: WhiteboardProps) {
           yLines.delete(index, 1);
         }
       }
-      saveNow();
+      saveFullNow();
       setClearMarkers(false);
     }
   }, [clearMarkers]);
@@ -714,7 +750,7 @@ export function Whiteboard(props: WhiteboardProps) {
           break;
         }
       }
-      saveNow();
+      saveFullNow();
       setUndoLastMarker(false);
     }
   }, [undoLastMarker]);
@@ -735,9 +771,9 @@ export function Whiteboard(props: WhiteboardProps) {
           break;
         }
       }
-      if (deleted) saveNow();
+      if (deleted) saveFullNow();
     },
-    [yLines, saveNow]
+    [yLines, saveFullNow]
   );
 
   // Bounding-box index over all committed shapes.  Rebuilt only when the set of
