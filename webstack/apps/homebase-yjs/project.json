@@ -1,0 +1,63 @@
+{
+  "name": "homebase-yjs",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/homebase-yjs/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/webpack:webpack",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "target": "node",
+        "compiler": "tsc",
+        "outputPath": "dist/apps/homebase-yjs",
+        "main": "apps/homebase-yjs/src/main.ts",
+        "tsConfig": "apps/homebase-yjs/tsconfig.app.json",
+        "assets": [
+          "apps/homebase-yjs/src/assets"
+        ],
+        "webpackConfig": "apps/homebase-yjs/webpack.config.js",
+        "isolatedConfig": true,
+        "babelUpwardRootMode": true
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "extractLicenses": true,
+          "inspect": false,
+          "fileReplacements": [
+            {
+              "replace": "apps/homebase-yjs/src/environments/environment.ts",
+              "with": "apps/homebase-yjs/src/environments/environment.prod.ts"
+            }
+          ]
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nrwl/js:node",
+      "options": {
+        "buildTarget": "homebase-yjs:build"
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "homebase-yjs:build:production"
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "apps/homebase-yjs/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

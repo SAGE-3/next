@@ -1,0 +1,63 @@
+{
+  "name": "homebase-files",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/homebase-files/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "executor": "@nrwl/webpack:webpack",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "target": "node",
+        "compiler": "tsc",
+        "outputPath": "dist/apps/homebase-files",
+        "main": "apps/homebase-files/src/main.ts",
+        "tsConfig": "apps/homebase-files/tsconfig.app.json",
+        "assets": [
+          "apps/homebase-files/src/assets"
+        ],
+        "webpackConfig": "apps/homebase-files/webpack.config.js",
+        "isolatedConfig": true,
+        "babelUpwardRootMode": true
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "extractLicenses": true,
+          "inspect": false,
+          "fileReplacements": [
+            {
+              "replace": "apps/homebase-files/src/environments/environment.ts",
+              "with": "apps/homebase-files/src/environments/environment.prod.ts"
+            }
+          ]
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nrwl/js:node",
+      "options": {
+        "buildTarget": "homebase-files:build"
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "homebase-files:build:production"
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "apps/homebase-files/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

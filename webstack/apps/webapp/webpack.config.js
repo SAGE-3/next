@@ -1,9 +1,8 @@
-const getWebpackConfig = require('@nrwl/react/plugins/webpack');
+const { composePlugins, withNx } = require('@nrwl/webpack');
+const { withReact } = require('@nrwl/react');
 
-module.exports = (config, context) => {
-  config = getWebpackConfig(config, context);
-
-  // Silence the Dart Sass legacy JS API deprecation warning (sass-loader v12
+module.exports = composePlugins(withNx(), withReact(), (config) => {
+  // Silence the Dart Sass legacy JS API deprecation warning (sass-loader
   // still uses the legacy API; the warning is noise until NX upgrades its
   // webpack/sass-loader stack).
   config.module.rules.forEach((rule) => {
@@ -25,4 +24,4 @@ module.exports = (config, context) => {
   });
 
   return config;
-};
+});

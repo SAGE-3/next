@@ -1,0 +1,60 @@
+{
+  "name": "homebase",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/homebase/src",
+  "projectType": "application",
+  "prefix": "homebase",
+  "generators": {},
+  "targets": {
+    "build": {
+      "executor": "@nrwl/webpack:webpack",
+      "options": {
+        "outputPath": "dist/apps/homebase",
+        "main": "apps/homebase/src/main.ts",
+        "tsConfig": "apps/homebase/tsconfig.app.json",
+        "assets": [
+          "apps/homebase/src/assets"
+        ],
+        "target": "node",
+        "compiler": "tsc",
+        "webpackConfig": "apps/homebase/webpack.config.js",
+        "isolatedConfig": true,
+        "babelUpwardRootMode": true
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "extractLicenses": true,
+          "inspect": false,
+          "fileReplacements": [
+            {
+              "replace": "apps/homebase/src/environments/environment.ts",
+              "with": "apps/homebase/src/environments/environment.prod.ts"
+            }
+          ]
+        }
+      },
+      "outputs": [
+        "{options.outputPath}"
+      ]
+    },
+    "serve": {
+      "executor": "@nrwl/js:node",
+      "options": {
+        "buildTarget": "homebase:build"
+      }
+    },
+    "lint": {
+      "executor": "@nrwl/linter:eslint",
+      "outputs": [
+        "{options.outputFile}"
+      ],
+      "options": {
+        "lintFilePatterns": [
+          "apps/homebase/**/*.ts"
+        ]
+      }
+    }
+  },
+  "tags": []
+}
