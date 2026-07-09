@@ -103,10 +103,54 @@ const sageStyleTweaksPlugin = {
   },
 };
 
+// SVGR support (Nx 22 removed the built-in svgr option from NxReactWebpackPlugin):
+// .svg imports from JS/TS expose the CRA-style named ReactComponent export,
+// matching the module declarations @nx/react still ships in typings/image.d.ts.
+// Append ?url to an import to get the asset URL instead.
+const svgrPlugin = {
+  apply(compiler) {
+    const rules = compiler.options.module.rules || [];
+    compiler.options.module.rules = rules.filter((rule) => {
+      if (!rule || typeof rule !== 'object' || !(rule.test instanceof RegExp) || !rule.test.test('x.svg')) {
+        return true;
+      }
+      if (rule.test.test('x.png')) {
+        // Combined image asset rule: keep it for other formats, drop svg from it.
+        rule.exclude = /\.svg$/;
+        return true;
+      }
+      return false;
+    });
+    compiler.options.module.rules.push({
+      test: /\.svg$/,
+      oneOf: [
+        {
+          resourceQuery: /url/,
+          type: 'asset/resource',
+          generator: { filename: '[name].[hash][ext]' },
+        },
+        {
+          issuer: /\.[jt]sx?$/,
+          use: [
+            {
+              loader: require.resolve('@svgr/webpack'),
+              options: { svgo: false, titleProp: true, ref: true, exportType: 'named' },
+            },
+          ],
+        },
+        {
+          type: 'asset/resource',
+          generator: { filename: '[name].[hash][ext]' },
+        },
+      ],
+    });
+  },
+};
+
 module.exports = {
   devServer: {
     port: 4200,
     proxy: require('./proxy.conf.json'),
   },
-  plugins: [new NxAppWebpackPlugin(buildOptions), new NxReactWebpackPlugin(), sageStyleTweaksPlugin],
+  plugins: [new NxAppWebpackPlugin(buildOptions), new NxReactWebpackPlugin(), sageStyleTweaksPlugin, svgrPlugin],
 };
