@@ -54,3 +54,5 @@ Thumbs.db
 # Tokens
 /clients/pycli/token_test.json
 /clients/pycli/output.jpg
+
+.nx/cache

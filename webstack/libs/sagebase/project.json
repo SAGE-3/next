@@ -5,11 +5,8 @@
   "projectType": "library",
   "targets": {
     "lint": {
-      "executor": "@nx/linter:eslint",
-      "outputs": ["{options.outputFile}"],
-      "options": {
-        "lintFilePatterns": ["libs/sagebase/**/*.ts"]
-      }
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
     },
     "build": {
       "executor": "@nx/js:tsc",
@@ -19,8 +16,7 @@
         "tsConfig": "libs/sagebase/tsconfig.lib.json",
         "packageJson": "libs/sagebase/package.json",
         "main": "libs/sagebase/src/index.ts",
-        "assets": ["libs/sagebase/*.md"],
-        "updateBuildableProjectDepsInPackageJson": true
+        "assets": ["libs/sagebase/*.md"]
       }
     }
   },
