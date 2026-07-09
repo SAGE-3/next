@@ -41,6 +41,5 @@
   },
   "parallel": 1,
   "useInferencePlugins": false,
-  "defaultBase": "remotes/origin/dev",
-  "useLegacyCache": true
+  "defaultBase": "remotes/origin/dev"
 }
