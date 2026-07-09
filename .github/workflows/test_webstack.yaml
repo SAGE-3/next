@@ -33,7 +33,7 @@ jobs:
         run: yarn install --frozen-lockfile --silent
 
       - name: Build Homebase
-        run: yarn build --if-present
+        run: yarn build
 
       - name: Build Webapp
-        run: yarn build webapp --if-present
+        run: yarn build webapp
