@@ -35,7 +35,7 @@
       "cache": true
     },
     "@nx/eslint:lint": {
-      "inputs": ["default", "{workspaceRoot}/.eslintrc"],
+      "inputs": ["default", "^default", "{workspaceRoot}/.eslintrc", "{workspaceRoot}/tools/eslint-rules/**/*"],
       "cache": true
     }
   },
