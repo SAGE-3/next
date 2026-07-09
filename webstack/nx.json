@@ -1,7 +1,4 @@
 {
-  "affected": {
-    "defaultBase": "remotes/origin/dev"
-  },
   "defaultProject": "homebase",
   "generators": {
     "@nx/react": {
@@ -20,8 +17,15 @@
     }
   },
   "namedInputs": {
-    "default": ["{projectRoot}/**/*", "sharedGlobals"],
-    "sharedGlobals": ["{workspaceRoot}/tsconfig.base.json", "{workspaceRoot}/nx.json", "{workspaceRoot}/babel.config.json"],
+    "default": [
+      "{projectRoot}/**/*",
+      "sharedGlobals"
+    ],
+    "sharedGlobals": [
+      "{workspaceRoot}/tsconfig.base.json",
+      "{workspaceRoot}/nx.json",
+      "{workspaceRoot}/babel.config.json"
+    ],
     "production": [
       "default",
       "!{projectRoot}/.eslintrc",
@@ -34,13 +38,21 @@
   },
   "targetDefaults": {
     "build": {
-      "inputs": ["production", "^production"],
+      "inputs": [
+        "production",
+        "^production"
+      ],
       "cache": true
     },
     "@nx/eslint:lint": {
-      "inputs": ["default", "{workspaceRoot}/.eslintrc"],
+      "inputs": [
+        "default",
+        "{workspaceRoot}/.eslintrc"
+      ],
       "cache": true
     }
   },
-  "parallel": 1
+  "parallel": 1,
+  "useInferencePlugins": false,
+  "defaultBase": "remotes/origin/dev"
 }
