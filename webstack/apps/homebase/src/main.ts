@@ -159,7 +159,7 @@ async function startServer() {
         wsAPIRouter(socket, message, user, subCache);
       } catch (err) {
         console.error('Server> Error parsing message:', msg.toString());
-        console.error('       ', err.message);
+        console.error('       ', err instanceof Error ? err.message : String(err));
       }
     });
 

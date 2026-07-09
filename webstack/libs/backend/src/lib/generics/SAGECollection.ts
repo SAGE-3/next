@@ -287,7 +287,7 @@ export class SAGE3Collection<T extends SBJSON> {
     console.log(`SAGE3Collection ${this.name}> ${message}`);
   }
 
-  protected printError(message: string) {
+  protected printError(message: unknown) {
     console.error(`SAGE3Collection ${this.name}> ${message}`);
   }
 

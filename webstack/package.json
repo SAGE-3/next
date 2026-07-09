@@ -229,7 +229,7 @@
     "stylus": "0.59.0",
     "stylus-loader": "^7.1.0",
     "ts-node": "^10.9.2",
-    "typescript": "5.9.3",
+    "typescript": "6.0.3",
     "url-loader": "^4.1.1",
     "webpack": "5.108.4",
     "webpack-cli": "^7.0.0",
