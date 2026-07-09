@@ -18,7 +18,7 @@ const container = document.getElementById('root');
 if (container) {
   const root = createRoot(container);
   root.render(
-    <HashRouter>
+    <HashRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <ColorModeScript initialColorMode={theme.config.initialColorMode} />
       <App />
     </HashRouter>
