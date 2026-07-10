@@ -578,12 +578,21 @@ export function Whiteboard(props: WhiteboardProps) {
         setLines(yLinesArr.toArray());
         console.log(`[annotations] hydrated ${total} strokes in ${Math.round(performance.now() - t0)}ms`);
         // Persist the cleaned set so the duplicates don't return on next load.
+        // Save directly from the local array: the component `yLines` state (used
+        // by the debounced save path) may not be updated yet during cold-load.
         if (duplicatesRemoved > 0) {
-          saveFullNow();
-          console.log(
-            `[annotations] de-duplicated board: removed ${duplicatesRemoved} duplicate strokes ` +
-              `(${rawTotal} → ${total}); persisted cleaned set`
-          );
+          const ok = await updateAnnotation(props.boardId, { whiteboardLines: yLinesArr.toJSON() });
+          if (ok) {
+            console.log(
+              `[annotations] de-duplicated board: removed ${duplicatesRemoved} duplicate strokes ` +
+                `(${rawTotal} → ${total}); persisted cleaned set`
+            );
+          } else {
+            console.warn(
+              `[annotations] de-dup computed (${rawTotal} → ${total}) but NOT persisted ` +
+                `(no edit permission or save failed)`
+            );
+          }
         }
       }
     }
