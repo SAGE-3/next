@@ -26,7 +26,8 @@
     "prod-files": "rimraf dist && nx run-many --target=build --projects=homebase-files --configuration=production --verbose",
     "prod-yjs": "rimraf dist && yarn build homebase-yjs --target=build --configuration=production --verbose",
     "newapp": "nx g @sage3/workspace-plugin:newapp",
-    "regen": "nx g @sage3/workspace-plugin:regen"
+    "regen": "nx g @sage3/workspace-plugin:regen",
+    "postinstall": "node tools/scripts/fix-tsc-bin.js"
   },
   "private": true,
   "dependencies": {
@@ -229,7 +230,8 @@
     "stylus": "0.59.0",
     "stylus-loader": "^7.1.0",
     "ts-node": "^10.9.2",
-    "typescript": "5.9.3",
+    "typescript": "6.0.3",
+    "typescript-native": "npm:typescript@7.0.2",
     "url-loader": "^4.1.1",
     "webpack": "5.108.4",
     "webpack-cli": "^7.0.0",

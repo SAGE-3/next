@@ -72,7 +72,7 @@ async function startServer() {
   });
 
   // Websocket API for WebRTC
-  const rtcSocketServer = new WebSocket.Server({ noServer: true });
+  const rtcSocketServer = new WebSocketServer({ noServer: true });
   const clients: Map<string, WebSocket[]> = new Map();
   // Broadcast to all clients in the room
   function emitRTC(room: string, type: string, params: any) {

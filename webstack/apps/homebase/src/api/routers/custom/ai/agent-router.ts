@@ -7,7 +7,7 @@
  */
 
 import express from 'express';
-import { config } from 'apps/homebase/src/config';
+import { config } from '../../../../config';
 
 import {
   SError,

@@ -1,13 +1,12 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
+    "ignoreDeprecations": "6.0",
     "rootDir": ".",
     "sourceMap": true,
     "resolveJsonModule": true,
     "declaration": false,
-    "moduleResolution": "node",
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
+    "moduleResolution": "bundler",
     "importHelpers": true,
     "noImplicitAny": true,
     "strictBindCallApply": true,
@@ -17,8 +16,8 @@
     "target": "es2015",
     "module": "esnext",
     "typeRoots": [
-      "node_modules/@types",
-      "libs/shared/src/lib/types"
+      "./node_modules/@types",
+      "./libs/shared/src/lib/types"
     ],
     "lib": [
       "es2023",
@@ -26,40 +25,40 @@
     ],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
-    "baseUrl": ".",
     "paths": {
       "@sage3/applications/apps": [
-        "libs/applications/src/lib/apps.ts"
+        "./libs/applications/src/lib/apps.ts"
       ],
       "@sage3/applications/initialValues": [
-        "libs/applications/src/lib/initialValues.ts"
+        "./libs/applications/src/lib/initialValues.ts"
       ],
       "@sage3/applications/schema": [
-        "libs/applications/src/lib/schema.ts"
+        "./libs/applications/src/lib/schema.ts"
       ],
       "@sage3/backend": [
-        "libs/backend/src/index.ts"
+        "./libs/backend/src/index.ts"
       ],
       "@sage3/frontend": [
-        "libs/frontend/src/index.ts"
+        "./libs/frontend/src/index.ts"
       ],
       "@sage3/sagebase": [
-        "libs/sagebase/src/index.ts"
+        "./libs/sagebase/src/index.ts"
       ],
       "@sage3/sageplugin": [
-        "libs/sageplugin/src/index.ts"
+        "./libs/sageplugin/src/index.ts"
       ],
       "@sage3/shared": [
-        "libs/shared/src/index.ts"
+        "./libs/shared/src/index.ts"
       ],
       "@sage3/shared/types": [
-        "libs/shared/src/lib/types/index.ts"
+        "./libs/shared/src/lib/types/index.ts"
       ],
       "@sage3/workspace-plugin": [
-        "tools/workspace-plugin/src/index.ts"
+        "./tools/workspace-plugin/src/index.ts"
       ]
     },
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "baseUrl": "."
   },
   "exclude": [
     "node_modules",

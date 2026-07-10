@@ -129,7 +129,7 @@ export class LlamaModel extends AiModel {
     } catch (error) {
       return {
         success: false,
-        error_message: `Failed to query llama model: ${error.message}`,
+        error_message: `Failed to query llama model: ${error instanceof Error ? error.message : String(error)}`,
       };
     }
   }
@@ -239,7 +239,7 @@ export class LlamaModel extends AiModel {
         console.log('Failed to query llama model.', error);
         reject({
           success: false,
-          error_message: `Failed to query llama model: ${error.message}`,
+          error_message: `Failed to query llama model: ${error instanceof Error ? error.message : String(error)}`,
         });
       }
     });

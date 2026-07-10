@@ -40,7 +40,8 @@ export function passportAppleSetup(config: SBAuthAppleConfig): boolean {
           privateKeyLocation: config.privateKeyLocation,
           passReqToCallback: true,
           scope: 'email name',
-        },
+          // routeEndpoint is a passport-apple option missing from its typings
+        } as any,
         async (req: any, accessToken: string, refreshToken: string, idToken: any, profile: any, verified: Function) => {
           const decoded = jwt.decode(idToken, { json: true });
           if (decoded) {
