@@ -21,8 +21,7 @@ Can't select and move lines/shapes
 <--------------------------------------------------------------------------------------------TODO-------------------------------------------------------------------------------------------->
 */
 
-
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as Simplify from 'simplify-js';
 
 // Yjs Imports
@@ -41,8 +40,191 @@ import {
   useYjs,
 } from '@sage3/frontend';
 
-import { Line } from './Line';
+import { Line, ShapeView } from './Line';
 import { useDragAndDropBoard } from '../DragAndDropBoard';
+
+/**
+ * Minimum pointer travel (in screen pixels) between stored samples while a
+ * freehand stroke is in progress.  Larger values yield a smaller/cheaper draft
+ * path at the cost of finer detail; the pointer-up Simplify pass runs regardless.
+ */
+const MIN_DRAFT_SAMPLE_PX = 2;
+
+/**
+ * Freehand simplification tolerance, expressed in SCREEN pixels and converted to
+ * board units at commit time (divided by the current scale).  A fixed board-unit
+ * tolerance would over-simplify strokes drawn while zoomed in (discarding the
+ * detail the draft decimation preserved) and under-simplify strokes drawn while
+ * zoomed out.  0.5px matches the previous hard-coded 0.5 board-unit value at 1x.
+ */
+const SIMPLIFY_TOL_PX = 0.5;
+
+/**
+ * Trailing debounce (ms) for persisting annotations.  Rapid stroke commits are
+ * coalesced into a single save; forced flushes on tab-hide/unload and tool/board
+ * change guarantee durability.  Persisting each stroke immediately would PUT the
+ * entire whiteboardLines array (O(board)) on every stroke.
+ */
+const SAVE_DEBOUNCE_MS = 1500;
+
+/**
+ * Cold-load hydration tuning.  Persisted annotations are loaded into Yjs in
+ * chunks — each chunk is a SINGLE Yjs transaction plus one batched array push
+ * (vs. a transaction + push per stroke) — and the loop yields to the event loop
+ * between chunks so a very large board (tens of thousands of strokes) renders
+ * progressively instead of freezing the main thread.  To bound the O(n) bbox
+ * re-index, the visible set is refreshed only every RENDER_EVERY_CHUNKS chunks
+ * (plus the first and last).
+ */
+const HYDRATE_CHUNK_SIZE = 2000;
+const RENDER_EVERY_CHUNKS = 4;
+
+/**
+ * Round to 0.1 board units — matching the stroke renderer's own `toFixed(1)`
+ * precision.  Finer than integer rounding so strokes stay smooth when zoomed in
+ * (up to 6x, 0.1 unit ≈ 0.6 screen px), while not exceeding what the SVG path
+ * can represent.  Rendered path size is unaffected (it depends on point count).
+ */
+const round1 = (n: number) => Math.round(n * 10) / 10;
+
+/** Metadata for the shape currently being drawn (kept local until finalized). */
+type DraftShape = {
+  id: string;
+  type: string;
+  userColor: string;
+  alpha: number;
+  size: number;
+  userId?: string;
+};
+
+/**
+ * Extra viewport margin (fraction of the visible board rect) used when culling
+ * off-screen annotations, so shapes are rendered slightly before they scroll
+ * into view during a pan.
+ */
+const VIEWPORT_CULL_MARGIN = 0.25;
+
+type ShapeBBox = { minX: number; minY: number; maxX: number; maxY: number };
+
+/** An indexed shape: the live Y.Map plus its cached bounding box for culling. */
+type IndexedLine = { line: Y.Map<any>; bbox: ShapeBBox | null };
+
+/**
+ * Compute the (board-space) bounding box of a shape from its stored points,
+ * expanded by half the stroke width so the outline is fully covered.  Reads the
+ * Yjs points array directly — no React subscription — so off-screen shapes can
+ * be culled without mounting a component for each.
+ */
+function computeShapeBBox(line: Y.Map<any>): ShapeBBox | null {
+  const pts = line.get('points') as Y.Array<number> | undefined;
+  if (!pts || pts.length < 2) return null;
+  const arr = pts.toArray();
+  const size = (line.get('size') as number) ?? 5;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (let i = 0; i + 1 < arr.length; i += 2) {
+    const x = arr[i];
+    const y = arr[i + 1];
+    if (x < minX) minX = x;
+    if (y < minY) minY = y;
+    if (x > maxX) maxX = x;
+    if (y > maxY) maxY = y;
+  }
+  const m = size / 2 + 1;
+  return { minX: minX - m, minY: minY - m, maxX: maxX + m, maxY: maxY + m };
+}
+
+/** Reference-equality comparison of two Y.Map arrays (same length, same items). */
+function sameLineArray(a: Y.Map<any>[], b: Y.Map<any>[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+  return true;
+}
+
+/** Build a single Yjs shape map from a persisted/plain line record. */
+function buildYLineMap(line: any): Y.Map<any> {
+  const pts = new Y.Array<number>();
+  // Persisted points are a flat [x, y, x, y, ...] array.
+  pts.push(line.points);
+  const yLine = new Y.Map<any>();
+  yLine.set('id', line.id);
+  yLine.set('type', line.type ?? 'line');
+  yLine.set('points', pts);
+  yLine.set('userColor', line.userColor);
+  yLine.set('alpha', line.alpha);
+  yLine.set('size', line.size);
+  yLine.set('isComplete', true);
+  yLine.set('userId', line.userId);
+  yLine.set('text', line.text);
+  return yLine;
+}
+
+/**
+ * Content signature of a shape (type + style + text + points) used to detect
+ * duplicate strokes.  Two shapes with the same signature are visually identical,
+ * so keeping one is safe — unlike de-duping by id, this never drops distinct
+ * strokes that merely collided on an old Date.now() id.
+ */
+function shapeSignature(json: any): string {
+  return [
+    json.type ?? 'line',
+    json.userColor,
+    json.size,
+    json.alpha,
+    json.text ?? '',
+    (json.points || []).join(','),
+  ].join('|');
+}
+
+/**
+ * Return one copy of each unique shape (by content signature), preserving order.
+ * Used to clean up boards that stored the same stroke many times.
+ */
+function dedupeLines(raw: any[]): any[] {
+  const seen = new Set<string>();
+  const unique: any[] = [];
+  for (const line of raw) {
+    const sig = shapeSignature(line);
+    if (seen.has(sig)) continue;
+    seen.add(sig);
+    unique.push(line);
+  }
+  return unique;
+}
+
+// Stable, guaranteed-unique React key per shape.  Some persisted boards contain
+// duplicate shape ids, so keying by id alone triggers "two children with the
+// same key" warnings and reconciliation bugs.  Keying by the Y.Map's object
+// identity (via a WeakMap counter) is both unique and stable across re-renders.
+let shapeKeyCounter = 0;
+const shapeKeys = new WeakMap<object, string>();
+function shapeKey(line: Y.Map<any>): string {
+  let k = shapeKeys.get(line);
+  if (k === undefined) {
+    k = `s${shapeKeyCounter++}`;
+    shapeKeys.set(line, k);
+  }
+  return k;
+}
+
+/**
+ * The committed (finalized) annotations layer.  Memoized and keyed by stable
+ * per-shape identity so that drawing an in-progress stroke (which re-renders the
+ * parent on every pointer move) does NOT reconcile the potentially-thousands of
+ * finalized shapes.  It only re-renders when the visible set or erase handler
+ * changes.
+ */
+const CommittedAnnotations = memo(function CommittedAnnotations(props: {
+  lines: Y.Map<any>[];
+  onErase: (id: string) => void;
+}) {
+  return (
+    <>
+      {props.lines.map((line) => (
+        <Line key={shapeKey(line)} line={line} onClick={props.onErase} />
+      ))}
+    </>
+  );
+});
 
 type WhiteboardProps = {
   boardId: string;
@@ -82,6 +264,7 @@ export function Whiteboard(props: WhiteboardProps) {
 
   // Annotations Store
   const updateAnnotation = useAnnotationStore((state) => state.update);
+  const appendLines = useAnnotationStore((state) => state.appendLines);
   const subAnnotations = useAnnotationStore((state) => state.subscribeToBoard);
   const unsubAnnotations = useAnnotationStore((state) => state.unsubscribe);
   const getAnnotations = useAnnotationStore((state) => state.getAnnotations);
@@ -91,8 +274,18 @@ export function Whiteboard(props: WhiteboardProps) {
   const [yDoc, setYdoc] = useState<Y.Doc | null>(null);
   const [yLines, setYlines] = useState<Y.Array<Y.Map<any>> | null>(null);
   const [lines, setLines] = useState<Y.Map<any>[]>([]);
-  const rCurrentLine = useRef<Y.Map<any>>();
   const activeTouchCount = useRef(0);
+  // True while the cold-load hydration is populating yLines in chunks; the array
+  // observer defers to the explicit progressive setLines during this window.
+  const hydrating = useRef(false);
+
+  // In-progress stroke: held entirely in local state so that pointer moves do
+  // NOT write to the Yjs document.  The shape is committed to Yjs exactly once,
+  // on pointer-up.  rDraftPoints is the authoritative point list (read on
+  // finalize); draftPoints mirrors it into state to drive the live preview.
+  const rDraft = useRef<DraftShape | null>(null);
+  const rDraftPoints = useRef<number[][]>([]);
+  const [draftPoints, setDraftPoints] = useState<number[][]>([]);
 
   // Preview cursor state
   const [cursorPosition, setCursorPosition] = useState<{ x: number; y: number } | null>(null);
@@ -101,9 +294,9 @@ export function Whiteboard(props: WhiteboardProps) {
   const { dragProps, renderContent } = useDragAndDropBoard({ roomId: props.roomId, boardId: props.boardId });
 
   /**
-   * Persist the Yjs lines array to the SAGE annotation store.  Called after
-   * completing a stroke or clearing markers.  Only runs when yLines and
-   * boardId are defined.
+   * Full save: serialize the entire Yjs lines array and PUT it.  O(board).  Used
+   * for destructive ops (clear/undo/erase) and as reconciliation if an
+   * incremental append ever fails.  Only runs when yLines and boardId are set.
    */
   function updateBoardLines() {
     if (yLines && props.boardId) {
@@ -112,23 +305,168 @@ export function Whiteboard(props: WhiteboardProps) {
     }
   }
 
+  // Incremental persistence.  New strokes are queued and appended with a single
+  // O(stroke) request per debounce window; only destructive ops (or a failed
+  // append) fall back to the O(board) full save.  Rapid commits coalesce, and a
+  // flush is forced on tab-hide/unload and tool/board change so nothing is lost.
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveDirty = useRef(false);
+  const pendingAppends = useRef<any[]>([]); // serialized shapes awaiting append
+  const needsFullSave = useRef(false); // a remove/clear (or append failure) occurred
+
+  // Decide append-vs-full and execute.  A pending full save supersedes queued
+  // appends (they are already present in the serialized array).
+  function persist() {
+    if (needsFullSave.current) {
+      needsFullSave.current = false;
+      pendingAppends.current = [];
+      updateBoardLines();
+    } else if (pendingAppends.current.length > 0 && props.boardId) {
+      const batch = pendingAppends.current;
+      pendingAppends.current = [];
+      appendLines(props.boardId, batch).then((ok) => {
+        if (!ok) {
+          // Re-queue as a reconciling full save on the next flush.
+          needsFullSave.current = true;
+          saveDirty.current = true;
+          scheduleSave();
+        }
+      });
+    }
+  }
+
+  // Latest-ref so the stable save helpers below always call the current closure.
+  const persistRef = useRef(persist);
+  useEffect(() => {
+    persistRef.current = persist;
+  });
+
+  // Schedule a trailing save — used for high-frequency stroke commits.
+  const scheduleSave = useCallback(() => {
+    saveDirty.current = true;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      saveTimer.current = null;
+      if (!saveDirty.current) return;
+      saveDirty.current = false;
+      persistRef.current();
+    }, SAVE_DEBOUNCE_MS);
+  }, []);
+
+  // Flush a pending save immediately, if any — used for tab-hide/unload/unmount.
+  const flushSave = useCallback(() => {
+    if (!saveDirty.current) return;
+    if (saveTimer.current) {
+      clearTimeout(saveTimer.current);
+      saveTimer.current = null;
+    }
+    saveDirty.current = false;
+    persistRef.current();
+  }, []);
+
+  // Save immediately — used for infrequent destructive ops (clear/undo/erase).
+  const saveNow = useCallback(() => {
+    if (saveTimer.current) {
+      clearTimeout(saveTimer.current);
+      saveTimer.current = null;
+    }
+    saveDirty.current = false;
+    persistRef.current();
+  }, []);
+
+  // Force a full (reconciling) save immediately — for destructive ops that
+  // change existing shapes, where an incremental append cannot express the change.
+  const saveFullNow = useCallback(() => {
+    needsFullSave.current = true;
+    saveNow();
+  }, [saveNow]);
+
+  // Force a flush when the tab is hidden or the page is unloaded.
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === 'hidden') flushSave();
+    };
+    window.addEventListener('beforeunload', flushSave);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('beforeunload', flushSave);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [flushSave]);
+
+  // Flush pending saves when the drawing tool changes or the component unmounts.
+  useEffect(() => {
+    return () => {
+      flushSave();
+    };
+  }, [primaryActionMode, flushSave]);
+
+  // DEV-ONLY: generate N freehand strokes for performance testing at scale.
+  // Pushes generated shapes straight into the Yjs array (same path a real
+  // stroke commit uses), spread over a grid so both zoomed-in (culling) and
+  // zoomed-out (all-visible) regimes can be exercised.  Persists via the normal
+  // debounced save, so a reload cold-loads them.  Call from the browser
+  // console: seedStrokes(3000).  Stripped from production builds.
+  function seedTestStrokes(count: number) {
+    if (!yLines || !yDoc) return;
+    const colors = ['red', 'blue', 'green', 'orange', 'purple', 'teal', 'pink', 'cyan'];
+    const cols = Math.ceil(Math.sqrt(count));
+    const spacing = 400; // board units between strokes
+    const ox = boardWidth / 2 - (cols * spacing) / 2;
+    const oy = boardHeight / 2 - (cols * spacing) / 2;
+    yDoc.transact(() => {
+      for (let i = 0; i < count; i++) {
+        const gx = ox + (i % cols) * spacing;
+        const gy = oy + Math.floor(i / cols) * spacing;
+        const n = 8 + Math.floor(Math.random() * 20); // ~8–28 points per squiggle
+        let x = gx;
+        let y = gy;
+        const flat: number[] = [];
+        for (let p = 0; p < n; p++) {
+          x += (Math.random() - 0.5) * 60;
+          y += (Math.random() - 0.5) * 60;
+          flat.push(Math.round(x * 10) / 10, Math.round(y * 10) / 10);
+        }
+        const pts = new Y.Array<number>();
+        pts.push(flat);
+        const yShape = new Y.Map<any>();
+        yShape.set('id', `seed-${Date.now()}-${i}`);
+        yShape.set('type', 'line');
+        yShape.set('points', pts);
+        yShape.set('userColor', colors[i % colors.length]);
+        yShape.set('alpha', 0.8);
+        yShape.set('size', 15);
+        yShape.set('isComplete', true);
+        yShape.set('userId', user?._id);
+        yShape.set('text', '');
+        yLines.push([yShape]);
+      }
+    });
+    // Seeded shapes are pushed straight into yLines (not queued as appends), so
+    // persist the whole array once.
+    saveFullNow();
+    console.log(`[seedStrokes] generated ${count} freehand strokes`);
+  }
+
+  // Expose the seeder on window in development builds only.
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'development') return;
+    (window as any).seedStrokes = seedTestStrokes;
+    return () => {
+      delete (window as any).seedStrokes;
+    };
+  }, [yLines, yDoc, boardWidth, boardHeight, user, scheduleSave]);
+
   /**
-   * Cancel and remove the in-progress stroke (if any).  Called when a second
+   * Cancel and discard the in-progress stroke (if any).  Called when a second
    * touch finger arrives so the initial single-finger touch doesn't leave a
-   * tiny dot behind during a pan/zoom gesture.
+   * tiny dot behind during a pan/zoom gesture.  Since the in-progress stroke
+   * lives only in local state, this never touches the Yjs document.
    */
   function cancelInProgressStroke() {
-    const current = rCurrentLine.current;
-    if (!current || !yLines) {
-      rCurrentLine.current = undefined;
-      return;
-    }
-    // Remove the incomplete shape from the Yjs array
-    const index = yLines.toArray().indexOf(current);
-    if (index >= 0) {
-      yLines.delete(index, 1);
-    }
-    rCurrentLine.current = undefined;
+    rDraft.current = null;
+    rDraftPoints.current = [];
+    setDraftPoints([]);
     setCursorPosition(null);
   }
 
@@ -142,7 +480,7 @@ export function Whiteboard(props: WhiteboardProps) {
       const localY = y / scale - boardPosition.y;
       return [localX, localY];
     },
-    [boardPosition.x, boardPosition.y, scale]
+    [boardPosition.x, boardPosition.y, scale],
   );
 
   /**
@@ -152,6 +490,9 @@ export function Whiteboard(props: WhiteboardProps) {
    */
   useEffect(() => {
     function handleChange() {
+      // During chunked cold-load hydration, setLines is driven explicitly at a
+      // bounded cadence; skip the per-push refresh to avoid O(n^2) re-indexing.
+      if (hydrating.current) return;
       if (yLines) {
         setLines(yLines.toArray());
       }
@@ -174,6 +515,10 @@ export function Whiteboard(props: WhiteboardProps) {
    * into the Yjs doc.
    */
   useEffect(() => {
+    // Set when the effect is torn down (board switch / unmount) so an in-flight
+    // chunked hydration stops instead of writing into a stale doc.
+    let cancelled = false;
+
     async function connectYjs(yRoom: YjsRoomConnection) {
       const yLinesArr = yRoom.doc.getArray('lines') as Y.Array<Y.Map<any>>;
       const ydoc = yRoom.doc;
@@ -182,46 +527,82 @@ export function Whiteboard(props: WhiteboardProps) {
       setYlines(yLinesArr);
       setLines(yLinesArr.toArray());
 
-      // If I'm the only user connected, sync lines from the DB
+      // Only the first (solo) connection hydrates from the DB; otherwise state
+      // arrives via Yjs sync from peers.
       const users = yRoom.provider.awareness.getStates();
-      if (users.size === 1) {
-        const dbLines = getAnnotations();
-        if (dbLines && ydoc) {
-          // Clear the Yjs array
-          yLinesArr.delete(0, yLinesArr.length);
-          // Push each persisted line/rectangle into the Yjs array
-          dbLines.data.whiteboardLines.forEach((line: any) => {
-            const pts = new Y.Array<number>();
-            // If the persisted line stores points as nested arrays, push them
-            pts.push(line.points);
-            const yLine = new Y.Map<any>();
-            ydoc.transact(() => {
-              yLine.set('id', line.id);
-              yLine.set('type', line.type ?? 'line');
-              yLine.set('points', pts);
-              yLine.set('userColor', line.userColor);
-              yLine.set('alpha', line.alpha);
-              yLine.set('size', line.size);
-              yLine.set('isComplete', true);
-              yLine.set('userId', line.userId);
-              yLine.set('text', line.text);
-            });
-            yLinesArr.push([yLine]);
-          });
-          // Update local state
+      if (users.size !== 1) return;
+      const dbLines = getAnnotations();
+      if (!dbLines || !ydoc) return;
+
+      const raw = dbLines.data.whiteboardLines as any[];
+      const rawTotal = raw.length;
+
+      // Auto de-duplicate on load: older boards stored the same stroke many
+      // times.  Keep one copy per content signature so we hydrate the real
+      // strokes, not the redundant copies.  If any were dropped, the cleaned set
+      // is persisted below so the board is fixed for next time.
+      const all = dedupeLines(raw);
+      const total = all.length;
+      const duplicatesRemoved = rawTotal - total;
+      const t0 = performance.now();
+
+      // Clear any existing strokes, then hydrate in chunks: each chunk is ONE
+      // transaction + ONE batched push, and we yield between chunks so the board
+      // renders progressively and the main thread stays responsive.
+      hydrating.current = true;
+      ydoc.transact(() => yLinesArr.delete(0, yLinesArr.length));
+
+      let chunkIndex = 0;
+      for (let start = 0; start < total; start += HYDRATE_CHUNK_SIZE) {
+        if (cancelled) {
+          hydrating.current = false;
+          return;
+        }
+        const chunk = all.slice(start, start + HYDRATE_CHUNK_SIZE);
+        ydoc.transact(() => {
+          yLinesArr.push(chunk.map(buildYLineMap));
+        });
+        chunkIndex += 1;
+        const isLast = start + HYDRATE_CHUNK_SIZE >= total;
+        // Progressive render, but not every chunk (bounds the bbox re-index).
+        if (isLast || chunkIndex === 1 || chunkIndex % RENDER_EVERY_CHUNKS === 0) {
           setLines(yLinesArr.toArray());
+        }
+        if (!isLast) {
+          await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+        }
+      }
+
+      hydrating.current = false;
+      if (!cancelled) {
+        setLines(yLinesArr.toArray());
+        console.log(`[annotations] hydrated ${total} strokes in ${Math.round(performance.now() - t0)}ms`);
+        // Persist the cleaned set so the duplicates don't return on next load.
+        if (duplicatesRemoved > 0) {
+          saveFullNow();
+          console.log(
+            `[annotations] de-duplicated board: removed ${duplicatesRemoved} duplicate strokes ` +
+              `(${rawTotal} → ${total}); persisted cleaned set`
+          );
         }
       }
     }
+
     async function connect(yRoom: YjsRoomConnection) {
       setLines([]);
+      const tGet = performance.now();
       await subAnnotations(props.boardId);
+      console.log(`[annotations] fetched from server in ${Math.round(performance.now() - tGet)}ms`);
+      if (cancelled) return;
       connectYjs(yRoom);
     }
     if (yAnnotations) {
       connect(yAnnotations);
     }
     return () => {
+      cancelled = true;
+      // Persist any pending edits before tearing down (e.g. board switch).
+      flushSave();
       unsubAnnotations();
     };
   }, [yAnnotations, props.boardId]);
@@ -249,44 +630,38 @@ export function Whiteboard(props: WhiteboardProps) {
         return;
       }
       // Determine type based on current tool
-      const type = primaryActionMode === 'rectangle' ? 'rectangle' : primaryActionMode === 'pen' ? 'line' : primaryActionMode === 'circle' ? 'circle' : primaryActionMode === 'arrow' ? 'arrow' : primaryActionMode === 'doubleArrow' ? 'doubleArrow' : 'eraser';
+      const type =
+        primaryActionMode === 'rectangle'
+          ? 'rectangle'
+          : primaryActionMode === 'pen'
+            ? 'line'
+            : primaryActionMode === 'circle'
+              ? 'circle'
+              : primaryActionMode === 'arrow'
+                ? 'arrow'
+                : primaryActionMode === 'doubleArrow'
+                  ? 'doubleArrow'
+                  : 'eraser';
       if (type === 'eraser') return;
       if (!yLines || !yDoc || !canAnnotate || !boardSynced) return;
       if (!e.isPrimary || e.button !== 0) return;
 
-      const id = Date.now().toString();
+      // Collision-resistant id: Date.now() alone repeats for strokes committed
+      // in the same millisecond, which produced duplicate ids on existing boards.
+      const id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
       const [x0, y0] = getPoint(e.clientX, e.clientY);
 
       // Capture pointer events
       e.currentTarget.setPointerCapture(e.pointerId);
 
-      // Prepare a shared Yjs array for storing points
-      const pts = new Y.Array<number>();
-      pts.push([x0, y0]);
-      // Circle needs to have at least two points to correctly render
-      // Extra point gets deleted when the pointer moves
-      if (type === 'circle' || type === 'arrow' || type === 'doubleArrow') {
-        pts.push([x0 + .000001, y0 + .000001]);
-      }
-      // Create a Yjs map for this shape
-      const yShape = new Y.Map();
-
-      yDoc.transact(() => {
-        yShape.set('id', id);
-        yShape.set('type', type);
-        yShape.set('points', pts);
-        yShape.set('userColor', color);
-        yShape.set('alpha', markerOpacity);
-        yShape.set('size', markerSize);
-        yShape.set('isComplete', false);
-        yShape.set('userId', user?._id);
-        yShape.set('text', '');
-      });
-      rCurrentLine.current = yShape;
-      yLines.push([yShape]);
+      // Keep the in-progress shape in local state only.  Nothing is written to
+      // Yjs until the stroke is finalized in handlePointerUp.
+      rDraft.current = { id, type, userColor: color, alpha: markerOpacity, size: markerSize, userId: user?._id };
+      rDraftPoints.current = [[x0, y0]];
+      setDraftPoints(rDraftPoints.current);
       setCursorPosition({ x: x0, y: y0 });
     },
-    [yLines, yDoc, canAnnotate, boardSynced, primaryActionMode, color, markerOpacity, markerSize, user, getPoint]
+    [yLines, yDoc, canAnnotate, boardSynced, primaryActionMode, color, markerOpacity, markerSize, user, getPoint],
   );
 
   /**
@@ -297,7 +672,7 @@ export function Whiteboard(props: WhiteboardProps) {
    */
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
-      if (!rCurrentLine.current) return;
+      if (!rDraft.current) return;
       // For mouse / pen / touch we require an active pointer capture to avoid stray moves.
       if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
 
@@ -310,29 +685,32 @@ export function Whiteboard(props: WhiteboardProps) {
       const [x, y] = getPoint(e.clientX, e.clientY);
       setCursorPosition(primaryActionMode !== 'eraser' ? { x, y } : null);
 
-      const current = rCurrentLine.current;
-      const type = current.get('type') as string;
-      const pts = current.get('points') as Y.Array<number>;
-      if (!pts) return;
-
+      const type = rDraft.current.type;
       if (type === 'line') {
-        // Append new point for freehand line
-        pts.push([x, y]);
+        // Decimate the freehand draft: only append a sample once the pointer has
+        // travelled at least MIN_DRAFT_SAMPLE_PX (in screen space) from the last
+        // stored point, and round to integer board coords.  This keeps the
+        // in-progress SVG path small and cheap to re-tessellate on each move; the
+        // pointer-up Simplify pass still cleans up the committed stroke.
+        const pts = rDraftPoints.current;
+        const last = pts[pts.length - 1];
+        const minDist = MIN_DRAFT_SAMPLE_PX / scale; // screen px -> board units
+        const dx = x - last[0];
+        const dy = y - last[1];
+        if (dx * dx + dy * dy < minDist * minDist) return; // too close; skip
+        rDraftPoints.current = [...pts, [round1(x), round1(y)]];
+        setDraftPoints(rDraftPoints.current);
       }
-      // use same logic to track circle and rectangle movements 
+      // Rectangle / circle / arrow track start + current drag-end point
       else if (type === 'rectangle' || type === 'circle' || type === 'arrow' || type === 'doubleArrow') {
-        // Replace the last end point (if exists) with the current coordinates
-        // A rectangle stores two points: start and current drag end
-        if (pts.length >= 4) {
-          pts.delete(2, 2);
-        }
-        pts.push([x, y]);
-      }
-      else {
+        const start = rDraftPoints.current[0];
+        rDraftPoints.current = [start, [x, y]];
+        setDraftPoints(rDraftPoints.current);
+      } else {
         setCursorPosition(null);
       }
     },
-    [primaryActionMode, getPoint, rCurrentLine.current]
+    [primaryActionMode, getPoint, scale],
   );
 
   /**
@@ -342,93 +720,87 @@ export function Whiteboard(props: WhiteboardProps) {
    * including the starting point repeated).  After finalisation, the
    * shape is marked complete and persisted to the annotation store.
    */
+  /**
+   * Commit a finalized shape to the Yjs document in a single transaction.  The
+   * points are stored flat ([x, y, x, y, ...]) to match the persisted format.
+   */
+  function commitShape(draft: DraftShape, finalPairs: number[][]) {
+    if (!yLines || !yDoc) return;
+    const flat: number[] = [];
+    for (const [px, py] of finalPairs) flat.push(px, py);
+    const pts = new Y.Array<number>();
+    pts.push(flat);
+    const yShape = new Y.Map();
+    yDoc.transact(() => {
+      yShape.set('id', draft.id);
+      yShape.set('type', draft.type);
+      yShape.set('points', pts);
+      yShape.set('userColor', draft.userColor);
+      yShape.set('alpha', draft.alpha);
+      yShape.set('size', draft.size);
+      yShape.set('isComplete', true);
+      yShape.set('userId', draft.userId);
+      yShape.set('text', '');
+    });
+    yLines.push([yShape]);
+    // Queue the plain snapshot for an incremental append (persisted on save).
+    pendingAppends.current.push(yShape.toJSON());
+  }
+
   const handlePointerUp = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
       if (e.pointerType === 'touch' && activeTouchCount.current > 0) {
         activeTouchCount.current -= 1;
       }
       e.currentTarget.releasePointerCapture(e.pointerId);
-      const current = rCurrentLine.current;
-      if (!current) return;
+      const draft = rDraft.current;
+      const points = rDraftPoints.current;
+      // Clear the local draft up front so an early return can't leave it dangling.
+      rDraft.current = null;
+      rDraftPoints.current = [];
+      setDraftPoints([]);
+      if (!draft) return;
 
-      const type = current.get('type') as string;
-      const pts = current.get('points') as Y.Array<number>;
-      if (!pts) {
-        rCurrentLine.current = undefined;
-        return;
-      }
+      const type = draft.type;
+      let committed = false;
 
       if (type === 'line') {
-        // Simplify freehand stroke
-        if (pts.length >= 4) {
-          const xyPoints: { x: number; y: number }[] = [];
-          for (let i = 0; i < pts.length / 2; i++) {
-            xyPoints.push({ x: pts.get(i * 2), y: pts.get(i * 2 + 1) });
-          }
-          // Simplify the stroke; tolerance 0.5, high quality
-          const simpler = Simplify.default(xyPoints, 0.5, true);
-          pts.delete(0, pts.length);
-          for (const p of simpler) {
-            pts.push([Math.round(p.x), Math.round(p.y)]);
-          }
+        // Simplify freehand stroke (tolerance 0.5, high quality)
+        let finalPairs = points;
+        if (points.length >= 2) {
+          const xyPoints = points.map(([x, y]) => ({ x, y }));
+          // Scale-aware tolerance: keep simplification consistent with the
+          // screen-space draft decimation (equals 0.5 board units at 1x zoom).
+          const tolerance = SIMPLIFY_TOL_PX / scale;
+          const simpler = Simplify.default(xyPoints, tolerance, true);
+          finalPairs = simpler.map((p) => [round1(p.x), round1(p.y)]);
         }
-        current.set('isComplete', true);
+        commitShape(draft, finalPairs);
+        committed = true;
       } else if (type === 'rectangle') {
-        // Finalise rectangle: convert two endpoints to a closed rectangle
-        // If the user never moved, remove the shape
-        if (pts.length < 4) {
-          // Remove incomplete rectangle
-          const index = yLines?.toArray().indexOf(current) ?? -1;
-          if (index >= 0 && yLines) {
-            yLines.delete(index, 1);
-          }
-        } else {
-          const x0 = pts.get(0);
-          const y0 = pts.get(1);
-          const x1 = pts.get(2);
-          const y1 = pts.get(3);
-          // Determine top-left corner and dimensions【992428044196702†L130-L147】
+        // Need a start + drag-end point; otherwise the shape never formed.
+        if (points.length >= 2) {
+          const [x0, y0] = points[0];
+          const [x1, y1] = points[1];
           const xMin = Math.min(x0, x1);
           const yMin = Math.min(y0, y1);
           const width = Math.abs(x1 - x0);
           const height = Math.abs(y1 - y0);
-          // Build a closed rectangle path: TL, TR, BR, BL, back to TL
-          const rectPoints = [
-            xMin,
-            yMin,
-            xMin + width,
-            yMin,
-            xMin + width,
-            yMin + height,
-            xMin,
-            yMin + height,
-            xMin,
-            yMin,
+          // Closed rectangle path: TL, TR, BR, BL, back to TL
+          const rectPairs: number[][] = [
+            [xMin, yMin],
+            [xMin + width, yMin],
+            [xMin + width, yMin + height],
+            [xMin, yMin + height],
+            [xMin, yMin],
           ];
-          pts.delete(0, pts.length);
-          for (let i = 0; i < rectPoints.length; i += 2) {
-            pts.push([rectPoints[i], rectPoints[i + 1]]);
-          }
-          current.set('isComplete', true);
+          commitShape(draft, rectPairs);
+          committed = true;
         }
-      }
-      else if (type === 'circle') {
-        if (pts.length < 4) {
-          try {
-            const index = yLines?.toArray().indexOf(current) ?? -1;
-            if (index >= 0 && yLines) {
-              yLines.delete(index, 1);
-            }
-          }
-          catch {
-            console.log(`array not long enough circle points: ${pts}`)
-          }
-        }
-        else {
-          const x0 = pts.get(0);
-          const y0 = pts.get(1);
-          const x1 = pts.get(2);
-          const y1 = pts.get(3);
+      } else if (type === 'circle') {
+        if (points.length >= 2) {
+          const [x0, y0] = points[0];
+          const [x1, y1] = points[1];
           const maxX = Math.max(x0, x1);
           const minX = Math.min(x0, x1);
           const maxY = Math.max(y0, y1);
@@ -441,48 +813,27 @@ export function Whiteboard(props: WhiteboardProps) {
           const vert1y = cy + ry * Math.sin(Math.PI / 2);
           const vert2x = cx + rx * Math.cos((3 * Math.PI) / 2);
           const vert2y = cy + ry * Math.sin((3 * Math.PI) / 2);
-          const circlePoints = [
-            x0,
-            y0,
-            x1,
-            y1,
-            vert1x,
-            vert1y,
-            vert2x,
-            vert2y,
+          const circlePairs: number[][] = [
+            [x0, y0],
+            [x1, y1],
+            [vert1x, vert1y],
+            [vert2x, vert2y],
           ];
-          pts.delete(0, pts.length);
-          for (let i = 0; i < circlePoints.length; i += 2) {
-            pts.push([circlePoints[i], circlePoints[i + 1]]);
-          }
-          current.set('isComplete', true);
+          commitShape(draft, circlePairs);
+          committed = true;
+        }
+      } else if (type === 'arrow' || type === 'doubleArrow') {
+        if (points.length >= 2) {
+          commitShape(draft, [points[0], points[1]]);
+          committed = true;
         }
       }
-      else if (type === 'arrow' || type === 'doubleArrow') {
-        console.log(type)
-        if (pts.length < 4) {
-          const index = yLines?.toArray().indexOf(current) ?? -1;
-          if (index >= 0 && yLines) {
-            yLines.delete(index, 1);
-          }
-        }
-        else {
-          const x0 = pts.get(0);
-          const y0 = pts.get(1);
-          const x1 = pts.get(2);
-          const y1 = pts.get(3);
-          const points = [x0, y0, x1, y1];
-          pts.delete(0, pts.length);
-          for (let i = 0; i < points.length; i += 2) {
-            pts.push([points[i], points[i + 1]]);
-          }
-          current.set('isComplete', true);
-        }
-      }
-      updateBoardLines();
-      rCurrentLine.current = undefined;
+
+      // Persist to the annotation store only when a shape was actually added.
+      // Debounced so a burst of strokes coalesces into a single save.
+      if (committed) scheduleSave();
     },
-    [updateBoardLines, yLines]
+    [scheduleSave, yLines, yDoc, scale],
   );
 
   /**
@@ -492,7 +843,7 @@ export function Whiteboard(props: WhiteboardProps) {
     if (yLines && clearAllMarkers) {
       yLines.delete(0, yLines.length);
       setClearAllMarkers(false);
-      updateBoardLines();
+      saveFullNow();
     }
   }, [clearAllMarkers]);
 
@@ -507,7 +858,7 @@ export function Whiteboard(props: WhiteboardProps) {
           yLines.delete(index, 1);
         }
       }
-      updateBoardLines();
+      saveFullNow();
       setClearMarkers(false);
     }
   }, [clearMarkers]);
@@ -524,27 +875,66 @@ export function Whiteboard(props: WhiteboardProps) {
           break;
         }
       }
-      updateBoardLines();
+      saveFullNow();
       setUndoLastMarker(false);
     }
   }, [undoLastMarker]);
 
   /**
-   * Remove a shape when clicked on.
+   * Remove a shape when clicked on.  Stable identity (useCallback) so the
+   * memoized committed-annotations layer isn't re-rendered by drawing.
    */
-  const lineClicked = (id: string) => {
-    if (!yLines) return;
-    let deleted = false;
-    for (let index = yLines.length - 1; index >= 0; index--) {
-      const line = yLines.get(index);
-      if (line.get('id') === id) {
-        yLines.delete(index, 1);
-        deleted = true;
-        break;
+  const lineClicked = useCallback(
+    (id: string) => {
+      if (!yLines) return;
+      let deleted = false;
+      for (let index = yLines.length - 1; index >= 0; index--) {
+        const line = yLines.get(index);
+        if (line.get('id') === id) {
+          yLines.delete(index, 1);
+          deleted = true;
+          break;
+        }
+      }
+      if (deleted) saveFullNow();
+    },
+    [yLines, saveFullNow]
+  );
+
+  // Bounding-box index over all committed shapes.  Rebuilt only when the set of
+  // shapes changes (commit/delete) — not on pan/zoom or while drawing.
+  const bboxIndex = useMemo<IndexedLine[]>(
+    () => lines.map((line) => ({ line, bbox: computeShapeBBox(line) })),
+    [lines]
+  );
+
+  // Visible subset: shapes whose bbox intersects the (margin-expanded) viewport.
+  // Recomputed on pan/zoom, but returns the SAME array reference when the visible
+  // set is unchanged, so the memoized committed layer doesn't re-render
+  // needlessly (and never re-renders during drawing, when the viewport is fixed).
+  const prevVisible = useRef<Y.Map<any>[]>([]);
+  const visibleLines = useMemo(() => {
+    const winW = typeof window !== 'undefined' ? window.innerWidth : 1920;
+    const winH = typeof window !== 'undefined' ? window.innerHeight : 1080;
+    const viewW = winW / scale;
+    const viewH = winH / scale;
+    const marginX = viewW * VIEWPORT_CULL_MARGIN;
+    const marginY = viewH * VIEWPORT_CULL_MARGIN;
+    const vMinX = -boardPosition.x - marginX;
+    const vMaxX = -boardPosition.x + viewW + marginX;
+    const vMinY = -boardPosition.y - marginY;
+    const vMaxY = -boardPosition.y + viewH + marginY;
+    const next: Y.Map<any>[] = [];
+    for (const { line, bbox } of bboxIndex) {
+      // Shapes with no computable bbox (e.g. degenerate) are always kept.
+      if (!bbox || (bbox.maxX >= vMinX && bbox.minX <= vMaxX && bbox.maxY >= vMinY && bbox.minY <= vMaxY)) {
+        next.push(line);
       }
     }
-    if (deleted) updateBoardLines();
-  };
+    if (sameLineArray(next, prevVisible.current)) return prevVisible.current;
+    prevVisible.current = next;
+    return next;
+  }, [bboxIndex, boardPosition.x, boardPosition.y, scale]);
 
   // Hotkeys: undo last line (Pen only)
   useHotkeys(
@@ -554,7 +944,7 @@ export function Whiteboard(props: WhiteboardProps) {
         setUndoLastMarker(true);
       }
     },
-    { dependencies: [primaryActionMode] }
+    { dependencies: [primaryActionMode] },
   );
   useHotkeys(
     'cmd+z',
@@ -563,19 +953,15 @@ export function Whiteboard(props: WhiteboardProps) {
         setUndoLastMarker(true);
       }
     },
-    { dependencies: [primaryActionMode] }
+    { dependencies: [primaryActionMode] },
   );
 
   return (
     <div
       className="canvas-container"
       style={{
-        pointerEvents: ['pen', 'eraser', 'rectangle', 'circle', 'arrow', 'doubleArrow'].includes(primaryActionMode)
-          ? 'auto'
-          : 'none',
-        touchAction: ['pen', 'eraser', 'rectangle', 'circle', 'arrow', 'doubleArrow'].includes(primaryActionMode)
-          ? 'none'
-          : 'auto',
+        pointerEvents: ['pen', 'eraser', 'rectangle', 'circle', 'arrow', 'doubleArrow'].includes(primaryActionMode) ? 'auto' : 'none',
+        touchAction: ['pen', 'eraser', 'rectangle', 'circle', 'arrow', 'doubleArrow'].includes(primaryActionMode) ? 'none' : 'auto',
       }}
     >
       <svg
@@ -588,8 +974,8 @@ export function Whiteboard(props: WhiteboardProps) {
           left: 0,
           top: 0,
           zIndex: 1000,
-        // Use a consistent crosshair cursor for all annotation tools
-        cursor: 'crosshair',
+          // Use a consistent crosshair cursor for all annotation tools
+          cursor: 'crosshair',
         }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -612,10 +998,21 @@ export function Whiteboard(props: WhiteboardProps) {
         {...dragProps}
       >
         <g>
-          {/* Render all shapes */}
-          {lines.map((line, i) => (
-            <Line key={i} line={line} onClick={lineClicked} />
-          ))}
+          {/* Render committed shapes — culled to the viewport and isolated in a
+              memoized subtree so drawing/panning stays cheap at scale. */}
+          <CommittedAnnotations lines={visibleLines} onErase={lineClicked} />
+          {/* In-progress (local, non-persisted) draft stroke preview */}
+          {rDraft.current && draftPoints.length > 0 && (
+            <ShapeView
+              points={draftPoints}
+              color={rDraft.current.userColor}
+              isComplete={false}
+              alpha={rDraft.current.alpha}
+              size={rDraft.current.size}
+              type={rDraft.current.type}
+              interactive={false}
+            />
+          )}
           {/* Preview cursor for pen */}
           {cursorPosition && primaryActionMode === 'pen' && (
             <circle
