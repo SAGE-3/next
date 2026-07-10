@@ -68,6 +68,18 @@ const SIMPLIFY_TOL_PX = 0.5;
 const SAVE_DEBOUNCE_MS = 1500;
 
 /**
+ * Cold-load hydration tuning.  Persisted annotations are loaded into Yjs in
+ * chunks — each chunk is a SINGLE Yjs transaction plus one batched array push
+ * (vs. a transaction + push per stroke) — and the loop yields to the event loop
+ * between chunks so a very large board (tens of thousands of strokes) renders
+ * progressively instead of freezing the main thread.  To bound the O(n) bbox
+ * re-index, the visible set is refreshed only every RENDER_EVERY_CHUNKS chunks
+ * (plus the first and last).
+ */
+const HYDRATE_CHUNK_SIZE = 2000;
+const RENDER_EVERY_CHUNKS = 4;
+
+/**
  * Round to 0.1 board units — matching the stroke renderer's own `toFixed(1)`
  * precision.  Finer than integer rounding so strokes stay smooth when zoomed in
  * (up to 6x, 0.1 unit ≈ 0.6 screen px), while not exceeding what the SVG path
@@ -128,11 +140,27 @@ function sameLineArray(a: Y.Map<any>[], b: Y.Map<any>[]): boolean {
   return true;
 }
 
+// Stable, guaranteed-unique React key per shape.  Some persisted boards contain
+// duplicate shape ids, so keying by id alone triggers "two children with the
+// same key" warnings and reconciliation bugs.  Keying by the Y.Map's object
+// identity (via a WeakMap counter) is both unique and stable across re-renders.
+let shapeKeyCounter = 0;
+const shapeKeys = new WeakMap<object, string>();
+function shapeKey(line: Y.Map<any>): string {
+  let k = shapeKeys.get(line);
+  if (k === undefined) {
+    k = `s${shapeKeyCounter++}`;
+    shapeKeys.set(line, k);
+  }
+  return k;
+}
+
 /**
  * The committed (finalized) annotations layer.  Memoized and keyed by stable
- * shape id so that drawing an in-progress stroke (which re-renders the parent on
- * every pointer move) does NOT reconcile the potentially-thousands of finalized
- * shapes.  It only re-renders when the visible set or erase handler changes.
+ * per-shape identity so that drawing an in-progress stroke (which re-renders the
+ * parent on every pointer move) does NOT reconcile the potentially-thousands of
+ * finalized shapes.  It only re-renders when the visible set or erase handler
+ * changes.
  */
 const CommittedAnnotations = memo(function CommittedAnnotations(props: {
   lines: Y.Map<any>[];
@@ -141,7 +169,7 @@ const CommittedAnnotations = memo(function CommittedAnnotations(props: {
   return (
     <>
       {props.lines.map((line) => (
-        <Line key={line.get('id')} line={line} onClick={props.onErase} />
+        <Line key={shapeKey(line)} line={line} onClick={props.onErase} />
       ))}
     </>
   );
@@ -196,6 +224,9 @@ export function Whiteboard(props: WhiteboardProps) {
   const [yLines, setYlines] = useState<Y.Array<Y.Map<any>> | null>(null);
   const [lines, setLines] = useState<Y.Map<any>[]>([]);
   const activeTouchCount = useRef(0);
+  // True while the cold-load hydration is populating yLines in chunks; the array
+  // observer defers to the explicit progressive setLines during this window.
+  const hydrating = useRef(false);
 
   // In-progress stroke: held entirely in local state so that pointer moves do
   // NOT write to the Yjs document.  The shape is committed to Yjs exactly once,
@@ -408,6 +439,9 @@ export function Whiteboard(props: WhiteboardProps) {
    */
   useEffect(() => {
     function handleChange() {
+      // During chunked cold-load hydration, setLines is driven explicitly at a
+      // bounded cadence; skip the per-push refresh to avoid O(n^2) re-indexing.
+      if (hydrating.current) return;
       if (yLines) {
         setLines(yLines.toArray());
       }
@@ -430,6 +464,28 @@ export function Whiteboard(props: WhiteboardProps) {
    * into the Yjs doc.
    */
   useEffect(() => {
+    // Set when the effect is torn down (board switch / unmount) so an in-flight
+    // chunked hydration stops instead of writing into a stale doc.
+    let cancelled = false;
+
+    // Build a single Yjs shape map from a persisted line record.
+    function toYLine(line: any): Y.Map<any> {
+      const pts = new Y.Array<number>();
+      // Persisted points are a flat [x, y, x, y, ...] array.
+      pts.push(line.points);
+      const yLine = new Y.Map<any>();
+      yLine.set('id', line.id);
+      yLine.set('type', line.type ?? 'line');
+      yLine.set('points', pts);
+      yLine.set('userColor', line.userColor);
+      yLine.set('alpha', line.alpha);
+      yLine.set('size', line.size);
+      yLine.set('isComplete', true);
+      yLine.set('userId', line.userId);
+      yLine.set('text', line.text);
+      return yLine;
+    }
+
     async function connectYjs(yRoom: YjsRoomConnection) {
       const yLinesArr = yRoom.doc.getArray('lines') as Y.Array<Y.Map<any>>;
       const ydoc = yRoom.doc;
@@ -438,46 +494,64 @@ export function Whiteboard(props: WhiteboardProps) {
       setYlines(yLinesArr);
       setLines(yLinesArr.toArray());
 
-      // If I'm the only user connected, sync lines from the DB
+      // Only the first (solo) connection hydrates from the DB; otherwise state
+      // arrives via Yjs sync from peers.
       const users = yRoom.provider.awareness.getStates();
-      if (users.size === 1) {
-        const dbLines = getAnnotations();
-        if (dbLines && ydoc) {
-          // Clear the Yjs array
-          yLinesArr.delete(0, yLinesArr.length);
-          // Push each persisted line/rectangle into the Yjs array
-          dbLines.data.whiteboardLines.forEach((line: any) => {
-            const pts = new Y.Array<number>();
-            // If the persisted line stores points as nested arrays, push them
-            pts.push(line.points);
-            const yLine = new Y.Map<any>();
-            ydoc.transact(() => {
-              yLine.set('id', line.id);
-              yLine.set('type', line.type ?? 'line');
-              yLine.set('points', pts);
-              yLine.set('userColor', line.userColor);
-              yLine.set('alpha', line.alpha);
-              yLine.set('size', line.size);
-              yLine.set('isComplete', true);
-              yLine.set('userId', line.userId);
-              yLine.set('text', line.text);
-            });
-            yLinesArr.push([yLine]);
-          });
-          // Update local state
+      if (users.size !== 1) return;
+      const dbLines = getAnnotations();
+      if (!dbLines || !ydoc) return;
+
+      const all = dbLines.data.whiteboardLines as any[];
+      const total = all.length;
+      const t0 = performance.now();
+
+      // Clear any existing strokes, then hydrate in chunks: each chunk is ONE
+      // transaction + ONE batched push, and we yield between chunks so the board
+      // renders progressively and the main thread stays responsive.
+      hydrating.current = true;
+      ydoc.transact(() => yLinesArr.delete(0, yLinesArr.length));
+
+      let chunkIndex = 0;
+      for (let start = 0; start < total; start += HYDRATE_CHUNK_SIZE) {
+        if (cancelled) {
+          hydrating.current = false;
+          return;
+        }
+        const chunk = all.slice(start, start + HYDRATE_CHUNK_SIZE);
+        ydoc.transact(() => {
+          yLinesArr.push(chunk.map(toYLine));
+        });
+        chunkIndex += 1;
+        const isLast = start + HYDRATE_CHUNK_SIZE >= total;
+        // Progressive render, but not every chunk (bounds the bbox re-index).
+        if (isLast || chunkIndex === 1 || chunkIndex % RENDER_EVERY_CHUNKS === 0) {
           setLines(yLinesArr.toArray());
         }
+        if (!isLast) {
+          await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+        }
+      }
+
+      hydrating.current = false;
+      if (!cancelled) {
+        setLines(yLinesArr.toArray());
+        console.log(`[annotations] hydrated ${total} strokes in ${Math.round(performance.now() - t0)}ms`);
       }
     }
+
     async function connect(yRoom: YjsRoomConnection) {
       setLines([]);
+      const tGet = performance.now();
       await subAnnotations(props.boardId);
+      console.log(`[annotations] fetched from server in ${Math.round(performance.now() - tGet)}ms`);
+      if (cancelled) return;
       connectYjs(yRoom);
     }
     if (yAnnotations) {
       connect(yAnnotations);
     }
     return () => {
+      cancelled = true;
       // Persist any pending edits before tearing down (e.g. board switch).
       flushSave();
       unsubAnnotations();
@@ -523,7 +597,9 @@ export function Whiteboard(props: WhiteboardProps) {
       if (!yLines || !yDoc || !canAnnotate || !boardSynced) return;
       if (!e.isPrimary || e.button !== 0) return;
 
-      const id = Date.now().toString();
+      // Collision-resistant id: Date.now() alone repeats for strokes committed
+      // in the same millisecond, which produced duplicate ids on existing boards.
+      const id = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
       const [x0, y0] = getPoint(e.clientX, e.clientY);
 
       // Capture pointer events
