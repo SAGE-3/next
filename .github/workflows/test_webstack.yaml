@@ -20,6 +20,12 @@ jobs:
         node-version:
           - 24
 
+    services:
+      redis:
+        image: redis/redis-stack-server:latest
+        ports:
+          - 6379:6379
+
     steps:
       - uses: actions/checkout@v6
         with:
@@ -31,6 +37,20 @@ jobs:
 
       - name: Install Dependencies
         run: yarn install --frozen-lockfile --silent
+
+      - name: Run tests
+        # Scoped to projects with a working jest config today, not --all: most
+        # other Nx projects (webapp, sageplugin, homebase*) have a test target
+        # declared in workspace.json but no jest.config.js ever created (or
+        # are missing jest-environment-jsdom) — a pre-existing gap. Widen this
+        # list as those get fixed.
+        #
+        # REDIS_TEST_URL points SBAuthDatabase.integration.spec.ts at the real
+        # Redis Stack service above; that file skips entirely if unset, so
+        # `yarn test` still runs cleanly on a machine without Redis.
+        env:
+          REDIS_TEST_URL: redis://localhost:6379
+        run: yarn nx run-many --target=test --projects=sagebase,shared,backend --parallel=1
 
       - name: Build Homebase
         run: yarn build --if-present
