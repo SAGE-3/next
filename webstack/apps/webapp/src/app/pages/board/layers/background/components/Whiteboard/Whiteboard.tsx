@@ -140,6 +140,41 @@ function sameLineArray(a: Y.Map<any>[], b: Y.Map<any>[]): boolean {
   return true;
 }
 
+/** Build a single Yjs shape map from a persisted/plain line record. */
+function buildYLineMap(line: any): Y.Map<any> {
+  const pts = new Y.Array<number>();
+  // Persisted points are a flat [x, y, x, y, ...] array.
+  pts.push(line.points);
+  const yLine = new Y.Map<any>();
+  yLine.set('id', line.id);
+  yLine.set('type', line.type ?? 'line');
+  yLine.set('points', pts);
+  yLine.set('userColor', line.userColor);
+  yLine.set('alpha', line.alpha);
+  yLine.set('size', line.size);
+  yLine.set('isComplete', true);
+  yLine.set('userId', line.userId);
+  yLine.set('text', line.text);
+  return yLine;
+}
+
+/**
+ * Content signature of a shape (type + style + text + points) used to detect
+ * duplicate strokes.  Two shapes with the same signature are visually identical,
+ * so keeping one is safe — unlike de-duping by id, this never drops distinct
+ * strokes that merely collided on an old Date.now() id.
+ */
+function shapeSignature(json: any): string {
+  return [
+    json.type ?? 'line',
+    json.userColor,
+    json.size,
+    json.alpha,
+    json.text ?? '',
+    (json.points || []).join(','),
+  ].join('|');
+}
+
 // Stable, guaranteed-unique React key per shape.  Some persisted boards contain
 // duplicate shape ids, so keying by id alone triggers "two children with the
 // same key" warnings and reconciliation bugs.  Keying by the Y.Map's object
@@ -407,6 +442,56 @@ export function Whiteboard(props: WhiteboardProps) {
   }, [yLines, yDoc, boardWidth, boardHeight, user, scheduleSave]);
 
   /**
+   * Remove duplicate strokes from the board and persist the cleaned set.  Fixes
+   * boards created with the old id scheme, where the same stroke was stored many
+   * times.  De-dupes by content signature (type + style + text + points), keeping
+   * the first occurrence, then rebuilds the Yjs array in one batched transaction
+   * and does a full save.  Returns the number of duplicates removed.  Requires
+   * annotate permission.  Callable from the console: dedupAnnotations().
+   */
+  function dedupAnnotations(): number {
+    if (!yLines || !yDoc || !canAnnotate) return 0;
+    const arr = yLines.toArray();
+    const before = arr.length;
+    const seen = new Set<string>();
+    const unique: any[] = [];
+    for (const m of arr) {
+      const json = m.toJSON();
+      const sig = shapeSignature(json);
+      if (!seen.has(sig)) {
+        seen.add(sig);
+        unique.push(json);
+      }
+    }
+    const removed = before - unique.length;
+    if (removed === 0) {
+      console.log('[dedupAnnotations] no duplicates found');
+      return 0;
+    }
+    // Rebuild the array with one copy of each unique shape (batched), suppressing
+    // the observer during the rebuild, then persist the cleaned array.
+    hydrating.current = true;
+    yDoc.transact(() => {
+      yLines.delete(0, yLines.length);
+      yLines.push(unique.map(buildYLineMap));
+    });
+    hydrating.current = false;
+    setLines(yLines.toArray());
+    saveFullNow();
+    console.log(`[dedupAnnotations] ${before} -> ${unique.length} strokes (removed ${removed}); saving…`);
+    return removed;
+  }
+
+  // Expose the cleanup on window (all builds) so a problematic board can be fixed
+  // from the console: dedupAnnotations().  The save itself is permission-gated.
+  useEffect(() => {
+    (window as any).dedupAnnotations = dedupAnnotations;
+    return () => {
+      delete (window as any).dedupAnnotations;
+    };
+  }, [yLines, yDoc, canAnnotate, saveFullNow]);
+
+  /**
    * Cancel and discard the in-progress stroke (if any).  Called when a second
    * touch finger arrives so the initial single-finger touch doesn't leave a
    * tiny dot behind during a pan/zoom gesture.  Since the in-progress stroke
@@ -468,24 +553,6 @@ export function Whiteboard(props: WhiteboardProps) {
     // chunked hydration stops instead of writing into a stale doc.
     let cancelled = false;
 
-    // Build a single Yjs shape map from a persisted line record.
-    function toYLine(line: any): Y.Map<any> {
-      const pts = new Y.Array<number>();
-      // Persisted points are a flat [x, y, x, y, ...] array.
-      pts.push(line.points);
-      const yLine = new Y.Map<any>();
-      yLine.set('id', line.id);
-      yLine.set('type', line.type ?? 'line');
-      yLine.set('points', pts);
-      yLine.set('userColor', line.userColor);
-      yLine.set('alpha', line.alpha);
-      yLine.set('size', line.size);
-      yLine.set('isComplete', true);
-      yLine.set('userId', line.userId);
-      yLine.set('text', line.text);
-      return yLine;
-    }
-
     async function connectYjs(yRoom: YjsRoomConnection) {
       const yLinesArr = yRoom.doc.getArray('lines') as Y.Array<Y.Map<any>>;
       const ydoc = yRoom.doc;
@@ -501,8 +568,23 @@ export function Whiteboard(props: WhiteboardProps) {
       const dbLines = getAnnotations();
       if (!dbLines || !ydoc) return;
 
-      const all = dbLines.data.whiteboardLines as any[];
+      const raw = dbLines.data.whiteboardLines as any[];
+      const rawTotal = raw.length;
+
+      // Auto de-duplicate on load: older boards stored the same stroke many
+      // times.  Keep one copy per content signature so we hydrate the real
+      // strokes, not the redundant copies.  If any were dropped, the cleaned set
+      // is persisted below so the board is fixed for next time.
+      const seen = new Set<string>();
+      const all: any[] = [];
+      for (const line of raw) {
+        const sig = shapeSignature(line);
+        if (seen.has(sig)) continue;
+        seen.add(sig);
+        all.push(line);
+      }
       const total = all.length;
+      const duplicatesRemoved = rawTotal - total;
       const t0 = performance.now();
 
       // Clear any existing strokes, then hydrate in chunks: each chunk is ONE
@@ -519,7 +601,7 @@ export function Whiteboard(props: WhiteboardProps) {
         }
         const chunk = all.slice(start, start + HYDRATE_CHUNK_SIZE);
         ydoc.transact(() => {
-          yLinesArr.push(chunk.map(toYLine));
+          yLinesArr.push(chunk.map(buildYLineMap));
         });
         chunkIndex += 1;
         const isLast = start + HYDRATE_CHUNK_SIZE >= total;
@@ -535,7 +617,12 @@ export function Whiteboard(props: WhiteboardProps) {
       hydrating.current = false;
       if (!cancelled) {
         setLines(yLinesArr.toArray());
-        console.log(`[annotations] hydrated ${total} strokes in ${Math.round(performance.now() - t0)}ms`);
+        console.log(
+          `[annotations] hydrated ${total} strokes in ${Math.round(performance.now() - t0)}ms` +
+            (duplicatesRemoved > 0 ? ` (removed ${duplicatesRemoved} duplicates)` : '')
+        );
+        // Persist the cleaned set so the duplicates don't return on next load.
+        if (duplicatesRemoved > 0) saveFullNow();
       }
     }
 
