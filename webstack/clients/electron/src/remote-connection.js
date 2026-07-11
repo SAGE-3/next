@@ -51,10 +51,10 @@ const pulseClass = 'pulse';
 const blackColor = '#222222';
 
 const favorites_file_name = 'sage3_favorite_sites.json';
-const REFRESH_SITES_STATUS_TIME = 5000;
-const FILE_VERSION = 1;
+const REFRESH_SITES_STATUS_TIME = 5000; // how often (ms) all favorites are re-polled for online/offline status
+const FILE_VERSION = 1; // schema version stamped into the favorites JSON file
 
-const PREDEFINED_LOCAL_PORT = '3333';
+const PREDEFINED_LOCAL_PORT = '3333'; // port assumed when the host is localhost/127.0.0.1
 
 //JS object containing list of favorites sites
 var favorites = {
@@ -77,7 +77,7 @@ let lastCheckedSiteName;
 let lastClickedCheck = false;
 let cached_config_files = {};
 
-// Reading the favorites json file
+// On startup: load the persisted favorites list from disk and render it (runs once when the page loads)
 fs.readFile(getAppDataPath(favorites_file_name), 'utf8', function readFileCallback(err, data) {
   if (err) {
     // most likely no json file (first use), write empty favorites on file
@@ -143,6 +143,7 @@ function getFallback() {
  * @param  {String} file_name the name of the file
  * @return the path to the file
  */
+// Picks the per-OS data folder (used to persist the favorites JSON file)
 function getAppDataPath(file_name) {
   let appDataPath = '';
   switch (platform()) {
@@ -165,6 +166,7 @@ function getAppDataPath(file_name) {
   }
 }
 
+// Handler for the "Add" button: turn the URL input into a favorite entry and add it to the list
 function addSite() {
   let aURL = urlInput.value;
   // if (aURL.startsWith('https://')) {
@@ -269,12 +271,14 @@ function addItemToList(item, index) {
                     </div>`;
   it.innerHTML = htmlCode;
 
+  // Wire up the heart icon: pinned items unpin on click, unpinned items pin on click
   // it.addEventListener('click', selectFavoriteSite);
   if (item.pinned) {
     it.firstElementChild.lastElementChild.firstElementChild.addEventListener('click', removeFavoriteSiteList);
   } else {
     it.firstElementChild.lastElementChild.firstElementChild.addEventListener('click', addFavoriteSiteList);
   }
+  // Wire up the trash icon to delete the site
   it.firstElementChild.lastElementChild.lastElementChild.addEventListener('click', deleteSite);
   it.style.color = 'grey';
   if (item.pinned) {
@@ -335,6 +339,7 @@ function addConnectedSiteToList(item, index) {
 function selectFavoriteSite(event) {
   lastClickedCheck = false;
 
+  // The click may land on a child (span/div); walk up until we reach the <li> row for this site
   var elem = event.target;
   if (elem.tagName === 'SPAN') {
     elem = elem.parentElement.parentElement;
@@ -408,6 +413,7 @@ function addFavoriteSiteList(event) {
   // parent.removeChild(item);
 }
 
+// Handler for the trash icon: read the host from the row's DOM and remove it everywhere
 function deleteSite(event) {
   var aURL = event.target.parentElement.parentElement.firstElementChild.nextElementSibling.innerText;
   dynamicItemRemovingInList(aURL);
@@ -470,6 +476,7 @@ function unpinFavorite(favorite_url) {
   }
 }
 
+// Remove a site both from the persisted favorites and from the visible UI list
 function dynamicItemRemovingInList(aURL) {
   for (let i = 0; i < favorites.list.length; i++) {
     if (aURL === favorites.list[i].host) {
@@ -522,6 +529,7 @@ function buildConfigURL(domain) {
   if (domain === 'localhost' || domain === '127.0.0.1') {
     domain = domain + ':' + PREDEFINED_LOCAL_PORT;
   }
+  // The server exposes its public config (name, displays, remote_sites, passwordProtected) at this endpoint
   return protocol + domain + '/api/configuration';
 }
 
@@ -568,6 +576,7 @@ function populateUI(config_json, attachConnectedSites) {
 
   lastCheckedSiteName = config_json.name;
 
+  // If the server requires a password, enable the field and prefill any saved hash
   if (config_json.passwordProtected) {
     enablePassword();
     handlePasswordHash(config_json.host);
@@ -669,7 +678,7 @@ function formatProperly(aURL) {
     aURL = url_start + aURL;
   }
 
-  // If display number is toggled then take the ID, if NaN do full screen
+  // clientID picks which wall display to mirror; -1 means the full-screen composite
   if (check1.checked) {
     var id = isNaN(parseInt(idDropName.innerHTML)) ? -1 : parseInt(idDropName.innerHTML);
 
@@ -685,6 +694,7 @@ function formatProperly(aURL) {
       // if the password field is empty try to connect without using a password
       return aURL;
     } else {
+      // A saved value is already a hash (send as &hash), otherwise it's plaintext (&session)
       if (isHashSaved) {
         // Correct hash previously saved locally
         aURL = aURL + '&hash=' + pwd;
@@ -719,6 +729,7 @@ function okayOnClick() {
   }
 }
 
+// Tell the main Electron process to navigate/connect to this site (received in electron.js)
 function connectToPage(aURL) {
   // let nURL = formatProperly(aURL);
   ipcRenderer.send('connect-url', aURL);
@@ -750,6 +761,7 @@ function onCurrentSiteDown() {
  * @param {function} onTimeout the function to be executed in case of timeout
  */
 function fetchWithTimeout(aURL, host, delay, attachConnectedSites, onTimeout) {
+  // Race the config fetch against a timer so an unreachable site is treated as offline after `delay` ms
   const timer = new Promise((resolve) => {
     setTimeout(resolve, delay, {
       timeout: true,
@@ -767,7 +779,7 @@ function fetchWithTimeout(aURL, host, delay, attachConnectedSites, onTimeout) {
     })
     .then((json) => {
       if (json) {
-        // saved cached config file
+        // cache the config so info popups can render without re-fetching
         cached_config_files[host] = json;
         populateUI(json, attachConnectedSites);
         if (!attachConnectedSites) {
@@ -973,6 +985,7 @@ function refreshSiteStatus(it) {
   setOnlineStatus(buildConfigURL(host), host, it.firstElementChild.lastElementChild.firstElementChild, it, 1000);
 }
 
+// Re-poll every site row's online/offline status; called periodically on a timer (see bottom of file)
 function refreshSitesStatus() {
   var children = Array.from(favoriteList.children);
   children.forEach(refreshSiteStatus);
@@ -1025,6 +1038,7 @@ function buildInfoHTML(config) {
 /**************************** Functions finished *****************************/
 
 // Catches the message sent from the main electron window that is providing the current location
+// (true = also pull the currently-connected site's remote_sites into the list)
 ipcRenderer.on('current-location', (e, host) => {
   // urlInput.value = host;
   if (!host) {
@@ -1051,6 +1065,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // attachBehaviorDropdownSites();
 });
 
+// check1/check2 are mutually exclusive: picking a specific display ID vs. full-screen
 // Adds behavior to ClientID checkbox1 input
 check1.addEventListener('click', (e) => {
   var checked = e.target.checked;
@@ -1102,4 +1117,5 @@ urlInput.addEventListener('input', (e) => {
   }
 });
 
+// Periodically refresh every listed site's online/offline indicator
 setInterval(refreshSitesStatus, REFRESH_SITES_STATUS_TIME);

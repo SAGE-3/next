@@ -23,12 +23,18 @@ export class SAGE3Collection<T extends SBJSON> {
   private _collection!: SBCollectionRef<T>;
   private _name: string;
   private _queryableAttributes: Partial<T>;
+  // Whether single-document updates are broadcast to subscribers.  Defaults to
+  // true; a collection whose live sync is handled elsewhere (e.g. ANNOTATIONS,
+  // synced via Yjs) can opt out to avoid re-broadcasting the whole document on
+  // every update.
+  private _publishUpdates: boolean;
 
   private _httpRouter!: Router;
 
-  constructor(name: string, queryableAttributes: Partial<T>) {
+  constructor(name: string, queryableAttributes: Partial<T>, options?: { publishUpdates?: boolean }) {
     this._name = name;
     this._queryableAttributes = queryableAttributes;
+    this._publishUpdates = options?.publishUpdates ?? true;
   }
 
   protected get collection(): SBCollectionRef<T> {
@@ -162,7 +168,7 @@ export class SAGE3Collection<T extends SBJSON> {
    */
   public async update(id: string, by: string, update: SBDocumentUpdate<T>): Promise<SBDocument<T> | undefined> {
     try {
-      const response = await this._collection.docRef(id).update(update, by);
+      const response = await this._collection.docRef(id).update(update, by, this._publishUpdates);
       return response.doc;
     } catch (error) {
       this.printError(error);
@@ -260,7 +266,7 @@ export class SAGE3Collection<T extends SBJSON> {
   public async subscribeByQuery(
     field: keyof T,
     value: string,
-    callback: (message: SBDocumentMessage<T>) => void
+    callback: (message: SBDocumentMessage<T>) => void,
   ): Promise<(() => Promise<void>) | undefined> {
     try {
       const unsubscribe = await this._collection.subscribeToQuery(field, value, callback);

@@ -1,10 +1,16 @@
+/**
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
+ *
+ * Distributed under the terms of the SAGE3 License.  The full license is in
+ * the file LICENSE, distributed as part of this software.
+ */
+
 import {
   InstancePresenceRecordType,
   TLAnyShapeUtilConstructor,
   TLInstancePresence,
   TLRecord,
-  TLUser,
-  UserRecordType,
   TLStoreWithStatus,
   computed,
   createPresenceStateDerivation,
@@ -16,6 +22,7 @@ import {
   react,
   SerializedSchema,
 } from 'tldraw';
+import { createUserId, TLUser, UserRecordType } from '@tldraw/tlschema';
 import { useEffect, useMemo, useState } from 'react';
 import { YKeyValue } from 'y-utility/y-keyvalue';
 import { WebsocketProvider } from 'y-websocket';
@@ -139,12 +146,12 @@ export function useYjsStore({
       const yClientId = room.awareness.clientID.toString();
       setUserPreferences({ id: yClientId });
 
-      // tldraw v5: the derivation expects a Signal<TLUser>, not the old
-      // TLUserPreferences shape. Build a proper TLUser record from prefs.
-      const userPreferences = computed<TLUser>('userPreferences', () => {
+      // tldraw v5 presence derivation uses user records from @tldraw/tlschema.
+      const userPreferences = computed<TLUser | null>('userPreferences', () => {
         const user = getUserPreferences();
+        if (!user.id) return null;
         return UserRecordType.create({
-          id: UserRecordType.createId(user.id),
+          id: createUserId(user.id),
           color: user.color ?? defaultUserPreferences.color,
           name: user.name ?? defaultUserPreferences.name,
         });
@@ -152,7 +159,6 @@ export function useYjsStore({
 
       // Create the instance presence derivation
       const presenceId = InstancePresenceRecordType.createId(yClientId);
-      // tldraw v5: the 2nd arg is now an options object, not a bare presence id
       const presenceDerivation = createPresenceStateDerivation(userPreferences, { instanceId: presenceId })(store);
 
       // Set our initial presence from the derivation's current value

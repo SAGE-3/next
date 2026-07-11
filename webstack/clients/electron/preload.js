@@ -8,6 +8,9 @@
 
 const { ipcRenderer, contextBridge } = require('electron');
 
+// Allow-list of IPC channel names the renderer is permitted to use.
+// Any channel not in this list is silently ignored below, so a compromised
+// renderer cannot reach arbitrary main-process handlers.
 const validChannels = [
   'client-info-response',
   'client-info-request',
@@ -34,6 +37,9 @@ const validChannels = [
   'set-scale-level',
 ];
 
+// With context isolation on, the renderer cannot touch Node/Electron directly.
+// contextBridge exposes only this small, vetted API as window.electron,
+// and every method gates its channel through the validChannels allow-list.
 contextBridge.exposeInMainWorld('electron', {
   send: (channel, data) => {
     if (validChannels.includes(channel)) {
@@ -42,7 +48,7 @@ contextBridge.exposeInMainWorld('electron', {
   },
   on: (channel, callback) => {
     if (validChannels.includes(channel)) {
-      // Filtering the event param from ipcRenderer
+      // Strip the IpcRendererEvent so the renderer callback only sees the payload
       const newCallback = (_, data) => callback(data);
       ipcRenderer.on(channel, newCallback);
     }

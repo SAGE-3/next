@@ -332,7 +332,7 @@ export function Files(props: FilesProps): JSX.Element {
             // search in the owner name
             item.ownerName.toUpperCase().indexOf(term.toUpperCase()) !== -1
           );
-        })
+        }),
       );
     } else {
       // Full list if no search term
