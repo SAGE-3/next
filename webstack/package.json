@@ -62,7 +62,7 @@
     "express-session": "^1.18.2",
     "extended-eventsource": "^1.4.9",
     "framer-motion": "^12.23.22",
-    "fuse.js": "^7.1.0",
+    "fuse.js": "7.1.0",
     "geotiff": "^2.0.7",
     "helmet": "^8.1.0",
     "highlight.js": "^11.10.0",
