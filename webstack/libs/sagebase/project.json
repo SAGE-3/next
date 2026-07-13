@@ -3,6 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/sagebase/src",
   "projectType": "library",
+  "tags": [],
   "targets": {
     "lint": {
       "executor": "@nx/eslint:lint",
@@ -19,6 +20,5 @@
         "assets": ["libs/sagebase/*.md"]
       }
     }
-  },
-  "tags": []
+  }
 }

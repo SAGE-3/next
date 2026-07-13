@@ -17,15 +17,8 @@
     }
   },
   "namedInputs": {
-    "default": [
-      "{projectRoot}/**/*",
-      "sharedGlobals"
-    ],
-    "sharedGlobals": [
-      "{workspaceRoot}/tsconfig.base.json",
-      "{workspaceRoot}/nx.json",
-      "{workspaceRoot}/babel.config.json"
-    ],
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "sharedGlobals": ["{workspaceRoot}/tsconfig.base.json", "{workspaceRoot}/nx.json", "{workspaceRoot}/babel.config.json"],
     "production": [
       "default",
       "!{projectRoot}/.eslintrc",
@@ -38,26 +31,26 @@
   },
   "targetDefaults": {
     "build": {
-      "inputs": [
-        "production",
-        "^production"
-      ],
+      "inputs": ["production", "^production"],
       "cache": true
     },
     "@nx/eslint:lint": {
-      "inputs": [
-        "default",
-        "^default",
-        "{workspaceRoot}/.eslintrc",
-        "{workspaceRoot}/tools/eslint-rules/**/*"
-      ],
+      "inputs": ["default", "^default", "{workspaceRoot}/.eslintrc", "{workspaceRoot}/tools/eslint-rules/**/*"],
       "cache": true
     },
     "typecheck": {
       "cache": true,
+      "inputs": ["default", "^default"]
+    },
+    "test": {
+      "cache": true,
       "inputs": [
         "default",
-        "^default"
+        "^default",
+        "{workspaceRoot}/jest.preset.js",
+        {
+          "env": "REDIS_TEST_URL"
+        }
       ]
     }
   },
@@ -74,12 +67,13 @@
         "serveStaticTargetName": "serve-static",
         "serveTargetName": "serve"
       },
-      "include": [
-        "apps/homebase/**/*",
-        "apps/homebase-files/**/*",
-        "apps/homebase-yjs/**/*",
-        "apps/webapp/**/*"
-      ]
+      "include": ["apps/homebase/**/*", "apps/homebase-files/**/*", "apps/homebase-yjs/**/*", "apps/webapp/**/*"]
+    },
+    {
+      "plugin": "@nx/jest/plugin",
+      "options": {
+        "targetName": "test"
+      }
     }
   ]
 }

@@ -7,7 +7,6 @@
       "node"
     ]
   },
-  "exclude": [
-    "***.ts"
-  ]
+  "include": ["**/*.ts"],
+  "exclude": ["**/*.spec.ts", "**/*.test.ts"]
 }
