@@ -107,8 +107,10 @@ export function listenApp(app: express.Express, listenPort: number | string): Se
   const PORT = parseInt(listenPort as string, 10);
   // HTTP server
   const server = app.listen(PORT, '0.0.0.0', () => {
-    const { port } = server.address() as AddressInfo;
-    console.log('HTTP> listening on port', port);
+    const addr = server.address();
+    if (addr && typeof addr !== 'string') {
+      console.log('HTTP> listening on port', addr.port);
+    }
   });
   return server;
 }

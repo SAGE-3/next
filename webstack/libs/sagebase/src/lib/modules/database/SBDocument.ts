@@ -186,6 +186,37 @@ export class SBDocumentRef<Type extends SBJSON> {
     }
   }
 
+  /**
+   * Append one or more values to a JSON array field of this document's data,
+   * without rewriting the whole array (RedisJSON ARRAPPEND).  This makes adding
+   * an element O(appended) instead of O(existing).  When `publish` is false the
+   * full document is not read back, keeping the whole operation independent of
+   * the array's current size.
+   */
+  public async arrayAppend(field: string, values: any[], by: string, publish = true): Promise<SBDocWriteResult<Type>> {
+    if (!values || values.length === 0) return generateWriteResult('update', this._colName, false);
+    const exists = await this._redisClient.exists(`${this.path}`);
+    if (exists === 0) {
+      this.ERRORLOG(`Doc does not exists.`);
+      return generateWriteResult('update', this._colName, false);
+    }
+    try {
+      await this._redisClient.json.arrAppend(`${this.path}`, `.data.${field}`, ...values);
+      // Refresh the updatedAt/updatedBy metadata.
+      await this.refreshUpdate(by);
+      // Only read back and broadcast the full document when asked to publish.
+      if (publish) {
+        const newValue = await this.read();
+        if (newValue) await this.publishUpdateAction(newValue, {});
+        return generateWriteResult<Type>('update', this._colName, true, newValue);
+      }
+      return generateWriteResult<Type>('update', this._colName, true);
+    } catch (error) {
+      this.ERRORLOG(error);
+      return generateWriteResult<Type>('update', this._colName, false);
+    }
+  }
+
   private async refreshUpdate(by?: string): Promise<void> {
     const updatedAt = Date.now();
     const redisRes = await this._redisClient.json.set(`${this.path}`, `._updatedAt`, updatedAt, { XX: true });
