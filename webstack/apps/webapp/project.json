@@ -5,9 +5,13 @@
   "projectType": "application",
   "targets": {
     "build": {
-      "defaultConfiguration": "development",
+      "defaultConfiguration": "production",
       "configurations": {
-        "production": {},
+        "production": {
+          "env": {
+            "NODE_ENV": "production"
+          }
+        },
         "development": {
           "env": {
             "NODE_ENV": "development"
