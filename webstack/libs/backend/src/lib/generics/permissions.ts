@@ -7,7 +7,7 @@
  */
 
 // NPM imports
-import * as express from 'express';
+import express from 'express';
 
 // SAGEBase Imports
 import { SBAuthSchema } from '@sage3/sagebase';

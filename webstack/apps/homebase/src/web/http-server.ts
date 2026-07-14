@@ -12,15 +12,15 @@ import { AddressInfo } from 'net';
 import { Server } from 'http';
 
 // Express web server framework
-import * as express from 'express';
+import express from 'express';
 
 // Express middlewares
 import helmet from 'helmet';
-import * as compression from 'compression';
-import * as cors from 'cors';
-import * as morgan from 'morgan';
-import * as favicon from 'serve-favicon';
-import * as cookieParser from 'cookie-parser';
+import compression from 'compression';
+import cors from 'cors';
+import morgan from 'morgan';
+import favicon from 'serve-favicon';
+import cookieParser from 'cookie-parser';
 import { ServerConfiguration } from '@sage3/shared/types';
 
 /**

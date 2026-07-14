@@ -23,7 +23,7 @@ import { IncomingMessage } from 'http';
 import * as dns from 'node:dns';
 
 // Websocket
-import { WebSocket } from 'ws';
+import { WebSocket, WebSocketServer } from 'ws';
 import { SAGEnlp, SAGE_PRESENCE, SocketPresence, SubscriptionCache } from '@sage3/backend';
 import { setupWsforLogs } from './api/routers/custom';
 
@@ -47,7 +47,7 @@ import { SBAuthDB, JWTPayload } from '@sage3/sagebase';
 
 // SAGE Twilio Helper Import
 import { SAGETwilio } from '@sage3/backend';
-import * as express from 'express';
+import express from 'express';
 
 // Exception handling
 process.on('unhandledRejection', (reason: Error) => {
@@ -130,9 +130,9 @@ async function startServer() {
   app.use('/api', expressAPIRouter());
 
   // Websocket setup
-  const apiWebSocketServer = new WebSocket.Server({ noServer: true });
+  const apiWebSocketServer = new WebSocketServer({ noServer: true });
 
-  const logsServer = new WebSocket.Server({ noServer: true });
+  const logsServer = new WebSocketServer({ noServer: true });
 
   logsServer.on('connection', (socket: WebSocket) => {
     setupWsforLogs(socket);
@@ -159,7 +159,7 @@ async function startServer() {
         wsAPIRouter(socket, message, user, subCache);
       } catch (err) {
         console.error('Server> Error parsing message:', msg.toString());
-        console.error('       ', err.message);
+        console.error('       ', err instanceof Error ? err.message : String(err));
       }
     });
 

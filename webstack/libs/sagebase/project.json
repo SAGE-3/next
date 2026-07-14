@@ -1,0 +1,24 @@
+{
+  "name": "sagebase",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/sagebase/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/sagebase",
+        "tsConfig": "libs/sagebase/tsconfig.lib.json",
+        "packageJson": "libs/sagebase/package.json",
+        "main": "libs/sagebase/src/index.ts",
+        "assets": ["libs/sagebase/*.md"]
+      }
+    }
+  }
+}

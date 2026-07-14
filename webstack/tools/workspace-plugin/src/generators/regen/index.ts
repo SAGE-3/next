@@ -8,7 +8,7 @@
 
 import { join } from 'path';
 import { promises as fs } from 'fs';
-import { Tree, formatFiles, installPackagesTask, generateFiles } from '@nrwl/devkit';
+import { Tree, formatFiles, installPackagesTask } from '@nx/devkit';
 
 // Arguments to the build
 interface Schema {
@@ -36,16 +36,13 @@ var camalize = function camalize(str: string) {
  * @param {string} root
  * @param {string} name
  */
-async function addApplication(root: string, name: string) {
-  console.log('App> adding app', name);
+async function sortApplication(root: string) {
   const filePath = join(root, 'libs', 'applications', 'src', 'lib', 'apps.json');
   const filedata = await fs.readFile(filePath);
   // Parse the xisting json file
   const apps = JSON.parse(filedata.toString());
   // Create a set from it (to get unique app names)
   const appSet = new Set(apps);
-  // Add the new applications
-  appSet.add(name);
   // Save the updated array
   const output = JSON.stringify(Array.from(appSet).sort(), null, 4);
   await fs.writeFile(filePath, output);
@@ -65,7 +62,6 @@ async function updateApps(root: string) {
   // Parse it as an array
   const apps = Array.from(JSON.parse(filedata.toString())) as string[];
   let output = '// SAGE3 Generated from apps.json file\n\n';
-
   for (let i in apps) {
     const it = apps[i];
     output += `import { name as ${it}Name } from './apps/${it}';\n`;
@@ -193,22 +189,9 @@ export default async function (host: Tree, schema: Schema) {
   console.log('Schema>', schema);
   console.log('Folder>', host.root);
 
-  // const camel = camalize(schema.name);
-  const camel = schema.name;
-
   try {
-    // Copy the files
-    await generateFiles(
-      host,
-      // source files (inside generator folder)
-      join(__dirname, 'files'),
-      // destination
-      join('.', 'libs', 'applications', 'src', 'lib', 'apps', schema.name),
-      // substitution variables (filenames and content of files)
-      { tmpl: '', name: camel, username: schema.username, statename: schema.statename, statetype: schema.statetype, val: schema.val }
-    );
     // update apps.json
-    await addApplication(host.root, schema.name);
+    await sortApplication(host.root);
     // update index.ts
     await updateApps(host.root);
     // update metadata.ts
@@ -220,8 +203,7 @@ export default async function (host: Tree, schema: Schema) {
   }
 
   // Pretty please
-  // Note: formatFiles disabled due to dynamic import issues with Prettier in newer Node.js versions
-  // await formatFiles(host);
+  await formatFiles(host);
 
   // All done
   return () => {

@@ -19,7 +19,7 @@
 // import { formatDistance } from 'date-fns';
 
 // // Express web server framework
-// import * as express from 'express';
+// import express from 'express';
 
 // // Web server configuraton type
 // import { ServerConfiguration } from '@sage3/shared/types';

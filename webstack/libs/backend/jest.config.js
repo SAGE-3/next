@@ -3,13 +3,8 @@ module.exports = {
   displayName: 'backend',
   preset: '../../jest.preset.js',
   testEnvironment: 'node',
-  globals: {
-    'ts-jest': {
-      tsconfig: '<rootDir>/tsconfig.spec.json',
-    },
-  },
   transform: {
-    '^.+\\.[tj]sx?$': 'ts-jest',
+    '^.+\\.[tj]sx?$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.spec.json' }],
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
   // permissions.ts imports the real SAGE3Ability/RoleArg/ActionArg/ResourceArg

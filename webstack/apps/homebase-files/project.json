@@ -1,0 +1,46 @@
+{
+  "name": "homebase-files",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/homebase-files/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "configurations": {
+        "production": {},
+        "development": {
+          "env": {
+            "NODE_ENV": "development"
+          }
+        }
+      },
+      "outputs": [
+        "{workspaceRoot}/dist/apps/homebase-files"
+      ]
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "options": {
+        "buildTarget": "homebase-files:build"
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "homebase-files:build:production"
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ]
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node ../../node_modules/typescript-native/bin/tsc -p tsconfig.check.json --noEmit",
+        "cwd": "apps/homebase-files"
+      }
+    }
+  },
+  "tags": []
+}
