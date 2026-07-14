@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y build-essential libcairo2-dev libpango1
 # Project files
 COPY webstack/package.json package.json
 COPY webstack/yarn.lock yarn.lock
+COPY webstack/tools tools
 # Install dependencies
 RUN yarn install --frozen-lockfile
 
@@ -18,7 +19,6 @@ COPY webstack/babel.config.json babel.config.json
 COPY webstack/tsconfig.base.json tsconfig.base.json
 COPY webstack/apps apps
 COPY webstack/libs libs
-COPY webstack/tools tools
 
 # Increase RAM for node to build the app
 ENV NODE_OPTIONS=--max-old-space-size=8192
