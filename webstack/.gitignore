@@ -15,6 +15,10 @@
 # dependencies
 /node_modules
 
+# Nx cache
+/.nx/cache
+/.nx/workspace-data
+
 # IDEs and editors
 /.idea
 .idea/workspace.xml
