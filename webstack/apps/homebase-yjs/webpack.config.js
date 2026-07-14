@@ -11,6 +11,7 @@ const configValues = {
     tsConfig: './tsconfig.app.json',
     assets: ['./src/assets'],
     babelUpwardRootMode: true,
+    outputHashing: 'none',
   },
   production: {
     optimization: true,
