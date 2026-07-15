@@ -10,6 +10,21 @@ services:
     entrypoint: redis-server
     command: /conf/redis.conf
 
+  livekit-server:
+    image: "livekit/livekit-server:v1.13"
+    command: --config /etc/livekit.yaml --node-ip=127.0.0.1
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:7880:7880"
+      - "127.0.0.1:7881:7881"
+      - "127.0.0.1:7882:7882/udp"
+    volumes:
+      - ./configurations/livekit/livekit.yaml:/etc/livekit.yaml
+    deploy:
+      restart_policy:
+        condition: on-failure
+
   yjs-server:
     image: "ghcr.io/sage-3/next_yjs:dev_amd64"
     depends_on:

@@ -136,6 +136,33 @@ services:
       driver: "json-file"
       options:
         max-size: "100m"
+  livekit-server:
+    image: "livekit/livekit-server:v1.13"
+    # LIVEKIT_NODE_IP: the server's public/LAN IP, advertised to clients in ICE candidates (set in .env)
+    command: --config /etc/livekit.yaml --node-ip=${LIVEKIT_NODE_IP}
+    labels:
+      - "traefik.enable=true"
+      # Signaling (WebSocket) goes through traefik for TLS: wss://<server>/sfu
+      # (/livekit is NOT used as the prefix: the node-server owns /livekit/token)
+      - "traefik.http.routers.livekit-server.rule=Host(`${SAGE3_SERVER}`) && PathPrefix(`/sfu`)"
+      - "traefik.http.routers.livekit-server.priority=400"
+      - "traefik.http.routers.livekit-server.entrypoints=websecure"
+      - "traefik.http.services.livekit-server.loadbalancer.server.port=7880"
+      - "traefik.http.middlewares.livekit-strip.stripprefix.prefixes=/sfu"
+      - "traefik.http.routers.livekit-server.middlewares=livekit-strip"
+    # WebRTC media bypasses traefik: UDP (and TCP fallback) directly on the host
+    ports:
+      - "7881:7881"
+      - "7882:7882/udp"
+    volumes:
+      - ./configurations/livekit/livekit.yaml:/etc/livekit.yaml
+    deploy:
+      restart_policy:
+        condition: on-failure
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
   fluentd-server:
     image: "fluent/fluentd:edge-debian"
     ports:

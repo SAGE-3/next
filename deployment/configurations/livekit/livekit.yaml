@@ -1,0 +1,34 @@
+# LiveKit SFU server configuration for SAGE3 screenshare
+# https://docs.livekit.io/home/self-hosting/deployment/
+
+# HTTP/WebSocket signaling port
+port: 7880
+
+rtc:
+  # TCP fallback for clients that cannot use UDP
+  tcp_port: 7881
+  # All WebRTC media is multiplexed over this single UDP port
+  # (avoids publishing a large UDP port range through Docker)
+  udp_port: 7882
+  # No STUN lookup: SAGE3 runs in local/offline environments
+  use_external_ip: false
+
+# API key/secret pair used by the SAGE3 server to mint client join tokens.
+# Must match services.livekit in the SAGE3 hjson configuration.
+# Dev credentials for local testing only (LiveKit requires a 32+ char secret).
+# Generate real ones for production:
+#   docker run --rm livekit/livekit-server generate-keys
+keys:
+  SAGE3KEY: sage3-livekit-dev-secret-not-for-production
+
+# Webhooks notify the SAGE3 server about room/track events (screenshare app cleanup).
+# Requests are signed with the api_key's secret.
+# - Local dev: homebase runs on the host machine
+# - Production: use the node-server container instead: http://node-server:3000/livekit/webhook
+webhook:
+  api_key: SAGE3KEY
+  urls:
+    - http://host.docker.internal:3000/livekit/webhook
+
+logging:
+  level: info

@@ -62,6 +62,14 @@
       // API Secret
       "apiSecret": ""
     },
+    "livekit": {
+      // WebSocket URL clients use to reach the LiveKit server
+      "url": "ws://localhost:7880",
+      // API Key, must match the LiveKit server config (deployment/configurations/livekit/livekit.yaml)
+      "apiKey": "SAGE3KEY",
+      // API Secret, must match the LiveKit server config
+      "apiSecret": "sage3-livekit-dev-secret-not-for-production"
+    },
     "openai": {
       // API Key
       "apiKey": "",

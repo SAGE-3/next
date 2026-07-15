@@ -29,8 +29,9 @@ import { name as PDFViewerName } from './apps/PDFViewer';
 import { name as PluginAppName } from './apps/PluginApp';
 import { name as PollName } from './apps/Poll';
 import { name as RTCChatName } from './apps/RTCChat';
-import { name as SageIdeatorName } from './apps/SageIdeator';
 import { name as SageCellName } from './apps/SageCell';
+import { name as SageIdeatorName } from './apps/SageIdeator';
+import { name as ScreenshareName } from './apps/Screenshare';
 import { name as SensorOverviewName } from './apps/SensorOverview';
 import { name as StickieName } from './apps/Stickie';
 import { name as TimerName } from './apps/Timer';
@@ -73,8 +74,9 @@ import PDFViewer from './apps/PDFViewer/PDFViewer';
 import PluginApp from './apps/PluginApp/PluginApp';
 import Poll from './apps/Poll/Poll';
 import RTCChat from './apps/RTCChat/RTCChat';
-import SageIdeator from './apps/SageIdeator/SageIdeator';
 import SageCell from './apps/SageCell/SageCell';
+import SageIdeator from './apps/SageIdeator/SageIdeator';
+import Screenshare from './apps/Screenshare/Screenshare';
 import SensorOverview from './apps/SensorOverview/SensorOverview';
 import Stickie from './apps/Stickie/Stickie';
 import Timer from './apps/Timer/Timer';
@@ -231,15 +233,20 @@ export const Applications = {
     ToolbarComponent: RTCChat.ToolbarComponent,
     GroupedToolbarComponent: RTCChat.GroupedToolbarComponent,
   },
+  [SageCellName]: {
+    AppComponent: React.memo(SageCell.AppComponent),
+    ToolbarComponent: SageCell.ToolbarComponent,
+    GroupedToolbarComponent: SageCell.GroupedToolbarComponent,
+  },
   [SageIdeatorName]: {
     AppComponent: React.memo(SageIdeator.AppComponent),
     ToolbarComponent: SageIdeator.ToolbarComponent,
     GroupedToolbarComponent: SageIdeator.GroupedToolbarComponent,
   },
-  [SageCellName]: {
-    AppComponent: React.memo(SageCell.AppComponent),
-    ToolbarComponent: SageCell.ToolbarComponent,
-    GroupedToolbarComponent: SageCell.GroupedToolbarComponent,
+  [ScreenshareName]: {
+    AppComponent: React.memo(Screenshare.AppComponent),
+    ToolbarComponent: Screenshare.ToolbarComponent,
+    GroupedToolbarComponent: Screenshare.GroupedToolbarComponent,
   },
   [SensorOverviewName]: {
     AppComponent: React.memo(SensorOverview.AppComponent),
