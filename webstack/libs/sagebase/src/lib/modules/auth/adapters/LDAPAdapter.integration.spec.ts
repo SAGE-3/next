@@ -20,8 +20,8 @@
  */
 
 import * as ldap from 'ldapjs';
-import * as express from 'express';
-import * as supertest from 'supertest';
+import express from 'express';
+import supertest from 'supertest';
 
 // SBAuthDB is not needed for these integration tests.
 jest.mock('../SBAuthDatabase', () => ({
