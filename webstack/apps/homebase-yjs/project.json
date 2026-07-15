@@ -6,8 +6,13 @@
   "tags": [],
   "targets": {
     "build": {
+      "defaultConfiguration": "production",
       "configurations": {
-        "production": {},
+        "production": {
+          "env": {
+            "NODE_ENV": "production"
+          }
+        },
         "development": {
           "env": {
             "NODE_ENV": "development"
@@ -27,7 +32,7 @@
     "serve": {
       "executor": "@nx/js:node",
       "options": {
-        "buildTarget": "homebase-yjs:build"
+        "buildTarget": "homebase-yjs:build:development"
       },
       "configurations": {
         "production": {

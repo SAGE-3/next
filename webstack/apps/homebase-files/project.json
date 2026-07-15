@@ -5,8 +5,13 @@
   "projectType": "application",
   "targets": {
     "build": {
+      "defaultConfiguration": "production",
       "configurations": {
-        "production": {},
+        "production": {
+          "env": {
+            "NODE_ENV": "production"
+          }
+        },
         "development": {
           "env": {
             "NODE_ENV": "development"
@@ -20,7 +25,7 @@
     "serve": {
       "executor": "@nx/js:node",
       "options": {
-        "buildTarget": "homebase-files:build"
+        "buildTarget": "homebase-files:build:development"
       },
       "configurations": {
         "production": {
