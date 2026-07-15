@@ -27,7 +27,7 @@ import { FcGoogle } from 'react-icons/fc';
 import { FaGhost, FaApple, FaServer } from 'react-icons/fa';
 import { SiKeycloak } from 'react-icons/si';
 
-import { isElectron, useAuth, useRouteNav, GetServerInfo } from '@sage3/frontend';
+import { isElectron, useHexColor, useAuth, useRouteNav, GetServerInfo } from '@sage3/frontend';
 
 // Logos
 import cilogonLogo from '../../../assets/cilogon.png';
@@ -43,6 +43,8 @@ export function LoginPage() {
   const [serverName, setServerName] = useState<string>('');
   const [shouldDisable, setShouldDisable] = useState(false);
   const [logins, setLogins] = useState<string[]>([]);
+  const placeholderColorValue = useColorModeValue('gray.400', 'gray.100');
+  const placeholderColor = useHexColor(placeholderColorValue);
 
   const logoUrl = '/assets/sage3_banner.webp';
   const thisIsElectron = isElectron();
@@ -463,16 +465,26 @@ export function LoginPage() {
             // natively, no client-side response handling needed.
             <Box as="form" action="/auth/ldap" method="POST" width="100%">
               <VStack spacing={2} width="100%">
+                <Text textAlign="left" width="100%" fontSize="sm" userSelect="none">
+                  LDAP / Active Directory Login
+                </Text>
                 <FormControl>
-                  <Input name="username" placeholder="Username" autoComplete="username" isDisabled={shouldDisable} />
+                  <Input
+                    name="username"
+                    placeholder="LDAP Username"
+                    autoComplete="username"
+                    isDisabled={shouldDisable}
+                    _placeholder={{ opacity: 0.7, color: placeholderColor }}
+                  />
                 </FormControl>
                 <FormControl>
                   <Input
                     name="password"
                     type="password"
-                    placeholder="Password"
+                    placeholder="LDAP Password"
                     autoComplete="current-password"
                     isDisabled={shouldDisable}
+                    _placeholder={{ opacity: 0.7, color: placeholderColor }}
                   />
                 </FormControl>
                 <ButtonGroup isAttached size="lg" width="100%">
