@@ -1,4 +1,4 @@
-FROM node:20-bookworm-slim AS builder
+FROM node:22-bookworm-slim AS builder
 
 # Install in that directory
 WORKDIR /app
@@ -9,12 +9,12 @@ RUN apt-get update && apt-get install -y build-essential libcairo2-dev libpango1
 # Project files
 COPY webstack/package.json package.json
 COPY webstack/yarn.lock yarn.lock
+COPY webstack/tools tools
 # Install dependencies
 RUN yarn install --frozen-lockfile
 
 # Code
 COPY webstack/nx.json nx.json
-COPY webstack/workspace.json workspace.json
 COPY webstack/babel.config.json babel.config.json
 COPY webstack/tsconfig.base.json tsconfig.base.json
 COPY webstack/apps apps
@@ -26,7 +26,7 @@ ENV NODE_OPTIONS=--max-old-space-size=8192
 RUN yarn prod-yjs && yarn cache clean
 
 # Stage 2: Production Image
-FROM node:20-bookworm-slim
+FROM node:22-bookworm-slim
 
 WORKDIR /app
 

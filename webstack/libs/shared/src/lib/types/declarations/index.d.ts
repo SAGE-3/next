@@ -27,6 +27,11 @@ declare module '*.svg' {
   export default content;
 }
 
+// Stylesheets are handled by webpack; declare them so TypeScript 6's
+// noUncheckedSideEffectImports check accepts `import './styles.css'`.
+declare module '*.css';
+declare module '*.scss';
+
 // Trick to make electron available in the window object
 import { Electron } from 'electron';
 declare global {

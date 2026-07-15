@@ -8,7 +8,7 @@
 
 // React
 import { useCallback, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { Button, useColorModeValue, Image, Text, VStack, Spacer, Box, Link, Flex, Icon, useToast, Progress, HStack, Divider } from '@chakra-ui/react';
 import { FiExternalLink } from 'react-icons/fi';
 

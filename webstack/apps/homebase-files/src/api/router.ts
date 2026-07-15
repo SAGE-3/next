@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2025. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -9,7 +9,7 @@
 import { AssetsCollection } from './assetsCollection';
 import { FilesRouter } from './files';
 // NPM imports
-import * as express from 'express';
+import express from 'express';
 import { MessageCollection } from './messageCollection';
 // SAGEBase Imports
 import { SAGEBase } from '@sage3/sagebase';
@@ -25,7 +25,7 @@ export async function expressAPIRouter(): Promise<express.Router> {
   const router = express.Router();
 
   await AssetsCollection.initialize();
-  await MessageCollection.initialize();
+  await MessageCollection.initialize(true, 60);
 
   // Download the file from an Asset using a public route with a UUIDv5 token
   // route: /api/files/:id/:token

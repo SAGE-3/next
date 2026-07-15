@@ -1,0 +1,24 @@
+{
+  "name": "sageplugin",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/sageplugin/src",
+  "projectType": "library",
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/sageplugin",
+        "tsConfig": "libs/sageplugin/tsconfig.lib.json",
+        "packageJson": "libs/sageplugin/package.json",
+        "main": "libs/sageplugin/src/index.ts",
+        "assets": ["libs/sageplugin/*.md"]
+      }
+    }
+  },
+  "tags": []
+}

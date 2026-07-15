@@ -7,7 +7,7 @@
  */
 
 import { useEffect, useState, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 
 // React component for efficiently rendering large lists and tabular data
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
@@ -332,7 +332,7 @@ export function Files(props: FilesProps): JSX.Element {
             // search in the owner name
             item.ownerName.toUpperCase().indexOf(term.toUpperCase()) !== -1
           );
-        })
+        }),
       );
     } else {
       // Full list if no search term
@@ -419,7 +419,6 @@ export function Files(props: FilesProps): JSX.Element {
             behavior: 'auto',
           });
         } else if (e.key === 'ArrowUp') {
-          // @ts-expect-error
           const last = filesList.findLastIndex((k) => k.selected);
           if (last > 0) {
             prev[last - 1] = { ...prev[last - 1], selected: true };

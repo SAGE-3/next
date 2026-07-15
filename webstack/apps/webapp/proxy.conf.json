@@ -1,49 +1,79 @@
-{
-  "/api/assets/upload": {
+[
+  {
+    "context": [
+      "/api/assets/upload"
+    ],
     "target": "http://localhost:3002",
     "secure": false
   },
-  "/api/assets/static": {
+  {
+    "context": [
+      "/api/assets/static"
+    ],
     "target": "http://localhost:3002",
     "secure": false
   },
-  "/api/files": {
+  {
+    "context": [
+      "/api/files"
+    ],
     "target": "http://localhost:3002",
     "secure": false
   },
-  "/api": {
+  {
+    "context": [
+      "/api"
+    ],
     "target": "http://127.0.0.1:3000",
     "secure": false,
     "ws": true
   },
-  "/auth": {
+  {
+    "context": [
+      "/auth"
+    ],
     "target": "http://127.0.0.1:3000",
     "secure": false,
     "ws": true
   },
-  "/yjs": {
+  {
+    "context": [
+      "/yjs"
+    ],
     "target": "http://127.0.0.1:3001",
     "secure": false,
     "ws": true
   },
-  "/rtc": {
+  {
+    "context": [
+      "/rtc"
+    ],
     "target": "http://127.0.0.1:3001",
     "secure": false,
     "ws": true
   },
-  "/twilio": {
+  {
+    "context": [
+      "/twilio"
+    ],
     "target": "http://127.0.0.1:3000",
     "secure": false,
     "ws": true
   },
-  "/logs": {
+  {
+    "context": [
+      "/logs"
+    ],
     "target": "http://127.0.0.1:3000",
     "secure": false,
     "ws": true
   },
-  "/plugins": {
+  {
+    "context": [
+      "/plugins"
+    ],
     "target": "http://127.0.0.1:3000",
     "secure": false,
     "ws": true
   }
-}
+]

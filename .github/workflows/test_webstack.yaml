@@ -53,7 +53,7 @@ jobs:
         run: yarn nx run-many --target=test --projects=sagebase,shared,backend --parallel=1
 
       - name: Build Homebase
-        run: yarn build --if-present
+        run: yarn build
 
       - name: Build Webapp
-        run: yarn build webapp --if-present
+        run: yarn build webapp

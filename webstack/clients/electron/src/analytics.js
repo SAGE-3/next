@@ -6,11 +6,13 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+// Sends anonymous usage analytics (app start/stop) to the SAGE3 events server.
+
 const { screen } = require('electron');
 const os = require('os');
-const fetch = require('node-fetch');
-const { v4 } = require('uuid');
+const { randomUUID } = require('crypto');
 
+// Endpoint that collects the analytics events
 const server_url = 'https://sage3.evl.uic.edu/events';
 
 /*
@@ -40,6 +42,7 @@ function analyticsOnStart(userId, arg_url) {
   const ip = getMachineIP();
 
   const dateObj = new Date();
+  // Locale and timezone from the running environment
   const options = Intl.DateTimeFormat().resolvedOptions();
 
   const event_start = {
@@ -56,6 +59,7 @@ function analyticsOnStart(userId, arg_url) {
     ip,
   };
 
+  // Fire-and-forget POST; errors are logged, not thrown
   fetch(server_url, {
     method: 'POST',
     headers: {
@@ -101,8 +105,9 @@ async function analyticsOnStop(userId) {
   }
 }
 
+// Generate a random anonymous user id (persisted by the caller across sessions)
 function genUserId() {
-  return v4();
+  return randomUUID();
 }
 
 module.exports = {
@@ -111,6 +116,7 @@ module.exports = {
   genUserId,
 };
 
+// Return the first external IPv4 address, or a fallback if none is found
 function getMachineIP() {
   var os = require('os');
   var ifaces = os.networkInterfaces();

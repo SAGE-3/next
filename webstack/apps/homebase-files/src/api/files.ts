@@ -14,7 +14,7 @@
  */
 
 // Express web server framework
-import * as express from 'express';
+import express from 'express';
 // Node modules
 import * as path from 'path';
 import { v5 as uuidv5 } from 'uuid';
