@@ -78,6 +78,11 @@ export interface ServerConfiguration {
   // ID management API keys
   auth: AuthConfiguration;
 
+  // Key used to derive the AES-256 encryption key for the credentials store
+  // (per-user secrets like API tokens) — kept separate from sessionSecret so
+  // a compromise of one doesn't automatically expose the other.
+  secretsEncryptionKey: string;
+
   // Namespace for signing uuid v5 keys
   namespace: string;
 }

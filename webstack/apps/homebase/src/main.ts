@@ -102,6 +102,7 @@ async function startServer() {
       ...config.auth,
       production: config.production,
     },
+    ...(config.secretsEncryptionKey ? { credentialsConfig: { encryptionKey: config.secretsEncryptionKey } } : {}),
     logConfig: sbLogConfig,
   };
   await SAGEBase.init(sbConfig, app);
