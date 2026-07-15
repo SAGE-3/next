@@ -140,7 +140,7 @@
     "strategies": [
       "guest",
       "jwt",
-      "keycloak",
+      "ldap",
       "google" // "spectator"       // "cilogon"       // "ldap"
     ],
     // A List of emails to enable those users to be admins.
@@ -210,13 +210,13 @@
       // LDAP server URL.
       // Use ldap:// for plain (port 389) or ldaps:// for TLS (port 636).
       // Active Directory example: "ldap://ad.university.edu:389"
-      "url": "ldap://ldap.example.com:389",
+      "url": "ldap://localhost:3890",
 
       // Service account used to search the directory (bind DN + password).
       // This account only needs read access to the user tree.
       // Active Directory example: "cn=svc-sage3,ou=ServiceAccounts,dc=university,dc=edu"
       "bindDN": "cn=admin,dc=example,dc=com",
-      "bindCredentials": "password",
+      "bindCredentials": "admin",
 
       // Base DN under which users are searched.
       // Active Directory example: "ou=People,dc=university,dc=edu"
