@@ -38,8 +38,18 @@ function createFakeRedisClient() {
       },
     },
     json: {
-      set: async (key: string, path: string, value: unknown) => {
-        if (path === '.') store.set(key, value);
+      set: async (key: string, path: string, value: unknown, options?: { NX?: true; XX?: true }) => {
+        if (options?.NX && store.has(key)) {
+          return null;
+        }
+        if (path === '.') {
+          store.set(key, value);
+        } else {
+          // Only '$.role' is used for partial updates in this module.
+          const existing = (store.get(key) as Record<string, unknown>) ?? {};
+          const field = path.replace(/^\$\./, '');
+          store.set(key, { ...existing, [field]: value });
+        }
         return 'OK';
       },
       get: async (key: string) => store.get(key) ?? null,
@@ -107,5 +117,71 @@ describe('SBAuthDatabase — CRUD', () => {
 
   it('deleteAuthByEmail returns undefined when no record matches', async () => {
     expect(await db.deleteAuthByEmail('nobody@example.com')).toBeUndefined();
+  });
+});
+
+describe('SBAuthDatabase — role persistence', () => {
+  let db: SBAuthDatabase;
+
+  beforeEach(async () => {
+    db = new SBAuthDatabase();
+    await db.init(createFakeRedisClient() as any, 'test');
+  });
+
+  it('persists role when provided on creation', async () => {
+    const auth = await db.addAuth('ldap', 'uid=alice', { displayName: 'Alice', email: 'alice@example.com', role: 'admin' });
+    expect(auth?.role).toBe('admin');
+  });
+
+  it('omits role when not provided (backward compatible with non-LDAP providers)', async () => {
+    const auth = await db.addAuth('google', 'google-id-10', { displayName: 'Bob', email: 'bob@example.com' });
+    expect(auth?.role).toBeUndefined();
+  });
+
+  it('findOrAddAuth creates a new record with the resolved role on first login', async () => {
+    const auth = await db.findOrAddAuth('ldap', 'uid=alice', { displayName: 'Alice', role: 'admin' });
+    expect(auth?.role).toBe('admin');
+  });
+
+  it('findOrAddAuth re-syncs the persisted role when a later login resolves a different one', async () => {
+    // First login: alice is in the admin group.
+    await db.findOrAddAuth('ldap', 'uid=alice', { displayName: 'Alice', role: 'admin' });
+    // Second login: alice has since been removed from the admin group and now
+    // only matches the default role. This must take effect immediately —
+    // access granted by group membership must also be revoked by it.
+    const auth = await db.findOrAddAuth('ldap', 'uid=alice', { displayName: 'Alice', role: 'spectator' });
+    expect(auth?.role).toBe('spectator');
+  });
+
+  it('findOrAddAuth leaves the role unchanged when the resolved role is the same', async () => {
+    await db.findOrAddAuth('ldap', 'uid=bob', { displayName: 'Bob', role: 'user' });
+    const auth = await db.findOrAddAuth('ldap', 'uid=bob', { displayName: 'Bob', role: 'user' });
+    expect(auth?.role).toBe('user');
+  });
+
+  it('findOrAddAuth does not touch an existing role when no role is supplied (non-LDAP providers)', async () => {
+    await db.addAuth('google', 'google-id-11', { displayName: 'Carol', role: 'admin' });
+    // A provider that never resolves a role (e.g. google) must not silently
+    // wipe out whatever role happened to be there.
+    const auth = await db.findOrAddAuth('google', 'google-id-11', { displayName: 'Carol' });
+    expect(auth?.role).toBe('admin');
+  });
+
+  it('a pre-existing record created before this feature (no role field at all) gets the role backfilled on next login', async () => {
+    await db.addAuth('ldap', 'uid=dave', { displayName: 'Dave' });
+    const auth = await db.findOrAddAuth('ldap', 'uid=dave', { displayName: 'Dave', role: 'user' });
+    expect(auth?.role).toBe('user');
+  });
+
+  it('addAuth does not overwrite a record that already exists (TOCTOU guard)', async () => {
+    // Simulates two concurrent first-time logins for the same identity both
+    // passing findOrAddAuth's readAuth() check before either has written,
+    // and both then calling addAuth. The second call must not silently
+    // overwrite the first's record with a different v4() id.
+    const first = await db.addAuth('ldap', 'uid=eve', { displayName: 'Eve', role: 'user' });
+    const second = await db.addAuth('ldap', 'uid=eve', { displayName: 'Eve', role: 'user' });
+    expect(second?.id).toBe(first?.id);
+    const persisted = await db.readAuth('ldap', 'uid=eve');
+    expect(persisted?.id).toBe(first?.id);
   });
 });

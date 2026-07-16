@@ -825,6 +825,8 @@ for b in bits:
 const GrowingPacker = function () {};
 
 GrowingPacker.prototype = {
+  root: null as any,
+
   fit: function (blocks: any[]) {
     var n,
       node,
@@ -840,7 +842,7 @@ GrowingPacker.prototype = {
     }
   },
 
-  findNode: function (root: any, w: number, h: number) {
+  findNode: function (root: any, w: number, h: number): any {
     if (root.used) return this.findNode(root.right, w, h) || this.findNode(root.down, w, h);
     else if (w <= root.w && h <= root.h) return root;
     else return null;

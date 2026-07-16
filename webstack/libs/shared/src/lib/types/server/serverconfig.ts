@@ -115,8 +115,8 @@ export interface AuthConfiguration {
   sessionMaxAge: number;
   sessionSecret: string;
 
-  // List of login strategies: guest, google, apple, jwt, cilogon, keycloak, spectator
-  strategies: ('google' | 'apple' | 'cilogon' | 'guest' | 'jwt' | 'keycloak' | 'spectator')[];
+  // List of login strategies: guest, google, apple, jwt, cilogon, keycloak, ldap, spectator
+  strategies: ('google' | 'apple' | 'cilogon' | 'guest' | 'jwt' | 'keycloak' | 'ldap' | 'spectator')[];
 
   // Admin users
   admins: string[];
@@ -154,6 +154,23 @@ export interface AuthConfiguration {
     clientSecret?: string;
     routeEndpoint: string;
     callbackURL: string;
+  };
+  // LDAP / Active Directory
+  ldapConfig?: {
+    url: string;
+    bindDN: string;
+    bindCredentials: string;
+    searchBase: string;
+    searchFilter: string;
+    groupMapping: {
+      admin?: string;
+      user?: string;
+      spectator?: string;
+    };
+    defaultRole: string;
+    tlsOptions?: {
+      rejectUnauthorized: boolean;
+    };
   };
 }
 

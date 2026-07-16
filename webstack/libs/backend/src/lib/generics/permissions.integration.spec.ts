@@ -15,8 +15,8 @@
  * action/resource math it delegates to is correct in isolation.
  */
 
-import * as express from 'express';
-import * as request from 'supertest';
+import express from 'express';
+import request from 'supertest';
 import { checkPermissionsREST } from './permissions';
 import { SBAuthSchema } from '@sage3/sagebase';
 

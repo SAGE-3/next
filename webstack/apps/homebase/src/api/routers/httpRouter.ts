@@ -14,7 +14,7 @@
  */
 
 // NPM imports
-import * as express from 'express';
+import express from 'express';
 
 // Asset imports
 

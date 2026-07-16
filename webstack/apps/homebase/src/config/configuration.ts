@@ -11,7 +11,7 @@ import * as fsModule from 'fs';
 const fs = fsModule.promises;
 
 // Get the version from the package file
-import * as packageInfo from 'package.json';
+import packageInfo from '../../../../package.json';
 const { version } = packageInfo;
 
 // Import some definitions for the server

@@ -1,4 +1,3 @@
-
 services:
   redis-server:
     image: "redis/redis-stack-server:latest"
@@ -16,6 +15,8 @@ services:
       - "redis-server"
     ports:
       - "127.0.0.1:3001:3001"
+    environment:
+      - NODE_ENV=production
     volumes:
       - ../webstack/keys:/app/keys
       - ../webstack/sage3-prod.hjson:/app/sage3-prod.hjson
@@ -35,6 +36,8 @@ services:
       - "redis-server"
     ports:
       - "127.0.0.1:3002:3002"
+    environment:
+      - NODE_ENV=production
     volumes:
       - ../webstack/keys:/app/keys
       - ../webstack/assets:/app/assets
@@ -69,6 +72,7 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
+
   fluentd-server:
     image: "fluent/fluentd:edge-debian"
     ports:
@@ -80,6 +84,7 @@ services:
       driver: "json-file"
       options:
         max-size: "10m"
+
   kernelserver:
     image: "ghcr.io/sage-3/sagekernelserver:amd64"
     ports:
@@ -103,6 +108,7 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
+
   jupyter:
     image: "quay.io/jupyter/datascience-notebook:2024-05-27"
     volumes:

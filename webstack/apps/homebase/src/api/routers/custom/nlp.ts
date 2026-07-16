@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import * as express from 'express';
+import express from 'express';
 import { SAGEnlp } from '@sage3/backend';
 
 // FYI: updated to v4 API

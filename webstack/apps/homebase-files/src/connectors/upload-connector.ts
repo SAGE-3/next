@@ -14,8 +14,8 @@
  * @version 1.0.0
  */
 
-import * as express from 'express';
-import * as multer from 'multer';
+import express from 'express';
+import multer from 'multer';
 import { v4 as getUUID } from 'uuid';
 import { parseFileSize, humanFileSize } from '@sage3/shared';
 

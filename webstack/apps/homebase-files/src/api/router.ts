@@ -9,7 +9,7 @@
 import { AssetsCollection } from './assetsCollection';
 import { FilesRouter } from './files';
 // NPM imports
-import * as express from 'express';
+import express from 'express';
 import { MessageCollection } from './messageCollection';
 // SAGEBase Imports
 import { SAGEBase } from '@sage3/sagebase';

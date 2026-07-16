@@ -8,7 +8,7 @@
 
 import { PublicInformation, OpenConfiguration, sanitizeLLMConfiguration } from '@sage3/shared/types';
 import { SBAuthSchema } from '@sage3/sagebase';
-import * as express from 'express';
+import express from 'express';
 import { createClient } from 'redis';
 import { config } from '../../../config';
 

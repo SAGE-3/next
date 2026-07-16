@@ -35,6 +35,9 @@ describeIfRedis('SBAuthDatabase — integration (real Redis Stack)', () => {
 
   beforeAll(async () => {
     redisClient = createClient({ url: REDIS_URL });
+    redisClient.on('error', () => {
+      /* ignore socket errors emitted during teardown */
+    });
     await redisClient.connect();
     db = new SBAuthDatabase();
     await db.init(redisClient as unknown as RedisClientType, prefix);
@@ -43,6 +46,16 @@ describeIfRedis('SBAuthDatabase — integration (real Redis Stack)', () => {
   afterAll(async () => {
     const keys = await redisClient.keys(`${prefix}:DB:*`);
     if (keys.length) await redisClient.del(keys);
+    // db.init() duplicates the client into a second connection it never
+    // exposes; close it too, or the jest worker is left with an open handle
+    // and crashes on an unhandled socket 'error' at exit.
+    const duplicated = (db as unknown as { _redisClient?: RedisClientType })._redisClient;
+    if (duplicated) {
+      duplicated.on('error', () => {
+        /* ignore socket errors emitted during teardown */
+      });
+      if (duplicated.isOpen) await duplicated.quit();
+    }
     await redisClient.quit();
   });
 

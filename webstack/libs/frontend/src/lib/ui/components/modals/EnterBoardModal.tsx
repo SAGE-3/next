@@ -23,7 +23,7 @@ import {
 } from '@chakra-ui/react';
 import { v5 as uuidv5 } from 'uuid';
 
-import { useRouteNav } from 'libs/frontend/src/lib/hooks';
+import { useRouteNav } from '../../../hooks';
 
 import { timeout } from '../../../utils';
 import { Board } from '@sage3/shared/types';

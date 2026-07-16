@@ -6,8 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import * as express from 'express';
-import { config } from 'apps/homebase/src/config';
+import express from 'express';
+import { config } from '../../../config';
 
 import {
   SError,

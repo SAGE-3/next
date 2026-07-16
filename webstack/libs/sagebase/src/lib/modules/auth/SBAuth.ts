@@ -10,7 +10,7 @@ import { RedisClientType } from 'redis';
 import RedisStore from 'connect-redis';
 
 import { Express, NextFunction, Request, Response } from 'express';
-import * as session from 'express-session';
+import session from 'express-session';
 import * as passport from 'passport';
 
 import { SBAuthDatabase, SBAuthDB, SBAuthSchema } from './SBAuthDatabase';
@@ -31,12 +31,14 @@ import {
   SBAuthSpectatorConfig,
   passportKeycloakSetup,
   SBAuthKeycloakConfig,
+  passportLDAPSetup,
+  SBAuthLDAPConfig,
 } from './adapters/';
 
 export type SBAuthConfig = {
   sessionMaxAge: number;
   sessionSecret: string;
-  strategies: ('google' | 'apple' | 'cilogon' | 'guest' | 'jwt' | 'spectator' | 'keycloak')[];
+  strategies: ('google' | 'apple' | 'cilogon' | 'guest' | 'jwt' | 'spectator' | 'keycloak' | 'ldap')[];
   production: boolean;
   googleConfig?: SBAuthGoogleConfig;
   appleConfig?: SBAuthAppleConfig;
@@ -45,7 +47,35 @@ export type SBAuthConfig = {
   cilogonConfig?: SBAuthCILogonConfig;
   spectatorConfig?: SBAuthSpectatorConfig;
   keycloakConfig?: SBAuthKeycloakConfig;
+  ldapConfig?: SBAuthLDAPConfig;
 };
+
+type LdapAuthenticator = { authenticate: typeof passport.authenticate };
+
+/**
+ * Route handler for POST /auth/ldap. Exported standalone (rather than
+ * defined inline where it's registered) so it can be tested directly
+ * against a real Express app via supertest.
+ */
+export function makeLdapAuthHandler(passportInstance: LdapAuthenticator) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    passportInstance.authenticate('ldapauth', (err: Error | null, user: Express.User | false) => {
+      // ldapauth-fork can emit a late connection 'error' after we've already
+      // responded (e.g. on connection teardown), which re-invokes this callback.
+      // Guard against a double response that otherwise throws
+      // "Cannot set headers after they are sent to the client".
+      if (res.headersSent) return;
+      if (err || !user) {
+        return res.redirect('/?error=ldap_failed');
+      }
+      req.logIn(user, (loginErr: Error) => {
+        if (res.headersSent) return;
+        if (loginErr) return next(loginErr);
+        return res.redirect('/');
+      });
+    })(req, res, next);
+  };
+}
 
 /**
  * The SBAuth instance.
@@ -243,6 +273,16 @@ export class SBAuth {
             }),
           );
           express.get(config.keycloakConfig.callbackURL, this.createOAuthCallbackHandler('keycloak', 'keycloak'));
+        }
+      }
+
+      // LDAP / Active Directory Setup
+      if (config.strategies.includes('ldap') && config.ldapConfig) {
+        const ready = passportLDAPSetup(config.ldapConfig);
+        if (ready) {
+          express.post('/auth/ldap', makeLdapAuthHandler(passport));
+        } else {
+          console.error('LDAP> Setup failed — /auth/ldap will not be registered. Check ldapConfig in the server config.');
         }
       }
     }
