@@ -83,6 +83,14 @@ export interface ServerConfiguration {
   // a compromise of one doesn't automatically expose the other.
   secretsEncryptionKey: string;
 
+  // SSH Terminal app configuration. `allowedHosts` is the allow-list of hosts the
+  // app may dial — entries are `host` (any port) or `host:port`. An empty or
+  // missing list denies every connection (secure-by-default): SSH access must be
+  // explicitly opted into per deployment.
+  sshTerminal?: {
+    allowedHosts: string[];
+  };
+
   // Namespace for signing uuid v5 keys
   namespace: string;
 }

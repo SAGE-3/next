@@ -8,3 +8,4 @@
 
 export * from './SAGECollection';
 export * from './SAGERouter';
+export * from './sshTypes';
