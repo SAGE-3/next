@@ -15,3 +15,4 @@ export * from './presencethrottle';
 export * from './kernels';
 export * from './ai/agent-router';
 export * from './credentials';
+export * from './integrations/ssh';
