@@ -677,9 +677,11 @@ function AppComponent(props: App): JSX.Element {
       setGeneratingImageNodeId(nodeId);
       try {
         const dataUrl = await generateNodeImage(node.Title, node.Summary, node.Keywords, s.apiKey, s.prompt, node.Dimension);
-        // Upload to SAGE3 assets to avoid storing a ~1MB base64 string in app state
         const blob = await fetch(dataUrl).then((r) => r.blob());
-        const imgFile = new File([blob], `idea-${nodeId}.png`, { type: 'image/png' });
+        // Filename encodes idea title + problem space so it's identifiable in the Assets panel
+        const safeTitle = node.Title.replace(/[^a-zA-Z0-9\s-]/g, '').trim().slice(0, 40);
+        const safePrompt = s.prompt.replace(/[^a-zA-Z0-9\s-]/g, '').trim().slice(0, 40);
+        const imgFile = new File([blob], `${safeTitle} - ${safePrompt}.png`, { type: 'image/png' });
         const fd = new FormData();
         fd.append('files', imgFile);
         fd.append('room', props.data.roomId);
@@ -690,6 +692,20 @@ function AppComponent(props: App): JSX.Element {
         if (!assetDbId) throw new Error('No asset ID returned from upload');
         // Store the DB id — localNodes resolves it to a URL via useAssetStore
         updateState(props._id, { nodeImages: { ...(s.nodeImages ?? {}), [nodeId]: assetDbId } });
+        // Open the image as an ImageViewer app on the board, labelled with idea + problem space
+        await createApp({
+          title: `${node.Title} — ${s.prompt}`.slice(0, 100),
+          roomId: props.data.roomId,
+          boardId: props.data.boardId,
+          position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+          size: { width: 512, height: 512, depth: 0 },
+          rotation: { x: 0, y: 0, z: 0 },
+          type: 'ImageViewer',
+          state: { assetid: assetDbId },
+          raised: true,
+          dragging: false,
+          pinned: false,
+        });
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         toast({ title: 'Image generation failed', description: msg, status: 'error', duration: 4000, isClosable: true });
@@ -697,7 +713,7 @@ function AppComponent(props: App): JSX.Element {
         setGeneratingImageNodeId(null);
       }
     },
-    [s, localNodes, activeEntryId, generatingImageNodeId, props._id, props.data.roomId],
+    [s, localNodes, activeEntryId, generatingImageNodeId, props._id, props.data.roomId, props.data.boardId, props.data.position, props.data.size, createApp],
   );
 
   const summarizeFavorites = useCallback(async () => {
