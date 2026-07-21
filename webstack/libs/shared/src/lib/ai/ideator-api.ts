@@ -81,6 +81,7 @@ export type IdeatorImageRequest = {
   model: string;
   brainstormingPrompt?: string;
   dimension?: { categorical: Record<string, string>; ordinal: Record<string, string> };
+  additionalContext?: string;
 };
 
 export type IdeatorImageResponse = {

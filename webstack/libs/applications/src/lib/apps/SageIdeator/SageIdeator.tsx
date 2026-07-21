@@ -13,7 +13,7 @@ import { format } from 'date-fns/format';
 import { Flex, Box, Button, IconButton, Tooltip, useToast, useColorModeValue } from '@chakra-ui/react';
 import { MdFileDownload, MdChat, MdChevronLeft, MdChevronRight } from 'react-icons/md';
 
-import { useAppStore, useHexColor, useUser, downloadFile, apiUrls, useAssetStore } from '@sage3/frontend';
+import { useAppStore, useHexColor, useUser, downloadFile, apiUrls, useAssetStore, useLinkStore } from '@sage3/frontend';
 import { genId } from '@sage3/shared';
 
 import { App } from '../../schema';
@@ -118,6 +118,7 @@ function AppComponent(props: App): JSX.Element {
   const updateApp = useAppStore((state) => state.update);
   const createApp = useAppStore((state) => state.create);
   const boardApps = useAppStore((s) => s.apps);
+  const addLink = useLinkStore((s) => s.addLink);
   const toast = useToast();
 
   // Theme
@@ -153,6 +154,7 @@ function AppComponent(props: App): JSX.Element {
   // Refs shared with VisualizationCanvas
   const positionsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
   const hasFitRef = useRef(false);
+  const imageAbortRef = useRef<AbortController | null>(null);
 
   // Stickie drag-to-import state
   const [pendingImport, setPendingImport] = useState<{
@@ -670,51 +672,162 @@ function AppComponent(props: App): JSX.Element {
   );
 
   const generateImageForNode = useCallback(
-    async (nodeId: string) => {
+    async (nodeId: string, context?: string, count = 1) => {
       if (generatingImageNodeId || !activeEntryId) return;
       const node = localNodes.find((n) => n.ID === nodeId);
       if (!node) return;
+      const controller = new AbortController();
+      imageAbortRef.current = controller;
       setGeneratingImageNodeId(nodeId);
       try {
-        const dataUrl = await generateNodeImage(node.Title, node.Summary, node.Keywords, s.apiKey, s.prompt, node.Dimension);
-        const blob = await fetch(dataUrl).then((r) => r.blob());
-        // Filename encodes idea title + problem space so it's identifiable in the Assets panel
+        // ── 1. Find or create anchor Stickie ─────────────────────────────
+        const liveApps = useAppStore.getState().apps;
+        const existingStickieId = s.nodeStickies?.[nodeId];
+        let stickieApp = existingStickieId
+          ? liveApps.find((a) => a._id === existingStickieId) ?? null
+          : null;
+
+        if (!stickieApp) {
+          stickieApp = liveApps.find(
+            (a) =>
+              a.data.type === 'Stickie' &&
+              a.data.boardId === props.data.boardId &&
+              (a.data.state as { text?: string }).text?.startsWith(node.Title)
+          ) ?? null;
+        }
+
+        let stickieId: string;
+        let stickiePosition: { x: number; y: number; z: number };
+        let stickieSize: { width: number; height: number; depth: number };
+
+        if (stickieApp) {
+          stickieId = stickieApp._id;
+          stickiePosition = stickieApp.data.position;
+          stickieSize = stickieApp.data.size;
+        } else {
+          const stickieResult = await createApp({
+            title: node.Title,
+            roomId: props.data.roomId,
+            boardId: props.data.boardId,
+            position: { x: props.data.position.x, y: props.data.position.y - 260, z: 0 },
+            size: { width: 320, height: 200, depth: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            type: 'Stickie',
+            state: {
+              text: `${node.Title}\n\n${node.Summary}`,
+              fontSize: 18,
+              color: 'purple',
+              lock: false,
+              sources: [props._id],
+              executeInfo: { executeFunc: '', params: {} },
+            },
+            raised: true,
+            dragging: false,
+            pinned: false,
+          });
+          stickieId = stickieResult?.data?._id ?? '';
+          stickiePosition = { x: props.data.position.x, y: props.data.position.y - 260, z: 0 };
+          stickieSize = { width: 320, height: 200, depth: 0 };
+        }
+
+        // ── 2. Count existing visualizations to offset placement ──────────
+        const existingVizCount = liveApps.filter(
+          (a) =>
+            a.data.type === 'ImageViewer' &&
+            a.data.boardId === props.data.boardId &&
+            a.data.title.startsWith(node.Title)
+        ).length;
+
+        // ── 3. Generate all variations in parallel ────────────────────────
         const safeTitle = node.Title.replace(/[^a-zA-Z0-9\s-]/g, '').trim().slice(0, 40);
         const safePrompt = s.prompt.replace(/[^a-zA-Z0-9\s-]/g, '').trim().slice(0, 40);
-        const imgFile = new File([blob], `${safeTitle} - ${safePrompt}.png`, { type: 'image/png' });
-        const fd = new FormData();
-        fd.append('files', imgFile);
-        fd.append('room', props.data.roomId);
-        const uploadRes = await fetch(apiUrls.assets.upload, { method: 'POST', body: fd, credentials: 'include' });
-        if (!uploadRes.ok) throw new Error('Asset upload failed');
-        const uploadedIds = await uploadRes.json() as string[];
-        const assetDbId = uploadedIds[0];
-        if (!assetDbId) throw new Error('No asset ID returned from upload');
-        // Store the DB id — localNodes resolves it to a URL via useAssetStore
-        updateState(props._id, { nodeImages: { ...(s.nodeImages ?? {}), [nodeId]: assetDbId } });
-        // Open the image as an ImageViewer app on the board, labelled with idea + problem space
-        await createApp({
-          title: `${node.Title} — ${s.prompt}`.slice(0, 100),
-          roomId: props.data.roomId,
-          boardId: props.data.boardId,
-          position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
-          size: { width: 512, height: 512, depth: 0 },
-          rotation: { x: 0, y: 0, z: 0 },
-          type: 'ImageViewer',
-          state: { assetid: assetDbId },
-          raised: true,
-          dragging: false,
-          pinned: false,
-        });
+        const imgSize = 512;
+        const gap = 20;
+
+        const results = await Promise.allSettled(
+          Array.from({ length: count }, () =>
+            generateNodeImage(node.Title, node.Summary, node.Keywords, s.apiKey, s.prompt, node.Dimension, controller.signal, context)
+          )
+        );
+
+        // ── 4. Upload and place each successful result ────────────────────
+        let placedCount = 0;
+        let lastAssetId: string | null = null;
+        for (const result of results) {
+          if (result.status === 'rejected') {
+            const msg = result.reason instanceof Error ? result.reason.message : String(result.reason);
+            if (msg !== 'Cancelled') {
+              toast({ title: 'One variation failed', description: msg, status: 'warning', duration: 3000, isClosable: true });
+            }
+            continue;
+          }
+
+          const blob = await fetch(result.value).then((r) => r.blob());
+          const variantSuffix = count > 1 ? ` v${existingVizCount + placedCount + 1}` : '';
+          const imgFile = new File([blob], `${safeTitle} - ${safePrompt}${variantSuffix}.png`, { type: 'image/png' });
+          const fd = new FormData();
+          fd.append('files', imgFile);
+          fd.append('room', props.data.roomId);
+          const uploadRes = await fetch(apiUrls.assets.upload, { method: 'POST', body: fd, credentials: 'include' });
+          if (!uploadRes.ok) {
+            toast({ title: 'Upload failed', status: 'warning', duration: 3000, isClosable: true });
+            continue;
+          }
+          const uploadedIds = await uploadRes.json() as string[];
+          const assetDbId = uploadedIds[0];
+          if (!assetDbId) continue;
+          lastAssetId = assetDbId;
+
+          const imageResult = await createApp({
+            title: `${node.Title}${variantSuffix} — ${s.prompt}`.slice(0, 100),
+            roomId: props.data.roomId,
+            boardId: props.data.boardId,
+            position: {
+              x: stickiePosition.x + stickieSize.width + gap + (existingVizCount + placedCount) * (imgSize + gap),
+              y: stickiePosition.y,
+              z: 0,
+            },
+            size: { width: imgSize, height: imgSize, depth: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            type: 'ImageViewer',
+            state: { assetid: assetDbId },
+            raised: true,
+            dragging: false,
+            pinned: false,
+          });
+
+          const imageViewerId = imageResult?.data?._id;
+          if (stickieId && imageViewerId) {
+            addLink(stickieId, imageViewerId, props.data.boardId, 'provenance');
+          }
+          placedCount++;
+        }
+
+        // ── 5. Persist stickie + most recent asset ID in state ────────────
+        if (placedCount > 0 && lastAssetId) {
+          updateState(props._id, {
+            nodeImages: { ...(s.nodeImages ?? {}), [nodeId]: lastAssetId },
+            nodeStickies: { ...(s.nodeStickies ?? {}), [nodeId]: stickieId },
+          });
+        }
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
-        toast({ title: 'Image generation failed', description: msg, status: 'error', duration: 4000, isClosable: true });
+        if (msg !== 'Cancelled') {
+          toast({ title: 'Visualization failed', description: msg, status: 'error', duration: 4000, isClosable: true });
+        }
       } finally {
+        imageAbortRef.current = null;
         setGeneratingImageNodeId(null);
       }
     },
-    [s, localNodes, activeEntryId, generatingImageNodeId, props._id, props.data.roomId, props.data.boardId, props.data.position, props.data.size, createApp],
+    [s, localNodes, activeEntryId, generatingImageNodeId, props._id, props.data, boardApps, createApp, addLink],
   );
+
+  const cancelImageGeneration = useCallback(() => {
+    imageAbortRef.current?.abort();
+    imageAbortRef.current = null;
+    setGeneratingImageNodeId(null);
+  }, []);
 
   const summarizeFavorites = useCallback(async () => {
     const favNodes = localNodes.filter((n) => n.IsMyFav);
@@ -983,6 +1096,7 @@ function AppComponent(props: App): JSX.Element {
           onSummarizeFavorites={summarizeFavorites}
           isSummarizing={isSummarizing}
           onGenerateImage={generateImageForNode}
+          onCancelImageGeneration={cancelImageGeneration}
           generatingImageNodeId={generatingImageNodeId}
           onReroll={rerollNode}
           rerollingNodeId={rerollingNodeId}

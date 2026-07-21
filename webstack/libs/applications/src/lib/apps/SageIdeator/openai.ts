@@ -89,8 +89,10 @@ export async function generateNodeImage(
   _apiKey: string,
   brainstormingPrompt?: string,
   dimension?: { categorical: Record<string, string>; ordinal: Record<string, string> },
+  signal?: AbortSignal,
+  additionalContext?: string,
 ): Promise<string> {
-  const result = await seerIdeator.image({ title, summary, keywords, model: 'openai', brainstormingPrompt, dimension });
+  const result = await seerIdeator.image({ title, summary, keywords, model: 'openai', brainstormingPrompt, dimension, additionalContext }, signal);
   if (isSError(result)) throw new Error(result.message);
   return result.imageUrl;
 }

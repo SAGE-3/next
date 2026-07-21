@@ -259,11 +259,13 @@ class IdeatorAgent:
             if dim_entries
             else ""
         )
+        context_line = f"Additional context: {req.additionalContext}. " if req.additionalContext else ""
         prompt = (
             topic_line
             + f'The idea is titled "{req.title}" — {req.summary} '
             + dim_line
             + f"Visual themes: {', '.join(req.keywords)}. "
+            + context_line
             + "Abstract, minimal, clean design. No text, labels, or words."
         )
         self.logger.info(f"IdeatorAgent.image: prompt length={len(prompt)}, prompt={prompt[:200]}")
