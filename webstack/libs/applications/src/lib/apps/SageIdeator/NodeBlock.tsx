@@ -6,6 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { useState } from 'react';
 import {
   Box,
   Text,
@@ -24,6 +25,9 @@ import {
   ModalBody,
   ModalCloseButton,
   useDisclosure,
+  useColorModeValue,
+  Textarea,
+  Button,
 } from '@chakra-ui/react';
 
 import { MdAltRoute, MdQuestionAnswer, MdImage, MdRefresh } from 'react-icons/md';
@@ -48,7 +52,8 @@ export interface NodeBlockProps {
   onFocus: () => void;
   onBranch: () => void;
   onSelectQA: () => void;
-  onGenerateImage: () => void;
+  onGenerateImage: (context?: string, count?: number, presetLabel?: string, userContext?: string) => void;
+  onCancelGeneration: () => void;
   isGeneratingImage: boolean;
   onReroll: () => void;
   isRerolling: boolean;
@@ -175,6 +180,7 @@ export function NodeBlock({
   onBranch,
   onSelectQA,
   onGenerateImage,
+  onCancelGeneration,
   isGeneratingImage,
   onReroll,
   isRerolling,
@@ -184,6 +190,138 @@ export function NodeBlock({
 
   const bg = hexToRgba(color, isHovered || node.IsMyFav || isSelectedQA ? 1 : 0.82);
   const ring = isSelectedQA ? '0 0 0 2.5px teal, 0 0 8px rgba(0,128,128,0.4)' : isHovered ? '0 0 0 2.5px rgba(0,0,0,0.75)' : 'none';
+
+  const { isOpen: isContextOpen, onOpen: onContextOpen, onClose: onContextClose } = useDisclosure();
+  const [visualizeContext, setVisualizeContext] = useState('');
+  const [variationCount, setVariationCount] = useState(1);
+  const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
+  const textareaColor = useColorModeValue('gray.800', 'whiteAlpha.900');
+  const textareaBg = useColorModeValue('white', 'whiteAlpha.100');
+  const placeholderColor = useColorModeValue('gray.400', 'whiteAlpha.400');
+  const variantBtnActive = useColorModeValue('blue.500', 'blue.300');
+  const variantBtnInactive = useColorModeValue('gray.200', 'whiteAlpha.200');
+  const variantTextActive = useColorModeValue('white', 'gray.900');
+  const variantTextInactive = useColorModeValue('gray.700', 'whiteAlpha.800');
+  const presetActiveBg = useColorModeValue('gray.700', 'whiteAlpha.300');
+  const presetInactiveBg = useColorModeValue('gray.100', 'whiteAlpha.100');
+  const presetActiveColor = useColorModeValue('white', 'whiteAlpha.900');
+  const presetInactiveColor = useColorModeValue('gray.600', 'whiteAlpha.600');
+
+  const PRESETS: { label: string; directive: string; tooltip: string }[] = [
+    {
+      label: 'Realistic',
+      directive: 'photorealistic rendering, natural lighting, detailed textures, true to life',
+      tooltip: 'Grounds the idea in concrete visual reality to help evaluate how it might look in the real world.',
+    },
+    {
+      label: 'Sketch',
+      directive: 'hand-drawn pencil sketch, rough lines, minimal shading, unfinished feel',
+      tooltip: 'Signals that the idea is still in progress and invites teams to build on or critique it freely.',
+    },
+    {
+      label: 'Technical',
+      directive: 'technical schematic, white lines on dark background, flow diagrams, engineering drawing style',
+      tooltip: 'Shifts attention from how the idea looks to how it works, useful for systems and processes.',
+    },
+  ];
+
+  const contextModal = (
+    <Modal isOpen={isContextOpen} onClose={onContextClose} size="sm" isCentered>
+      <ModalOverlay />
+      <ModalContent>
+        <ModalCloseButton />
+        <ModalBody py={5}>
+          <VStack spacing={3} align="stretch">
+            <Box>
+              <Text fontSize="sm" fontWeight="700" mb={0.5}>Visualize: {node.Title}</Text>
+              <Text fontSize="xs" color="gray.500">
+                Add more details about visualization in the textbox below if needed, then press Generate.
+              </Text>
+            </Box>
+            <Box>
+              <Text fontSize="xs" fontWeight="600" color="gray.500" mb={1}>Style Preset</Text>
+              <HStack spacing={2}>
+              {PRESETS.map((preset) => {
+                const isActive = selectedPreset === preset.label;
+                return (
+                  <Tooltip key={preset.label} label={preset.tooltip} placement="top" hasArrow openDelay={300} fontSize="xs">
+                    <Box
+                      as="button"
+                      px={3}
+                      py={1}
+                      borderRadius="full"
+                      fontSize="xs"
+                      fontWeight="600"
+                      bg={isActive ? presetActiveBg : presetInactiveBg}
+                      color={isActive ? presetActiveColor : presetInactiveColor}
+                      onClick={() => setSelectedPreset(isActive ? null : preset.label)}
+                      transition="all 0.15s"
+                      _hover={{ opacity: 0.8 }}
+                    >
+                      {preset.label}
+                    </Box>
+                  </Tooltip>
+                );
+              })}
+              </HStack>
+            </Box>
+            <Textarea
+              placeholder="Optional: add more details about style, mood, or focus…"
+              value={visualizeContext}
+              onChange={(e) => setVisualizeContext(e.target.value)}
+              size="sm"
+              rows={3}
+              resize="vertical"
+              color={textareaColor}
+              bg={textareaBg}
+              _placeholder={{ color: placeholderColor }}
+            />
+            <HStack spacing={2} align="center">
+              <Text fontSize="xs" color="gray.500" flexShrink={0}>Variations</Text>
+              <HStack spacing={1}>
+                {[1, 2, 3].map((n) => (
+                  <Box
+                    key={n}
+                    as="button"
+                    w="24px"
+                    h="24px"
+                    borderRadius="md"
+                    fontSize="xs"
+                    fontWeight="600"
+                    bg={variationCount === n ? variantBtnActive : variantBtnInactive}
+                    color={variationCount === n ? variantTextActive : variantTextInactive}
+                    onClick={() => setVariationCount(n)}
+                    transition="all 0.15s"
+                    _hover={{ opacity: 0.85 }}
+                  >
+                    {n}
+                  </Box>
+                ))}
+              </HStack>
+              <Box flex={1} />
+              <Button size="sm" variant="ghost" onClick={onContextClose}>Cancel</Button>
+              <Button
+                size="sm"
+                colorScheme="blue"
+                onClick={() => {
+                  const preset = PRESETS.find((p) => p.label === selectedPreset);
+                  const userText = visualizeContext.trim();
+                  const combined = [preset?.directive, userText].filter(Boolean).join('. ');
+                  onContextClose();
+                  onGenerateImage(combined || undefined, variationCount, selectedPreset || undefined, userText || undefined);
+                  setVisualizeContext('');
+                  setVariationCount(1);
+                  setSelectedPreset(null);
+                }}
+              >
+                Generate
+              </Button>
+            </HStack>
+          </VStack>
+        </ModalBody>
+      </ModalContent>
+    </Modal>
+  );
 
   const onDragStart = (e: React.DragEvent) => {
     e.dataTransfer.clearData();
@@ -291,6 +429,7 @@ export function NodeBlock({
   // ── Level 4: title + summary + steps + attributes ─────────────────
   if (zoom < 10) {
     return (
+      <>
       <Box position="relative" display="inline-block">
         {node.IsMyFav && <FavBadge size={18} offset={-7} />}
         <Box bg={bg} borderRadius="md" w={w(240)} boxShadow={ring || 'lg'} cursor="default" overflow="hidden">
@@ -404,30 +543,36 @@ export function NodeBlock({
                 color={isSelectedQA ? 'teal.500' : 'black'}
               />
             </Tooltip>
-            {/* <Tooltip label={node.imageUrl ? 'Regenerate image' : 'Generate image'} placement="bottom" hasArrow openDelay={300}>
+            <Tooltip label={isGeneratingImage ? 'Cancel visualization' : 'Visualize'} placement="bottom" hasArrow openDelay={300}>
               <IconButton
-                aria-label="Generate image"
+                aria-label={isGeneratingImage ? 'Cancel visualization' : 'Visualize'}
                 size="xs"
                 variant="ghost"
                 icon={isGeneratingImage ? <Spinner size="xs" /> : <MdImage />}
                 onClick={(e) => {
                   e.stopPropagation();
-                  onGenerateImage();
+                  if (isGeneratingImage) {
+                    onCancelGeneration();
+                  } else {
+                    onContextOpen();
+                  }
                 }}
                 h="18px"
                 minW="18px"
-                color={node.imageUrl ? 'blue.500' : 'black'}
-                isDisabled={isGeneratingImage}
+                color={isGeneratingImage ? 'red.400' : node.imageUrl ? 'blue.500' : 'black'}
               />
-            </Tooltip> */}
+            </Tooltip>
           </HStack>
         </Box>
       </Box>
+      {contextModal}
+    </>
     );
   }
 
   // ── Level 5: full prose + attributes ──────────────────────────────
   return (
+    <>
     <Box position="relative" display="inline-block">
       {node.IsMyFav && <FavBadge size={18} offset={-7} />}
       <Box bg={bg} borderRadius="md" w={w(295)} boxShadow={ring || 'xl'} cursor="default" overflow="hidden">
@@ -516,24 +661,29 @@ export function NodeBlock({
               color={isSelectedQA ? 'teal.500' : 'black'}
             />
           </Tooltip>
-          {/* <Tooltip label={node.imageUrl ? 'Regenerate image' : 'Generate image'} placement="bottom" hasArrow openDelay={300}>
+          <Tooltip label={isGeneratingImage ? 'Cancel visualization' : 'Visualize'} placement="bottom" hasArrow openDelay={300}>
             <IconButton
-              aria-label="Generate image"
+              aria-label={isGeneratingImage ? 'Cancel visualization' : 'Visualize'}
               size="xs"
               variant="ghost"
               icon={isGeneratingImage ? <Spinner size="xs" /> : <MdImage />}
               onClick={(e) => {
                 e.stopPropagation();
-                onGenerateImage();
+                if (isGeneratingImage) {
+                  onCancelGeneration();
+                } else {
+                  onContextOpen();
+                }
               }}
               h="20px"
               minW="20px"
-              color={node.imageUrl ? 'blue.500' : 'black'}
-              isDisabled={isGeneratingImage}
+              color={isGeneratingImage ? 'red.400' : node.imageUrl ? 'blue.500' : 'black'}
             />
-          </Tooltip> */}
+          </Tooltip>
         </HStack>
       </Box>
     </Box>
+    {contextModal}
+  </>
   );
 }

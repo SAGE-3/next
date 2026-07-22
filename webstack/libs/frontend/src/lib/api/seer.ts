@@ -45,10 +45,13 @@ import {
 const AGENT_TIMEOUT_MS = 120 * 1000;
 const IDEATOR_TIMEOUT_MS = 60 * 1000;
 
-async function agentPost<T>(path: string, data: object, timeoutMs = AGENT_TIMEOUT_MS): Promise<T | SError> {
+async function agentPost<T>(path: string, data: object, timeoutMs = AGENT_TIMEOUT_MS, signal?: AbortSignal): Promise<T | SError> {
   try {
-    return await ky.post<T>(path, { json: data, timeout: timeoutMs }).json();
+    return await ky.post<T>(path, { json: data, timeout: timeoutMs, signal }).json();
   } catch (e) {
+    if (e instanceof Error && e.name === 'AbortError') {
+      return { message: 'Cancelled' };
+    }
     const error = e as HTTPError<Response>;
     if (error.name === 'HTTPError') {
       const err: SError = await error.response.json();
@@ -125,11 +128,12 @@ export const seerIdeator = {
       data,
       IDEATOR_TIMEOUT_MS
     ),
-  image: (data: IdeatorImageRequest) =>
+  image: (data: IdeatorImageRequest, signal?: AbortSignal) =>
     agentPost<IdeatorImageResponse>(
       `${apiUrls.ai.ideator.base}${IdeatorRoutes.image}`,
       data,
-      IDEATOR_TIMEOUT_MS
+      IDEATOR_TIMEOUT_MS,
+      signal,
     ),
   prose: (data: IdeatorProseRequest) =>
     agentPost<IdeatorProseResponse>(

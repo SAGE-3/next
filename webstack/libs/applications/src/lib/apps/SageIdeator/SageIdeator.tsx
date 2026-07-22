@@ -672,7 +672,7 @@ function AppComponent(props: App): JSX.Element {
   );
 
   const generateImageForNode = useCallback(
-    async (nodeId: string, context?: string, count = 1) => {
+    async (nodeId: string, context?: string, count = 1, presetLabel?: string, userContext?: string) => {
       if (generatingImageNodeId || !activeEntryId) return;
       const node = localNodes.find((n) => n.ID === nodeId);
       if (!node) return;
@@ -753,6 +753,7 @@ function AppComponent(props: App): JSX.Element {
         // ── 4. Upload and place each successful result ────────────────────
         let placedCount = 0;
         let lastAssetId: string | null = null;
+
         for (const result of results) {
           if (result.status === 'rejected') {
             const msg = result.reason instanceof Error ? result.reason.message : String(result.reason);
@@ -762,9 +763,10 @@ function AppComponent(props: App): JSX.Element {
             continue;
           }
 
+          const iteration = existingVizCount + placedCount + 1;
           const blob = await fetch(result.value).then((r) => r.blob());
-          const variantSuffix = count > 1 ? ` v${existingVizCount + placedCount + 1}` : '';
-          const imgFile = new File([blob], `${safeTitle} - ${safePrompt}${variantSuffix}.png`, { type: 'image/png' });
+          const variantSuffix = ` v${iteration}`;
+          const imgFile = new File([blob], `${safeTitle}${variantSuffix} - ${safePrompt}.png`, { type: 'image/png' });
           const fd = new FormData();
           fd.append('files', imgFile);
           fd.append('room', props.data.roomId);
@@ -778,8 +780,14 @@ function AppComponent(props: App): JSX.Element {
           if (!assetDbId) continue;
           lastAssetId = assetDbId;
 
+          // Build ImageViewer title
+          const titleParts = [`${node.Title} v${iteration}`];
+          if (presetLabel) titleParts.push(presetLabel);
+          if (userContext) titleParts.push(`"${userContext.slice(0, 30)}"`);
+          const imageTitle = `${titleParts.join(' · ')} — ${s.prompt}`.slice(0, 100);
+
           const imageResult = await createApp({
-            title: `${node.Title}${variantSuffix} — ${s.prompt}`.slice(0, 100),
+            title: imageTitle,
             roomId: props.data.roomId,
             boardId: props.data.boardId,
             position: {
@@ -797,9 +805,44 @@ function AppComponent(props: App): JSX.Element {
           });
 
           const imageViewerId = imageResult?.data?._id;
-          if (stickieId && imageViewerId) {
-            addLink(stickieId, imageViewerId, props.data.boardId, 'provenance');
+
+          // ── Create info Stickie and link ──
+          const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          const provenanceLines = [`Iteration: v${iteration}`, `Prompt: ${s.prompt}`];
+          if (presetLabel) provenanceLines.push(`Style: ${presetLabel}`);
+          if (userContext) provenanceLines.push(`Context: "${userContext}"`);
+          provenanceLines.push(`Generated: ${time}`);
+
+          const imgX = stickiePosition.x + stickieSize.width + gap + (existingVizCount + placedCount) * (imgSize + gap);
+          const provenanceResult = await createApp({
+            title: `${node.Title} v${iteration} — provenance`,
+            roomId: props.data.roomId,
+            boardId: props.data.boardId,
+            position: { x: imgX, y: stickiePosition.y + imgSize + gap, z: 0 },
+            size: { width: imgSize, height: 160, depth: 0 },
+            rotation: { x: 0, y: 0, z: 0 },
+            type: 'Stickie',
+            state: {
+              text: provenanceLines.join('\n'),
+              fontSize: 16,
+              color: 'yellow',
+              lock: false,
+              sources: [],
+              executeInfo: { executeFunc: '', params: {} },
+            },
+            raised: true,
+            dragging: false,
+            pinned: false,
+          });
+
+          const provenanceId = provenanceResult?.data?._id;
+          if (stickieId && provenanceId) {
+            addLink(stickieId, provenanceId, props.data.boardId, 'provenance');
           }
+          if (provenanceId && imageViewerId) {
+            addLink(provenanceId, imageViewerId, props.data.boardId, 'provenance');
+          }
+
           placedCount++;
         }
 

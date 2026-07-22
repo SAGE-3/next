@@ -107,7 +107,7 @@ interface VisualizationCanvasProps {
   onBranchFavorites: () => void;
   onSummarizeFavorites: () => void;
   isSummarizing: boolean;
-  onGenerateImage: (nodeId: string, context?: string, count?: number) => void;
+  onGenerateImage: (nodeId: string, context?: string, count?: number, presetLabel?: string, userContext?: string) => void;
   onCancelImageGeneration: () => void;
   generatingImageNodeId: string | null;
   onReroll: (nodeId: string) => void;
@@ -713,7 +713,7 @@ export function VisualizationCanvas({
                   }}
                   onBranch={() => onBranch(node)}
                   onSelectQA={() => onSelectQA(node.ID)}
-                  onGenerateImage={(context, count) => onGenerateImage(node.ID, context, count)}
+                  onGenerateImage={(context, count, presetLabel, userContext) => onGenerateImage(node.ID, context, count, presetLabel, userContext)}
                   onCancelGeneration={onCancelImageGeneration}
                   isGeneratingImage={generatingImageNodeId === node.ID}
                   onReroll={() => onReroll(node.ID)}
