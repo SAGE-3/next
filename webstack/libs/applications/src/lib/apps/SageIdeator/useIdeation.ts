@@ -96,7 +96,6 @@ export function useIdeation({ s, appId, input, setInput, attachedImage, setAttac
       if (!branchOpts) {
         setInput('');
         setAttachedImage(null);
-        updateState(appId, { ...s, pdfContext: undefined });
       }
       positionsRef.current.clear();
       hasFitRef.current = false;
@@ -117,7 +116,12 @@ export function useIdeation({ s, appId, input, setInput, attachedImage, setAttac
 
       setIsGenerating(true);
       setLocalStatusMessage('Determining important aspects…');
-      updateState(appId, { ...s, prompt: aiPrompt, chatHistory: [...s.chatHistory, chatEntry] });
+      updateState(appId, {
+        ...s,
+        prompt: aiPrompt,
+        chatHistory: [...s.chatHistory, chatEntry],
+        ...(!branchOpts && { pdfContext: null as any }),
+      });
 
       try {
         const rawDims = await generateDimensionsFromPrompt(aiPrompt, s.apiKey, s.model, s.numDimensions, image, s.pdfContext?.text);
@@ -250,7 +254,7 @@ export function useIdeation({ s, appId, input, setInput, attachedImage, setAttac
         ]
           .filter(Boolean)
           .join('\n');
-        const answer = await callProseAPI(`${context}\n\nQuestion: ${question}`, s.apiKey, s.model);
+        const answer = await callProseAPI(`Answer in 80 words or fewer.\n\n${context}\n\nQuestion: ${question}`, s.apiKey, s.model);
         const qaEntry = {
           id: genId(),
           nodeId: node.ID,
@@ -313,11 +317,14 @@ export function useIdeation({ s, appId, input, setInput, attachedImage, setAttac
         const cur = latest ?? s;
         const curEntry = cur.chatHistory.find((e) => e.id === activeEntryId);
         if (!curEntry) return;
-        const rawDims = {
-          categorical: Object.fromEntries(curEntry.dimensions.filter((d) => d.type === 'categorical').map((d) => [d.name, d.values])),
-          ordinal: Object.fromEntries(curEntry.dimensions.filter((d) => d.type === 'ordinal').map((d) => [d.name, d.values])),
-        };
-        const { requirements, categorical, ordinal } = buildRequirements(rawDims);
+        const originalNode = curEntry.nodes.find((n) => n.ID === nodeId);
+        if (!originalNode) return;
+        // Preserve the original node's dimension assignments so it stays in the same design-space position
+        const { categorical, ordinal } = originalNode.Dimension;
+        const requirements = [
+          ...Object.entries(categorical).map(([name, value]) => `${name}: ${value}`),
+          ...Object.entries(ordinal).map(([name, value]) => `${name}: ${value}`),
+        ].join('\n');
         const text = await generateNodeContent(curEntry.prompt, requirements, s.apiKey, s.model, undefined, s.pdfContext?.text);
         const summary = await abstractNode(text, s.apiKey, s.model);
         const afterGen = useAppStore.getState().apps.find((a) => a._id === appId)?.data.state as AppState | undefined;

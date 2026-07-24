@@ -141,8 +141,8 @@ function AppComponent(props: App): JSX.Element {
   );
 
   const handleClearPdf = useCallback(() => {
-    updateState(props._id, { ...s, pdfContext: undefined });
-  }, [s, props._id]);
+    updateState(props._id, { pdfContext: null as any });
+  }, [props._id, updateState]);
 
   // ── Q&A helpers ──
 
