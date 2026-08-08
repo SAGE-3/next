@@ -41,6 +41,7 @@ import { ServerConfiguration } from '@sage3/shared/types';
 import { useUserSettings } from '../../../providers';
 import { useConfigStore } from '../../../stores';
 import { isElectron } from '../../../utils';
+import { CredentialsSettingsTab } from './CredentialsSettingsTab';
 
 interface EditUserSettingsModalProps {
   isOpen: boolean;
@@ -48,11 +49,12 @@ interface EditUserSettingsModalProps {
   tab?: UserSettingsTabs;
 }
 
-type UserSettingsTabs = 'interface' | 'board' | 'intelligence';
+type UserSettingsTabs = 'interface' | 'board' | 'intelligence' | 'credentials';
 const tabDict: Record<UserSettingsTabs, number> = {
   interface: 0,
   board: 1,
   intelligence: 2,
+  credentials: 3,
 };
 
 /**
@@ -138,6 +140,7 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
               <Tab>Interface</Tab>
               <Tab>Board Visibility</Tab>
               <Tab>Intelligence</Tab>
+              <Tab>Credentials</Tab>
             </TabList>
 
             <TabPanels>
@@ -260,6 +263,10 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
                     </RadioGroup>
                   </VStack>
                 </VStack>
+              </TabPanel>
+
+              <TabPanel>
+                <CredentialsSettingsTab />
               </TabPanel>
             </TabPanels>
           </Tabs>
