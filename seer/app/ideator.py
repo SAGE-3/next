@@ -243,7 +243,7 @@ class IdeatorAgent:
         r = await self._prose_chat(msg, req.model, 0.7)
         return IdeatorSummarizeResponse(r=r)
 
-    async def image(self, req: IdeatorImageRequest) -> IdeatorImageResponse:
+    async def image(self, req: IdeatorImageRequest) -> IdeatorImageResponse: # NEED TO WORK ON
         import base64
         client, _ = self._get_client_and_model(req.model)
         topic_line = (
@@ -259,21 +259,22 @@ class IdeatorAgent:
             if dim_entries
             else ""
         )
+        context_line = f"Additional context: {req.additionalContext}. " if req.additionalContext else ""
         prompt = (
             topic_line
             + f'The idea is titled "{req.title}" — {req.summary} '
             + dim_line
             + f"Visual themes: {', '.join(req.keywords)}. "
+            + context_line
             + "Abstract, minimal, clean design. No text, labels, or words."
         )
         self.logger.info(f"IdeatorAgent.image: prompt length={len(prompt)}, prompt={prompt[:200]}")
         try:
             response = await client.images.generate(
-                model="dall-e-3",
+                model="gpt-image-1",
                 prompt=prompt,
                 n=1,
                 size="1024x1024",
-                response_format="b64_json",
             )
             b64 = response.data[0].b64_json
             data_url = f"data:image/png;base64,{b64}"
