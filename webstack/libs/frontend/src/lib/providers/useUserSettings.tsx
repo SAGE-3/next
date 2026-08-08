@@ -8,7 +8,7 @@
 
 import { useCallback, createContext, useContext, useState, useEffect } from 'react';
 
-import { isElectron } from 'libs/applications/src/lib/apps/Cobrowse/util';
+import { isElectron } from '../../../../applications/src/lib/apps/Cobrowse/util';
 
 /**
  * Represents the user preferences for the application.
@@ -20,6 +20,7 @@ import { isElectron } from 'libs/applications/src/lib/apps/Cobrowse/util';
  * @property {boolean} showAppTitles - Indicates whether application titles should be displayed.
  * @property {'none'| 'selected' | 'all'} showLinks - Indicates whether provenance information should be displayed (arrows).
  * @property {boolean} showUI - Indicates whether the user interface should be displayed.
+ * @property {boolean} showGrid - Indicates whether the background grid should be displayed.
  * @property {boolean} showTags - Indicates whether tags should be displayed.
  * @property {'grid' | 'list'} selectedBoardListView - The view mode for the board list, either 'grid' or 'list'.
  * @property {'lasso' | 'grab' | 'pen' | 'eraser' | 'linker' | 'shape' | 'circle' | 'rectangle'} primaryActionMode - The primary action mode, which can be 'lasso', 'grab', 'pen', or 'eraser'.
@@ -31,6 +32,7 @@ type UserSettings = {
   showAppTitles: boolean;
   showLinks: 'none' | 'selected' | 'selected-path' | 'all';
   showUI: boolean;
+  showGrid: boolean;
   showTags: boolean;
   selectedBoardListView: 'grid' | 'list';
   primaryActionMode: 'lasso' | 'grab' | 'pen' | 'eraser' | 'linker' | 'shape' | 'circle' | 'rectangle' | 'arrow' | 'doubleArrow';
@@ -52,6 +54,7 @@ const defaultSettings: UserSettings = {
   showAppTitles: false,
   showLinks: 'all',
   showUI: true,
+  showGrid: true,
   showTags: false,
   selectedBoardListView: 'grid',
   primaryActionMode: 'lasso',
@@ -68,6 +71,7 @@ type UserSettingsContextType = {
   toggleShowAppTitles: () => void;
   setShowLinks: (value: UserSettings['showLinks']) => void;
   toggleShowUI: () => void;
+  toggleShowGrid: () => void;
   toggleShowTags: () => void;
   setBoardListView: (value: UserSettings['selectedBoardListView']) => void;
   setPrimaryActionMode: (value: UserSettings['primaryActionMode']) => void;
@@ -84,6 +88,7 @@ const UserSettingsContext = createContext<UserSettingsContextType>({
   toggleShowAppTitles: () => { },
   setShowLinks: (value: UserSettings['showLinks']) => { },
   toggleShowUI: () => { },
+  toggleShowGrid: () => { },
   toggleShowTags: () => { },
   setBoardListView: (value: UserSettings['selectedBoardListView']) => { },
   setPrimaryActionMode: (value: UserSettings['primaryActionMode']) => { },
@@ -171,6 +176,15 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
     setSettings((prev) => {
       const newSettings = { ...prev };
       newSettings.showUI = !prev.showUI;
+      setUserSettings(newSettings);
+      return newSettings;
+    });
+  }, [setSettings]);
+
+  const toggleShowGrid = useCallback(() => {
+    setSettings((prev) => {
+      const newSettings = { ...prev };
+      newSettings.showGrid = !prev.showGrid;
       setUserSettings(newSettings);
       return newSettings;
     });
@@ -269,6 +283,7 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
         toggleShowViewports,
         toggleShowAppTitles,
         toggleShowUI,
+        toggleShowGrid,
         setShowLinks,
         toggleShowTags,
         setBoardListView,

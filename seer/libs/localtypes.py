@@ -127,3 +127,113 @@ class WebScreenshotAnswer(BaseModel):
     r: str  # answer
     success: bool = True  # success flag
     actions: List[Json]  # actions to be performed
+
+
+# ─── Ideator types ────────────────────────────────────────────────────────────
+
+class IdeatorNode(BaseModel):
+    ID: str
+    Title: str
+    Summary: str
+
+
+class IdeatorSummarizeNode(BaseModel):
+    Title: str
+    Summary: str
+    Keywords: List[str]
+
+
+class IdeatorDimension(BaseModel):
+    categorical: dict
+    ordinal: dict
+
+
+class IdeatorDimensionsRequest(BaseModel):
+    prompt: str
+    numDims: int
+    model: str
+    imageBase64: str | None = None
+    pdfContext: str | None = None
+
+
+class IdeatorDimensionsResponse(BaseModel):
+    categorical: dict
+    ordinal: dict
+    success: bool = True
+
+
+class IdeatorNodeRequest(BaseModel):
+    prompt: str
+    requirements: str
+    model: str
+    imageBase64: str | None = None
+    pdfContext: str | None = None
+
+
+class IdeatorNodeResponse(BaseModel):
+    r: str
+    success: bool = True
+
+
+class IdeatorAbstractRequest(BaseModel):
+    text: str
+    model: str
+    temperature: float = 0.0
+
+
+class IdeatorAbstractResponse(BaseModel):
+    Title: str
+    Summary: str
+    Keywords: List[str]
+    Steps: List[str]
+    success: bool = True
+
+
+class IdeatorUserDimensionRequest(BaseModel):
+    dimName: str
+    prompt: str
+    nodes: List[IdeatorNode]
+    model: str
+
+
+class IdeatorUserDimensionResponse(BaseModel):
+    type: str  # 'categorical' | 'ordinal'
+    values: List[str]
+    assignments: dict
+    success: bool = True
+
+
+class IdeatorSummarizeRequest(BaseModel):
+    nodes: List[IdeatorSummarizeNode]
+    prompt: str
+    model: str
+
+
+class IdeatorSummarizeResponse(BaseModel):
+    r: str
+    success: bool = True
+
+
+class IdeatorImageRequest(BaseModel):
+    title: str
+    summary: str
+    keywords: List[str]
+    model: str
+    brainstormingPrompt: str | None = None
+    dimension: IdeatorDimension | None = None
+    additionalContext: str | None = None
+
+
+class IdeatorImageResponse(BaseModel):
+    imageUrl: str
+    success: bool = True
+
+
+class IdeatorProseRequest(BaseModel):
+    userPrompt: str
+    model: str
+
+
+class IdeatorProseResponse(BaseModel):
+    r: str
+    success: bool = True

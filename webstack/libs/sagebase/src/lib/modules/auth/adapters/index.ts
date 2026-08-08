@@ -13,3 +13,4 @@ export * from './CILoginAdapter';
 export * from './AppleAdapter';
 export * from './SpectatorAdapter';
 export * from './KeycloakAdapter';
+export * from './LDAPAdapter';

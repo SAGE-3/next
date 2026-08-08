@@ -4,9 +4,9 @@ services:
     container_name: traefik
     restart: always
     ports:
-      - "443:443"  # HTTPS for secure traffic
+      - "443:443" # HTTPS for secure traffic
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock  # Allow Traefik to access Docker API
+      - /var/run/docker.sock:/var/run/docker.sock # Allow Traefik to access Docker API
       - ./configurations/traefik:/etc/traefik
   redis-server:
     image: "redis/redis-stack-server:latest"
@@ -56,6 +56,8 @@ services:
       - "traefik.http.middlewares.ws-headers.headers.customrequestheaders.Connection=Upgrade"
       - "traefik.http.middlewares.authheader.headers.accesscontrolallowheaders=Authorization,Content-Type"
       - "traefik.http.routers.node-server.middlewares=authheader"
+    environment:
+      - NODE_ENV=production
     volumes:
       - ./configurations/node/keys:/app/keys
       - ./configurations/node/assets:/app/dist/apps/homebase/assets
@@ -90,6 +92,8 @@ services:
       - "traefik.http.middlewares.ws-headers.headers.customrequestheaders.Connection=Upgrade"
       - "traefik.http.middlewares.authheader.headers.accesscontrolallowheaders=Authorization,Content-Type"
       - "traefik.http.routers.yjs-server.middlewares=authheader"
+    environment:
+      - NODE_ENV=production
     volumes:
       - ./configurations/node/keys:/app/keys
       - ./configurations/node/sage3-prod.hjson:/app/sage3-prod.hjson
@@ -118,6 +122,8 @@ services:
       - "traefik.http.services.files-server.loadbalancer.server.port=3002"
       - "traefik.http.middlewares.authheader.headers.accesscontrolallowheaders=Authorization,Content-Type"
       - "traefik.http.routers.files-server.middlewares=authheader"
+    environment:
+      - NODE_ENV=production
     volumes:
       - ./configurations/node/keys:/app/keys
       - ./configurations/node/assets:/app/dist/apps/homebase/assets

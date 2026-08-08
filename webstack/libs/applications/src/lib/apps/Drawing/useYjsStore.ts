@@ -1,3 +1,11 @@
+/**
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
+ *
+ * Distributed under the terms of the SAGE3 License.  The full license is in
+ * the file LICENSE, distributed as part of this software.
+ */
+
 import {
   InstancePresenceRecordType,
   TLAnyShapeUtilConstructor,
@@ -14,6 +22,7 @@ import {
   react,
   SerializedSchema,
 } from 'tldraw';
+import { createUserId, TLUser, UserRecordType } from '@tldraw/tlschema';
 import { useEffect, useMemo, useState } from 'react';
 import { YKeyValue } from 'y-utility/y-keyvalue';
 import { WebsocketProvider } from 'y-websocket';
@@ -137,22 +146,20 @@ export function useYjsStore({
       const yClientId = room.awareness.clientID.toString();
       setUserPreferences({ id: yClientId });
 
-      const userPreferences = computed<{
-        id: string;
-        color: string;
-        name: string;
-      }>('userPreferences', () => {
+      // tldraw v5 presence derivation uses user records from @tldraw/tlschema.
+      const userPreferences = computed<TLUser | null>('userPreferences', () => {
         const user = getUserPreferences();
-        return {
-          id: user.id,
+        if (!user.id) return null;
+        return UserRecordType.create({
+          id: createUserId(user.id),
           color: user.color ?? defaultUserPreferences.color,
           name: user.name ?? defaultUserPreferences.name,
-        };
+        });
       });
 
       // Create the instance presence derivation
       const presenceId = InstancePresenceRecordType.createId(yClientId);
-      const presenceDerivation = createPresenceStateDerivation(userPreferences, presenceId)(store);
+      const presenceDerivation = createPresenceStateDerivation(userPreferences, { instanceId: presenceId })(store);
 
       // Set our initial presence from the derivation's current value
       room.awareness.setLocalStateField('presence', presenceDerivation.get());
@@ -257,7 +264,8 @@ export function useYjsStore({
           meta.set('schema', ourSchema);
         });
 
-        store.loadSnapshot({
+        // tldraw v5: Store.loadSnapshot was renamed to loadStoreSnapshot
+        store.loadStoreSnapshot({
           store: migrationResult.value,
           schema: ourSchema,
         });

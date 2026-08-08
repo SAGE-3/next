@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -14,7 +14,7 @@
  */
 
 // Express web server framework
-import * as express from 'express';
+import express from 'express';
 import { decode as decode8 } from 'utf8';
 import { v4 as getUUID } from 'uuid';
 
@@ -25,15 +25,17 @@ import { getFileType } from '@sage3/shared';
 import { UploadConnector } from '../connectors/upload-connector';
 // Asset model
 import { AssetsCollection } from './assetsCollection';
-import { MessageCollection } from './messageCollection';
+import { addUploadMessage } from './messageCollection';
 import { AssetSchema } from '@sage3/shared/types';
 
 // Google storage and AWS S3 storage
 // import { multerGoogleMiddleware, multerS3Middleware } from './middleware-upload';
 
 export async function uploadHandler(req: express.Request, res: express.Response) {
+  const uploadId = getUUID();
+  const headerRoomId = req.header('x-sage3-room') || undefined;
   // Signal the start of the upload
-  await MessageCollection.add({ type: 'upload', payload: `Uploading Assets`, close: false }, req.user.id);
+  await addUploadMessage(req.user.id, `Uploading Assets`, { uploadId, roomId: headerRoomId, phase: 'uploading' });
 
   return UploadConnector.getInstance().uploadMiddleware('files')(req, res, async (err) => {
     let hasError = false;
@@ -44,6 +46,7 @@ export async function uploadHandler(req: express.Request, res: express.Response)
       console.log('multerMiddleware>', err.message);
       hasError = true;
       processError = err.message;
+      await addUploadMessage(req.user.id, `Upload failed: ${processError}`, { uploadId, roomId: headerRoomId, phase: 'failed', close: true });
       return res.status(500).send(processError);
     }
     // destructure the request into an array of file objects
@@ -61,41 +64,91 @@ export async function uploadHandler(req: express.Request, res: express.Response)
 
     // Get the current uploader information
     const user = req.user as SBAuthSchema;
+    const roomId = req.body.room || headerRoomId || '-';
+    const messageRoomId = roomId === '-' ? undefined : roomId;
 
     // Signal the start of the processing
-    await MessageCollection.add({ type: 'upload', payload: `Processing Assets`, close: false }, user.id);
+    await addUploadMessage(user.id, `Processing Assets`, { uploadId, roomId: messageRoomId, phase: 'processing' });
 
     const newAssets: AssetSchema[] = [];
+    const newAssetMessages: { fileId: string; filename: string }[] = [];
     const newIds: string[] = [];
 
     // Do something with the files
     for await (const elt of files) {
+      let fileHasError = false;
       elt.originalname = decode8(elt.originalname);
       console.log('FileUpload>', elt.originalname, elt.mimetype, elt.filename, elt.size);
+      const fileMessageId = getUUID();
       // Normalize mime types using the mime package
       elt.mimetype = getFileType(elt.originalname) || elt.mimetype;
       // Put the new file into the collection
       const now = new Date().toISOString();
+      await addUploadMessage(user.id, `Processing ${elt.originalname}`, {
+        uploadId,
+        fileId: fileMessageId,
+        roomId: messageRoomId,
+        filename: elt.originalname,
+        phase: 'metadata',
+      });
       // Process the file for metadata
       const mdata = await AssetsCollection.metadataFile(getUUID(), elt.filename, elt.mimetype).catch((e) => {
-        processError = e.message as string;
+        processError = e instanceof Error ? e.message : String(e);
         hasError = true;
+        fileHasError = true;
         return;
       });
+      if (fileHasError) {
+        await addUploadMessage(user.id, `Processing failed for ${elt.originalname}: ${processError}`, {
+          uploadId,
+          fileId: fileMessageId,
+          roomId: messageRoomId,
+          filename: elt.originalname,
+          phase: 'failed',
+          close: true,
+        });
+        continue;
+      }
       // Process image and pdf
-      const pdata = await AssetsCollection.processFile(getUUID(), elt.filename, elt.mimetype).catch((e) => {
-        processError = e.message as string;
+      const pdata = await AssetsCollection.processFile(
+        getUUID(),
+        elt.filename,
+        elt.mimetype,
+        user.id,
+        elt.originalname,
+        uploadId,
+        fileMessageId,
+        messageRoomId,
+      ).catch((e) => {
+        processError = e instanceof Error ? e.message : String(e);
         hasError = true;
+        fileHasError = true;
         return;
       });
+      if (fileHasError) {
+        await addUploadMessage(user.id, `Processing failed for ${elt.originalname}: ${processError}`, {
+          uploadId,
+          fileId: fileMessageId,
+          roomId: messageRoomId,
+          filename: elt.originalname,
+          phase: 'failed',
+          close: true,
+        });
+        continue;
+      }
       if (mdata) {
-        // Signal the end of processing of the file
-        await MessageCollection.add({ type: 'process', payload: `Processing done for ${elt.originalname}`, close: false }, user.id);
+        await addUploadMessage(user.id, `Finalizing ${elt.originalname}`, {
+          uploadId,
+          fileId: fileMessageId,
+          roomId: messageRoomId,
+          filename: elt.originalname,
+          phase: 'processing',
+        });
         // Add the new file to a buffer
         newAssets.push({
           file: elt.filename,
           owner: user.id || '-',
-          room: req.body.room || '-',
+          room: roomId,
           originalfilename: elt.originalname,
           path: elt.path,
           destination: elt.destination,
@@ -105,6 +158,7 @@ export async function uploadHandler(req: express.Request, res: express.Response)
           derived: pdata || {},
           ...mdata,
         });
+        newAssetMessages.push({ fileId: fileMessageId, filename: elt.originalname });
       }
     }
 
@@ -114,15 +168,35 @@ export async function uploadHandler(req: express.Request, res: express.Response)
       // Collect the ids of the new files
       const ids = lots.map((l) => l._id);
       newIds.push(...ids);
+      for (const [index, lot] of lots.entries()) {
+        const fileMessage = newAssetMessages[index];
+        if (!fileMessage) continue;
+        await addUploadMessage(user.id, `Processing done for ${fileMessage.filename}`, {
+          uploadId,
+          fileId: fileMessage.fileId,
+          roomId: messageRoomId,
+          assetId: lot._id,
+          filename: fileMessage.filename,
+          phase: 'ready',
+          progress: { current: 1, total: 1, percent: 100, unit: 'files' },
+          close: true,
+        });
+      }
     }
 
-    // Signal the end of the processing
-    await MessageCollection.add({ type: 'upload', payload: `Assets Ready`, close: true }, user.id);
-
     if (hasError && processError) {
+      await addUploadMessage(user.id, `Upload failed: ${processError}`, { uploadId, roomId: messageRoomId, phase: 'failed', close: true });
       // Return error with the information
       res.status(500).send(processError);
     } else {
+      // Signal the end of the processing
+      await addUploadMessage(user.id, `Assets Ready`, {
+        uploadId,
+        roomId: messageRoomId,
+        phase: 'ready',
+        progress: { current: newIds.length, total: files.length, percent: 100, unit: 'files' },
+        close: true,
+      });
       // Return success with the ids of the new files
       res.status(200).send(newIds);
     }

@@ -88,7 +88,7 @@ export function Alfred(props: props) {
   const config = useConfigStore((state) => state.config);
 
   // User Settings
-  const { toggleShowUI } = useUserSettings();
+  const { toggleShowUI, toggleShowGrid } = useUserSettings();
 
   // chakra color mode
   const { colorMode, toggleColorMode } = useColorMode();
@@ -139,8 +139,7 @@ export function Alfred(props: props) {
     if (appName === 'Timer') {
       w = 330;
       h = 226;
-    }
-    else if (appName === 'Clock') {
+    } else if (appName === 'Clock') {
       w = 320 * 1.5;
       h = 130 * 1.5;
     }
@@ -150,6 +149,13 @@ export function Alfred(props: props) {
     const scale = useUIStore.getState().scale;
     const x = Math.floor(-bx + window.innerWidth / scale / 2);
     const y = Math.floor(-by + window.innerHeight / scale / 2);
+
+    // Per-app size overrides (applied last so they're never clobbered)
+    const appSizeOverrides: Record<string, { w: number; h: number }> = {
+      SageIdeator: { w: 1400, h: 800 },
+    };
+    const sizeOverride = appSizeOverrides[appName as string];
+    if (sizeOverride) { w = sizeOverride.w; h = sizeOverride.h; }
 
     createApp({
       title: appName,
@@ -289,6 +295,8 @@ export function Alfred(props: props) {
         newApplication('SageCell');
       } else if (terms[0] === 'toggleui') {
         toggleShowUI();
+      } else if (terms[0] === 'togglegrid') {
+        toggleShowGrid();
       } else if (terms[0] === 'light') {
         if (colorMode !== 'light') toggleColorMode();
       } else if (terms[0] === 'dark') {
@@ -364,7 +372,7 @@ export function Alfred(props: props) {
         });
       }
     },
-    [user, apps, props.boardId, colorMode]
+    [user, apps, props.boardId, colorMode],
   );
 
   return (
@@ -439,7 +447,7 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
             // search in the owner name
             item.ownerName.toUpperCase().indexOf(term.toUpperCase()) !== -1
           );
-        })
+        }),
       );
     } else {
       // Full list if no search term
@@ -574,7 +582,6 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
     }
   }, [filteredList]);
 
-
   // Voice command
   const triggerVoice = () => {
     // Check if the browser supports speech recognition
@@ -639,7 +646,6 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
         blockScrollOnMount={false}
         scrollBehavior={'inside'}
         isCentered
-
       >
         <ModalOverlay />
         <ModalContent maxH={'30vh'} top={'4rem'} minWidth="800px">
@@ -665,9 +671,13 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
             </InputGroup>
 
             <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Voice to text - Click and speak'} openDelay={400}>
-              <Button p={0} m={'8px 0px 8px 0px'} disabled={!('webkitSpeechRecognition' in window)} onClick={triggerVoice}
-                colorScheme={recording ? 'red' : 'gray'}>
-
+              <Button
+                p={0}
+                m={'8px 0px 8px 0px'}
+                disabled={!('webkitSpeechRecognition' in window)}
+                onClick={triggerVoice}
+                colorScheme={recording ? 'red' : 'gray'}
+              >
                 {recording ? <MdStop size="24px" /> : <MdMic size="24px" />}
               </Button>
             </Tooltip>
@@ -679,7 +689,7 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
                   <MdInfoOutline fontSize={'24px'} />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent fontSize={'sm'} width={'300px'}>
+              <PopoverContent fontSize={'sm'} width={'310px'}>
                 <PopoverArrow />
                 <PopoverCloseButton />
                 <PopoverHeader>Quick Actions</PopoverHeader>
@@ -706,6 +716,9 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
                     </ListItem>
                     <ListItem>
                       <b>hideui</b> : Hide the panels
+                    </ListItem>
+                    <ListItem>
+                      <b>togglegrid</b> : Show/Hide the grid
                     </ListItem>
                     <ListItem>
                       <b>light</b> : Switch to light mode

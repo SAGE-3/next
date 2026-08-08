@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -51,6 +51,7 @@ export function UploadModal(props: UploadModalProps): JSX.Element {
   // selected files
   const [input, setInput] = useState<File[]>([]);
   const [allowFolder, setAllowFolder] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   // Files have been selected
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,7 +69,9 @@ export function UploadModal(props: UploadModalProps): JSX.Element {
 
   // Perform the actual upload
   const upload = () => {
-    if (input) {
+    if (input.length > 0 && roomId && !uploading) {
+      setUploading(true);
+      props.onClose();
       // Uploaded with a Form object
       const fd = new FormData();
       // Add each file to the form
@@ -83,14 +86,15 @@ export function UploadModal(props: UploadModalProps): JSX.Element {
       // Upload with a POST request
       fetch(apiUrls.assets.upload, {
         method: 'POST',
+        headers: { 'x-sage3-room': roomId },
         body: fd,
       })
         .catch((error: Error) => {
           console.log('Upload> Error: ', error);
         })
         .finally(() => {
-          // Close the modal UI
-          props.onClose();
+          setInput([]);
+          setUploading(false);
         });
     }
   };
@@ -135,7 +139,7 @@ export function UploadModal(props: UploadModalProps): JSX.Element {
           </FormControl>
         </ModalBody>
         <ModalFooter>
-          <Button type="submit" colorScheme="green" mr={5} onClick={upload} isDisabled={input.length === 0}>
+          <Button type="submit" colorScheme="green" mr={5} onClick={upload} isDisabled={input.length === 0 || uploading}>
             Upload
           </Button>
           <Button mr={3} onClick={props.onClose}>

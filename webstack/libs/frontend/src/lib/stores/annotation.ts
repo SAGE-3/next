@@ -23,7 +23,8 @@ interface AnnotationState {
   error: string | null;
   fetched: boolean;
   clearError: () => void;
-  update: (id: string, updates: Partial<AnnotationSchema>) => void;
+  update: (id: string, updates: Partial<AnnotationSchema>) => Promise<boolean>;
+  appendLines: (id: string, lines: unknown[]) => Promise<boolean>;
   getAnnotations: () => Annotation | undefined;
   subscribeToBoard: (boardId: string) => Promise<void>;
   unsubscribe: () => void;
@@ -41,12 +42,25 @@ const AnnotationStore = create<AnnotationState>()((set, get) => {
     clearError: () => {
       set({ error: null });
     },
-    update: async (id: string, updates: Partial<AnnotationSchema>) => {
-      if (!SAGE3Ability.canCurrentUser('update', 'boards')) return;
+    update: async (id: string, updates: Partial<AnnotationSchema>): Promise<boolean> => {
+      if (!SAGE3Ability.canCurrentUser('update', 'boards')) return false;
       const res = await SocketAPI.sendRESTMessage(`/annotations/${id}`, 'PUT', updates);
       if (!res.success) {
         set({ error: res.message });
+        return false;
       }
+      return true;
+    },
+    // Incremental append: adds strokes without rewriting the whole array.
+    appendLines: async (id: string, lines: unknown[]): Promise<boolean> => {
+      if (!SAGE3Ability.canCurrentUser('update', 'boards')) return false;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const res = await APIHttp.POST(`/annotations/${id}/lines`, { lines } as any);
+      if (!res.success) {
+        set({ error: res.message });
+        return false;
+      }
+      return true;
     },
     unsubscribe: () => {
       // Unsubscribe old subscription

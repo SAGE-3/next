@@ -12,15 +12,15 @@ import { AddressInfo } from 'net';
 import { Server } from 'http';
 
 // Express web server framework
-import * as express from 'express';
+import express from 'express';
 
 // Express middlewares
 import helmet from 'helmet';
-import * as compression from 'compression';
-import * as cors from 'cors';
-import * as morgan from 'morgan';
-import * as favicon from 'serve-favicon';
-import * as cookieParser from 'cookie-parser';
+import compression from 'compression';
+import cors from 'cors';
+import morgan from 'morgan';
+import favicon from 'serve-favicon';
+import cookieParser from 'cookie-parser';
 import { ServerConfiguration } from '@sage3/shared/types';
 
 /**
@@ -107,8 +107,10 @@ export function listenApp(app: express.Express, listenPort: number | string): Se
   const PORT = parseInt(listenPort as string, 10);
   // HTTP server
   const server = app.listen(PORT, '0.0.0.0', () => {
-    const { port } = server.address() as AddressInfo;
-    console.log('HTTP> listening on port', port);
+    const addr = server.address();
+    if (addr && typeof addr !== 'string') {
+      console.log('HTTP> listening on port', addr.port);
+    }
   });
   return server;
 }

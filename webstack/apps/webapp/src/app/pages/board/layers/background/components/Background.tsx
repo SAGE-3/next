@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -7,7 +7,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { Box, useColorModeValue, useToast, ToastId, useDisclosure } from '@chakra-ui/react';
+import { Box, useColorModeValue, useToast, useDisclosure } from '@chakra-ui/react';
 import { throttle } from 'throttle-debounce';
 
 import {
@@ -15,11 +15,11 @@ import {
   useAppStore,
   useUser,
   useHexColor,
-  useMessageStore,
   useHotkeys,
   useCursorBoardPosition,
   setupApp,
   HelpModal,
+  useUserSettings,
 } from '@sage3/frontend';
 
 import { useDragAndDropBoard } from './DragAndDropBoard';
@@ -33,19 +33,11 @@ type BackgroundProps = {
 export function Background(props: BackgroundProps) {
   // display some notifications
   const toast = useToast();
-  // Handle to a toast
-  const toastIdRef = useRef<ToastId>();
   // Help modal
   const { isOpen: helpIsOpen, onOpen: helpOnOpen, onClose: helpOnClose } = useDisclosure();
 
   // Drag and Drop On Board
   const { dragProps, renderContent } = useDragAndDropBoard({ roomId: props.roomId, boardId: props.boardId });
-
-  // Messsages
-  const subMessage = useMessageStore((state) => state.subscribe);
-  const unsubMessage = useMessageStore((state) => state.unsubscribe);
-  const message = useMessageStore((state) => state.lastone);
-  // const messages = useMessageStore((state) => state.messages);
 
   // How to create some applications
   const createApp = useAppStore((state) => state.create);
@@ -67,44 +59,10 @@ export function Background(props: BackgroundProps) {
   const gc = useColorModeValue('gray.100', 'gray.700');
   const gridColor = useHexColor(gc);
 
-  // Subscribe to messages
-  useEffect(() => {
-    subMessage();
-    return () => {
-      unsubMessage();
-    };
-  }, []);
-
-  // Get the last new message
-  useEffect(() => {
-    if (!user) return;
-    if (!message) return;
-    if (message._createdBy === user._id) {
-      const title = message.data.type.charAt(0).toUpperCase() + message.data.type.slice(1);
-      // Update the toast if we can
-      if (toastIdRef.current && toast.isActive(toastIdRef.current)) {
-        toast.update(toastIdRef.current, {
-          title: title,
-          status: message.data.close ? 'info' : 'loading',
-          description: message.data.payload,
-          duration: message.data.close ? 5000 : null,
-          isClosable: true,
-        });
-      } else {
-        // or create a new one
-        toastIdRef.current = toast({
-          title: title,
-          description: message.data.payload,
-          status: message.data.close ? 'info' : 'loading',
-          duration: message.data.close ? 5000 : null,
-          isClosable: true,
-        });
-      }
-    } else if (message.data.type === 'upload' && message.data.payload === 'Assets Ready') {
-      // Update the asset store when someones uploads an asset
-      // useAssetStore.getState().update();
-    }
-  }, [message]);
+  // Hide the background grid when the UI is hidden or the grid toggle is off
+  const { settings } = useUserSettings();
+  const showUI = settings.showUI;
+  const showGrid = settings.showGrid;
 
   // Question mark character for help
   useHotkeys(
@@ -117,7 +75,7 @@ export function Background(props: BackgroundProps) {
       return false;
     },
     // Depends on the cursor to get the correct position
-    { dependencies: [] }
+    { dependencies: [] },
   );
 
   // Move the board with the arrow keys
@@ -139,7 +97,7 @@ export function Background(props: BackgroundProps) {
       return false;
     },
     // Depends on the cursor to get the correct position
-    { dependencies: [selectedAppId, boardPosition.x, boardPosition.y] }
+    { dependencies: [selectedAppId, boardPosition.x, boardPosition.y] },
   );
 
   // Zoom in/out of the board with the -/+ keys
@@ -157,14 +115,14 @@ export function Background(props: BackgroundProps) {
       return false;
     },
     // Depends on the cursor to get the correct position
-    { dependencies: [selectedAppId] }
+    { dependencies: [selectedAppId] },
   );
 
   // Throttle stickie hotkey event
   const throttleStickieCreation = throttle(1000, (x: number, y: number) => {
     if (!user) return;
     createApp(
-      setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 420 }, { color: user.data.color || 'yellow' })
+      setupApp(user.data.name, 'Stickie', x, y, props.roomId, props.boardId, { w: 400, h: 420 }, { color: user.data.color || 'yellow' }),
     );
   });
   const throttleStickieCreationRef = useCallback(throttleStickieCreation, [user]);
@@ -191,7 +149,7 @@ export function Background(props: BackgroundProps) {
       }
     },
     // Depends on the cursor to get the correct position
-    { dependencies: [] }
+    { dependencies: [] },
   );
 
   const MemoizedBoard = useMemo(() => {
@@ -201,9 +159,13 @@ export function Background(props: BackgroundProps) {
         width="100%"
         height="100%"
         backgroundSize={'100px 100px'}
-        bgImage={`linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${
-          1 / scale
-        }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`}
+        bgImage={
+          showUI && showGrid
+            ? `linear-gradient(to right, ${gridColor} ${1 / scale}px, transparent ${
+                1 / scale
+              }px), linear-gradient(to bottom, ${gridColor} ${1 / scale}px, transparent ${1 / scale}px);`
+            : 'none'
+        }
         id="board"
         userSelect={'none'}
         draggable={false}
@@ -225,7 +187,7 @@ export function Background(props: BackgroundProps) {
         <InteractionbarShortcuts />
       </Box>
     );
-  }, [gridColor, scale, dragProps, helpOnClose, helpIsOpen, renderContent]);
+  }, [gridColor, scale, showUI, showGrid, dragProps, helpOnClose, helpIsOpen, renderContent]);
 
   return MemoizedBoard;
 }

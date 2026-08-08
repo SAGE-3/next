@@ -6,8 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import * as express from 'express';
-import { config } from 'apps/homebase/src/config';
+import express from 'express';
+import { config } from '../../../../config';
 
 import {
   SError,
@@ -25,6 +25,22 @@ import {
   WebScreenshotAnswer,
   MesonetRequest,
   MesonetResponse,
+  IdeatorRoutes,
+  IdeatorDimensionsRequest,
+  IdeatorDimensionsResponse,
+  IdeatorNodeRequest,
+  IdeatorNodeResponse,
+  IdeatorAbstractRequest,
+  IdeatorAbstractResponse,
+  IdeatorUserDimensionRequest,
+  IdeatorUserDimensionResponse,
+  IdeatorSummarizeRequest,
+  IdeatorSummarizeResponse,
+  IdeatorImageRequest,
+  IdeatorImageResponse,
+  IdeatorProseRequest,
+  IdeatorProseResponse,
+  ImageGenerationRoutes,
 } from '@sage3/shared';
 
 // Define a general RPC handler type
@@ -94,6 +110,22 @@ const mesonetHandler: RpcHandlerPost<MesonetRequest, MesonetResponse> = (req) =>
   return fetchPost(`${config.agents.url}${route}`, req);
 };
 
+// Ideator handlers — forwarded to seer under /ideator/...
+const ideatorDimensionsHandler: RpcHandlerPost<IdeatorDimensionsRequest, IdeatorDimensionsResponse> = (req) =>
+  fetchPost(`${config.agents.url}${IdeatorRoutes.dimensions}`, req);
+const ideatorNodeHandler: RpcHandlerPost<IdeatorNodeRequest, IdeatorNodeResponse> = (req) =>
+  fetchPost(`${config.agents.url}${IdeatorRoutes.node}`, req);
+const ideatorAbstractHandler: RpcHandlerPost<IdeatorAbstractRequest, IdeatorAbstractResponse> = (req) =>
+  fetchPost(`${config.agents.url}${IdeatorRoutes.abstract}`, req);
+const ideatorUserDimensionHandler: RpcHandlerPost<IdeatorUserDimensionRequest, IdeatorUserDimensionResponse> = (req) =>
+  fetchPost(`${config.agents.url}${IdeatorRoutes.userDimension}`, req);
+const ideatorSummarizeHandler: RpcHandlerPost<IdeatorSummarizeRequest, IdeatorSummarizeResponse> = (req) =>
+  fetchPost(`${config.agents.url}${IdeatorRoutes.summarize}`, req);
+const ideatorImageHandler: RpcHandlerPost<IdeatorImageRequest, IdeatorImageResponse> = (req) =>
+  fetchPost(`${config.agents.url}${ImageGenerationRoutes.generate}`, req);
+const ideatorProseHandler: RpcHandlerPost<IdeatorProseRequest, IdeatorProseResponse> = (req) =>
+  fetchPost(`${config.agents.url}${IdeatorRoutes.prose}`, req);
+
 // List all the handlers
 const handlers: HandlerStore = {};
 handlers[AgentRoutes.status] = { func: statusHandler, method: 'GET' };
@@ -105,6 +137,14 @@ handlers[AgentRoutes.image] = { func: imageHandler, method: 'POST' };
 handlers[AgentRoutes.pdf] = { func: pdfHandler, method: 'POST' };
 handlers[AgentRoutes.mesonet] = { func: mesonetHandler, method: 'POST' };
 handlers[AgentRoutes.code] = { func: codeHandler, method: 'POST' };
+// Ideator routes mounted under /ideator/... to avoid collisions with agent routes
+handlers[`/ideator${IdeatorRoutes.dimensions}`] = { func: ideatorDimensionsHandler, method: 'POST' };
+handlers[`/ideator${IdeatorRoutes.node}`] = { func: ideatorNodeHandler, method: 'POST' };
+handlers[`/ideator${IdeatorRoutes.abstract}`] = { func: ideatorAbstractHandler, method: 'POST' };
+handlers[`/ideator${IdeatorRoutes.userDimension}`] = { func: ideatorUserDimensionHandler, method: 'POST' };
+handlers[`/ideator${IdeatorRoutes.summarize}`] = { func: ideatorSummarizeHandler, method: 'POST' };
+handlers[`/ideator${IdeatorRoutes.image}`] = { func: ideatorImageHandler, method: 'POST' };
+handlers[`/ideator${IdeatorRoutes.prose}`] = { func: ideatorProseHandler, method: 'POST' };
 
 /*
  * Create an express router for the agent API

@@ -3,13 +3,13 @@
 import { ServerConfiguration } from '@sage3/shared/types';
 import expressAPIRouter from './api/router';
 
-import * as express from 'express';
+import express from 'express';
 import * as dns from 'node:dns';
 import { loadConfig } from './config';
 import helmet from 'helmet';
-import * as compression from 'compression';
-import * as cors from 'cors';
-import * as cookieParser from 'cookie-parser';
+import compression from 'compression';
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import { Server } from 'http';
 import { SAGEBaseConfig, SAGEBase } from '@sage3/sagebase';
 import { AddressInfo } from 'net';
