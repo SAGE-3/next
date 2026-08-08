@@ -24,6 +24,8 @@ import { Readable } from 'node:stream';
 import { config } from '../config';
 // Asset model
 import { AssetsCollection } from './assetsCollection';
+// SSRF-safe fetch of user-provided URLs
+import { fetchPublicURL } from './fetch-public';
 
 /**
  * App route/api express middleware.
@@ -38,7 +40,8 @@ export function FilesRouter(): express.Router {
     const fileUrl = params.url as string;
     if (!fileUrl) return res.status(400).send('Missing URL');
     try {
-      const response = await fetch(fileUrl);
+      // Fetch the URL, refusing private/internal addresses
+      const response = await fetchPublicURL(fileUrl);
       if (!response.ok) throw new Error(`Fetch failed: ${response.status}`);
       const body = response.body;
       if (!body) return res.status(500).send('No content returned');
@@ -48,7 +51,8 @@ export function FilesRouter(): express.Router {
       res.setHeader('Content-Type', response.headers.get('content-type') || 'application/octet-stream');
       // set the content disposition to attachment to prompt download with the original filename
       // or 'download' if the filename cannot be determined from the URL
-      res.setHeader('Content-Disposition', `attachment; filename="${decodeURIComponent(fileUrl.split('/').pop() || 'download')}"`);
+      const filename = decodeURIComponent(fileUrl.split('/').pop() || 'download').replace(/["\\\r\n]/g, '');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename || 'download'}"`);
 
       // Convert from Web stream -> Node stream
       const nodeStream = Readable.fromWeb(body as any);
