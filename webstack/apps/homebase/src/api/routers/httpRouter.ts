@@ -38,7 +38,7 @@ import {
 import { SAGEBase } from '@sage3/sagebase';
 
 // Custom Routes
-import { ConfigRouter, InfoRouter, TimeRouter, NLPRouter, LogsRouter, KernelsRouter, PresenceThrottle, AgentRouter } from './custom';
+import { ConfigRouter, InfoRouter, TimeRouter, NLPRouter, LogsRouter, KernelsRouter, PresenceThrottle, AgentRouter, CredentialsRouter, SSHIntegrationRouter } from './custom';
 
 import { config } from '../../config';
 
@@ -75,6 +75,12 @@ export function expressAPIRouter(): express.Router {
   router.use('/roommembers', RoomMembersCollection.router());
   router.use('/annotations', AnnotationsCollection.router());
   router.use('/links', LinkCollection.router());
+
+  // Credentials store
+  router.use('/credentials', CredentialsRouter());
+
+  // First-party integration handlers
+  router.use('/integrations/ssh', SSHIntegrationRouter(config.sshTerminal?.allowedHosts ?? []));
 
   // Check to see if plugins module is enabled.
   if (config.features.plugins) {

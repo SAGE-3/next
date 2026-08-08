@@ -12,12 +12,16 @@ import { Express } from 'express';
 // SAGEBase Module Imports
 import { SBDatabase, SBLogConfig, SBLogger, SBPubSub } from '../modules';
 import { SBAuth, SBAuthConfig } from '../modules/auth/SBAuth';
+import { SBCredentialsDB } from '../modules/credentials/SBCredentialsDatabase';
 
 export type SAGEBaseConfig = {
   redisUrl?: string;
   projectName: string;
   authConfig?: SBAuthConfig;
   logConfig?: SBLogConfig;
+  // Optional so existing @sage3/sagebase consumers that don't need the
+  // credentials store aren't forced to configure it.
+  credentialsConfig?: { encryptionKey: string };
 };
 
 // The core SAGEBase class that allows access to the various modules. (Database, PubSub, Auth...etc)
@@ -49,6 +53,15 @@ class SAGEBaseCore {
     // Init the SAGEBase Database
     this._database = new SBDatabase();
     await this._database.init(this._client, this._redisPrefix);
+
+    // Init the Credentials store — independent of which auth strategy is
+    // configured, so it's initialized unconditionally whenever a key is
+    // provided (matching how _database/_pubsub are always initialized).
+    if (config.credentialsConfig) {
+      await SBCredentialsDB.init(this._client, this._redisPrefix, config.credentialsConfig.encryptionKey);
+    } else {
+      console.warn('SAGEBase> No credentialsConfig provided — the credentials store is disabled.');
+    }
 
     // Init the SAGEBase PubSub
     this._pubsub = new SBPubSub();

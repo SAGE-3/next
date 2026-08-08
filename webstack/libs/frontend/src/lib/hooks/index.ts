@@ -22,3 +22,4 @@ export * from './useThrottlePresenceUsers';
 export * from './useAbility';
 export * from './useNetworkState';
 export * from './usePressureObserver';
+export * from './useCredentials';
