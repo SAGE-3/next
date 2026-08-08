@@ -119,6 +119,9 @@ export function Alfred(props: props) {
   const newApplication = (appName: AppName) => {
     if (!user) return;
 
+    // Screenshares can only be started from the ScreenshareMenu
+    if (appName === 'LocalScreenshare') return;
+
     let w = 400;
     let h = 400;
 

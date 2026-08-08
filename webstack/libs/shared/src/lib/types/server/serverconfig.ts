@@ -64,6 +64,7 @@ export interface ServerConfiguration {
   // External Services
   services: {
     twilio: TwilioConfiguration;
+    livekit: LiveKitConfiguration;
     openai: OpenAIConfiguration;
     llama: LlamaConfiguration;
     azure: AzureConfig;
@@ -181,6 +182,13 @@ export interface TwilioConfiguration {
   accountSid: string; // Your Account SID from www.twilio.com/console
   apiKey: string; // API Key
   apiSecret: string; // API Secret
+}
+
+// The LiveKit Configuration (self-hosted SFU for screensharing)
+export interface LiveKitConfiguration {
+  url: string; // WebSocket URL clients use to reach the LiveKit server (e.g. ws://localhost:7880)
+  apiKey: string; // API Key, must match the 'keys' entry in the LiveKit server config
+  apiSecret: string; // API Secret, must match the 'keys' entry in the LiveKit server config
 }
 
 // The OpenAI Configuration

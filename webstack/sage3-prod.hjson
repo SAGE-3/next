@@ -57,6 +57,14 @@
       // API Secret
       "apiSecret": ""
     },
+    "livekit": {
+      // WebSocket URL clients use to reach the LiveKit server, e.g. wss://<your-server>/sfu
+      "url": "",
+      // API Key, must match the LiveKit server config (deployment/configurations/livekit/livekit.yaml)
+      "apiKey": "",
+      // API Secret, must match the LiveKit server config
+      "apiSecret": ""
+    },
     "openai": {
       // API Key
       "apiKey": "",

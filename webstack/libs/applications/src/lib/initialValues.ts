@@ -29,8 +29,9 @@ import { name as PDFViewerName, init as defaultPDFViewer } from './apps/PDFViewe
 import { name as PluginAppName, init as defaultPluginApp } from './apps/PluginApp';
 import { name as PollName, init as defaultPoll } from './apps/Poll';
 import { name as RTCChatName, init as defaultRTCChat } from './apps/RTCChat';
-import { name as SageIdeatorName, init as defaultSageIdeator } from './apps/SageIdeator';
 import { name as SageCellName, init as defaultSageCell } from './apps/SageCell';
+import { name as SageIdeatorName, init as defaultSageIdeator } from './apps/SageIdeator';
+import { name as ScreenshareName, init as defaultScreenshare } from './apps/Screenshare';
 import { name as SensorOverviewName, init as defaultSensorOverview } from './apps/SensorOverview';
 import { name as StickieName, init as defaultStickie } from './apps/Stickie';
 import { name as TimerName, init as defaultTimer } from './apps/Timer';
@@ -71,8 +72,9 @@ export const initialValues = {
   [PluginAppName]: defaultPluginApp,
   [PollName]: defaultPoll,
   [RTCChatName]: defaultRTCChat,
-  [SageIdeatorName]: defaultSageIdeator,
   [SageCellName]: defaultSageCell,
+  [SageIdeatorName]: defaultSageIdeator,
+  [ScreenshareName]: defaultScreenshare,
   [SensorOverviewName]: defaultSensorOverview,
   [StickieName]: defaultStickie,
   [TimerName]: defaultTimer,

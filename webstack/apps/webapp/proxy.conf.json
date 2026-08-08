@@ -62,6 +62,14 @@
   },
   {
     "context": [
+      "/livekit"
+    ],
+    "target": "http://127.0.0.1:3000",
+    "secure": false,
+    "ws": true
+  },
+  {
+    "context": [
       "/logs"
     ],
     "target": "http://127.0.0.1:3000",

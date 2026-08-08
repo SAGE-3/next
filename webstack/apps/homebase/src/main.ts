@@ -46,7 +46,7 @@ import { APIClientWSMessage, ServerConfiguration } from '@sage3/shared/types';
 import { SBAuthDB, JWTPayload } from '@sage3/sagebase';
 
 // SAGE Twilio Helper Import
-import { SAGETwilio } from '@sage3/backend';
+import { SAGETwilio, SAGELiveKit } from '@sage3/backend';
 import express from 'express';
 
 // Exception handling
@@ -124,6 +124,43 @@ async function startServer() {
     const identity = req.query.identity as string;
     const token = twilio.generateVideoToken(identity, room);
     res.send({ token });
+  });
+
+  // LiveKit Setup (self-hosted SFU for screensharing)
+  // Servers without a livekit section in their config must still boot: fall back to
+  // empty credentials (token requests then mint tokens no LiveKit server accepts).
+  const livekitConfig = config.services.livekit ?? { url: '', apiKey: '', apiSecret: '' };
+  const livekit = new SAGELiveKit(livekitConfig, AppsCollection, 10000, screenShareTimeLimit);
+  app.get('/livekit/token', SAGEBase.Auth.authenticate, async (req, res) => {
+    // The participant identity is built server-side from the session, so users cannot impersonate each other
+    const authId = req.user.id;
+    const room = req.query.room as string;
+    const accessId = req.query.accessId as string;
+    if (authId === undefined) {
+      res.status(403).send();
+      return;
+    }
+    if (!room || !accessId) {
+      res.status(400).send();
+      return;
+    }
+    try {
+      const token = await livekit.generateVideoToken(`${authId}--${accessId}`, room);
+      res.send({ token, url: livekitConfig.url, shareTimeLimit: screenShareTimeLimit });
+    } catch (error) {
+      // Not configured (empty credentials) or signing failure
+      res.status(503).send();
+    }
+  });
+  // LiveKit webhook receiver: cleans up screenshare apps when their tracks disappear.
+  // No auth middleware: the request signature is verified against the LiveKit API secret.
+  app.post('/livekit/webhook', express.raw({ type: 'application/webhook+json' }), async (req, res) => {
+    try {
+      await livekit.handleWebhook(req.body.toString(), req.get('Authorization'));
+      res.status(200).send();
+    } catch (error) {
+      res.status(400).send();
+    }
   });
 
   // Load the API Routes
