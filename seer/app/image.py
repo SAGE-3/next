@@ -14,7 +14,7 @@ import httpx
 
 # Image
 from io import BytesIO
-import base64, requests
+import base64
 from typing import List
 
 # SAGE3 API
@@ -31,6 +31,7 @@ from libs.utils import (
     scaleImage,
     isURL,
     isDataURL,
+    fetch_public_image,
     parse_openai_error,
 )
 from libs.llm_manager import LLMManager
@@ -126,8 +127,12 @@ class ImageAgent:
         if isDataURL(asset):
             imageContent = BytesIO(base64.b64decode(asset.split(",")[1])).getbuffer()
         elif isURL(asset):
-            response = requests.get(asset)
-            imageContent = BytesIO(response.content).getbuffer()
+            # Fetch and load an image from a URL, refusing private/internal addresses
+            try:
+                imageContent = BytesIO(fetch_public_image(asset)).getbuffer()
+            except ValueError as e:
+                self.logger.error(f"Refused or failed to fetch image URL: {e}")
+                imageContent = None
         else:
             imageContent = getImageFile(self.ps3, asset)
         if not imageContent:

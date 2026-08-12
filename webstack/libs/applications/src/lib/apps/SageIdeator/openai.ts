@@ -10,6 +10,8 @@
 
 import { seerIdeator } from '@sage3/frontend';
 import { SError } from '@sage3/shared';
+import { state as AppState } from './index';
+import { DimBlend } from './VisualizationCanvas';
 
 function isSError(r: unknown): r is SError {
   return typeof r === 'object' && r !== null && 'message' in r;
@@ -81,8 +83,10 @@ export async function generateNodeImage(
   model: string,
   brainstormingPrompt?: string,
   dimension?: { categorical: Record<string, string>; ordinal: Record<string, string> },
+  signal?: AbortSignal,
+  additionalContext?: string,
 ): Promise<string> {
-  const result = await seerIdeator.image({ title, summary, keywords, model, brainstormingPrompt, dimension });
+  const result = await seerIdeator.image({ title, summary, keywords, model, brainstormingPrompt, dimension, additionalContext }, signal);
   if (isSError(result)) throw new Error(result.message);
   return result.imageUrl;
 }
@@ -94,6 +98,42 @@ export async function callProseAPI(
   const result = await seerIdeator.prose({ userPrompt, model });
   if (isSError(result)) throw new Error(result.message);
   return result.r;
+}
+
+export function buildBlendedRequirements(
+  dims: AppState['dimensions'],
+  xDimName: string | null,
+  xBlend: DimBlend | null,
+  yDimName: string | null,
+  yBlend: DimBlend | null,
+): { requirements: string; categorical: Record<string, string>; ordinal: Record<string, string> } {
+  let req = '';
+  const categorical: Record<string, string> = {};
+  const ordinal: Record<string, string> = {};
+  for (const dim of dims) {
+    const blend = dim.name === xDimName ? xBlend : dim.name === yDimName ? yBlend : null;
+    let assignedValue: string;
+    if (blend) {
+      if (blend.secondary === null || blend.primaryWeight === 1) {
+        req += `${dim.name}: ${blend.primary}\n`;
+        assignedValue = blend.primary;
+      } else if (blend.primaryWeight >= 0.65) {
+        req += `${dim.name}: primarily "${blend.primary}" with some "${blend.secondary}" influence\n`;
+        assignedValue = blend.primary;
+      } else {
+        const pct = Math.round(blend.primaryWeight * 100);
+        const sPct = 100 - pct;
+        req += `${dim.name}: blend of "${blend.primary}" (${pct}%) and "${blend.secondary}" (${sPct}%)\n`;
+        assignedValue = blend.primary;
+      }
+    } else {
+      assignedValue = dim.values[Math.floor(Math.random() * dim.values.length)];
+      req += `${dim.name}: ${assignedValue}\n`;
+    }
+    if (dim.type === 'categorical') categorical[dim.name] = assignedValue;
+    else ordinal[dim.name] = assignedValue;
+  }
+  return { requirements: req, categorical, ordinal };
 }
 
 export function buildRequirements(dims: {

@@ -6,16 +6,14 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 
 import { format } from 'date-fns/format';
 
 import { Flex, Box, Button, IconButton, Tooltip, useToast, useColorModeValue } from '@chakra-ui/react';
 import { MdFileDownload, MdChat, MdChevronLeft, MdChevronRight } from 'react-icons/md';
 
-import { useAppStore, useHexColor, useUser, downloadFile, apiUrls, useAssetStore, useConfigStore, useUserSettings } from '@sage3/frontend';
-import { genId } from '@sage3/shared';
-import { LLMConfigManager } from '@sage3/shared/types';
+import { useAppStore, useHexColor, downloadFile } from '@sage3/frontend';
 
 import { App } from '../../schema';
 import { state as AppState } from './index';
@@ -29,17 +27,6 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.min.mjs';
 const CMAP_URL = './node_modules/pdfjs-dist/cmaps/';
 const FONT_URL = './node_modules/pdfjs-dist/standard_fonts/';
 const CMAP_PACKED = true;
-
-import {
-  generateDimensionsFromPrompt,
-  generateNodeContent,
-  abstractNode,
-  buildRequirements,
-  callProseAPI,
-  generateUserDimension,
-  summarizeFavorites as summarizeFavoritesAPI,
-  generateNodeImage,
-} from './openai';
 
 // ─── PDF text extraction ──────────────────────────────────────────────────────
 const MAX_PDF_CHARS = 5000;
@@ -60,74 +47,21 @@ async function extractPdfText(file: File): Promise<string> {
   }
   return text.slice(0, MAX_PDF_CHARS);
 }
+import { useIdeation } from './useIdeation';
+import { useImageGeneration } from './useImageGeneration';
+import { useStickyImport } from './useStickyImport';
 import { ChatPanel } from './ChatPanel';
-import { VisualizationCanvas, DimBlend } from './VisualizationCanvas';
+import { VisualizationCanvas } from './VisualizationCanvas';
 import { QAPanel } from './QAPanel';
-import { StickyImportDialog, ImportPreview } from './StickyImportDialog';
-
-type SageNode = AppState['nodes'][number];
-
-// ─── Blended requirements builder ────────────────────────────────────────────
-
-function buildBlendedRequirements(
-  dims: AppState['dimensions'],
-  xDimName: string | null,
-  xBlend: DimBlend | null,
-  yDimName: string | null,
-  yBlend: DimBlend | null,
-): { requirements: string; categorical: Record<string, string>; ordinal: Record<string, string> } {
-  let req = '';
-  const categorical: Record<string, string> = {};
-  const ordinal: Record<string, string> = {};
-
-  for (const dim of dims) {
-    const blend = dim.name === xDimName ? xBlend : dim.name === yDimName ? yBlend : null;
-    let assignedValue: string;
-
-    if (blend) {
-      if (blend.secondary === null || blend.primaryWeight === 1) {
-        req += `${dim.name}: ${blend.primary}\n`;
-        assignedValue = blend.primary;
-      } else if (blend.primaryWeight >= 0.65) {
-        req += `${dim.name}: primarily "${blend.primary}" with some "${blend.secondary}" influence\n`;
-        assignedValue = blend.primary;
-      } else {
-        const pct = Math.round(blend.primaryWeight * 100);
-        const sPct = 100 - pct;
-        req += `${dim.name}: blend of "${blend.primary}" (${pct}%) and "${blend.secondary}" (${sPct}%)\n`;
-        assignedValue = blend.primary;
-      }
-    } else {
-      assignedValue = dim.values[Math.floor(Math.random() * dim.values.length)];
-      req += `${dim.name}: ${assignedValue}\n`;
-    }
-
-    if (dim.type === 'categorical') categorical[dim.name] = assignedValue;
-    else ordinal[dim.name] = assignedValue;
-  }
-
-  return { requirements: req, categorical, ordinal };
-}
+import { StickyImportDialog } from './StickyImportDialog';
 
 // ─── AppComponent ─────────────────────────────────────────────────────────────
 
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
-  const { user } = useUser();
   const updateState = useAppStore((state) => state.updateState);
-  const updateApp = useAppStore((state) => state.update);
-  const createApp = useAppStore((state) => state.create);
-  const boardApps = useAppStore((s) => s.apps);
-  const toast = useToast();
 
-  // The AI provider comes from the user's global setting, resolved against the
-  // server's LLM configuration (mirrors the Chat app). We send the provider
-  // name to Seer, which maps it to a concrete model per task; capability checks
-  // gate features the provider can't do (e.g. image input / image generation).
-  const serverConfig = useConfigStore((state) => state.config);
-  const llmManager = useMemo(() => (serverConfig?.models ? new LLMConfigManager(serverConfig.models) : undefined), [serverConfig]);
-  const { settings } = useUserSettings();
-  const aiProvider = settings.aiModel || serverConfig?.models?.settings?.default_provider || '';
+  const toast = useToast();
 
   // Theme
   const bgColor = useColorModeValue('gray.100', 'gray.700');
@@ -140,156 +74,54 @@ function AppComponent(props: App): JSX.Element {
 
   // Input / UI state
   const [input, setInput] = useState('');
-  const [username, setUsername] = useState('');
-  const [activeEntryId, setActiveEntryId] = useState<string | null>(null);
-  const [askingNodeId, setAskingNodeId] = useState<string | null>(null);
   const [selectedQANodeId, setSelectedQANodeId] = useState<string | null>(null);
   const [qaPanelOpen, setQaPanelOpen] = useState(false);
   const [qaInput, setQaInput] = useState('');
-  const [isAddingDimension, setIsAddingDimension] = useState(false);
-  const [isSummarizing, setIsSummarizing] = useState(false);
-  const [generatingImageNodeId, setGeneratingImageNodeId] = useState<string | null>(null);
-  const [localNodeImages, setLocalNodeImages] = useState<Record<string, string>>({});
-  const [rerollingNodeId, setRerollingNodeId] = useState<string | null>(null);
-  const [isGeneratingAt, setIsGeneratingAt] = useState(false);
-  const [isAddingManualIdea, setIsAddingManualIdea] = useState(false);
   const [chatPanelOpen, setChatPanelOpen] = useState(true);
   const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const [isLoadingPdf, setIsLoadingPdf] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [localStatusMessage, setLocalStatusMessage] = useState('');
 
-  // Refs shared with VisualizationCanvas
-  const positionsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
-  const hasFitRef = useRef(false);
+  const {
+    activeEntryId, localNodes, localDims,
+    isGenerating, localStatusMessage, askingNodeId,
+    isAddingDimension, rerollingNodeId, isGeneratingAt,
+    isAddingManualIdea, isSummarizing,
+    positionsRef, hasFitRef,
+    generate, toggleFav, clearAll, deleteEntry, restoreSnapshot,
+    branchFromNode, askNodeQuestion, addDimension, rerollNode,
+    generateMore, generateAt, addManualIdea, removeDimension,
+    summarizeFavorites, branchFromFavorites,
+  } = useIdeation({
+    s,
+    appId: props._id,
+    input,
+    setInput,
+    attachedImage,
+    setAttachedImage,
+    boardId: props.data.boardId,
+    roomId: props.data.roomId,
+    appPosition: props.data.position,
+    appSize: props.data.size,
+  });
 
-  // Stickie drag-to-import state
-  const [pendingImport, setPendingImport] = useState<{
-    stickieId: string;
-    text: string;
-    originalPosition: { x: number; y: number; z: number };
-    preview: ImportPreview | null;
-    isLoading: boolean;
-    temperature: number;
-  } | null>(null);
-  // Track previous stickie positions to detect entry into ideator bounds on drag-end
-  const prevPositionsRef = useRef<Record<string, { x: number; y: number }>>({});
-  const importingRef = useRef(false);
+  const { pendingImport, handleImportConfirm, handleImportCancel, handleImportRegenerate } = useStickyImport({
+    s,
+    localDims,
+    activeEntryId,
+    appId: props._id,
+    appPosition: props.data.position,
+    appSize: props.data.size,
+  });
 
-  // Per-user local view — derived from the active chatHistory entry
-  const activeEntry = s.chatHistory.find((e) => e.id === activeEntryId) ?? null;
-  const favorites = s.favorites ?? {};
-  const localNodes = (activeEntry?.nodes ?? []).map((n) => ({
-    ...n,
-    IsMyFav: favorites[n.ID] ?? false,
-    imageUrl: localNodeImages[n.ID] ?? n.imageUrl,
-  }));
-  const localDims = activeEntry?.dimensions ?? [];
-
-  useEffect(() => {
-    if (user) setUsername(user.data.name.split(' ')[0]);
-  }, [user]);
-
-  // ── Stickie drag-to-import detection ──
-
-  // Detect when a Stickie's position changes from outside to inside the ideator bounds.
-  // App dragging in SAGE3 is local-only during the drag; the store position only updates
-  // when the drag ends and the server confirms, so position changes == drag-end events.
-  useEffect(() => {
-    const stickies = boardApps.filter((a) => a.data.type === 'Stickie');
-    const ip = props.data.position;
-    const is = props.data.size;
-
-    for (const stickie of stickies) {
-      const prev = prevPositionsRef.current[stickie._id];
-      const curr = stickie.data.position;
-
-      if (prev && !importingRef.current) {
-        const { width: sw, height: sh } = stickie.data.size;
-        const wasInside = prev.x < ip.x + is.width && prev.x + sw > ip.x && prev.y < ip.y + is.height && prev.y + sh > ip.y;
-        const isInside = curr.x < ip.x + is.width && curr.x + sw > ip.x && curr.y < ip.y + is.height && curr.y + sh > ip.y;
-
-        if (!wasInside && isInside) {
-          const originalPosition = { x: prev.x, y: prev.y, z: curr.z };
-          const text = ((stickie.data.state as { text: string }).text ?? '').trim();
-
-          if (!activeEntryId || localDims.length === 0) {
-            toast({ title: 'No idea space yet', description: 'Generate ideas first, then import a Stickie.', status: 'warning', duration: 3000, isClosable: true });
-          } else if (text) {
-            importingRef.current = true;
-            updateApp(stickie._id, { position: { x: ip.x + is.width + 20, y: ip.y, z: curr.z } });
-            setPendingImport({ stickieId: stickie._id, text, originalPosition, preview: null, isLoading: true, temperature: 0 });
-          }
-        }
-      }
-
-      prevPositionsRef.current[stickie._id] = { x: curr.x, y: curr.y };
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [boardApps]);
-
-  // Run abstractNode whenever a new import preview is needed (initial drop or "Try Again")
-  useEffect(() => {
-    if (!pendingImport?.isLoading) return;
-    const { text, stickieId, originalPosition } = pendingImport;
-    let active = true;
-    abstractNode(text, aiProvider, pendingImport.temperature)
-      .then((preview) => {
-        if (active) setPendingImport((prev) => (prev ? { ...prev, preview, isLoading: false } : null));
-      })
-      .catch(() => {
-        if (active) {
-          updateApp(stickieId, { position: originalPosition });
-          setPendingImport(null);
-          importingRef.current = false;
-          toast({ title: 'Preview failed', status: 'error', duration: 3000, isClosable: true });
-        }
-      });
-    return () => { active = false; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pendingImport?.isLoading]);
-
-  const handleImportConfirm = useCallback(() => {
-    if (!pendingImport?.preview || !activeEntryId) return;
-    const { preview, text } = pendingImport;
-    const rawDims = {
-      categorical: Object.fromEntries(localDims.filter((d) => d.type === 'categorical').map((d) => [d.name, d.values])),
-      ordinal: Object.fromEntries(localDims.filter((d) => d.type === 'ordinal').map((d) => [d.name, d.values])),
-    };
-    const { categorical, ordinal } = buildRequirements(rawDims);
-    const newNode: AppState['nodes'][number] = {
-      ID: genId(),
-      Title: preview.Title,
-      Summary: preview.Summary,
-      Keywords: preview.Keywords,
-      Steps: preview.Steps,
-      Result: text,
-      Structure: preview.Structure,
-      Dimension: { categorical, ordinal },
-      IsMyFav: false,
-    };
-    const latest = useAppStore.getState().apps.find((a) => a._id === props._id)?.data.state as AppState | undefined;
-    const cur = latest ?? s;
-    const updatedHistory = cur.chatHistory.map((e) => (e.id === activeEntryId ? { ...e, nodes: [...e.nodes, newNode] } : e));
-    updateState(props._id, { ...cur, chatHistory: updatedHistory });
-    setPendingImport(null);
-    importingRef.current = false;
-  }, [pendingImport, activeEntryId, localDims, s, props._id, updateState]);
-
-  const handleImportCancel = useCallback(() => {
-    if (!pendingImport) return;
-    updateApp(pendingImport.stickieId, { position: pendingImport.originalPosition });
-    setPendingImport(null);
-    importingRef.current = false;
-  }, [pendingImport, updateApp]);
-
-  const handleImportRegenerate = useCallback(() => {
-    if (!pendingImport) return;
-    setPendingImport((prev) => (prev ? { ...prev, preview: null, isLoading: true, temperature: 0.7 } : null));
-  }, [pendingImport]);
-
-  // ── Setup save ──
-
+  const { generateImageForNode, cancelImageGeneration, generatingImageNodeId } = useImageGeneration({
+    s,
+    localNodes,
+    activeEntryId,
+    appId: props._id,
+    boardId: props.data.boardId,
+    roomId: props.data.roomId,
+    appPosition: props.data.position,
+  });
 
   // ── PDF context ──
   const handleAttachPdf = useCallback(
@@ -309,580 +141,8 @@ function AppComponent(props: App): JSX.Element {
   );
 
   const handleClearPdf = useCallback(() => {
-    updateState(props._id, { ...s, pdfContext: undefined });
-  }, [s, props._id]);
-
-  // ── Generation ──
-
-  const generate = useCallback(
-    async (branchOpts?: { displayPrompt: string; aiPrompt: string; parentEntryId?: string; parentNodeTitle?: string }) => {
-      if (!user || isGenerating) return;
-
-      const displayPrompt = branchOpts?.displayPrompt ?? input.trim();
-      const aiPrompt = branchOpts?.aiPrompt ?? input.trim();
-      if (!displayPrompt) {
-        toast({ title: 'Enter a prompt', status: 'warning', duration: 2500, isClosable: true });
-        return;
-      }
-
-      // Guard: image attached but the selected provider can't do vision
-      const image = branchOpts ? undefined : (attachedImage ?? undefined);
-      if (image && !llmManager?.canProviderPerformTask(aiProvider, 'image')) {
-        toast({
-          title: 'Provider does not support images',
-          description: `Your AI provider (${aiProvider || 'none'}) can't process images. Pick a vision-capable provider in your user settings.`,
-          status: 'warning',
-          duration: 4000,
-          isClosable: true,
-        });
-        return;
-      }
-
-      if (!branchOpts) {
-        setInput('');
-        setAttachedImage(null);
-        updateState(props._id, { ...s, pdfContext: undefined });
-      }
-      positionsRef.current.clear();
-      hasFitRef.current = false;
-
-      const chatEntry = {
-        id: genId(),
-        prompt: displayPrompt,
-        userName: username,
-        userId: user._id,
-        timestamp: Date.now(),
-        nodes: [] as AppState['nodes'],
-        dimensions: [] as AppState['dimensions'],
-        parentEntryId: branchOpts?.parentEntryId,
-        parentNodeTitle: branchOpts?.parentNodeTitle,
-        imageUrl: image,
-        pdfFilename: s.pdfContext?.filename,
-      };
-
-      setIsGenerating(true);
-      setLocalStatusMessage('Determining important aspects…');
-      updateState(props._id, {
-        ...s,
-        prompt: aiPrompt,
-        chatHistory: [...s.chatHistory, chatEntry],
-      });
-
-      try {
-        const rawDims = await generateDimensionsFromPrompt(aiPrompt, aiProvider, s.numDimensions, image, s.pdfContext?.text);
-
-        const dimensions: AppState['dimensions'] = [
-          ...Object.entries(rawDims.categorical).map(([name, values], i) => ({
-            id: i,
-            name,
-            type: 'categorical' as const,
-            values,
-          })),
-          ...Object.entries(rawDims.ordinal).map(([name, values], i) => ({
-            id: Object.keys(rawDims.categorical).length + i,
-            name,
-            type: 'ordinal' as const,
-            values,
-          })),
-        ];
-
-        setLocalStatusMessage(`Generating ${s.batchSize} responses…`);
-
-        const newNodes: AppState['nodes'] = [];
-
-        const results = await Promise.allSettled(
-          Array.from({ length: s.batchSize }, async () => {
-            const { requirements, categorical, ordinal } = buildRequirements(rawDims);
-            const text = await generateNodeContent(aiPrompt, requirements, aiProvider, image, s.pdfContext?.text);
-            const summary = await abstractNode(text, aiProvider);
-            return {
-              ID: genId(),
-              Title: summary.Title,
-              Summary: summary.Summary,
-              Keywords: summary.Keywords,
-              Steps: summary.Steps,
-              Result: text,
-              Structure: summary.Structure,
-              Dimension: { categorical, ordinal },
-              IsMyFav: false,
-            };
-          }),
-        );
-        for (const r of results) {
-          if (r.status === 'fulfilled') newNodes.push(r.value);
-        }
-        if (newNodes.length === 0) throw new Error('All idea generations failed');
-
-        const latest = useAppStore.getState().apps.find((a) => a._id === props._id)?.data.state as AppState | undefined;
-        const updatedHistory = (latest?.chatHistory ?? [...s.chatHistory, chatEntry]).map((e) =>
-          e.id === chatEntry.id ? { ...e, nodes: newNodes, dimensions } : e,
-        );
-        setIsGenerating(false);
-        setLocalStatusMessage('');
-        updateState(props._id, {
-          ...(latest ?? s),
-          status: 'ready',
-          prompt: aiPrompt,
-          chatHistory: updatedHistory,
-        });
-
-        setActiveEntryId(chatEntry.id);
-      } catch (err: unknown) {
-        const errMsg = err instanceof Error ? err.message : String(err);
-        toast({ title: 'Generation failed', description: errMsg, status: 'error', duration: 5000, isClosable: true });
-        setIsGenerating(false);
-        setLocalStatusMessage('');
-        updateState(props._id, { ...s, status: 'idle' });
-      }
-    },
-    [user, s, input, username, isGenerating, props._id, attachedImage],
-  );
-
-  const toggleFav = (nodeId: string) => {
-    const current = (s.favorites ?? {})[nodeId] ?? false;
-    updateState(props._id, { favorites: { ...(s.favorites ?? {}), [nodeId]: !current } });
-  };
-
-  const clearAll = () => {
-    updateState(props._id, {
-      ...s,
-      status: 'idle',
-      nodes: [],
-      dimensions: [],
-      prompt: '',
-      statusMessage: '',
-      chatHistory: [],
-      qa: [],
-      favorites: {},
-      nodeImages: {},
-    });
-    positionsRef.current.clear();
-    hasFitRef.current = false;
-    setActiveEntryId(null);
-  };
-
-  const deleteEntry = useCallback(
-    (entryId: string) => {
-      const updated = s.chatHistory.filter((e) => e.id !== entryId);
-      updateState(props._id, { ...s, chatHistory: updated });
-      if (activeEntryId === entryId) {
-        // Switch to the previous remaining entry, if any
-        const idx = s.chatHistory.findIndex((e) => e.id === entryId);
-        const next = updated[idx - 1] ?? updated[idx] ?? null;
-        setActiveEntryId(next?.id ?? null);
-      }
-    },
-    [s, props._id, activeEntryId],
-  );
-
-  const restoreSnapshot = useCallback((entry: AppState['chatHistory'][number]) => {
-    if (!(entry.nodes ?? []).length) return;
-    positionsRef.current.clear();
-    hasFitRef.current = false;
-    setActiveEntryId(entry.id);
-  }, []);
-
-  const branchFromNode = useCallback(
-    (node: SageNode) => {
-      const aiPrompt = [
-        s.prompt,
-        `\nNow explore new variations specifically inspired by this idea:`,
-        `Title: "${node.Title}"`,
-        node.Summary,
-        node.Steps?.length ? `Steps: ${node.Steps.join('; ')}` : '',
-      ]
-        .filter(Boolean)
-        .join('\n');
-      generate({
-        displayPrompt: node.Title,
-        aiPrompt,
-        parentEntryId: activeEntryId ?? undefined,
-        parentNodeTitle: node.Title,
-      });
-    },
-    [s.prompt, activeEntryId, generate],
-  );
-
-  const askNodeQuestion = useCallback(
-    async (node: SageNode, question: string) => {
-      if (!user || askingNodeId) return;
-      setAskingNodeId(node.ID);
-      try {
-        const context = [
-          `Idea: "${node.Title}"`,
-          node.Summary,
-          node.Steps?.length ? `Steps: ${node.Steps.join('; ')}` : '',
-          node.Result ? `Details: ${node.Result}` : '',
-        ]
-          .filter(Boolean)
-          .join('\n');
-        const answer = await callProseAPI(`${context}\n\nQuestion: ${question}`, aiProvider);
-        const qaEntry = {
-          id: genId(),
-          nodeId: node.ID,
-          nodeTitle: node.Title,
-          question,
-          answer,
-          userId: user._id,
-          userName: username,
-          timestamp: Date.now(),
-        };
-        const latest = useAppStore.getState().apps.find((a) => a._id === props._id)?.data.state as AppState | undefined;
-        updateState(props._id, { ...(latest ?? s), qa: [...(latest?.qa ?? s.qa ?? []), qaEntry] });
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        toast({ title: 'Question failed', description: msg, status: 'error', duration: 4000, isClosable: true });
-      } finally {
-        setAskingNodeId(null);
-      }
-    },
-    [user, s, username, askingNodeId, props._id],
-  );
-
-  // ── Dimension management ──
-
-  const addDimension = useCallback(
-    async (dimName: string) => {
-      if (isAddingDimension || localNodes.length === 0 || !activeEntryId) return;
-      setIsAddingDimension(true);
-      try {
-        const nodeStubs = localNodes.map((n) => ({ ID: n.ID, Title: n.Title, Summary: n.Summary }));
-        const { type, values, assignments } = await generateUserDimension(dimName, s.prompt, nodeStubs, aiProvider);
-        const newDim = { id: localDims.length, name: dimName, type, values };
-        const updatedNodes = localNodes.map((n) => ({
-          ...n,
-          Dimension: {
-            categorical:
-              type === 'categorical' ? { ...n.Dimension.categorical, [dimName]: assignments[n.ID] ?? values[0] } : n.Dimension.categorical,
-            ordinal: type === 'ordinal' ? { ...n.Dimension.ordinal, [dimName]: assignments[n.ID] ?? values[0] } : n.Dimension.ordinal,
-          },
-        }));
-        const latest = useAppStore.getState().apps.find((a) => a._id === props._id)?.data.state as AppState | undefined;
-        const cur = latest ?? s;
-        const updatedHistory = cur.chatHistory.map((e) =>
-          e.id === activeEntryId ? { ...e, nodes: updatedNodes, dimensions: [...(e.dimensions ?? []), newDim] } : e,
-        );
-        updateState(props._id, { ...cur, chatHistory: updatedHistory });
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        toast({ title: 'Failed to add dimension', description: msg, status: 'error', duration: 4000, isClosable: true });
-      } finally {
-        setIsAddingDimension(false);
-      }
-    },
-    [s, localNodes, localDims, activeEntryId, isAddingDimension, props._id],
-  );
-
-  const rerollNode = useCallback(
-    async (nodeId: string) => {
-      if (rerollingNodeId || !activeEntryId) return;
-      setRerollingNodeId(nodeId);
-      try {
-        const latest = useAppStore.getState().apps.find((a) => a._id === props._id)?.data.state as AppState | undefined;
-        const cur = latest ?? s;
-        const curEntry = cur.chatHistory.find((e) => e.id === activeEntryId);
-        if (!curEntry) return;
-        const rawDims = {
-          categorical: Object.fromEntries(curEntry.dimensions.filter((d) => d.type === 'categorical').map((d) => [d.name, d.values])),
-          ordinal: Object.fromEntries(curEntry.dimensions.filter((d) => d.type === 'ordinal').map((d) => [d.name, d.values])),
-        };
-        const { requirements, categorical, ordinal } = buildRequirements(rawDims);
-        const text = await generateNodeContent(curEntry.prompt, requirements, aiProvider, undefined, s.pdfContext?.text);
-        const summary = await abstractNode(text, aiProvider);
-        const afterGen = useAppStore.getState().apps.find((a) => a._id === props._id)?.data.state as AppState | undefined;
-        const afterEntry = (afterGen ?? cur).chatHistory.find((e) => e.id === activeEntryId);
-        if (!afterEntry) return;
-        const updatedNodes = afterEntry.nodes.map((n) =>
-          n.ID === nodeId
-            ? {
-                ...n,
-                Title: summary.Title,
-                Summary: summary.Summary,
-                Keywords: summary.Keywords,
-                Steps: summary.Steps,
-                Result: text,
-                Structure: summary.Structure,
-                Dimension: { categorical, ordinal },
-                IsMyFav: false,
-                imageUrl: undefined,
-              }
-            : n,
-        );
-        const updatedHistory = (afterGen ?? cur).chatHistory.map((e) => (e.id === activeEntryId ? { ...e, nodes: updatedNodes } : e));
-        updateState(props._id, { ...(afterGen ?? cur), chatHistory: updatedHistory });
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        toast({ title: 'Re-roll failed', description: msg, status: 'error', duration: 4000, isClosable: true });
-      } finally {
-        setRerollingNodeId(null);
-      }
-    },
-    [s, localNodes, activeEntryId, rerollingNodeId, props._id],
-  );
-
-  const generateMore = useCallback(
-    async (entry: AppState['chatHistory'][number]) => {
-      const entryDims = entry.dimensions ?? [];
-      if (!user || isGenerating || entryDims.length === 0) return;
-      // Restore the entry's snapshot first so the canvas shows the right nodes
-      restoreSnapshot(entry);
-      const rawDims = {
-        categorical: Object.fromEntries(entryDims.filter((d) => d.type === 'categorical').map((d) => [d.name, d.values])),
-        ordinal: Object.fromEntries(entryDims.filter((d) => d.type === 'ordinal').map((d) => [d.name, d.values])),
-      };
-      setIsGenerating(true);
-      setLocalStatusMessage(`Generating ${s.batchSize} more ideas…`);
-      const latest = useAppStore.getState().apps.find((a) => a._id === props._id)?.data.state as AppState | undefined;
-      updateState(props._id, { ...(latest ?? s) });
-      try {
-        const newNodes: AppState['nodes'] = [];
-        const moreResults = await Promise.allSettled(
-          Array.from({ length: s.batchSize }, async () => {
-            const { requirements, categorical, ordinal } = buildRequirements(rawDims);
-            const text = await generateNodeContent(entry.prompt, requirements, aiProvider, undefined, s.pdfContext?.text);
-            const summary = await abstractNode(text, aiProvider);
-            return {
-              ID: genId(),
-              Title: summary.Title,
-              Summary: summary.Summary,
-              Keywords: summary.Keywords,
-              Steps: summary.Steps,
-              Result: text,
-              Structure: summary.Structure,
-              Dimension: { categorical, ordinal },
-              IsMyFav: false,
-            };
-          }),
-        );
-        for (const r of moreResults) {
-          if (r.status === 'fulfilled') newNodes.push(r.value);
-        }
-        if (newNodes.length === 0) throw new Error('All idea generations failed');
-        const afterGen = useAppStore.getState().apps.find((a) => a._id === props._id)?.data.state as AppState | undefined;
-        const cur = afterGen ?? s;
-        const existingEntry = cur.chatHistory.find((e) => e.id === entry.id);
-        const combinedNodes = [...(existingEntry?.nodes ?? entry.nodes), ...newNodes];
-        const updatedHistory = cur.chatHistory.map((e) => (e.id === entry.id ? { ...e, nodes: combinedNodes } : e));
-        setIsGenerating(false);
-        setLocalStatusMessage('');
-        updateState(props._id, { ...cur, status: 'ready', chatHistory: updatedHistory });
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        toast({ title: 'Generation failed', description: msg, status: 'error', duration: 5000, isClosable: true });
-        setIsGenerating(false);
-        setLocalStatusMessage('');
-        const afterFail = useAppStore.getState().apps.find((a) => a._id === props._id)?.data.state as AppState | undefined;
-        updateState(props._id, { ...(afterFail ?? s), status: 'ready' });
-      }
-    },
-    [user, s, isGenerating, props._id, restoreSnapshot],
-  );
-
-  const generateImageForNode = useCallback(
-    async (nodeId: string) => {
-      if (generatingImageNodeId || !activeEntryId) return;
-      const node = localNodes.find((n) => n.ID === nodeId);
-      if (!node) return;
-      if (!llmManager?.canProviderPerformTask(aiProvider, 'image_generation')) {
-        toast({
-          title: 'Provider cannot generate images',
-          description: `Your AI provider (${aiProvider || 'none'}) has no image-generation model. Pick another provider in your user settings.`,
-          status: 'warning',
-          duration: 4000,
-          isClosable: true,
-        });
-        return;
-      }
-      setGeneratingImageNodeId(nodeId);
-      try {
-        const dataUrl = await generateNodeImage(node.Title, node.Summary, node.Keywords, aiProvider, s.prompt, node.Dimension);
-        // Upload to SAGE3 assets to avoid storing a ~1MB base64 string in app state
-        const blob = await fetch(dataUrl).then((r) => r.blob());
-        const imgFile = new File([blob], `idea-${nodeId}.png`, { type: 'image/png' });
-        const fd = new FormData();
-        fd.append('files', imgFile);
-        fd.append('room', props.data.roomId);
-        const uploadRes = await fetch(apiUrls.assets.upload, { method: 'POST', body: fd, credentials: 'include' });
-        if (!uploadRes.ok) throw new Error('Asset upload failed');
-        const uploadedIds = await uploadRes.json() as string[];
-        const assetDbId = uploadedIds[0];
-        if (!assetDbId) throw new Error('No asset ID returned from upload');
-        // Store the DB id — localNodes resolves it to a URL via useAssetStore
-        updateState(props._id, { nodeImages: { ...(s.nodeImages ?? {}), [nodeId]: assetDbId } });
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        toast({ title: 'Image generation failed', description: msg, status: 'error', duration: 4000, isClosable: true });
-      } finally {
-        setGeneratingImageNodeId(null);
-      }
-    },
-    [s, localNodes, activeEntryId, generatingImageNodeId, props._id, props.data.roomId, llmManager, aiProvider, toast],
-  );
-
-  const summarizeFavorites = useCallback(async () => {
-    const favNodes = localNodes.filter((n) => n.IsMyFav);
-    if (favNodes.length === 0 || isSummarizing) return;
-    setIsSummarizing(true);
-    try {
-      const summary = await summarizeFavoritesAPI(
-        favNodes.map((n) => ({ Title: n.Title, Summary: n.Summary, Keywords: n.Keywords })),
-        s.prompt,
-        aiProvider,
-      );
-      const header = `★ Favorites Summary\nTopic: ${s.prompt}\n\n`;
-      const footer = `\n\nFavorites: ${favNodes.map((n) => n.Title).join(', ')}`;
-      await createApp({
-        title: 'Favorites Summary',
-        roomId: props.data.roomId,
-        boardId: props.data.boardId,
-        position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
-        size: { width: 420, height: 520, depth: 0 },
-        rotation: { x: 0, y: 0, z: 0 },
-        type: 'Stickie',
-        state: {
-          text: header + summary + footer,
-          fontSize: 18,
-          color: 'yellow',
-          lock: false,
-          sources: [props._id],
-          executeInfo: { executeFunc: '', params: {} },
-        },
-        raised: true,
-        dragging: false,
-        pinned: false,
-      });
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      toast({ title: 'Summary failed', description: msg, status: 'error', duration: 4000, isClosable: true });
-    } finally {
-      setIsSummarizing(false);
-    }
-  }, [localNodes, s.prompt, aiProvider, isSummarizing, props._id, props.data, createApp]);
-
-  const branchFromFavorites = useCallback(() => {
-    const favNodes = localNodes.filter((n) => n.IsMyFav);
-    if (favNodes.length === 0) return;
-    const ideasList = favNodes.map((n, i) => `${i + 1}. "${n.Title}": ${n.Summary}`).join('\n');
-    const aiPrompt = [
-      s.prompt ? `Original topic: ${s.prompt}` : '',
-      `\nThe following ideas were favorited from the previous exploration:\n${ideasList}`,
-      `\nNow generate new ideas that build on, combine, or extend the themes from these favorites. Explore adjacent variations that share their strengths.`,
-    ]
-      .filter(Boolean)
-      .join('\n');
-    const displayPrompt = `Branch from ${favNodes.length} favorite${favNodes.length > 1 ? 's' : ''}: ${favNodes.map((n) => n.Title).join(', ')}`;
-    generate({
-      displayPrompt,
-      aiPrompt,
-      parentEntryId: activeEntryId ?? undefined,
-    });
-  }, [localNodes, s.prompt, activeEntryId, generate]);
-
-  const generateAt = useCallback(
-    async ({
-      worldX,
-      worldY,
-      xDimName,
-      xBlend,
-      yDimName,
-      yBlend,
-    }: {
-      worldX: number;
-      worldY: number;
-      xDimName: string | null;
-      xBlend: DimBlend | null;
-      yDimName: string | null;
-      yBlend: DimBlend | null;
-    }) => {
-      if (!activeEntryId || localDims.length === 0) return;
-      setIsGeneratingAt(true);
-      try {
-        const { requirements, categorical, ordinal } = buildBlendedRequirements(localDims, xDimName, xBlend, yDimName, yBlend);
-        const text = await generateNodeContent(s.prompt, requirements, aiProvider);
-        const summary = await abstractNode(text, aiProvider);
-        const newNode: AppState['nodes'][number] = {
-          ID: genId(),
-          Title: summary.Title,
-          Summary: summary.Summary,
-          Keywords: summary.Keywords,
-          Steps: summary.Steps,
-          Result: text,
-          Structure: summary.Structure,
-          Dimension: { categorical, ordinal },
-          IsMyFav: false,
-        };
-        // Seed the position near where the user clicked so the simulation starts there
-        positionsRef.current.set(newNode.ID, { x: worldX, y: worldY });
-        const latest = useAppStore.getState().apps.find((a) => a._id === props._id)?.data.state as AppState | undefined;
-        const cur = latest ?? s;
-        const updatedHistory = cur.chatHistory.map((e) => (e.id === activeEntryId ? { ...e, nodes: [...e.nodes, newNode] } : e));
-        updateState(props._id, { ...cur, chatHistory: updatedHistory });
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        toast({ title: 'Generation failed', description: msg, status: 'error', duration: 4000, isClosable: true });
-      } finally {
-        setIsGeneratingAt(false);
-      }
-    },
-    [s, localDims, activeEntryId, props._id, positionsRef],
-  );
-
-  const addManualIdea = useCallback(
-    async (text: string) => {
-      if (!activeEntryId) return;
-      setIsAddingManualIdea(true);
-      try {
-        const summary = await abstractNode(text, aiProvider);
-        const rawDims = {
-          categorical: Object.fromEntries(localDims.filter((d) => d.type === 'categorical').map((d) => [d.name, d.values])),
-          ordinal: Object.fromEntries(localDims.filter((d) => d.type === 'ordinal').map((d) => [d.name, d.values])),
-        };
-        const { categorical, ordinal } = buildRequirements(rawDims);
-        const newNode: AppState['nodes'][number] = {
-          ID: genId(),
-          Title: summary.Title,
-          Summary: summary.Summary,
-          Keywords: summary.Keywords,
-          Steps: summary.Steps,
-          Result: text,
-          Structure: summary.Structure,
-          Dimension: { categorical, ordinal },
-          IsMyFav: false,
-        };
-        const latest = useAppStore.getState().apps.find((a) => a._id === props._id)?.data.state as AppState | undefined;
-        const cur = latest ?? s;
-        const updatedHistory = cur.chatHistory.map((e) => (e.id === activeEntryId ? { ...e, nodes: [...e.nodes, newNode] } : e));
-        updateState(props._id, { ...cur, chatHistory: updatedHistory });
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : String(err);
-        toast({ title: 'Failed to add idea', description: msg, status: 'error', duration: 4000, isClosable: true });
-      } finally {
-        setIsAddingManualIdea(false);
-      }
-    },
-    [s, localDims, activeEntryId, props._id],
-  );
-
-  const removeDimension = useCallback(
-    (dimName: string) => {
-      if (!activeEntryId) return;
-      const updatedDims = localDims.filter((d) => d.name !== dimName);
-      const updatedNodes = localNodes.map((n) => {
-        const categorical = { ...n.Dimension.categorical };
-        const ordinal = { ...n.Dimension.ordinal };
-        delete categorical[dimName];
-        delete ordinal[dimName];
-        return { ...n, Dimension: { categorical, ordinal } };
-      });
-      const updatedHistory = s.chatHistory.map((e) =>
-        e.id === activeEntryId ? { ...e, nodes: updatedNodes, dimensions: updatedDims } : e,
-      );
-      updateState(props._id, { ...s, chatHistory: updatedHistory });
-    },
-    [s, localNodes, localDims, activeEntryId, props._id],
-  );
-
-  // ── Setup screen ──
+    updateState(props._id, { pdfContext: null as any });
+  }, [props._id, updateState]);
 
   // ── Q&A helpers ──
 
@@ -985,6 +245,7 @@ function AppComponent(props: App): JSX.Element {
           onSummarizeFavorites={summarizeFavorites}
           isSummarizing={isSummarizing}
           onGenerateImage={generateImageForNode}
+          onCancelImageGeneration={cancelImageGeneration}
           generatingImageNodeId={generatingImageNodeId}
           onReroll={rerollNode}
           rerollingNodeId={rerollingNodeId}

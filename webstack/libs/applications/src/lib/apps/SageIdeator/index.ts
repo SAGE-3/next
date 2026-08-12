@@ -60,6 +60,7 @@ export const schema = z.object({
   pdfContext: z.object({ filename: z.string(), text: z.string() }).optional(),
   favorites: z.record(z.string(), z.boolean()).default({}),
   nodeImages: z.record(z.string(), z.string()).default({}),
+  nodeStickies: z.record(z.string(), z.string()).default({}),
   chatHistory: z.array(
     z.object({
       id: z.string(),
@@ -94,6 +95,7 @@ export const init: Partial<state> = {
   qa: [],
   favorites: {},
   nodeImages: {},
+  nodeStickies: {},
   chatHistory: [],
 };
 

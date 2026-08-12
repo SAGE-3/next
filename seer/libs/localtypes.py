@@ -225,6 +225,7 @@ class IdeatorImageRequest(BaseModel):
     model: str
     brainstormingPrompt: str | None = None
     dimension: IdeatorDimension | None = None
+    additionalContext: str | None = None
 
 
 class IdeatorImageResponse(BaseModel):

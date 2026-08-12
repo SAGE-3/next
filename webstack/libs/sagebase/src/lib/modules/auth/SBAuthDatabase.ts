@@ -195,13 +195,14 @@ export class SBAuthDatabase {
    */
   public async deleteAuthByEmail(email: string): Promise<SBAuthSchema | undefined> {
     try {
-      // RediSearch TAG queries treat '.', '-', '+', and '@' as syntax
-      // characters. Only escaping '@' and '.' (the prior behavior) let a
-      // syntax error slip through for any email containing '-' or '+' —
-      // both legal, common email characters — which this method's catch
-      // block silently swallowed as "no match found" even when a matching
-      // record existed. Found via an integration test against real Redis.
-      const escapedQuery = email.replace(/[@.\-+]/g, '\\$&');
+      // RediSearch TAG queries treat most punctuation as syntax characters,
+      // and a backslash in the input can escape the query's own delimiters.
+      // Escape every non-alphanumeric character (harmless for characters
+      // that don't need it): the single pass covers backslash itself, so an
+      // input backslash can't defeat the escaping, and legal email
+      // characters like '-' and '+' no longer cause a syntax error that
+      // this method's catch block would swallow as "no match found".
+      const escapedQuery = email.replace(/[^a-zA-Z0-9]/g, '\\$&');
       const response = await this._redisClient.ft.search(this._indexName, `@email:{${escapedQuery}}`);
       const docs = response.documents;
       if (docs.length > 1) {

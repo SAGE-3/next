@@ -13,6 +13,8 @@ import logging
 from PIL import Image
 from io import BytesIO
 import re, time, os, base64
+import ipaddress, socket, requests
+from urllib.parse import urlparse
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -470,6 +472,93 @@ def isURL(string):
         r"(:\d+)?(/.*)?$"  # Optional port and path
     )
     return bool(url_pattern.match(string))
+
+
+# Limits for fetching user-provided image URLs
+FETCH_TIMEOUT = 10  # seconds
+FETCH_MAX_BYTES = 20 * 1024 * 1024  # 20 MB
+FETCH_MAX_REDIRECTS = 3
+
+
+def assertPublicHost(url):
+    """
+    Raise ValueError unless every address the URL's hostname resolves to is public.
+
+    Blocks loopback, private (RFC 1918), link-local, multicast, and reserved
+    ranges so a user-provided URL cannot reach internal services (SSRF).
+
+    Args:
+      url (str): The URL to check.
+
+    Returns:
+      The parsed URL (urllib.parse.ParseResult).
+    """
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https"):
+        raise ValueError(f"Unsupported URL scheme: {parsed.scheme}")
+    if not parsed.hostname:
+        raise ValueError("URL has no hostname")
+    port = parsed.port or (443 if parsed.scheme == "https" else 80)
+    try:
+        infos = socket.getaddrinfo(parsed.hostname, port, proto=socket.IPPROTO_TCP)
+    except socket.gaierror:
+        raise ValueError(f"Cannot resolve host: {parsed.hostname}")
+    # Every resolved address must be public, not just the first one
+    for info in infos:
+        ip = ipaddress.ip_address(info[4][0])
+        if not ip.is_global or ip.is_multicast:
+            raise ValueError(f"URL resolves to a non-public address: {ip}")
+    return parsed
+
+
+def fetch_public_image(url):
+    """
+    Fetch an image from a user-provided URL, refusing non-public destinations.
+
+    Redirects are followed manually and each hop is re-validated with
+    assertPublicHost. The download is bounded by FETCH_TIMEOUT and
+    FETCH_MAX_BYTES, and the response must be an image.
+
+    Note: the address check happens before the request (resolve-then-fetch),
+    so a hostile DNS server flipping records between the two lookups is a
+    residual risk; network egress rules are the backstop for that.
+
+    Args:
+      url (str): The http(s) URL of the image.
+
+    Returns:
+      bytes: The raw image content.
+
+    Raises:
+      ValueError: If the URL is unsafe, unreachable, redirects too many
+        times, is too large, or does not contain an image.
+    """
+    for _ in range(FETCH_MAX_REDIRECTS + 1):
+        assertPublicHost(url)
+        try:
+            response = requests.get(
+                url, timeout=FETCH_TIMEOUT, allow_redirects=False, stream=True
+            )
+        except requests.RequestException as e:
+            raise ValueError(f"Failed to fetch URL: {e}")
+        if response.is_redirect or response.is_permanent_redirect:
+            location = response.headers.get("Location")
+            if not location:
+                raise ValueError("Redirect without a Location header")
+            url = requests.compat.urljoin(url, location)
+            continue
+        if response.status_code != 200:
+            raise ValueError(f"Fetch failed with status {response.status_code}")
+        content_type = response.headers.get("Content-Type", "").split(";")[0].strip()
+        if not (content_type.startswith("image/") or content_type == "application/octet-stream"):
+            raise ValueError(f"Not an image: {content_type}")
+        data = BytesIO()
+        for chunk in response.iter_content(chunk_size=64 * 1024):
+            data.write(chunk)
+            if data.tell() > FETCH_MAX_BYTES:
+                raise ValueError("Image too large")
+        return data.getvalue()
+    raise ValueError("Too many redirects")
 
 
 def getImageFile(ps3, assetid):
