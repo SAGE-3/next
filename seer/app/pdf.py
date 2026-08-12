@@ -29,7 +29,7 @@ from fastapi import HTTPException
 
 # Typing for RPC
 from libs.localtypes import PDFQuery, PDFAnswer
-from libs.utils import getModelsInfo, getPDFFile
+from libs.utils import getModelsInfo, getPDFFile, mdCachePath
 from libs.llm_manager import LLMManager
 
 # ChromaDB AI vector DB
@@ -145,7 +145,7 @@ class PDFAgent:
         If the Markdown file already exists in the temporary directory, it reads and returns the content from the file.
         Otherwise, it converts the PDF content to Markdown, writes it to a temporary file, and returns the Markdown content.
         """
-        file_path = f"/tmp/{id}.md"
+        file_path = mdCachePath(id)
         if os.path.exists(file_path):
             with open(file_path, "r") as file:
                 return file.read()
@@ -214,7 +214,7 @@ class PDFAgent:
     async def _get_markdown(self, id, content, model):
         """PDF -> Markdown, cached in /tmp/{id}.md. Prefers olmOCR (models.pdf2md)
         and falls back to pymupdf4llm (with vision-OCR) if it's unset or fails."""
-        file_path = f"/tmp/{id}.md"
+        file_path = mdCachePath(id)
         if os.path.exists(file_path):
             with open(file_path, "r") as f:
                 return f.read()

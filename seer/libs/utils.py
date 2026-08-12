@@ -338,6 +338,23 @@ def getUsers(ps3):
     return None
 
 
+def mdCachePath(asset_id):
+    """
+    Build the /tmp/{id}.md cache path for a PDF asset, rejecting ids that
+    would escape /tmp (path injection). Asset ids come from client requests,
+    so they must be treated as untrusted.
+    """
+    name = str(asset_id)
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", name):
+        raise ValueError(f"Invalid asset id: {asset_id!r}")
+    # /tmp may itself be a symlink (e.g. /private/tmp on macOS)
+    base = os.path.realpath("/tmp")
+    path = os.path.realpath(os.path.join(base, name + ".md"))
+    if not path.startswith(base + os.sep):
+        raise ValueError(f"Invalid asset id: {asset_id!r}")
+    return path
+
+
 def getMDfromPDF(id, content):
     """
     Converts a PDF content to Markdown format and caches the result in a temporary file.
@@ -352,7 +369,7 @@ def getMDfromPDF(id, content):
     If the Markdown file already exists in the temporary directory, it reads and returns the content from the file.
     Otherwise, it converts the PDF content to Markdown, writes it to a temporary file, and returns the Markdown content.
     """
-    file_path = f"/tmp/{id}.md"
+    file_path = mdCachePath(id)
     if os.path.exists(file_path):
         with open(file_path, "r") as file:
             return file.read()
