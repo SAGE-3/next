@@ -33,11 +33,13 @@ import {
   TabPanels,
   Tab,
   TabPanel,
+  useColorMode,
+  HStack,
 } from '@chakra-ui/react';
 import { MdInfo } from 'react-icons/md';
 
 // SAGE Imports
-import { ServerConfiguration } from '@sage3/shared/types';
+import { LLMConfiguration, LLMConfigManager, TaskType, TASK_TYPES } from '@sage3/shared/types';
 import { useUserSettings } from '../../../providers';
 import { useConfigStore } from '../../../stores';
 import { isElectron } from '../../../utils';
@@ -63,6 +65,9 @@ const tabDict: Record<UserSettingsTabs, number> = {
 export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.Element {
   const initialRef = useRef(null);
   const tabIndex = props.tab ? tabDict[props.tab] : 0;
+
+  // Chakra Toggle Color Mode
+  const { colorMode } = useColorMode();
 
   // User Settings Provider
   const {
@@ -90,31 +95,33 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
 
   // SAGE Intelligence Settings
   const config = useConfigStore((state) => state.config);
-  const [llama, setLlama] = useState<ServerConfiguration['services']['llama']>();
-  const [openai, setOpenai] = useState<ServerConfiguration['services']['openai']>();
-  const [azure, setAzure] = useState<ServerConfiguration['services']['azure']>();
+  const [models, setModels] = useState<LLMConfiguration>();
   const [selectedModel, setSelectedModel] = useState(userSettings.aiModel);
+  const [manager, setManager] = useState<LLMConfigManager>();
 
   useEffect(() => {
     if (config) {
-      setLlama(config.llama);
-      setOpenai(config.openai);
-      setAzure(config.azure);
+      setModels(config.models);
+      const mgr = new LLMConfigManager(config.models);
+      setManager(mgr);
     }
   }, [config]);
 
   useEffect(() => {
-    // Look for a previously set model
-    if (userSettings.aiModel) {
-      // If value previously set, use it
+    // Wait for the provider list to load before validating the saved model
+    if (!models) return;
+    const providerKeys = Object.keys(models.providers || {});
+    if (userSettings.aiModel && providerKeys.includes(userSettings.aiModel)) {
+      // Saved provider still exists in the config: keep it
       setSelectedModel(userSettings.aiModel);
-    } else {
-      // Otherwise, use azure as default
-      const val = 'azure';
+    } else if (providerKeys.length > 0) {
+      // Saved provider is missing or invalid (e.g. a legacy 'llama' value in
+      // localStorage): fall back to the first available provider and persist it
+      const val = providerKeys[0];
       setSelectedModel(val);
       setAIModel(val);
     }
-  }, [userSettings.aiModel, openai, setAIModel]);
+  }, [userSettings.aiModel, models]);
 
   return (
     <Modal
@@ -124,10 +131,10 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
       blockScrollOnMount={false}
       returnFocusOnClose={false}
       initialFocusRef={initialRef}
-      size="lg"
+      size="xl"
     >
       <ModalOverlay />
-      <ModalContent>
+      <ModalContent height={"550px"}>
         <ModalHeader fontSize="3xl" pb="0">
           User Settings
         </ModalHeader>
@@ -243,19 +250,48 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
                 <VStack>
                   <VStack p={1} pt={1} w="100%" align={'left'}>
                     <Text fontSize="lg" mb={1} fontWeight={'bold'}>
-                      Models
+                      AI Providers and Models
                     </Text>
                     <RadioGroup defaultValue={selectedModel} onChange={setAIModel} colorScheme="purple">
-                      <Stack>
-                        <Radio value="llama" isDisabled={!llama?.url}>
-                          <b>{llama?.label || 'Llama'}</b>: {llama?.model}
-                        </Radio>
-                        <Radio value="openai" isDisabled={!openai?.apiKey}>
-                          <b>{openai?.label || 'OpenAI'}</b>: {openai?.model}
-                        </Radio>
-                        <Radio value="azure" isDisabled={!azure?.text.apiKey}>
-                          <b>{azure?.text.label || 'Azure'}</b>: {azure?.text.model}
-                        </Radio>
+                      <Stack maxHeight="300px" overflowY="auto">
+                        {models?.providers &&
+                          Object.entries(models.providers).map(([provider, providerData]) => {
+
+                            const availableTasks = manager
+                              ? TASK_TYPES.filter((task) => {
+                                const cando = manager.canProviderPerformTask(provider, task);
+                                return cando;
+                              }) : [];
+
+                            return (
+                              <VStack key={provider} align="start" spacing={1} p={1} borderWidth="1px" borderRadius="md" w="100%">
+                                <Radio value={provider}>
+                                  <Text fontWeight="bold">{provider}</Text>
+                                </Radio>
+                                {availableTasks.length > 0 && (
+                                  <Text pl={6} fontSize="sm" color={colorMode === 'light' ? 'gray.600' : 'gray.300'}>
+                                    Tasks enabled: {availableTasks.join(', ')}
+                                  </Text>
+                                )}
+
+
+                                {providerData.models && (
+                                  <VStack align="start" pl={8} spacing={1}>
+                                    {Object.entries(providerData.models).map(([modelName, modelData]) => (
+                                      <VStack key={modelName} align="start" spacing={0}>
+                                        <HStack> <Text fontSize="sm" fontWeight="semibold">- {modelName}</Text><Text fontSize="sm" >({modelData.model_id})</Text></HStack>
+                                        {modelData.capabilities && (
+                                          <Text fontSize="sm" pl={2} color={colorMode === 'light' ? "gray.600" : "gray.300"}>
+                                            capabilities: {Array.isArray(modelData.capabilities) ? modelData.capabilities.join(", ") : String(modelData.capabilities)}
+                                          </Text>
+                                        )}
+                                      </VStack>
+                                    ))}
+                                  </VStack>
+                                )}
+                              </VStack>
+                            );
+                          })}
                       </Stack>
                     </RadioGroup>
                   </VStack>

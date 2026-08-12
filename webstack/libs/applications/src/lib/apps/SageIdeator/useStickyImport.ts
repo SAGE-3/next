@@ -13,6 +13,7 @@ import { genId } from '@sage3/shared';
 
 import { state as AppState } from './index';
 import { abstractNode, buildRequirements } from './openai';
+import { useAiProvider } from './useAiProvider';
 import { ImportPreview } from './StickyImportDialog';
 
 type SageDimension = AppState['dimensions'][number];
@@ -44,6 +45,7 @@ export function useStickyImport({ s, localDims, activeEntryId, appId, appPositio
   const updateApp = useAppStore((st) => st.update);
   const updateState = useAppStore((st) => st.updateState);
   const toast = useToast();
+  const { aiProvider } = useAiProvider();
 
   // Detect when a Stickie's position changes from outside to inside the ideator bounds.
   // App dragging in SAGE3 is local-only during the drag; the store position only updates
@@ -92,7 +94,7 @@ export function useStickyImport({ s, localDims, activeEntryId, appId, appPositio
     if (!pendingImport?.isLoading) return;
     const { text, stickieId, originalPosition } = pendingImport;
     let active = true;
-    abstractNode(text, s.apiKey, s.model, pendingImport.temperature)
+    abstractNode(text, aiProvider, pendingImport.temperature)
       .then((preview) => {
         if (active) setPendingImport((prev) => (prev ? { ...prev, preview, isLoading: false } : null));
       })

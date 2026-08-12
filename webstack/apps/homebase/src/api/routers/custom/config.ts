@@ -6,7 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { PublicInformation, OpenConfiguration } from '@sage3/shared/types';
+import { PublicInformation, OpenConfiguration, sanitizeLLMConfiguration } from '@sage3/shared/types';
+import { SBAuthSchema } from '@sage3/sagebase';
 import express from 'express';
 import { createClient } from 'redis';
 import { config } from '../../../config';
@@ -38,6 +39,12 @@ export function ConfigRouter(): express.Router {
   router.get('/', async (req, res) => {
     // Get the jupyter token
     const token = await getJupyterToken();
+    // Only the server's JWT service token (e.g. the Seer agent via pysage3) uses
+    // the 'jwt' provider; browser users authenticate via google/cilogon/guest/etc.
+    // Service callers get the full models config (with apiKey/url); everyone else
+    // gets a sanitized copy with secrets stripped.
+    const user = req.user as SBAuthSchema | undefined;
+    const isService = user?.provider === 'jwt';
     // Configuration public values
     const configuration = {
       serverName: config.serverName,
@@ -49,9 +56,9 @@ export function ConfigRouter(): express.Router {
       // Jupyter token
       token: token,
       admins: config.auth.admins || [],
-      openai: config.services.openai || {},
-      llama: config.services.llama || {},
-      azure: config.services.azure || {},
+      // Service caller (JWT) gets the full config; browser users get capability
+      // info only — secrets (apiKey/url) are stripped before sending to them.
+      models: isService ? config.services.models : sanitizeLLMConfiguration(config.services.models),
       feedback: config.feedback || {},
       fluentd: config.fluentd || {},
       veoServer: config.veoServer || {},

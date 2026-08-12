@@ -46,7 +46,6 @@
   "veoServer": {
     "url": "https://sage3-vnc.cis230038.projects.jetstream-cloud.org"
   },
-
   // Feedback URL
   "feedback": {
     "url": "http://sage3-server-status.cis230038.projects.jetstream-cloud.org:3000/feedback"
@@ -62,51 +61,118 @@
       // API Secret
       "apiSecret": ""
     },
-    "openai": {
-      // API Key
-      "apiKey": "",
-      // Model name: gpt-4o-mini, gpt-4, gpt-3.5-turbo, davinci, ...
-      "model": "gpt-3.5-turbo",
-      "label": "OpenAI GPT-3.5 Turbo"
-    },
-    "llama": {
-      "url": "https://arcade.evl.uic.edu/llama32-11B-vision",
-      "model": "meta/llama-3.2-11b-vision-instruct",
-      "apiKey": "",
-      "label": "Llama@EVL",
-      "max_tokens": 1000
-    },
-    "azure": {
-      "text": {
-        "url": "",
-        "model": "gpt-4.1-mini",
-        "api_version": "2024-12-01-preview",
-        "label": "Azure GPT-4.1mini",
-        "apiKey": ""
+    "models": {
+      "providers": {
+        "azure": {
+          "apiKey": "",
+          "url": "https://uic-east.openai.azure.com",
+          "models": {
+            "chat": {
+              "model_id": "gpt-5.2-chat",
+              "capabilities": [
+                "chat",
+                "code",
+                "vision"
+              ],
+              "max_tokens": 4096,
+              "context_window": 128000,
+              "api_version": "2025-04-01-preview"
+            },
+            "text": {
+              "model_id": "gpt-5.2",
+              "capabilities": [
+                "chat"
+              ],
+              "max_tokens": 4096,
+              "context_window": 128000,
+              "api_version": "2025-04-01-preview"
+            },
+            "image": {
+              "model_id": "gpt-image-1.5",
+              "capabilities": [
+                "imagegen"
+              ],
+              "api_version": "2025-04-01-preview"
+            },
+            "embedding": {
+              "model_id": "text-embedding-3-small",
+              "capabilities": [
+                "embeddings"
+              ],
+              "max_tokens": 8191,
+              "context_window": 8191,
+              "api_version": "2025-04-01-preview"
+            }
+          }
+        },
+        "openai": {
+          "apiKey": "OPENAI_API_KEY",
+          "models": {
+            "gpt4": {
+              "model_id": "gpt-4-turbo",
+              "capabilities": [
+                "chat",
+                "code",
+                "vision"
+              ],
+              "max_tokens": 4096,
+              "context_window": 128000
+            }
+          }
+        },
+        "llama4": {
+          "url": "https://localhost/",
+          "apiKey": "",
+          "models": {
+            "llama4": {
+              "model_id": "llama4",
+              "capabilities": [
+                "chat",
+                "code",
+                "vision"
+              ],
+              "max_tokens": 4096,
+              "context_window": 32768
+            }
+          }
+        },
+        "gemma4": {
+          "url": "https://localhost/",
+          "apiKey": "",
+          "models": {
+            "gemma4": {
+              "model_id": "gemma4",
+              "capabilities": [
+                "chat",
+                "code",
+                "vision"
+              ],
+              "max_tokens": 131072,
+              "context_window": 131072
+            }
+          }
+        }      },
+      // NeMo Retriever embeddings NIM — set url to where your embed NIM listens
+      "embed": {
+        "url": "http://localhost:8000",
+        "model": "nvidia/llama-nemotron-embed-1b-v2"
       },
-      "embedding": {
-        "url": "",
-        "model": "text-embedding-3-small",
-        "api_version": "2024-12-01-preview",
-        "apiKey": ""
+      // NeMo Retriever reranking NIM — set url to where your rerank NIM listens
+      "rerank": {
+        "url": "http://localhost:8001",
+        "model": "nvidia/llama-nemotron-rerank-1b-v2"
       },
-      "transcription": {
-        "url": "",
-        "model": "gpt-4o-mini-transcribe",
-        "api_version": "2025-03-01-preview",
-        "apiKey": ""
+      // OLM model to convert PDF -> Markdown (key must be "pdf2md"; Seer reads
+      // this via LLMManager.ocr_config())
+      "pdf2md": {
+        "url": "http://localhost:8002",
+        "model": "allenai/olmOCR-2-7B-1025-FP8"
       },
-      "reasoning": {
-        "url": "",
-        "model": "o4-mini",
-        "api_version": "2024-12-01-preview",
-        "apiKey": ""
-      },
-      "vision": {
-        "url": "",
-        "model": "gpt-4.1-mini",
-        "api_version": "2024-12-01-preview",
-        "apiKey": ""
+      "settings": {
+        "default_provider": "azure",
+        "timeout_seconds": 60,
+        "max_retries": 3,
+        "log_requests": true
       }
     }
   },
@@ -159,7 +225,7 @@
       // Client ID from the Google Developer Console
       "clientID": "773749598438-sgbn6mj326jj6ggsa8n3avrc3jue0ikv.apps.googleusercontent.com",
       // Client Secret from the Google Developer Console
-      "clientSecret": "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",
+      "clientSecret": "",
       // Endpoint for the google login
       "routeEndpoint": "/auth/google",
       // Callback URL for the google login

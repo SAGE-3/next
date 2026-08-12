@@ -24,7 +24,7 @@ import { isElectron } from '../../../../applications/src/lib/apps/Cobrowse/util'
  * @property {boolean} showTags - Indicates whether tags should be displayed.
  * @property {'grid' | 'list'} selectedBoardListView - The view mode for the board list, either 'grid' or 'list'.
  * @property {'lasso' | 'grab' | 'pen' | 'eraser' | 'linker' | 'shape' | 'circle' | 'rectangle'} primaryActionMode - The primary action mode, which can be 'lasso', 'grab', 'pen', or 'eraser'.
- * @property {'llama' | 'openai'} aiModel - The AI model to be used, either 'llama' or 'openai'.
+ * @property {string} aiModel - The AI provider label to be used, for example 'azure' or 'openai'.
  */
 type UserSettings = {
   showCursors: boolean;
@@ -36,7 +36,7 @@ type UserSettings = {
   showTags: boolean;
   selectedBoardListView: 'grid' | 'list';
   primaryActionMode: 'lasso' | 'grab' | 'pen' | 'eraser' | 'linker' | 'shape' | 'circle' | 'rectangle' | 'arrow' | 'doubleArrow';
-  aiModel: 'llama' | 'openai' | 'azure';
+  aiModel: string;
   uiScale: 'xs' | 's' | 'md' | 'lg' | 'xl';
 };
 
@@ -58,7 +58,7 @@ const defaultSettings: UserSettings = {
   showTags: false,
   selectedBoardListView: 'grid',
   primaryActionMode: 'lasso',
-  aiModel: 'llama',
+  aiModel: 'azure',
   uiScale: 'md',
 };
 
@@ -199,7 +199,7 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
         return newSettings;
       });
     },
-    [setSettings]
+    [setSettings],
   );
 
   const toggleShowTags = useCallback(() => {
@@ -220,7 +220,7 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
         return newSettings;
       });
     },
-    [setSettings]
+    [setSettings],
   );
 
   const setPrimaryActionMode = useCallback(
@@ -232,7 +232,7 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
         return newSettings;
       });
     },
-    [setSettings]
+    [setSettings],
   );
 
   const setAIModel = useCallback(
@@ -244,7 +244,7 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
         return newSettings;
       });
     },
-    [setSettings]
+    [setSettings],
   );
 
   const setDefaultPrimaryActionMode = useCallback(() => {
@@ -272,7 +272,7 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
         return newSettings;
       });
     },
-    [setSettings]
+    [setSettings],
   );
 
   return (

@@ -21,12 +21,19 @@ from pysage3.client import PySage3
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 
-from langchain_nvidia_ai_endpoints import ChatNVIDIA
-from langchain_openai import ChatOpenAI, AzureChatOpenAI
-
 # Typing for RPC
 from libs.localtypes import CodeRequest, Context, Question, Answer
-from libs.utils import getModelsInfo
+from libs.utils import getModelsInfo, buildContextFromApps
+from libs.llm_manager import LLMManager
+
+# Server-side instructions per code method (moved out of the frontend, which
+# now sends `appIds` + `method` instead of assembling the prompt).
+CODE_PROMPTS = {
+    "comment": "Comment this code extensively to explain clearly what each instruction does.",
+    "explain": "Explain this code.",
+    "refactor": "Refactor this code.",
+    "generate": "Generate the best solution for the following request.",
+}
 
 # AI logging
 from libs.ai_logging import ai_logger
@@ -42,51 +49,15 @@ class CodeAgent:
         self.logger = logger
         self.ps3 = ps3
         self.logger.info("SAGE3 server configuration:")
-        models = getModelsInfo(ps3)
-        openai = models["openai"]
-        llama = models["llama"]
-        azure = models["azure"]
-
-        llm_llama = None
-        llm_openai = None
-        llm_azure = None
-
-        # Llama model
-        if llama["url"] and llama["model"]:
-            llm_llama = ChatNVIDIA(
-                base_url=llama["url"] + "/v1",
-                model=llama["model"],
-                api_key=llama["apiKey"],
-                stream=False,
-                max_tokens=2000,
-            )
-
-        # OpenAI model
-        if openai["apiKey"] and openai["model"]:
-            llm_openai = ChatOpenAI(api_key=openai["apiKey"], model=openai["model"])
-
-        # Azure OpenAI model
-        if azure["text"]["apiKey"] and azure["text"]["model"]:
-            model = azure["text"]["model"]
-            endpoint = azure["text"]["url"]
-            credential = azure["text"]["apiKey"]
-            api_version = azure["text"]["api_version"]
-
-            llm_azure = AzureChatOpenAI(
-                azure_deployment=model,
-                api_version=api_version,
-                azure_endpoint=endpoint,
-                azure_ad_token=credential,
-                model=model,
-            )
+        # Capability-driven model registry (providers/tasks/settings)
+        self.manager = LLMManager(getModelsInfo(ps3), logger)
+        self.logger.info("Code providers: " + ", ".join(self.manager.list_providers()))
 
         ai_logger.emit(
             "init",
             {
                 "agent": "code",
-                "openai": openai["apiKey"] is not None,
-                "llama": llama["url"] is not None,
-                "azure": azure["text"]["apiKey"] is not None,
+                "providers": self.manager.list_providers(),
             },
         )
 
@@ -103,7 +74,7 @@ class CodeAgent:
         human_template_str = "{question}"
 
         # For OpenAI / Message API compatible models
-        prompt = ChatPromptTemplate.from_messages(
+        self.prompt = ChatPromptTemplate.from_messages(
             [
                 ("system", sys_template_str),
                 ("user", human_template_str),
@@ -113,22 +84,20 @@ class CodeAgent:
         # OutputParser that parses LLMResult into the top likely string.
         # Create a new model by parsing and validating input data from keyword arguments.
         # Raises ValidationError if the input data cannot be parsed to form a valid model.
-        output_parser = StrOutputParser()
+        self.output_parser = StrOutputParser()
 
-        self.session_llama = None
-        self.session_openai = None
-        self.session_azure = None
+        if not self.manager.list_providers():
+            # Don't crash startup on an un-migrated/empty config: boot without a
+            # provider and let process() return a clear per-request error.
+            self.logger.warning("CodeAgent> no model configured; code requests will fail until models are set")
 
-        # Session : prompt building and then LLM
-        if llm_openai:
-            self.session_openai = prompt | llm_openai | output_parser
-        if llm_llama:
-            self.session_llama = prompt | llm_llama | output_parser
-        if llm_azure:
-            self.session_azure = prompt | llm_azure | output_parser
-
-        if not self.session_llama and not self.session_openai:
-            raise HTTPException(status_code=500, detail="Langchain> Model unknown")
+    def _get_session(self, provider: str):
+        """Build a prompt|llm|parser chain for a provider's code-capable model,
+        or None if the provider can't handle code. The model itself is cached by
+        LLMManager, so the chain is cheap to recompose per request."""
+        # 'coding' task prefers a 'code' model, falling back to chat
+        llm = self.manager.build_chat_model(provider, ["code", "chat"])
+        return (self.prompt | llm | self.output_parser) if llm else None
 
     async def process(self, qq: CodeRequest):
         self.logger.info(
@@ -138,36 +107,33 @@ class CodeAgent:
         # Get the current date and time
         today = time.asctime()
 
-        # Ask the question
-        if qq.model == "llama" and self.session_llama:
-            response = await self.session_llama.ainvoke(
-                {
-                    "question": qq.q,
-                    "username": qq.user,
-                    "location": qq.location,
-                    "date": today,
-                }
+        # Resolve a code session for the requested provider
+        session = self._get_session(qq.model)
+        if session is None:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Provider '{qq.model}' has no model capable of coding",
             )
-        elif qq.model == "openai" and self.session_openai:
-            response = await self.session_openai.ainvoke(
-                {
-                    "question": qq.q,
-                    "username": qq.user,
-                    "location": qq.location,
-                    "date": today,
-                }
-            )
-        elif qq.model == "azure" and self.session_azure:
-            response = await self.session_azure.ainvoke(
-                {
-                    "question": qq.q,
-                    "username": qq.user,
-                    "location": qq.location,
-                    "date": today,
-                }
+
+        # Read the code from linked apps server-side (frontend sends app ids).
+        context = buildContextFromApps(self.ps3, qq.appIds) if qq.appIds else ""
+        instruction = CODE_PROMPTS.get(qq.method, qq.q)
+        if context:
+            question = (
+                "Please carefully read the following code:\n"
+                f"<code>\n{context}\n</code>\n{instruction}"
             )
         else:
-            raise HTTPException(status_code=500, detail="Langchain> Model unknown")
+            question = qq.q
+
+        response = await session.ainvoke(
+            {
+                "question": question,
+                "username": qq.user,
+                "location": qq.location,
+                "date": today,
+            }
+        )
 
         if qq.method == "refactor":
             pattern = r"```(.*?)```"

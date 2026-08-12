@@ -17,12 +17,8 @@ function isSError(r: unknown): r is SError {
   return typeof r === 'object' && r !== null && 'message' in r;
 }
 
-export const MODELS = ['gpt-4o-mini', 'gpt-4o', 'gpt-3.5-turbo'];
-export const VISION_MODELS = new Set(['gpt-4o-mini', 'gpt-4o']);
-
 export async function generateDimensionsFromPrompt(
   prompt: string,
-  _apiKey: string,
   model: string,
   numDims: number,
   imageBase64?: string,
@@ -36,7 +32,6 @@ export async function generateDimensionsFromPrompt(
 export async function generateNodeContent(
   prompt: string,
   requirements: string,
-  _apiKey: string,
   model: string,
   imageBase64?: string,
   pdfContext?: string,
@@ -48,7 +43,6 @@ export async function generateNodeContent(
 
 export async function abstractNode(
   text: string,
-  _apiKey: string,
   model: string,
   temperature = 0,
 ): Promise<{ Title: string; Summary: string; Keywords: string[]; Steps: string[]; Structure: string }> {
@@ -61,7 +55,6 @@ export async function generateUserDimension(
   dimName: string,
   prompt: string,
   nodes: Array<{ ID: string; Title: string; Summary: string }>,
-  _apiKey: string,
   model: string,
 ): Promise<{
   type: 'categorical' | 'ordinal';
@@ -76,7 +69,6 @@ export async function generateUserDimension(
 export async function summarizeFavorites(
   nodes: Array<{ Title: string; Summary: string; Keywords: string[] }>,
   prompt: string,
-  _apiKey: string,
   model: string,
 ): Promise<string> {
   const result = await seerIdeator.summarize({ nodes, prompt, model });
@@ -88,20 +80,19 @@ export async function generateNodeImage(
   title: string,
   summary: string,
   keywords: string[],
-  _apiKey: string,
+  model: string,
   brainstormingPrompt?: string,
   dimension?: { categorical: Record<string, string>; ordinal: Record<string, string> },
   signal?: AbortSignal,
   additionalContext?: string,
 ): Promise<string> {
-  const result = await seerIdeator.image({ title, summary, keywords, model: 'openai', brainstormingPrompt, dimension, additionalContext }, signal);
+  const result = await seerIdeator.image({ title, summary, keywords, model, brainstormingPrompt, dimension, additionalContext }, signal);
   if (isSError(result)) throw new Error(result.message);
   return result.imageUrl;
 }
 
 export async function callProseAPI(
   userPrompt: string,
-  _apiKey: string,
   model: string,
 ): Promise<string> {
   const result = await seerIdeator.prose({ userPrompt, model });

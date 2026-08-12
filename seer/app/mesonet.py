@@ -15,10 +15,8 @@ from logging import Logger
 # AI
 import openai as openai_client
 from langgraph.graph import END, StateGraph
-from langchain_openai.embeddings import OpenAIEmbeddings
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_nvidia_ai_endpoints import ChatNVIDIA
 
 # Utils
 from libs.mesonet.csv_llm.csv_llm import LLM
@@ -33,6 +31,7 @@ from pysage3.client import PySage3
 # Typing for RPC
 from libs.localtypes import MesonetQuery, MesonetAnswer
 from libs.utils import getModelsInfo
+from libs.llm_manager import LLMManager
 
 
 # Define the State for LangGraph
@@ -98,27 +97,50 @@ class MesonetAgent:
         self.logger = logger
         self.ps3 = ps3
 
-        # AI models
-        models = getModelsInfo(ps3)
-        llama = models["llama"]
-        openai = models["openai"]
+        # Capability-driven model registry (providers/tasks/settings)
+        self.manager = LLMManager(getModelsInfo(ps3), logger)
+        self.logger.info(
+            "Mesonet providers: " + ", ".join(self.manager.list_providers())
+        )
 
-        # Llama model
-        if llama["url"] and llama["model"]:
-            self.llm_llama = ChatNVIDIA(
-                base_url=llama["url"] + "/v1",
-                model=llama["model"],
-                api_key=llama["apiKey"],
-                stream=False,
-                max_tokens=1000,
+        # Mesonet has no per-request provider; resolve a chat-capable provider
+        # (prefer the configured default), then build the raw OpenAI-style SDK
+        # client the reasoning helper (LLM) needs plus the date-extraction chain.
+        self.provider = None
+        for prov in [self.manager.default_provider()] + self.manager.list_providers():
+            if prov and self.manager.can_provider_perform_task(prov, "chat"):
+                self.provider = prov
+                break
+
+        self.client = None
+        self.model_id = None
+        self.session_chat = None
+        self.embedding_model = None
+        self.llm_chat = None
+
+        if self.provider:
+            info = self.manager.resolve_model(self.provider, ["chat", "code"])
+            if info:
+                self.model_id = info["model_id"]
+                api_key = info["api_key"] or "EMPTY"
+                if info["kind"] == "azure":
+                    self.client = openai_client.AzureOpenAI(
+                        azure_endpoint=info["url"],
+                        api_key=api_key,
+                        api_version=info["api_version"],
+                    )
+                else:
+                    # OpenAI or OpenAI-compatible endpoint (litellm, NVIDIA, ...)
+                    base_url = info["base_url"] or "https://api.openai.com/v1"
+                    self.client = openai_client.OpenAI(
+                        base_url=base_url, api_key=api_key
+                    )
+            # Embeddings come from any embeddings-capable model of the provider
+            self.embedding_model = self.manager.build_embeddings(self.provider)
+            # Date-extraction chat chain
+            self.llm_chat = self.manager.build_chat_model(
+                self.provider, ["chat"], max_tokens=1000
             )
-        # OpenAI model
-        if openai["apiKey"] and openai["model"]:
-            self.client = openai_client.OpenAI(
-                base_url="https://api.openai.com/v1", api_key=openai["apiKey"]
-            )
-            # OpenAI for now, can explore more in the future
-            self.embedding_model = OpenAIEmbeddings(api_key=openai["apiKey"])
 
         # Templates
         sys_template_str = """Today is {date}. 
@@ -148,8 +170,8 @@ class MesonetAgent:
         # Raises ValidationError if the input data cannot be parsed to form a valid model.
         output_parser = StrOutputParser()
 
-        if self.llm_llama:
-            self.session_llama = prompt | self.llm_llama | output_parser
+        if self.llm_chat:
+            self.session_chat = prompt | self.llm_chat | output_parser
 
     async def process(self, qq: MesonetQuery):
         self.logger.info("Got Mesonet> from " + qq.user + ": " + qq.q)
@@ -159,7 +181,9 @@ class MesonetAgent:
         workflow = StateGraph(GraphState)
 
         def initialize_llms(state: GraphState):
-            state["llm_re"] = LLM(self.client, {"model": "gpt-4o", "temperature": 0})
+            state["llm_re"] = LLM(
+                self.client, {"model": self.model_id, "temperature": 0}
+            )
             return state
 
         def get_all_stations(state: GraphState):
@@ -323,7 +347,19 @@ class MesonetAgent:
         # Compile the graph
         app = workflow.compile()
 
-        response = await self.session_llama.ainvoke(  # Make sure self.session_llama is available in state
+        if self.session_chat is None or self.client is None:
+            return MesonetAnswer(
+                attributes=[],
+                stations=[],
+                chart_type=[],
+                start_date="",
+                end_date="",
+                summary="No chat-capable AI provider is configured for Mesonet.",
+                success=False,
+                actions=[],
+            )
+
+        response = await self.session_chat.ainvoke(
             {
                 "history": [("human", ""), ("ai", "")],
                 "question": qq.q,

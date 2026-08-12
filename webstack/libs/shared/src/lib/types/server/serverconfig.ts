@@ -6,6 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { LLMConfiguration } from './llm';
+
 /**
  * Configuration parameters for the SAGE3 server
  *
@@ -64,9 +66,7 @@ export interface ServerConfiguration {
   // External Services
   services: {
     twilio: TwilioConfiguration;
-    openai: OpenAIConfiguration;
-    llama: LlamaConfiguration;
-    azure: AzureConfig;
+    models: LLMConfiguration;
   };
 
   // Feature flags
@@ -98,9 +98,7 @@ export type OpenConfiguration = Pick<
   admins: ServerConfiguration['auth']['admins'];
   logins: ServerConfiguration['auth']['strategies'];
   features: ServerConfiguration['features'];
-  openai: ServerConfiguration['services']['openai'];
-  llama: ServerConfiguration['services']['llama'];
-  azure: ServerConfiguration['services']['azure'];
+  models: ServerConfiguration['services']['models'];
   fluentd: ServerConfiguration['fluentd'];
   veoServer: ServerConfiguration['veoServer'];
 };
@@ -182,36 +180,3 @@ export interface TwilioConfiguration {
   apiKey: string; // API Key
   apiSecret: string; // API Secret
 }
-
-// The OpenAI Configuration
-export interface OpenAIConfiguration {
-  apiKey: string; // API Key
-  model: string; // LLM model
-  label?: string; // Model label in the UI
-}
-
-// Llama Configuration
-export interface LlamaConfiguration {
-  url: string;
-  model: string; // LLM model
-  apiKey: string; // API Key
-  max_tokens: number;
-  label?: string; // Model label in the UI
-}
-
-// Azure Configuration
-export type AzureServiceConfig = {
-  url: string;
-  model: string;
-  apiKey: string;
-  api_version: string;
-  label?: string; // Model label in the UI
-};
-
-export type AzureConfig = {
-  text: AzureServiceConfig;
-  embedding: AzureServiceConfig;
-  transcription: AzureServiceConfig;
-  reasoning: AzureServiceConfig;
-  vision: AzureServiceConfig;
-};

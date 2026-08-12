@@ -7,6 +7,7 @@
 # -----------------------------------------------------------------------------
 
 import json
+import logging
 
 # Image
 from PIL import Image
@@ -102,14 +103,19 @@ def getModelsInfo(ps3):
       ps3: SAGE3 API handle.
 
     Returns:
-      dict: A dictionary containing the "llama" and "openai" model information.
+      dict: The "models" configuration block, or an empty dict if the server
+      config has not been migrated to the unified models schema. Returning {}
+      lets LLMManager degrade gracefully instead of crashing Seer at startup.
     """
-    sage3_config = ps3.s3_comm.web_config
-    openai = sage3_config["openai"]
-    llama = sage3_config["llama"]
-    azure = sage3_config["azure"]
-    return {"llama": llama, "openai": openai, "azure": azure}
-
+    web_config = ps3.s3_comm.web_config or {}
+    sage3_config = web_config.get('models')
+    if not sage3_config:
+        logging.getLogger(__name__).warning(
+            "SAGE3 server config has no 'models' block; AI features will be "
+            "unavailable until the server is migrated to the unified models schema."
+        )
+        return {}
+    return sage3_config
 
 def getRoomInfo(ps3, room_id):
     """
@@ -132,6 +138,53 @@ def getRoomInfo(ps3, room_id):
         res = r.json()
         return DotDict(res).data[0]
     return None
+
+
+# How to read the text content out of each app type's state. Mirrors the
+# frontend app schemas; keep in sync if an app's state shape changes.
+APP_CONTENT_FIELDS = {
+    "Stickie": "text",
+    "CodeEditor": "content",
+    "SageCell": "code",
+    "Notepad": "text",
+}
+
+
+def getApp(ps3, app_id):
+    """Fetch a single app document by id from the SAGE3 server, or None."""
+    url = (
+        ps3.s3_comm.conf[ps3.s3_comm.prod_type]["web_server"] + "/api/apps/" + app_id
+    )
+    headers = ps3.s3_comm._SageCommunication__headers
+    r = ps3.s3_comm.httpx_client.get(url, headers=headers)
+    if r.is_success:
+        data = r.json().get("data") or []
+        return data[0] if data else None
+    return None
+
+
+def getAppContent(ps3, app_id):
+    """Return (app_type, text) for an app's content, or (type, '') / (None, '')."""
+    app = getApp(ps3, app_id)
+    if not app:
+        return None, ""
+    atype = app.get("data", {}).get("type")
+    field = APP_CONTENT_FIELDS.get(atype)
+    if not field:
+        return atype, ""
+    text = app.get("data", {}).get("state", {}).get(field) or ""
+    return atype, text
+
+
+def buildContextFromApps(ps3, app_ids):
+    """Concatenate the text content of the given apps (server-side), so the
+    frontend can send app ids instead of extracting and shipping content."""
+    parts = []
+    for aid in app_ids or []:
+        _atype, text = getAppContent(ps3, aid)
+        if text:
+            parts.append(text)
+    return "\n\n".join(parts)
 
 
 def getBoardInfo(ps3, board_id):
@@ -556,12 +609,19 @@ def scaleImage(imageContent, imageSize):
     # Convert the image to RGB format
     img = img.convert("RGB")
 
-    # Check if the width is zero to avoid division by zero error
-    if width == 0:
-        raise ValueError("Image width cannot be zero.")
+    # Check if dimensions are zero to avoid invalid resize operations
+    if width == 0 or height == 0:
+      raise ValueError("Image dimensions cannot be zero.")
 
-    # Resize the image while maintaining the aspect ratio
-    img = img.resize((imageSize, int(imageSize / (width / height))))
+    # Resize only if necessary, while maintaining aspect ratio so the longest side is imageSize
+    if max(width, height) > imageSize:
+      if width >= height:
+        new_width = imageSize
+        new_height = max(1, int(round((height / width) * imageSize)))
+      else:
+        new_height = imageSize
+        new_width = max(1, int(round((width / height) * imageSize)))
+      img = img.resize((new_width, new_height))
 
     # Save the resized image to a bytes buffer in JPEG format
     buffered = BytesIO()

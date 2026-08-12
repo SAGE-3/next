@@ -28,9 +28,13 @@ html2text
 
 # PDF
 pymupdf4llm
+# olmOCR: PDF -> Markdown via a remote vLLM server (models.pdf2md). Heavy deps;
+# only needed when the pdf2md config block is set.
+olmocr
 
 # ChromaDB AI vector DB
-chromadb==0.5.16
+#chromadb==0.5.16
+chromadb
 
 #Mesonet
 pandas

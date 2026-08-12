@@ -29,6 +29,8 @@ class Question(BaseModel):
     user: str  # user name
     location: str  # location
     model: str  # AI model: llama, openai, azure
+    appIds: List[str] = []  # source apps whose content to read server-side
+    intent: str = ""  # optional prompt template: summary|proscons|keywords|opinion|facts
 
 
 class Answer(BaseModel):
@@ -46,6 +48,7 @@ class CodeRequest(BaseModel):
     location: str  # location
     model: str  # AI model: llama, openai, azure
     method: str
+    appIds: List[str] = []  # source CodeEditor apps to read server-side
 
 
 class CodeAnswer(BaseModel):
@@ -57,7 +60,7 @@ class CodeAnswer(BaseModel):
 
 class ImageQuery(BaseModel):
     ctx: Context  # context
-    asset: str  # question
+    assets: List[str]  # one or more image assets
     user: str  # user name
     model: str  # AI model: llama, openai, azure
     q: str  # question
@@ -86,6 +89,7 @@ class ImageAnswer(BaseModel):
     r: str  # answer
     success: bool = True  # success flag
     actions: List[Json]  # actions to be performed
+    selected: List[str] = []  # asset ids the answer selects (filter/pick tasks)
 
 
 class PDFQuery(BaseModel):

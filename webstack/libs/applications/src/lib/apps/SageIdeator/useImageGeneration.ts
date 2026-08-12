@@ -12,6 +12,7 @@ import { useAppStore, useLinkStore, apiUrls } from '@sage3/frontend';
 
 import { state as AppState } from './index';
 import { generateNodeImage } from './openai';
+import { useAiProvider } from './useAiProvider';
 
 type SageNode = AppState['nodes'][number];
 
@@ -33,12 +34,23 @@ export function useImageGeneration({ s, localNodes, activeEntryId, appId, boardI
   const createApp = useAppStore((state) => state.create);
   const addLink = useLinkStore((st) => st.addLink);
   const toast = useToast();
+  const { aiProvider, llmManager } = useAiProvider();
 
   const generateImageForNode = useCallback(
     async (nodeId: string, context?: string, count = 1, presetLabel?: string, userContext?: string) => {
       if (generatingImageNodeId || !activeEntryId) return;
       const node = localNodes.find((n) => n.ID === nodeId);
       if (!node) return;
+      if (!llmManager?.canProviderPerformTask(aiProvider, 'image_generation')) {
+        toast({
+          title: 'Provider cannot generate images',
+          description: `Your AI provider (${aiProvider || 'none'}) has no image-generation model. Pick another provider in your user settings.`,
+          status: 'warning',
+          duration: 4000,
+          isClosable: true,
+        });
+        return;
+      }
 
       const controller = new AbortController();
       imageAbortRef.current = controller;
@@ -111,7 +123,7 @@ export function useImageGeneration({ s, localNodes, activeEntryId, appId, boardI
 
         const results = await Promise.allSettled(
           Array.from({ length: count }, () =>
-            generateNodeImage(node.Title, node.Summary, node.Keywords, s.apiKey, s.prompt, node.Dimension, controller.signal, context)
+            generateNodeImage(node.Title, node.Summary, node.Keywords, aiProvider, s.prompt, node.Dimension, controller.signal, context)
           )
         );
 
@@ -220,7 +232,7 @@ export function useImageGeneration({ s, localNodes, activeEntryId, appId, boardI
         setGeneratingImageNodeId(null);
       }
     },
-    [s, localNodes, activeEntryId, generatingImageNodeId, appId, boardId, roomId, appPosition, createApp, addLink, updateState, toast]
+    [s, localNodes, activeEntryId, generatingImageNodeId, appId, boardId, roomId, appPosition, createApp, addLink, updateState, toast, aiProvider, llmManager]
   );
 
   const cancelImageGeneration = useCallback(() => {
