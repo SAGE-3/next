@@ -74,67 +74,31 @@ async function agentGet<T>(path: string): Promise<T | SError> {
 // ─── Agent (Chat) endpoints ───────────────────────────────────────────────────
 
 export const seerAgents = {
-  status: () =>
-    agentGet<HealthResponse>(`${apiUrls.ai.agents.base}${AgentRoutes.status}`),
-  ask: (data: AskRequest) =>
-    agentPost<AskResponse>(`${apiUrls.ai.agents.base}${AgentRoutes.ask}`, data),
-  summary: (data: AskRequest) =>
-    agentPost<AskResponse>(`${apiUrls.ai.agents.base}${AgentRoutes.summary}`, data),
-  web: (data: WebQuery) =>
-    agentPost<WebAnswer>(`${apiUrls.ai.agents.base}${AgentRoutes.web}`, data),
-  webshot: (data: WebScreenshot) =>
-    agentPost<WebScreenshotAnswer>(`${apiUrls.ai.agents.base}${AgentRoutes.webshot}`, data),
-  image: (data: ImageQuery) =>
-    agentPost<ImageAnswer>(`${apiUrls.ai.agents.base}${AgentRoutes.image}`, data),
-  pdf: (data: PDFQuery) =>
-    agentPost<PDFAnswer>(`${apiUrls.ai.agents.base}${AgentRoutes.pdf}`, data),
-  mesonet: (data: MesonetRequest) =>
-    agentPost<MesonetResponse>(`${apiUrls.ai.agents.base}${AgentRoutes.mesonet}`, data),
+  status: () => agentGet<HealthResponse>(`${apiUrls.ai.agents.base}${AgentRoutes.status}`),
+  ask: (data: AskRequest) => agentPost<AskResponse>(`${apiUrls.ai.agents.base}${AgentRoutes.ask}`, data),
+  summary: (data: AskRequest) => agentPost<AskResponse>(`${apiUrls.ai.agents.base}${AgentRoutes.summary}`, data),
+  web: (data: WebQuery) => agentPost<WebAnswer>(`${apiUrls.ai.agents.base}${AgentRoutes.web}`, data),
+  webshot: (data: WebScreenshot) => agentPost<WebScreenshotAnswer>(`${apiUrls.ai.agents.base}${AgentRoutes.webshot}`, data),
+  image: (data: ImageQuery) => agentPost<ImageAnswer>(`${apiUrls.ai.agents.base}${AgentRoutes.image}`, data),
+  pdf: (data: PDFQuery) => agentPost<PDFAnswer>(`${apiUrls.ai.agents.base}${AgentRoutes.pdf}`, data),
+  mesonet: (data: MesonetRequest) => agentPost<MesonetResponse>(`${apiUrls.ai.agents.base}${AgentRoutes.mesonet}`, data),
 };
 
 // ─── Ideator endpoints ────────────────────────────────────────────────────────
 
 export const seerIdeator = {
   dimensions: (data: IdeatorDimensionsRequest) =>
-    agentPost<IdeatorDimensionsResponse>(
-      `${apiUrls.ai.ideator.base}${IdeatorRoutes.dimensions}`,
-      data,
-      IDEATOR_TIMEOUT_MS
-    ),
+    agentPost<IdeatorDimensionsResponse>(`${apiUrls.ai.ideator.base}${IdeatorRoutes.dimensions}`, data, IDEATOR_TIMEOUT_MS),
   node: (data: IdeatorNodeRequest) =>
-    agentPost<IdeatorNodeResponse>(
-      `${apiUrls.ai.ideator.base}${IdeatorRoutes.node}`,
-      data,
-      IDEATOR_TIMEOUT_MS
-    ),
+    agentPost<IdeatorNodeResponse>(`${apiUrls.ai.ideator.base}${IdeatorRoutes.node}`, data, IDEATOR_TIMEOUT_MS),
   abstract: (data: IdeatorAbstractRequest) =>
-    agentPost<IdeatorAbstractResponse>(
-      `${apiUrls.ai.ideator.base}${IdeatorRoutes.abstract}`,
-      data,
-      IDEATOR_TIMEOUT_MS
-    ),
+    agentPost<IdeatorAbstractResponse>(`${apiUrls.ai.ideator.base}${IdeatorRoutes.abstract}`, data, IDEATOR_TIMEOUT_MS),
   userDimension: (data: IdeatorUserDimensionRequest) =>
-    agentPost<IdeatorUserDimensionResponse>(
-      `${apiUrls.ai.ideator.base}${IdeatorRoutes.userDimension}`,
-      data,
-      IDEATOR_TIMEOUT_MS
-    ),
+    agentPost<IdeatorUserDimensionResponse>(`${apiUrls.ai.ideator.base}${IdeatorRoutes.userDimension}`, data, IDEATOR_TIMEOUT_MS),
   summarize: (data: IdeatorSummarizeRequest) =>
-    agentPost<IdeatorSummarizeResponse>(
-      `${apiUrls.ai.ideator.base}${IdeatorRoutes.summarize}`,
-      data,
-      IDEATOR_TIMEOUT_MS
-    ),
+    agentPost<IdeatorSummarizeResponse>(`${apiUrls.ai.ideator.base}${IdeatorRoutes.summarize}`, data, IDEATOR_TIMEOUT_MS),
   image: (data: IdeatorImageRequest) =>
-    agentPost<IdeatorImageResponse>(
-      `${apiUrls.ai.ideator.base}${IdeatorRoutes.image}`,
-      data,
-      IDEATOR_TIMEOUT_MS
-    ),
+    agentPost<IdeatorImageResponse>(`${apiUrls.ai.ideator.base}${IdeatorRoutes.image}`, data, IDEATOR_TIMEOUT_MS),
   prose: (data: IdeatorProseRequest) =>
-    agentPost<IdeatorProseResponse>(
-      `${apiUrls.ai.ideator.base}${IdeatorRoutes.prose}`,
-      data,
-      IDEATOR_TIMEOUT_MS
-    ),
+    agentPost<IdeatorProseResponse>(`${apiUrls.ai.ideator.base}${IdeatorRoutes.prose}`, data, IDEATOR_TIMEOUT_MS),
 };

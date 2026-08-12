@@ -85,7 +85,7 @@ ideatorAG = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global chatAG, codeAG, imageAG, mesonetAG, pdfAG, webAG
+    global chatAG, codeAG, imageAG, mesonetAG, pdfAG, webAG, ideatorAG
 
     logger.info("FastAPI App started")
     web_config = getModelsInfo(ps3)
@@ -99,6 +99,7 @@ async def lifespan(app: FastAPI):
     mesonetAG = MesonetAgent(logger, ps3)
     pdfAG = PDFAgent(logger, ps3)
     webAG = WebAgent(logger, ps3)
+    ideatorAG = IdeatorAgent(logger, ps3)
 
     await webAG.init()
     yield

@@ -59,7 +59,6 @@ async function fetchGet(url: string) {
   }).then((res) => res.json());
 }
 async function fetchPost(url: string, data: object) {
-  // return await ky.post(url, { json: data }).json();
   return fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

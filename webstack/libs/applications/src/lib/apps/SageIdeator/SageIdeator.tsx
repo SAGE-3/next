@@ -683,6 +683,16 @@ function AppComponent(props: App): JSX.Element {
       if (generatingImageNodeId || !activeEntryId) return;
       const node = localNodes.find((n) => n.ID === nodeId);
       if (!node) return;
+      if (!llmManager?.canProviderPerformTask(aiProvider, 'image_generation')) {
+        toast({
+          title: 'Provider cannot generate images',
+          description: `Your AI provider (${aiProvider || 'none'}) has no image-generation model. Pick another provider in your user settings.`,
+          status: 'warning',
+          duration: 4000,
+          isClosable: true,
+        });
+        return;
+      }
       setGeneratingImageNodeId(nodeId);
       try {
         const dataUrl = await generateNodeImage(node.Title, node.Summary, node.Keywords, aiProvider, s.prompt, node.Dimension);
@@ -706,7 +716,7 @@ function AppComponent(props: App): JSX.Element {
         setGeneratingImageNodeId(null);
       }
     },
-    [s, localNodes, activeEntryId, generatingImageNodeId, props._id, props.data.roomId],
+    [s, localNodes, activeEntryId, generatingImageNodeId, props._id, props.data.roomId, llmManager, aiProvider, toast],
   );
 
   const summarizeFavorites = useCallback(async () => {

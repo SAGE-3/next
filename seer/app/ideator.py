@@ -11,10 +11,14 @@
 import asyncio
 import json
 from logging import Logger
+
+from fastapi import HTTPException
 from openai import AsyncOpenAI, AsyncAzureOpenAI
+from langchain_core.messages import HumanMessage, SystemMessage
 
 from pysage3.client import PySage3
 from libs.utils import getModelsInfo
+from libs.llm_manager import LLMManager
 from libs.localtypes import (
     IdeatorDimensionsRequest,
     IdeatorDimensionsResponse,
@@ -31,9 +35,6 @@ from libs.localtypes import (
     IdeatorProseRequest,
     IdeatorProseResponse,
 )
-
-OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions"
-DALLE_URL = "https://api.openai.com/v1/images/generations"
 
 JSON_SYSTEM = "You are a helpful assistant. Return ONLY valid JSON with no extra text, markdown, or code fences."
 PROSE_SYSTEM = (
@@ -57,52 +58,43 @@ class IdeatorAgent:
         self.logger = logger
         self.ps3 = ps3
 
-        models = getModelsInfo(ps3)
-        openai_cfg = models["openai"]
-        azure_cfg = models["azure"]
+        # Capability-driven model registry (providers/tasks/settings)
+        self.manager = LLMManager(getModelsInfo(ps3), logger)
+        # Raw OpenAI-SDK clients for image generation, keyed by (provider, model name)
+        self._image_clients: dict = {}
 
-        self.openai_client = None
-        self.azure_client = None
-        self.openai_model = openai_cfg.get("model", "gpt-4o-mini")
+        providers = self.manager.list_providers()
+        if providers:
+            logger.info("Ideator providers: " + ", ".join(providers))
+        else:
+            # Don't crash startup on an un-migrated/empty config: boot without a
+            # provider and let each request return a clear error.
+            logger.warning("IdeatorAgent> no model configured; ideator requests will fail until models are set")
 
-        if openai_cfg.get("apiKey"):
-            self.openai_client = AsyncOpenAI(api_key=openai_cfg["apiKey"])
-            logger.info(f"IdeatorAgent: OpenAI ready, model={self.openai_model}")
-
-        if azure_cfg.get("text", {}).get("apiKey"):
-            self.azure_client = AsyncAzureOpenAI(
-                api_key=azure_cfg["text"]["apiKey"],
-                azure_endpoint=azure_cfg["text"]["url"],
-                api_version=azure_cfg["text"].get("api_version", "2024-02-01"),
-            )
-            self.azure_model = azure_cfg["text"]["model"]
-            logger.info(f"IdeatorAgent: Azure OpenAI ready, model={self.azure_model}")
-
-    def _get_client_and_model(self, model: str):
-        """Return (client, model_name) based on requested model string."""
-        if model.startswith("azure") and self.azure_client:
-            return self.azure_client, self.azure_model
-        if self.openai_client:
-            return self.openai_client, self.openai_model
-        raise RuntimeError("No AI model configured — check sage3-dev.hjson services.openai.apiKey")
+    def _resolve_provider(self, model: str) -> str:
+        """The request's `model` field carries a provider name (e.g. 'azure');
+        fall back to the configured default provider when empty."""
+        return model or self.manager.default_provider() or ""
 
     async def _chat(self, system: str, user: str, model: str, temperature: float = 0.7, image_base64: str | None = None) -> str:
-        client, model_name = self._get_client_and_model(model)
+        provider = self._resolve_provider(model)
+        capability = "vision" if image_base64 else "chat"
+        llm = self.manager.build_chat_model(provider, [capability], temperature=temperature)
+        if llm is None:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Provider '{provider}' has no model capable of {capability}",
+            )
         user_content = user
         if image_base64:
             user_content = [
                 {"type": "text", "text": user},
                 {"type": "image_url", "image_url": {"url": image_base64}},
             ]
-        response = await client.chat.completions.create(
-            model=model_name,
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user", "content": user_content},
-            ],
-            temperature=temperature,
+        response = await llm.ainvoke(
+            [SystemMessage(content=system), HumanMessage(content=user_content)]
         )
-        return response.choices[0].message.content
+        return str(response.content)
 
     async def _json_chat(self, user: str, model: str, temperature: float = 0.7, image_base64: str | None = None) -> str:
         return await self._chat(JSON_SYSTEM, user, model, temperature, image_base64)
@@ -243,9 +235,36 @@ class IdeatorAgent:
         r = await self._prose_chat(msg, req.model, 0.7)
         return IdeatorSummarizeResponse(r=r)
 
+    def _image_client(self, provider: str) -> tuple:
+        """(client, model_id) for the provider's imagegen-capable model.
+        LLMManager only builds LangChain chat/embeddings clients, so image
+        generation uses the OpenAI SDK directly from the resolved config."""
+        info = self.manager.resolve_model(provider, "imagegen")
+        if not info:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Provider '{provider}' has no model capable of image generation",
+            )
+        key = (provider, info["name"])
+        if key in self._image_clients:
+            return self._image_clients[key]
+        api_key = info["api_key"] or "EMPTY"
+        if info["kind"] == "azure":
+            client = AsyncAzureOpenAI(
+                api_key=api_key,
+                azure_endpoint=info["url"],
+                api_version=info["api_version"],
+            )
+        elif info["kind"] == "openai_compat":
+            client = AsyncOpenAI(api_key=api_key, base_url=info["base_url"])
+        else:
+            client = AsyncOpenAI(api_key=api_key)
+        self._image_clients[key] = (client, info["model_id"])
+        return client, info["model_id"]
+
     async def image(self, req: IdeatorImageRequest) -> IdeatorImageResponse:
-        import base64
-        client, _ = self._get_client_and_model(req.model)
+        provider = self._resolve_provider(req.model)
+        client, model_id = self._image_client(provider)
         topic_line = (
             f'Conceptual illustration for a brainstorming idea about: "{req.brainstormingPrompt}". '
             if req.brainstormingPrompt
@@ -266,20 +285,19 @@ class IdeatorAgent:
             + f"Visual themes: {', '.join(req.keywords)}. "
             + "Abstract, minimal, clean design. No text, labels, or words."
         )
-        self.logger.info(f"IdeatorAgent.image: prompt length={len(prompt)}, prompt={prompt[:200]}")
+        self.logger.info(f"IdeatorAgent.image: provider={provider}, model={model_id}, prompt={prompt[:200]}")
+        kwargs = {"model": model_id, "prompt": prompt, "n": 1, "size": "1024x1024"}
+        # DALL-E returns URLs unless asked for base64; gpt-image models always
+        # return base64 and reject the response_format parameter.
+        if model_id.startswith("dall-e"):
+            kwargs["response_format"] = "b64_json"
         try:
-            response = await client.images.generate(
-                model="dall-e-3",
-                prompt=prompt,
-                n=1,
-                size="1024x1024",
-                response_format="b64_json",
-            )
+            response = await client.images.generate(**kwargs)
             b64 = response.data[0].b64_json
             data_url = f"data:image/png;base64,{b64}"
             return IdeatorImageResponse(imageUrl=data_url)
         except Exception as e:
-            self.logger.error(f"IdeatorAgent.image: OpenAI error: {e}")
+            self.logger.error(f"IdeatorAgent.image: error from {provider}/{model_id}: {e}")
             raise
 
     async def prose(self, req: IdeatorProseRequest) -> IdeatorProseResponse:
