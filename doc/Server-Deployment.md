@@ -734,6 +734,8 @@ Each provider entry takes an `apiKey` and/or a `url`:
 - `url` only — an unauthenticated or network-local endpoint (e.g. a self-hosted gateway).
 - `url` + `apiKey` — an authenticated custom endpoint (e.g. Azure OpenAI, a LiteLLM/vLLM gateway). Any OpenAI-compatible endpoint works.
 
+How the endpoint is spoken to is inferred from the config: a model with an `api_version` **and** a provider `url` is treated as **Azure OpenAI**; a `url` without `api_version` is treated as a generic **OpenAI-compatible** endpoint (`/v1` is appended automatically, so `"http://myhost:11434"` is enough for e.g. Ollama); no `url` at all means **openai.com**. The `model_id` must match the name the endpoint reports under `/v1/models`.
+
 Per-model fields: `model_id` (the provider's actual model name), `capabilities` (array), and optional `max_tokens`, `api_version`, `cost_per_1k_input`, `cost_per_1k_output`. `context_window` is optional but **recommended for chat models** — it budgets how much PDF text is stuffed for summary questions. If unset it defaults to `32768` (with a warning in the Seer log), and long or multi-PDF summaries may be truncated.
 
 **Shared PDF retrieval infrastructure** (top-level under `models`, not per provider):
@@ -774,14 +776,17 @@ quay.io/jupyter/datascience-notebook   2024-05-27        0752ac24b52d   7 months
 ```bash
 > docker ps
 CONTAINER ID   IMAGE                             COMMAND                  CREATED        STATUS                  PORTS                      NAMES
-20a136469e25   ghcr.io/sage-3/sagekernelserver:arm64             "python src/main.py …"   22 hours ago   Up 22 hours (healthy)   127.0.0.1:8000->8000/tcp               sage3-10-kernelserver-1
-b93c18e46325   d5df36d8db59                                      "docker-entrypoint.s…"   22 hours ago   Up 22 hours (healthy)   0.0.0.0:443->443/tcp                   sage3-10-node-server-1
-e3a6448d6df2   7fc39679f348                                      "fastapi run main.py…"   22 hours ago   Up 22 hours (healthy)   127.0.0.1:9999->9999/tcp               sage3-10-seer-1
-5bc7b93c6bf5   quay.io/jupyter/datascience-notebook:2024-05-27   "tini -g -- start.sh…"   22 hours ago   Up 22 hours (healthy)   127.0.0.1:8888->8888/tcp               sage3-10-jupyter-1
-b6a3ae3c7244   chromadb/chroma:0.5.16                            "/docker_entrypoint.…"   22 hours ago   Up 22 hours (healthy)   127.0.0.1:8100->8000/tcp               sage3-10-chromadb-1
-4776cdcfedf9   redis/redis-stack-server:latest                   "redis-server /conf/…"   22 hours ago   Up 22 hours             127.0.0.1:6379->6379/tcp               sage3-10-redis-server-1
-b2d60836dee3   fluent/fluentd:edge-debian                        "tini -- /bin/entryp…"   22 hours ago   Up 22 hours             5140/tcp, 127.0.0.1:24224->24224/tcp   sage3-10-fluentd-server-1
+f1a2b3c4d5e6   traefik:v2                                        "/entrypoint.sh trae…"   22 hours ago   Up 22 hours             0.0.0.0:443->443/tcp       traefik
+20a136469e25   ghcr.io/sage-3/sagekernelserver:arm64             "python src/main.py …"   22 hours ago   Up 22 hours (healthy)   8000/tcp                   sage3-10-kernelserver-1
+b93c18e46325   ghcr.io/sage-3/next:arm64                         "docker-entrypoint.s…"   22 hours ago   Up 22 hours (healthy)   3000/tcp                   sage3-10-node-server-1
+e3a6448d6df2   ghcr.io/sage-3/agents:arm64                       "fastapi run main.py…"   22 hours ago   Up 22 hours (healthy)   9999/tcp                   sage3-10-seer-1
+5bc7b93c6bf5   quay.io/jupyter/datascience-notebook:2024-05-27   "tini -g -- start.sh…"   22 hours ago   Up 22 hours (healthy)   8888/tcp                   sage3-10-jupyter-1
+b6a3ae3c7244   chromadb/chroma:0.5.16                            "/docker_entrypoint.…"   22 hours ago   Up 22 hours (healthy)   8000/tcp                   sage3-10-chromadb-1
+4776cdcfedf9   redis/redis-stack-server:latest                   "redis-server /conf/…"   22 hours ago   Up 22 hours             6379/tcp                   sage3-10-redis-server-1
+b2d60836dee3   fluent/fluentd:edge-debian                        "tini -- /bin/entryp…"   22 hours ago   Up 22 hours             5140/tcp, 24224/tcp        sage3-10-fluentd-server-1
 ```
+
+Note: only Traefik publishes a host port (443). All the other services communicate over the internal Docker network using service names, so their ports are not reachable from the host. To poke at an internal service, go through its container, e.g. `docker compose exec seer curl localhost:9999/status` or `docker compose exec redis-server redis-cli`.
 
 - See logs of a container
 
