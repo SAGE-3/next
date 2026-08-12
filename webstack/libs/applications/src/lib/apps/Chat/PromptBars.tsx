@@ -38,7 +38,7 @@ export interface PromptBarHandlers {
   onSummary: () => void;
   onProsCons: () => void;
   onKeywords: () => void;
-  onOpinion: () => void;
+  onImageGeneration: () => void;
   onFacts: () => void;
   onCodeRefactor: () => void;
   onCodeExplain: () => void;
@@ -115,7 +115,11 @@ export function PromptBars({ mode, handlers }: { mode: OperationMode; handlers: 
             tooltip="Extract 3-5 keywords that best capture the essence and subject matter of the text"
             onClick={handlers.onKeywords}
           />
-          <PromptButton label="Provide Opinion" tooltip="Provide a short opinion on the text" onClick={handlers.onOpinion} />
+          <PromptButton
+            label="Image Generation"
+            tooltip="Generate an image from the text and place it on the board"
+            onClick={handlers.onImageGeneration}
+          />
           <PromptButton label="Find Facts" tooltip="Provide two or three interesting facts from the text" onClick={handlers.onFacts} />
         </HStack>
       )}

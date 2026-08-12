@@ -42,6 +42,7 @@ import {
   useAssetStore,
   apiUrls,
   useConfigStore,
+  seerIdeator,
 } from '@sage3/frontend';
 import { genId, AskRequest, ImageQuery, PDFQuery, CodeRequest, WebQuery, WebScreenshot, isGeoJSON } from '@sage3/shared';
 import { LLMConfigManager, TaskType } from '@sage3/shared/types';
@@ -1190,8 +1191,90 @@ function AppComponent(props: App): JSX.Element {
   const onProsCons = () => askIntent('proscons', 'Identify pros and cons', 'Identify the pros and cons. Answer in a few sentences.');
   const onKeywords = () =>
     askIntent('keywords', 'Extract keywords', 'Extract 3-5 keywords that best capture the essence and subject matter. Answer as a list.');
-  const onOpinion = () => askIntent('opinion', 'Give an opinion', 'Provide a short opinion on the document.');
   const onFacts = () => askIntent('facts', 'List interesting facts', 'List two or three interesting facts from the document.');
+
+  // Generate an image from the linked text app (e.g. a Stickie): the text is
+  // sent to the image-generation endpoint, the result is uploaded as an asset,
+  // and an ImageViewer is placed next to the chat window.
+  const onImageGeneration = async () => {
+    if (!user || processing) return;
+    if (!canPerform('image_generation')) return;
+    const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
+    const textApp = apps.find((a) => typeof (a.data.state as { text?: string }).text === 'string');
+    const text = ((textApp?.data.state as { text?: string })?.text ?? s.context ?? '').trim();
+    if (!text) {
+      toast({ title: 'No text to illustrate', description: 'Link a Stickie with some text first.', status: 'warning', duration: 4000, isClosable: true });
+      return;
+    }
+    const label = 'Generate an image from the text';
+    const [firstLine, ...rest] = text.split('\n').filter((l) => l.trim());
+    const now = await serverTime();
+    const placeholder = {
+      id: genId(),
+      userId: user._id,
+      creationId: '',
+      creationDate: now.epoch,
+      userName: 'SAGE',
+      query: label,
+      response: 'Working on it...',
+    };
+    updateState(props._id, { ...s, messages: [...s.messages, placeholder] });
+    setProcessing(true);
+    try {
+      const result = await seerIdeator.image({
+        title: (firstLine ?? text).slice(0, 80),
+        summary: (rest.join(' ') || firstLine || text).slice(0, 600),
+        keywords: [],
+        model: selectedModel || '',
+      });
+      if ('message' in result) throw new Error(result.message);
+      // Upload to SAGE3 assets instead of keeping a ~1MB data URL around
+      const blob = await fetch(result.imageUrl).then((r) => r.blob());
+      const imgFile = new File([blob], `chat-image-${genId()}.png`, { type: 'image/png' });
+      const fd = new FormData();
+      fd.append('files', imgFile);
+      fd.append('room', roomId!);
+      const uploadRes = await fetch(apiUrls.assets.upload, { method: 'POST', body: fd, credentials: 'include' });
+      if (!uploadRes.ok) throw new Error('Asset upload failed');
+      const uploadedIds = (await uploadRes.json()) as string[];
+      const assetDbId = uploadedIds[0];
+      if (!assetDbId) throw new Error('No asset ID returned from upload');
+      await createApp({
+        title: (firstLine ?? 'Generated image').slice(0, 60),
+        roomId: roomId!,
+        boardId: boardId!,
+        position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+        size: { width: 512, height: 512, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        type: 'ImageViewer',
+        state: { assetid: assetDbId },
+        raised: true,
+        dragging: false,
+        pinned: false,
+      });
+      updateState(props._id, {
+        ...s,
+        messages: [
+          ...s.messages,
+          placeholder,
+          {
+            id: genId(),
+            userId: user._id,
+            creationId: '',
+            creationDate: now.epoch + 1,
+            userName: 'SAGE',
+            query: '',
+            response: 'Image generated from the linked text and placed next to the chat window.',
+          },
+        ],
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast({ title: 'Image generation failed', description: msg, status: 'error', duration: 4000, isClosable: true });
+    } finally {
+      setProcessing(false);
+    }
+  };
 
   /*
     Chat with Paper:
@@ -1453,7 +1536,7 @@ function AppComponent(props: App): JSX.Element {
             onSummary,
             onProsCons,
             onKeywords,
-            onOpinion,
+            onImageGeneration,
             onFacts,
             onCodeRefactor,
             onCodeExplain,
