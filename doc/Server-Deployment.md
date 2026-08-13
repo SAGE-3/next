@@ -103,18 +103,18 @@ node -v
 
 3. Download a SAGE3 server package:
 
-- [SAGE3 Linux AMD64 Server Package for Intel CPUs](https://github.com/SAGE-3/next/releases/download/server-1.4/SAGE3-1.4-linux-amd64.tgz) and extract it.
+- [SAGE3 Linux AMD64 Server Package for Intel CPUs](https://github.com/SAGE-3/next/releases/download/server-1.6/SAGE3-1.6-amd64.tgz) and extract it.
 
 ```bash
 # Open a Terminal
 
 # Move the downloaded file to your user's home folder
-mv SAGE3-1.4-linux-amd64.tgz ~
+mv SAGE3-1.6-amd64.tgz ~
 cd ~
 
 # Extract file
-tar xvfz SAGE3-1.4-linux-amd64.tgz
-cd SAGE3-1.4
+tar xvfz SAGE3-1.6-amd64.tgz
+cd SAGE3-1.6
 ```
 
 4. Copy your SSL Certificates to the configurations folder. There should be two files, your PRIVATE key and the CERTIFICATE file
@@ -123,8 +123,8 @@ cd SAGE3-1.4
 # Open a Terminal
 
 # Copy SSL Certs to the SAGE3 Keys folder. Remember these names for later when setting up the configuration file (step 7).
-cp PRIVATE_KEY_FILE ~/SAGE3-1.4/configurations/node/keys
-cp CERTIFICATE_FILE ~/SAGE3-1.4/configurations/node/keys
+cp PRIVATE_KEY_FILE ~/SAGE3-1.6/configurations/node/keys
+cp CERTIFICATE_FILE ~/SAGE3-1.6/configurations/node/keys
 ```
 
 5. Generate JWT Keys and Token
@@ -133,7 +133,7 @@ cp CERTIFICATE_FILE ~/SAGE3-1.4/configurations/node/keys
 # Open a Terminal
 
 # Switch to the SAGE3 Node Keys Directory
-cd ~/SAGE3-1.4/configurations/node/keys
+cd ~/SAGE3-1.6/configurations/node/keys
 
 # Generate JWT Keys and Token
 ./genJWT_keys.sh
@@ -146,7 +146,7 @@ cd ~/SAGE3-1.4/configurations/node/keys
 # Open a Terminal
 
 # Change directory to the SAGE3 Server Folder
-cd ~/SAGE3-1.4
+cd ~/SAGE3-1.6
 
 # Edit .env file and add the name of your server and the token you just generated. Leave other variables as is.
 vim .env
@@ -162,7 +162,7 @@ CHROMA_CLIENT_AUTH_CREDENTIALS=...
 # Open a Terminal
 
 # Change directory to the SAGE3 Server Node Folder
-cd ~/SAGE3-1.4/configurations
+cd ~/SAGE3-1.6/configurations
 
 # Edit the sage3-prod.hjson file with your preferred editor
 # The file is documented with instructions.
@@ -175,7 +175,7 @@ vim sage3-prod.hjson
 # Open a Terminal
 
 # Change to the SAGE3 Server Directory
-cd ~/SAGE3-1.4
+cd ~/SAGE3-1.6
 
 # Pull images
 docker compose pull
@@ -196,7 +196,7 @@ docker compose pull
 # Open a Terminal
 
 # Change to the SAGE3 Server Directory
-cd ~/SAGE3-1.4
+cd ~/SAGE3-1.6
 
 # Start Server
 ./GO
@@ -233,22 +233,22 @@ sudo apt-get install -y nodejs
 node -v
 ```
 
-4. Download the [SAGE3 Linux AMD64 Server Package](https://github.com/SAGE-3/next/releases/download/server-1.4/SAGE3-1.4-linux-amd64.tgz) and extract it within the WSL subsystem
+4. Download the [SAGE3 Linux AMD64 Server Package](https://github.com/SAGE-3/next/releases/download/server-1.6/SAGE3-1.6-amd64.tgz) and extract it within the WSL subsystem
 
 ```
 # Open Powershell and switch to WSL
 wsl
 
 # Download the file if not done already
-curl -LJO https://github.com/SAGE-3/next/releases/download/server-1.4/SAGE3-1.4-linux-amd64.tgz
+curl -LJO https://github.com/SAGE-3/next/releases/download/server-1.6/SAGE3-1.6-amd64.tgz
 
 # Move the downloaded file to your user's home folder
-mv SAGE3-1.4-linux-amd64.tgz ~
+mv SAGE3-1.6-amd64.tgz ~
 cd ~
 
 # Extract file
-tar xvfz SAGE3-1.4-linux-amd64.tgz
-cd SAGE3-1.4
+tar xvfz SAGE3-1.6-amd64.tgz
+cd SAGE3-1.6
 ```
 
 5. Copy your SSL Certificates to the configurations folder. There should be two files, your PRIVATE key and the CERTIFICATE file
@@ -258,8 +258,8 @@ cd SAGE3-1.4
 wsl
 
 # Copy SSL Certs to the SAGE3 Keys folder. Remember these names for later when setting up the configuration file (step 8).
-cp PRIVATE_KEY_FILE ~/SAGE3-1.4/configurations/node/keys
-cp CERTIFICATE_FILE ~/SAGE3-1.4/configurations/node/keys
+cp PRIVATE_KEY_FILE ~/SAGE3-1.6/configurations/node/keys
+cp CERTIFICATE_FILE ~/SAGE3-1.6/configurations/node/keys
 ```
 
 6. Generate JWT Keys and Token
@@ -269,7 +269,7 @@ cp CERTIFICATE_FILE ~/SAGE3-1.4/configurations/node/keys
 wsl
 
 # Switch to the SAGE3 Node Keys Directory
-cd ~/SAGE3-1.4/configurations/node/keys
+cd ~/SAGE3-1.6/configurations/node/keys
 
 # Generate JWT Keys and Token
 ./genJWT_keys.sh
@@ -283,7 +283,7 @@ cd ~/SAGE3-1.4/configurations/node/keys
 wsl
 
 # Change directory to the SAGE3 Server Folder
-cd ~/SAGE3-1.4
+cd ~/SAGE3-1.6
 
 # Edit .env file with your preferred editor
 vim .env
@@ -298,7 +298,7 @@ TOKEN= # token value copied without “” from: configurations/node/keys/token.
 wsl
 
 # Change directory to the SAGE3 Server Node Folder
-cd ~/SAGE3-1.4/configurations/node
+cd ~/SAGE3-1.6/configurations/node
 
 # Edit the sage3-prod.hjson file with your preferred editor
 # The file is documented with instructions.
@@ -314,7 +314,7 @@ vim sage3-prod.hjson
 wsl
 
 # Change to the SAGE3 Server Directory
-cd ~/SAGE3-1.4
+cd ~/SAGE3-1.6
 
 # Pull images
 sudo docker compose pull
@@ -335,7 +335,7 @@ pulling fastapi      ... done
 wsl
 
 # Change to the SAGE3 Server Directory
-cd ~/SAGE3-1.4
+cd ~/SAGE3-1.6
 
 # Start Server
 ./GO
@@ -356,19 +356,19 @@ cd ~/SAGE3-1.4
 
 3. Download a SAGE3 server package:
 
-- [SAGE3 macOS ARM64 Server Package for Arm CPUs](https://github.com/SAGE-3/next/releases/download/server-1.4/SAGE3-1.4-macos-arm64.tgz) and extract it
-- [SAGE3 Linux AMD64 Server Package for Intel CPUs](https://github.com/SAGE-3/next/releases/download/server-1.4/SAGE3-1.4-linux-amd64.tgz) and extract it
+- [SAGE3 ARM64 Server Package for Arm CPUs (Apple Silicon, Ampere, ...)](https://github.com/SAGE-3/next/releases/download/server-1.6/SAGE3-1.6-arm64.tgz) and extract it
+- [SAGE3 Linux AMD64 Server Package for Intel CPUs](https://github.com/SAGE-3/next/releases/download/server-1.6/SAGE3-1.6-amd64.tgz) and extract it
 
 ```
 # Open a Terminal
 
 # Move the downloaded file to your user's home folder
-mv SAGE3-1.4-linux-arm64.tgz ~
+mv SAGE3-1.6-arm64.tgz ~
 cd ~
 
 # Extract file
-tar xvfz SAGE3-1.4-linux-arm64.tgz
-cd SAGE3-1.4
+tar xvfz SAGE3-1.6-arm64.tgz
+cd SAGE3-1.6
 ```
 
 4. Copy your SSL Certificates to the configurations folder. There should be two files, your PRIVATE key and the CERTIFICATE file
@@ -377,8 +377,8 @@ cd SAGE3-1.4
 # Open a Terminal
 
 # Copy SSL Certs to the SAGE3 Keys folder. Remember these names for later when setting up the configuration file (step 7).
-cp PRIVATE_KEY_FILE ~/SAGE3-1.4/configurations/node/keys
-cp CERTIFICATE_FILE ~/SAGE3-1.4/configurations/node/keys
+cp PRIVATE_KEY_FILE ~/SAGE3-1.6/configurations/node/keys
+cp CERTIFICATE_FILE ~/SAGE3-1.6/configurations/node/keys
 ```
 
 
@@ -388,7 +388,7 @@ cp CERTIFICATE_FILE ~/SAGE3-1.4/configurations/node/keys
 # Open a Terminal
 
 # Switch to the SAGE3 Node Keys Directory
-cd ~/SAGE3-1.4/configurations/node/keys
+cd ~/SAGE3-1.6/configurations/node/keys
 
 # Generate JWT Keys and Token
 ./genJWT_keys.sh
@@ -401,7 +401,7 @@ cd ~/SAGE3-1.4/configurations/node/keys
 # Open a Terminal
 
 # Change directory to the SAGE3 Server Folder
-cd ~/SAGE3-1.4
+cd ~/SAGE3-1.6
 
 # Edit .env file with your preferred editor
 vim .env
@@ -415,7 +415,7 @@ TOKEN= # token value copied without “” from: configurations/node/keys/token.
 # Open a Terminal
 
 # Change directory to the SAGE3 Server Node Folder
-cd ~/SAGE3-1.4/configurations
+cd ~/SAGE3-1.6/configurations
 
 # Edit the sage3-prod.hjson file with your preferred editor
 # The file is documented with instructions.
@@ -430,7 +430,7 @@ vim sage3-prod.hjson
 # Open a Terminal
 
 # Change to the SAGE3 Server Directory
-cd ~/SAGE3-1.4
+cd ~/SAGE3-1.6
 
 # Pull images
 docker compose pull
@@ -451,7 +451,7 @@ docker compose pull
 # Open a Terminal
 
 # Change to the SAGE3 Server Directory
-cd ~/SAGE3-1.4
+cd ~/SAGE3-1.6
 
 # Start Server
 ./GO
