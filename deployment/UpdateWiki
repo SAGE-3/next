@@ -1,0 +1,62 @@
+#!/bin/bash
+#
+# UpdateWiki — publish the doc/ folder to the GitHub wiki.
+#
+# Usage:
+#   ./UpdateWiki        # shows the pending changes, asks before pushing
+#   ./UpdateWiki -y     # no confirmation prompt
+#
+# The doc/ folder is the source of truth; it mirrors the wiki with one
+# transformation: wiki page links "](Page-Name)" are stored in doc/ as
+# relative file links "](Page-Name.md)" so they resolve when browsing the
+# repository. This script does the reverse: it copies every doc/*.md page
+# (except README.md, which is repo-only) plus the images/ and icons/
+# folders into a fresh clone of the wiki repo, strips the ".md" from
+# relative page links, and pushes.
+#
+set -euo pipefail
+cd "$(dirname "$0")"
+
+CONFIRM="${1:-}"
+WIKI_URL="https://github.com/SAGE-3/next.wiki.git"
+DOC="../doc"
+
+STAGE=$(mktemp -d)
+trap 'rm -rf "$STAGE"' EXIT
+
+echo "Cloning wiki..."
+git clone --quiet "$WIKI_URL" "$STAGE/wiki"
+
+# Pages: copy all doc/*.md except README.md, converting relative links
+# "](Page.md)" or "](Page.md#anchor)" back to wiki style "](Page)".
+# URLs are untouched (the pattern excludes "/" and ":").
+for f in "$DOC"/*.md; do
+  name=$(basename "$f")
+  [ "$name" = "README.md" ] && continue
+  sed -E 's/\]\(([A-Za-z0-9()._-]+)\.md(#[^)]*)?\)/](\1\2)/g' "$f" > "$STAGE/wiki/$name"
+done
+
+# Assets (macOS junk files excluded, and scrubbed if previously pushed)
+cp -R "$DOC/images" "$DOC/icons" "$STAGE/wiki/"
+find "$STAGE/wiki" -name ".DS_Store" -delete
+
+cd "$STAGE/wiki"
+if [ -z "$(git status --porcelain)" ]; then
+  echo "Wiki is already up to date with doc/ — nothing to push."
+  exit 0
+fi
+
+echo ""
+echo "Pending wiki changes:"
+git status --short
+echo ""
+
+if [[ "$CONFIRM" != "-y" ]]; then
+  read -r -p "Push these changes to the wiki? [y/N] " answer
+  [[ "$answer" == "y" || "$answer" == "Y" ]] || { echo "Aborted."; exit 1; }
+fi
+
+git add -A
+git commit --quiet -m "Sync from doc/ folder"
+git push --quiet
+echo "Wiki updated: https://github.com/SAGE-3/next/wiki"
