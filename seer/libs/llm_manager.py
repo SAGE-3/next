@@ -206,7 +206,9 @@ class LLMManager:
     def ocr_config(self) -> Optional[dict]:
         """Connection info for a PDF->Markdown OCR service (olmOCR vLLM server),
         or None. Read from the optional `pdf2md` block of the models config:
-            "pdf2md": { "url": "http://host/olmocr", "model": "<model_id>" }
+            "pdf2md": { "url": "http://host/olmocr/v1", "model": "<model_id>" }
+        The url must include the /v1 path: olmocr's pipeline appends only
+        /chat/completions to it.
         """
         o = self.config.get("pdf2md") or {}
         url = o.get("url")

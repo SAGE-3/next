@@ -803,7 +803,7 @@ Per-model fields: `model_id` (the provider's actual model name), `capabilities` 
 
 - `embed` — NeMo Retriever embedding NIM (`{ url, model }`), used to index and search PDF text.
 - `rerank` — NeMo Retriever reranking NIM (`{ url, model }`), used to re-order retrieved passages.
-- `pdf2md` — *optional* olmOCR PDF→Markdown vLLM server (`{ url, model }`). If omitted, Seer falls back to `pymupdf4llm` text extraction.
+- `pdf2md` — *optional* olmOCR PDF→Markdown vLLM server (`{ url, model }`). The URL must include the `/v1` path (e.g. `http://host:8002/v1`) — olmocr appends only `/chat/completions` to it. If omitted, Seer falls back to `pymupdf4llm` text extraction.
 
 > Switching embedding models requires a fresh Chroma collection, because the vector dimension changes.
 
