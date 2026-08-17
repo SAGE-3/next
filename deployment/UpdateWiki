@@ -18,7 +18,8 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 CONFIRM="${1:-}"
-WIKI_URL="https://github.com/SAGE-3/next.wiki.git"
+# Overridable so CI can inject a token-authenticated URL
+WIKI_URL="${WIKI_URL:-https://github.com/SAGE-3/next.wiki.git}"
 DOC="../doc"
 
 STAGE=$(mktemp -d)
@@ -57,6 +58,6 @@ if [[ "$CONFIRM" != "-y" ]]; then
 fi
 
 git add -A
-git commit --quiet -m "Sync from doc/ folder"
+git commit --quiet -m "Sync from doc/ folder${GITHUB_SHA:+ (${GITHUB_SHA:0:7})}"
 git push --quiet
 echo "Wiki updated: https://github.com/SAGE-3/next/wiki"
