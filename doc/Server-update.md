@@ -1,6 +1,6 @@
-# SAGE3 Server Update v1.3 - v1.4
+# SAGE3 Server Update
 
-Date: 08/12/2024
+Date: 08/16/2026 (updating to server v1.6)
 
 ## Updating from a 1.1 or 1.2 server installation
 

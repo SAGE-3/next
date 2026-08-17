@@ -1,6 +1,6 @@
 # Server Deployment
 
-**Updated January 2025**
+**Updated August 2026** (SAGE3 server v1.6)
 
 The SAGE3 server can be deployed on a Window, Mac or Linux machine with a fully qualified name and a SSL certificate to support HTTPS. It includes a series of containers running the services required for the SAGE3 platform (using docker compose).
 
