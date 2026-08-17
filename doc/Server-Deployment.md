@@ -646,12 +646,14 @@ This file allows you to configure your server to your specific needs.
     // Max age for a session per user. In milliseconds. 7 days
     "sessionMaxAge": 604800000,
     // Which login strategies to enable for the server.
-    // If you enbable them ensure you add the relevant config information below.
+    // Available: google, apple, cilogon, keycloak, ldap, guest, spectator, jwt
+    // If you enable them ensure you add the relevant config information below.
     "strategies": [
       "google",
       "apple",
       "cilogon",
       "keycloak",
+      "ldap",
       "guest",
       "spectator",
       "jwt"
@@ -714,12 +716,60 @@ This file allows you to configure your server to your specific needs.
       "routeEndpoint": "/auth/cilogon",
       // Callback URL for the cilogon login
       "callbackURL": "/auth/cilogon/redirect"
+    },
+    // Keycloak (or any OpenID Connect provider) configuration
+    "keycloakConfig": {
+      // Full Keycloak realm URL — all OIDC endpoints are autodiscovered from this
+      "issuerURL": "https://keycloak.example.com/realms/sage3",
+      // Client ID created in the Keycloak realm
+      "clientID": "sage3",
+      // Client Secret (leave empty for public clients)
+      "clientSecret": "",
+      // Endpoint to initiate Keycloak login
+      "routeEndpoint": "/auth/keycloak",
+      // Must match the redirect URI configured in your Keycloak client
+      "callbackURL": "/auth/keycloak/redirect"
+    },
+    // LDAP / Active Directory configuration
+    "ldapConfig": {
+      // ldap:// for plain (port 389) or ldaps:// for TLS (port 636)
+      "url": "ldaps://ldap.example.com:636",
+      // Service account used to search the directory (read access is enough)
+      "bindDN": "cn=svc-sage3,ou=ServiceAccounts,dc=example,dc=com",
+      "bindCredentials": "CHANGE_ME",
+      // Base DN under which users are searched
+      "searchBase": "ou=People,dc=example,dc=com",
+      // {{username}} is replaced at login time.
+      // OpenLDAP: "(uid={{username}})" — Active Directory: "(sAMAccountName={{username}})"
+      "searchFilter": "(uid={{username}})",
+      // Map LDAP group DNs (from the user's memberOf attribute) to SAGE3 roles.
+      // Checked in priority order admin > user > spectator; omit a key to skip it.
+      "groupMapping": {
+        "admin": "cn=sage3-admins,ou=Groups,dc=example,dc=com",
+        "user": "cn=sage3-users,ou=Groups,dc=example,dc=com",
+        "spectator": "cn=sage3-readonly,ou=Groups,dc=example,dc=com"
+      },
+      // Role assigned when the user matches no groupMapping entry: admin | user | spectator
+      "defaultRole": "spectator",
+      // TLS options passed to Node.js tls.connect.
+      // Set "rejectUnauthorized": false only for self-signed certs in dev/test.
+      "tlsOptions": {
+        "rejectUnauthorized": true
+      }
     }
   },
   // Namespace for signing UUID v5 keys: generate yours or https://www.uuidtools.com/generate/v4
   "namespace": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
 }
 ```
+
+### Authentication
+
+Login methods are enabled through the `auth.strategies` list; each strategy reads its own config block (shown above). Google, Apple, and CILogon are OAuth services that require credentials from the respective provider; `guest` and `spectator` need no external setup; `jwt` is for API/service access using the keys generated during install.
+
+**Keycloak** (`keycloakConfig`) works with Keycloak or any OpenID Connect provider. Create a client in your realm, set its redirect URI to `https://YOUR_SERVER/auth/keycloak/redirect`, and put the realm URL and client ID/secret in the config — all OIDC endpoints are autodiscovered from the issuer URL. To try it locally: `docker run -p 8080:8080 -e KC_BOOTSTRAP_ADMIN_USERNAME=admin -e KC_BOOTSTRAP_ADMIN_PASSWORD=admin quay.io/keycloak/keycloak:latest start-dev`, then create a realm and client at `http://localhost:8080`.
+
+**LDAP / Active Directory** (`ldapConfig`) authenticates users with a username + password form against your directory (via `POST /auth/ldap`). It needs a read-only service account (`bindDN`/`bindCredentials`), a search base and filter to locate users (use `(sAMAccountName={{username}})` for Active Directory), and can optionally map directory groups to SAGE3 roles through `groupMapping` — users matching no mapped group get `defaultRole`. Use `ldaps://` in production; certificate checking is on by default via `tlsOptions`.
 
 ### AI Configuration
 

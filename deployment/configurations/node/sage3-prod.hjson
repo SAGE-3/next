@@ -129,14 +129,16 @@
     "sessionSecret": "SUPERSECRET!!$$",
     // Max age for a session per user. In milliseconds. 8 days
     "sessionMaxAge": 691200000,
-    // Which login strategies to enable for the server. 
-    // If you enbable them ensure you add the relevant config information below.
+    // Which login strategies to enable for the server.
+    // Available: google, apple, cilogon, keycloak, ldap, guest, spectator, jwt
+    // If you enable them ensure you add the relevant config information below.
     "strategies": [
       "google",
       "cilogon",
       "guest",
       "spectator",
       // "keycloak",
+      // "ldap",
       "jwt"
     ],
     // A List of emails to enable those users to be admins.
@@ -185,7 +187,47 @@
       // "routeEndpoint": "/auth/keycloak",
       // Must match the redirect URI configured in your Keycloak client
       // "callbackURL": "/auth/keycloak/redirect"
-    // }
+    // },
+    // LDAP / Active Directory configuration
+    // Add "ldap" to strategies above to enable this.
+    // Users authenticate via POST /auth/ldap with { username, password }.
+    // "ldapConfig": {
+      // LDAP server URL.
+      // Use ldap:// for plain (port 389) or ldaps:// for TLS (port 636).
+      // Active Directory example: "ldap://ad.university.edu:389"
+      // "url": "ldaps://ldap.example.com:636",
+      // Service account used to search the directory (bind DN + password).
+      // This account only needs read access to the user tree.
+      // Active Directory example: "cn=svc-sage3,ou=ServiceAccounts,dc=university,dc=edu"
+      // "bindDN": "cn=svc-sage3,ou=ServiceAccounts,dc=example,dc=com",
+      // "bindCredentials": "CHANGE_ME",
+      // Base DN under which users are searched.
+      // Active Directory example: "ou=People,dc=university,dc=edu"
+      // "searchBase": "ou=People,dc=example,dc=com",
+      // LDAP filter used to locate the authenticating user.
+      // {{username}} is replaced at login time with the value the user typed.
+      // OpenLDAP:        "(uid={{username}})"
+      // Active Directory: "(sAMAccountName={{username}})"
+      // "searchFilter": "(uid={{username}})",
+      // Map LDAP group DNs to SAGE3 roles.
+      // Roles are checked in priority order: admin > user > spectator.
+      // A user's groups are read from the "memberOf" attribute on their entry.
+      // Omit a key (or leave it empty) to skip that role mapping.
+      // If the user matches no group, defaultRole is assigned instead.
+      // "groupMapping": {
+      //   "admin": "cn=sage3-admins,ou=Groups,dc=example,dc=com",
+      //   "user": "cn=sage3-users,ou=Groups,dc=example,dc=com",
+      //   "spectator": "cn=sage3-readonly,ou=Groups,dc=example,dc=com"
+      // },
+      // Role assigned when the user authenticates but matches no groupMapping entry.
+      // Options: "admin", "user", "spectator"
+      // "defaultRole": "spectator",
+      // TLS options (passed directly to Node.js tls.connect).
+      // Set to { "rejectUnauthorized": false } for self-signed certs in dev/test.
+      // "tlsOptions": {
+      //   "rejectUnauthorized": true
+      // }
+    // },
     // CILogon configuration
     "cilogonConfig": {
       // Client ID from CILogon
