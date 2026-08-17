@@ -22,8 +22,8 @@ import {
   generateUserDimension,
   callProseAPI,
   summarizeFavorites as summarizeFavoritesAPI,
-  VISION_MODELS,
 } from './openai';
+import { useAiProvider } from './useAiProvider';
 
 type SageNode = AppState['nodes'][number];
 type SageDimension = AppState['dimensions'][number];
@@ -61,6 +61,7 @@ export function useIdeation({ s, appId, input, setInput, attachedImage, setAttac
   const updateState = useAppStore((state) => state.updateState);
   const createApp = useAppStore((state) => state.create);
   const toast = useToast();
+  const { aiProvider, llmManager } = useAiProvider();
 
   // Derived from active entry
   const activeEntry = s.chatHistory.find((e) => e.id === activeEntryId) ?? null;
@@ -82,10 +83,10 @@ export function useIdeation({ s, appId, input, setInput, attachedImage, setAttac
       }
 
       const image = branchOpts ? undefined : (attachedImage ?? undefined);
-      if (image && !VISION_MODELS.has(s.model)) {
+      if (image && !llmManager?.canProviderPerformTask(aiProvider, 'image')) {
         toast({
-          title: 'Model does not support images',
-          description: `Switch to a vision-capable model (e.g. gpt-4o-mini) to use image prompts.`,
+          title: 'Provider does not support images',
+          description: `Your AI provider (${aiProvider || 'none'}) can't process images. Pick a vision-capable provider in your user settings.`,
           status: 'warning',
           duration: 4000,
           isClosable: true,
@@ -124,7 +125,7 @@ export function useIdeation({ s, appId, input, setInput, attachedImage, setAttac
       });
 
       try {
-        const rawDims = await generateDimensionsFromPrompt(aiPrompt, s.apiKey, s.model, s.numDimensions, image, s.pdfContext?.text);
+        const rawDims = await generateDimensionsFromPrompt(aiPrompt, aiProvider, s.numDimensions, image, s.pdfContext?.text);
         const dimensions: AppState['dimensions'] = [
           ...Object.entries(rawDims.categorical).map(([name, values], i) => ({ id: i, name, type: 'categorical' as const, values })),
           ...Object.entries(rawDims.ordinal).map(([name, values], i) => ({
@@ -140,8 +141,8 @@ export function useIdeation({ s, appId, input, setInput, attachedImage, setAttac
         const results = await Promise.allSettled(
           Array.from({ length: s.batchSize }, async () => {
             const { requirements, categorical, ordinal } = buildRequirements(rawDims);
-            const text = await generateNodeContent(aiPrompt, requirements, s.apiKey, s.model, image, s.pdfContext?.text);
-            const summary = await abstractNode(text, s.apiKey, s.model);
+            const text = await generateNodeContent(aiPrompt, requirements, aiProvider, image, s.pdfContext?.text);
+            const summary = await abstractNode(text, aiProvider);
             return {
               ID: genId(),
               Title: summary.Title,
@@ -176,7 +177,7 @@ export function useIdeation({ s, appId, input, setInput, attachedImage, setAttac
         updateState(appId, { ...s, status: 'idle' });
       }
     },
-    [user, s, input, username, isGenerating, appId, attachedImage, setInput, setAttachedImage, updateState, toast],
+    [user, s, input, username, isGenerating, appId, attachedImage, setInput, setAttachedImage, updateState, toast, aiProvider, llmManager],
   );
 
   const toggleFav = useCallback(
@@ -254,7 +255,7 @@ export function useIdeation({ s, appId, input, setInput, attachedImage, setAttac
         ]
           .filter(Boolean)
           .join('\n');
-        const answer = await callProseAPI(`Answer in 80 words or fewer.\n\n${context}\n\nQuestion: ${question}`, s.apiKey, s.model);
+        const answer = await callProseAPI(`Answer in 80 words or fewer.\n\n${context}\n\nQuestion: ${question}`, aiProvider);
         const qaEntry = {
           id: genId(),
           nodeId: node.ID,
@@ -274,7 +275,7 @@ export function useIdeation({ s, appId, input, setInput, attachedImage, setAttac
         setAskingNodeId(null);
       }
     },
-    [user, s, username, askingNodeId, appId, updateState, toast],
+    [user, s, username, askingNodeId, appId, updateState, toast, aiProvider],
   );
 
   const addDimension = useCallback(
@@ -283,7 +284,7 @@ export function useIdeation({ s, appId, input, setInput, attachedImage, setAttac
       setIsAddingDimension(true);
       try {
         const nodeStubs = localNodes.map((n) => ({ ID: n.ID, Title: n.Title, Summary: n.Summary }));
-        const { type, values, assignments } = await generateUserDimension(dimName, s.prompt, nodeStubs, s.apiKey, s.model);
+        const { type, values, assignments } = await generateUserDimension(dimName, s.prompt, nodeStubs, aiProvider);
         const newDim = { id: localDims.length, name: dimName, type, values };
         const updatedNodes = localNodes.map((n) => ({
           ...n,
@@ -305,7 +306,7 @@ export function useIdeation({ s, appId, input, setInput, attachedImage, setAttac
         setIsAddingDimension(false);
       }
     },
-    [s, localNodes, localDims, activeEntryId, isAddingDimension, appId, updateState, toast],
+    [s, localNodes, localDims, activeEntryId, isAddingDimension, appId, updateState, toast, aiProvider],
   );
 
   const rerollNode = useCallback(
@@ -325,8 +326,8 @@ export function useIdeation({ s, appId, input, setInput, attachedImage, setAttac
           ...Object.entries(categorical).map(([name, value]) => `${name}: ${value}`),
           ...Object.entries(ordinal).map(([name, value]) => `${name}: ${value}`),
         ].join('\n');
-        const text = await generateNodeContent(curEntry.prompt, requirements, s.apiKey, s.model, undefined, s.pdfContext?.text);
-        const summary = await abstractNode(text, s.apiKey, s.model);
+        const text = await generateNodeContent(curEntry.prompt, requirements, aiProvider, undefined, s.pdfContext?.text);
+        const summary = await abstractNode(text, aiProvider);
         const afterGen = useAppStore.getState().apps.find((a) => a._id === appId)?.data.state as AppState | undefined;
         const afterEntry = (afterGen ?? cur).chatHistory.find((e) => e.id === activeEntryId);
         if (!afterEntry) return;
@@ -344,7 +345,7 @@ export function useIdeation({ s, appId, input, setInput, attachedImage, setAttac
         setRerollingNodeId(null);
       }
     },
-    [s, activeEntryId, rerollingNodeId, appId, updateState, toast],
+    [s, activeEntryId, rerollingNodeId, appId, updateState, toast, aiProvider],
   );
 
   const generateMore = useCallback(
@@ -365,8 +366,8 @@ export function useIdeation({ s, appId, input, setInput, attachedImage, setAttac
         const moreResults = await Promise.allSettled(
           Array.from({ length: s.batchSize }, async () => {
             const { requirements, categorical, ordinal } = buildRequirements(rawDims);
-            const text = await generateNodeContent(entry.prompt, requirements, s.apiKey, s.model, undefined, s.pdfContext?.text);
-            const summary = await abstractNode(text, s.apiKey, s.model);
+            const text = await generateNodeContent(entry.prompt, requirements, aiProvider, undefined, s.pdfContext?.text);
+            const summary = await abstractNode(text, aiProvider);
             return {
               ID: genId(),
               Title: summary.Title,
@@ -401,7 +402,7 @@ export function useIdeation({ s, appId, input, setInput, attachedImage, setAttac
         updateState(appId, { ...(afterFail ?? s), status: 'ready' });
       }
     },
-    [user, s, isGenerating, appId, restoreSnapshot, updateState, toast],
+    [user, s, isGenerating, appId, restoreSnapshot, updateState, toast, aiProvider],
   );
 
   const generateAt = useCallback(
@@ -414,8 +415,8 @@ export function useIdeation({ s, appId, input, setInput, attachedImage, setAttac
       setIsGeneratingAt(true);
       try {
         const { requirements, categorical, ordinal } = buildBlendedRequirements(localDims, xDimName, xBlend, yDimName, yBlend);
-        const text = await generateNodeContent(s.prompt, requirements, s.apiKey, s.model);
-        const summary = await abstractNode(text, s.apiKey, s.model);
+        const text = await generateNodeContent(s.prompt, requirements, aiProvider);
+        const summary = await abstractNode(text, aiProvider);
         const newNode: AppState['nodes'][number] = {
           ID: genId(),
           Title: summary.Title,
@@ -439,7 +440,7 @@ export function useIdeation({ s, appId, input, setInput, attachedImage, setAttac
         setIsGeneratingAt(false);
       }
     },
-    [s, localDims, activeEntryId, appId, updateState, toast],
+    [s, localDims, activeEntryId, appId, updateState, toast, aiProvider],
   );
 
   const addManualIdea = useCallback(
@@ -447,7 +448,7 @@ export function useIdeation({ s, appId, input, setInput, attachedImage, setAttac
       if (!activeEntryId) return;
       setIsAddingManualIdea(true);
       try {
-        const summary = await abstractNode(text, s.apiKey, s.model);
+        const summary = await abstractNode(text, aiProvider);
         const rawDims = {
           categorical: Object.fromEntries(localDims.filter((d) => d.type === 'categorical').map((d) => [d.name, d.values])),
           ordinal: Object.fromEntries(localDims.filter((d) => d.type === 'ordinal').map((d) => [d.name, d.values])),
@@ -475,7 +476,7 @@ export function useIdeation({ s, appId, input, setInput, attachedImage, setAttac
         setIsAddingManualIdea(false);
       }
     },
-    [s, localDims, activeEntryId, appId, updateState, toast],
+    [s, localDims, activeEntryId, appId, updateState, toast, aiProvider],
   );
 
   const removeDimension = useCallback(
@@ -505,8 +506,7 @@ export function useIdeation({ s, appId, input, setInput, attachedImage, setAttac
       const summary = await summarizeFavoritesAPI(
         favNodes.map((n) => ({ Title: n.Title, Summary: n.Summary, Keywords: n.Keywords })),
         s.prompt,
-        s.apiKey,
-        s.model,
+        aiProvider,
       );
       const header = `★ Favorites Summary\nTopic: ${s.prompt}\n\n`;
       const footer = `\n\nFavorites: ${favNodes.map((n) => n.Title).join(', ')}`;
@@ -536,7 +536,7 @@ export function useIdeation({ s, appId, input, setInput, attachedImage, setAttac
     } finally {
       setIsSummarizing(false);
     }
-  }, [localNodes, s, isSummarizing, appId, boardId, roomId, appPosition, appSize, createApp, updateState, toast]);
+  }, [localNodes, s, isSummarizing, appId, boardId, roomId, appPosition, appSize, createApp, updateState, toast, aiProvider]);
 
   const branchFromFavorites = useCallback(() => {
     const favNodes = localNodes.filter((n) => n.IsMyFav);

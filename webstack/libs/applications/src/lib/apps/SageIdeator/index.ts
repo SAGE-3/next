@@ -49,8 +49,6 @@ const QAEntrySchema = z.object({
 });
 
 export const schema = z.object({
-  apiKey: z.string(),
-  model: z.string(),
   batchSize: z.number(),
   numDimensions: z.number(),
   status: z.enum(['idle', 'generating_dimensions', 'generating_responses', 'ready']),
@@ -87,8 +85,6 @@ export const schema = z.object({
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  apiKey: '',
-  model: 'gpt-4o-mini',
   batchSize: 8,
   numDimensions: 2,
   status: 'idle',

@@ -12,7 +12,7 @@
 
 import json, os
 from logging import Logger
-from typing import Dict, List
+from typing import List
 
 # SAGE3 API
 from pysage3.client import PySage3
@@ -23,27 +23,40 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 
 # from langchain_nvidia_ai_endpoints import ChatNVIDIA
-from langchain_openai import ChatOpenAI, AzureChatOpenAI
+
+# Web API
+from fastapi import HTTPException
 
 # Typing for RPC
 from libs.localtypes import PDFQuery, PDFAnswer
-from libs.utils import getModelsInfo, getPDFFile
+from libs.utils import getModelsInfo, getPDFFile, mdCachePath
+from libs.llm_manager import LLMManager
 
 # ChromaDB AI vector DB
 import chromadb
 from chromadb.config import Settings
 from langchain_chroma import Chroma
-from langchain_openai.embeddings import OpenAIEmbeddings
-from langchain_openai import AzureOpenAIEmbeddings
-from langchain.vectorstores.base import VectorStoreRetriever
 
 # PDF
 import pymupdf4llm
 import pymupdf
 from io import BytesIO
 
-from libs.pdf.pdf_v3 import generate_answer
+from libs.pdf.rag import generate_answer, make_reranker, NimEmbeddings
+from libs.pdf.ocr import olmocr_to_markdown
 from libs.utils import isValidPDFDocument, convertPDFToImages
+
+
+# Minimum vector-store relevance score (0..1) for a chunk to be considered a
+# real match. Chunks below this are dropped so an off-topic question retrieves
+# nothing and falls back to full-text, instead of surfacing the nearest but
+# irrelevant passages (which the model would answer from as if relevant).
+RELEVANCE_THRESHOLD = 0.7
+
+# Fallback chat-model context window (tokens) when a model config omits
+# "context_window". Used to budget how much document text is stuffed for broad
+# summary questions; too small silently truncates long/multi-PDF summaries.
+DEFAULT_CONTEXT_WINDOW = 32768
 
 
 class PDFAgent:
@@ -55,46 +68,32 @@ class PDFAgent:
         logger.info("Initializing PDFAgent")
         self.logger = logger
         self.ps3 = ps3
-        models = getModelsInfo(ps3)
+        # Capability-driven model registry (providers/tasks/settings)
+        self.manager = LLMManager(getModelsInfo(ps3), logger)
+        self.logger.info("PDF providers: " + ", ".join(self.manager.list_providers()))
 
-        openai = models["openai"]
-        azure = models["azure"]
+        # Optional olmOCR service for PDF -> Markdown (models.pdf2md). When set,
+        # it's the primary converter; pymupdf4llm remains the fallback.
+        self.ocr = self.manager.ocr_config()
+        if self.ocr:
+            self.logger.info("PDF OCR: olmOCR " + self.ocr["model"])
 
-        # OpenAI model
-        if openai["apiKey"] and openai["model"]:
-            self.llm_openai = ChatOpenAI(
-                api_key=openai["apiKey"],
-                model=openai["model"],
-                streaming=False,
-            )
-            # OpenAI embedding
-            self.embedding_openai = OpenAIEmbeddings(api_key=openai["apiKey"])
-
-        # Azure OpenAI model
-        if azure["text"]["apiKey"] and azure["text"]["model"]:
-            model = azure["text"]["model"]
-            endpoint = azure["text"]["url"]
-            credential = azure["text"]["apiKey"]
-            api_version = azure["text"]["api_version"]
-
-            self.llm_azure = AzureChatOpenAI(
-                azure_deployment=model,
-                api_version=api_version,
-                azure_endpoint=endpoint,
-                azure_ad_token=credential,
-                model=model,
-            )
-            # Azure embedding
-            model = azure["embedding"]["model"]
-            endpoint = azure["embedding"]["url"]
-            credential = azure["embedding"]["apiKey"]
-            api_version = azure["embedding"]["api_version"]
-            self.embedding_azure = AzureOpenAIEmbeddings(
-                model=model,
-                azure_endpoint=endpoint,
-                api_key=credential,
-                api_version=api_version,
-            )
+        # Embeddings for the vector store: prefer a dedicated embedding NIM
+        # (models.embed), otherwise fall back to a provider that has an
+        # embeddings-capable model.
+        embeddings = None
+        emb = self.manager.embed_config()
+        if emb:
+            embeddings = NimEmbeddings(emb["url"], emb["model"], emb.get("apiKey"))
+            self.logger.info("PDF embeddings: NIM " + emb["model"])
+        else:
+            for prov in [self.manager.default_provider()] + self.manager.list_providers():
+                if prov and self.manager.has_capability(prov, "embeddings"):
+                    embeddings = self.manager.build_embeddings(prov)
+                    self.logger.info("PDF embeddings: provider " + prov)
+                    break
+        if embeddings is None:
+            self.logger.error("PDFAgent> no embeddings configured")
 
         # Create the ChromaDB client
         chromaServer = "127.0.0.1"
@@ -121,18 +120,11 @@ class PDFAgent:
         )
 
         # Langchain Chroma
-        if azure["embedding"]["apiKey"] and azure["embedding"]["model"]:
-            self.vector_store = Chroma(
-                client=self.chroma,
-                collection_name="pdf_docs",
-                embedding_function=self.embedding_azure,
-            )
-        else:
-            self.vector_store = Chroma(
-                client=self.chroma,
-                collection_name="pdf_docs",
-                embedding_function=self.embedding_openai,
-            )
+        self.vector_store = Chroma(
+            client=self.chroma,
+            collection_name="pdf_docs",
+            embedding_function=embeddings,
+        )
 
         # Using Langchain's Chromadb
         # Heartbeat to check the connection
@@ -153,7 +145,7 @@ class PDFAgent:
         If the Markdown file already exists in the temporary directory, it reads and returns the content from the file.
         Otherwise, it converts the PDF content to Markdown, writes it to a temporary file, and returns the Markdown content.
         """
-        file_path = f"/tmp/{id}.md"
+        file_path = mdCachePath(id)
         if os.path.exists(file_path):
             with open(file_path, "r") as file:
                 return file.read()
@@ -211,109 +203,172 @@ class PDFAgent:
             )
         )
 
-        if model == "openai":
-            response = self.llm_openai.invoke(messages)
-        elif model == "azure":
-            response = self.llm_azure.invoke(messages)
-        else:
-            raise ValueError(f"Unsupported model: {model}")
+        llm = self.manager.build_chat_model(model, ["vision"])
+        if llm is None:
+            raise ValueError(
+                f"Provider '{model}' has no model capable of vision (PDF OCR)"
+            )
+        response = llm.invoke(messages)
         return {"index": page_num, "content": str(response.content)}
+
+    async def _get_markdown(self, id, content, model):
+        """PDF -> Markdown, cached in /tmp/{id}.md. Prefers olmOCR (models.pdf2md)
+        and falls back to pymupdf4llm (with vision-OCR) if it's unset or fails."""
+        file_path = mdCachePath(id)
+        if os.path.exists(file_path):
+            with open(file_path, "r") as f:
+                return f.read()
+
+        if self.ocr:
+            try:
+                md = await olmocr_to_markdown(
+                    content, self.ocr["url"], self.ocr["model"], logger=self.logger
+                )
+                if md and md.strip():
+                    with open(file_path, "w") as f:
+                        f.write(md)
+                    return md
+                self.logger.error("olmOCR returned empty output; falling back")
+            except Exception as e:
+                self.logger.error(f"olmOCR failed ({e}); falling back to pymupdf4llm")
+
+        # Fallback path (also handles the /tmp cache + image OCR internally)
+        return self.getMDfromPDFWithImages(id, content, model)
 
     async def process(self, qq: PDFQuery):
         self.logger.info(
             "Got PDF> from " + qq.user + ": " + qq.q + " using: " + qq.model
         )
 
-        pdfContents = [
-            {"id": assetid, "content": getPDFFile(self.ps3, assetid)}
-            for assetid in qq.assetids
-        ]
-
-        self.logger.info(f"pdfs: {len(pdfContents)}")
-        self.logger.info(
-            f"pdf: {pdfContents[0]['id']}, {len(pdfContents[0]['content'])}"
-        )
-
         self.logger.info(f"\n\nqq, {qq}\n\n")
 
-        # Used to filter documents in the vector DB
-        #   using an array to accomodate for more than 1 pdf in the future
-        sage_asset_ids = qq.assetids
-
-        # Create retrievers for each document
-        retrievers: Dict[str, VectorStoreRetriever] = {
-            sage_asset_id: self.vector_store.as_retriever(
-                search_type="similarity_score_threshold",
-                search_kwargs={
-                    "filter": {"sage_asset_id": sage_asset_id},
-                    "score_threshold": 0.7,
-                },
-            )
-            for sage_asset_id in sage_asset_ids
-        }
-
-        self.logger.info(f"sage retrievers: {retrievers}")
-
-        if len(pdfContents) > 0:
-            # TODO: For now doing the document processing here will need to create endpoint for that. Upon uploading, embeddings should be created and stored in chromadb
-            # TODO: Check token length for context length limits on long documents
-
-            # Convert PDFs to markdown
-            pdfs_to_md = {
-                pdf["id"]: self.getMDfromPDFWithImages(
-                    pdf["id"], pdf["content"], qq.model
-                )
-                for pdf in pdfContents
-            }
-
-            self.logger.info(f"pdfs_to_md, {pdfs_to_md.keys()}")
-
+        text = ""
+        if qq.assetids:
+            # Index each document once. Already-indexed docs are skipped entirely
+            # (no fetch, no conversion, no re-embed) so repeat questions in a
+            # session only pay for retrieval + answering.
             for assetid in qq.assetids:
-                # If asset id is not in vector store, add it
-                if (
+                already = (
                     len(
                         self.vector_store.get(where={"sage_asset_id": assetid})[
                             "documents"
                         ]
                     )
-                    == 0
-                ):
-                    print("\n\nadding to chroma\n\n")
-                    text_splitter = RecursiveCharacterTextSplitter(
-                        chunk_size=1000, chunk_overlap=200
-                    )
-
-                    splits = text_splitter.split_documents(
-                        [
-                            Document(
-                                pdfs_to_md[assetid],
-                                metadata={
-                                    "sage_asset_id": assetid,
-                                },
-                            )
-                        ]
-                    )
-
-                    res = await self.vector_store.aadd_documents(documents=splits)
-
-                    print(f"\n\ndocument splits: {len(res)}\n\n")
-
-            if qq.model == "openai":
-                answer = await generate_answer(
-                    qq=qq,
-                    llm=self.llm_openai,
-                    retrievers=retrievers,
-                    markdown_files_dict=pdfs_to_md,
+                    > 0
                 )
-            elif qq.model == "azure":
-                answer = await generate_answer(
-                    qq=qq,
-                    llm=self.llm_azure,
-                    retrievers=retrievers,
-                    markdown_files_dict=pdfs_to_md,
+                if already:
+                    self.logger.info(f"pdf {assetid}: already indexed, skipping")
+                    continue
+
+                # First time we see this doc: fetch -> markdown -> chunk -> embed
+                content = getPDFFile(self.ps3, assetid)
+                md = await self._get_markdown(assetid, content, qq.model)
+                splitter = RecursiveCharacterTextSplitter(
+                    chunk_size=1000, chunk_overlap=200
                 )
-            else:
-                raise ValueError(f"Unsupported model: {qq.model}")
+                splits = splitter.split_documents(
+                    [Document(md, metadata={"sage_asset_id": assetid})]
+                )
+                # Record chunk order so the full document can be reconstructed
+                for i, d in enumerate(splits):
+                    d.metadata["chunk_index"] = i
+                res = await self.vector_store.aadd_documents(documents=splits)
+                self.logger.info(f"pdf {assetid}: indexed {len(res)} chunks")
+
+            llm = self.manager.build_chat_model(qq.model, ["chat"])
+            if llm is None:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Provider '{qq.model}' has no model capable of chat (PDF)",
+                )
+
+            # Chat model context window (used for summary stuffing) + reranker
+            info = self.manager.resolve_model(qq.model, ["chat"]) or {}
+            context_window = info.get("context_window")
+            if not context_window:
+                self.logger.warning(
+                    f"Model '{qq.model}' has no context_window in config; "
+                    f"falling back to {DEFAULT_CONTEXT_WINDOW}. Set it to avoid "
+                    "truncating long/multi-PDF summaries."
+                )
+                context_window = DEFAULT_CONTEXT_WINDOW
+            rr = self.manager.rerank_config()
+            rerank = (
+                make_reranker(rr["url"], rr["model"], rr.get("apiKey")) if rr else None
+            )
+
+            # Retrieve PER DOCUMENT so every selected PDF is represented — a
+            # single global top-k can be dominated by one document, which is why
+            # cross-document questions ("common topics in the 2 papers") failed.
+            # Each document's candidates are reranked independently, then merged.
+            async def retrieve(query: str):
+                n = max(1, len(qq.assetids))
+                keep = 5 if n == 1 else max(2, 8 // n)
+                fetch = max(keep * 3, 12)
+                results = []
+                for aid in qq.assetids:
+                    scored = await self.vector_store.asimilarity_search_with_relevance_scores(
+                        query, k=fetch, filter={"sage_asset_id": aid}
+                    )
+                    # Keep only chunks that clear the relevance floor; below it we
+                    # treat retrieval as empty so generate_answer falls back to
+                    # full-text rather than answering from irrelevant passages.
+                    docs = [doc for doc, score in scored if score >= RELEVANCE_THRESHOLD]
+                    docs = rerank(query, docs, keep) if rerank else docs[:keep]
+                    results.extend(docs)
+                return results
+
+            # Reconstruct full document text from the indexed chunks, grouped and
+            # labeled per document. Used for broad questions and empty retrieval.
+            def get_full_text() -> str:
+                stored = self.vector_store.get(
+                    where={"sage_asset_id": {"$in": qq.assetids}}
+                )
+                docs = stored.get("documents") or []
+                metas = stored.get("metadatas") or []
+                by_doc: dict = {}
+                for meta, doc in zip(metas, docs):
+                    aid = (meta or {}).get("sage_asset_id", "")
+                    by_doc.setdefault(aid, []).append(
+                        ((meta or {}).get("chunk_index", 0), doc)
+                    )
+                sections = []
+                for i, aid in enumerate(qq.assetids):
+                    chunks = sorted(by_doc.get(aid, []), key=lambda p: p[0])
+                    if chunks:
+                        body = "\n\n".join(c for _, c in chunks)
+                        sections.append(f"# Document {i + 1}\n\n{body}")
+                return "\n\n".join(sections)
+
+            # The head (first chunks) of each document — where title, authors and
+            # abstract live — for structural/metadata questions.
+            def get_head(n_per_doc: int = 2):
+                stored = self.vector_store.get(
+                    where={"sage_asset_id": {"$in": qq.assetids}}
+                )
+                docs = stored.get("documents") or []
+                metas = stored.get("metadatas") or []
+                by_doc: dict = {}
+                for meta, doc in zip(metas, docs):
+                    aid = (meta or {}).get("sage_asset_id", "")
+                    by_doc.setdefault(aid, []).append(
+                        ((meta or {}).get("chunk_index", 0), doc, meta or {})
+                    )
+                head = []
+                for aid in qq.assetids:
+                    first = sorted(by_doc.get(aid, []), key=lambda p: p[0])[:n_per_doc]
+                    for _, doc, meta in first:
+                        head.append(Document(page_content=doc, metadata=meta))
+                return head
+
+            answer = await generate_answer(
+                qq=qq,
+                llm=llm,
+                retrieve=retrieve,
+                get_full_text=get_full_text,
+                get_head=get_head,
+                context_window=context_window,
+            )
 
             text = answer.strip()
             text = text + "\n\n---\n"
