@@ -16,7 +16,8 @@ Before any file updates, run the ‘STOP’ script to stop the server deployment
 
 Download a new server installation file from the Github repository:
 
-* [https://github.com/SAGE-3/next/releases](https://github.com/SAGE-3/next/releases)
+* Newest package (permanent links): [SAGE3-amd64.tgz](https://github.com/SAGE-3/next/releases/download/server-latest/SAGE3-amd64.tgz) / [SAGE3-arm64.tgz](https://github.com/SAGE-3/next/releases/download/server-latest/SAGE3-arm64.tgz)
+* All versions: [https://github.com/SAGE-3/next/releases](https://github.com/SAGE-3/next/releases)
 
 Installation documentation: [https://sage-3.github.io/docs/Server-Deployment](https://sage-3.github.io/docs/Server-Deployment)
 

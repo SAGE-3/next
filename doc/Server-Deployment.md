@@ -103,17 +103,21 @@ node -v
 
 3. Download a SAGE3 server package:
 
-- [SAGE3 Linux AMD64 Server Package for Intel CPUs](https://github.com/SAGE-3/next/releases/download/server-1.6/SAGE3-1.6-amd64.tgz) and extract it.
+- [SAGE3 AMD64 Server Package for Intel CPUs](https://github.com/SAGE-3/next/releases/download/server-latest/SAGE3-amd64.tgz) — this permanent link always serves the newest release; versioned packages are listed under [Releases](https://github.com/SAGE-3/next/releases).
 
 ```bash
 # Open a Terminal
 
-# Move the downloaded file to your user's home folder
-mv SAGE3-1.6-amd64.tgz ~
+# Download the package into your user's home folder
 cd ~
+curl -LO https://github.com/SAGE-3/next/releases/download/server-latest/SAGE3-amd64.tgz
 
-# Extract file
-tar xvfz SAGE3-1.6-amd64.tgz
+# Optional: verify the download
+curl -LO https://github.com/SAGE-3/next/releases/download/server-latest/SAGE3-amd64.tgz.sha256
+sha256sum -c SAGE3-amd64.tgz.sha256
+
+# Extract file — the archive extracts to a folder named after the packaged version
+tar xvfz SAGE3-amd64.tgz
 cd SAGE3-1.6
 ```
 
@@ -233,21 +237,22 @@ sudo apt-get install -y nodejs
 node -v
 ```
 
-4. Download the [SAGE3 Linux AMD64 Server Package](https://github.com/SAGE-3/next/releases/download/server-1.6/SAGE3-1.6-amd64.tgz) and extract it within the WSL subsystem
+4. Download the [SAGE3 AMD64 Server Package](https://github.com/SAGE-3/next/releases/download/server-latest/SAGE3-amd64.tgz) and extract it within the WSL subsystem
 
 ```
 # Open Powershell and switch to WSL
 wsl
 
-# Download the file if not done already
-curl -LJO https://github.com/SAGE-3/next/releases/download/server-1.6/SAGE3-1.6-amd64.tgz
-
-# Move the downloaded file to your user's home folder
-mv SAGE3-1.6-amd64.tgz ~
+# Download the package into your user's home folder
 cd ~
+curl -LO https://github.com/SAGE-3/next/releases/download/server-latest/SAGE3-amd64.tgz
 
-# Extract file
-tar xvfz SAGE3-1.6-amd64.tgz
+# Optional: verify the download
+curl -LO https://github.com/SAGE-3/next/releases/download/server-latest/SAGE3-amd64.tgz.sha256
+sha256sum -c SAGE3-amd64.tgz.sha256
+
+# Extract file — the archive extracts to a folder named after the packaged version
+tar xvfz SAGE3-amd64.tgz
 cd SAGE3-1.6
 ```
 
@@ -356,18 +361,24 @@ cd ~/SAGE3-1.6
 
 3. Download a SAGE3 server package:
 
-- [SAGE3 ARM64 Server Package for Arm CPUs (Apple Silicon, Ampere, ...)](https://github.com/SAGE-3/next/releases/download/server-1.6/SAGE3-1.6-arm64.tgz) and extract it
-- [SAGE3 Linux AMD64 Server Package for Intel CPUs](https://github.com/SAGE-3/next/releases/download/server-1.6/SAGE3-1.6-amd64.tgz) and extract it
+- [SAGE3 ARM64 Server Package for Arm CPUs (Apple Silicon, Ampere, ...)](https://github.com/SAGE-3/next/releases/download/server-latest/SAGE3-arm64.tgz) and extract it
+- [SAGE3 AMD64 Server Package for Intel CPUs](https://github.com/SAGE-3/next/releases/download/server-latest/SAGE3-amd64.tgz) and extract it
+
+These permanent links always serve the newest release; versioned packages are listed under [Releases](https://github.com/SAGE-3/next/releases).
 
 ```
 # Open a Terminal
 
-# Move the downloaded file to your user's home folder
-mv SAGE3-1.6-arm64.tgz ~
+# Download the package into your user's home folder
 cd ~
+curl -LO https://github.com/SAGE-3/next/releases/download/server-latest/SAGE3-arm64.tgz
 
-# Extract file
-tar xvfz SAGE3-1.6-arm64.tgz
+# Optional: verify the download
+curl -LO https://github.com/SAGE-3/next/releases/download/server-latest/SAGE3-arm64.tgz.sha256
+shasum -a 256 -c SAGE3-arm64.tgz.sha256
+
+# Extract file — the archive extracts to a folder named after the packaged version
+tar xvfz SAGE3-arm64.tgz
 cd SAGE3-1.6
 ```
 
