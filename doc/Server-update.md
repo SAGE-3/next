@@ -94,7 +94,7 @@ Each service has a folder inside the ‘configuration’ directory.
     * Namespace  
       * Copy the key from old configuration
     * Feedback URL
-      * "feedback": {     "url": "http://sage3-server-status.cis230038.projects.jetstream-cloud.org:3000/feedback"   }, 
+      * `"feedback": { "url": "http://sage3-server-status.cis230038.projects.jetstream-cloud.org:3000/feedback" },`
     * Services:
 ```
  …

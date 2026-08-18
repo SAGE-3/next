@@ -18,7 +18,7 @@ Displays a download button to a file stored in the asset manager. Clicking the d
 
 | Name | Type | Icon | Description |
 |------|------|------|-------------|
-| Download Asset | Button | <img src="icons/applications/MdFileDownload.svg" width="20"> | Download the linked file |
+| Download Asset | Button | <img src="icons/applications/MdFileDownload.svg" width="20" /> | Download the linked file |
 
 ---
 
@@ -50,8 +50,8 @@ A simple calculator for performing basic arithmetic. Supports addition, subtract
 
 | Name | Type | Icon | Description |
 |------|------|------|-------------|
-| View History | Button | <img src="icons/applications/MdList.svg" width="20"> | Opens a drawer showing past calculations |
-| Copy Result | Button | <img src="icons/applications/MdCopyAll.svg" width="20"> | Copies the current result to your clipboard |
+| View History | Button | <img src="icons/applications/MdList.svg" width="20" /> | Opens a drawer showing past calculations |
+| Copy Result | Button | <img src="icons/applications/MdCopyAll.svg" width="20" /> | Copies the current result to your clipboard |
 
 ---
 
@@ -65,7 +65,7 @@ A messaging application for communicating with other users on the board **and wi
 
 | Name | Type | Icon | Description |
 |------|------|------|-------------|
-| Download Transcript | Button | <img src="icons/applications/MdFileDownload.svg" width="20"> | Downloads the full chat history as a `.txt` file |
+| Download Transcript | Button | <img src="icons/applications/MdFileDownload.svg" width="20" /> | Downloads the full chat history as a `.txt` file |
 
 ### Asking the AI
 
@@ -129,7 +129,7 @@ A shared web browser that streams a live Firefox session to all users on the boa
 |------|------|------|-------------|
 | Lock / Unlock Control | Toggle | | (Owner only) When locked, only the owner can interact with the browser. When unlocked, all users can control it. |
 | Paste Clipboard | Button | | Pastes your local clipboard text into the browser session |
-| Toggle Audio | Toggle | <img src="icons/applications/MdVolumeUp.svg" width="20"> <img src="icons/applications/MdVolumeOff.svg" width="20"> | Enable or disable audio from the browser session |
+| Toggle Audio | Toggle | <img src="icons/applications/MdVolumeUp.svg" width="20" /> <img src="icons/applications/MdVolumeOff.svg" width="20" /> | Enable or disable audio from the browser session |
 
 ---
 
@@ -145,12 +145,12 @@ A collaborative code editor for writing and reviewing code in real time. Changes
 | Name | Type | Icon | Description |
 |------|------|------|-------------|
 | Language | Dropdown | | Select the programming language |
-| Font Size - | Button | <img src="icons/applications/MdRemove.svg" width="20"> | Decrease the font size |
-| Font Size + | Button | <img src="icons/applications/MdAdd.svg" width="20"> | Increase the font size |
-| Read Only / Edit | Toggle | <img src="icons/applications/MdLock.svg" width="20"> <img src="icons/applications/MdLockOpen.svg" width="20"> | Toggle between locked and editable modes |
-| Save to Asset Manager | Button | <img src="icons/applications/MdFileUpload.svg" width="20"> | Upload the code to the server's asset manager |
-| Download | Button | <img src="icons/applications/MdFileDownload.svg" width="20"> | Download the code as a file |
-| Preview | Button | <img src="icons/applications/MdSlideshow.svg" width="20"> | For Markdown or HTML, opens a rendered preview |
+| Font Size - | Button | <img src="icons/applications/MdRemove.svg" width="20" /> | Decrease the font size |
+| Font Size + | Button | <img src="icons/applications/MdAdd.svg" width="20" /> | Increase the font size |
+| Read Only / Edit | Toggle | <img src="icons/applications/MdLock.svg" width="20" /> <img src="icons/applications/MdLockOpen.svg" width="20" /> | Toggle between locked and editable modes |
+| Save to Asset Manager | Button | <img src="icons/applications/MdFileUpload.svg" width="20" /> | Upload the code to the server's asset manager |
+| Download | Button | <img src="icons/applications/MdFileDownload.svg" width="20" /> | Download the code as a file |
+| Preview | Button | <img src="icons/applications/MdSlideshow.svg" width="20" /> | For Markdown or HTML, opens a rendered preview |
 
 ---
 
@@ -168,7 +168,7 @@ A tabular viewer for CSV files. The table is rendered using virtualization for e
 
 | Name | Type | Icon | Description |
 |------|------|------|-------------|
-| Download CSV | Button | <img src="icons/applications/MdFileDownload.svg" width="20"> | Download the original CSV file |
+| Download CSV | Button | <img src="icons/applications/MdFileDownload.svg" width="20" /> | Download the original CSV file |
 
 ---
 
@@ -197,12 +197,12 @@ A collaborative drawing application built on the TLDraw library. Draw freehand, 
 
 | Name | Type | Icon | Description |
 |------|------|------|-------------|
-| Undo | Button | <img src="icons/applications/MdUndo.svg" width="20"> | Undo the last action |
-| Redo | Button | <img src="icons/applications/MdRedo.svg" width="20"> | Redo the last undone action |
-| Zoom to Fit | Button | <img src="icons/applications/MdZoomInMap.svg" width="20"> | Fit the entire canvas into the window |
-| Zoom to 100% | Button | <img src="icons/applications/MdZoomOutMap.svg" width="20"> | Reset zoom level |
-| Follow Me | Toggle | <img src="icons/applications/RiUserFollowFill.svg" width="20"> | Other users' views follow your camera position |
-| Export Image | Button | <img src="icons/applications/MdSaveAlt.svg" width="20"> | Export the drawing as an image on the board |
+| Undo | Button | <img src="icons/applications/MdUndo.svg" width="20" /> | Undo the last action |
+| Redo | Button | <img src="icons/applications/MdRedo.svg" width="20" /> | Redo the last undone action |
+| Zoom to Fit | Button | <img src="icons/applications/MdZoomInMap.svg" width="20" /> | Fit the entire canvas into the window |
+| Zoom to 100% | Button | <img src="icons/applications/MdZoomOutMap.svg" width="20" /> | Reset zoom level |
+| Follow Me | Toggle | <img src="icons/applications/RiUserFollowFill.svg" width="20" /> | Other users' views follow your camera position |
+| Export Image | Button | <img src="icons/applications/MdSaveAlt.svg" width="20" /> | Export the drawing as an image on the board |
 
 ---
 
@@ -222,8 +222,8 @@ Select one or more images and choose **Open in Chat** to ask the AI about them â
 
 | Name | Type | Icon | Description |
 |------|------|------|-------------|
-| Download Image | Button | <img src="icons/applications/MdFileDownload.svg" width="20"> | Download the original image file |
-| Annotations | Toggle | <img src="icons/applications/HiPencilAlt.svg" width="20"> | Toggle AI-generated annotation boxes (when available) |
+| Download Image | Button | <img src="icons/applications/MdFileDownload.svg" width="20" /> | Download the original image file |
+| Annotations | Toggle | <img src="icons/applications/HiPencilAlt.svg" width="20" /> | Toggle AI-generated annotation boxes (when available) |
 
 ---
 
@@ -240,9 +240,9 @@ An interactive map powered by MapGL. Navigate by panning and zooming with the mo
 | Name | Type | Icon | Description |
 |------|------|------|-------------|
 | Address Search | Text Input | | Search for a place or address to center the map |
-| Street Map | Button | <img src="icons/applications/MdMap.svg" width="20"> | Switch to the OpenStreetMap base layer |
-| Satellite Map | Button | <img src="icons/applications/MdTerrain.svg" width="20"> | Switch to the satellite imagery base layer |
-| Add Layer | Button | <img src="icons/applications/MdAdd.svg" width="20"> | Overlay GeoJSON or GeoTIFF data from the asset manager |
+| Street Map | Button | <img src="icons/applications/MdMap.svg" width="20" /> | Switch to the OpenStreetMap base layer |
+| Satellite Map | Button | <img src="icons/applications/MdTerrain.svg" width="20" /> | Switch to the satellite imagery base layer |
+| Add Layer | Button | <img src="icons/applications/MdAdd.svg" width="20" /> | Overlay GeoJSON or GeoTIFF data from the asset manager |
 
 ---
 
@@ -265,14 +265,14 @@ A collaborative rich-text editor for writing formatted documents together in rea
 | Font Size | Dropdown | | Select text size: Small, Medium, or Large |
 | Font Color | Dropdown | | Change the text color |
 | Background Color | Dropdown | | Change the text highlight color |
-| Align Left | Button | <img src="icons/applications/MdFormatAlignLeft.svg" width="20"> | Align text to the left |
-| Align Center | Button | <img src="icons/applications/MdFormatAlignCenter.svg" width="20"> | Center the text |
-| Align Right | Button | <img src="icons/applications/MdFormatAlignRight.svg" width="20"> | Align text to the right |
-| Justify | Button | <img src="icons/applications/MdFormatAlignJustify.svg" width="20"> | Justify the text |
-| Bullet List | Toggle | <img src="icons/applications/MdOutlineList.svg" width="20"> | Toggle bullet list formatting |
-| Numbered List | Toggle | <img src="icons/applications/MdOutlineFormatListNumbered.svg" width="20"> | Toggle numbered list formatting |
-| Download as HTML | Button | <img src="icons/applications/MdFileDownload.svg" width="20"> | Export the document as an `.html` file |
-| Reconnect | Button | <img src="icons/applications/MdRefresh.svg" width="20"> | Re-establish the collaboration connection |
+| Align Left | Button | <img src="icons/applications/MdFormatAlignLeft.svg" width="20" /> | Align text to the left |
+| Align Center | Button | <img src="icons/applications/MdFormatAlignCenter.svg" width="20" /> | Center the text |
+| Align Right | Button | <img src="icons/applications/MdFormatAlignRight.svg" width="20" /> | Align text to the right |
+| Justify | Button | <img src="icons/applications/MdFormatAlignJustify.svg" width="20" /> | Justify the text |
+| Bullet List | Toggle | <img src="icons/applications/MdOutlineList.svg" width="20" /> | Toggle bullet list formatting |
+| Numbered List | Toggle | <img src="icons/applications/MdOutlineFormatListNumbered.svg" width="20" /> | Toggle numbered list formatting |
+| Download as HTML | Button | <img src="icons/applications/MdFileDownload.svg" width="20" /> | Export the document as an `.html` file |
+| Reconnect | Button | <img src="icons/applications/MdRefresh.svg" width="20" /> | Re-establish the collaboration connection |
 
 ---
 
@@ -292,15 +292,15 @@ Select one or more PDFs and choose **Open in Chat** to ask the AI questions abou
 
 | Name | Type | Icon | Description |
 |------|------|------|-------------|
-| Remove Page | Button | <img src="icons/applications/MdRemove.svg" width="20"> | Decrease the number of visible pages |
-| Add Page | Button | <img src="icons/applications/MdAdd.svg" width="20"> | Increase the number of visible pages |
-| First Page | Button | <img src="icons/applications/MdSkipPrevious.svg" width="20"> | Jump to the first page |
-| Previous Page | Button | <img src="icons/applications/MdNavigateBefore.svg" width="20"> | Go to the previous page |
-| Next Page | Button | <img src="icons/applications/MdNavigateNext.svg" width="20"> | Go to the next page |
-| Last Page | Button | <img src="icons/applications/MdSkipNext.svg" width="20"> | Jump to the last page |
-| Back 10 | Button | <img src="icons/applications/MdFastRewind.svg" width="20"> | Jump 10 pages backward |
-| Forward 10 | Button | <img src="icons/applications/MdFastForward.svg" width="20"> | Jump 10 pages forward |
-| Download PDF | Button | <img src="icons/applications/MdFileDownload.svg" width="20"> | Download the original PDF file |
+| Remove Page | Button | <img src="icons/applications/MdRemove.svg" width="20" /> | Decrease the number of visible pages |
+| Add Page | Button | <img src="icons/applications/MdAdd.svg" width="20" /> | Increase the number of visible pages |
+| First Page | Button | <img src="icons/applications/MdSkipPrevious.svg" width="20" /> | Jump to the first page |
+| Previous Page | Button | <img src="icons/applications/MdNavigateBefore.svg" width="20" /> | Go to the previous page |
+| Next Page | Button | <img src="icons/applications/MdNavigateNext.svg" width="20" /> | Go to the next page |
+| Last Page | Button | <img src="icons/applications/MdSkipNext.svg" width="20" /> | Jump to the last page |
+| Back 10 | Button | <img src="icons/applications/MdFastRewind.svg" width="20" /> | Jump 10 pages backward |
+| Forward 10 | Button | <img src="icons/applications/MdFastForward.svg" width="20" /> | Jump 10 pages forward |
+| Download PDF | Button | <img src="icons/applications/MdFileDownload.svg" width="20" /> | Download the original PDF file |
 
 ---
 
@@ -327,18 +327,18 @@ A computational code cell backed by a Jupyter kernel. Write and execute Python, 
 
 | Name | Type | Icon | Description |
 |------|------|------|-------------|
-| Create Kernel | Button | <img src="icons/applications/MdAdd.svg" width="20"> | Create a new Jupyter kernel |
-| Select Kernel | Dropdown | <img src="icons/applications/MdArrowDropDown.svg" width="20"> | Choose an existing kernel (Python, R, Julia) |
-| Run | Button | <img src="icons/applications/MdPlayArrow.svg" width="20"> | Execute the current cell |
-| Run All | Button | <img src="icons/applications/VscRunAll.svg" width="20"> | Execute all SageCell apps on the board |
-| Run To Here | Button | <img src="icons/applications/VscRunAbove.svg" width="20"> | Execute all cells ranked above this one |
-| Run From Here | Button | <img src="icons/applications/VscRunBelow.svg" width="20"> | Execute all cells ranked below this one |
-| Stop | Button | <img src="icons/applications/MdStop.svg" width="20"> | Interrupt the running execution |
-| Help | Button | <img src="icons/applications/MdHelp.svg" width="20"> | Open the SageCell help reference |
-| Font Size - | Button | <img src="icons/applications/MdRemove.svg" width="20"> | Decrease the font size |
-| Font Size + | Button | <img src="icons/applications/MdAdd.svg" width="20"> | Increase the font size |
-| Save to Asset Manager | Button | <img src="icons/applications/MdFileUpload.svg" width="20"> | Upload the code to the asset manager |
-| Download | Button | <img src="icons/applications/MdFileDownload.svg" width="20"> | Download the code as a `.py`, `.R`, or `.jl` file |
+| Create Kernel | Button | <img src="icons/applications/MdAdd.svg" width="20" /> | Create a new Jupyter kernel |
+| Select Kernel | Dropdown | <img src="icons/applications/MdArrowDropDown.svg" width="20" /> | Choose an existing kernel (Python, R, Julia) |
+| Run | Button | <img src="icons/applications/MdPlayArrow.svg" width="20" /> | Execute the current cell |
+| Run All | Button | <img src="icons/applications/VscRunAll.svg" width="20" /> | Execute all SageCell apps on the board |
+| Run To Here | Button | <img src="icons/applications/VscRunAbove.svg" width="20" /> | Execute all cells ranked above this one |
+| Run From Here | Button | <img src="icons/applications/VscRunBelow.svg" width="20" /> | Execute all cells ranked below this one |
+| Stop | Button | <img src="icons/applications/MdStop.svg" width="20" /> | Interrupt the running execution |
+| Help | Button | <img src="icons/applications/MdHelp.svg" width="20" /> | Open the SageCell help reference |
+| Font Size - | Button | <img src="icons/applications/MdRemove.svg" width="20" /> | Decrease the font size |
+| Font Size + | Button | <img src="icons/applications/MdAdd.svg" width="20" /> | Increase the font size |
+| Save to Asset Manager | Button | <img src="icons/applications/MdFileUpload.svg" width="20" /> | Upload the code to the asset manager |
+| Download | Button | <img src="icons/applications/MdFileDownload.svg" width="20" /> | Download the code as a `.py`, `.R`, or `.jl` file |
 
 ---
 
@@ -354,7 +354,7 @@ Share your screen or a specific application window with everyone on the board. M
 
 | Name | Type | Icon | Description |
 |------|------|------|-------------|
-| Stop Stream | Button | <img src="icons/applications/MdScreenShare.svg" width="20"> | End the screen sharing session (visible to the stream owner only) |
+| Stop Stream | Button | <img src="icons/applications/MdScreenShare.svg" width="20" /> | End the screen sharing session (visible to the stream owner only) |
 
 ---
 
@@ -370,12 +370,12 @@ Virtual sticky notes for quick text entry. Choose from multiple colors, resize t
 
 | Name | Type | Icon | Description |
 |------|------|------|-------------|
-| Font Size - | Button | <img src="icons/applications/MdRemove.svg" width="20"> | Decrease the font size |
-| Font Size + | Button | <img src="icons/applications/MdAdd.svg" width="20"> | Increase the font size |
-| Lock / Unlock | Toggle | <img src="icons/applications/MdLock.svg" width="20"> <img src="icons/applications/MdLockOpen.svg" width="20"> | Prevent or allow editing by other users (owner only) |
-| Color | Color Picker | <img src="icons/applications/MdStickyNote2.svg" width="20"> | Change the stickie color |
-| Save to Asset Manager | Button | <img src="icons/applications/MdFileUpload.svg" width="20"> | Upload the note as a `.md` file |
-| Download as Markdown | Button | <img src="icons/applications/MdFileDownload.svg" width="20"> | Download the note as a `.md` file |
+| Font Size - | Button | <img src="icons/applications/MdRemove.svg" width="20" /> | Decrease the font size |
+| Font Size + | Button | <img src="icons/applications/MdAdd.svg" width="20" /> | Increase the font size |
+| Lock / Unlock | Toggle | <img src="icons/applications/MdLock.svg" width="20" /> <img src="icons/applications/MdLockOpen.svg" width="20" /> | Prevent or allow editing by other users (owner only) |
+| Color | Color Picker | <img src="icons/applications/MdStickyNote2.svg" width="20" /> | Change the stickie color |
+| Save to Asset Manager | Button | <img src="icons/applications/MdFileUpload.svg" width="20" /> | Upload the note as a `.md` file |
+| Download as Markdown | Button | <img src="icons/applications/MdFileDownload.svg" width="20" /> | Download the note as a `.md` file |
 
 ---
 
@@ -404,13 +404,13 @@ Play web-compatible video files (MP4 preferred). Playback position is synchroniz
 
 | Name | Type | Icon | Description |
 |------|------|------|-------------|
-| Play / Pause | Toggle | <img src="icons/applications/MdPlayArrow.svg" width="20"> <img src="icons/applications/MdPause.svg" width="20"> | Control playback |
-| Loop | Toggle | <img src="icons/applications/MdLoop.svg" width="20"> | Toggle looping |
-| Mute / Unmute | Toggle | <img src="icons/applications/MdVolumeOff.svg" width="20"> <img src="icons/applications/MdVolumeUp.svg" width="20"> | Toggle audio |
-| Seek | Slider | <img src="icons/applications/MdGraphicEq.svg" width="20"> | Scrub through the video with time display |
-| Download Video | Button | <img src="icons/applications/MdFileDownload.svg" width="20"> | Download the original video file |
-| Screenshot | Button | <img src="icons/applications/MdScreenshotMonitor.svg" width="20"> | Capture the current frame as an image on the board |
-| Info | Button | <img src="icons/applications/MdInfoOutline.svg" width="20"> | View file metadata |
+| Play / Pause | Toggle | <img src="icons/applications/MdPlayArrow.svg" width="20" /> <img src="icons/applications/MdPause.svg" width="20" /> | Control playback |
+| Loop | Toggle | <img src="icons/applications/MdLoop.svg" width="20" /> | Toggle looping |
+| Mute / Unmute | Toggle | <img src="icons/applications/MdVolumeOff.svg" width="20" /> <img src="icons/applications/MdVolumeUp.svg" width="20" /> | Toggle audio |
+| Seek | Slider | <img src="icons/applications/MdGraphicEq.svg" width="20" /> | Scrub through the video with time display |
+| Download Video | Button | <img src="icons/applications/MdFileDownload.svg" width="20" /> | Download the original video file |
+| Screenshot | Button | <img src="icons/applications/MdScreenshotMonitor.svg" width="20" /> | Capture the current frame as an image on the board |
+| Info | Button | <img src="icons/applications/MdInfoOutline.svg" width="20" /> | View file metadata |
 
 ---
 
@@ -426,12 +426,12 @@ Paste a URL onto the board to create a WebpageLink. It fetches and displays meta
 
 | Name | Type | Icon | Description |
 |------|------|------|-------------|
-| Open in SAGE3 | Button | <img src="icons/applications/MdWeb.svg" width="20"> | Open the URL in a new Webview app on the board |
-| Stream Webview | Button | <img src="icons/applications/MdViewSidebar.svg" width="20"> | Stream the webview content (Electron client) |
-| Open in Desktop | Button | <img src="icons/applications/MdDesktopMac.svg" width="20"> | Open the URL in your system browser |
-| Copy URL | Button | <img src="icons/applications/MdCopyAll.svg" width="20"> | Copy the URL to your clipboard |
-| Save to Asset Manager | Button | <img src="icons/applications/MdFileUpload.svg" width="20"> | Save the link as a `.url` file |
-| Download Link | Button | <img src="icons/applications/MdFileDownload.svg" width="20"> | Download as a `.url` file |
+| Open in SAGE3 | Button | <img src="icons/applications/MdWeb.svg" width="20" /> | Open the URL in a new Webview app on the board |
+| Stream Webview | Button | <img src="icons/applications/MdViewSidebar.svg" width="20" /> | Stream the webview content (Electron client) |
+| Open in Desktop | Button | <img src="icons/applications/MdDesktopMac.svg" width="20" /> | Open the URL in your system browser |
+| Copy URL | Button | <img src="icons/applications/MdCopyAll.svg" width="20" /> | Copy the URL to your clipboard |
+| Save to Asset Manager | Button | <img src="icons/applications/MdFileUpload.svg" width="20" /> | Save the link as a `.url` file |
+| Download Link | Button | <img src="icons/applications/MdFileDownload.svg" width="20" /> | Download as a `.url` file |
 
 ---
 
@@ -449,22 +449,22 @@ An embedded web browser within the board. Enter any URL to load a web page direc
 
 | Name | Type | Icon | Description |
 |------|------|------|-------------|
-| Back | Button | <img src="icons/applications/MdArrowBack.svg" width="20"> | Navigate back |
-| Forward | Button | <img src="icons/applications/MdArrowForward.svg" width="20"> | Navigate forward |
-| Reload | Button | <img src="icons/applications/MdRefresh.svg" width="20"> | Refresh the current page |
+| Back | Button | <img src="icons/applications/MdArrowBack.svg" width="20" /> | Navigate back |
+| Forward | Button | <img src="icons/applications/MdArrowForward.svg" width="20" /> | Navigate forward |
+| Reload | Button | <img src="icons/applications/MdRefresh.svg" width="20" /> | Refresh the current page |
 | URL Bar | Text Input | | View or change the current URL |
-| Revert to Shared URL | Button | <img src="icons/applications/MdCallReceived.svg" width="20"> | Reset to the URL shared with all users |
-| Update Shared URL | Button | <img src="icons/applications/MdCallMade.svg" width="20"> | Push your current URL to all users |
-| Zoom In | Button | <img src="icons/applications/MdAdd.svg" width="20"> | Increase the page zoom level |
-| Zoom Out | Button | <img src="icons/applications/MdRemove.svg" width="20"> | Decrease the page zoom level |
-| Mute | Toggle | <img src="icons/applications/MdVolumeOff.svg" width="20"> | Toggle audio |
-| Save URL | Button | <img src="icons/applications/MdFileUpload.svg" width="20"> | Save the URL to the asset manager |
-| Copy URL | Button | <img src="icons/applications/MdCopyAll.svg" width="20"> | Copy the URL to your clipboard |
-| Open in Desktop | Button | <img src="icons/applications/MdOpenInNew.svg" width="20"> | Open the URL in your system browser |
+| Revert to Shared URL | Button | <img src="icons/applications/MdCallReceived.svg" width="20" /> | Reset to the URL shared with all users |
+| Update Shared URL | Button | <img src="icons/applications/MdCallMade.svg" width="20" /> | Push your current URL to all users |
+| Zoom In | Button | <img src="icons/applications/MdAdd.svg" width="20" /> | Increase the page zoom level |
+| Zoom Out | Button | <img src="icons/applications/MdRemove.svg" width="20" /> | Decrease the page zoom level |
+| Mute | Toggle | <img src="icons/applications/MdVolumeOff.svg" width="20" /> | Toggle audio |
+| Save URL | Button | <img src="icons/applications/MdFileUpload.svg" width="20" /> | Save the URL to the asset manager |
+| Copy URL | Button | <img src="icons/applications/MdCopyAll.svg" width="20" /> | Copy the URL to your clipboard |
+| Open in Desktop | Button | <img src="icons/applications/MdOpenInNew.svg" width="20" /> | Open the URL in your system browser |
 
 **Toolbar (Web browser client):**
 
 | Name | Type | Icon | Description |
 |------|------|------|-------------|
-| Open | Button | <img src="icons/applications/MdOpenInNew.svg" width="20"> | Open the URL in a new browser tab |
-| Copy URL | Button | <img src="icons/applications/MdCopyAll.svg" width="20"> | Copy the URL to your clipboard |
+| Open | Button | <img src="icons/applications/MdOpenInNew.svg" width="20" /> | Open the URL in a new browser tab |
+| Copy URL | Button | <img src="icons/applications/MdCopyAll.svg" width="20" /> | Copy the URL to your clipboard |
