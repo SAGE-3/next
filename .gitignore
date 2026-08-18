@@ -45,3 +45,15 @@ dev-model-list.md
 
 # Local-only AI config — kept out of git
 webstack/sage3-dev-ai-new.hjson
+
+# Local config variants with credentials — never commit
+webstack/sage3-dev-*.hjson
+webstack/sage3-dev.hjson.good
+seer/.env.*
+deployment/configurations/node/keys/token.json
+webstack/clients/cli/token-alpha.json
+*.key
+*.crt
+
+# Build artifacts
+pysage3/dist/
