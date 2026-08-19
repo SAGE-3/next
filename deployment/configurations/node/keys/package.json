@@ -5,7 +5,7 @@
   "main": "genJWT.js",
   "license": "MIT",
   "dependencies": {
-    "commander": "^8.1.0",
-    "jsonwebtoken": "^9.0.2"
+    "commander": "^14.0.3",
+    "jsonwebtoken": "^9.0.3"
   }
 }
