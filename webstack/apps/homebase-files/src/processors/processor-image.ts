@@ -12,7 +12,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 // Image processing tool
-import sharp from 'sharp';
+import sharp, { type OutputInfo } from 'sharp';
 
 // SAGEBase queue
 import { SBQueue } from '../connectors';
@@ -105,7 +105,7 @@ async function sharpProcessing(job: any): Promise<ExtraImageType> {
       });
     } else {
       const sharpStream = sharp({
-        failOnError: false,
+        failOn: 'none',
         limitInputPixels: 4294836225, // 65k x 65k
       });
 
@@ -137,7 +137,7 @@ async function sharpProcessing(job: any): Promise<ExtraImageType> {
             options[2].width = Math.max(8, Math.round(maxwidth / 2));
             options[3].width = maxwidth;
           }
-          Promise.all<sharp.OutputInfo>([
+          Promise.all<OutputInfo>([
             // resize multiple versions based on the option set
             ...options.map(({ width, quality }) =>
               sharpStream
