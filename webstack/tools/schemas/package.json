@@ -17,5 +17,10 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "6.0.3"
+  },
+  "resolutions": {
+    "lodash": "^4.17.23",
+    "markdown-it": "^14.2.0",
+    "linkify-it": "^5.0.2"
   }
 }
