@@ -21,6 +21,7 @@
   "resolutions": {
     "lodash": "^4.17.23",
     "markdown-it": "^14.2.0",
-    "linkify-it": "^5.0.2"
+    "linkify-it": "^5.0.2",
+    "underscore": "^1.13.8"
   }
 }
