@@ -7,3 +7,4 @@
  */
 
 export * from './lib/core/SAGEBase';
+export * from './lib/modules/auth/SBRateLimit';

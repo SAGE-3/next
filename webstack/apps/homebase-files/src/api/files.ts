@@ -26,6 +26,7 @@ import { config } from '../config';
 import { AssetsCollection } from './assetsCollection';
 // SSRF-safe fetch of user-provided URLs
 import { fetchPublicURL } from './fetch-public';
+import { createRateLimiter } from '@sage3/sagebase';
 
 /**
  * App route/api express middleware.
@@ -65,6 +66,7 @@ export function FilesRouter(): express.Router {
 
   // Get one asset: GET /api/files/:id/:token
   // route: /api/files/:id/:token
+  router.use('/:id/:token', createRateLimiter(60));
   router.get('/:id/:token', async ({ params }, res) => {
     // Get the asset
     const data = await AssetsCollection.get(params.id);

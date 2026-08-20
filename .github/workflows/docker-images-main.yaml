@@ -1,5 +1,9 @@
 name: Docker Images Main
 
+permissions:
+  contents: read
+  packages: write
+
 on:
   push:
     branches: ["main"]

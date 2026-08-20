@@ -78,7 +78,7 @@ export function createApp(assetPath: string, config: ServerConfiguration): expre
   app.use(
     helmet({
       // Content-Security-Policy
-      contentSecurityPolicy: false,
+      contentSecurityPolicy: true,
       // Strict-Transport-Security
       hsts: true,
       // Cross-Origin-Embedder-Policy: disable to enable map images and zoom images to load

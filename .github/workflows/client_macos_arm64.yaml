@@ -1,5 +1,8 @@
 name: Client macos-arm
 
+permissions:
+  contents: read
+
 on:
   push:
     paths:

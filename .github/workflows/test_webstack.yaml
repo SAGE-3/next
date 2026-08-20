@@ -1,5 +1,8 @@
 name: Webstack CI
 
+permissions:
+  contents: read
+
 on:
   push:
     branches:

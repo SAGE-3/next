@@ -81,77 +81,84 @@ export function zeroPad(num: number, places: number): string {
 }
 
 /**
- * Process a URL to be embedded
+ * Exact-or-subdomain hostname match (never a substring match, so lookalike
+ * hosts like evil-vimeo.com or vimeo.com.evil.net do not qualify)
+ */
+function hostMatches(host: string, domain: string): boolean {
+  return host === domain || host.endsWith('.' + domain);
+}
+
+/**
+ * Process a URL to be embedded: rewrite known services to their embed form.
+ * Services are identified by URL hostname; unknown or unparseable URLs are
+ * returned unchanged (this is a rewriter — isValidURL is the gate).
  *
  * @param {string} view_url
  * @returns {string} resulting url
  */
 export function processContentURL(view_url: string): string {
-  // A youtube URL with a 'watch' video
-  if (view_url.startsWith('https://www.youtube.com') && !view_url.includes('/channel/') && view_url !== 'https://www.youtube.com/') {
-    if (view_url.indexOf('embed') === -1 || view_url.indexOf('watch?v=') >= 0) {
-      // Search for the Youtube ID
-      let video_id = view_url.split('v=')[1];
-      const ampersandPosition = video_id.indexOf('&');
-      if (ampersandPosition !== -1) {
-        video_id = video_id.substring(0, ampersandPosition);
-      }
-      view_url = 'https://www.youtube.com/embed/' + video_id + '?autoplay=0';
+  let u: URL;
+  try {
+    u = new URL(view_url);
+  } catch {
+    return view_url;
+  }
+  if (u.protocol !== 'https:' && u.protocol !== 'http:') return view_url;
+  const host = u.hostname.toLowerCase();
+
+  if (host === 'www.youtube.com' && !u.pathname.startsWith('/channel/') && u.pathname !== '/') {
+    // A youtube URL with a 'watch' video
+    const video_id = u.searchParams.get('v');
+    if (video_id && !u.pathname.startsWith('/embed')) {
+      view_url = 'https://www.youtube.com/embed/' + encodeURIComponent(video_id) + '?autoplay=0';
     }
-  } else if (view_url.startsWith('https://www.ted.com/talks')) {
+  } else if (host === 'www.ted.com' && u.pathname.startsWith('/talks')) {
     // Handler for TED talks
-    const talk = view_url.replace('https://www.ted.com/talks', 'https://embed.ted.com/talks');
-    view_url = talk;
-  } else if (view_url.startsWith('https://youtu.be')) {
+    view_url = view_url.replace('https://www.ted.com/talks', 'https://embed.ted.com/talks');
+  } else if (host === 'youtu.be') {
     // youtube short URL (used in sharing)
-    const video_id = view_url.split('/').pop();
-    view_url = 'https://www.youtube.com/embed/' + video_id + '?autoplay=0';
-  } else if (view_url.indexOf('vimeo') >= 0) {
-    // Search for the Vimeo ID
-    const m = view_url.match(/^.+vimeo.com\/(.*\/)?([^#?]*)/);
-    const vimeo_id = m ? m[2] || m[1] : null;
-    if (vimeo_id) {
-      view_url = 'https://player.vimeo.com/video/' + vimeo_id;
+    const video_id = u.pathname.split('/').pop();
+    if (video_id) {
+      view_url = 'https://www.youtube.com/embed/' + encodeURIComponent(video_id) + '?autoplay=0';
     }
-  } else if (view_url.indexOf('twitch.tv') >= 0) {
-    // Twitch video from:
-    //    https://go.twitch.tv/videos/180266596
-    // to embedded:
-    //    https://player.twitch.tv/?!autoplay&video=v180266596
-    // Search for the Twitch ID
-    const tw = view_url.match(/^.+twitch.tv\/(.*\/)?([^#?]*)/);
-    const twitch_id = tw ? tw[2] || tw[1] : null;
+  } else if (hostMatches(host, 'vimeo.com')) {
+    // Vimeo ID is the last path segment
+    const vimeo_id = u.pathname.split('/').filter(Boolean).pop();
+    if (vimeo_id) {
+      view_url = 'https://player.vimeo.com/video/' + encodeURIComponent(vimeo_id);
+    }
+  } else if (hostMatches(host, 'twitch.tv')) {
+    // Twitch video from: https://go.twitch.tv/videos/180266596
+    // to embedded:       https://player.twitch.tv/?!autoplay&video=v180266596
+    const twitch_id = u.pathname.split('/').filter(Boolean).pop();
     if (twitch_id) {
-      view_url = 'https://player.twitch.tv/?!autoplay&video=v' + twitch_id;
+      view_url = 'https://player.twitch.tv/?!autoplay&video=v' + encodeURIComponent(twitch_id);
     }
   } else if (
-    // TLDraw regex
-    // eslint-disable-next-line no-useless-escape
-    view_url.match(/https:\/\/([\w\.-]+\.)?figma.com\/(file|proto)\/([0-9a-zA-Z]{22,128})(?:\/.*)?$/) &&
+    hostMatches(host, 'figma.com') &&
+    u.pathname.match(/^\/(file|proto)\/([0-9a-zA-Z]{22,128})(\/.*)?$/) &&
     !view_url.includes('figma.com/embed')
   ) {
-    view_url = `https://www.figma.com/embed?embed_host=share&url=${view_url}`;
-  } else if (view_url.includes('docs.google.')) {
+    view_url = `https://www.figma.com/embed?embed_host=share&url=${encodeURIComponent(view_url)}`;
+  } else if (host === 'docs.google.com') {
     // slides in presentation mode when published
-    const urlObj = new URL(view_url);
-    if (urlObj?.pathname.match(/^\/presentation/) && urlObj?.pathname.match(/\/pub\/?$/)) {
-      urlObj.pathname = urlObj.pathname.replace(/\/pub$/, '/embed');
-      const keys = Array.from(urlObj.searchParams.keys());
+    if (u.pathname.match(/^\/presentation/) && u.pathname.match(/\/pub\/?$/)) {
+      u.pathname = u.pathname.replace(/\/pub$/, '/embed');
+      const keys = Array.from(u.searchParams.keys());
       for (const key of keys) {
-        urlObj.searchParams.delete(key);
+        u.searchParams.delete(key);
       }
-      view_url = urlObj.href;
+      view_url = u.href;
     }
-  } else if (view_url.includes('observablehq.com')) {
-    const urlObj = new URL(view_url);
-    if (urlObj && urlObj.pathname.match(/^\/@([^/]+)\/([^/]+)\/?$/)) {
-      view_url = `${urlObj.origin}/embed${urlObj.pathname}?cell=*`;
+  } else if (hostMatches(host, 'observablehq.com')) {
+    if (u.pathname.match(/^\/@([^/]+)\/([^/]+)\/?$/)) {
+      view_url = `${u.origin}/embed${u.pathname}?cell=*`;
     }
-    if (urlObj && urlObj.pathname.match(/^\/d\/([^/]+)\/?$/)) {
-      const pathName = urlObj.pathname.replace(/^\/d/, '');
-      view_url = `${urlObj.origin}/embed${pathName}?cell=*`;
+    if (u.pathname.match(/^\/d\/([^/]+)\/?$/)) {
+      const pathName = u.pathname.replace(/^\/d/, '');
+      view_url = `${u.origin}/embed${pathName}?cell=*`;
     }
-  } else if (view_url.includes('twitter.com/')) {
+  } else if (hostMatches(host, 'twitter.com')) {
     view_url = `https://oembed.link/${view_url}`;
   }
   return view_url;
@@ -217,8 +224,10 @@ export function isValidURL(value: string): string | undefined {
   // eslint-disable-next-line no-useless-escape
   if (!/^[a-z][a-z0-9\+\-\.]*$/.test(scheme.toLowerCase())) return;
 
-  // Disable some protocols: chrome sage3
-  if (scheme === 'sage3' || scheme === 'chrome') {
+  // Only allow web protocols: rejects javascript:, data:, file:, chrome:,
+  // sage3:, etc. — validated URLs end up in webviews and links.
+  const lowScheme = scheme.toLowerCase();
+  if (lowScheme !== 'http' && lowScheme !== 'https') {
     return;
   }
 

@@ -1,5 +1,8 @@
 name: Tag release macos-x64
 
+permissions:
+  contents: write
+
 on:
   push:
     branches:
