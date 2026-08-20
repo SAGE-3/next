@@ -14,13 +14,12 @@ import rateLimit from 'express-rate-limit';
  * 'trust proxy' enabled, so req.ip is the real client address from
  * X-Forwarded-For.
  *
- * @param windowMinutes length of the sliding window
- * @param limit maximum requests per client IP within the window
+ * @param maxPerMinute maximum requests per client IP per minute
  */
-export function createRateLimiter(windowMinutes: number, limit: number) {
+export function createRateLimiter(maxPerMinute: number) {
   return rateLimit({
-    windowMs: windowMinutes * 60 * 1000,
-    limit,
+    windowMs: 60 * 1000,
+    limit: maxPerMinute,
     standardHeaders: 'draft-7',
     legacyHeaders: false,
     // 'trust proxy' is intentionally permissive: Traefik is the single

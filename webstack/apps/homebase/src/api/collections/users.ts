@@ -80,7 +80,7 @@ class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
       res.status(200).send({ success: true, data: { userStats } });
     });
 
-    router.post('/accountDeletion', createRateLimiter(60, 10), async ({ body, user }, res) => {
+    router.post('/accountDeletion', createRateLimiter(1), async ({ body, user }, res) => {
       const userRequestingDeletion = user as SBAuthSchema;
 
       // Is the user logged in?

@@ -199,8 +199,8 @@ export class SBAuth {
 
     // Rate limiters on the routes flagged by code scanning: OAuth callbacks
     // are rare per client; verify/logout run on page loads
-    const loginLimiter = createRateLimiter(15, 30);
-    const sessionLimiter = createRateLimiter(5, 200);
+    const loginLimiter = createRateLimiter(2);
+    const sessionLimiter = createRateLimiter(40);
 
     if (config.strategies) {
       // Google Setup

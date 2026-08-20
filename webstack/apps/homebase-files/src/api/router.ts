@@ -32,7 +32,7 @@ export async function expressAPIRouter(): Promise<express.Router> {
   router.use('/files', FilesRouter());
 
   // Rate limit (generous per-IP backstop for asset traffic), then authenticate all API Routes
-  router.use(createRateLimiter(5, 3000));
+  router.use(createRateLimiter(600));
   router.use(SAGEBase.Auth.authenticate);
 
   // /api/assets/upload

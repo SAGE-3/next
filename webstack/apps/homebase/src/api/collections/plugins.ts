@@ -85,7 +85,7 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
     ensureDirectoryExistence(appsPath);
 
     // Upload a new Plugin App
-    router.post('/upload', createRateLimiter(15, 50), upload.single('plugin'), async (req, res) => {
+    router.post('/upload', createRateLimiter(4), upload.single('plugin'), async (req, res) => {
       // Check for file.
       const file = req.file;
       if (file == undefined) {
@@ -316,7 +316,7 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
     });
 
     // REMOVE: Remove the plugin db reference and the files locally.
-    router.use('/remove/:id', createRateLimiter(15, 50));
+    router.use('/remove/:id', createRateLimiter(4));
     router.delete('/remove/:id', async ({ params }, res) => {
       try {
         const docRef = this.collection.docRef(params.id);

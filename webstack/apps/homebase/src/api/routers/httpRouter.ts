@@ -58,7 +58,7 @@ export function expressAPIRouter(): express.Router {
   router.use('/logs', LogsRouter());
 
   // Rate limit (generous per-IP backstop), then authenticate all API Routes
-  router.use(createRateLimiter(5, 2000));
+  router.use(createRateLimiter(400));
   router.use(SAGEBase.Auth.authenticate);
 
   // Kernels Routes
