@@ -35,7 +35,7 @@ import {
 } from '../collections';
 
 // SAGEBase Imports
-import { SAGEBase } from '@sage3/sagebase';
+import { SAGEBase, createRateLimiter } from '@sage3/sagebase';
 
 // Custom Routes
 import { ConfigRouter, InfoRouter, TimeRouter, NLPRouter, LogsRouter, KernelsRouter, PresenceThrottle, AgentRouter } from './custom';
@@ -57,7 +57,8 @@ export function expressAPIRouter(): express.Router {
   router.use('/time', TimeRouter());
   router.use('/logs', LogsRouter());
 
-  // Authenticate all API Routes
+  // Rate limit (generous per-IP backstop), then authenticate all API Routes
+  router.use(createRateLimiter(5, 2000));
   router.use(SAGEBase.Auth.authenticate);
 
   // Kernels Routes

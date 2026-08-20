@@ -40,7 +40,7 @@ import { loadConfig } from './config';
 // import { AssetService } from './services';
 import { expressAPIRouter, wsAPIRouter } from './api/routers';
 import { AppsCollection, loadCollections, PresenceCollection } from './api/collections';
-import { SAGEBase, SAGEBaseConfig } from '@sage3/sagebase';
+import { SAGEBase, SAGEBaseConfig, createRateLimiter } from '@sage3/sagebase';
 
 import { APIClientWSMessage, ServerConfiguration } from '@sage3/shared/types';
 import { SBAuthDB, JWTPayload } from '@sage3/sagebase';
@@ -115,7 +115,7 @@ async function startServer() {
   // Twilio Setup
   const screenShareTimeLimit = 3600 * 6 * 1000; // 6 hours
   const twilio = new SAGETwilio(config.services.twilio, AppsCollection, PresenceCollection, 10000, screenShareTimeLimit);
-  app.get('/twilio/token', SAGEBase.Auth.authenticate, (req, res) => {
+  app.get('/twilio/token', createRateLimiter(5, 30), SAGEBase.Auth.authenticate, (req, res) => {
     const authId = req.user.id;
     if (authId === undefined) {
       res.status(403).send();

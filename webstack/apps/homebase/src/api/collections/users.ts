@@ -9,7 +9,7 @@
 import { UserSchema } from '@sage3/shared/types';
 import { SAGE3Collection, sageRouter } from '@sage3/backend';
 
-import { SAGEBase, SBAuthSchema } from '@sage3/sagebase';
+import { SAGEBase, SBAuthSchema, createRateLimiter } from '@sage3/sagebase';
 
 import { config } from '../../config';
 import { RoomsCollection } from './rooms';
@@ -80,7 +80,7 @@ class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
       res.status(200).send({ success: true, data: { userStats } });
     });
 
-    router.post('/accountDeletion', async ({ body, user }, res) => {
+    router.post('/accountDeletion', createRateLimiter(60, 10), async ({ body, user }, res) => {
       const userRequestingDeletion = user as SBAuthSchema;
 
       // Is the user logged in?

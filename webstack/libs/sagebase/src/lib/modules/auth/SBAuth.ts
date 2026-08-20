@@ -14,6 +14,7 @@ import session from 'express-session';
 import * as passport from 'passport';
 
 import { SBAuthDatabase, SBAuthDB, SBAuthSchema } from './SBAuthDatabase';
+import { createRateLimiter } from './SBRateLimit';
 export type { SBAuthSchema } from './SBAuthDatabase';
 export type { JWTPayload } from './adapters';
 import {
@@ -196,34 +197,39 @@ export class SBAuth {
     // Passport deserialize function in order to support login sessions.
     passport.deserializeUser(this.deserializeUser);
 
+    // Rate limiters: logins/callbacks are rare per client; verify/logout run on page loads
+    const loginLimiter = createRateLimiter(15, 30);
+    const sessionLimiter = createRateLimiter(5, 200);
+
     if (config.strategies) {
       // Google Setup
       if (config.strategies.includes('google') && config.googleConfig) {
         if (passportGoogleSetup(config.googleConfig)) {
           express.get(
             config.googleConfig.routeEndpoint,
+            loginLimiter,
             passport.authenticate('google', {
               prompt: 'select_account',
               scope: ['profile', 'email'],
               // Note: State parameter validation handled by passport strategy
             }),
           );
-          express.get(config.googleConfig.callbackURL, this.createOAuthCallbackHandler('google', 'google'));
+          express.get(config.googleConfig.callbackURL, loginLimiter, this.createOAuthCallbackHandler('google', 'google'));
         }
       }
 
       // Apple Setup
       if (config.strategies.includes('apple') && config.appleConfig) {
         if (passportAppleSetup(config.appleConfig)) {
-          express.get(config.appleConfig.routeEndpoint, passport.authenticate('apple'));
-          express.post(config.appleConfig.callbackURL, this.createOAuthCallbackHandler('apple', 'apple'));
+          express.get(config.appleConfig.routeEndpoint, loginLimiter, passport.authenticate('apple'));
+          express.post(config.appleConfig.callbackURL, loginLimiter, this.createOAuthCallbackHandler('apple', 'apple'));
         }
       }
 
       // JWT Setup
       if (config.strategies.includes('jwt') && config.jwtConfig) {
         if (passportJWTSetup(config.jwtConfig)) {
-          express.post(config.jwtConfig.routeEndpoint, passport.authenticate('jwt', { session: false }), (req, res) => {
+          express.post(config.jwtConfig.routeEndpoint, loginLimiter, passport.authenticate('jwt', { session: false }), (req, res) => {
             res.status(200).send({ success: true, message: 'logged in', user: req.user });
           });
         }
@@ -232,7 +238,7 @@ export class SBAuth {
       // Guest Setup
       if (config.strategies.includes('guest') && config.guestConfig) {
         if (passportGuestSetup()) {
-          express.post(config.guestConfig.routeEndpoint, passport.authenticate('guest', { successRedirect: '/', failureRedirect: '/' }));
+          express.post(config.guestConfig.routeEndpoint, loginLimiter, passport.authenticate('guest', { successRedirect: '/', failureRedirect: '/' }));
         }
       }
 
@@ -241,6 +247,7 @@ export class SBAuth {
         if (passportSpectatorSetup()) {
           express.post(
             config.spectatorConfig.routeEndpoint,
+            loginLimiter,
             passport.authenticate('spectator', { successRedirect: '/', failureRedirect: '/' }),
           );
         }
@@ -252,13 +259,14 @@ export class SBAuth {
         if (ready) {
           express.get(
             config.cilogonConfig.routeEndpoint,
+            loginLimiter,
             passport.authenticate('openidconnect', {
               prompt: 'consent',
               scope: ['openid', 'email', 'profile'],
               // Note: State parameter validation handled by OpenID Connect strategy
             }),
           );
-          express.get(config.cilogonConfig.callbackURL, this.createOAuthCallbackHandler('cilogon', 'openidconnect'));
+          express.get(config.cilogonConfig.callbackURL, loginLimiter, this.createOAuthCallbackHandler('cilogon', 'openidconnect'));
         }
       }
 
@@ -268,11 +276,12 @@ export class SBAuth {
         if (ready) {
           express.get(
             config.keycloakConfig.routeEndpoint,
+            loginLimiter,
             passport.authenticate('keycloak', {
               scope: ['openid', 'email', 'profile'],
             }),
           );
-          express.get(config.keycloakConfig.callbackURL, this.createOAuthCallbackHandler('keycloak', 'keycloak'));
+          express.get(config.keycloakConfig.callbackURL, loginLimiter, this.createOAuthCallbackHandler('keycloak', 'keycloak'));
         }
       }
 
@@ -280,7 +289,7 @@ export class SBAuth {
       if (config.strategies.includes('ldap') && config.ldapConfig) {
         const ready = passportLDAPSetup(config.ldapConfig);
         if (ready) {
-          express.post('/auth/ldap', makeLdapAuthHandler(passport));
+          express.post('/auth/ldap', loginLimiter, makeLdapAuthHandler(passport));
         } else {
           console.error('LDAP> Setup failed — /auth/ldap will not be registered. Check ldapConfig in the server config.');
         }
@@ -288,10 +297,10 @@ export class SBAuth {
     }
 
     // Route to logout
-    express.get('/auth/logout', (req, res, next) => this.logout(req, res, next));
+    express.get('/auth/logout', sessionLimiter, (req, res, next) => this.logout(req, res, next));
 
     // Route to quickly verify authentication
-    express.get('/auth/verify', this.authenticate, (req, res) => {
+    express.get('/auth/verify', sessionLimiter, this.authenticate, (req, res) => {
       const user = req.user as SBAuthSchema;
       // Get the expiration date from the session cookie
       const exp = req.session.cookie.expires || new Date();
