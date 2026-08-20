@@ -251,6 +251,51 @@ function disablePassword() {
 }
 
 /**
+ * Escape a value for interpolation into HTML text content
+ * or into a *quoted* attribute value.
+ */
+function escapeHtml(value) {
+  const HTML_CHARS = /["'&<>]/;
+  const str = '' + value;
+  const match = HTML_CHARS.exec(str);
+
+  if (!match) return str; // fast path: nothing to do
+
+  let out = '';
+  let lastIndex = 0;
+  let index = match.index;
+  let escape;
+
+  for (; index < str.length; index++) {
+    switch (str.charCodeAt(index)) {
+      case 34:
+        escape = '&quot;';
+        break; // "
+      case 38:
+        escape = '&amp;';
+        break; // &
+      case 39:
+        escape = '&#39;';
+        break; // '
+      case 60:
+        escape = '&lt;';
+        break; //
+      case 62:
+        escape = '&gt;';
+        break; // >
+      default:
+        continue;
+    }
+
+    if (lastIndex !== index) out += str.substring(lastIndex, index);
+    lastIndex = index + 1;
+    out += escape;
+  }
+
+  return lastIndex !== index ? out + str.substring(lastIndex, index) : out;
+}
+
+/**
  * Adds an item to the UI list of favorites
  *
  * @param  {site object} item a site object
@@ -264,11 +309,13 @@ function addItemToList(item, index) {
   }
   let it = document.createElement('LI');
   addClass(it, 'collection-item grey lighten-2 z-depth-3');
-  let htmlCode = `<div><b><span>${item.name}</span> -</b> <span>${item.host}</span><a href="#!" class="secondary-content">
+  let htmlHost = escapeHtml(item.host);
+  let htmlName = escapeHtml(item.name);
+  let htmlCode = `<div><b><span>${htmlName}</span> -</b> <span>${htmlHost}</span><a href="#!" class="secondary-content">
 						<i class="material-icons style="color:${blackColor};">${pinnedHTMLString}</i><b>&nbsp&nbsp</b>
 						<i class="material-icons style="color:${blackColor};">delete</i>
-                            </a>
-                    </div>`;
+           </a>
+  </div>`;
   it.innerHTML = htmlCode;
 
   // Wire up the heart icon: pinned items unpin on click, unpinned items pin on click
@@ -305,12 +352,12 @@ function addConnectedSiteToList(item, index) {
   }
   let it = document.createElement('li');
   addClass(it, 'collection-item grey lighten-2 z-depth-3');
-  let htmlCode = `<div><b><span>${item.name}</span> -</b> <span>${item.host}</span><a href="#!" class="secondary-content">
+  let htmlCode = `<div><b><span>${escapeHtml(item.name)}</span> -</b> <span>${escapeHtml(item.host)}</span><a href="#!" class="secondary-content">
 	<i class="material-icons style="color:${blackColor};">favorite_border</i>
 	<b>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp</b>
-						 <i></i>
-                            </a>
-                    </div>`;
+       <i></i>
+       </a>
+  </div>`;
   it.innerHTML = htmlCode;
 
   // it.addEventListener('click', selectFavoriteSite);
