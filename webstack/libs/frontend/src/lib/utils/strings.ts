@@ -266,3 +266,48 @@ function splitUri(uri: string) {
 export function formatDateAndTime(date: number | string): string {
   return format(date, 'MMM do, yyyy h:mmaaa');
 }
+
+/**
+ * Escape a value for interpolation into HTML text content
+ * or into a *quoted* attribute value.
+ */
+export function escapeHtml(value: string): string {
+  const HTML_CHARS = /["'&<>]/;
+  const str = '' + value;
+  const match = HTML_CHARS.exec(str);
+
+  if (!match) return str; // fast path: nothing to do
+
+  let out = '';
+  let lastIndex = 0;
+  let index = match.index;
+  let escape;
+
+  for (; index < str.length; index++) {
+    switch (str.charCodeAt(index)) {
+      case 34:
+        escape = '&quot;';
+        break; // "
+      case 38:
+        escape = '&amp;';
+        break; // &
+      case 39:
+        escape = '&#39;';
+        break; // '
+      case 60:
+        escape = '&lt;';
+        break; //
+      case 62:
+        escape = '&gt;';
+        break; // >
+      default:
+        continue;
+    }
+
+    if (lastIndex !== index) out += str.substring(lastIndex, index);
+    lastIndex = index + 1;
+    out += escape;
+  }
+
+  return lastIndex !== index ? out + str.substring(lastIndex, index) : out;
+}
