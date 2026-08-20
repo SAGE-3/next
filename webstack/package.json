@@ -228,6 +228,7 @@
     "jest-environment-node": "^30.4.1",
     "jsonc-eslint-parser": "^2.3.0",
     "ldapjs": "^2.3.3",
+    "monaco-editor-webpack-plugin": "^7.1.1",
     "node-addon-api": "^8.7.0",
     "node-gyp": "^12.2.0",
     "node-loader": "^1.0.2",
