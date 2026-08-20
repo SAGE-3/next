@@ -1,5 +1,8 @@
 name: Client Linux
 
+permissions:
+  contents: read
+
 on:
   push:
     paths:

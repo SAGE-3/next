@@ -1,5 +1,8 @@
 name: Tag release windows
 
+permissions:
+  contents: write
+
 on:
   push:
     tags:
