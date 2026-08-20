@@ -221,7 +221,7 @@ export function LoginPage() {
       }
 
       // Log to console for debugging (always visible)
-      console.error(`OAuth Authentication Error [${error}]:`, {
+      console.error(`OAuth Authentication Error:`, {
         title,
         description,
         details: details ? decodeURIComponent(details) : 'No additional details',
