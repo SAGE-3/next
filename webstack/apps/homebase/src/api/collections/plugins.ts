@@ -330,10 +330,10 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
     });
 
     // REMOVE: Remove the plugin db reference and the files locally.
-    router.use('/remove/:id', createRateLimiter(4));
-    router.delete('/remove/:id', async ({ params }, res) => {
+    router.delete('/remove/:id', createRateLimiter(4), async ({ params }, res) => {
       try {
-        const docRef = this.collection.docRef(params.id);
+        const id = String(params.id);
+        const docRef = this.collection.docRef(id);
         const doc = await docRef.read();
         if (doc === undefined) {
           res.status(404).send({ success: false, message: 'Plugin not found.' });
@@ -353,7 +353,7 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
         }
 
         // Delete the document
-        const del = await this.delete(params.id);
+        const del = await this.delete(id);
         if (del) {
           res.status(200).send({ success: true });
         } else {
