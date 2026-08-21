@@ -259,7 +259,7 @@ async function startServer() {
       'Content-Security-Policy',
       "default-src 'self' https: data: blob:; script-src 'self' https: 'unsafe-inline' 'unsafe-eval'; " +
         "style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data: blob:; " +
-        "connect-src 'self' https: wss:; worker-src 'self' blob:; frame-ancestors 'self'",
+        "connect-src 'self' https: wss: data: blob:; worker-src 'self' blob:; frame-ancestors 'self'",
     );
     next();
   });

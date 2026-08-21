@@ -89,7 +89,9 @@ export function createApp(assetPath: string, config: ServerConfiguration): expre
           'media-src': ["'self'", 'blob:', 'https:'],
           'worker-src': ["'self'", 'blob:'],
           'frame-src': ["'self'", 'https:'],
-          'connect-src': ["'self'", 'https:', 'wss:'],
+          // data:/blob: cover fetch() of generated images (AI image data URLs
+          // are converted to blobs before asset upload) — local decoding only
+          'connect-src': ["'self'", 'https:', 'wss:', 'data:', 'blob:'],
         },
       },
       // Strict-Transport-Security
