@@ -311,3 +311,35 @@ export function escapeHtml(value: string): string {
 
   return lastIndex !== index ? out + str.substring(lastIndex, index) : out;
 }
+
+/**
+ * Decode a base64 data URL into a Blob, without a network request.
+ *
+ * `fetch()` of a `data:` URL is subject to the connect-src CSP directive, even
+ * though nothing leaves the browser. Decoding here keeps the conversion local
+ * and independent of whatever CSP a deployment happens to serve.
+ *
+ * @param dataURL a data URL, e.g. `data:image/png;base64,iVBOR...`
+ * @returns the decoded Blob, typed from the URL's own MIME type
+ */
+export function dataURLtoBlob(dataURL: string): Blob {
+  const comma = dataURL.indexOf(',');
+  if (!dataURL.startsWith('data:') || comma === -1) {
+    throw new Error('Not a data URL');
+  }
+  const header = dataURL.substring(5, comma);
+  const mime = header.split(';')[0] || 'application/octet-stream';
+  const data = dataURL.substring(comma + 1);
+
+  // Non-base64 data URLs carry percent-encoded text
+  if (!header.includes(';base64')) {
+    return new Blob([decodeURIComponent(data)], { type: mime });
+  }
+
+  const binary = atob(data);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new Blob([bytes], { type: mime });
+}

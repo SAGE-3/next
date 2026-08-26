@@ -43,6 +43,7 @@ import {
   apiUrls,
   useConfigStore,
   seerIdeator,
+  dataURLtoBlob,
 } from '@sage3/frontend';
 import { genId, AskRequest, ImageQuery, PDFQuery, CodeRequest, WebQuery, WebScreenshot, isGeoJSON } from '@sage3/shared';
 import { LLMConfigManager, TaskType } from '@sage3/shared/types';
@@ -1228,8 +1229,12 @@ function AppComponent(props: App): JSX.Element {
         model: selectedModel || '',
       });
       if ('message' in result) throw new Error(result.message);
-      // Upload to SAGE3 assets instead of keeping a ~1MB data URL around
-      const blob = await fetch(result.imageUrl).then((r) => r.blob());
+      // Upload to SAGE3 assets instead of keeping a ~1MB data URL around.
+      // Generated images arrive as data URLs; decode them locally rather than
+      // fetch()ing, since a fetch of a data: URL is subject to connect-src.
+      const blob = result.imageUrl.startsWith('data:')
+        ? dataURLtoBlob(result.imageUrl)
+        : await fetch(result.imageUrl).then((r) => r.blob());
       const imgFile = new File([blob], `chat-image-${genId()}.png`, { type: 'image/png' });
       const fd = new FormData();
       fd.append('files', imgFile);

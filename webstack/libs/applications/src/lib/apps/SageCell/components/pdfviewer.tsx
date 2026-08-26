@@ -9,6 +9,8 @@
 import { useState, memo, useEffect } from 'react';
 import { AspectRatio, Box } from '@chakra-ui/react';
 
+import { dataURLtoBlob } from '@sage3/frontend';
+
 interface PdfViewerProps {
   data: string;
 }
@@ -17,12 +19,10 @@ export const PdfViewer = memo(({ data }: PdfViewerProps): JSX.Element => {
   const [url, setUrl] = useState<string>('');
 
   useEffect(() => {
-    // Function to convert base64 to blob, without dependencies
-    const b64toBlob = (base64: string) => fetch(`data:application/pdf;base64,${base64}`).then((res) => res.blob());
-    // convert the data we got into a blob that can be displayed in an iframe
-    b64toBlob(data).then((blob) => {
-      setUrl(URL.createObjectURL(blob));
-    });
+    // Decode locally rather than fetch()ing a data: URL, which CSP's
+    // connect-src applies to even though nothing leaves the browser
+    const blob = dataURLtoBlob(`data:application/pdf;base64,${data}`);
+    setUrl(URL.createObjectURL(blob));
   }, [data]);
 
   return (
