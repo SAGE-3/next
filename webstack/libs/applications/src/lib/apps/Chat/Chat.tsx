@@ -42,7 +42,7 @@ import {
   useAssetStore,
   apiUrls,
   useConfigStore,
-  seerIdeator,
+  seerImage,
   dataURLtoBlob,
   withUserProvider,
 } from '@sage3/frontend';
@@ -1213,7 +1213,7 @@ function AppComponent(props: App): JSX.Element {
       return;
     }
     const label = 'Generate an image from the text';
-    const [firstLine, ...rest] = text.split('\n').filter((l) => l.trim());
+    const [firstLine] = text.split('\n').filter((l) => l.trim());
     const now = await serverTime();
     const placeholder = {
       id: genId(),
@@ -1227,10 +1227,11 @@ function AppComponent(props: App): JSX.Element {
     updateState(props._id, { ...s, messages: [...s.messages, placeholder] });
     setProcessing(true);
     try {
-      const result = await seerIdeator.image({
-        title: (firstLine ?? text).slice(0, 80),
-        summary: (rest.join(' ') || firstLine || text).slice(0, 600),
-        keywords: [],
+      // Generic image generation: the linked text becomes the prompt as-is.
+      // The Ideator's image call is not used here — it composes a
+      // brainstorming-specific prompt that is only meaningful in SageIdeator.
+      const result = await seerImage.generate({
+        prompt: text.slice(0, 1000),
         model: selectedModel || '',
       });
       if ('message' in result) throw new Error(result.message);

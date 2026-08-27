@@ -41,6 +41,9 @@ import {
   IdeatorImageResponse,
   IdeatorProseRequest,
   IdeatorProseResponse,
+  ImageGenerationRoutes,
+  ImageGenerationRequest,
+  ImageGenerationResponse,
 } from '@sage3/shared';
 
 const AGENT_TIMEOUT_MS = 120 * 1000;
@@ -118,6 +121,23 @@ export const seerAgents = {
   image: (data: ImageQuery) => agentPost<ImageAnswer>(`${apiUrls.ai.agents.base}${AgentRoutes.image}`, data),
   pdf: (data: PDFQuery) => agentPost<PDFAnswer>(`${apiUrls.ai.agents.base}${AgentRoutes.pdf}`, data),
   mesonet: (data: MesonetRequest) => agentPost<MesonetResponse>(`${apiUrls.ai.agents.base}${AgentRoutes.mesonet}`, data),
+};
+
+// ─── Image generation ─────────────────────────────────────────────────────────
+
+/**
+ * Generic image generation, for any app that wants an image. The prompt is
+ * sent as written. SageIdeator's brainstorming-specific image call is
+ * seerIdeator.image below, and is not for general use.
+ */
+export const seerImage = {
+  generate: (data: ImageGenerationRequest, signal?: AbortSignal) =>
+    agentPost<ImageGenerationResponse>(
+      `${apiUrls.ai.agents.base}${ImageGenerationRoutes.generate}`,
+      data,
+      IDEATOR_TIMEOUT_MS,
+      signal
+    ),
 };
 
 // ─── Ideator endpoints ────────────────────────────────────────────────────────

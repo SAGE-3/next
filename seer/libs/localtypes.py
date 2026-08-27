@@ -36,6 +36,19 @@ class UserLLM(BaseModel):
     __str__ = __repr__
 
 
+class ImageGenerationRequest(BaseModel):
+    """A plain image-generation request: the prompt is used as written."""
+
+    prompt: str  # the prompt, exactly as the caller wrote it
+    model: str  # provider name
+    size: Optional[str] = None  # e.g. "1024x1024"; None uses the default
+    userllm: Optional[UserLLM] = None  # reserved; imagegen is config-only today
+
+
+class ImageGenerationResponse(BaseModel):
+    imageUrl: str  # the generated image as a data URL
+
+
 class Context(BaseModel):
     previousQ: List[str]  # previous prompt
     previousA: List[str]  # previous answer

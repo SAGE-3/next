@@ -108,7 +108,3 @@ export const IdeatorRoutes = {
   image: '/image',
   prose: '/prose',
 } as const;
-
-export const ImageGenerationRoutes = {
-  generate: '/image-generation',
-} as const;

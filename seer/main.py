@@ -8,6 +8,7 @@ from fluent import sender
 from libs.ai_logging import initFluent
 
 
+from app.imagegen import ImageGenAgent
 from libs.localtypes import (
     ImageQuery,
     Question,
@@ -22,6 +23,7 @@ from libs.localtypes import (
     IdeatorUserDimensionRequest,
     IdeatorSummarizeRequest,
     IdeatorImageRequest,
+    ImageGenerationRequest,
     IdeatorProseRequest,
 )
 
@@ -68,6 +70,7 @@ mesonetAG = None
 pdfAG = None
 webAG = None
 ideatorAG = None
+imagegenAG = None
 
 # Set to debug the queries into langchain
 # set_debug(True)
@@ -86,7 +89,7 @@ ideatorAG = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global chatAG, codeAG, imageAG, mesonetAG, pdfAG, webAG, ideatorAG
+    global chatAG, codeAG, imageAG, mesonetAG, pdfAG, webAG, ideatorAG, imagegenAG
 
     logger.info("FastAPI App started")
     web_config = getModelsInfo(ps3)
@@ -101,6 +104,7 @@ async def lifespan(app: FastAPI):
     pdfAG = PDFAgent(logger, ps3)
     webAG = WebAgent(logger, ps3)
     ideatorAG = IdeatorAgent(logger, ps3)
+    imagegenAG = ImageGenAgent(logger, ps3)
 
     await webAG.init()
     yield
@@ -313,13 +317,22 @@ async def ideator_summarize(qq: IdeatorSummarizeRequest):
 
 
 @app.post("/image-generation")
+async def image_generation(qq: ImageGenerationRequest):
+    """Generic image generation: the prompt is used as the caller wrote it."""
+    try:
+        return await asyncio.wait_for(imagegenAG.generate(qq), timeout=60)
+    except asyncio.TimeoutError:
+        raise HTTPException(status_code=408, detail="Image generation timed out")
+
+
+@app.post("/ideator/image")
 async def ideator_image(qq: IdeatorImageRequest):
+    """SageIdeator's image call: composes a brainstorming prompt from ideator
+    concepts, then generates. Only meaningful inside SageIdeator."""
     try:
         return await asyncio.wait_for(ideatorAG.image(qq), timeout=60)
     except asyncio.TimeoutError:
         raise HTTPException(status_code=408, detail="Image generation timed out")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/prose")
