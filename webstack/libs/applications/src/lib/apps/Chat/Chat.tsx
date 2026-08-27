@@ -55,6 +55,7 @@ import { AppWindow } from '../../components';
 
 import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot, callMesonet } from './tRPC';
 import { OperationMode, MODE_TASK, MAX_IMAGES, MAX_PDFS } from './constants';
+import { parseCommand, commandHelp, ParsedCommand } from './commands';
 import { ToolbarComponent, GroupedToolbarComponent } from './Toolbar';
 import { MessageItem } from './MessageItem';
 import { PromptBars } from './PromptBars';
@@ -173,8 +174,59 @@ function AppComponent(props: App): JSX.Element {
     setInput(value);
   };
 
+  /**
+   * Run a slash command. Commands act for the person who typed them: their
+   * results go to a toast or to the board, not into the shared transcript.
+   */
+  const runCommand = async (parsed: ParsedCommand) => {
+    const { command, args } = parsed;
+
+    if (command.name === '/help') {
+      toast({ title: 'Chat commands', description: commandHelp(), status: 'info', duration: 8000, isClosable: true });
+      return;
+    }
+
+    if (command.name === '/image') {
+      if (!args) {
+        toast({
+          title: 'Describe the image',
+          description: command.usage,
+          status: 'warning',
+          duration: 4000,
+          isClosable: true,
+        });
+        return;
+      }
+      // canPerform reports an uncapable model; generateImage re-checks too
+      if (command.task && !canPerform(command.task)) return;
+      await generateImage(args, args);
+      return;
+    }
+  };
+
   const sendMessage = async () => {
     const text = input.trim();
+
+    // Slash commands are handled locally and never posted to the shared
+    // transcript: their output is feedback for the person who typed them, not
+    // part of the conversation everyone sees.
+    const parsed = parseCommand(text);
+    if (parsed === 'unknown') {
+      toast({
+        title: `Unknown command "${text.split(/\s+/)[0]}"`,
+        description: commandHelp(),
+        status: 'warning',
+        duration: 6000,
+        isClosable: true,
+      });
+      return;
+    }
+    if (parsed) {
+      setInput('');
+      await runCommand(parsed);
+      return;
+    }
+
     setInput('');
     if (mode === 'image') {
       // Image
@@ -1202,17 +1254,35 @@ function AppComponent(props: App): JSX.Element {
   // Generate an image from the linked text app (e.g. a Stickie): the text is
   // sent to the image-generation endpoint, the result is uploaded as an asset,
   // and an ImageViewer is placed next to the chat window.
+  /** The "Generate Image" prompt button: illustrate the linked text. */
   const onImageGeneration = async () => {
-    if (!user || processing) return;
-    if (!canPerform('image_generation')) return;
     const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
     const textApp = apps.find((a) => typeof (a.data.state as { text?: string }).text === 'string');
     const text = ((textApp?.data.state as { text?: string })?.text ?? s.context ?? '').trim();
     if (!text) {
-      toast({ title: 'No text to illustrate', description: 'Link a Stickie with some text first.', status: 'warning', duration: 4000, isClosable: true });
+      toast({
+        title: 'No text to illustrate',
+        description: 'Link a Stickie with some text first, or type /image <description>.',
+        status: 'warning',
+        duration: 4000,
+        isClosable: true,
+      });
       return;
     }
-    const label = 'Generate an image from the text';
+    await generateImage(text, 'Generate an image from the text');
+  };
+
+  /**
+   * Generate an image from `text`, used as the prompt as written.
+   *
+   * Shared by the "Generate Image" prompt button (which illustrates a linked
+   * Stickie) and the /image command (where the typed text is the prompt), so
+   * both take the same path through generation, upload and window creation.
+   */
+  const generateImage = async (text: string, label: string) => {
+    if (!user || processing) return;
+    if (!canPerform('image_generation')) return;
+    if (!text) return;
     const [firstLine] = text.split('\n').filter((l) => l.trim());
     const now = await serverTime();
     const placeholder = {
@@ -1567,7 +1637,7 @@ function AppComponent(props: App): JSX.Element {
         {/* Input Text */}
         <InputGroup bg={'blackAlpha.100'} maxHeight={'120px'}>
           <Textarea
-            placeholder={'Chat with friends or ask SAGE with @S' + (selectedModel ? ' (' + selectedModel + ' model)' : '')}
+            placeholder={'Chat, ask SAGE with @S, or type / for commands' + (selectedModel ? ' (' + selectedModel + ' model)' : '')}
             size="md"
             variant="outline"
             _placeholder={{ color: 'inherit' }}
