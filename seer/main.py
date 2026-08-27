@@ -8,7 +8,6 @@ from fluent import sender
 from libs.ai_logging import initFluent
 
 
-from app.imagegen import ImageGenAgent
 from libs.localtypes import (
     ImageQuery,
     Question,
@@ -53,6 +52,7 @@ from langchain.globals import set_debug, set_verbose
 # Modules
 from app.chat import ChatAgent
 from app.ideator import IdeatorAgent
+from app.imagegen import ImageGenAgent
 
 # from app.summary import SummaryAgent
 from app.web import WebAgent
