@@ -9,6 +9,7 @@
 import ky, { HTTPError } from 'ky';
 
 import { apiUrls } from '../config/urls';
+import { USER_PROVIDER_NAME, userLLMPayload } from '../utils/userllm';
 import {
   SError,
   AgentRoutes,
@@ -45,19 +46,52 @@ import {
 const AGENT_TIMEOUT_MS = 120 * 1000;
 const IDEATOR_TIMEOUT_MS = 60 * 1000;
 
+/**
+ * Attach the user's own credentials when — and only when — the request names
+ * their own provider. Every request carries a `model` field holding a provider
+ * name; if it is anything other than the user's own, the payload is returned
+ * untouched, so requests against server-configured providers are unchanged.
+ */
+export function withUserCredentials<T extends object>(data: T): T {
+  if ((data as { model?: string }).model !== USER_PROVIDER_NAME) return data;
+  const userllm = userLLMPayload();
+  // Selected but no credentials stored: send as-is and let the backend report
+  // the failure rather than silently pretending a different provider was meant
+  if (!userllm) return data;
+  return { ...data, userllm };
+}
+
+/**
+ * Turn a failed response into a readable SError.
+ *
+ * The backend reports failures as `{ detail: ... }` (FastAPI's convention)
+ * while SError carries `message`, so reading only `message` silently discards
+ * the reason and leaves the caller with a bare status code.
+ */
+export async function toSError(error: HTTPError<Response>): Promise<SError> {
+  try {
+    const body = (await error.response.json()) as { message?: string; detail?: unknown };
+    const detail = typeof body?.detail === 'string' ? body.detail : body?.detail ? JSON.stringify(body.detail) : undefined;
+    const message = body?.message || detail;
+    if (message) return { message };
+  } catch (e) {
+    // Body was not JSON — fall through to the status line
+  }
+  return { message: `${error.response.status} ${error.response.statusText}`.trim() };
+}
+
 async function agentPost<T>(path: string, data: object, timeoutMs = AGENT_TIMEOUT_MS, signal?: AbortSignal): Promise<T | SError> {
   try {
-    return await ky.post<T>(path, { json: data, timeout: timeoutMs, signal }).json();
+    return await ky.post<T>(path, { json: withUserCredentials(data), timeout: timeoutMs, signal }).json();
   } catch (e) {
     if (e instanceof Error && e.name === 'AbortError') {
       return { message: 'Cancelled' };
     }
     const error = e as HTTPError<Response>;
     if (error.name === 'HTTPError') {
-      const err: SError = await error.response.json();
-      return err;
+      return await toSError(error);
     }
-    return { message: 'Unknown error' };
+    return { message: e instanceof Error ? e.message : 'Unknown error' };
   }
 }
 
@@ -67,10 +101,9 @@ async function agentGet<T>(path: string): Promise<T | SError> {
   } catch (e) {
     const error = e as HTTPError<Response>;
     if (error.name === 'HTTPError') {
-      const err: SError = await error.response.json();
-      return err;
+      return await toSError(error);
     }
-    return { message: 'Unknown error' };
+    return { message: e instanceof Error ? e.message : 'Unknown error' };
   }
 }
 

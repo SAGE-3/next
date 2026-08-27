@@ -44,6 +44,7 @@ import {
   useConfigStore,
   seerIdeator,
   dataURLtoBlob,
+  withUserProvider,
 } from '@sage3/frontend';
 import { genId, AskRequest, ImageQuery, PDFQuery, CodeRequest, WebQuery, WebScreenshot, isGeoJSON } from '@sage3/shared';
 import { LLMConfigManager, TaskType } from '@sage3/shared/types';
@@ -104,7 +105,11 @@ function AppComponent(props: App): JSX.Element {
   // AI capability config (no secrets) used to gate requests by capability.
   // Built from the server config; the manager mirrors the backend's matching.
   const serverConfig = useConfigStore((state) => state.config);
-  const llmManager = useMemo(() => (serverConfig?.models ? new LLMConfigManager(serverConfig.models) : undefined), [serverConfig]);
+  const llmManager = useMemo(
+    // Include the user's own provider so its capabilities gate tasks like any other
+    () => (serverConfig?.models ? new LLMConfigManager(withUserProvider(serverConfig.models)) : undefined),
+    [serverConfig]
+  );
 
   // Input text for query
   const [input, setInput] = useState<string>('');

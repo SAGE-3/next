@@ -26,7 +26,8 @@ from libs.localtypes import (
 )
 
 # Web API
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 import uvicorn
 
 load_dotenv()  # take environment variables from .env.
@@ -112,6 +113,30 @@ app = FastAPI(
     description="A LangChain proxy for SAGE3.",
     version="0.1.0",
 )
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    """Log the full traceback and return the actual error to the caller.
+
+    Without this an uncaught error becomes a bare 500 with no detail and no
+    traceback anywhere, which is indistinguishable from every other 500.
+    """
+    logger.exception(f"Unhandled error on {request.method} {request.url.path}")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"{type(exc).__name__}: {exc}"},
+    )
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """Keep the status code the handler chose instead of flattening it to 500,
+    and log it so refusals (bad provider, missing capability) are visible."""
+    logger.warning(
+        f"HTTP {exc.status_code} on {request.method} {request.url.path}: {exc.detail}"
+    )
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
 
 

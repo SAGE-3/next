@@ -240,8 +240,6 @@ class PDFAgent:
             "Got PDF> from " + qq.user + ": " + qq.q + " using: " + qq.model
         )
 
-        self.logger.info(f"\n\nqq, {qq}\n\n")
-
         text = ""
         if qq.assetids:
             # Index each document once. Already-indexed docs are skipped entirely
@@ -275,7 +273,9 @@ class PDFAgent:
                 res = await self.vector_store.aadd_documents(documents=splits)
                 self.logger.info(f"pdf {assetid}: indexed {len(res)} chunks")
 
-            llm = self.manager.build_chat_model(qq.model, ["chat"])
+            llm = self.manager.build_chat_model(
+                qq.model, ["chat"], user_llm=LLMManager.user_credentials(qq)
+            )
             if llm is None:
                 raise HTTPException(
                     status_code=400,

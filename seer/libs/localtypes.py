@@ -7,11 +7,33 @@
 # -----------------------------------------------------------------------------
 
 # Models
-from typing import List
+from typing import List, Optional
 from pydantic import BaseModel, Json
 import io
 
 # Pydantic models: Question, Answer, Context
+
+
+class UserLLM(BaseModel):
+    """A user's own OpenAI-compatible credentials, supplied per request.
+
+    Present only when the request's `model` field names the user's own provider
+    (`my-own-key`); absent for the server's configured providers. Used for that
+    single request and never stored. `apiKey` is a bearer secret: it must be
+    redacted before any request is logged.
+    """
+
+    apiKey: str  # the user's API key, valid for this request only
+    baseUrl: Optional[str] = None  # OpenAI-compatible base URL; None = OpenAI
+    modelId: str  # the model to call, e.g. gpt-4o
+
+    def __repr__(self) -> str:
+        # Defence in depth: any log line that interpolates a request object
+        # prints this instead of the key. Does not affect model_dump(), which
+        # is what the manager reads to build the client.
+        return f"UserLLM(apiKey='***', baseUrl={self.baseUrl!r}, modelId={self.modelId!r})"
+
+    __str__ = __repr__
 
 
 class Context(BaseModel):
@@ -29,6 +51,7 @@ class Question(BaseModel):
     user: str  # user name
     location: str  # location
     model: str  # AI model: llama, openai, azure
+    userllm: Optional[UserLLM] = None  # the user's own credentials, when they chose their own provider
     appIds: List[str] = []  # source apps whose content to read server-side
     intent: str = ""  # optional prompt template: summary|proscons|keywords|opinion|facts
 
@@ -47,6 +70,7 @@ class CodeRequest(BaseModel):
     user: str  # user name
     location: str  # location
     model: str  # AI model: llama, openai, azure
+    userllm: Optional[UserLLM] = None  # the user's own credentials, when they chose their own provider
     method: str
     appIds: List[str] = []  # source CodeEditor apps to read server-side
 
@@ -63,6 +87,7 @@ class ImageQuery(BaseModel):
     assets: List[str]  # one or more image assets
     user: str  # user name
     model: str  # AI model: llama, openai, azure
+    userllm: Optional[UserLLM] = None  # the user's own credentials, when they chose their own provider
     q: str  # question
 
 
@@ -97,6 +122,7 @@ class PDFQuery(BaseModel):
     assetids: List[str]  # pdfs in sage
     user: str  # user name
     model: str  # AI model: openai, azure
+    userllm: Optional[UserLLM] = None  # the user's own credentials, when they chose their own provider
     q: str  # question
 
 
@@ -111,6 +137,7 @@ class WebQuery(BaseModel):
     url: str  # question
     user: str  # user name
     model: str  # AI model: llama, openai, azure
+    userllm: Optional[UserLLM] = None  # the user's own credentials, when they chose their own provider
     q: str  # question
     extras: str  # extra request data: 'links' | 'text' | 'images' | 'pdfs'
 
@@ -156,6 +183,7 @@ class IdeatorDimensionsRequest(BaseModel):
     prompt: str
     numDims: int
     model: str
+    userllm: Optional[UserLLM] = None  # the user's own credentials, when they chose their own provider
     imageBase64: str | None = None
     pdfContext: str | None = None
 
@@ -170,6 +198,7 @@ class IdeatorNodeRequest(BaseModel):
     prompt: str
     requirements: str
     model: str
+    userllm: Optional[UserLLM] = None  # the user's own credentials, when they chose their own provider
     imageBase64: str | None = None
     pdfContext: str | None = None
 
@@ -182,6 +211,7 @@ class IdeatorNodeResponse(BaseModel):
 class IdeatorAbstractRequest(BaseModel):
     text: str
     model: str
+    userllm: Optional[UserLLM] = None  # the user's own credentials, when they chose their own provider
     temperature: float = 0.0
 
 
@@ -198,6 +228,7 @@ class IdeatorUserDimensionRequest(BaseModel):
     prompt: str
     nodes: List[IdeatorNode]
     model: str
+    userllm: Optional[UserLLM] = None  # the user's own credentials, when they chose their own provider
 
 
 class IdeatorUserDimensionResponse(BaseModel):
@@ -211,6 +242,7 @@ class IdeatorSummarizeRequest(BaseModel):
     nodes: List[IdeatorSummarizeNode]
     prompt: str
     model: str
+    userllm: Optional[UserLLM] = None  # the user's own credentials, when they chose their own provider
 
 
 class IdeatorSummarizeResponse(BaseModel):
@@ -223,6 +255,7 @@ class IdeatorImageRequest(BaseModel):
     summary: str
     keywords: List[str]
     model: str
+    userllm: Optional[UserLLM] = None  # the user's own credentials, when they chose their own provider
     brainstormingPrompt: str | None = None
     dimension: IdeatorDimension | None = None
     additionalContext: str | None = None
@@ -236,6 +269,7 @@ class IdeatorImageResponse(BaseModel):
 class IdeatorProseRequest(BaseModel):
     userPrompt: str
     model: str
+    userllm: Optional[UserLLM] = None  # the user's own credentials, when they chose their own provider
 
 
 class IdeatorProseResponse(BaseModel):

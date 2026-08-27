@@ -11,6 +11,32 @@ export type SError = {
   message: string;
 };
 
+/**
+ * The provider name used when a request carries the user's own credentials
+ * rather than naming one of the server's configured providers. A request whose
+ * `model` field holds this value is expected to carry a `userllm` block.
+ */
+export const USER_LLM_PROVIDER = 'my-own-key';
+
+/**
+ * A user's own OpenAI-compatible credentials, attached to an AI request when
+ * they have chosen their own provider instead of one configured on the server.
+ *
+ * Present ONLY on those requests: a request naming a server provider is sent
+ * exactly as before, with no `userllm` field at all.
+ *
+ * The backend should use these for that single request and never persist them.
+ * `apiKey` is a bearer secret — it must be redacted from any request logging.
+ */
+export type UserLLMPayload = {
+  /** The user's API key, valid for this request only. */
+  apiKey: string;
+  /** Optional OpenAI-compatible base URL; absent means the OpenAI default. */
+  baseUrl?: string;
+  /** The model to call, e.g. `gpt-4o`. */
+  modelId: string;
+};
+
 // Request Types
 
 // Health check request
