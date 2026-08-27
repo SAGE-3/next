@@ -71,6 +71,26 @@ A messaging application for communicating with other users on the board **and wi
 
 Type a message to chat normally; the AI answers questions, brainstorms, and summarizes. The model used depends on your server's configuration and the model you select — see [AI Configuration](Server-Deployment.md#ai-configuration). The AI can only perform a task when the selected model has the matching capability (for example, image questions need a `vision`-capable model), and the Chat app will tell you when a request isn't supported by the current model.
 
+### Commands
+
+Typing a message that starts with **`/`** runs a command instead of sending the message to the conversation. Commands act for you alone — their results appear in a notification or on the board, never as a message everyone sees.
+
+| Command | Does |
+|---|---|
+| `/image <description>` | Generates an image from the description and opens it on the board. Also `/img`, `/draw`. |
+| `/help` | Lists the available commands. Also `/?`. |
+
+Command names are case-insensitive, and anything that only *looks* like a command — `http://example.com/page`, or `and/or` — is sent as an ordinary message. Mistyping a command shows the list rather than posting the typo to the conversation.
+
+### Generating images
+
+There are two ways to get an image:
+
+- **`/image <description>`** — the text you type is the prompt. Use this for anything you can describe.
+- **The "Generate Image" button**, shown when a Stickie is linked to the Chat, illustrates the linked note's text.
+
+Either way the image is generated, saved into the room's assets, and opened as an ImageViewer window on the board, linked back to the Chat that made it. Image generation needs a model that declares the `imagegen` capability — see [AI Configuration](Server-Deployment.md#ai-configuration) — so it is not available with a personal API key, which is assumed to cover text tasks only.
+
 ### Asking about content (images, PDFs, sticky notes)
 
 You can ask the AI about content already on the board:
