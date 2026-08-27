@@ -149,13 +149,69 @@ class LLMManager:
             url = url + "/v1"
         return url
 
+
+    @staticmethod
+    def user_credentials(req) -> Optional[dict]:
+        """The per-request credentials carried by a request model, or None.
+
+        Requests naming a server-configured provider have no `userllm` block,
+        so this returns None and every caller behaves exactly as before.
+        """
+        u = getattr(req, "userllm", None)
+        if not u:
+            return None
+        return u.model_dump() if hasattr(u, "model_dump") else dict(u)
+
     def resolve_model(
-        self, provider: str, capabilities: Union[str, List[Capability]]
+        self,
+        provider: str,
+        capabilities: Union[str, List[Capability]],
+        user_llm: Optional[dict] = None,
     ) -> Optional[dict]:
         """Return the raw connection details for the best matching model, or
-        None when the provider has no model with any of the capabilities."""
+        None when the provider has no model with any of the capabilities.
+
+        When `user_llm` is given it holds credentials supplied with the request
+        (apiKey / baseUrl / modelId) and takes precedence over the configured
+        providers: the model is built from those instead of from the config.
+        The capabilities are not checked against it — a user-supplied model is
+        assumed to handle chat, code, and vision, matching what the client
+        offers — but image generation and embeddings never route here.
+        """
         if isinstance(capabilities, str):
             capabilities = [capabilities]
+
+        if user_llm:
+            url = user_llm.get("baseUrl")
+            model_id = user_llm.get("modelId")
+            has_key = bool(user_llm.get("apiKey"))
+            if self.logger:
+                # Never log the key itself — only whether one arrived
+                self.logger.info(
+                    f"LLM> user-supplied credentials: model={model_id!r} "
+                    f"base_url={url or 'default (OpenAI)'} key_present={has_key}"
+                )
+            if not model_id or not has_key:
+                if self.logger:
+                    self.logger.warning(
+                        "LLM> user credentials incomplete (missing model or key)"
+                    )
+                return None
+            return {
+                # No url means plain OpenAI; a url means an OpenAI-compatible
+                # endpoint. Azure is never inferred here: it needs an
+                # api_version the client has no way to supply.
+                "kind": "openai_compat" if url else "openai",
+                "name": provider,
+                "model_id": model_id,
+                "api_key": user_llm.get("apiKey"),
+                "url": url,
+                "base_url": self._normalize_base_url(url) if url else None,
+                "api_version": None,
+                "max_tokens": None,
+                "context_window": None,
+            }
+
         p = self.get_provider(provider)
         if not p:
             return None
@@ -222,17 +278,27 @@ class LLMManager:
     #
 
     def build_chat_model(
-        self, provider: str, capabilities: Union[str, List[Capability]], **kwargs
+        self,
+        provider: str,
+        capabilities: Union[str, List[Capability]],
+        user_llm: Optional[dict] = None,
+        **kwargs,
     ):
         """Build (and cache) a LangChain chat model for the first model in
-        `provider` matching one of `capabilities`. Returns None if no match."""
+        `provider` matching one of `capabilities`. Returns None if no match.
+
+        A model built from per-request `user_llm` credentials is NEVER cached: the
+        cache is keyed by provider name, which every user of their own key would
+        share, so caching would hand one user's client — and their API key — to
+        the next request that named the same provider.
+        """
         if isinstance(capabilities, str):
             capabilities = [capabilities]
         cache_key = (provider, tuple(capabilities), tuple(sorted(kwargs.items())))
-        if cache_key in self._chat_cache:
+        if not user_llm and cache_key in self._chat_cache:
             return self._chat_cache[cache_key]
 
-        info = self.resolve_model(provider, capabilities)
+        info = self.resolve_model(provider, capabilities, user_llm)
         if not info:
             return None
 
@@ -259,7 +325,8 @@ class LLMManager:
         else:
             llm = ChatOpenAI(api_key=api_key, model=model_id, **kwargs)
 
-        self._chat_cache[cache_key] = llm
+        if not user_llm:
+            self._chat_cache[cache_key] = llm
         return llm
 
     def build_embeddings(self, provider: str):

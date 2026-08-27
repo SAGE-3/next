@@ -41,6 +41,8 @@ import {
   IdeatorProseRequest,
   IdeatorProseResponse,
   ImageGenerationRoutes,
+  ImageGenerationRequest,
+  ImageGenerationResponse,
 } from '@sage3/shared';
 
 // Define a general RPC handler type
@@ -121,6 +123,9 @@ const ideatorUserDimensionHandler: RpcHandlerPost<IdeatorUserDimensionRequest, I
 const ideatorSummarizeHandler: RpcHandlerPost<IdeatorSummarizeRequest, IdeatorSummarizeResponse> = (req) =>
   fetchPost(`${config.agents.url}${IdeatorRoutes.summarize}`, req);
 const ideatorImageHandler: RpcHandlerPost<IdeatorImageRequest, IdeatorImageResponse> = (req) =>
+  fetchPost(`${config.agents.url}/ideator${IdeatorRoutes.image}`, req);
+// Generic image generation: the prompt is used as the caller wrote it
+const imageGenerationHandler: RpcHandlerPost<ImageGenerationRequest, ImageGenerationResponse> = (req) =>
   fetchPost(`${config.agents.url}${ImageGenerationRoutes.generate}`, req);
 const ideatorProseHandler: RpcHandlerPost<IdeatorProseRequest, IdeatorProseResponse> = (req) =>
   fetchPost(`${config.agents.url}${IdeatorRoutes.prose}`, req);
@@ -144,6 +149,8 @@ handlers[`/ideator${IdeatorRoutes.userDimension}`] = { func: ideatorUserDimensio
 handlers[`/ideator${IdeatorRoutes.summarize}`] = { func: ideatorSummarizeHandler, method: 'POST' };
 handlers[`/ideator${IdeatorRoutes.image}`] = { func: ideatorImageHandler, method: 'POST' };
 handlers[`/ideator${IdeatorRoutes.prose}`] = { func: ideatorProseHandler, method: 'POST' };
+// Generic image generation, available to any app (not ideator-specific)
+handlers[ImageGenerationRoutes.generate] = { func: imageGenerationHandler, method: 'POST' };
 
 /*
  * Create an express router for the agent API

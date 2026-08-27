@@ -91,12 +91,12 @@ class CodeAgent:
             # provider and let process() return a clear per-request error.
             self.logger.warning("CodeAgent> no model configured; code requests will fail until models are set")
 
-    def _get_session(self, provider: str):
+    def _get_session(self, provider: str, user_llm=None):
         """Build a prompt|llm|parser chain for a provider's code-capable model,
         or None if the provider can't handle code. The model itself is cached by
         LLMManager, so the chain is cheap to recompose per request."""
         # 'coding' task prefers a 'code' model, falling back to chat
-        llm = self.manager.build_chat_model(provider, ["code", "chat"])
+        llm = self.manager.build_chat_model(provider, ["code", "chat"], user_llm=user_llm)
         return (self.prompt | llm | self.output_parser) if llm else None
 
     async def process(self, qq: CodeRequest):
@@ -108,7 +108,7 @@ class CodeAgent:
         today = time.asctime()
 
         # Resolve a code session for the requested provider
-        session = self._get_session(qq.model)
+        session = self._get_session(qq.model, LLMManager.user_credentials(qq))
         if session is None:
             raise HTTPException(
                 status_code=400,

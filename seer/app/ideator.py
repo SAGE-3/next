@@ -76,10 +76,13 @@ class IdeatorAgent:
         fall back to the configured default provider when empty."""
         return model or self.manager.default_provider() or ""
 
-    async def _chat(self, system: str, user: str, model: str, temperature: float = 0.7, image_base64: str | None = None) -> str:
+    async def _chat(self, system: str, user: str, model: str, temperature: float = 0.7, image_base64: str | None = None, user_llm=None) -> str:
         provider = self._resolve_provider(model)
         capability = "vision" if image_base64 else "chat"
-        llm = self.manager.build_chat_model(provider, [capability], temperature=temperature)
+        # `user` above is the prompt; `user_llm` is the caller's own credentials
+        llm = self.manager.build_chat_model(
+            provider, [capability], user_llm=user_llm, temperature=temperature
+        )
         if llm is None:
             raise HTTPException(
                 status_code=400,
@@ -96,11 +99,11 @@ class IdeatorAgent:
         )
         return str(response.content)
 
-    async def _json_chat(self, user: str, model: str, temperature: float = 0.7, image_base64: str | None = None) -> str:
-        return await self._chat(JSON_SYSTEM, user, model, temperature, image_base64)
+    async def _json_chat(self, user: str, model: str, temperature: float = 0.7, image_base64: str | None = None, user_llm=None) -> str:
+        return await self._chat(JSON_SYSTEM, user, model, temperature, image_base64, user_llm)
 
-    async def _prose_chat(self, user: str, model: str, temperature: float = 0.7, image_base64: str | None = None) -> str:
-        return await self._chat(PROSE_SYSTEM, user, model, temperature, image_base64)
+    async def _prose_chat(self, user: str, model: str, temperature: float = 0.7, image_base64: str | None = None, user_llm=None) -> str:
+        return await self._chat(PROSE_SYSTEM, user, model, temperature, image_base64, user_llm)
 
     # ─── Endpoints ───────────────────────────────────────────────────────────
 
@@ -130,8 +133,8 @@ class IdeatorAgent:
         )
 
         cat_raw, ord_raw = await asyncio.gather(
-            self._json_chat(cat_msg, req.model, 0.7, req.imageBase64),
-            self._json_chat(ord_msg, req.model, 0.7, req.imageBase64),
+            self._json_chat(cat_msg, req.model, 0.7, req.imageBase64, LLMManager.user_credentials(req)),
+            self._json_chat(ord_msg, req.model, 0.7, req.imageBase64, LLMManager.user_credentials(req)),
         )
 
         categorical = {}
@@ -157,7 +160,7 @@ class IdeatorAgent:
             "Describe one specific, actionable idea that satisfies all constraints in 1–2 natural paragraphs (up to 150 words). "
             "Be concrete and practical. Write as flowing prose, not lists or JSON."
         )
-        r = await self._prose_chat(msg, req.model, 0.8, req.imageBase64)
+        r = await self._prose_chat(msg, req.model, 0.8, req.imageBase64, LLMManager.user_credentials(req))
         return IdeatorNodeResponse(r=r)
 
     async def abstract(self, req: IdeatorAbstractRequest) -> IdeatorAbstractResponse:
@@ -167,7 +170,7 @@ class IdeatorAgent:
             "Return ONLY valid JSON:\n"
             '{"Title":"<title>","Summary":"<one sentence>","Steps":["Do X","Do Y","Do Z"],"Key Words":["w1","w2"]}'
         )
-        raw = await self._json_chat(msg, req.model, req.temperature)
+        raw = await self._json_chat(msg, req.model, req.temperature, None, LLMManager.user_credentials(req))
         try:
             j = json.loads(_extract_json(raw))
             return IdeatorAbstractResponse(
@@ -192,7 +195,7 @@ class IdeatorAgent:
             "Suggest exactly 4 values.\n"
             'Return ONLY valid JSON: {"type":"categorical","values":["v1","v2","v3","v4"]}'
         )
-        type_raw = await self._json_chat(type_msg, req.model, 0)
+        type_raw = await self._json_chat(type_msg, req.model, 0, None, LLMManager.user_credentials(req))
         dim_type = "categorical"
         values = []
         try:
