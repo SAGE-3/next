@@ -169,20 +169,26 @@ webstack/apps/homebase-files/
 
 Seer is a Python FastAPI server that provides AI-powered features for SAGE3. It connects to external LLM providers and processes AI requests forwarded from Homebase.
 
-**Supported LLM providers:**
-- OpenAI (GPT-4 family)
-- Azure OpenAI
-- Llama (self-hosted via NVIDIA API, hosted at University of Illinois Chicago)
+**LLM providers** are not hard-coded. Seer reads the server's capability-driven model registry (`services.models`, see [AI Configuration](Server-Deployment.md#ai-configuration)) at start-up and picks a model by matching a request's **task** to a model's declared **capabilities**. How each provider is spoken to is inferred from its config: a `url` plus a model `api_version` means **Azure OpenAI**, a `url` alone means any **OpenAI-compatible** endpoint (LiteLLM, vLLM, Ollama, …), and no `url` means **openai.com**. Adding a provider is a configuration change, not a code change.
 
 **AI agents:**
 | Agent | Endpoint | Description |
 |---|---|---|
 | Chat | `POST /ask` | General LLM Q&A with message history |
+| Summary | `POST /summary` | Summarize the linked content |
 | Code | `POST /code` | Code assistance and explanation |
 | Image | `POST /image` | Image understanding and bounding box detection |
-| Web | `POST /web` | Web page scraping and summarization |
+| Image generation | `POST /image-generation` | Generic image generation; the prompt is used as written |
+| Web | `POST /web`, `POST /webshot` | Web page scraping, summarization and screenshots |
 | PDF | `POST /pdf` | PDF document analysis and Q&A |
 | Mesonet | `POST /mesonet` | Hawaii sensor / weather data queries |
+| Ideator | `POST /dimensions`, `/node`, `/abstract`, `/user-dimension`, `/summarize`, `/prose`, `/ideator/image` | Brainstorming support for the SageIdeator app |
+
+`GET /status` reports service health.
+
+> **Image generation vs. the Ideator.** `POST /image-generation` is the generic path used by any app: it sends the caller's prompt unchanged. `POST /ideator/image` is SageIdeator's, and *composes* a brainstorming prompt from ideator concepts (dimensions, the brainstorming prompt) before generating. They share the client-construction code but not the prompt, so the ideator's framing does not leak into ordinary image requests.
+
+**Per-request user credentials.** A request may carry a `userllm` block (`apiKey`, optional `baseUrl`, `modelId`) when the user has supplied their own key in the web app. When present it takes precedence over the configured providers for that one request. Such models are **never cached** — the model cache is keyed by provider name, which every user of a personal key shares, so caching would hand one user's client and key to the next request. The key is used and discarded; it is never persisted, and `UserLLM` carries a redacting representation so a log line that prints a request shows `apiKey='***'`. See [Users bringing their own key](Server-Deployment.md#users-bringing-their-own-key).
 
 Seer uses ChromaDB for semantic vector caching and communicates back to SAGE3 using the `pysage3` Python client library.
 

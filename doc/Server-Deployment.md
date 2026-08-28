@@ -809,6 +809,32 @@ Per-model fields: `model_id` (the provider's actual model name), `capabilities` 
 
 **`settings`** holds the `default_provider` (used when a user has not chosen one) plus `timeout_seconds`, `max_retries`, and `log_requests`.
 
+#### Users bringing their own key
+
+Alongside the providers configured above, a user can supply **their own OpenAI-compatible API key** from **Settings → Intelligence**, where it appears as an extra provider named `my-own-key` in the same list as the server's providers.
+
+The form takes three things:
+
+| Field | Meaning |
+|---|---|
+| **API key** | The user's key. Required. |
+| **Base URL** | Optional. Blank means `https://api.openai.com/v1`. Any OpenAI-compatible endpoint works; `/v1` is appended if missing, so `https://myhost` is enough. |
+| **Model** | The model to call. Chosen from a dropdown when the endpoint can be queried, typed by hand otherwise. |
+
+As soon as a key and base URL are entered, the browser calls `GET {baseUrl}/models` with the key and offers the result as a dropdown. The lookup is debounced, and any lookup still in flight is cancelled when either field changes again. If the endpoint does not answer — no `/models` route, a rejected key, or a network or CSP failure — the field falls back to free text so the model name can be typed instead.
+
+**Capabilities.** A user-supplied model is assumed to handle `chat`, `code`, and `vision`, which enables the *chat*, *coding*, *image* and *pdf_processing* tasks. It never advertises `imagegen` or `embeddings`: there is no way to ask an arbitrary endpoint what its model supports, so claiming those would light up UI that then fails at request time. Image generation therefore stays on the server's providers.
+
+**Where the key lives.** The key is stored **only in that browser**, under the `s3_user_llm` local-storage key — never in the SAGE3 database and never in the user's account record. It is sent with each AI request the user makes, used for that one request, and never persisted server-side. It is kept out of the `s3_user_settings` bundle deliberately, so that *Restore Default Settings* cannot silently delete it. Clearing the browser's site data removes it, and it does not follow the user to another machine.
+
+Two consequences worth stating plainly to users: requests made this way are **billed to their own account**, and anyone with access to their browser profile can read the key — the same exposure as any credential kept in a browser.
+
+**Who may use it.** Registered users and admins only. Guests and spectators are refused: they are transient, unverified accounts, and a key pasted into a shared guest session would outlive whoever pasted it. Opening Settings as a guest also clears any key a previous account left behind in that browser.
+
+**Which endpoints work.** A key with no base URL is spoken to as OpenAI; a base URL is treated as a generic OpenAI-compatible endpoint. **Azure OpenAI is not supported this way**, because it needs an `api_version` the form has no field for — Azure must be configured server-side. Note also that the browser contacts the endpoint directly for the model lookup, so an `http://` endpoint is blocked by the web app's content-security policy; use `https://`, or configure that endpoint server-side instead.
+
+**Turning it off.** There is no server switch for this today. Leaving `models.providers` empty disables AI entirely, including user-supplied keys.
+
 **To disable AI**, leave `models.providers` empty (or remove the `models` block).
 
 See the `models` block in the configuration listing above for a complete example.

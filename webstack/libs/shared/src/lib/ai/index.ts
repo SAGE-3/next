@@ -9,3 +9,4 @@
 export * from './ai-api';
 export * from './agents-api';
 export * from './ideator-api';
+export * from './image-api';

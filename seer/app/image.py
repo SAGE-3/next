@@ -169,7 +169,9 @@ class ImageAgent:
             ai_handler.setPrompt(qq.q)
 
             # Resolve a vision-capable model for the requested provider
-            llm = self.manager.build_chat_model(qq.model, ["vision"])
+            llm = self.manager.build_chat_model(
+                qq.model, ["vision"], user_llm=LLMManager.user_credentials(qq)
+            )
             if llm is None:
                 from fastapi import HTTPException
 

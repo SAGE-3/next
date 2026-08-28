@@ -101,12 +101,12 @@ class ChatAgent:
             # provider and let process() return a clear per-request error.
             self.logger.warning("ChatAgent> no model configured; chat requests will fail until models are set")
 
-    def _get_session(self, provider: str):
+    def _get_session(self, provider: str, user_llm=None):
         """Build a prompt|llm|parser chain for a provider's chat-capable model,
         or None if the provider can't chat. The model itself is cached by
         LLMManager, so the chain is cheap to recompose per request."""
         # 'chat' task needs a chat-capable model
-        llm = self.manager.build_chat_model(provider, ["chat"])
+        llm = self.manager.build_chat_model(provider, ["chat"], user_llm=user_llm)
         return (self.prompt | llm | self.output_parser) if llm else None
 
     async def process(self, qq: Question):
@@ -122,7 +122,11 @@ class ChatAgent:
         ai_handler.setAI(qq.model)
 
         # Resolve a chat session for the requested provider
-        session = self._get_session(qq.model)
+        user_llm = LLMManager.user_credentials(qq)
+        self.logger.info(
+            f"Chat> provider={qq.model!r} own_key={'yes' if user_llm else 'no'}"
+        )
+        session = self._get_session(qq.model, user_llm)
         if session is None:
             # Defense in depth: the frontend gates this, but reject clearly here
             raise HTTPException(
