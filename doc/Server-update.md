@@ -93,8 +93,6 @@ Each service has a folder inside the ‘configuration’ directory.
       * Google, CILogin, …  
     * Namespace  
       * Copy the key from old configuration
-    * Feedback URL
-      * `"feedback": { "url": "http://sage3-server-status.cis230038.projects.jetstream-cloud.org:3000/feedback" },`
     * Services:
 ```
  …
