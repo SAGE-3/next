@@ -39,7 +39,6 @@ import {
   MdArrowForward,
   MdLock,
   MdLockOpen,
-  MdBugReport,
   MdHelpOutline,
   MdPerson,
   MdSettings,
@@ -58,7 +57,6 @@ import {
   EnterBoardModal,
   useHexColor,
   useAbility,
-  FeedbackModal,
   useConfigStore,
   HelpModal,
   Alfred,
@@ -89,7 +87,6 @@ export function MainButton(props: MainButtonProps) {
 
   const config = useConfigStore((state) => state.config);
   const isProduction = config.production;
-  const feedbackUrl = config.feedback ? config.feedback.url : null;
 
   // Track if the menu is open or not
   const [menuOpen, setMenuOpen] = useState<boolean>(false);
@@ -132,9 +129,6 @@ export function MainButton(props: MainButtonProps) {
 
   // Nav
   const { toAdmin } = useRouteNav();
-
-  // FeedbackModel
-  const { isOpen: feedbackIsOpen, onOpen: feedbackOnOpen, onClose: feedbackOnClose } = useDisclosure();
 
   // Enter Board Modal
   const { isOpen: enterBoardIsOpen, onOpen: enterBoardOnOpen, onClose: enterBoardOnClose } = useDisclosure();
@@ -210,9 +204,6 @@ export function MainButton(props: MainButtonProps) {
         <Alfred boardId={props.boardInfo.boardId} roomId={props.boardInfo.roomId} isOpen={alfredIsOpen} onClose={alfredOnClose} />
       )}
 
-      {/* Feedback modal */}
-      {feedbackUrl && <FeedbackModal isOpen={feedbackIsOpen} onClose={feedbackOnClose} url={feedbackUrl} />}
-
       <Menu preventOverflow={false} placement="top-start" onOpen={() => setMenuOpen(true)} onClose={() => setMenuOpen(false)}>
         {props.boardInfo ? (
           <Flex gap="2">
@@ -287,11 +278,6 @@ export function MainButton(props: MainButtonProps) {
               {' '}
               About{' '}
             </MenuItem>
-            {feedbackUrl && (
-              <MenuItem onClick={feedbackOnOpen} icon={<MdBugReport fontSize="24px" />} py="1px" m="0">
-                Feedback
-              </MenuItem>
-            )}
             {(isAdmin || !isProduction) && (
               <MenuItem onClick={openAdmin} icon={<MdOutlineVpnKey fontSize="24px" />} py="1px" m="0">
                 Admin
