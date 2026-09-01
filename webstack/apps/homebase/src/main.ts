@@ -40,7 +40,7 @@ import { loadConfig } from './config';
 // import { AssetService } from './services';
 import { expressAPIRouter, wsAPIRouter } from './api/routers';
 import { AppsCollection, loadCollections, PresenceCollection } from './api/collections';
-import { SAGEBase, SAGEBaseConfig } from '@sage3/sagebase';
+import { SAGEBase, SAGEBaseConfig, createRateLimiter } from '@sage3/sagebase';
 
 import { APIClientWSMessage, ServerConfiguration } from '@sage3/shared/types';
 import { SBAuthDB, JWTPayload } from '@sage3/sagebase';
@@ -115,7 +115,7 @@ async function startServer() {
   // Twilio Setup
   const screenShareTimeLimit = 3600 * 6 * 1000; // 6 hours
   const twilio = new SAGETwilio(config.services.twilio, AppsCollection, PresenceCollection, 10000, screenShareTimeLimit);
-  app.get('/twilio/token', SAGEBase.Auth.authenticate, (req, res) => {
+  app.get('/twilio/token', createRateLimiter(6), SAGEBase.Auth.authenticate, (req, res) => {
     const authId = req.user.id;
     if (authId === undefined) {
       res.status(403).send();
@@ -286,7 +286,20 @@ async function startServer() {
 
   // Serve the static react files from webapp folder
   serveApp(app, path.join(__dirname, 'webapp'));
-  // Serve the plugins folder
+  // Serve the plugins folder. Plugin documents run in their own same-origin
+  // iframes and load third-party (CDN, inline) scripts, so they get their own
+  // permissive CSP — CSP is per-document, so this does not weaken the main
+  // app's policy. frame-ancestors 'self' keeps plugin pages embeddable only
+  // by SAGE3 itself.
+  app.use('/plugins', (req, res, next) => {
+    res.setHeader(
+      'Content-Security-Policy',
+      "default-src 'self' https: data: blob:; script-src 'self' https: 'unsafe-inline' 'unsafe-eval'; " +
+        "style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data: blob:; " +
+        "connect-src 'self' https: wss: data: blob:; worker-src 'self' blob:; frame-ancestors 'self'",
+    );
+    next();
+  });
   app.use('/plugins', express.static(path.join(__dirname, 'plugins'), { cacheControl: false }));
 
   // Handle termination

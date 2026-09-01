@@ -30,6 +30,7 @@ from libs.localtypes import Context, WebQuery, WebAnswer
 # Utils
 from libs.split_image import split_image_into_tiles
 from libs.utils import getModelsInfo
+from libs.llm_manager import LLMManager
 
 # Playwright
 from playwright.async_api import async_playwright
@@ -38,8 +39,6 @@ from playwright.async_api import async_playwright
 from pysage3.client import PySage3
 
 # AI
-from langchain_nvidia_ai_endpoints import ChatNVIDIA
-from langchain_openai import ChatOpenAI, AzureChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
@@ -73,51 +72,15 @@ class WebAgent:
         self.logger = logger
         self.ps3 = ps3
         self.browser = None
-        models = getModelsInfo(ps3)
-        openai = models["openai"]
-        llama = models["llama"]
-        azure = models["azure"]
-
-        llm_llama = None
-        llm_openai = None
-        llm_azure = None
-
-        # Llama model
-        if llama["url"] and llama["model"]:
-            llm_llama = ChatNVIDIA(
-                base_url=llama["url"] + "/v1",
-                model=llama["model"],
-                api_key=llama["apiKey"],
-                stream=False,
-                max_tokens=2000,
-            )
-
-        # OpenAI model
-        if openai["apiKey"] and openai["model"]:
-            llm_openai = ChatOpenAI(api_key=openai["apiKey"], model=openai["model"])
-
-        # Azure OpenAI model
-        if azure["text"]["apiKey"] and azure["text"]["model"]:
-            model = azure["text"]["model"]
-            endpoint = azure["text"]["url"]
-            credential = azure["text"]["apiKey"]
-            api_version = azure["text"]["api_version"]
-
-            llm_azure = AzureChatOpenAI(
-                azure_deployment=model,
-                api_version=api_version,
-                azure_endpoint=endpoint,
-                azure_ad_token=credential,
-                model=model,
-            )
+        # Capability-driven model registry (providers/tasks/settings)
+        self.manager = LLMManager(getModelsInfo(ps3), logger)
+        self.logger.info("Web providers: " + ", ".join(self.manager.list_providers()))
 
         ai_logger.emit(
             "init",
             {
                 "agent": "web",
-                "openai": openai["apiKey"] is not None,
-                "llama": llama["url"] is not None,
-                "azure": azure["text"]["apiKey"] is not None,
+                "providers": self.manager.list_providers(),
             },
         )
 
@@ -125,7 +88,7 @@ class WebAgent:
         human_template_str = "{question}"
 
         # For OpenAI / Message API compatible models
-        prompt = ChatPromptTemplate.from_messages(
+        self.prompt = ChatPromptTemplate.from_messages(
             [
                 ("system", sys_template_str),
                 MessagesPlaceholder("history"),
@@ -137,22 +100,19 @@ class WebAgent:
         # OutputParser that parses LLMResult into the top likely string.
         # Create a new model by parsing and validating input data from keyword arguments.
         # Raises ValidationError if the input data cannot be parsed to form a valid model.
-        output_parser = StrOutputParser()
+        self.output_parser = StrOutputParser()
 
-        self.session_llama = None
-        self.session_openai = None
-        self.session_azure = None
+        if not self.manager.list_providers():
+            # Don't crash startup on an un-migrated/empty config: boot without a
+            # provider and let process() return a clear per-request error.
+            self.logger.warning("WebAgent> no model configured; web requests will fail until models are set")
 
-        # Session : prompt building and then LLM
-        if llm_openai:
-            self.session_openai = prompt | llm_openai | output_parser
-        if llm_llama:
-            self.session_llama = prompt | llm_llama | output_parser
-        if llm_azure:
-            self.session_azure = prompt | llm_azure | output_parser
-
-        if not self.session_llama and not self.session_openai:
-            raise HTTPException(status_code=500, detail="Langchain> Model unknown")
+    def _get_session(self, provider: str, user_llm=None):
+        """Build a prompt|llm|parser chain for a provider's chat-capable model,
+        or None if the provider can't chat. The model itself is cached by
+        LLMManager, so the chain is cheap to recompose per request."""
+        llm = self.manager.build_chat_model(provider, ["chat"], user_llm=user_llm)
+        return (self.prompt | llm | self.output_parser) if llm else None
 
     async def init(self):
         playwright = await async_playwright().start()
@@ -229,42 +189,23 @@ class WebAgent:
         # Save the ai name for the logs
         ai_handler.setAI(qq.model)
 
-        # Ask the question
-        if qq.model == "llama" and self.session_llama:
-            response = await self.session_llama.ainvoke(
-                {
-                    "history": [("human", qq.ctx.previousQ), ("ai", qq.ctx.previousA)],
-                    "page": page_text,
-                    "question": qq.q,
-                    "username": qq.user,
-                    "date": today,
-                },
-                config={"callbacks": [ai_handler]},
+        # Resolve a chat session for the requested provider
+        session = self._get_session(qq.model, LLMManager.user_credentials(qq))
+        if session is None:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Provider '{qq.model}' has no model capable of chat",
             )
-        elif qq.model == "openai" and self.session_openai:
-            response = await self.session_openai.ainvoke(
-                {
-                    "history": [("human", qq.ctx.previousQ), ("ai", qq.ctx.previousA)],
-                    "page": page_text,
-                    "question": qq.q,
-                    "username": qq.user,
-                    "date": today,
-                },
-                config={"callbacks": [ai_handler]},
-            )
-        elif qq.model == "azure" and self.session_azure:
-            response = await self.session_azure.ainvoke(
-                {
-                    "history": [("human", qq.ctx.previousQ), ("ai", qq.ctx.previousA)],
-                    "page": page_text,
-                    "question": qq.q,
-                    "username": qq.user,
-                    "date": today,
-                },
-                config={"callbacks": [ai_handler]},
-            )
-        else:
-            raise HTTPException(status_code=500, detail="Langchain> Model unknown")
+        response = await session.ainvoke(
+            {
+                "history": [("human", qq.ctx.previousQ), ("ai", qq.ctx.previousA)],
+                "page": page_text,
+                "question": qq.q,
+                "username": qq.user,
+                "date": today,
+            },
+            config={"callbacks": [ai_handler]},
+        )
 
         actions = []
 

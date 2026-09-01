@@ -13,8 +13,6 @@ services:
     volumes:
       - ./configurations/redis/data:/data
       - ./configurations/redis/conf:/conf
-    ports:
-      - "127.0.0.1:6379:6379"
     entrypoint: redis-server
     command: /conf/redis.conf
     deploy:
@@ -22,8 +20,6 @@ services:
         condition: on-failure
   chromadb:
     image: "chromadb/chroma:0.5.16"
-    ports:
-      - "127.0.0.1:8100:8000"
     volumes:
       - ./configurations/chroma/data:/chroma/chroma
     environment:
@@ -171,8 +167,6 @@ services:
         max-size: "100m"
   fluentd-server:
     image: "fluent/fluentd:edge-debian"
-    ports:
-      - "127.0.0.1:24224:24224"
     volumes:
       - ./configurations/fluentd/log:/fluentd/log
       - ./configurations/fluentd/conf:/fluentd/etc
@@ -182,8 +176,6 @@ services:
         max-size: "100m"
   kernelserver:
     image: "ghcr.io/sage-3/sagekernelserver:amd64"
-    ports:
-      - "127.0.0.1:8000:8000"
     environment:
       - ENVIRONMENT=production
       - SAGE3_SERVER=${SAGE3_SERVER}
@@ -207,8 +199,6 @@ services:
         condition: on-failure
   seer:
     image: "ghcr.io/sage-3/agents:amd64"
-    ports:
-      - "127.0.0.1:9999:9999"
     environment:
       - ENVIRONMENT=production
       - SAGE3_SERVER=${SAGE3_SERVER}
@@ -233,8 +223,6 @@ services:
     volumes:
       - ./configurations/jupyter/conf:/conf
       - ./configurations/jupyter/notebooks:/home/jovyan/notebooks
-    ports:
-      - "127.0.0.1:8888:8888"
     environment:
       - ENVIRONMENT=production
       - SAGE3_SERVER=${SAGE3_SERVER}

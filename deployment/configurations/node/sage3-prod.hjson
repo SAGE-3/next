@@ -43,7 +43,6 @@
     "url": "http://seer:9999"
   },
 
-
   // Feedback URL
   "feedback": {
     "url": "http://sage3-server-status.cis230038.projects.jetstream-cloud.org:3000/feedback"
@@ -59,47 +58,102 @@
       // API Secret
       "apiSecret": ""
     },
-    "openai": {
-      // API Key
-      "apiKey": "",
-      // Model name: gpt-4o-mini, gpt-4, gpt-3.5-turbo, davinci, ...
-      "model": "gpt-4o-mini"
-    },
-    "llama": {
-      "url": "https://arcade.evl.uic.edu/llama32-11B-vision",
-      "model": "meta/llama-3.2-11b-vision-instruct",
-      "apiKey": "",
-      "max_tokens": 1000
-    },
-    "azure": {
-      "text": {
-        "url": "https://dev-sage3-us2.openai.azure.com",
-        "model": "gpt-4.1-mini",
-        "api_version": "2024-12-01-preview"
+    "models": {
+      "providers": {
+        "azure": {
+          "apiKey": "XXXXXX",
+          "url": "YYYYYY",
+          "models": {
+            "chat": {
+              "model_id": "gpt-5.2-chat",
+              "capabilities": [
+                "chat",
+                "code",
+                "vision"
+              ],
+              "max_tokens": 4096,
+              "context_window": 128000,
+              "api_version": "2025-04-01-preview"
+            },
+            "text": {
+              "model_id": "gpt-5.2",
+              "capabilities": [
+                "chat"
+              ],
+              "max_tokens": 4096,
+              "context_window": 128000,
+              "api_version": "2025-04-01-preview"
+            },
+            "image": {
+              "model_id": "gpt-image-1.5",
+              "capabilities": [
+                "imagegen"
+              ],
+              "api_version": "2025-04-01-preview"
+            },
+            "embedding": {
+              "model_id": "text-embedding-3-small",
+              "capabilities": [
+                "embeddings"
+              ],
+              "max_tokens": 8191,
+              "context_window": 8191,
+              "api_version": "2025-04-01-preview"
+            }
+          }
+        },
+        "openai": {
+          "apiKey": "OPENAI_API_KEY",
+          "models": {
+            "gpt4": {
+              "model_id": "gpt-4-turbo",
+              "capabilities": [
+                "chat",
+                "code",
+                "vision"
+              ],
+              "max_tokens": 4096,
+              "context_window": 128000
+            }
+          }
+        },
+        "gemma4": {
+          "url": "https://sage200.evl.uic.edu/",
+          "apiKey": "XXXXXX",
+          "models": {
+            "gemma4": {
+              "model_id": "gemma4",
+              "capabilities": [
+                "chat",
+                "code",
+                "vision"
+              ],
+              "max_tokens": 131072,
+              "context_window": 131072
+            }
+          }
+        }
       },
-      "embedding": {
-        "url": "https://dev-sage3-us2.openai.azure.com/",
-        "model": "text-embedding-3-small",
-        "apiKey": "",
-        "api_version": "2024-12-01-preview"
+      // NeMo Retriever embeddings NIM
+      "embed": {
+        "url": "https://arcade.evl.uic.edu/embed",
+        "model": "nvidia/llama-nemotron-embed-1b-v2"
       },
-      "transcription": {
-        "url": "https://dev-sage3-us2.openai.azure.com/openai/deployments/gpt-4o-mini-transcribe/audio/transcriptions",
-        "model": "gpt-4o-mini-transcribe",
-        "apiKey": "",
-        "api_version": "2025-03-01-preview"
+      // NeMo Retriever reranking NIM
+      "rerank": {
+        "url": "https://arcade.evl.uic.edu/rerank",
+        "model": "nvidia/llama-nemotron-rerank-1b-v2"
       },
-      "reasoning": {
-        "url": "https://dev-sage3-us2.openai.azure.com/",
-        "model": "o4-mini",
-        "apiKey": "",
-        "api_version": "2024-12-01-preview"
+      // olmOCR
+      "pdf2md": {
+        "url": "https://arcade.evl.uic.edu/olmocr/v1",
+        "model": "allenai/olmOCR-2-7B-1025-FP8"
       },
-      "vision": {
-        "url": "https://dev-sage3-us2.openai.azure.com",
-        "model": "gpt-4.1-mini",
-        "apiKey": "",
-        "api_version": "2024-12-01-preview"
+      "settings": {
+        "default_provider": "gemma4",
+        "timeout_seconds": 60,
+        "max_retries": 3,
+        "log_requests": true
       }
     }
   },
@@ -129,14 +183,16 @@
     "sessionSecret": "SUPERSECRET!!$$",
     // Max age for a session per user. In milliseconds. 8 days
     "sessionMaxAge": 691200000,
-    // Which login strategies to enable for the server. 
-    // If you enbable them ensure you add the relevant config information below.
+    // Which login strategies to enable for the server.
+    // Available: google, apple, cilogon, keycloak, ldap, guest, spectator, jwt
+    // If you enable them ensure you add the relevant config information below.
     "strategies": [
       "google",
       "cilogon",
       "guest",
       "spectator",
       // "keycloak",
+      // "ldap",
       "jwt"
     ],
     // A List of emails to enable those users to be admins.
@@ -185,7 +241,47 @@
       // "routeEndpoint": "/auth/keycloak",
       // Must match the redirect URI configured in your Keycloak client
       // "callbackURL": "/auth/keycloak/redirect"
-    // }
+    // },
+    // LDAP / Active Directory configuration
+    // Add "ldap" to strategies above to enable this.
+    // Users authenticate via POST /auth/ldap with { username, password }.
+    // "ldapConfig": {
+      // LDAP server URL.
+      // Use ldap:// for plain (port 389) or ldaps:// for TLS (port 636).
+      // Active Directory example: "ldap://ad.university.edu:389"
+      // "url": "ldaps://ldap.example.com:636",
+      // Service account used to search the directory (bind DN + password).
+      // This account only needs read access to the user tree.
+      // Active Directory example: "cn=svc-sage3,ou=ServiceAccounts,dc=university,dc=edu"
+      // "bindDN": "cn=svc-sage3,ou=ServiceAccounts,dc=example,dc=com",
+      // "bindCredentials": "CHANGE_ME",
+      // Base DN under which users are searched.
+      // Active Directory example: "ou=People,dc=university,dc=edu"
+      // "searchBase": "ou=People,dc=example,dc=com",
+      // LDAP filter used to locate the authenticating user.
+      // {{username}} is replaced at login time with the value the user typed.
+      // OpenLDAP:        "(uid={{username}})"
+      // Active Directory: "(sAMAccountName={{username}})"
+      // "searchFilter": "(uid={{username}})",
+      // Map LDAP group DNs to SAGE3 roles.
+      // Roles are checked in priority order: admin > user > spectator.
+      // A user's groups are read from the "memberOf" attribute on their entry.
+      // Omit a key (or leave it empty) to skip that role mapping.
+      // If the user matches no group, defaultRole is assigned instead.
+      // "groupMapping": {
+      //   "admin": "cn=sage3-admins,ou=Groups,dc=example,dc=com",
+      //   "user": "cn=sage3-users,ou=Groups,dc=example,dc=com",
+      //   "spectator": "cn=sage3-readonly,ou=Groups,dc=example,dc=com"
+      // },
+      // Role assigned when the user authenticates but matches no groupMapping entry.
+      // Options: "admin", "user", "spectator"
+      // "defaultRole": "spectator",
+      // TLS options (passed directly to Node.js tls.connect).
+      // Set to { "rejectUnauthorized": false } for self-signed certs in dev/test.
+      // "tlsOptions": {
+      //   "rejectUnauthorized": true
+      // }
+    // },
     // CILogon configuration
     "cilogonConfig": {
       // Client ID from CILogon

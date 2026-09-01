@@ -2,11 +2,17 @@
   "compilerOptions": {
     "target": "es2017",
     "module": "commonjs",
-    "outDir": "dist",
+    "moduleResolution": "node10",
+    "ignoreDeprecations": "6.0",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
-    "moduleResolution": "node10"
+    "noEmit": true,
+    "types": ["node"],
+    "paths": {
+      "@sage3/shared": ["../../libs/shared/src/index.ts"],
+      "@sage3/shared/types": ["../../libs/shared/src/lib/types/index.ts"]
+    }
   }
 }

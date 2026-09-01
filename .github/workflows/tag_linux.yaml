@@ -1,5 +1,8 @@
 name: Tag release linux
 
+permissions:
+  contents: write
+
 on:
   push:
     branches:

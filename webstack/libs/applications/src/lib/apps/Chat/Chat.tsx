@@ -1,16 +1,14 @@
 /**
- * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useRef, useState, Fragment, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router';
 import {
-  ButtonGroup,
-  Button,
   useToast,
   IconButton,
   Box,
@@ -21,39 +19,13 @@ import {
   InputGroup,
   InputRightElement,
   HStack,
-  Divider,
-  Center,
-  AbsoluteCenter,
   List,
   ListIcon,
   ListItem,
   Textarea,
   useDisclosure,
-  Table,
-  Tr,
-  Td,
-  Th,
-  Thead,
-  Tbody,
 } from '@chakra-ui/react';
-import {
-  MdSend,
-  MdExpandCircleDown,
-  MdStopCircle,
-  MdChangeCircle,
-  MdFileDownload,
-  MdChat,
-  MdSettings,
-  MdOpenInNew,
-} from 'react-icons/md';
-import { BsCopy, BsCheck } from 'react-icons/bs';
-import { HiCommandLine } from 'react-icons/hi2';
-
-// Date management
-import { formatDistance } from 'date-fns';
-import { format } from 'date-fns/format';
-// Markdown
-import Markdown from 'markdown-to-jsx';
+import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle, MdChat, MdSettings, MdOpenInNew } from 'react-icons/md';
 
 import { AppName } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
@@ -62,7 +34,6 @@ import {
   useHexColor,
   useUser,
   serverTime,
-  downloadFile,
   useUsersStore,
   useUserSettings,
   useUIStore,
@@ -70,71 +41,24 @@ import {
   useLinkStore,
   useAssetStore,
   apiUrls,
+  useConfigStore,
+  seerImage,
+  dataURLtoBlob,
+  withUserProvider,
 } from '@sage3/frontend';
 import { genId, AskRequest, ImageQuery, PDFQuery, CodeRequest, WebQuery, WebScreenshot, isGeoJSON } from '@sage3/shared';
+import { LLMConfigManager, TaskType } from '@sage3/shared/types';
 
 import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
 
 import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot, callMesonet } from './tRPC';
-
-// Override the default markdown options for lists
-const MdOrderedList: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => (
-  <ol style={{ paddingLeft: '24px' }} {...props}>
-    {children}
-  </ol>
-);
-
-const MdUnorderedList: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => (
-  <ul style={{ paddingLeft: '24px' }} {...props}>
-    {children}
-  </ul>
-);
-
-const MdCode: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => {
-  // @ts-ignore
-  const lang = props.className ? props.className.replace('lang-', '') : 'text';
-  const [copied, setCopied] = useState(false);
-  return <Table variant="unstyled" size="sm" style={{
-    borderSpacing: 0,
-    borderCollapse: 'separate',
-    borderRadius: '10px 10px 10px 10px',
-    border: '1px solid black'
-  }}>
-    <Thead>
-      <Tr backgroundColor="#e5e5e5">
-        <Th style={{ borderRadius: '10px 10px 0 0' }} textTransform={'capitalize'} fontWeight={'normal'}>
-          <Box display={"flex"} justifyContent={'space-between'}>
-            <span><b>{lang}</b></span>
-            <Box display={"flex"} alignItems={'center'} userSelect={'none'} _hover={{ cursor: 'pointer' }}
-              onClick={(e) => {
-                e.stopPropagation();
-                setCopied(true);
-                // Copy the code to clipboard
-                navigator.clipboard.writeText(children as string);
-              }}>
-              {copied ? <BsCheck /> : <BsCopy />} <span> {copied ? 'Copied' : 'Copy'} </span>
-            </Box>
-          </Box>
-        </Th>
-      </Tr>
-    </Thead>
-    <Tbody>
-      <Tr>
-        <Td style={{ padding: 0 }} colSpan={1}>
-          <pre style={{ fontSize: 'smaller', paddingLeft: '24px', backgroundColor: '#fafafa', borderRadius: '0 0 10px 10px' }} {...props}>
-            <code {...props} style={{ userSelect: "text" }}>
-              {children}
-            </code>
-          </pre>
-        </Td>
-      </Tr>
-    </Tbody>
-  </Table >
-};
-
-type OperationMode = 'chat' | 'text' | 'image' | 'web' | 'pdf' | 'code' | 'map' | 'Hawaii Mesonet';
+import { OperationMode, MODE_TASK, MAX_IMAGES, MAX_PDFS } from './constants';
+import { parseCommand, commandHelp, ParsedCommand } from './commands';
+import { ToolbarComponent, GroupedToolbarComponent } from './Toolbar';
+import { MessageItem } from './MessageItem';
+import { PromptBars } from './PromptBars';
 
 /* App component for Chat */
 
@@ -154,7 +78,7 @@ function AppComponent(props: App): JSX.Element {
   // Colors for Dark theme and light theme
   // Chat Bubble Colors
   const myColor = useHexColor(`blue.300`);
-  const sageColor = "#bec6dc"
+  const sageColor = '#bec6dc';
   const aiTypingColor = useHexColor('orange.300');
   const otherUserColor = useHexColor('gray.300');
   // Background, scrollbar, and Foreground Colors
@@ -178,6 +102,15 @@ function AppComponent(props: App): JSX.Element {
   // Model Preferences
   const { settings } = useUserSettings();
   const [selectedModel, setSelectedModel] = useState(settings.aiModel);
+
+  // AI capability config (no secrets) used to gate requests by capability.
+  // Built from the server config; the manager mirrors the backend's matching.
+  const serverConfig = useConfigStore((state) => state.config);
+  const llmManager = useMemo(
+    // Include the user's own provider so its capabilities gate tasks like any other
+    () => (serverConfig?.models ? new LLMConfigManager(withUserProvider(serverConfig.models)) : undefined),
+    [serverConfig]
+  );
 
   // Input text for query
   const [input, setInput] = useState<string>('');
@@ -203,6 +136,24 @@ function AppComponent(props: App): JSX.Element {
   // Display some notifications
   const toast = useToast();
 
+  // Capability gate: verify the selected provider can perform `task` before we
+  // send the request to the backend. Returns true when allowed; otherwise warns
+  // the user and returns false so the caller can abort.
+  const canPerform = (task: TaskType): boolean => {
+    const provider = selectedModel;
+    // No capability info or no provider selected yet: don't block
+    if (!llmManager || !provider) return true;
+    if (llmManager.canProviderPerformTask(provider, task)) return true;
+    toast({
+      title: 'Model not capable',
+      description: `The selected model "${provider}" can't handle ${task.replace('_', ' ')} requests. Pick a different model in Settings (gear icon).`,
+      status: 'warning',
+      duration: 6000,
+      isClosable: true,
+    });
+    return false;
+  };
+
   // Sort messages by creation date to display in order
   const sortedMessages = s.messages ? s.messages.sort((a, b) => a.creationDate - b.creationDate) : [];
 
@@ -223,8 +174,59 @@ function AppComponent(props: App): JSX.Element {
     setInput(value);
   };
 
+  /**
+   * Run a slash command. Commands act for the person who typed them: their
+   * results go to a toast or to the board, not into the shared transcript.
+   */
+  const runCommand = async (parsed: ParsedCommand) => {
+    const { command, args } = parsed;
+
+    if (command.name === '/help') {
+      toast({ title: 'Chat commands', description: commandHelp(), status: 'info', duration: 8000, isClosable: true });
+      return;
+    }
+
+    if (command.name === '/image') {
+      if (!args) {
+        toast({
+          title: 'Describe the image',
+          description: command.usage,
+          status: 'warning',
+          duration: 4000,
+          isClosable: true,
+        });
+        return;
+      }
+      // canPerform reports an uncapable model; generateImage re-checks too
+      if (command.task && !canPerform(command.task)) return;
+      await generateImage(args, args);
+      return;
+    }
+  };
+
   const sendMessage = async () => {
     const text = input.trim();
+
+    // Slash commands are handled locally and never posted to the shared
+    // transcript: their output is feedback for the person who typed them, not
+    // part of the conversation everyone sees.
+    const parsed = parseCommand(text);
+    if (parsed === 'unknown') {
+      toast({
+        title: `Unknown command "${text.split(/\s+/)[0]}"`,
+        description: commandHelp(),
+        status: 'warning',
+        duration: 6000,
+        isClosable: true,
+      });
+      return;
+    }
+    if (parsed) {
+      setInput('');
+      await runCommand(parsed);
+      return;
+    }
+
     setInput('');
     if (mode === 'image') {
       // Image
@@ -288,7 +290,7 @@ function AppComponent(props: App): JSX.Element {
         },
         function (e) {
           console.log('Location> error', e);
-        }
+        },
       );
     }
   }, [user]);
@@ -339,99 +341,67 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [sourceApps]);
 
+  // Handle a chat-box submission: a peer message (posted as-is) or an @S
+  // question to SAGE (sent via runAsk, with linked apps passed as appIds).
   const newMessage = async (new_input: string) => {
     if (!user) return;
-    // Get server time
-    const now = await serverTime();
-    // Is it a question to SAGE?
     const isQuestion = new_input.toUpperCase().startsWith('@S');
-    const name = isQuestion ? 'SAGE' : user?.data.name;
-    // Add messages
-    const initialAnswer = {
-      id: genId(),
-      userId: user._id,
-      creationId: '',
-      creationDate: now.epoch,
-      userName: name,
-      query: new_input,
-      response: isQuestion ? 'Working on it...' : '',
-    };
-    updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
-    if (isQuestion) {
-      setProcessing(true);
-      // Remove the @S from the question
-      const request = isQuestion ? new_input.slice(2) : new_input;
-
-      if (isQuestion) {
-        const ctx = `Please carefully read the following text:
-        <text>
-        ${s.context}
-        </text>
-        ${request}`;
-
-        const body: AskRequest = {
-          ctx: {
-            previousQ: previousQuestion,
-            previousA: previousAnswer,
-            pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
-            roomId: roomId!,
-            boardId: boardId!,
+    if (!isQuestion) {
+      // Peer chat message — just post it to the transcript
+      const now = await serverTime();
+      updateState(props._id, {
+        ...s,
+        messages: [
+          ...s.messages,
+          {
+            id: genId(),
+            userId: user._id,
+            creationId: '',
+            creationDate: now.epoch,
+            userName: user?.data.name,
+            query: new_input,
+            response: '',
           },
-          user: username,
-          id: genId(),
-          model: selectedModel || 'llama',
-          location: location,
-          q: s.context ? ctx : request,
-        };
-        const response = await callAsk(body);
-        if ('message' in response) {
-          toast({
-            title: 'Error',
-            description: response.message || 'Error sending query to the agent. Please try again.',
-            status: 'error',
-            duration: 4000,
-            isClosable: true,
-          });
-        } else {
-          const new_text = response.r || '';
-          setProcessing(false);
-          // Clear the stream text
-          setStreamText('');
-          ctrlRef.current = null;
-          setPreviousAnswer((prevItems) => [...prevItems, new_text]);
-          // Add messages
-          updateState(props._id, {
-            ...s,
-            previousQ: [...s.previousQ, request],
-            previousA: [...s.previousA, new_text],
-            messages: [
-              ...s.messages,
-              initialAnswer,
-              {
-                id: genId(),
-                userId: user._id,
-                creationId: '',
-                creationDate: now.epoch + 1,
-                userName: 'SAGE',
-                query: '',
-                response: new_text,
-              },
-            ],
-          });
-          // Check if there are actions to be taken
-          if (response.actions && response.actions.length > 0) {
-            setActions(response.actions);
-          }
-        }
-      }
+        ],
+      });
+      return;
     }
+    // Question to SAGE — let the backend read linked apps' content from appIds;
+    // fall back to s.context only when there are no linked apps.
+    const request = new_input.slice(2);
+    const common = {
+      ctx: {
+        previousQ: previousQuestion,
+        previousA: previousAnswer,
+        pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+        roomId: roomId!,
+        boardId: boardId!,
+      },
+      user: username,
+      id: genId(),
+      model: selectedModel || 'llama',
+      location: location,
+    };
+    let body: AskRequest;
+    if (sourceApps.length > 0) {
+      body = { ...common, q: request, appIds: sourceApps };
+    } else if (s.context) {
+      body = { ...common, q: `Please carefully read the following text:\n<text>\n${s.context}\n</text>\n${request}` };
+    } else {
+      body = { ...common, q: request };
+    }
+    runAsk(body, request);
   };
 
   const goToBottom = (mode: ScrollBehavior = 'smooth') => {
-    // Scroll to bottom of chat box smoothly
-    chatBox.current?.scrollTo({
-      top: chatBox.current?.scrollHeight,
-      behavior: mode,
+    // Defer to after layout/paint (two frames) so scrollHeight reflects the
+    // freshly-rendered markdown of an incoming answer — otherwise we measure a
+    // stale, shorter height and the window stops part-way down.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const el = chatBox.current;
+        if (el) el.scrollTo({ top: el.scrollHeight, behavior: mode });
+      });
     });
   };
 
@@ -473,30 +443,89 @@ function AppComponent(props: App): JSX.Element {
     setActions([]);
   };
 
-  const onSummary = async () => {
+  // Shared: send an Ask request with the optimistic "Working on it..." message,
+  // error handling, transcript/state update, and actions. Used by the prompt
+  // helpers below (and available for the other senders to adopt).
+  const runAsk = async (body: AskRequest, displayQuery: string) => {
     if (!user) return;
-    // Get the current context
-    let newctx = s.context;
-    if (!newctx && sourceApps.length > 0) {
-      // Update the context with the stickies
-      const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
-      newctx = apps.reduce((accumulate, app) => {
-        if (app.data.type === 'Stickie') accumulate += app.data.state.text + '\n\n';
-        return accumulate;
-      }, '');
+    if (!canPerform(MODE_TASK[mode] || 'chat')) return;
+    const now = await serverTime();
+    // Optimistic "Working on it..." bubble while the agent runs
+    const placeholder = {
+      id: genId(),
+      userId: user._id,
+      creationId: '',
+      creationDate: now.epoch,
+      userName: 'SAGE',
+      query: displayQuery,
+      response: 'Working on it...',
+    };
+    updateState(props._id, { ...s, messages: [...s.messages, placeholder] });
+    setProcessing(true);
+    const response = await callAsk(body);
+    setProcessing(false);
+    if ('message' in response) {
+      toast({
+        title: 'Error',
+        description: response.message || 'Error sending query to the agent. Please try again.',
+        status: 'error',
+        duration: 4000,
+        isClosable: true,
+      });
+      return;
     }
-    if (newctx) {
-      // Summary prompt
-      const ctx = `@S, Please carefully read the following document text:
-        <document>
-        ${newctx}
-        </document>
-        After reading through the document, identify the main topics, themes, and key concepts that are covered.
-        Provide all your answers in a few sentences.`;
-      newMessage(ctx);
-      setInput('');
-    }
+    // Append the real answer and record the turn in the transcript/history
+    const new_text = response.r || '';
+    setStreamText('');
+    ctrlRef.current = null;
+    setPreviousAnswer((prevItems) => [...prevItems, new_text]);
+    updateState(props._id, {
+      ...s,
+      previousQ: [...s.previousQ, displayQuery],
+      previousA: [...s.previousA, new_text],
+      messages: [
+        ...s.messages,
+        placeholder,
+        { id: genId(), userId: user._id, creationId: '', creationDate: now.epoch + 1, userName: 'SAGE', query: '', response: new_text },
+      ],
+    });
+    if (response.actions && response.actions.length > 0) setActions(response.actions);
   };
+
+  // Ask SAGE about the linked source apps using a server-side prompt template.
+  // The backend reads each app's content from appIds — no client-side extraction
+  // or prompt assembly. Falls back to s.context when there are no linked apps.
+  const askIntent = (intent: string, label: string, fallbackInstruction: string) => {
+    const common = {
+      ctx: {
+        previousQ: previousQuestion,
+        previousA: previousAnswer,
+        pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+        roomId: roomId!,
+        boardId: boardId!,
+      },
+      user: username,
+      id: genId(),
+      model: selectedModel || 'llama',
+      location: location,
+    };
+    let body: AskRequest;
+    if (sourceApps.length > 0) {
+      body = { ...common, q: label, appIds: sourceApps, intent };
+    } else if (s.context) {
+      body = {
+        ...common,
+        q: `Please carefully read the following document:\n<document>\n${s.context}\n</document>\n${fallbackInstruction}`,
+      };
+    } else {
+      return;
+    }
+    runAsk(body, label);
+    setInput('');
+  };
+
+  const onSummary = () =>
+    askIntent('summary', 'Summarize the document', 'Identify the main topics, themes, and key concepts. Answer in a few sentences.');
 
   const onImageSummary = async () => {
     return onContentImage('Describe the image in details');
@@ -516,6 +545,8 @@ function AppComponent(props: App): JSX.Element {
 
   const onContentImage = async (prompt: string) => {
     if (!user) return;
+    // Capability check: image questions require a vision-capable model
+    if (!canPerform('image')) return;
     if (sourceApps.length > 0) {
       // Update the context
       const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
@@ -523,6 +554,19 @@ function AppComponent(props: App): JSX.Element {
       // Check for image
       if (apps && apps[0].data.type === 'ImageViewer') {
         if (roomId && boardId) {
+          // All linked images, so the model can describe or compare several at once
+          const assetids = apps.filter((a) => a.data.type === 'ImageViewer').map((a) => a.data.state.assetid);
+          // Too many images overwhelm the vision model: block before posting anything to the transcript
+          if (assetids.length > MAX_IMAGES) {
+            toast({
+              title: 'Too many images',
+              description: `You can ask about at most ${MAX_IMAGES} images at once (${assetids.length} selected). Please unlink some and try again.`,
+              status: 'warning',
+              duration: 5000,
+              isClosable: true,
+            });
+            return;
+          }
           const now = await serverTime();
           const initialAnswer = {
             id: genId(),
@@ -535,7 +579,6 @@ function AppComponent(props: App): JSX.Element {
           };
           updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
 
-          const assetid = apps[0].data.state.assetid;
           // Build the query
           const q: ImageQuery = {
             ctx: {
@@ -547,7 +590,7 @@ function AppComponent(props: App): JSX.Element {
             },
             q: prompt,
             user: username,
-            asset: assetid,
+            assets: assetids,
             model: selectedModel || 'llama',
           };
           setProcessing(true);
@@ -568,7 +611,7 @@ function AppComponent(props: App): JSX.Element {
             // Clear the stream text
             setStreamText('');
             ctrlRef.current = null;
-            setPreviousAnswer(prevItems => [...prevItems, response.r]);
+            setPreviousAnswer((prevItems) => [...prevItems, response.r]);
             // Add messages
             updateState(props._id, {
               ...s,
@@ -590,6 +633,23 @@ function AppComponent(props: App): JSX.Element {
             });
             if (response.actions) {
               setActions(response.actions);
+            }
+            // If the agent picked specific images (filter/select), select the
+            // corresponding ImageViewers on the board.
+            if (response.selected && response.selected.length > 0) {
+              const matchedAppIds = apps
+                .filter((a) => a.data.type === 'ImageViewer' && response.selected!.includes(a.data.state.assetid))
+                .map((a) => a._id);
+              if (matchedAppIds.length > 0) {
+                useUIStore.getState().setSelectedAppsIds(matchedAppIds);
+                toast({
+                  title: 'Selection',
+                  description: `Selected ${matchedAppIds.length} image${matchedAppIds.length > 1 ? 's' : ''} on the board`,
+                  status: 'info',
+                  duration: 3000,
+                  isClosable: true,
+                });
+              }
             }
           }
         }
@@ -615,6 +675,8 @@ function AppComponent(props: App): JSX.Element {
 
   const onContentMesonet = async (prompt: string) => {
     if (!user) return;
+    // Capability check: Mesonet analysis needs a chat-capable model
+    if (!canPerform('chat')) return;
     if (selectedModel == 'llama') {
       toast({
         title: 'Mesonet Feature not available for current model',
@@ -673,7 +735,7 @@ function AppComponent(props: App): JSX.Element {
           } else {
             setStreamText('');
             ctrlRef.current = null;
-            setPreviousAnswer(prevItems => [...prevItems, response.summary]);
+            setPreviousAnswer((prevItems) => [...prevItems, response.summary]);
             // Update the Mesonet app's state with the selected stations
             // if (response.stations && response.stations.length > 0) {
             //   const mesonetApp = apps[0];
@@ -714,27 +776,36 @@ function AppComponent(props: App): JSX.Element {
     }
   };
 
-  const mesonetPrompts: { title: string; action: () => void; prompt: string }[] = [
-    // { title: 'Summarize Mesonet Data', action: onMesonetSummary, prompt: 'Summarize key weather patterns from the Mesonet dataset.' },
-    // { title: 'Find Trends', action: onMesonetTrends, prompt: 'Identify key trends in the Mesonet weather data.' },
-    // { title: 'Compare Locations', action: onMesonetComparison, prompt: 'Compare weather conditions between different Mesonet stations.' },
-    // { title: 'Generate Forecast Insights', action: onMesonetForecast, prompt: 'Provide insights based on past data to predict trends.' },
-    // { title: 'Find Extremes', action: onMesonetExtremes, prompt: 'Find the extreme values (highest and lowest) recorded in the dataset.' },
-  ];
-
   const onContentPDF = async (prompt: string) => {
     if (!user) return;
 
     const isQuestion = prompt.toUpperCase().startsWith('@S');
+    // Capability check: PDF questions require an embeddings + chat-capable model
+    if (isQuestion && !canPerform('pdf_processing')) return;
     const name = isQuestion ? 'SAGE' : user?.data.name;
 
     if (sourceApps.length > 0) {
       // Update the context
       const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
 
-      // Check for image
-      if (apps && apps[0].data.type === 'PDFViewer') {
+      // Only consider linked PDFViewer apps: a Chat can be linked to a mix of
+      // app types, so mapping asset ids over all apps would inflate the PDF
+      // count and send undefined ids for non-PDF apps.
+      const pdfApps = apps.filter((a) => a.data.type === 'PDFViewer');
+      if (pdfApps.length > 0) {
         if (roomId && boardId) {
+          // Too many PDFs overwhelm the context: block the question before posting anything to the transcript
+          const assetids = pdfApps.map((d) => d.data.state.assetid);
+          if (isQuestion && assetids.length > MAX_PDFS) {
+            toast({
+              title: 'Too many PDFs',
+              description: `You can ask about at most ${MAX_PDFS} PDFs at once (${assetids.length} selected). Please unlink some and try again.`,
+              status: 'warning',
+              duration: 5000,
+              isClosable: true,
+            });
+            return;
+          }
           const now = await serverTime();
           const initialAnswer = {
             id: genId(),
@@ -749,7 +820,6 @@ function AppComponent(props: App): JSX.Element {
 
           if (isQuestion) {
             const request = isQuestion ? prompt.slice(2) : prompt;
-            const assetids = apps.map((d) => d.data.state.assetid);
             // Build the query
             const q: PDFQuery = {
               ctx: {
@@ -773,7 +843,7 @@ function AppComponent(props: App): JSX.Element {
             if ('message' in response) {
               const errorMessage = 'There has been an error, please try again or report it through the menu.';
               setStreamText('');
-              setPreviousAnswer(prevItems => [...prevItems, errorMessage]);
+              setPreviousAnswer((prevItems) => [...prevItems, errorMessage]);
               updateState(props._id, {
                 ...s,
                 previousQ: [...s.previousQ, q.q],
@@ -803,11 +873,11 @@ function AppComponent(props: App): JSX.Element {
               // Clear the stream text
               setStreamText('');
               ctrlRef.current = null;
-              setPreviousAnswer(prevItems => [...prevItems, response.r]);
+              setPreviousAnswer((prevItems) => [...prevItems, response.r]);
               // Add messages
               updateState(props._id, {
                 ...s,
-                previousQ: [...s.previousQ, 'Describe the content'],
+                previousQ: [...s.previousQ, q.q],
                 previousA: [...s.previousA, response.r],
                 messages: [
                   ...s.messages,
@@ -836,6 +906,8 @@ function AppComponent(props: App): JSX.Element {
   // Generic code to handle the web content
   const onContentWeb = async (prompt: string) => {
     if (!user) return;
+    // Capability check: web summarization needs a chat-capable model
+    if (!canPerform('chat')) return;
     if (sourceApps.length > 0) {
       // Update the context
       const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
@@ -888,7 +960,7 @@ function AppComponent(props: App): JSX.Element {
             // Clear the stream text
             setStreamText('');
             ctrlRef.current = null;
-            setPreviousAnswer(prevItems => [...prevItems, response.r]);
+            setPreviousAnswer((prevItems) => [...prevItems, response.r]);
             // Add messages
             updateState(props._id, {
               ...s,
@@ -920,129 +992,56 @@ function AppComponent(props: App): JSX.Element {
   // Generic code to handle the map content
   const onContentMap = async (prompt: string) => {
     if (!user) return;
-    if (sourceApps.length > 0) {
-      // Update the context
-      const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
+    // Capability check: map questions need a chat-capable model
+    if (!canPerform('chat')) return;
+    if (sourceApps.length === 0 || !roomId || !boardId) return;
+    const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
+    if (!apps[0] || apps[0].data.type !== 'Map') return;
 
-      // Check for map
-      if (apps && apps[0].data.type === 'Map') {
-        if (roomId && boardId) {
-          const now = await serverTime();
-          const initialAnswer = {
-            id: genId(),
-            userId: user._id,
-            creationId: '',
-            creationDate: now.epoch,
-            userName: 'SAGE',
-            query: prompt,
-            response: 'Working on it...',
-          };
-          updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
-
-          const request = prompt.slice(2);
-          console.log('Map request', request);
-          console.log('GeoJSON', apps[0].data.state);
-          let ctx = '';
-          const layers = apps[0].data.state.layers || [];
-          if (layers.length > 0) {
-            const visibleLayers = layers.filter((l: any) => l.visible).map((l: any) => l.assetId);
-            if (visibleLayers.length === 0) {
-              toast({
-                title: 'No visible layers',
-                description: 'Please select a layer to query.',
-                status: 'warning',
-                duration: 4000,
-                isClosable: true,
-              });
-              return;
-            }
-            const myasset = useAssetStore.getState().assets.find((a) => a._id === visibleLayers[0]);
-            if (myasset && isGeoJSON(myasset.data.mimetype)) {
-              const newURL = apiUrls.assets.getAssetById(myasset.data.file);
-              // Get the GEOJSON data from the asset
-              const response = await fetch(newURL, {
-                headers: {
-                  'Content-Type': 'application/json',
-                  Accept: 'application/json',
-                },
-              });
-              const geojson = await response.json();
-
-              ctx = `Please read the following GeoJSON data:
-                <text>
-                ${JSON.stringify(geojson, null, 2)}
-                </text>
-                ${request}`;
-            }
-          } else {
-            ctx = `Please check the following map centered on the coordinates:
-              <data>
-              Lng ${apps[0].data.state.location[0]}, Lat ${apps[0].data.state.location[1]}
-              </data>
-              ${request}`;
-          }
-
-          // Build the query
-          const q: AskRequest = {
-            ctx: {
-              previousQ: previousQuestion,
-              previousA: previousAnswer,
-              pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
-              roomId,
-              boardId,
-            },
-
-            user: username,
-            id: genId(),
-            model: selectedModel || 'llama',
-            location: location,
-            q: s.context ? ctx : request,
-          };
-          setProcessing(true);
-          setActions([]);
-          // Invoke the agent
-          const response = await callAsk(q);
-          setProcessing(false);
-
-          if ('message' in response) {
-            toast({
-              title: 'Error',
-              description: response.message || 'Error sending query to the agent. Please try again.',
-              status: 'error',
-              duration: 4000,
-              isClosable: true,
-            });
-          } else {
-            // Clear the stream text
-            setStreamText('');
-            ctrlRef.current = null;
-            setPreviousAnswer(prevItems => [...prevItems, response.r]);
-            // Add messages
-            updateState(props._id, {
-              ...s,
-              previousQ: [...s.previousQ, 'Describe the content'],
-              previousA: [...s.previousA, response.r],
-              messages: [
-                ...s.messages,
-                initialAnswer,
-                {
-                  id: genId(),
-                  userId: user._id,
-                  creationId: '',
-                  creationDate: now.epoch + 1,
-                  userName: 'SAGE',
-                  query: '',
-                  response: response.r,
-                },
-              ],
-            });
-            if (response.actions) {
-              setActions(response.actions);
-            }
-          }
-        }
+    // Map content is derived (a GeoJSON asset or coordinates), so it's assembled
+    // here and passed as the question rather than via appIds.
+    const request = prompt.slice(2);
+    let ctx = '';
+    const layers = apps[0].data.state.layers || [];
+    if (layers.length > 0) {
+      const visibleLayers = layers.filter((l: any) => l.visible).map((l: any) => l.assetId);
+      if (visibleLayers.length === 0) {
+        toast({
+          title: 'No visible layers',
+          description: 'Please select a layer to query.',
+          status: 'warning',
+          duration: 4000,
+          isClosable: true,
+        });
+        return;
       }
+      const myasset = useAssetStore.getState().assets.find((a) => a._id === visibleLayers[0]);
+      if (myasset && isGeoJSON(myasset.data.mimetype)) {
+        const newURL = apiUrls.assets.getAssetById(myasset.data.file);
+        const response = await fetch(newURL, { headers: { 'Content-Type': 'application/json', Accept: 'application/json' } });
+        const geojson = await response.json();
+        ctx = `Please read the following GeoJSON data:\n<text>\n${JSON.stringify(geojson, null, 2)}\n</text>\n${request}`;
+      }
+    } else {
+      ctx = `Please check the following map centered on the coordinates:\n<data>\nLng ${apps[0].data.state.location[0]}, Lat ${apps[0].data.state.location[1]}\n</data>\n${request}`;
     }
+
+    const body: AskRequest = {
+      ctx: {
+        previousQ: previousQuestion,
+        previousA: previousAnswer,
+        pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+        roomId,
+        boardId,
+      },
+      user: username,
+      id: genId(),
+      model: selectedModel || 'llama',
+      location: location,
+      q: ctx || request,
+    };
+    setActions([]);
+    runAsk(body, request);
   };
 
   // Get a screenshot of the web content
@@ -1097,7 +1096,7 @@ function AppComponent(props: App): JSX.Element {
             // Clear the stream text
             setStreamText('');
             ctrlRef.current = null;
-            setPreviousAnswer(prevItems => [...prevItems, response.r]);
+            setPreviousAnswer((prevItems) => [...prevItems, response.r]);
             // Add messages
             updateState(props._id, {
               ...s,
@@ -1127,150 +1126,234 @@ function AppComponent(props: App): JSX.Element {
   };
 
   // Array of prompts for Web content
-  const webPrompts = [
-    { title: 'Web Summary', action: onContentWeb, prompt: 'Summarize concisely this webpage.' },
-    { title: 'Find Links', action: onContentWeb, prompt: 'What are the main links that I should read to expand on the subject matter.' },
-    { title: 'Find PDF', action: onContentWeb, prompt: 'Find the PDF in the page.' },
-    {
-      title: 'Generate Keywords',
-      action: onContentWeb,
-      prompt: 'Return a list of 3-5 keywords that best capture the essence and subject matter of the text.',
-    },
-    { title: 'Find Facts', action: onContentWeb, prompt: 'Provide a list of two or three interesting facts from the text.' },
-    { title: 'Screenshot', action: onContentWebScreenshot, prompt: 'Take a screenshot' },
-  ];
-
-  // Code section
-  const onContentCode = async (prompt: string, method: string) => {
+  // Shared: send a Code request with the optimistic message + response handling.
+  const runCode = async (body: CodeRequest, displayQuery: string) => {
     if (!user) return;
-    // Get server time
+    if (!canPerform('coding')) return;
     const now = await serverTime();
-    // Is it a question to SAGE?
-    const isQuestion = prompt.toUpperCase().startsWith('@S');
-    const name = isQuestion ? 'SAGE' : user?.data.name;
-    // Add messages
-    const initialAnswer = {
+    // Optimistic "Working on it..." bubble while the agent runs
+    const placeholder = {
       id: genId(),
       userId: user._id,
       creationId: '',
       creationDate: now.epoch,
-      userName: name,
-      query: prompt,
-      response: isQuestion ? 'Working on it...' : '',
+      userName: 'SAGE',
+      query: displayQuery,
+      response: 'Working on it...',
     };
-    updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
-    if (isQuestion) {
-      setProcessing(true);
-      // Remove the @S from the question
-      const request = isQuestion ? prompt.slice(2) : prompt;
+    updateState(props._id, { ...s, messages: [...s.messages, placeholder] });
+    setProcessing(true);
+    const response = await callCode(body);
+    setProcessing(false);
+    if ('message' in response) {
+      toast({
+        title: 'Error',
+        description: response.message || 'Error sending query to the agent. Please try again.',
+        status: 'error',
+        duration: 4000,
+        isClosable: true,
+      });
+      return;
+    }
+    // Append the real answer and record the turn in the transcript/history
+    const new_text = response.r || '';
+    setStreamText('');
+    ctrlRef.current = null;
+    setPreviousAnswer((prevItems) => [...prevItems, new_text]);
+    updateState(props._id, {
+      ...s,
+      previousQ: [...s.previousQ, displayQuery],
+      previousA: [...s.previousA, new_text],
+      messages: [
+        ...s.messages,
+        placeholder,
+        { id: genId(), userId: user._id, creationId: '', creationDate: now.epoch + 1, userName: 'SAGE', query: '', response: new_text },
+      ],
+    });
+    if (response.actions && response.actions.length > 0) setActions(response.actions);
+  };
 
-      if (isQuestion) {
-        const body: CodeRequest = {
-          ctx: {
-            previousQ: previousQuestion,
-            previousA: previousAnswer,
-            pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
-            roomId: roomId!,
-            boardId: boardId!,
+  // Ask SAGE about the linked CodeEditor(s): the backend reads their content
+  // from appIds and applies the server-side template for `method`.
+  const askCode = (method: string, label: string, fallbackInstruction: string) => {
+    const common = {
+      ctx: {
+        previousQ: previousQuestion,
+        previousA: previousAnswer,
+        pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+        roomId: roomId!,
+        boardId: boardId!,
+      },
+      user: username,
+      id: genId(),
+      model: selectedModel || 'llama',
+      location: location,
+    };
+    let body: CodeRequest;
+    if (sourceApps.length > 0) {
+      body = { ...common, q: label, method, appIds: sourceApps };
+    } else if (s.context) {
+      body = { ...common, q: `Please carefully read the following code:\n<code>\n${s.context}\n</code>\n${fallbackInstruction}`, method };
+    } else {
+      return;
+    }
+    runCode(body, label);
+    setInput('');
+  };
+
+  // Typed @S question in code mode (from the input box).
+  const onContentCode = async (prompt: string, method: string) => {
+    if (!user) return;
+    const isQuestion = prompt.toUpperCase().startsWith('@S');
+    if (!isQuestion) {
+      // Peer chat message — just post it
+      const now = await serverTime();
+      updateState(props._id, {
+        ...s,
+        messages: [
+          ...s.messages,
+          {
+            id: genId(),
+            userId: user._id,
+            creationId: '',
+            creationDate: now.epoch,
+            userName: user?.data.name,
+            query: prompt,
+            response: '',
           },
-          user: username,
-          id: genId(),
-          model: selectedModel || 'llama',
-          location: location,
-          q: request,
-          method: method,
-        };
-        const response = await callCode(body);
-        if ('message' in response) {
-          toast({
-            title: 'Error',
-            description: response.message || 'Error sending query to the agent. Please try again.',
-            status: 'error',
-            duration: 4000,
-            isClosable: true,
-          });
-        } else {
-          const new_text = response.r || '';
-          setProcessing(false);
-          // Clear the stream text
-          setStreamText('');
-          ctrlRef.current = null;
-          setPreviousAnswer(prevItems => [...prevItems, new_text]);
-          // Add messages
-          updateState(props._id, {
-            ...s,
-            previousQ: [...s.previousQ, request],
-            previousA: [...s.previousA, new_text],
-            messages: [
-              ...s.messages,
-              initialAnswer,
-              {
-                id: genId(),
-                userId: user._id,
-                creationId: '',
-                creationDate: now.epoch + 1,
-                userName: 'SAGE',
-                query: '',
-                response: new_text,
-              },
-            ],
-          });
-          if (response.actions) {
-            setActions(response.actions);
-          }
-        }
-      }
+        ],
+      });
+      return;
     }
+    if (!canPerform('coding')) return;
+    const request = prompt.slice(2);
+    const body: CodeRequest = {
+      ctx: {
+        previousQ: previousQuestion,
+        previousA: previousAnswer,
+        pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
+        roomId: roomId!,
+        boardId: boardId!,
+      },
+      user: username,
+      id: genId(),
+      model: selectedModel || 'llama',
+      location: location,
+      q: request,
+      method,
+      appIds: sourceApps,
+    };
+    runCode(body, request);
   };
 
-  const onProsCons = async () => {
-    if (s.context) {
-      // ProsCons prompt
-      const ctx = `@S, Please carefully read the following document text:
-        <document>
-        ${s.context}
-        </document>
-        After reading through the document, identify the pros and cons.
-        Provide all your answers in a few sentences.`;
-      newMessage(ctx);
-      setInput('');
+  const onProsCons = () => askIntent('proscons', 'Identify pros and cons', 'Identify the pros and cons. Answer in a few sentences.');
+  const onKeywords = () =>
+    askIntent('keywords', 'Extract keywords', 'Extract 3-5 keywords that best capture the essence and subject matter. Answer as a list.');
+  const onFacts = () => askIntent('facts', 'List interesting facts', 'List two or three interesting facts from the document.');
+
+  // Generate an image from the linked text app (e.g. a Stickie): the text is
+  // sent to the image-generation endpoint, the result is uploaded as an asset,
+  // and an ImageViewer is placed next to the chat window.
+  /** The "Generate Image" prompt button: illustrate the linked text. */
+  const onImageGeneration = async () => {
+    const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
+    const textApp = apps.find((a) => typeof (a.data.state as { text?: string }).text === 'string');
+    const text = ((textApp?.data.state as { text?: string })?.text ?? s.context ?? '').trim();
+    if (!text) {
+      toast({
+        title: 'No text to illustrate',
+        description: 'Link a Stickie with some text first, or type /image <description>.',
+        status: 'warning',
+        duration: 4000,
+        isClosable: true,
+      });
+      return;
     }
+    await generateImage(text, 'Generate an image from the text');
   };
-  const onKeywords = async () => {
-    if (s.context) {
-      // Keywords prompt
-      const ctx = `@S, Please carefully read the following document text:
-        <document>
-        ${s.context}
-        </document>
-        Extract 3-5 keywords that best capture the essence and subject matter of the document. These keywords should concisely represent the most important and central ideas conveyed by the text.
-        Provide all your answers using a list.`;
-      newMessage(ctx);
-      setInput('');
-    }
-  };
-  const onOpinion = async () => {
-    if (s.context) {
-      // Opinion prompt
-      const ctx = `@S, Please carefully read the following document text:
-        <document>
-        ${s.context}
-        </document>
-        Provide a short opinion on the document.`;
-      newMessage(ctx);
-      setInput('');
-    }
-  };
-  const onFacts = async () => {
-    if (s.context) {
-      // Facts prompt
-      const ctx = `@S, Please carefully read the following document text:
-        <document>
-        ${s.context}
-        </document>
-        List two or three interesting facts from the document.`;
-      newMessage(ctx);
-      setInput('');
+
+  /**
+   * Generate an image from `text`, used as the prompt as written.
+   *
+   * Shared by the "Generate Image" prompt button (which illustrates a linked
+   * Stickie) and the /image command (where the typed text is the prompt), so
+   * both take the same path through generation, upload and window creation.
+   */
+  const generateImage = async (text: string, label: string) => {
+    if (!user || processing) return;
+    if (!canPerform('image_generation')) return;
+    if (!text) return;
+    const [firstLine] = text.split('\n').filter((l) => l.trim());
+    const now = await serverTime();
+    const placeholder = {
+      id: genId(),
+      userId: user._id,
+      creationId: '',
+      creationDate: now.epoch,
+      userName: 'SAGE',
+      query: label,
+      response: 'Working on it...',
+    };
+    updateState(props._id, { ...s, messages: [...s.messages, placeholder] });
+    setProcessing(true);
+    try {
+      // Generic image generation: the linked text becomes the prompt as-is.
+      // The Ideator's image call is not used here — it composes a
+      // brainstorming-specific prompt that is only meaningful in SageIdeator.
+      const result = await seerImage.generate({
+        prompt: text.slice(0, 1000),
+        model: selectedModel || '',
+      });
+      if ('message' in result) throw new Error(result.message);
+      // Upload to SAGE3 assets instead of keeping a ~1MB data URL around.
+      // Generated images arrive as data URLs; decode them locally rather than
+      // fetch()ing, since a fetch of a data: URL is subject to connect-src.
+      const blob = result.imageUrl.startsWith('data:')
+        ? dataURLtoBlob(result.imageUrl)
+        : await fetch(result.imageUrl).then((r) => r.blob());
+      const imgFile = new File([blob], `chat-image-${genId()}.png`, { type: 'image/png' });
+      const fd = new FormData();
+      fd.append('files', imgFile);
+      fd.append('room', roomId!);
+      const uploadRes = await fetch(apiUrls.assets.upload, { method: 'POST', body: fd, credentials: 'include' });
+      if (!uploadRes.ok) throw new Error('Asset upload failed');
+      const uploadedIds = (await uploadRes.json()) as string[];
+      const assetDbId = uploadedIds[0];
+      if (!assetDbId) throw new Error('No asset ID returned from upload');
+      await createApp({
+        title: (firstLine ?? 'Generated image').slice(0, 60),
+        roomId: roomId!,
+        boardId: boardId!,
+        position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+        size: { width: 512, height: 512, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        type: 'ImageViewer',
+        state: { assetid: assetDbId },
+        raised: true,
+        dragging: false,
+        pinned: false,
+      });
+      updateState(props._id, {
+        ...s,
+        messages: [
+          ...s.messages,
+          placeholder,
+          {
+            id: genId(),
+            userId: user._id,
+            creationId: '',
+            creationDate: now.epoch + 1,
+            userName: 'SAGE',
+            query: '',
+            response: 'Image generated from the linked text and placed next to the chat window.',
+          },
+        ],
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      toast({ title: 'Image generation failed', description: msg, status: 'error', duration: 4000, isClosable: true });
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -1290,148 +1373,11 @@ function AppComponent(props: App): JSX.Element {
       Find Related Papers
  */
   // Array of prompts for PDFs
-  const pdfPrompts = [
-    {
-      title: 'Generate Summary',
-      action: onContentPDF,
-      prompt:
-        'Provide a summary of the main findings and conclusions of these papers, including the research question, methods used, and key results.',
-    },
-    {
-      title: 'Gaps and Limitations',
-      action: onContentPDF,
-      prompt:
-        'What limitations or gaps does these papers identify in their own studies or in the broader field of research? How do the authors suggest overcoming these issues in future research?.',
-    },
-    {
-      title: 'Literature and References',
-      action: onContentPDF,
-      prompt:
-        'What are the key references and theoretical frameworks that these papers builds upon? Summarize how these studies contributes to existing research in the field.',
-    },
-    {
-      title: 'Methodology Analysis',
-      action: onContentPDF,
-      prompt:
-        'Describe the research methodology used in these papers. What were the sample size, experimental design, data collection methods, and statistical analyses applied used.',
-    },
-    {
-      title: 'Explain implications',
-      action: onContentPDF,
-      prompt:
-        'What are the practical and theoretical implications of these studies findings? How might they influence future research, trends, or real-world applications in the field?.',
-    },
-  ];
-
-  const onCodeComment = async () => {
-    if (!user) return;
-    // Get the current context
-    let newctx = s.context;
-    if (!newctx && sourceApps.length > 0) {
-      // Update the context
-      let language = 'python';
-      const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
-      newctx = apps.reduce((accumulate, app) => {
-        if (app.data.type === 'CodeEditor') {
-          accumulate += app.data.state.content + '\n\n';
-          language = app.data.state.language;
-        }
-        return accumulate;
-      }, '');
-      newctx = `Language ${language}:\n\n${newctx}`;
-    }
-    if (newctx) {
-      // Summary prompt
-      const ctx = `@S, Please carefully read the following code:
-        <code>
-        ${newctx}
-        </code>
-        Comment this code extensively to explain clearly what each instruction is supposed to do`;
-      onContentCode(ctx, 'comment');
-      setInput('');
-    }
-  };
-  const onCodeExplain = async () => {
-    if (!user) return;
-    // Get the current context
-    let newctx = s.context;
-    if (!newctx && sourceApps.length > 0) {
-      // Update the context
-      let language = 'python';
-      const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
-      newctx = apps.reduce((accumulate, app) => {
-        if (app.data.type === 'CodeEditor') {
-          accumulate += app.data.state.content + '\n\n';
-          language = app.data.state.language;
-        }
-        return accumulate;
-      }, '');
-      newctx = `Language ${language}:\n\n${newctx}`;
-    }
-    if (newctx) {
-      // Summary prompt
-      const ctx = `@S, Please carefully read the following code:
-        <code>
-        ${newctx}
-        </code>
-        Explain this code`;
-      onContentCode(ctx, 'explain');
-      setInput('');
-    }
-  };
-  const onCodeGenerate = async () => {
-    if (!user) return;
-    // Get the current context
-    let newctx = s.context;
-    if (sourceApps.length > 0) {
-      // Update the context
-      let language = 'python';
-      const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
-      newctx = apps.reduce((accumulate, app) => {
-        if (app.data.type === 'CodeEditor') {
-          accumulate += app.data.state.content + '\n\n';
-          language = app.data.state.language;
-        }
-        return accumulate;
-      }, '');
-      newctx = `Generate the best solution in ${language} code according to the following prompt: ${newctx}`;
-    }
-    if (newctx) {
-      // Summary prompt
-      const ctx = `@S, Generate the best solution according to the following prompt: ${newctx}`;
-      onContentCode(ctx, 'refactor');
-      setInput('');
-    }
-  };
-
-  const onCodeRefactor = async () => {
-    if (!user) return;
-    // Get the current context
-    let newctx = s.context;
-    if (!newctx && sourceApps.length > 0) {
-      // Update the context
-      let language = 'python';
-      const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
-      newctx = apps.reduce((accumulate, app) => {
-        if (app.data.type === 'CodeEditor') {
-          accumulate += app.data.state.content + '\n\n';
-          language = app.data.state.language;
-        }
-        return accumulate;
-      }, '');
-      newctx = `Language ${language}:\n\n${newctx}`;
-    }
-    if (newctx) {
-      // Summary prompt
-      const ctx = `@S, Please carefully read the following code:
-        <code>
-        ${newctx}
-        </code>
-        Can you refactor this code`;
-      onContentCode(ctx, 'refactor');
-      setInput('');
-    }
-  };
+  const onCodeComment = () =>
+    askCode('comment', 'Comment the code', 'Comment this code extensively to explain clearly what each instruction does.');
+  const onCodeExplain = () => askCode('explain', 'Explain the code', 'Explain this code.');
+  const onCodeGenerate = () => askCode('generate', 'Generate code', 'Generate the best solution for this code/request.');
+  const onCodeRefactor = () => askCode('refactor', 'Refactor the code', 'Refactor this code.');
 
   useEffect(() => {
     // Scroll to bottom of chat box immediately
@@ -1532,209 +1478,23 @@ function AppComponent(props: App): JSX.Element {
             },
           }}
         >
-          {sortedMessages.map((message, index) => {
-            const isMe = user?._id == message.userId;
-            const time = getDateString(message.creationDate);
-            const previousTime = message.creationDate;
-            const now = Date.now();
-            const diff = now - previousTime - 30 * 60 * 1000; // minus 30 minutes
-            const when = diff > 0 ? formatDistance(previousTime, now, { addSuffix: true }) : '';
-            const last = index === sortedMessages.length - 1;
-
-            // Remove single backticks and replace with double asterisks for bold
-            const response = message.response.replace(/`([^`\n]+)`/g, (match, p1) => {
-              return `**${p1}**`;
-            });
-
-            return (
-              <Fragment key={index}>
-                {/* Start of User Messages */}
-                {message.query && message.query.length ? (
-                  <Box position="relative" my={1}>
-                    {isMe ? (
-                      <Box top="-15px" right={'15px'} position={'absolute'} textAlign={'right'}>
-                        <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                          Me - {time}
-                        </Text>
-                      </Box>
-                    ) : (
-                      <Box top="-15px" left={'15px'} position={'absolute'} textAlign={'right'}>
-                        <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                          {message.userName} - {time}
-                        </Text>
-                      </Box>
-                    )}
-
-                    <Box display={'flex'} justifyContent={isMe ? 'right' : 'left'}>
-                      <Tooltip
-                        whiteSpace={'nowrap'}
-                        textOverflow="ellipsis"
-                        fontSize={'xs'}
-                        placement="top"
-                        hasArrow={true}
-                        // label={time}
-                        label={'Drag to board - Double-click to clipboard'}
-                        openDelay={400}
-                        closeDelay={2000}
-                      >
-                        <Box
-                          color="black"
-                          rounded={'md'}
-                          boxShadow="md"
-                          fontFamily="Arial"
-                          textAlign={isMe ? 'right' : 'left'}
-                          bg={isMe ? myColor : otherUserColor}
-                          px={2}
-                          py={1}
-                          m={3}
-                          maxWidth="70%"
-                          userSelect={isFocused ? 'text' : 'none'}
-                          onDoubleClick={() => {
-                            if (navigator.clipboard) {
-                              // Copy into clipboard
-                              navigator.clipboard.writeText(message.query);
-                              // Notify the user
-                              toast({
-                                title: 'Success',
-                                description: `Content Copied to Clipboard`,
-                                duration: 3000,
-                                isClosable: true,
-                                status: 'success',
-                              });
-                            }
-                          }}
-                          draggable={!isFocused}
-                          // Store the query into the drag/drop events to create stickies
-                          onDragStart={(e) => {
-                            e.dataTransfer.clearData();
-                            // Will create a new sticky
-                            e.dataTransfer.setData('app', 'Stickie');
-                            // Get the color of the user
-                            const colorMessage = isMe
-                              ? user?.data.color
-                              : users.find((u) => u._id === message.userId)?.data.color || 'blue';
-                            // Put the state of the app into the drag/drop events
-                            e.dataTransfer.setData(
-                              'app_state',
-                              JSON.stringify({
-                                color: colorMessage,
-                                text: message.query,
-                                fontSize: 24,
-                                sources: [props._id],
-                              })
-                            );
-                          }}
-                        >
-                          {message.query}
-                        </Box>
-                      </Tooltip>
-                    </Box>
-                  </Box>
-                ) : null}
-
-                {/* Start of SAGE Messages */}
-                {message.response && message.response.length ? (
-                  <Box position="relative" my={1} maxWidth={'70%'}>
-                    <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
-                      <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                        {message.userName} - {time}
-                      </Text>
-                    </Box>
-
-                    <Box display={'flex'} justifyContent="left" position={'relative'} top={'15px'} mb={'15px'}>
-                      <Tooltip
-                        whiteSpace={'nowrap'}
-                        textOverflow="ellipsis"
-                        fontSize={'xs'}
-                        placement="top"
-                        hasArrow={true}
-                        label={'Drag to board - Double-click to clipboard'}
-                        openDelay={400}
-                        closeDelay={2000}
-                      >
-                        <Box
-                          boxShadow="md"
-                          color="black"
-                          rounded={'md'}
-                          textAlign={'left'}
-                          bg={sageColor}
-                          px={2}
-                          py={1}
-                          m={3}
-                          fontFamily="Arial"
-                          onDoubleClick={() => {
-                            if (navigator.clipboard) {
-                              // Copy into clipboard
-                              navigator.clipboard.writeText(message.response);
-                              // Notify the user
-                              toast({
-                                title: 'Success',
-                                description: `Content Copied to Clipboard`,
-                                duration: 3000,
-                                isClosable: true,
-                                status: 'success',
-                              });
-                            }
-                          }}
-                        >
-                          <Box
-                            // pl={3}
-                            draggable={!isFocused}
-                            onDragStart={(e) => {
-                              // Store the response into the drag/drop events to create stickies
-                              e.dataTransfer.clearData();
-                              e.dataTransfer.setData('app', 'Stickie');
-                              e.dataTransfer.setData(
-                                'app_state',
-                                JSON.stringify({
-                                  color: 'purple',
-                                  text: message.response.trim(),
-                                  fontSize: 24,
-                                  sources: [props._id],
-                                })
-                              );
-                            }}
-                          >
-                            <Box>
-                              <Markdown
-                                options={{
-                                  overrides: {
-                                    ol: {
-                                      component: MdOrderedList,
-                                    },
-                                    ul: {
-                                      component: MdUnorderedList,
-                                    },
-                                    code: {
-                                      component: MdCode,
-                                    },
-                                  },
-                                }}
-                                style={{ userSelect: isFocused ? 'text' : 'none' }}
-                              >
-                                {response}
-                              </Markdown>
-                            </Box>
-                          </Box>
-                        </Box>
-                      </Tooltip>
-                    </Box>
-                  </Box>
-                ) : null}
-
-                {when && !last ? (
-                  <Box position="relative" padding="4">
-                    <Center>
-                      <Divider width={'80%'} borderColor={'ActiveBorder'} />
-                      <AbsoluteCenter bg={bgColor} px="4">
-                        {when}
-                      </AbsoluteCenter>
-                    </Center>
-                  </Box>
-                ) : null}
-              </Fragment>
-            );
-          })}
+          {sortedMessages.map((message, index) => (
+            <MessageItem
+              key={index}
+              message={message}
+              isLast={index === sortedMessages.length - 1}
+              user={user}
+              users={users}
+              appId={props._id}
+              isFocused={isFocused}
+              myColor={myColor}
+              otherUserColor={otherUserColor}
+              sageColor={sageColor}
+              textColor={textColor}
+              bgColor={bgColor}
+              toast={toast}
+            />
+          ))}
 
           {/* In progress SAGE Messages */}
           {streamText && (
@@ -1851,366 +1611,33 @@ function AppComponent(props: App): JSX.Element {
           </Tooltip>
         </HStack>
 
-        {mode !== 'chat' && <hr />}
-
-        {mode === 'Hawaii Mesonet' && (
-          <HStack>
-            {mesonetPrompts.map((p, i) => (
-              <Tooltip key={'tip' + i} fontSize={'xs'} placement="top" hasArrow={true} label={p.prompt} openDelay={400}>
-                <Button
-                  key={'button' + i}
-                  aria-label="stop"
-                  size={'xs'}
-                  p={0}
-                  m={0}
-                  colorScheme={'blue'}
-                  variant="ghost"
-                  textAlign={'left'}
-                  onClick={() => p.action()}
-                  width="34%"
-                >
-                  <HiCommandLine fontSize={'24px'} />
-                  <Text key={'text' + i} ml={'2'}>
-                    {p.title}
-                  </Text>
-                </Button>
-              </Tooltip>
-            ))}
-          </HStack>
-        )}
-
-        {/* AI Prompts */}
-        {mode === 'text' && (
-          <HStack>
-            <Tooltip
-              fontSize={'xs'}
-              placement="top"
-              hasArrow={true}
-              label={'Identify the main topics, themes, and key concepts that are covered in the text'}
-              openDelay={400}
-            >
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onSummary}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Generate Summary</Text>
-              </Button>
-            </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Identify the pros and cons of the text'} openDelay={400}>
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onProsCons}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Give feedback</Text>
-              </Button>
-            </Tooltip>
-            <Tooltip
-              fontSize={'xs'}
-              placement="top"
-              hasArrow={true}
-              label={'Extract 3-5 keywords that best capture the essence and subject matter of the text'}
-              openDelay={400}
-            >
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onKeywords}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Generate Keywords</Text>
-              </Button>
-            </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Provide a short opinion on the text'} openDelay={400}>
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onOpinion}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Provide Opinion</Text>
-              </Button>
-            </Tooltip>
-            <Tooltip
-              fontSize={'xs'}
-              placement="top"
-              hasArrow={true}
-              label={'Provide two or three interesting facts from the text'}
-              openDelay={400}
-            >
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onFacts}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Find Facts</Text>
-              </Button>
-            </Tooltip>
-          </HStack>
-        )}
-
-        {mode === 'code' && (
-          <HStack>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Refactor the code'} openDelay={400}>
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onCodeRefactor}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Refactor Code</Text>
-              </Button>
-            </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Explain the code'} openDelay={400}>
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onCodeExplain}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Explain Code</Text>
-              </Button>
-            </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Comment the code'} openDelay={400}>
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onCodeComment}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Comment Code</Text>
-              </Button>
-            </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Generate some code'} openDelay={400}>
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onCodeGenerate}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Generate Code</Text>
-              </Button>
-            </Tooltip>
-          </HStack>
-        )}
-
-        {mode === 'image' && (
-          <HStack>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Describe the image in details'} openDelay={400}>
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onImageSummary}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Describe Image</Text>
-              </Button>
-            </Tooltip>
-            <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Generate a caption for the image'} openDelay={400}>
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onImageCaption}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Generate Caption</Text>
-              </Button>
-            </Tooltip>
-            <Tooltip
-              fontSize={'xs'}
-              placement="top"
-              hasArrow={true}
-              label={'Describe the good parts and then the bad parts of the image'}
-              openDelay={400}
-            >
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onImageProsCons}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Give Feedback</Text>
-              </Button>
-            </Tooltip>
-            <Tooltip
-              fontSize={'xs'}
-              placement="top"
-              hasArrow={true}
-              label={'Generate 3-5 keywords that best capture the essence and subject matter of the image'}
-              openDelay={400}
-            >
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onImageKeywords}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Generate Keywords</Text>
-              </Button>
-            </Tooltip>
-            <Tooltip
-              fontSize={'xs'}
-              placement="top"
-              hasArrow={true}
-              label={'Provide two or three interesting facts about the image'}
-              openDelay={400}
-            >
-              <Button
-                aria-label="stop"
-                size={'xs'}
-                p={0}
-                m={0}
-                colorScheme={'blue'}
-                variant="ghost"
-                textAlign={'left'}
-                onClick={onImageFacts}
-                width="34%"
-              >
-                <HiCommandLine fontSize={'24px'} />
-                <Text ml={'2'}>Find Facts</Text>
-              </Button>
-            </Tooltip>
-          </HStack>
-        )}
-        {mode === 'pdf' && (
-          // Generate the prompt and buttons for the PDFs
-          <HStack>
-            {pdfPrompts.map((p, i) => (
-              <Tooltip key={'tip' + i} fontSize={'xs'} placement="top" hasArrow={true} label={p.prompt} openDelay={400}>
-                <Button
-                  key={'button' + i}
-                  aria-label="stop"
-                  size={'xs'}
-                  p={0}
-                  m={0}
-                  colorScheme={'blue'}
-                  variant="ghost"
-                  textAlign={'left'}
-                  onClick={() => p.action('@S ' + p.prompt)}
-                  width="34%"
-                >
-                  <HiCommandLine fontSize={'24px'} />
-                  <Text key={'text' + i} ml={'2'}>
-                    {p.title}
-                  </Text>
-                </Button>
-              </Tooltip>
-            ))}
-          </HStack>
-        )}
-        {mode === 'web' && (
-          // Generate the prompt and buttons for the Webviews
-          <HStack>
-            {webPrompts.map((p, i) => (
-              <Tooltip key={'tip' + i} fontSize={'xs'} placement="top" hasArrow={true} label={p.prompt} openDelay={400}>
-                <Button
-                  key={'button' + i}
-                  aria-label="stop"
-                  size={'xs'}
-                  p={0}
-                  m={0}
-                  colorScheme={'blue'}
-                  variant="ghost"
-                  textAlign={'left'}
-                  onClick={() => p.action('@S ' + p.prompt)}
-                  width="34%"
-                >
-                  <HiCommandLine fontSize={'24px'} />
-                  <Text key={'text' + i} ml={'2'}>
-                    {p.title}
-                  </Text>
-                </Button>
-              </Tooltip>
-            ))}
-          </HStack>
-        )}
+        <PromptBars
+          mode={mode}
+          handlers={{
+            onSummary,
+            onProsCons,
+            onKeywords,
+            onImageGeneration,
+            onFacts,
+            onCodeRefactor,
+            onCodeExplain,
+            onCodeComment,
+            onCodeGenerate,
+            onImageSummary,
+            onImageCaption,
+            onImageProsCons,
+            onImageKeywords,
+            onImageFacts,
+            onContentPDF,
+            onContentWeb,
+            onContentWebScreenshot,
+          }}
+        />
 
         {/* Input Text */}
         <InputGroup bg={'blackAlpha.100'} maxHeight={'120px'}>
           <Textarea
-            placeholder={'Chat with friends or ask SAGE with @S' + (selectedModel ? ' (' + selectedModel + ' model)' : '')}
+            placeholder={'Chat, ask SAGE with @S, or type / for commands' + (selectedModel ? ' (' + selectedModel + ' model)' : '')}
             size="md"
             variant="outline"
             _placeholder={{ color: 'inherit' }}
@@ -2237,71 +1664,5 @@ function AppComponent(props: App): JSX.Element {
     </AppWindow>
   );
 }
-
-/* App toolbar component for the app Chat */
-
-function ToolbarComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
-  const { user } = useUser();
-  // Sort messages by creation date to display in order
-  const sortedMessages = s.messages ? s.messages.sort((a, b) => a.creationDate - b.creationDate) : [];
-
-  // Download the content as a text file
-  const downloadTxt = () => {
-    // Rebuid the content as text
-    let content = '';
-    sortedMessages.map((message) => {
-      const isMe = user?._id == message.userId;
-      if (message.query.length) {
-        if (isMe) {
-          content += `Me> ${message.query}\n`;
-        } else {
-          content += `${message.userName}> ${message.query} \n`;
-        }
-      }
-      if (message.response.length) {
-        if (message.response !== 'Working on it...') {
-          content += `SAGE> ${message.response} \n`;
-        }
-      }
-    });
-
-    // Current date
-    const dt = format(new Date(), 'yyyy-MM-dd-HH:mm:ss');
-    // generate a URL containing the text of the note
-    const txturl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
-    // Make a filename with date
-    const filename = 'sage-' + dt + '.txt';
-    // Go for download
-    downloadFile(txturl, filename);
-  };
-
-  return (
-    <>
-      <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
-        <Tooltip placement="top" hasArrow={true} label={'Download Transcript'} openDelay={400}>
-          <Button onClick={downloadTxt} size='xs' px={0}>
-            <MdFileDownload fontSize="16px" />
-          </Button>
-        </Tooltip>
-      </ButtonGroup>
-    </>
-  );
-}
-
-function getDateString(epoch: number): string {
-  // const date = new Date(epoch).toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric' });
-  const time = new Date(epoch).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  // return `${date} - ${time}`;
-  return `${time}`;
-}
-
-/**
- * Grouped App toolbar component, this component will display when a group of apps are selected
- * @returns JSX.Element | null
- */
-const GroupedToolbarComponent = () => {
-  return null;
-};
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

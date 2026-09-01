@@ -241,8 +241,8 @@ export function LassoToolbar(props: LassoToolbarProps) {
       const firstApp = selectedApps[0];
       if (!firstApp) return false;
       // return AI_ENABLED_APPS.includes(firstApp.data.type);
-      // for now, only Chat and PDFViewer are AI_Enabled in multi-select
-      return ['Stickie', 'PDFViewer'].includes(firstApp.data.type);
+      // Apps that support multi-select AI (open all together in one Chat)
+      return ['Stickie', 'PDFViewer', 'ImageViewer'].includes(firstApp.data.type);
     } else {
       return false;
     }

@@ -6,6 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { LLMConfiguration } from './llm';
+
 /**
  * Configuration parameters for the SAGE3 server
  *
@@ -65,9 +67,7 @@ export interface ServerConfiguration {
   services: {
     twilio: TwilioConfiguration;
     livekit: LiveKitConfiguration;
-    openai: OpenAIConfiguration;
-    llama: LlamaConfiguration;
-    azure: AzureConfig;
+    models: LLMConfiguration;
   };
 
   // Feature flags
@@ -99,9 +99,7 @@ export type OpenConfiguration = Pick<
   admins: ServerConfiguration['auth']['admins'];
   logins: ServerConfiguration['auth']['strategies'];
   features: ServerConfiguration['features'];
-  openai: ServerConfiguration['services']['openai'];
-  llama: ServerConfiguration['services']['llama'];
-  azure: ServerConfiguration['services']['azure'];
+  models: ServerConfiguration['services']['models'];
   fluentd: ServerConfiguration['fluentd'];
   veoServer: ServerConfiguration['veoServer'];
 };
@@ -118,8 +116,8 @@ export interface AuthConfiguration {
   sessionMaxAge: number;
   sessionSecret: string;
 
-  // List of login strategies: guest, google, apple, jwt, cilogon, keycloak, spectator
-  strategies: ('google' | 'apple' | 'cilogon' | 'guest' | 'jwt' | 'keycloak' | 'spectator')[];
+  // List of login strategies: guest, google, apple, jwt, cilogon, keycloak, ldap, spectator
+  strategies: ('google' | 'apple' | 'cilogon' | 'guest' | 'jwt' | 'keycloak' | 'ldap' | 'spectator')[];
 
   // Admin users
   admins: string[];
@@ -158,6 +156,23 @@ export interface AuthConfiguration {
     routeEndpoint: string;
     callbackURL: string;
   };
+  // LDAP / Active Directory
+  ldapConfig?: {
+    url: string;
+    bindDN: string;
+    bindCredentials: string;
+    searchBase: string;
+    searchFilter: string;
+    groupMapping: {
+      admin?: string;
+      user?: string;
+      spectator?: string;
+    };
+    defaultRole: string;
+    tlsOptions?: {
+      rejectUnauthorized: boolean;
+    };
+  };
 }
 
 // The Twilio Configuration
@@ -173,36 +188,3 @@ export interface LiveKitConfiguration {
   apiKey: string; // API Key, must match the 'keys' entry in the LiveKit server config
   apiSecret: string; // API Secret, must match the 'keys' entry in the LiveKit server config
 }
-
-// The OpenAI Configuration
-export interface OpenAIConfiguration {
-  apiKey: string; // API Key
-  model: string; // LLM model
-  label?: string; // Model label in the UI
-}
-
-// Llama Configuration
-export interface LlamaConfiguration {
-  url: string;
-  model: string; // LLM model
-  apiKey: string; // API Key
-  max_tokens: number;
-  label?: string; // Model label in the UI
-}
-
-// Azure Configuration
-export type AzureServiceConfig = {
-  url: string;
-  model: string;
-  apiKey: string;
-  api_version: string;
-  label?: string; // Model label in the UI
-};
-
-export type AzureConfig = {
-  text: AzureServiceConfig;
-  embedding: AzureServiceConfig;
-  transcription: AzureServiceConfig;
-  reasoning: AzureServiceConfig;
-  vision: AzureServiceConfig;
-};

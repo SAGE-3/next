@@ -1,0 +1,131 @@
+#!/bin/bash
+#
+# Package — build the SAGE3 server install tarball for one architecture.
+#
+# Usage:
+#   ./Package amd64
+#   ./Package arm64
+#
+# The version comes from webstack/package.json (single source of truth).
+# Files are staged into a temporary directory from an explicit allowlist, so
+# generated keys, tokens, certificates, logs, and database data can never end
+# up in the tarball, and the working tree is left untouched.
+#
+# Optional:
+#   PIN_IMAGES=1 ./Package amd64
+#     rewrites the SAGE3 image tags in the shipped docker-compose.yml from the
+#     moving ":amd64"/":arm64" tags to versioned ":<major.minor>-<arch>" tags
+#     (the images must have been pushed with those tags).
+#
+set -euo pipefail
+cd "$(dirname "$0")"
+
+ARCH="${1:-}"
+if [[ "$ARCH" != "amd64" && "$ARCH" != "arm64" ]]; then
+  echo "Usage: $0 <amd64|arm64>" >&2
+  exit 1
+fi
+
+# ── Version from webstack/package.json ───────────────────────────────────────
+VERSION=$(sed -n 's/^[[:space:]]*"version":[[:space:]]*"\([^"]*\)".*/\1/p' ../webstack/package.json | head -1)
+if [[ -z "$VERSION" ]]; then
+  echo "Error: could not read version from ../webstack/package.json" >&2
+  exit 1
+fi
+MAJMIN=${VERSION%.*} # 1.6.0 -> 1.6
+
+PKG="SAGE3-${MAJMIN}"
+OUT="SAGE3-${MAJMIN}-${ARCH}.tgz"
+
+# GNU tar is "gtar" on macOS (brew install gnu-tar), "tar" on Linux.
+TAR=$(command -v gtar || command -v tar)
+
+sha256() {
+  if command -v sha256sum >/dev/null; then sha256sum "$@"; else shasum -a 256 "$@"; fi
+}
+
+# ── Stage into a temp dir (never mutates the working tree) ───────────────────
+STAGE=$(mktemp -d)
+trap 'rm -rf "$STAGE"' EXIT
+ROOT="$STAGE/$PKG"
+C="$ROOT/configurations"
+mkdir -p "$ROOT"
+
+# Top-level files
+cp README.md GO STOP "$ROOT/"
+cp "docker-compose-${ARCH}.yml" "$ROOT/docker-compose.yml"
+cp .env.template "$ROOT/.env"
+
+# Optionally pin the SAGE3 image tags to this release
+if [[ "${PIN_IMAGES:-}" == "1" ]]; then
+  sed -i.bak "s|\(ghcr.io/sage-3/[a-z_]*\):${ARCH}|\1:${MAJMIN}-${ARCH}|g" "$ROOT/docker-compose.yml"
+  rm -f "$ROOT/docker-compose.yml.bak"
+  echo "Pinned SAGE3 images to :${MAJMIN}-${ARCH}"
+fi
+
+# fluentd: production config (as fluent.conf) + log folder structure (no logs)
+mkdir -p "$C/fluentd/conf" "$C/fluentd/log/data" "$C/fluentd/log/seer"
+cp configurations/fluentd/conf/fluent-prod.conf "$C/fluentd/conf/fluent-prod.conf"
+cp configurations/fluentd/conf/fluent-prod.conf "$C/fluentd/conf/fluent.conf"
+cp configurations/fluentd/conf/README.md "$C/fluentd/conf/"
+cp configurations/fluentd/log/README.md "$C/fluentd/log/"
+
+# redis: config + empty data dir
+mkdir -p "$C/redis/conf" "$C/redis/data"
+cp configurations/redis/conf/redis.conf "$C/redis/conf/"
+
+# chroma: empty data dir (README placeholder only)
+mkdir -p "$C/chroma/data"
+cp configurations/chroma/data/README.md "$C/chroma/data/"
+
+# traefik: static + dynamic config, empty certs dir (README explains setup)
+mkdir -p "$C/traefik/certs"
+cp configurations/traefik/traefik.yml configurations/traefik/dynamic.yml "$C/traefik/"
+cp configurations/traefik/certs/README.md "$C/traefik/certs/"
+
+# node: prod config template + key-generation tooling.
+# The generated keys themselves (*.pem, *.key, *.crt, token.json) NEVER ship.
+mkdir -p "$C/node/assets" "$C/node/plugins/uploads" "$C/node/keys"
+cp configurations/node/sage3-prod.hjson "$C/node/"
+cp configurations/node/assets/README.md "$C/node/assets/"
+cp configurations/node/plugins/README.md "$C/node/plugins/"
+for f in genJWT.js genJWT_keys.sh genJWT_token.sh genSSL-linux genSSL-mac \
+  init_webserver.sh init_webserver.cmd v3.ext package.json package-lock.json README.md; do
+  cp "configurations/node/keys/$f" "$C/node/keys/"
+done
+
+# python helper scripts (JWT token file ships as an empty placeholder)
+mkdir -p "$C/python"
+cp configurations/python/*.py configurations/python/*.sh \
+  configurations/python/requirements.txt configurations/python/README.md "$C/python/"
+printf '{\n    "token": ""\n}\n' >"$C/python/jwt_sage3.json"
+
+# foresight top-level docs
+mkdir -p "$C/foresight"
+cp configurations/foresight/README.md "$C/foresight/"
+
+# jupyter: conf + notebooks. The runtime token (info.json) ships empty, the
+# generated TLS keypair never ships, and editor/build junk is excluded.
+mkdir -p "$C/jupyter/conf/keys"
+cp configurations/jupyter/conf/start.sh configurations/jupyter/conf/redis-store.py "$C/jupyter/conf/"
+printf '{ "token": "" }\n' >"$C/jupyter/conf/info.json"
+cp configurations/jupyter/conf/keys/README.md "$C/jupyter/conf/keys/"
+cp -R configurations/jupyter/conf/2D-Jupyter "$C/jupyter/conf/"
+"$TAR" -C configurations/jupyter -cf - \
+  --exclude='.ipynb_checkpoints' \
+  --exclude='.virtual_documents' \
+  --exclude='*.egg-info' \
+  --exclude='build' \
+  --exclude='.DS_Store' \
+  --exclude='ipynb' \
+  --exclude='*.log' \
+  notebooks | "$TAR" -C "$C/jupyter" -xf -
+
+# ── Tarball + checksum ───────────────────────────────────────────────────────
+rm -f "$OUT" "$OUT.sha256"
+"$TAR" --exclude '.DS_Store' -C "$STAGE" -czf "$OUT" "$PKG"
+sha256 "$OUT" >"$OUT.sha256"
+
+echo ""
+echo "Created $OUT (version $VERSION, $ARCH)"
+cat "$OUT.sha256"

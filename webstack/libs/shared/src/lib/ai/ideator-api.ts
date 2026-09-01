@@ -81,6 +81,7 @@ export type IdeatorImageRequest = {
   model: string;
   brainstormingPrompt?: string;
   dimension?: { categorical: Record<string, string>; ordinal: Record<string, string> };
+  additionalContext?: string;
 };
 
 export type IdeatorImageResponse = {
@@ -106,8 +107,4 @@ export const IdeatorRoutes = {
   summarize: '/summarize',
   image: '/image',
   prose: '/prose',
-} as const;
-
-export const ImageGenerationRoutes = {
-  generate: '/image-generation',
 } as const;

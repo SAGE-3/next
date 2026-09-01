@@ -1,5 +1,6 @@
 const { NxAppWebpackPlugin } = require('@nx/webpack/app-plugin');
 const { NxReactWebpackPlugin } = require('@nx/react/webpack-plugin');
+const MonacoWebpackPlugin = require('monaco-editor-webpack-plugin');
 
 // Options migrated from the former @nx/webpack:webpack executor target;
 // the production block applies when building with --configuration=production.
@@ -161,5 +162,15 @@ module.exports = {
       message: /Failed to parse source map/,
     },
   ],
-  plugins: [new NxAppWebpackPlugin(buildOptions), new NxReactWebpackPlugin(), sageStyleTweaksPlugin, svgrPlugin],
+  plugins: [
+    new NxAppWebpackPlugin(buildOptions),
+    new NxReactWebpackPlugin(),
+    sageStyleTweaksPlugin,
+    svgrPlugin,
+    // Monaco is bundled (see src/monaco-setup.ts) rather than loaded from a
+    // CDN; this plugin emits the editor/language workers as self-contained
+    // bundles (plain `new Worker(new URL(...))` breaks with Nx's runtimeChunk
+    // splitting) and wires MonacoEnvironment to them.
+    new MonacoWebpackPlugin({ filename: '[name].worker.js' }),
+  ],
 };

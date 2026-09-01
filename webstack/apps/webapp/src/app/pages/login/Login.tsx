@@ -8,13 +8,26 @@
 
 import { useEffect, useCallback, useState } from 'react';
 
-import { Button, ButtonGroup, IconButton, Box, useColorMode, Image, Text, VStack, useColorModeValue, useToast } from '@chakra-ui/react';
+import {
+  Button,
+  ButtonGroup,
+  IconButton,
+  Box,
+  useColorMode,
+  Image,
+  Text,
+  VStack,
+  useColorModeValue,
+  useToast,
+  Input,
+  FormControl,
+} from '@chakra-ui/react';
 
 import { FcGoogle } from 'react-icons/fc';
-import { FaGhost, FaApple } from 'react-icons/fa';
+import { FaGhost, FaApple, FaServer } from 'react-icons/fa';
 import { SiKeycloak } from 'react-icons/si';
 
-import { isElectron, useAuth, useRouteNav, GetServerInfo } from '@sage3/frontend';
+import { isElectron, useHexColor, useAuth, useRouteNav, GetServerInfo } from '@sage3/frontend';
 
 // Logos
 import cilogonLogo from '../../../assets/cilogon.png';
@@ -30,6 +43,8 @@ export function LoginPage() {
   const [serverName, setServerName] = useState<string>('');
   const [shouldDisable, setShouldDisable] = useState(false);
   const [logins, setLogins] = useState<string[]>([]);
+  const placeholderColorValue = useColorModeValue('gray.400', 'gray.100');
+  const placeholderColor = useHexColor(placeholderColorValue);
 
   const logoUrl = '/assets/sage3_banner.webp';
   const thisIsElectron = isElectron();
@@ -191,6 +206,10 @@ export function LoginPage() {
           title = 'Keycloak OAuth Error';
           description = 'Keycloak returned an authentication error. Please try again.';
           break;
+        case 'ldap_failed':
+          title = 'LDAP Login Failed';
+          description = 'Invalid username or password, or the directory could not be reached. Please try again.';
+          break;
         default:
           title = 'Authentication Error';
           description = `Unknown authentication error: ${error}`;
@@ -202,7 +221,7 @@ export function LoginPage() {
       }
 
       // Log to console for debugging (always visible)
-      console.error(`OAuth Authentication Error [${error}]:`, {
+      console.error(`OAuth Authentication Error:`, {
         title,
         description,
         details: details ? decodeURIComponent(details) : 'No additional details',
@@ -316,6 +335,7 @@ export function LoginPage() {
   const isApple = !shouldDisable && logins.includes('apple');
   const isCILogon = !shouldDisable && logins.includes('cilogon');
   const isKeycloak = !shouldDisable && logins.includes('keycloak');
+  const isLdap = !shouldDisable && logins.includes('ldap');
 
   return (
     <Box display="flex" flexDir={'column'} justifyContent="center" alignItems="center" width="100%" height="100%" position="relative">
@@ -434,6 +454,54 @@ export function LoginPage() {
                 Login with Keycloak
               </Button>
             </ButtonGroup>
+          )}
+
+          {/* LDAP / Active Directory Auth Service */}
+          {isLdap && (
+            // Plain HTML form submission (not a fetch call): the server
+            // responds with a redirect on both success ('/') and failure
+            // ('/?error=ldap_failed'), matching the OAuth-style flow every
+            // other provider above already uses — the browser follows it
+            // natively, no client-side response handling needed.
+            <Box as="form" action="/auth/ldap" method="POST" width="100%">
+              <VStack spacing={2} width="100%">
+                <Text textAlign="left" width="100%" fontSize="sm" userSelect="none">
+                  LDAP / Active Directory Login
+                </Text>
+                <FormControl>
+                  <Input
+                    name="username"
+                    placeholder="LDAP Username"
+                    autoComplete="username"
+                    isDisabled={shouldDisable}
+                    _placeholder={{ opacity: 0.7, color: placeholderColor }}
+                  />
+                </FormControl>
+                <FormControl>
+                  <Input
+                    name="password"
+                    type="password"
+                    placeholder="LDAP Password"
+                    autoComplete="current-password"
+                    isDisabled={shouldDisable}
+                    _placeholder={{ opacity: 0.7, color: placeholderColor }}
+                  />
+                </FormControl>
+                <ButtonGroup isAttached size="lg" width="100%">
+                  <IconButton
+                    width="80px"
+                    aria-label="Login with LDAP"
+                    icon={<FaServer size="26" />}
+                    pointerEvents="none"
+                    borderRight={`3px solid`}
+                    borderColor={colorMode === 'light' ? 'gray.50' : 'gray.800'}
+                  />
+                  <Button width="100%" type="submit" isDisabled={shouldDisable} justifyContent="left">
+                    Login with LDAP
+                  </Button>
+                </ButtonGroup>
+              </VStack>
+            </Box>
           )}
 
           {/* Guest Auth Service */}

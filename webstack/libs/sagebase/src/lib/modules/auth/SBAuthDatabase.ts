@@ -9,6 +9,14 @@
 import { RedisClientType, SchemaFieldTypes } from 'redis';
 import { v4 } from 'uuid';
 
+// Extra profile data passed from auth providers when creating/finding auth records
+export type AuthExtras = {
+  displayName?: string;
+  email?: string;
+  picture?: string;
+  role?: string;
+};
+
 // The Auth Schema
 export type SBAuthSchema = {
   provider: string;
@@ -18,6 +26,11 @@ export type SBAuthSchema = {
   displayName?: string;
   email?: string;
   picture?: string;
+  // Role resolved by the auth provider itself (currently only LDAP, via
+  // group→role mapping). Providers that don't resolve a role never set
+  // this, so it stays undefined for them — see permissions.ts's
+  // convertProviderToRole, which prefers this over the coarse provider map.
+  role?: string;
 };
 
 /**
@@ -94,13 +107,35 @@ export class SBAuthDatabase {
    * @param providerId The unique id for the provider
    * @returns {SBAuthSchema|undered} returns an SBAuthSchema if one was found or added succesfully.
    */
-  public async findOrAddAuth(provider: string, providerId: string, extras?: any): Promise<SBAuthSchema | undefined> {
+  public async findOrAddAuth(provider: string, providerId: string, extras?: AuthExtras): Promise<SBAuthSchema | undefined> {
     let auth = await this.readAuth(provider, providerId);
     if (auth != undefined) {
+      // Re-sync the role on every login for providers that resolve one
+      // dynamically (LDAP group membership can change between logins —
+      // access granted by group membership must also be revoked by it).
+      // Providers that never resolve a role (extras.role undefined) leave
+      // whatever's already stored untouched.
+      if (extras?.role !== undefined && auth.role !== extras.role) {
+        auth = await this.updateAuthRole(provider, providerId, extras.role);
+      }
       return auth;
     } else {
       auth = await this.addAuth(provider, providerId, extras);
       return auth;
+    }
+  }
+
+  /**
+   * Update the persisted role on an existing Auth record.
+   */
+  public async updateAuthRole(provider: string, providerId: string, role: string): Promise<SBAuthSchema | undefined> {
+    try {
+      const key = provider + providerId;
+      await this._redisClient.json.set(`${this._prefix}:${key}`, '$.role', role);
+      return await this.readAuth(provider, providerId);
+    } catch (error) {
+      this.ERRORLOG(error);
+      return undefined;
     }
   }
 
@@ -110,22 +145,31 @@ export class SBAuthDatabase {
    * @param providerId The unique id for the provider
    * @returns {SBAuthSchema|undered} returns an SBAuthscema if add was successful
    */
-  public async addAuth(provider: string, providerId: string, extras: any): Promise<SBAuthSchema | undefined> {
+  public async addAuth(provider: string, providerId: string, extras?: AuthExtras): Promise<SBAuthSchema | undefined> {
     const doc = {
       provider,
       providerId,
       id: v4(),
-      displayName: extras.displayName,
-      email: extras.email,
-      picture: extras.picture,
+      displayName: extras?.displayName,
+      email: extras?.email,
+      picture: extras?.picture,
+      role: extras?.role,
     } as SBAuthSchema;
     const key = provider + providerId;
-    const redisRes = await this._redisClient.json.set(`${this._prefix}:${key}`, '.', doc);
+    // NX: only write if the key doesn't already exist. Two concurrent
+    // first-time logins for the same identity can both pass findOrAddAuth's
+    // readAuth() check before either has written — without this, both would
+    // call addAuth and mint a different v4() id, with whichever write lands
+    // last silently winning and the other caller returning a stale id that
+    // no longer matches what's persisted.
+    const redisRes = await this._redisClient.json.set(`${this._prefix}:${key}`, '.', doc, { NX: true });
     if (redisRes == 'OK') {
       return doc;
-    } else {
-      return undefined;
     }
+    // NX prevented the write: another call already created this record
+    // first. Return what's actually persisted, not the one we lost the race
+    // to create.
+    return await this.readAuth(provider, providerId);
   }
 
   /**
@@ -151,13 +195,14 @@ export class SBAuthDatabase {
    */
   public async deleteAuthByEmail(email: string): Promise<SBAuthSchema | undefined> {
     try {
-      // RediSearch TAG queries treat '.', '-', '+', and '@' as syntax
-      // characters. Only escaping '@' and '.' (the prior behavior) let a
-      // syntax error slip through for any email containing '-' or '+' —
-      // both legal, common email characters — which this method's catch
-      // block silently swallowed as "no match found" even when a matching
-      // record existed. Found via an integration test against real Redis.
-      const escapedQuery = email.replace(/[@.\-+]/g, '\\$&');
+      // RediSearch TAG queries treat most punctuation as syntax characters,
+      // and a backslash in the input can escape the query's own delimiters.
+      // Escape every non-alphanumeric character (harmless for characters
+      // that don't need it): the single pass covers backslash itself, so an
+      // input backslash can't defeat the escaping, and legal email
+      // characters like '-' and '+' no longer cause a syntax error that
+      // this method's catch block would swallow as "no match found".
+      const escapedQuery = email.replace(/[^a-zA-Z0-9]/g, '\\$&');
       const response = await this._redisClient.ft.search(this._indexName, `@email:{${escapedQuery}}`);
       const docs = response.documents;
       if (docs.length > 1) {

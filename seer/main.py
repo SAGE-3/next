@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 from fluent import sender
 from libs.ai_logging import initFluent
 
+
 from libs.localtypes import (
     ImageQuery,
     Question,
@@ -21,11 +22,13 @@ from libs.localtypes import (
     IdeatorUserDimensionRequest,
     IdeatorSummarizeRequest,
     IdeatorImageRequest,
+    ImageGenerationRequest,
     IdeatorProseRequest,
 )
 
 # Web API
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 import uvicorn
 
 load_dotenv()  # take environment variables from .env.
@@ -34,6 +37,8 @@ logger = logging.getLogger("uvicorn.error")
 # SAGE3 API
 from pysage3.config import config as conf, prod_type
 from pysage3.client import PySage3
+# Utils
+from libs.utils import getModelsInfo
 
 # SAGE3 handle
 ps3 = PySage3(conf, prod_type)
@@ -47,6 +52,7 @@ from langchain.globals import set_debug, set_verbose
 # Modules
 from app.chat import ChatAgent
 from app.ideator import IdeatorAgent
+from app.imagegen import ImageGenAgent
 
 # from app.summary import SummaryAgent
 from app.web import WebAgent
@@ -56,18 +62,17 @@ from app.code import CodeAgent
 from app.mesonet import MesonetAgent
 
 
-# Instantiate each module's class
-chatAG = ChatAgent(logger, ps3)
-codeAG = CodeAgent(logger, ps3)
-# summaryAG = SummaryAgent(logger, ps3)
-imageAG = ImageAgent(logger, ps3)
-mesonetAG = MesonetAgent(logger, ps3)
-pdfAG = PDFAgent(logger, ps3)
-webAG = WebAgent(logger, ps3)
-asyncio.ensure_future(webAG.init())
-ideatorAG = IdeatorAgent(logger, ps3)
+# Instantiate module handles during FastAPI startup after refreshing server config
+chatAG = None
+codeAG = None
+imageAG = None
+mesonetAG = None
+pdfAG = None
+webAG = None
+ideatorAG = None
+imagegenAG = None
 
-# set to debug the queries into langchain
+# Set to debug the queries into langchain
 # set_debug(True)
 # set_verbose(True)
 
@@ -82,26 +87,61 @@ ideatorAG = IdeatorAgent(logger, ps3)
 #         await asyncio.sleep(3)
 
 
-# @asynccontextmanager
-# async def lifespan(app: FastAPI):
-#     # Start the periodic task
-#     task = asyncio.create_task(my_periodic_task())
-#     yield  # Application runs here
-#     # Cleanup on shutdown
-#     task.cancel()
-#     try:
-#         await task
-#     except asyncio.CancelledError:
-#         print("Periodic task cancelled")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global chatAG, codeAG, imageAG, mesonetAG, pdfAG, webAG, ideatorAG, imagegenAG
+
+    logger.info("FastAPI App started")
+    web_config = getModelsInfo(ps3)
+    logger.info("Fetched API keys and model configuration from SAGE3 server")
+    print(web_config)
+
+
+    chatAG = ChatAgent(logger, ps3)
+    codeAG = CodeAgent(logger, ps3)
+    imageAG = ImageAgent(logger, ps3)
+    mesonetAG = MesonetAgent(logger, ps3)
+    pdfAG = PDFAgent(logger, ps3)
+    webAG = WebAgent(logger, ps3)
+    ideatorAG = IdeatorAgent(logger, ps3)
+    imagegenAG = ImageGenAgent(logger, ps3)
+
+    await webAG.init()
+    yield
 
 
 # Web server
 app = FastAPI(
-    # lifespan=lifespan,
+    lifespan=lifespan,
     title="Seer",
     description="A LangChain proxy for SAGE3.",
     version="0.1.0",
 )
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    """Log the full traceback and return the actual error to the caller.
+
+    Without this an uncaught error becomes a bare 500 with no detail and no
+    traceback anywhere, which is indistinguishable from every other 500.
+    """
+    logger.exception(f"Unhandled error on {request.method} {request.url.path}")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"{type(exc).__name__}: {exc}"},
+    )
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """Keep the status code the handler chose instead of flattening it to 500,
+    and log it so refusals (bad provider, missing capability) are visible."""
+    logger.warning(
+        f"HTTP {exc.status_code} on {request.method} {request.url.path}: {exc.detail}"
+    )
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
 
 
 #
@@ -162,7 +202,7 @@ async def image(qq: ImageQuery):
     try:
         # do the work
         # val = await imageAG.process(qq)
-        val = await asyncio.wait_for(imageAG.process(qq), timeout=30)
+        val = await asyncio.wait_for(imageAG.process(qq), timeout=60)
         return val
     except asyncio.TimeoutError as e:
         print("Timeout error")
@@ -277,13 +317,22 @@ async def ideator_summarize(qq: IdeatorSummarizeRequest):
 
 
 @app.post("/image-generation")
+async def image_generation(qq: ImageGenerationRequest):
+    """Generic image generation: the prompt is used as the caller wrote it."""
+    try:
+        return await asyncio.wait_for(imagegenAG.generate(qq), timeout=60)
+    except asyncio.TimeoutError:
+        raise HTTPException(status_code=408, detail="Image generation timed out")
+
+
+@app.post("/ideator/image")
 async def ideator_image(qq: IdeatorImageRequest):
+    """SageIdeator's image call: composes a brainstorming prompt from ideator
+    concepts, then generates. Only meaningful inside SageIdeator."""
     try:
         return await asyncio.wait_for(ideatorAG.image(qq), timeout=60)
     except asyncio.TimeoutError:
         raise HTTPException(status_code=408, detail="Image generation timed out")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/prose")

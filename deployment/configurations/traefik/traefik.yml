@@ -5,7 +5,8 @@ entryPoints:
       tls: {}
 
 providers:
-  docker: {}
+  docker:
+    exposedByDefault: false
   file:
     filename: "/etc/traefik/dynamic.yml"
     watch: true

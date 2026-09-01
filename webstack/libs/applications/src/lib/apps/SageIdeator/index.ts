@@ -49,8 +49,6 @@ const QAEntrySchema = z.object({
 });
 
 export const schema = z.object({
-  apiKey: z.string(),
-  model: z.string(),
   batchSize: z.number(),
   numDimensions: z.number(),
   status: z.enum(['idle', 'generating_dimensions', 'generating_responses', 'ready']),
@@ -62,6 +60,7 @@ export const schema = z.object({
   pdfContext: z.object({ filename: z.string(), text: z.string() }).optional(),
   favorites: z.record(z.string(), z.boolean()).default({}),
   nodeImages: z.record(z.string(), z.string()).default({}),
+  nodeStickies: z.record(z.string(), z.string()).default({}),
   chatHistory: z.array(
     z.object({
       id: z.string(),
@@ -86,8 +85,6 @@ export const schema = z.object({
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  apiKey: '',
-  model: 'gpt-4o-mini',
   batchSize: 8,
   numDimensions: 2,
   status: 'idle',
@@ -98,6 +95,7 @@ export const init: Partial<state> = {
   qa: [],
   favorites: {},
   nodeImages: {},
+  nodeStickies: {},
   chatHistory: [],
 };
 

@@ -77,8 +77,23 @@ export function createApp(assetPath: string, config: ServerConfiguration): expre
   // Disabling a few rules for now, easier during development
   app.use(
     helmet({
-      // Content-Security-Policy
-      contentSecurityPolicy: false,
+      // Content-Security-Policy: keep script-src 'self' for the app document,
+      // but open the subresource directives the webapp needs in production
+      // (external map tiles, blob workers for pdf.js/Monaco, service embeds,
+      // Twilio websockets). Plugin documents get their own policy on the
+      // /plugins route (CSP is per-document).
+      contentSecurityPolicy: {
+        useDefaults: true,
+        directives: {
+          'img-src': ["'self'", 'data:', 'blob:', 'https:'],
+          'media-src': ["'self'", 'blob:', 'https:'],
+          'worker-src': ["'self'", 'blob:'],
+          'frame-src': ["'self'", 'https:'],
+          // data:/blob: cover fetch() of generated images (AI image data URLs
+          // are converted to blobs before asset upload) — local decoding only
+          'connect-src': ["'self'", 'https:', 'wss:', 'data:', 'blob:'],
+        },
+      },
       // Strict-Transport-Security
       hsts: true,
       // Cross-Origin-Embedder-Policy: disable to enable map images and zoom images to load

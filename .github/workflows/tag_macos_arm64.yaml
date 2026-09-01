@@ -1,5 +1,8 @@
 name: Tag release macos-arm
 
+permissions:
+  contents: write
+
 on:
   push:
     branches:

@@ -73,7 +73,7 @@ async function start() {
   console.log('CLI> Logged in');
 
   // Build a user
-  const randomName = faker.name.fullName();
+  const randomName = faker.person.fullName();
   const randomEmail = faker.internet.email();
   const randomAvatar = faker.image.avatar();
   const userData = {

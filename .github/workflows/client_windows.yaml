@@ -1,5 +1,8 @@
 name: Client Windows
 
+permissions:
+  contents: read
+
 on:
   push:
     paths:

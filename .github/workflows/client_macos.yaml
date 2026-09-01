@@ -1,5 +1,8 @@
 name: Client macos
 
+permissions:
+  contents: read
+
 on:
   push:
     paths:

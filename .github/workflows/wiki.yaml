@@ -1,0 +1,36 @@
+name: Update Wiki
+
+# Publish the doc/ folder to the GitHub wiki whenever docs change on main.
+# Reuses deployment/UpdateWiki (same script used for manual syncs).
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'doc/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-wiki
+  cancel-in-progress: false
+
+jobs:
+  update-wiki:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure git identity
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Publish doc/ to the wiki
+        env:
+          WIKI_URL: https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.wiki.git
+        run: ./deployment/UpdateWiki -y

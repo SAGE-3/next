@@ -12,7 +12,7 @@ import { FilesRouter } from './files';
 import express from 'express';
 import { MessageCollection } from './messageCollection';
 // SAGEBase Imports
-import { SAGEBase } from '@sage3/sagebase';
+import { SAGEBase, createRateLimiter } from '@sage3/sagebase';
 
 /**
  * API Loader function
@@ -31,7 +31,8 @@ export async function expressAPIRouter(): Promise<express.Router> {
   // route: /api/files/:id/:token
   router.use('/files', FilesRouter());
 
-  // Authenticate all API Routes
+  // Rate limit (generous per-IP backstop for asset traffic), then authenticate all API Routes
+  router.use(createRateLimiter(600));
   router.use(SAGEBase.Auth.authenticate);
 
   // /api/assets/upload

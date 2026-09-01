@@ -125,4 +125,16 @@ describeIfRedis('SBAuthDatabase — integration (real Redis Stack)', () => {
     const result = await db.deleteAuthByEmail('nobody-real@example.com');
     expect(result).toBeUndefined();
   });
+
+  it('deleteAuthByEmail survives a backslash in the input without corrupting the query', async () => {
+    // Regression test: the escaping regex must include backslash itself,
+    // or an input like 'x\' escapes the query's closing brace — the exact
+    // gap CodeQL's js/incomplete-sanitization flags. A trailing-backslash
+    // input must produce a clean empty result, not a swallowed syntax error,
+    // and must not match or delete an unrelated existing record.
+    await db.addAuth('google', 'real-redis-7', { displayName: 'Heidi', email: 'heidi@example.com' });
+    const result = await db.deleteAuthByEmail('heidi@example.com\\');
+    expect(result).toBeUndefined();
+    expect(await db.readAuth('google', 'real-redis-7')).not.toBeNull();
+  });
 });
