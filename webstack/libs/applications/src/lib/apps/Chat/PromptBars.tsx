@@ -95,7 +95,7 @@ const WEB_PROMPTS: { title: string; prompt: string; screenshot?: boolean }[] = [
 /**
  * The row of quick-prompt buttons shown under the transcript. Which buttons
  * appear depends on the type of the linked source app (text/code/image/pdf/web).
- * Chat mode and Hawaii Mesonet have no quick prompts.
+ * Chat mode has no quick prompts.
  */
 export function PromptBars({ mode, handlers }: { mode: OperationMode; handlers: PromptBarHandlers }): JSX.Element | null {
   if (mode === 'chat') return null;
