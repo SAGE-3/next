@@ -13409,11 +13409,6 @@ quickselect@^3.0.0:
   resolved "https://registry.yarnpkg.com/quickselect/-/quickselect-3.0.0.tgz#a37fc953867d56f095a20ac71c6d27063d2de603"
   integrity sha512-XdjUArbK4Bm5fLLvlm5KpTFOiOThgfWWI4axAZDWg4E/0mKdZyI9tNEfds27qCi1ze/vwTR16kvmmGhRra3c2g==
 
-quill-cursors@^4.0.2:
-  version "4.3.0"
-  resolved "https://registry.yarnpkg.com/quill-cursors/-/quill-cursors-4.3.0.tgz#775d82874f73e94dc495c03eb9f1ccfcd31e36c7"
-  integrity sha512-fHG6Ryon9KwD05L3gO14d8gqdapdVr2G/Rszl4g7T0X7ZQfG1j+/wAPx8JjhzZz+uWAekA9U0RjstfIt9M35IA==
-
 quill-delta@^5.1.0:
   version "5.1.0"
   resolved "https://registry.yarnpkg.com/quill-delta/-/quill-delta-5.1.0.tgz#1c4bc08f7c8e5cc4bdc88a15a1a70c1cc72d2b48"
@@ -15120,7 +15115,7 @@ tinyqueue@^3.0.0:
   resolved "https://registry.yarnpkg.com/tinyqueue/-/tinyqueue-3.0.0.tgz#101ea761ccc81f979e29200929e78f1556e3661e"
   integrity sha512-gRa9gwYU3ECmQYv3lslts5hxuIa90veaEcxDYuu3QGOIAEM2mOZkVHp48ANJuu1CURtRdHKUBY5Lm1tHV+sD4g==
 
-tldraw@^5.2.1:
+tldraw@^5.4.0:
   version "5.4.0"
   resolved "https://registry.yarnpkg.com/tldraw/-/tldraw-5.4.0.tgz#60cfad964b8cb00b153b61a72d2ee15979efee68"
   integrity sha512-4iNNAC/eV9Wa3unLBs9XIXh9lv+ZL8tPJYbVKkFmItDcKHL2bQ11OvltWEHY3Fp8Wk5v29C3qLmQxrBAoAGDWw==
