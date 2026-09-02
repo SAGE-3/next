@@ -439,9 +439,11 @@ async function pdfProcessing(job: any): Promise<ExtraPDFType> {
     );
     throw err;
   } finally {
-    if (pdf && typeof pdf.destroy === 'function') {
+    // pdf.js 6 removed PDFDocumentProxy.destroy(); the loading task's destroy()
+    // is the supported way to release the document and its worker
+    if (pdfTask && typeof pdfTask.destroy === 'function') {
       try {
-        await pdf.destroy();
+        await pdfTask.destroy();
       } catch (err) {
         console.warn('PDF> document cleanup failed', err);
       }
