@@ -183,11 +183,14 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
       // Make the directory
       ensureDirectoryExistence(resolveWithin(appsPath, folderName));
 
-      const p = req.file?.path;
-      if (p == undefined) {
+      if (req.file?.filename == undefined) {
         res.status(400).send({ success: false, message: 'Failed upload.' });
         return;
       }
+      // multer stores the upload under uploadPath with the generated name held
+      // in uploadName (above); rebuild the path from it rather than trusting
+      // req.file.path, so resolveWithin guarantees it stays inside uploadPath
+      const p = resolveWithin(uploadPath, uploadName);
 
       // Read and process the zip file
       try {

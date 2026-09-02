@@ -60,9 +60,6 @@ export interface ServerConfiguration {
     uploadLimit: string; // in bytes with optional units (KB, MB, GB, TB)
   };
 
-  // Feedback server
-  feedback: { url: string };
-
   // External Services
   services: {
     twilio: TwilioConfiguration;
@@ -91,10 +88,7 @@ export type PublicInformation = Pick<ServerConfiguration, 'serverName' | 'versio
 };
 
 // Public to authenticated users from server to the configuration request, for security reasons
-export type OpenConfiguration = Pick<
-  ServerConfiguration,
-  'serverName' | 'version' | 'production' | 'namespace' | 'features' | 'feedback'
-> & {
+export type OpenConfiguration = Pick<ServerConfiguration, 'serverName' | 'version' | 'production' | 'namespace' | 'features'> & {
   token: string;
   admins: ServerConfiguration['auth']['admins'];
   logins: ServerConfiguration['auth']['strategies'];

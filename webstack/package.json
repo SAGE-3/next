@@ -97,7 +97,7 @@
     "passport-ldapauth": "^3.0.1",
     "passport-local": "^1.0.0",
     "passport-openidconnect": "^0.1.2",
-    "pdfjs-dist": "^5.6.205",
+    "pdfjs-dist": "^6.3.289",
     "peerjs": "^1.4.6",
     "perfect-arrows": "^0.3.7",
     "perfect-freehand": "^1.2.2",
@@ -254,7 +254,7 @@
     "webpack-merge": "^5.8.0"
   },
   "engines": {
-    "node": "^20 || ^22 || ^24"
+    "node": "^22.13 || ^24"
   },
   "config": {
     "commitizen": {

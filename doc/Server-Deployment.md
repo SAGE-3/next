@@ -538,11 +538,6 @@ This file allows you to configure your server to your specific needs.
     "url": ""
   },
 
-  // Feedback URL
-  "feedback": {
-    "url": "http://sage3-server-status.cis230038.projects.jetstream-cloud.org:3000/feedback"
-  },
-
  // External Services
  "services": {
     // To enable screen sharing you must register for a Twilio account.

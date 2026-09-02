@@ -42,10 +42,6 @@
     "uploadLimit": "5GB" // file upload size limit in string, optional units: KB, MB, GB, TB
   },
 
-  // Feedback URL
-  "feedback": {
-    "url": "http://sage3-server-status.cis230038.projects.jetstream-cloud.org:3000/feedback"
-  },
 
   // External Services
   "services": {
