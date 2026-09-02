@@ -38,7 +38,7 @@ export const checkAvailableVisualizations = (variable: string) => {
       break;
 
     default:
-      availableVisualizations.push({value: 'map', name: 'Map'})
+      availableVisualizations.push({ value: 'map', name: 'Map' });
       availableVisualizations.push({ value: 'Line Chart', name: 'Line Chart' });
       // availableVisualizations.push({ value: 'Column Histogram', name: 'Column Histogram' });
       // availableVisualizations.push({ value: 'Pie Chart', name: 'Pie Chart' });
@@ -48,20 +48,6 @@ export const checkAvailableVisualizations = (variable: string) => {
   }
   return availableVisualizations;
 };
-
-// Not used for now. TODO in future, will ask ChatGPT to generate a chart
-export async function NLPHTTPRequest(message: string): Promise<NLPRequestResponse> {
-  const response = await fetch(apiUrls.misc.nlp, {
-    method: 'POST',
-    credentials: 'include',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ message }),
-  });
-  return (await response.json()) as NLPRequestResponse;
-}
 
 export function getFormattedDateTime() {
   const now = new Date();
@@ -194,7 +180,7 @@ const filterDataByDate = (formattedData: string[][], dates: { startDate: string;
 export const processStations = async (
   station_information: StationInformationProps,
   colorMode: string,
-  appSize: { width: number; height: number; depth: number }
+  appSize: { width: number; height: number; depth: number },
 ) => {
   // const stations = Object.keys(station_information);
   // const { dates, attributes: rawAttributes, chartType, transformations } = station_information[stations[0]];

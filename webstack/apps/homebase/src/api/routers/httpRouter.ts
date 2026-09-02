@@ -38,7 +38,7 @@ import {
 import { SAGEBase, createRateLimiter } from '@sage3/sagebase';
 
 // Custom Routes
-import { ConfigRouter, InfoRouter, TimeRouter, NLPRouter, LogsRouter, KernelsRouter, PresenceThrottle, AgentRouter } from './custom';
+import { ConfigRouter, InfoRouter, TimeRouter, LogsRouter, KernelsRouter, PresenceThrottle, AgentRouter } from './custom';
 
 import { config } from '../../config';
 
@@ -84,9 +84,6 @@ export function expressAPIRouter(): express.Router {
 
   // Configuration Route
   router.use('/configuration', ConfigRouter());
-
-  // Experimental NLP route
-  router.use('/nlp', NLPRouter());
 
   // Agent Routes (includes ideator routes under /agents/ideator/...)
   router.use('/agents', AgentRouter());

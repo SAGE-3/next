@@ -24,8 +24,6 @@ import {
   PDFAnswer,
   WebScreenshot,
   WebScreenshotAnswer,
-  MesonetRequest,
-  MesonetResponse,
   IdeatorRoutes,
   IdeatorDimensionsRequest,
   IdeatorDimensionsResponse,
@@ -120,7 +118,6 @@ export const seerAgents = {
   webshot: (data: WebScreenshot) => agentPost<WebScreenshotAnswer>(`${apiUrls.ai.agents.base}${AgentRoutes.webshot}`, data),
   image: (data: ImageQuery) => agentPost<ImageAnswer>(`${apiUrls.ai.agents.base}${AgentRoutes.image}`, data),
   pdf: (data: PDFQuery) => agentPost<PDFAnswer>(`${apiUrls.ai.agents.base}${AgentRoutes.pdf}`, data),
-  mesonet: (data: MesonetRequest) => agentPost<MesonetResponse>(`${apiUrls.ai.agents.base}${AgentRoutes.mesonet}`, data),
 };
 
 // ─── Image generation ─────────────────────────────────────────────────────────
@@ -132,12 +129,7 @@ export const seerAgents = {
  */
 export const seerImage = {
   generate: (data: ImageGenerationRequest, signal?: AbortSignal) =>
-    agentPost<ImageGenerationResponse>(
-      `${apiUrls.ai.agents.base}${ImageGenerationRoutes.generate}`,
-      data,
-      IDEATOR_TIMEOUT_MS,
-      signal
-    ),
+    agentPost<ImageGenerationResponse>(`${apiUrls.ai.agents.base}${ImageGenerationRoutes.generate}`, data, IDEATOR_TIMEOUT_MS, signal),
 };
 
 // ─── Ideator endpoints ────────────────────────────────────────────────────────
