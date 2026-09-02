@@ -165,5 +165,4 @@ export const AgentRoutes = {
   image: '/image',
   pdf: '/pdf',
   code: '/code',
-  mesonet: '/mesonet',
 } as const;

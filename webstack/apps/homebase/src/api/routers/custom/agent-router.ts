@@ -106,10 +106,6 @@ const pdfHandler: RpcHandlerPost<PDFQuery, PDFAnswer> = (req) => {
   const route = AgentRoutes.pdf;
   return fetchPost(`${config.agents.url}${route}`, req);
 };
-const mesonetHandler: RpcHandlerPost<MesonetRequest, MesonetResponse> = (req) => {
-  const route = AgentRoutes.mesonet;
-  return fetchPost(`${config.agents.url}${route}`, req);
-};
 
 // Ideator handlers — forwarded to seer under /ideator/...
 const ideatorDimensionsHandler: RpcHandlerPost<IdeatorDimensionsRequest, IdeatorDimensionsResponse> = (req) =>
@@ -139,7 +135,6 @@ handlers[AgentRoutes.web] = { func: webHandler, method: 'POST' };
 handlers[AgentRoutes.webshot] = { func: webshotHandler, method: 'POST' };
 handlers[AgentRoutes.image] = { func: imageHandler, method: 'POST' };
 handlers[AgentRoutes.pdf] = { func: pdfHandler, method: 'POST' };
-handlers[AgentRoutes.mesonet] = { func: mesonetHandler, method: 'POST' };
 handlers[AgentRoutes.code] = { func: codeHandler, method: 'POST' };
 // Ideator routes mounted under /ideator/... to avoid collisions with agent routes
 handlers[`/ideator${IdeatorRoutes.dimensions}`] = { func: ideatorDimensionsHandler, method: 'POST' };
