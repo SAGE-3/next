@@ -17,55 +17,61 @@
 'use strict';
 
 // Node modules
-const path = require('path');
-const dns = require('node:dns');
+import path from 'path';
+import dns from 'node:dns';
 
 // Get platform and hostname
-var os = require('os');
+import os from 'os';
 
 // NPM modules
-const electron = require('electron');
+import electron from 'electron';
 
 // parsing command-line arguments
-const { program } = require('commander');
+import { program } from 'commander';
+// The app's own version, read from package.json as before (app.getVersion() reports
+// Electron's version when run unpackaged via the electron CLI)
+import pkg from './package.json' with { type: 'json' };
 
 // URL received from protocol sage3:// while no window exists yet; loaded once the window opens
 var gotoURL = '';
 
 // Get the version from the package file
-var version = require('./package.json').version;
+const version = pkg.version;
 
 // Utilities
-const { checkServerIsSage, myParseInt, takeScreenshot, updateLandingPage } = require('./src/utils');
+import { checkServerIsSage, myParseInt, takeScreenshot, updateLandingPage } from './src/utils.js';
 
 // MenuBuilder
-const { buildMenu } = require('./src/menuBuilder');
+import { buildMenu } from './src/menuBuilder.js';
 
 // Stores
-const windowStore = require('./src/windowstore');
+import windowStore from './src/windowstore.js';
 const windowState = windowStore.getWindow();
-const bookmarkStore = require('./src/bookmarkstore');
+import bookmarkStore from './src/bookmarkstore.js';
 
 // SAGE3 Google maps APIKEY needed for user geo-location service
 // Stupid way to hide the key (I know)
 process.env.GOOGLE_API_KEY = Buffer.from('QUl6YVN5RGNOWjNCbzY1RmJtUzBOaVJ6WEdaekNjSFJIdm9ncURn', 'base64').toString('ascii');
 
 // Analytics
-var { analyticsOnStart, analyticsOnStop, genUserId } = require('./src/analytics');
+import { analyticsOnStart, analyticsOnStop, genUserId } from './src/analytics.js';
 var analytics_enabled = true;
 // random user id
 const userId = genUserId();
 
 // Windows installer (Squirrel) fires the app briefly during install/update/uninstall;
 // bail out early so we don't spin up a real window during those events.
-const { handleSquirrelEvent } = require('./src/squirrelEvent');
-if (require('electron-squirrel-startup')) {
-  return;
+import { handleSquirrelEvent } from './src/squirrelEvent.js';
+import squirrelStartup from 'electron-squirrel-startup';
+// ES modules cannot `return` at top level; quitting stops the app before `ready`,
+// which is where all window creation lives (the pattern electron-squirrel-startup documents)
+if (squirrelStartup) {
+  electron.app.quit();
 }
 // this should be placed at top of main.js to handle setup events quickly
 if (handleSquirrelEvent()) {
-  // squirrel event handled and app will exit in 1000ms, so don't do anything else
-  return;
+  // squirrel event handled and app will exit in 1000ms; quit so nothing else starts
+  electron.app.quit();
 }
 
 // Module to control application life.
@@ -126,7 +132,8 @@ const autoUpdater = electron.autoUpdater;
 // Auto update
 // require('update-electron-app')({ repo: 'SAGE-3/next' });
 // Poll GitHub releases (via Electron's public update service) and self-update in the background
-const { updateElectronApp, UpdateSourceType } = require('update-electron-app');
+import { updateElectronApp, UpdateSourceType } from 'update-electron-app';
+import log from 'electron-log';
 
 updateElectronApp({
   updateSource: {
@@ -135,7 +142,7 @@ updateElectronApp({
     repo: 'SAGE-3/next',
   },
   updateInterval: '10 minutes',
-  logger: require('electron-log'),
+  logger: log,
 });
 /////////////////////////////////////////////////////////////////
 
@@ -298,7 +305,7 @@ function showHidingWindow() {
     type: 'question',
     defaultId: 0,
     cancelId: 1,
-    // icon: path.join(__dirname, 'images/s3.png'),
+    // icon: path.join(import.meta.dirname, 'images/s3.png'),
     buttons: ['OK', 'Cancel'],
   });
   if (!res) {
@@ -466,7 +473,7 @@ function createWindow() {
       webviewTag: true,
       // Disable alert and confirm dialogs
       disableDialogs: true,
-      // Security: renderer talks to main only through the contextBridge in preload.js,
+      // Security: renderer talks to main only through the contextBridge in preload.cjs,
       // so node stays out of the renderer.
       nodeIntegration: false,
       contextIsolation: true,
@@ -476,7 +483,7 @@ function createWindow() {
       // this enables things like the CSS grid. add a commander option up top for enable / disable on start.
       experimentalFeatures: commander.experimentalFeatures ? true : false,
       // Hack to preload some js
-      preload: path.resolve(path.join(__dirname, 'preload.js')),
+      preload: path.resolve(path.join(import.meta.dirname, 'preload.cjs')),
     },
   };
 

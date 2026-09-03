@@ -35,7 +35,7 @@ install:
   - copy /Y Fullscreen.win  SAGE2_client-win32-x64\Fullscreen.bat
   - 7z a -sfx7z.sfx SAGE2_client-win64.exe SAGE2_client-win32-x64 > nul
   - move SAGE2_client-win64.exe ..
-  - node build_win.js
+  - node build_win.cjs
   - move windows-installer\SAGE2_client-Installer.exe ..
 
 build: off

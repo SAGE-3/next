@@ -3,6 +3,7 @@
   "version": "1.0.66",
   "description": "Electron-based SAGE3 client",
   "main": "electron.js",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "https://github.com/SAGE-3/next"
