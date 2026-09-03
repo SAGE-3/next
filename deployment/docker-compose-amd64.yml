@@ -54,6 +54,8 @@ services:
       - "traefik.http.routers.node-server.middlewares=authheader"
     environment:
       - NODE_ENV=production
+      # Same secret the livekit-server container gets; enables screensharing when set
+      - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET}
     volumes:
       - ./configurations/node/keys:/app/keys
       - ./configurations/node/assets:/app/dist/apps/homebase/assets
@@ -140,8 +142,11 @@ services:
         max-size: "100m"
   livekit-server:
     image: "livekit/livekit-server:v1.13"
-    # LIVEKIT_NODE_IP: the server's public/LAN IP, advertised to clients in ICE candidates (set in .env)
-    command: --config /etc/livekit.yaml --node-ip=${LIVEKIT_NODE_IP}
+    command: --config /etc/livekit.yaml
+    environment:
+      # The one credential a deployment generates, shared with node-server below.
+      # The key ("SAGE3") is an identifier, not a secret, so it is fixed.
+      - "LIVEKIT_KEYS=SAGE3: ${LIVEKIT_API_SECRET}"
     labels:
       - "traefik.enable=true"
       # Signaling (WebSocket) goes through traefik for TLS: wss://<server>/sfu

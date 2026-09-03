@@ -46,6 +46,49 @@ Use the `Build-Push` script to build all service images and push to GHCR:
 | homebase-yjs | `ghcr.io/sage-3/next_yjs` | Yjs collaboration server |
 | homebase-files | `ghcr.io/sage-3/next_files` | File upload/download server |
 | seer | `ghcr.io/sage-3/agents` | Python AI/LLM agent service |
+| livekit-server | `livekit/livekit-server` | Self-hosted SFU for screensharing |
+
+## Screenshare
+
+Screensharing runs on a self-hosted [LiveKit](https://livekit.io) SFU. To enable it, set
+one value in `.env`:
+
+```
+LIVEKIT_API_SECRET=$(uuidgen)
+```
+
+That is the whole configuration. The same secret is given to both the LiveKit container
+and the SAGE3 server, and there is nothing to set in `sage3-prod.hjson` — no URL, no key.
+Clients always reach the SFU at `/sfu` on the server they loaded the page from, so a
+SAGE3 server can only ever use its own SFU.
+
+Leave `LIVEKIT_API_SECRET` empty and there is no screensharing: the server mounts no
+routes and the screenshare button does not appear in the UI at all. The LiveKit container
+refuses to start without credentials, so comment out the `livekit-server` service too if
+you are running without screenshare.
+
+Keep the secret out of version control — `deployment/.env` is currently tracked by git.
+
+Open these ports on the host (forwarded to it if the server is behind NAT):
+
+| Port | Purpose |
+|---|---|
+| 7882/udp | All WebRTC media. Screenshares will connect but show no video without it. |
+| 7881/tcp | Media fallback for clients on networks that block UDP. |
+
+Signaling needs no new port: it goes through traefik over HTTPS at `wss://<server>/sfu`.
+
+The SFU discovers its public address via STUN. If this server has no outbound STUN
+access, or the discovered address is wrong, edit
+`configurations/livekit/livekit.yaml`: set `use_external_ip: false` and add
+`node_ip: <the address clients reach>`.
+
+### Twilio
+
+Servers that have not migrated may keep using Twilio by filling in the `twilio` block of
+`sage3-prod.hjson`. When both are configured LiveKit is used; existing Twilio screenshare
+windows on boards keep working either way. Twilio support will be removed in a future
+release.
 
 ## Authentication
 

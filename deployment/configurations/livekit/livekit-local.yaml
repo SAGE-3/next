@@ -1,0 +1,29 @@
+# LiveKit SFU server configuration for SAGE3 screenshare — LOCAL DEVELOPMENT
+# Used by the docker-compose-backend-*.yml files, where the SAGE3 server runs on the
+# host and the support containers run in Docker. All ports bind to 127.0.0.1, so
+# screensharing works only for a browser on this machine.
+
+port: 7880
+
+rtc:
+  tcp_port: 7881
+  udp_port: 7882
+  # No STUN lookup: everything is on this machine, so advertise loopback directly.
+  # node_ip only applies while use_external_ip is false.
+  use_external_ip: false
+  node_ip: 127.0.0.1
+
+# Development credentials. These never leave the local machine — the ports above are
+# bound to 127.0.0.1 — and they match LIVEKIT_DEV_SECRET, which the SAGE3 server falls
+# back to when it is not running in production. Nothing to configure on either side.
+keys:
+  SAGE3: sage3-livekit-dev-secret-not-for-production
+
+# In local development the SAGE3 server runs on the host, not in a container
+webhook:
+  api_key: SAGE3
+  urls:
+    - http://host.docker.internal:3000/livekit/webhook
+
+logging:
+  level: info

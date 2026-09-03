@@ -6,7 +6,6 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { LiveKitConfiguration } from '@sage3/shared/types';
 import { AppSchema } from '@sage3/applications/schema';
 import { SAGE3Collection } from '../generics';
 
@@ -15,15 +14,20 @@ import { AccessToken, WebhookReceiver } from 'livekit-server-sdk';
 // The screenshare app type handled by LiveKit
 const SCREENSHARE_TYPE = 'LocalScreenshare';
 
+// Credentials are passed in rather than read from the shared configuration types: a value
+// import of that barrel would pull it into this module at runtime, and its load order is
+// fragile. Callers supply the key constant and the resolved secret.
+
 /**
  * Generate a LiveKit room join token
- * @param config The LiveKit configuration
+ * @param apiKey The LiveKit API key
+ * @param apiSecret The LiveKit API secret
  * @param identity The participant identity (userId--accessId)
  * @param roomId The LiveKit roomId (a SAGE3 board id) the user is attempting to join
  * @returns The signed JWT
  */
-export function generateLiveKitToken(config: LiveKitConfiguration, identity: string, roomId: string): Promise<string> {
-  const token = new AccessToken(config.apiKey, config.apiSecret, { identity });
+export function generateLiveKitToken(apiKey: string, apiSecret: string, identity: string, roomId: string): Promise<string> {
+  const token = new AccessToken(apiKey, apiSecret, { identity });
   token.addGrant({ roomJoin: true, room: roomId, canPublish: true, canSubscribe: true });
   return token.toJwt();
 }
@@ -34,20 +38,29 @@ export function generateLiveKitToken(config: LiveKitConfiguration, identity: str
  * and cleans up screenshare apps from LiveKit webhook events.
  */
 export class SAGELiveKit {
-  private config: LiveKitConfiguration;
+  private apiKey: string;
+  private apiSecret: string;
   private apps: SAGE3Collection<AppSchema>;
   private receiver: WebhookReceiver;
 
   /**
-   * @param config LiveKit config
+   * @param apiKey The LiveKit API key
+   * @param apiSecret The LiveKit API secret
    * @param appCollection The apps collection
    * @param clearAppsInterval How often to sweep for screenshare apps that have expired (ms)
    * @param expiration How long can screenshare apps live before they expire (ms)
    */
-  constructor(config: LiveKitConfiguration, appCollection: SAGE3Collection<AppSchema>, clearAppsInterval: number, expiration: number) {
-    this.config = config;
+  constructor(
+    apiKey: string,
+    apiSecret: string,
+    appCollection: SAGE3Collection<AppSchema>,
+    clearAppsInterval: number,
+    expiration: number
+  ) {
+    this.apiKey = apiKey;
+    this.apiSecret = apiSecret;
     this.apps = appCollection;
-    this.receiver = new WebhookReceiver(config.apiKey, config.apiSecret);
+    this.receiver = new WebhookReceiver(apiKey, apiSecret);
     this.clearExpiredApps(clearAppsInterval, expiration);
   }
 
@@ -55,7 +68,7 @@ export class SAGELiveKit {
    * Generate a LiveKit room join token for the given identity for the given roomId
    */
   public generateVideoToken(identity: string, roomId: string): Promise<string> {
-    return generateLiveKitToken(this.config, identity, roomId);
+    return generateLiveKitToken(this.apiKey, this.apiSecret, identity, roomId);
   }
 
   /**

@@ -7,13 +7,9 @@
  */
 
 import { generateLiveKitToken } from './livekit';
-import { LiveKitConfiguration } from '@sage3/shared/types';
 
-const config: LiveKitConfiguration = {
-  url: 'ws://localhost:7880',
-  apiKey: 'testkey',
-  apiSecret: 'a-test-secret-of-at-least-32-characters!',
-};
+const API_KEY = 'testkey';
+const API_SECRET = 'a-test-secret-of-at-least-32-characters!';
 
 // Decode a JWT payload without verifying the signature
 function decodePayload(jwt: string): Record<string, any> {
@@ -23,7 +19,7 @@ function decodePayload(jwt: string): Record<string, any> {
 
 describe('generateLiveKitToken', () => {
   it('mints a JWT for the given identity and room', async () => {
-    const token = await generateLiveKitToken(config, 'user-1--tab-1', 'board-1');
+    const token = await generateLiveKitToken(API_KEY, API_SECRET, 'user-1--tab-1', 'board-1');
     const payload = decodePayload(token);
     expect(payload.sub).toBe('user-1--tab-1');
     expect(payload.iss).toBe('testkey');
@@ -32,14 +28,14 @@ describe('generateLiveKitToken', () => {
   });
 
   it('grants publish and subscribe', async () => {
-    const token = await generateLiveKitToken(config, 'user-1--tab-1', 'board-1');
+    const token = await generateLiveKitToken(API_KEY, API_SECRET, 'user-1--tab-1', 'board-1');
     const payload = decodePayload(token);
     expect(payload.video.canPublish).toBe(true);
     expect(payload.video.canSubscribe).toBe(true);
   });
 
   it('scopes the grant to a single room', async () => {
-    const token = await generateLiveKitToken(config, 'user-1--tab-1', 'board-1');
+    const token = await generateLiveKitToken(API_KEY, API_SECRET, 'user-1--tab-1', 'board-1');
     const payload = decodePayload(token);
     expect(payload.video.roomCreate).toBeFalsy();
     expect(payload.video.roomAdmin).toBeFalsy();
@@ -47,7 +43,7 @@ describe('generateLiveKitToken', () => {
   });
 
   it('tokens expire', async () => {
-    const token = await generateLiveKitToken(config, 'user-1--tab-1', 'board-1');
+    const token = await generateLiveKitToken(API_KEY, API_SECRET, 'user-1--tab-1', 'board-1');
     const payload = decodePayload(token);
     expect(typeof payload.exp).toBe('number');
     expect(payload.exp * 1000).toBeGreaterThan(Date.now());

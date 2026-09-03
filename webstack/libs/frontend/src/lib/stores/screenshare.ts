@@ -13,6 +13,16 @@ import { ConnectionState, RemoteTrack, Room, RoomEvent, Track } from 'livekit-cl
 
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 
+// Where this deployment serves its LiveKit SFU, relative to the page's own origin.
+// The SFU is always the one that came with the server, so there is no url to configure
+// and no way to be pointed at somebody else's.
+const SFU_PATH = '/sfu';
+
+function sfuUrl(): string {
+  const scheme = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  return `${scheme}//${window.location.host}${SFU_PATH}`;
+}
+
 async function fetchToken(accessId: string, roomName: string) {
   const response = await fetch(`/livekit/token?accessId=${accessId}&room=${roomName}`, {
     method: 'GET',
@@ -24,8 +34,8 @@ async function fetchToken(accessId: string, roomName: string) {
   if (!response.ok) {
     throw new Error(`Screenshare token request failed: ${response.status}`);
   }
-  const { token, url, shareTimeLimit } = await response.json();
-  return { token, url, shareTimeLimit } as { token: string; url: string; shareTimeLimit: number };
+  const { token, shareTimeLimit } = await response.json();
+  return { token, url: sfuUrl(), shareTimeLimit } as { token: string; url: string; shareTimeLimit: number };
 }
 
 // A remote track with the name it was published under (screenshare app id)

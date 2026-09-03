@@ -42,7 +42,7 @@ import { expressAPIRouter, wsAPIRouter } from './api/routers';
 import { AppsCollection, loadCollections, PresenceCollection } from './api/collections';
 import { SAGEBase, SAGEBaseConfig, createRateLimiter } from '@sage3/sagebase';
 
-import { APIClientWSMessage, ServerConfiguration } from '@sage3/shared/types';
+import { APIClientWSMessage, ServerConfiguration, isLiveKitEnabled, isTwilioEnabled, LIVEKIT_KEY } from '@sage3/shared/types';
 import { SBAuthDB, JWTPayload } from '@sage3/sagebase';
 
 // SAGE Twilio Helper Import
@@ -112,56 +112,65 @@ async function startServer() {
   // Load all the models: user, board, ...
   await loadCollections();
 
-  // Twilio Setup
+  // Screenshare Setup.
+  // A backend is only wired up when its credentials are present, so a server that has
+  // not configured one never exposes its routes and never runs its cleanup timers.
+  // The configuration endpoint reports the result, and the UI offers only what exists.
   const screenShareTimeLimit = 3600 * 6 * 1000; // 6 hours
-  const twilio = new SAGETwilio(config.services.twilio, AppsCollection, PresenceCollection, 10000, screenShareTimeLimit);
-  app.get('/twilio/token', createRateLimiter(6), SAGEBase.Auth.authenticate, (req, res) => {
-    const authId = req.user.id;
-    if (authId === undefined) {
-      res.status(403).send();
-    }
-    const room = req.query.room as string;
-    const identity = req.query.identity as string;
-    const token = twilio.generateVideoToken(identity, room);
-    res.send({ token });
-  });
 
-  // LiveKit Setup (self-hosted SFU for screensharing)
-  // Servers without a livekit section in their config must still boot: fall back to
-  // empty credentials (token requests then mint tokens no LiveKit server accepts).
-  const livekitConfig = config.services.livekit ?? { url: '', apiKey: '', apiSecret: '' };
-  const livekit = new SAGELiveKit(livekitConfig, AppsCollection, 10000, screenShareTimeLimit);
-  app.get('/livekit/token', SAGEBase.Auth.authenticate, async (req, res) => {
-    // The participant identity is built server-side from the session, so users cannot impersonate each other
-    const authId = req.user.id;
-    const room = req.query.room as string;
-    const accessId = req.query.accessId as string;
-    if (authId === undefined) {
-      res.status(403).send();
-      return;
-    }
-    if (!room || !accessId) {
-      res.status(400).send();
-      return;
-    }
-    try {
-      const token = await livekit.generateVideoToken(`${authId}--${accessId}`, room);
-      res.send({ token, url: livekitConfig.url, shareTimeLimit: screenShareTimeLimit });
-    } catch (error) {
-      // Not configured (empty credentials) or signing failure
-      res.status(503).send();
-    }
-  });
-  // LiveKit webhook receiver: cleans up screenshare apps when their tracks disappear.
-  // No auth middleware: the request signature is verified against the LiveKit API secret.
-  app.post('/livekit/webhook', express.raw({ type: 'application/webhook+json' }), async (req, res) => {
-    try {
-      await livekit.handleWebhook(req.body.toString(), req.get('Authorization'));
-      res.status(200).send();
-    } catch (error) {
-      res.status(400).send();
-    }
-  });
+  // Twilio (legacy, for servers that have not migrated to the self-hosted SFU)
+  if (isTwilioEnabled(config.services)) {
+    const twilio = new SAGETwilio(config.services.twilio, AppsCollection, PresenceCollection, 10000, screenShareTimeLimit);
+    app.get('/twilio/token', createRateLimiter(6), SAGEBase.Auth.authenticate, (req, res) => {
+      const authId = req.user.id;
+      if (authId === undefined) {
+        res.status(403).send();
+        return;
+      }
+      const room = req.query.room as string;
+      const identity = req.query.identity as string;
+      const token = twilio.generateVideoToken(identity, room);
+      res.send({ token });
+    });
+  }
+
+  // LiveKit (self-hosted SFU)
+  if (isLiveKitEnabled(config.services)) {
+    const livekit = new SAGELiveKit(LIVEKIT_KEY, config.services.livekit.apiSecret as string, AppsCollection, 10000, screenShareTimeLimit);
+
+    app.get('/livekit/token', createRateLimiter(6), SAGEBase.Auth.authenticate, async (req, res) => {
+      // The participant identity is built server-side from the session, so users cannot impersonate each other
+      const authId = req.user.id;
+      const room = req.query.room as string;
+      const accessId = req.query.accessId as string;
+      if (authId === undefined) {
+        res.status(403).send();
+        return;
+      }
+      if (!room || !accessId) {
+        res.status(400).send();
+        return;
+      }
+      try {
+        const token = await livekit.generateVideoToken(`${authId}--${accessId}`, room);
+        // No url: the SFU is always this deployment's own, reached at /sfu on this host
+        res.send({ token, shareTimeLimit: screenShareTimeLimit });
+      } catch (error) {
+        res.status(500).send();
+      }
+    });
+
+    // LiveKit webhook receiver: cleans up screenshare apps when their tracks disappear.
+    // No auth middleware: the request signature is verified against the LiveKit API secret.
+    app.post('/livekit/webhook', express.raw({ type: 'application/webhook+json' }), async (req, res) => {
+      try {
+        await livekit.handleWebhook(req.body.toString(), req.get('Authorization'));
+        res.status(200).send();
+      } catch (error) {
+        res.status(400).send();
+      }
+    });
+  }
 
   // Load the API Routes
   app.use('/api', expressAPIRouter());

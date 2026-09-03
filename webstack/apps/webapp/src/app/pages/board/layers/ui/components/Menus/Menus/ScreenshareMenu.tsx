@@ -41,6 +41,7 @@ import {
   useUIStore,
   useUser,
   useUsersStore,
+  useScreenshareBackend,
   truncateWithEllipsis,
   isElectron,
 } from '@sage3/frontend';
@@ -52,7 +53,9 @@ interface ScreensharesMenuProps {
   onActionComplete?: () => void;
 }
 
-// Screenshare app types: 'Screenshare' is Twilio, 'LocalScreenshare' is the self-hosted LiveKit SFU
+// Screenshare app types: 'Screenshare' is Twilio, 'LocalScreenshare' is the self-hosted LiveKit SFU.
+// Both are listed no matter which backend is active, so a board that still carries shares
+// from the other implementation shows them all in one place.
 const screenshareTypes = ['Screenshare', 'LocalScreenshare'];
 
 // Capture constraints: cap resolution and framerate
@@ -92,6 +95,10 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
   // Screenshare Store (LiveKit)
   const shareStream = useScreenshareStore((state) => state.shareStream);
 
+  // Which screenshare backend this server offers ('livekit', 'twilio' or 'none').
+  // The server decides from its own credentials; the UI never offers what is not configured.
+  const backend = useScreenshareBackend();
+
   // Local State
   const [screenshares, setScreenshares] = useState<App[]>([]);
   const [yourScreenshare, setYourScreenshare] = useState<App | null>(null);
@@ -111,7 +118,8 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
     setScreenshares(apps.filter((app) => screenshareTypes.includes(app.data.type)));
     const yourScreenshare = apps.find((app) => screenshareTypes.includes(app.data.type) && app._createdBy === user?._id);
     yourScreenshare ? setYourScreenshare(yourScreenshare) : setYourScreenshare(null);
-  }, [apps.length]);
+    // Depend on the apps themselves: a share can be replaced without the count changing
+  }, [apps, user?._id]);
 
   // Function that handles the user going to the specfied screenshare app
   const handleGoToApp = (selectedApp: App) => {
@@ -165,9 +173,19 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
     }
   };
 
-  // Start a screenshare: capture first (in the click gesture), then create the app
+  // Start a screenshare using whichever backend the server offers. The backend is not
+  // selectable: a server with both configured would otherwise let users start a share on
+  // the one nobody else is connected to, which shows up as a blank screenshare.
   const startYourScreenshare = async () => {
     if (!user || yourScreenshare) return;
+    // Log which one was used, for debugging on servers that have both configured
+    console.log('Screenshare> starting with backend:', backend);
+    if (backend === 'twilio') return startTwilioScreenshare();
+    if (backend === 'livekit') return startLiveKitScreenshare();
+  };
+
+  // LiveKit: capture first (inside the click gesture), then create the app
+  const startLiveKitScreenshare = async () => {
     if (isElectron()) {
       // Electron has no native picker: list the sources in a modal
       window.electron.on('set-source', async (sources: ElectronSource[]) => {
@@ -210,7 +228,7 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
 
   // Twilio screenshare (legacy): create the app, the app component starts the capture
   const startTwilioScreenshare = async () => {
-    if (!user || yourScreenshare) return;
+    if (!user) return;
     const width = 1280;
     const height = 720;
     const size = { height, width, depth: 0 };
@@ -273,15 +291,16 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
         </Text>
       )}
       <Divider my="2" />
-      {yourScreenshare == null ? (
-        <>
-          <Button onClick={() => startYourScreenshare()} py="1px" m="0" width="100%" size="xs" colorScheme="green">
-            Start Sharing
-          </Button>
-          <Button onClick={() => startTwilioScreenshare()} py="1px" mt="1" width="100%" size="xs" colorScheme="gray">
-            Start Sharing (Twilio)
-          </Button>
-        </>
+      {/* The server has no screenshare backend configured: say so rather than
+          offering a button that cannot work */}
+      {backend === 'none' ? (
+        <Text ml="6px" fontSize="12px" opacity={0.8} cursor="default">
+          Screensharing is not enabled on this server
+        </Text>
+      ) : yourScreenshare == null ? (
+        <Button onClick={() => startYourScreenshare()} py="1px" m="0" width="100%" size="xs" colorScheme="green">
+          Start Sharing
+        </Button>
       ) : (
         <Button onClick={() => stopYourScreenshare()} py="1px" m="0" width="100%" size="xs" colorScheme="red">
           Stop Sharing

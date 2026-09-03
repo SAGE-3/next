@@ -12,7 +12,7 @@ services:
 
   livekit-server:
     image: "livekit/livekit-server:v1.13"
-    command: --config /etc/livekit.yaml --node-ip=127.0.0.1
+    command: --config /etc/livekit.yaml
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
@@ -20,7 +20,7 @@ services:
       - "127.0.0.1:7881:7881"
       - "127.0.0.1:7882:7882/udp"
     volumes:
-      - ./configurations/livekit/livekit.yaml:/etc/livekit.yaml
+      - ./configurations/livekit/livekit-local.yaml:/etc/livekit.yaml
     deploy:
       restart_policy:
         condition: on-failure

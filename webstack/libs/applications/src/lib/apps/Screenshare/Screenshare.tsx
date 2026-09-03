@@ -63,6 +63,8 @@ function AppComponent(props: App): JSX.Element {
   // Toasts
   const toast = useToast();
   const toastIdRef = useRef<ToastId>();
+  // Whether this screenshare has already been announced to this viewer
+  const announcedRef = useRef(false);
 
   // Close the toast
   function closeToast() {
@@ -126,25 +128,26 @@ function AppComponent(props: App): JSX.Element {
   useEffect(() => {
     if (yours) return;
     const named = tracks.find((t) => t.name === props._id);
-    if (named && videoRef.current) {
-      named.track.attach(videoRef.current);
-      // Close other toasts by this app
-      closeToast();
-      // Show a notification
-      toastIdRef.current = toast({
-        title: `${props.data.title} started a screenshare`,
-        description: (
-          <Box>
-            <Button size="md" colorScheme="orange" my="1" variant="solid" width="100%" onClick={goToScreenshare}>
-              Focus on their screen?
-            </Button>
-          </Box>
-        ),
-        status: 'info',
-        duration: 5000,
-        isClosable: true,
-      });
-    }
+    if (!named || !videoRef.current) return;
+    named.track.attach(videoRef.current);
+    // Announce this screenshare once. `tracks` changes whenever anyone on the board
+    // starts or stops sharing, so every mounted screenshare re-runs this effect —
+    // announcing again here is what stacked one toast per existing share.
+    if (announcedRef.current) return;
+    announcedRef.current = true;
+    toastIdRef.current = toast({
+      title: `${props.data.title} started a screenshare`,
+      description: (
+        <Box>
+          <Button size="md" colorScheme="orange" my="1" variant="solid" width="100%" onClick={goToScreenshare}>
+            Focus on their screen?
+          </Button>
+        </Box>
+      ),
+      status: 'info',
+      duration: 5000,
+      isClosable: true,
+    });
   }, [tracks]);
 
   const goToScreenshare = useCallback(() => {

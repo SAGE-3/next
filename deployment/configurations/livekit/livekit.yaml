@@ -1,7 +1,12 @@
-# LiveKit SFU server configuration for SAGE3 screenshare
+# LiveKit SFU server configuration for SAGE3 screenshare — PRODUCTION
 # https://docs.livekit.io/home/self-hosting/deployment/
+#
+# This file needs no editing. The only value a deployment supplies is
+# LIVEKIT_API_SECRET in deployment/.env, which reaches the server as LIVEKIT_KEYS.
+# For local development see livekit-local.yaml, which the -backend- compose files use.
 
-# HTTP/WebSocket signaling port
+# HTTP/WebSocket signaling port. Reached through traefik at wss://<server>/sfu,
+# so it is not published on the host.
 port: 7880
 
 rtc:
@@ -10,25 +15,26 @@ rtc:
   # All WebRTC media is multiplexed over this single UDP port
   # (avoids publishing a large UDP port range through Docker)
   udp_port: 7882
-  # No STUN lookup: SAGE3 runs in local/offline environments
-  use_external_ip: false
+  # Discover the host's public IP via STUN and advertise it to clients. Inside a
+  # container the server only sees a private bridge address, which no client can reach.
+  #
+  # If this server has no outbound STUN access, or STUN reports the wrong address, set
+  # this to false and add `node_ip: <the address clients reach>` below. node_ip has no
+  # effect while use_external_ip is true — use_external_ip takes precedence.
+  use_external_ip: true
 
-# API key/secret pair used by the SAGE3 server to mint client join tokens.
-# Must match services.livekit in the SAGE3 hjson configuration.
-# Dev credentials for local testing only (LiveKit requires a 32+ char secret).
-# Generate real ones for production:
-#   docker run --rm livekit/livekit-server generate-keys
-keys:
-  SAGE3KEY: sage3-livekit-dev-secret-not-for-production
+# The API key/secret pair used by the SAGE3 server to mint client join tokens is NOT
+# stored here. It is passed in as the LIVEKIT_KEYS environment variable by the compose
+# file, sourced from LIVEKIT_API_SECRET in deployment/.env, so the one real credential
+# lives in a single untracked place and is shared with the SAGE3 server automatically.
 
-# Webhooks notify the SAGE3 server about room/track events (screenshare app cleanup).
-# Requests are signed with the api_key's secret.
-# - Local dev: homebase runs on the host machine
-# - Production: use the node-server container instead: http://node-server:3000/livekit/webhook
+# Webhooks notify the SAGE3 server about room/track events, which is what removes a
+# screenshare window the moment its publisher stops. node-server resolves over the
+# compose network. Requests are signed with the api_key's secret.
 webhook:
-  api_key: SAGE3KEY
+  api_key: SAGE3
   urls:
-    - http://host.docker.internal:3000/livekit/webhook
+    - http://node-server:3000/livekit/webhook
 
 logging:
   level: info
