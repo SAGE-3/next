@@ -19,6 +19,9 @@ export type RadialMenuItem = {
   label: string;
   // Highlighted as the currently active item (i.e. the current interaction mode)
   active?: boolean;
+  // Gives this item its own color scheme, worn all the time rather than only
+  // when highlighted, the way the toolbar's own colored buttons behave
+  colorScheme?: SAGEColors;
 };
 
 type RadialMenuProps = {
@@ -59,7 +62,6 @@ export function RadialMenu(props: RadialMenuProps) {
 
   // Same colors the toolbar buttons use: the scheme in light mode, the .200
   // shade in dark mode, gray.600 in dark mode when inactive
-  const activeColor = useHexColor(`${colorScheme}.200`);
   const lineColor = useHexColor(colorScheme);
   const hubBg = useColorModeValue('var(--chakra-colors-gray-100)', 'var(--chakra-colors-gray-600)');
   // The hovered item label reads as a tooltip, so it uses the same colors
@@ -229,6 +231,9 @@ export function RadialMenu(props: RadialMenuProps) {
       {ring.map((item) => {
         const offset = itemOffset(item.angle);
         const highlighted = hoveredId === item.id || item.active;
+        // An item with its own scheme keeps its color at all times
+        const colored = highlighted || !!item.colorScheme;
+        const scheme = item.colorScheme ?? colorScheme;
         return (
           <IconButton
             key={item.id}
@@ -236,10 +241,10 @@ export function RadialMenu(props: RadialMenuProps) {
             icon={item.icon}
             size="sm"
             fontSize="lg"
-            colorScheme={highlighted ? colorScheme : 'gray'}
+            colorScheme={colored ? scheme : 'gray'}
             sx={{
               _dark: {
-                bg: highlighted ? activeColor : 'gray.600', // 'inherit' didnt seem to work
+                bg: colored ? `${scheme}.200` : 'gray.600', // 'inherit' didnt seem to work
               },
             }}
             position="absolute"

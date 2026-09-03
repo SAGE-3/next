@@ -78,7 +78,7 @@ export function BoardRadialMenu(props: BoardRadialMenuProps) {
     { id: 'assets', icon: <MdFolder />, label: 'Assets' },
 
     { id: 'map', icon: <MdMap />, label: 'Map' },
-    { id: 'alfred', icon: <IoSparklesSharp />, label: 'SAGE Intelligence' },
+    { id: 'alfred', icon: <IoSparklesSharp />, label: 'SAGE Intelligence', colorScheme: 'purple' },
     // { id: 'home', icon: <MdArrowBack />, label: 'Back Home' },
 
     { id: 'eraser', icon: <BsEraserFill />, label: 'Eraser', active: primaryActionMode === 'eraser' },
