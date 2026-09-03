@@ -23,8 +23,6 @@ async function GO() {
 
   try {
     await electron_notarize.notarize({
-      tool: 'notarytool',
-      appBundleId: appId,
       appPath: appPath,
       // Apple ID  toto@mac.com
       appleId: process.env.APPLE_ID || 'XXXX',

@@ -18,7 +18,7 @@ echo "ARCH: $myarch"
 rm -fr SAGE3-linux-$myarch SAGE3-linux-$myarch.tar*
 
 # package the app
-./node_modules/.bin/electron-packager ./ --platform=linux --arch=$myarch --icon=sage3.icns --overwrite
+./node_modules/.bin/electron-packager ./ --platform=linux --arch=$myarch --icon=sage3.icns --overwrite --no-asar
 
 # add some utility files
 cp README.lnx SAGE3-linux-$myarch/README.txt
