@@ -19,7 +19,7 @@ import { MdApps, MdArrowBack, MdFolder, MdMap, MdPeople, MdScreenShare } from 'r
 
 import { useLinkStore, useUIStore, useUserSettings } from '@sage3/frontend';
 
-import { RadialMenu, RadialMenuItem } from './RadialMenu';
+import { RADIAL_MENU_Z, RADIAL_SHIELD_Z, RadialMenu, RadialMenuItem } from './RadialMenu';
 import { ScreenshareMenu } from './Menus/ScreenshareMenu';
 import { ApplicationsMenu, AssetsMenu, KernelsMenu, NavigationMenu, PluginsMenu, UsersMenu } from './Menus';
 
@@ -207,7 +207,7 @@ function MenuPanel(props: { center: { x: number; y: number }; title: string; onC
     <>
       {/* Same shield the ring uses: the click that dismisses the panel must not
           reach the board underneath */}
-      <Box position="fixed" top="0" left="0" right="0" bottom="0" zIndex={9999} />
+      <Box position="fixed" top="0" left="0" right="0" bottom="0" zIndex={RADIAL_SHIELD_Z} />
 
       <Box
         ref={panelRef}
@@ -215,7 +215,7 @@ function MenuPanel(props: { center: { x: number; y: number }; title: string; onC
         left={offset ? `${offset.left}px` : `${props.center.x}px`}
         top={offset ? `${offset.top}px` : `${props.center.y}px`}
         visibility={offset ? 'visible' : 'hidden'}
-        zIndex={10000}
+        zIndex={RADIAL_MENU_Z}
         background={bgColor}
         border="1px solid"
         borderColor={borderColor}

@@ -38,6 +38,11 @@ type RadialMenuProps = {
   onCenterChange?: (center: { x: number; y: number }) => void;
 };
 
+// Above the board and its app windows, but below Chakra's overlay (1300) and
+// modal (1400) layers, so a dialog opened from a menu dims and covers it
+export const RADIAL_MENU_Z = 1299;
+export const RADIAL_SHIELD_Z = 1298;
+
 // Default distance from the center to the items, overridable per menu
 const DEFAULT_RADIUS = 135;
 // Size of an item button
@@ -203,9 +208,9 @@ export function RadialMenu(props: RadialMenuProps) {
       {/* Swallow everything underneath while the menu is up. Without this the
           click that picks an item also reaches the board, drawing a dot when
           the pen is the active tool. Document listeners still see it. */}
-      <Box position="fixed" top="0" left="0" right="0" bottom="0" zIndex={9999} />
+      <Box position="fixed" top="0" left="0" right="0" bottom="0" zIndex={RADIAL_SHIELD_Z} />
 
-      <Box position="fixed" left={`${center.x}px`} top={`${center.y}px`} zIndex={10000} pointerEvents="none">
+      <Box position="fixed" left={`${center.x}px`} top={`${center.y}px`} zIndex={RADIAL_MENU_Z} pointerEvents="none">
         {/* Selection line from the center to the cursor */}
         {cursor && hoveredId && (
           <svg style={{ position: 'absolute', left: -radius * 2, top: -radius * 2, width: radius * 4, height: radius * 4 }}>
