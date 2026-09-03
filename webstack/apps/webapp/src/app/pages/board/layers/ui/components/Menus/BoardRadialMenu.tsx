@@ -165,11 +165,21 @@ function MenuPanel(props: { center: { x: number; y: number }; title: string; onC
   useLayoutEffect(() => {
     const el = panelRef.current;
     if (!el) return;
-    const margin = 8;
-    const { width, height } = el.getBoundingClientRect();
-    const left = Math.min(Math.max(props.center.x - width / 2, margin), Math.max(margin, window.innerWidth - width - margin));
-    const top = Math.min(Math.max(props.center.y - height / 2, margin), Math.max(margin, window.innerHeight - height - margin));
-    setOffset({ left, top });
+
+    const place = () => {
+      const margin = 8;
+      const { width, height } = el.getBoundingClientRect();
+      const left = Math.min(Math.max(props.center.x - width / 2, margin), Math.max(margin, window.innerWidth - width - margin));
+      const top = Math.min(Math.max(props.center.y - height / 2, margin), Math.max(margin, window.innerHeight - height - margin));
+      setOffset({ left, top });
+    };
+    place();
+
+    // Menus size to their content, which arrives and changes while the panel is
+    // open (users joining, assets loading), so keep it clamped on screen
+    const observer = new ResizeObserver(place);
+    observer.observe(el);
+    return () => observer.disconnect();
   }, [props.center.x, props.center.y, props.title]);
 
   useEffect(() => {
@@ -211,8 +221,6 @@ function MenuPanel(props: { center: { x: number; y: number }; title: string; onC
         borderColor={borderColor}
         borderRadius="md"
         boxShadow="xl"
-        maxHeight="80vh"
-        overflowY="auto"
       >
         <Flex align="center" justify="space-between" px="3" py="2" borderBottom="1px solid" borderColor={borderColor}>
           <Text fontWeight="semibold" userSelect="none">
