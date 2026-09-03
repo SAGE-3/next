@@ -157,6 +157,7 @@ export function BoardRadialMenu(props: BoardRadialMenuProps) {
  */
 function MenuPanel(props: { center: { x: number; y: number }; title: string; onClose: () => void; children: ReactNode }) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const shieldRef = useRef<HTMLDivElement>(null);
   const [offset, setOffset] = useState<{ left: number; top: number } | null>(null);
 
   const bgColor = useColorModeValue('white', 'gray.700');
@@ -187,12 +188,18 @@ function MenuPanel(props: { center: { x: number; y: number }; title: string; onC
     let armed = false;
     const arm = setTimeout(() => (armed = true), 0);
 
+    // Only a click landing on the shield is truly outside. Testing against the
+    // panel instead would count anything portalled to the body, a dialog opened
+    // from a menu among them, as outside and close the panel out from under it.
     const handleClick = (e: MouseEvent) => {
       if (!armed) return;
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) props.onClose();
+      if (e.target === shieldRef.current) props.onClose();
     };
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') props.onClose();
+      if (e.key !== 'Escape') return;
+      // A dialog opened from a menu takes escape first
+      if (document.querySelector('[role="dialog"], [role="alertdialog"]')) return;
+      props.onClose();
     };
     document.addEventListener('mousedown', handleClick);
     document.addEventListener('keydown', handleKey);
@@ -207,7 +214,7 @@ function MenuPanel(props: { center: { x: number; y: number }; title: string; onC
     <>
       {/* Same shield the ring uses: the click that dismisses the panel must not
           reach the board underneath */}
-      <Box position="fixed" top="0" left="0" right="0" bottom="0" zIndex={RADIAL_SHIELD_Z} />
+      <Box ref={shieldRef} position="fixed" top="0" left="0" right="0" bottom="0" zIndex={RADIAL_SHIELD_Z} />
 
       <Box
         ref={panelRef}
