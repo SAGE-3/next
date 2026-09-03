@@ -10,7 +10,7 @@ import { TaskType } from '@sage3/shared/types';
 
 // The kind of content the Chat is operating on (drives the prompt bar and the
 // capability check). Derived from the type of the linked source app.
-export type OperationMode = 'chat' | 'text' | 'image' | 'web' | 'pdf' | 'code' | 'map' | 'Hawaii Mesonet';
+export type OperationMode = 'chat' | 'text' | 'image' | 'web' | 'pdf' | 'code' | 'map';
 
 // Maximum number of images sent to the vision model in a single question. Too
 // many images blow up the context window and degrade the model's ability to
@@ -32,5 +32,4 @@ export const MODE_TASK: Record<OperationMode, TaskType> = {
   image: 'image',
   pdf: 'pdf_processing',
   code: 'coding',
-  'Hawaii Mesonet': 'chat',
 };

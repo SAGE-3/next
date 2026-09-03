@@ -25,5 +25,4 @@ export * from './Alfred';
 export * from './ConfirmValueModal';
 export * from './EditUserSettingsModal';
 export * from './BoardInformationModal';
-export * from './FeedbackModal';
 export * from './AccountDeletion';

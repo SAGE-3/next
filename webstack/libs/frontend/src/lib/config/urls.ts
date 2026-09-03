@@ -44,7 +44,6 @@ export const apiUrls = {
   misc: {
     getTime: '/api/time',
     getInfo: '/api/info',
-    nlp: '/api/nlp',
   },
   ai: {
     agents: {

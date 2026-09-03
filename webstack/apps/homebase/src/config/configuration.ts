@@ -51,7 +51,7 @@ function validateConfig(conf: ServerConfiguration): ServerConfiguration {
   }
   conf.services.models.tasks = tasks;
 
-  console.log('Configuration> validated LLM tasks', conf.services.models.tasks);
+  console.log('Configuration> LLM tasks validated LLM');
   return conf;
 }
 
