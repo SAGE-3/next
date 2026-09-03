@@ -53,7 +53,7 @@ import { App } from '../../schema';
 import { state as AppState, init as initialState } from './index';
 import { AppWindow } from '../../components';
 
-import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot, callMesonet } from './tRPC';
+import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot } from './tRPC';
 import { OperationMode, MODE_TASK, MAX_IMAGES, MAX_PDFS } from './constants';
 import { parseCommand, commandHelp, ParsedCommand } from './commands';
 import { ToolbarComponent, GroupedToolbarComponent } from './Toolbar';
@@ -109,7 +109,7 @@ function AppComponent(props: App): JSX.Element {
   const llmManager = useMemo(
     // Include the user's own provider so its capabilities gate tasks like any other
     () => (serverConfig?.models ? new LLMConfigManager(withUserProvider(serverConfig.models)) : undefined),
-    [serverConfig]
+    [serverConfig],
   );
 
   // Input text for query
@@ -243,9 +243,6 @@ function AppComponent(props: App): JSX.Element {
     } else if (mode === 'map') {
       // Map
       onContentMap(text);
-    } else if (mode === 'Hawaii Mesonet') {
-      // Code
-      onContentMesonet(text);
     } else {
       await newMessage(text);
     }
@@ -331,8 +328,6 @@ function AppComponent(props: App): JSX.Element {
         setMode('code');
       } else if (apps && apps[0] && apps[0].data.type === 'Webview') {
         setMode('web');
-      } else if (apps && apps[0] && apps[0].data.type === 'Hawaii Mesonet') {
-        setMode('Hawaii Mesonet');
       } else if (apps && apps[0] && apps[0].data.type === 'Map') {
         setMode('map');
       } else {
@@ -650,125 +645,6 @@ function AppComponent(props: App): JSX.Element {
                   isClosable: true,
                 });
               }
-            }
-          }
-        }
-      }
-    }
-  };
-
-  const onMesonetSummary = async () => {
-    return onContentMesonet('Summarize the key weather patterns from the Mesonet dataset.');
-  };
-  const onMesonetTrends = async () => {
-    return onContentMesonet('Identify key trends in the Mesonet weather data.');
-  };
-  const onMesonetComparison = async () => {
-    return onContentMesonet('Compare weather conditions between different Mesonet stations.');
-  };
-  const onMesonetForecast = async () => {
-    return onContentMesonet('Provide insights based on past data to predict future weather trends.');
-  };
-  const onMesonetExtremes = async () => {
-    return onContentMesonet('Find the extreme values (highest and lowest) recorded in the dataset.');
-  };
-
-  const onContentMesonet = async (prompt: string) => {
-    if (!user) return;
-    // Capability check: Mesonet analysis needs a chat-capable model
-    if (!canPerform('chat')) return;
-    if (selectedModel == 'llama') {
-      toast({
-        title: 'Mesonet Feature not available for current model',
-        description: 'Please switch SAGE Intelligence to OpenAI in User Settings.',
-        status: 'error',
-        duration: 4000,
-        isClosable: true,
-      });
-      return;
-    }
-    if (sourceApps && sourceApps.length >= 1) {
-      const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
-      if (apps && apps[0].data.type === 'Hawaii Mesonet') {
-        const url = apps[0].data.state.url;
-        if (roomId && boardId) {
-          const now = await serverTime();
-          const isoNow = new Date();
-          const isoString = isoNow.toISOString();
-          const initialAnswer = {
-            id: genId(),
-            userId: user._id,
-            creationId: '',
-            creationDate: now.epoch,
-            userName: 'SAGE',
-            query: prompt,
-            response: 'Working on it...',
-          };
-          updateState(props._id, { ...s, messages: [...s.messages, initialAnswer] });
-
-          const q = {
-            ctx: {
-              previousQ: previousQuestion,
-              previousA: previousAnswer,
-              pos: [props.data.position.x + props.data.size.width + 20, props.data.position.y],
-              roomId,
-              boardId,
-            },
-            q: prompt,
-            url: url,
-            user: username,
-            currentTime: isoString,
-          };
-          setProcessing(true);
-          setActions([]);
-          const response = await callMesonet(q);
-          setProcessing(false);
-
-          if ('message' in response) {
-            toast({
-              title: 'Error',
-              description: response.message || 'Error sending query to the agent. Please try again.',
-              status: 'error',
-              duration: 4000,
-              isClosable: true,
-            });
-          } else {
-            setStreamText('');
-            ctrlRef.current = null;
-            setPreviousAnswer((prevItems) => [...prevItems, response.summary]);
-            // Update the Mesonet app's state with the selected stations
-            // if (response.stations && response.stations.length > 0) {
-            //   const mesonetApp = apps[0];
-            //   updateState(mesonetApp._id, {
-            //     ...mesonetApp.data.state,
-            //     stationNames: response.stations,
-
-            //     widget: {
-            //       ...mesonetApp.data.state.widget,
-            //       yAxisNames: response.attributes,
-            //     },
-            //   });
-            // }
-
-            updateState(props._id, {
-              ...s,
-              previousQ: [...previousQuestion, 'Describe the content'],
-              previousA: [...previousAnswer, response.summary],
-              messages: [
-                ...s.messages,
-                {
-                  id: genId(),
-                  userId: user._id,
-                  creationId: '',
-                  creationDate: now.epoch + 1,
-                  userName: 'SAGE',
-                  query: initialAnswer.query,
-                  response: response.summary,
-                },
-              ],
-            });
-            if (response.actions) {
-              setActions(response.actions);
             }
           }
         }

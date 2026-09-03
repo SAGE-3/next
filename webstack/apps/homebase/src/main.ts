@@ -24,7 +24,7 @@ import * as dns from 'node:dns';
 
 // Websocket
 import { WebSocket, WebSocketServer } from 'ws';
-import { SAGEnlp, SAGE_PRESENCE, SocketPresence, SubscriptionCache } from '@sage3/backend';
+import { SAGE_PRESENCE, SocketPresence, SubscriptionCache } from '@sage3/backend';
 import { setupWsforLogs } from './api/routers/custom';
 
 // Create the web server with Express
@@ -105,9 +105,6 @@ async function startServer() {
     logConfig: sbLogConfig,
   };
   await SAGEBase.init(sbConfig, app);
-
-  // init AI models
-  await SAGEnlp.init();
 
   // Load all the models: user, board, ...
   await loadCollections();

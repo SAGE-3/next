@@ -93,9 +93,9 @@ export function ApplicationsMenu(props: ApplicationProps) {
       w = 1280;
       h = 720;
       state.accessId = accessId;
-    } else if (appName === 'Hawaii Mesonet') {
-      w = 650;
-      h = 650;
+      // } else if (appName === 'Hawaii Mesonet') {
+      //   w = 650;
+      //   h = 650;
     } else if (appName === 'Clock') {
       w = 320 * 1.5;
       h = 130 * 1.5;

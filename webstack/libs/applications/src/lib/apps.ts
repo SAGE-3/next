@@ -1,11 +1,9 @@
 // SAGE3 Generated from apps.json file
 
-import { name as AIPaneName } from './apps/AIPane';
 import { name as AssetLinkName } from './apps/AssetLink';
 import { name as BoardLinkName } from './apps/BoardLink';
 import { name as CSVViewerName } from './apps/CSVViewer';
 import { name as CalculatorName } from './apps/Calculator';
-import { name as ChartGeneratorName } from './apps/ChartGenerator';
 import { name as ChatName } from './apps/Chat';
 import { name as ClockName } from './apps/Clock';
 import { name as CobrowseName } from './apps/Cobrowse';
@@ -13,12 +11,9 @@ import { name as CodeEditorName } from './apps/CodeEditor';
 import { name as CounterName } from './apps/Counter';
 import { name as DeepZoomImageName } from './apps/DeepZoomImage';
 import { name as DrawingName } from './apps/Drawing';
-import { name as EChartsViewerName } from './apps/EChartsViewer';
 import { name as GLTFViewerName } from './apps/GLTFViewer';
-import { name as HCDPName } from './apps/HCDP';
 import { name as IFrameName } from './apps/IFrame';
 import { name as ImageViewerName } from './apps/ImageViewer';
-import { name as JupyterLabName } from './apps/JupyterLab';
 import { name as LeafLetName } from './apps/LeafLet';
 import { name as LinkerName } from './apps/Linker';
 import { name as MapName } from './apps/Map';
@@ -28,11 +23,9 @@ import { name as PDFResultName } from './apps/PDFResult';
 import { name as PDFViewerName } from './apps/PDFViewer';
 import { name as PluginAppName } from './apps/PluginApp';
 import { name as PollName } from './apps/Poll';
-import { name as RTCChatName } from './apps/RTCChat';
 import { name as SageCellName } from './apps/SageCell';
 import { name as SageIdeatorName } from './apps/SageIdeator';
 import { name as ScreenshareName } from './apps/Screenshare';
-import { name as SensorOverviewName } from './apps/SensorOverview';
 import { name as StickieName } from './apps/Stickie';
 import { name as TimerName } from './apps/Timer';
 import { name as TwilioScreenshareName } from './apps/TwilioScreenshare';
@@ -45,12 +38,10 @@ import { name as WebviewName } from './apps/Webview';
 import React from 'react';
 import { AppGroup } from './schema';
 
-import AIPane from './apps/AIPane/AIPane';
 import AssetLink from './apps/AssetLink/AssetLink';
 import BoardLink from './apps/BoardLink/BoardLink';
 import CSVViewer from './apps/CSVViewer/CSVViewer';
 import Calculator from './apps/Calculator/Calculator';
-import ChartGenerator from './apps/ChartGenerator/ChartGenerator';
 import Chat from './apps/Chat/Chat';
 import Clock from './apps/Clock/Clock';
 import Cobrowse from './apps/Cobrowse/Cobrowse';
@@ -58,12 +49,9 @@ import CodeEditor from './apps/CodeEditor/CodeEditor';
 import Counter from './apps/Counter/Counter';
 import DeepZoomImage from './apps/DeepZoomImage/DeepZoomImage';
 import Drawing from './apps/Drawing/Drawing';
-import EChartsViewer from './apps/EChartsViewer/EChartsViewer';
 import GLTFViewer from './apps/GLTFViewer/GLTFViewer';
-import HCDP from './apps/HCDP/HCDP';
 import IFrame from './apps/IFrame/IFrame';
 import ImageViewer from './apps/ImageViewer/ImageViewer';
-import JupyterLab from './apps/JupyterLab/JupyterLab';
 import LeafLet from './apps/LeafLet/LeafLet';
 import Linker from './apps/Linker/Linker';
 import Map from './apps/Map/Map';
@@ -73,11 +61,9 @@ import PDFResult from './apps/PDFResult/PDFResult';
 import PDFViewer from './apps/PDFViewer/PDFViewer';
 import PluginApp from './apps/PluginApp/PluginApp';
 import Poll from './apps/Poll/Poll';
-import RTCChat from './apps/RTCChat/RTCChat';
 import SageCell from './apps/SageCell/SageCell';
 import SageIdeator from './apps/SageIdeator/SageIdeator';
 import Screenshare from './apps/Screenshare/Screenshare';
-import SensorOverview from './apps/SensorOverview/SensorOverview';
 import Stickie from './apps/Stickie/Stickie';
 import Timer from './apps/Timer/Timer';
 import TwilioScreenshare from './apps/TwilioScreenshare/TwilioScreenshare';
@@ -88,11 +74,6 @@ import WebpageLink from './apps/WebpageLink/WebpageLink';
 import Webview from './apps/Webview/Webview';
 
 export const Applications = {
-  [AIPaneName]: {
-    AppComponent: React.memo(AIPane.AppComponent),
-    ToolbarComponent: AIPane.ToolbarComponent,
-    GroupedToolbarComponent: AIPane.GroupedToolbarComponent,
-  },
   [AssetLinkName]: {
     AppComponent: React.memo(AssetLink.AppComponent),
     ToolbarComponent: AssetLink.ToolbarComponent,
@@ -112,11 +93,6 @@ export const Applications = {
     AppComponent: React.memo(Calculator.AppComponent),
     ToolbarComponent: Calculator.ToolbarComponent,
     GroupedToolbarComponent: Calculator.GroupedToolbarComponent,
-  },
-  [ChartGeneratorName]: {
-    AppComponent: React.memo(ChartGenerator.AppComponent),
-    ToolbarComponent: ChartGenerator.ToolbarComponent,
-    GroupedToolbarComponent: ChartGenerator.GroupedToolbarComponent,
   },
   [ChatName]: {
     AppComponent: React.memo(Chat.AppComponent),
@@ -153,20 +129,10 @@ export const Applications = {
     ToolbarComponent: Drawing.ToolbarComponent,
     GroupedToolbarComponent: Drawing.GroupedToolbarComponent,
   },
-  [EChartsViewerName]: {
-    AppComponent: React.memo(EChartsViewer.AppComponent),
-    ToolbarComponent: EChartsViewer.ToolbarComponent,
-    GroupedToolbarComponent: EChartsViewer.GroupedToolbarComponent,
-  },
   [GLTFViewerName]: {
     AppComponent: React.memo(GLTFViewer.AppComponent),
     ToolbarComponent: GLTFViewer.ToolbarComponent,
     GroupedToolbarComponent: GLTFViewer.GroupedToolbarComponent,
-  },
-  [HCDPName]: {
-    AppComponent: React.memo(HCDP.AppComponent),
-    ToolbarComponent: HCDP.ToolbarComponent,
-    GroupedToolbarComponent: HCDP.GroupedToolbarComponent,
   },
   [IFrameName]: {
     AppComponent: React.memo(IFrame.AppComponent),
@@ -177,11 +143,6 @@ export const Applications = {
     AppComponent: React.memo(ImageViewer.AppComponent),
     ToolbarComponent: ImageViewer.ToolbarComponent,
     GroupedToolbarComponent: ImageViewer.GroupedToolbarComponent,
-  },
-  [JupyterLabName]: {
-    AppComponent: React.memo(JupyterLab.AppComponent),
-    ToolbarComponent: JupyterLab.ToolbarComponent,
-    GroupedToolbarComponent: JupyterLab.GroupedToolbarComponent,
   },
   [LeafLetName]: {
     AppComponent: React.memo(LeafLet.AppComponent),
@@ -228,11 +189,6 @@ export const Applications = {
     ToolbarComponent: Poll.ToolbarComponent,
     GroupedToolbarComponent: Poll.GroupedToolbarComponent,
   },
-  [RTCChatName]: {
-    AppComponent: React.memo(RTCChat.AppComponent),
-    ToolbarComponent: RTCChat.ToolbarComponent,
-    GroupedToolbarComponent: RTCChat.GroupedToolbarComponent,
-  },
   [SageCellName]: {
     AppComponent: React.memo(SageCell.AppComponent),
     ToolbarComponent: SageCell.ToolbarComponent,
@@ -247,11 +203,6 @@ export const Applications = {
     AppComponent: React.memo(Screenshare.AppComponent),
     ToolbarComponent: Screenshare.ToolbarComponent,
     GroupedToolbarComponent: Screenshare.GroupedToolbarComponent,
-  },
-  [SensorOverviewName]: {
-    AppComponent: React.memo(SensorOverview.AppComponent),
-    ToolbarComponent: SensorOverview.ToolbarComponent,
-    GroupedToolbarComponent: SensorOverview.GroupedToolbarComponent,
   },
   [StickieName]: {
     AppComponent: React.memo(Stickie.AppComponent),

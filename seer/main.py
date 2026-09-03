@@ -15,7 +15,6 @@ from libs.localtypes import (
     PDFQuery,
     CodeRequest,
     WebScreenshot,
-    MesonetQuery,
     IdeatorDimensionsRequest,
     IdeatorNodeRequest,
     IdeatorAbstractRequest,
@@ -59,14 +58,12 @@ from app.web import WebAgent
 from app.image import ImageAgent
 from app.pdf import PDFAgent
 from app.code import CodeAgent
-from app.mesonet import MesonetAgent
 
 
 # Instantiate module handles during FastAPI startup after refreshing server config
 chatAG = None
 codeAG = None
 imageAG = None
-mesonetAG = None
 pdfAG = None
 webAG = None
 ideatorAG = None
@@ -89,7 +86,7 @@ imagegenAG = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global chatAG, codeAG, imageAG, mesonetAG, pdfAG, webAG, ideatorAG, imagegenAG
+    global chatAG, codeAG, imageAG, pdfAG, webAG, ideatorAG, imagegenAG
 
     logger.info("FastAPI App started")
     web_config = getModelsInfo(ps3)
@@ -100,7 +97,6 @@ async def lifespan(app: FastAPI):
     chatAG = ChatAgent(logger, ps3)
     codeAG = CodeAgent(logger, ps3)
     imageAG = ImageAgent(logger, ps3)
-    mesonetAG = MesonetAgent(logger, ps3)
     pdfAG = PDFAgent(logger, ps3)
     webAG = WebAgent(logger, ps3)
     ideatorAG = IdeatorAgent(logger, ps3)
@@ -203,26 +199,6 @@ async def image(qq: ImageQuery):
         # do the work
         # val = await imageAG.process(qq)
         val = await asyncio.wait_for(imageAG.process(qq), timeout=60)
-        return val
-    except asyncio.TimeoutError as e:
-        print("Timeout error")
-        # Get the error message
-        text = str(e)
-        raise HTTPException(status_code=408, detail=text)
-    except HTTPException as e:
-        # Get the error message
-        text = e.detail
-        raise HTTPException(status_code=500, detail=text)
-
-
-@app.post("/mesonet")
-async def mesonet(qq: MesonetQuery):
-    print(qq)
-    print("Received mesonet ")
-    try:
-        # do the work
-        val = await mesonetAG.process(qq)
-        # val = await asyncio.wait_for(processAG.process(qq), timeout=30)
         return val
     except asyncio.TimeoutError as e:
         print("Timeout error")

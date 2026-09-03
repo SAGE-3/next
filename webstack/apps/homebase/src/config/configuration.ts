@@ -67,7 +67,7 @@ function validateConfig(conf: ServerConfiguration, production: boolean): ServerC
   }
   conf.services.models.tasks = tasks;
 
-  console.log('Configuration> validated LLM tasks', conf.services.models.tasks);
+  console.log('Configuration> LLM tasks validated LLM');
 
   applyLiveKitConfiguration(conf, production);
   console.log('Configuration> screenshare backend:', getScreenshareBackend(conf.services));
