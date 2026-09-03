@@ -27,14 +27,16 @@ type RadialMenuProps = {
   items: RadialMenuItem[];
   onSelect: (id: string) => void;
   onCancel: () => void;
+  // Distance from the center to each item: how tight the ring is
+  radius?: number;
   // Color scheme of the buttons, matching the toolbar buttons by default
   colorScheme?: SAGEColors;
   // The clamped center actually used for the ring, so callers can anchor to it
   onCenterChange?: (center: { x: number; y: number }) => void;
 };
 
-// Distance from center to menu items
-const RADIUS = 135;
+// Default distance from the center to the items, overridable per menu
+const DEFAULT_RADIUS = 135;
 // Size of an item button
 const ITEM_SIZE = 46;
 // Size of the center hub
@@ -53,23 +55,26 @@ const MIN_ACTIVATION_DISTANCE = 30;
 export function RadialMenu(props: RadialMenuProps) {
   const { position, items, onSelect, onCancel, onCenterChange } = props;
   const colorScheme = props.colorScheme ?? 'teal';
+  const radius = props.radius ?? DEFAULT_RADIUS;
 
   // Same colors the toolbar buttons use: the scheme in light mode, the .200
   // shade in dark mode, gray.600 in dark mode when inactive
   const activeColor = useHexColor(`${colorScheme}.200`);
   const lineColor = useHexColor(colorScheme);
   const hubBg = useColorModeValue('var(--chakra-colors-gray-100)', 'var(--chakra-colors-gray-600)');
-  const labelBg = useColorModeValue('var(--chakra-colors-gray-700)', 'white');
-  const labelColor = useColorModeValue('white', 'var(--chakra-colors-gray-800)');
+  // The hovered item label reads as a tooltip, so it uses the same colors
+  // Chakra's Tooltip theme does
+  const labelBg = useColorModeValue('gray.700', 'gray.300');
+  const labelColor = useColorModeValue('whiteAlpha.900', 'gray.900');
 
   // Keep the whole ring on screen: clamp the center away from the viewport edges
   const center = useMemo(() => {
-    const margin = RADIUS + ITEM_SIZE;
+    const margin = radius + ITEM_SIZE;
     return {
       x: Math.min(Math.max(position.x, margin), Math.max(margin, window.innerWidth - margin)),
       y: Math.min(Math.max(position.y, margin), Math.max(margin, window.innerHeight - margin)),
     };
-  }, [position.x, position.y]);
+  }, [position.x, position.y, radius]);
 
   useEffect(() => {
     onCenterChange?.(center);
@@ -186,7 +191,7 @@ export function RadialMenu(props: RadialMenuProps) {
 
   const itemOffset = (angle: number) => {
     const radians = ((angle - 90) * Math.PI) / 180; // -90 so that 0 is at the top
-    return { x: Math.cos(radians) * RADIUS, y: Math.sin(radians) * RADIUS };
+    return { x: Math.cos(radians) * radius, y: Math.sin(radians) * radius };
   };
 
   const hoveredLabel = ring.find((item) => item.id === hoveredId)?.label;
@@ -195,12 +200,12 @@ export function RadialMenu(props: RadialMenuProps) {
     <Box position="fixed" left={`${center.x}px`} top={`${center.y}px`} zIndex={10000} pointerEvents="none">
       {/* Selection line from the center to the cursor */}
       {cursor && hoveredId && (
-        <svg style={{ position: 'absolute', left: -RADIUS * 2, top: -RADIUS * 2, width: RADIUS * 4, height: RADIUS * 4 }}>
+        <svg style={{ position: 'absolute', left: -radius * 2, top: -radius * 2, width: radius * 4, height: radius * 4 }}>
           <line
-            x1={RADIUS * 2}
-            y1={RADIUS * 2}
-            x2={cursor.x - center.x + RADIUS * 2}
-            y2={cursor.y - center.y + RADIUS * 2}
+            x1={radius * 2}
+            y1={radius * 2}
+            x2={cursor.x - center.x + radius * 2}
+            y2={cursor.y - center.y + radius * 2}
             stroke={lineColor}
             strokeWidth="2"
             strokeDasharray="4 4"
@@ -255,7 +260,7 @@ export function RadialMenu(props: RadialMenuProps) {
         <Box
           position="absolute"
           left="-75px"
-          top={`${RADIUS + ITEM_SIZE}px`}
+          top={`${radius + ITEM_SIZE}px`}
           width="150px"
           textAlign="center"
           px="3"

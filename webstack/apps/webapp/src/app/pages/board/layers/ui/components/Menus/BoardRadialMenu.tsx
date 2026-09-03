@@ -33,6 +33,9 @@ type BoardRadialMenuProps = {
   openAlfred: () => void;
 };
 
+// How far each button sits from the center, lower is a tighter ring
+const RING_RADIUS = 100;
+
 // Interaction modes reachable from the radial menu
 type ActionMode = 'lasso' | 'grab' | 'pen' | 'eraser' | 'linker';
 const ACTION_MODES: ActionMode[] = ['lasso', 'grab', 'pen', 'eraser', 'linker'];
@@ -136,7 +139,16 @@ export function BoardRadialMenu(props: BoardRadialMenuProps) {
     );
   }
 
-  return <RadialMenu position={props.position} items={items} onSelect={handleSelect} onCancel={props.onClose} onCenterChange={setCenter} />;
+  return (
+    <RadialMenu
+      position={props.position}
+      items={items}
+      radius={RING_RADIUS}
+      onSelect={handleSelect}
+      onCancel={props.onClose}
+      onCenterChange={setCenter}
+    />
+  );
 }
 
 /**
