@@ -89,7 +89,7 @@ export function RadialMenu(props: RadialMenuProps) {
         ...item,
         angle: (360 / items.length) * index,
       })),
-    [items]
+    [items],
   );
   const ringRef = useRef(ring);
   ringRef.current = ring;
@@ -121,7 +121,7 @@ export function RadialMenu(props: RadialMenuProps) {
       });
       return closest;
     },
-    [center.x, center.y]
+    [center.x, center.y],
   );
 
   useEffect(() => {
@@ -199,88 +199,95 @@ export function RadialMenu(props: RadialMenuProps) {
   const hoveredLabel = ring.find((item) => item.id === hoveredId)?.label;
 
   return (
-    <Box position="fixed" left={`${center.x}px`} top={`${center.y}px`} zIndex={10000} pointerEvents="none">
-      {/* Selection line from the center to the cursor */}
-      {cursor && hoveredId && (
-        <svg style={{ position: 'absolute', left: -radius * 2, top: -radius * 2, width: radius * 4, height: radius * 4 }}>
-          <line
-            x1={radius * 2}
-            y1={radius * 2}
-            x2={cursor.x - center.x + radius * 2}
-            y2={cursor.y - center.y + radius * 2}
-            stroke={lineColor}
-            strokeWidth="2"
-            strokeDasharray="4 4"
-          />
-        </svg>
-      )}
+    <>
+      {/* Swallow everything underneath while the menu is up. Without this the
+          click that picks an item also reaches the board, drawing a dot when
+          the pen is the active tool. Document listeners still see it. */}
+      <Box position="fixed" top="0" left="0" right="0" bottom="0" zIndex={9999} />
 
-      {/* Center hub */}
-      <Box
-        position="absolute"
-        width={`${HUB_SIZE}px`}
-        height={`${HUB_SIZE}px`}
-        left={`${-HUB_SIZE / 2}px`}
-        top={`${-HUB_SIZE / 2}px`}
-        borderRadius="full"
-        background={hubBg}
-        boxShadow="lg"
-      />
+      <Box position="fixed" left={`${center.x}px`} top={`${center.y}px`} zIndex={10000} pointerEvents="none">
+        {/* Selection line from the center to the cursor */}
+        {cursor && hoveredId && (
+          <svg style={{ position: 'absolute', left: -radius * 2, top: -radius * 2, width: radius * 4, height: radius * 4 }}>
+            <line
+              x1={radius * 2}
+              y1={radius * 2}
+              x2={cursor.x - center.x + radius * 2}
+              y2={cursor.y - center.y + radius * 2}
+              stroke={lineColor}
+              strokeWidth="2"
+              strokeDasharray="4 4"
+            />
+          </svg>
+        )}
 
-      {/* Items */}
-      {ring.map((item) => {
-        const offset = itemOffset(item.angle);
-        const highlighted = hoveredId === item.id || item.active;
-        // An item with its own scheme keeps its color at all times
-        const colored = highlighted || !!item.colorScheme;
-        const scheme = item.colorScheme ?? colorScheme;
-        return (
-          <IconButton
-            key={item.id}
-            aria-label={item.label}
-            icon={item.icon}
-            size="sm"
-            fontSize="lg"
-            colorScheme={colored ? scheme : 'gray'}
-            sx={{
-              _dark: {
-                bg: colored ? `${scheme}.200` : 'gray.600', // 'inherit' didnt seem to work
-              },
-            }}
-            position="absolute"
-            borderRadius="full"
-            boxSize={`${ITEM_SIZE}px`}
-            minWidth={`${ITEM_SIZE}px`}
-            left={`${offset.x - ITEM_SIZE / 2}px`}
-            top={`${offset.y - ITEM_SIZE / 2}px`}
-            boxShadow="lg"
-            transition="transform 150ms"
-            transform={hoveredId === item.id ? 'scale(1.15)' : 'scale(1)'}
-          />
-        );
-      })}
-
-      {/* Label of the hovered item */}
-      {hoveredLabel && (
+        {/* Center hub */}
         <Box
           position="absolute"
-          left="-75px"
-          top={`${radius + ITEM_SIZE}px`}
-          width="150px"
-          textAlign="center"
-          px="3"
-          py="1"
-          borderRadius="md"
-          fontSize="sm"
-          fontWeight="medium"
-          whiteSpace="nowrap"
+          width={`${HUB_SIZE}px`}
+          height={`${HUB_SIZE}px`}
+          left={`${-HUB_SIZE / 2}px`}
+          top={`${-HUB_SIZE / 2}px`}
+          borderRadius="full"
+          background={hubBg}
           boxShadow="lg"
-          background={labelBg}
-          color={labelColor}
-        >
-          {hoveredLabel}
-        </Box>
-      )}
-    </Box>
+        />
+
+        {/* Items */}
+        {ring.map((item) => {
+          const offset = itemOffset(item.angle);
+          const highlighted = hoveredId === item.id || item.active;
+          // An item with its own scheme keeps its color at all times
+          const colored = highlighted || !!item.colorScheme;
+          const scheme = item.colorScheme ?? colorScheme;
+          return (
+            <IconButton
+              key={item.id}
+              aria-label={item.label}
+              icon={item.icon}
+              size="sm"
+              fontSize="lg"
+              colorScheme={colored ? scheme : 'gray'}
+              sx={{
+                _dark: {
+                  bg: colored ? `${scheme}.200` : 'gray.600', // 'inherit' didnt seem to work
+                },
+              }}
+              position="absolute"
+              borderRadius="full"
+              boxSize={`${ITEM_SIZE}px`}
+              minWidth={`${ITEM_SIZE}px`}
+              left={`${offset.x - ITEM_SIZE / 2}px`}
+              top={`${offset.y - ITEM_SIZE / 2}px`}
+              boxShadow="lg"
+              transition="transform 150ms"
+              transform={hoveredId === item.id ? 'scale(1.15)' : 'scale(1)'}
+            />
+          );
+        })}
+
+        {/* Label of the hovered item */}
+        {hoveredLabel && (
+          <Box
+            position="absolute"
+            left="-75px"
+            top={`${radius + ITEM_SIZE}px`}
+            width="150px"
+            textAlign="center"
+            px="3"
+            py="1"
+            borderRadius="md"
+            fontSize="sm"
+            fontWeight="medium"
+            whiteSpace="nowrap"
+            boxShadow="lg"
+            background={labelBg}
+            color={labelColor}
+          >
+            {hoveredLabel}
+          </Box>
+        )}
+      </Box>
+    </>
   );
 }

@@ -194,28 +194,34 @@ function MenuPanel(props: { center: { x: number; y: number }; title: string; onC
   }, [props.onClose]);
 
   return (
-    <Box
-      ref={panelRef}
-      position="fixed"
-      left={offset ? `${offset.left}px` : `${props.center.x}px`}
-      top={offset ? `${offset.top}px` : `${props.center.y}px`}
-      visibility={offset ? 'visible' : 'hidden'}
-      zIndex={10000}
-      background={bgColor}
-      border="1px solid"
-      borderColor={borderColor}
-      borderRadius="md"
-      boxShadow="xl"
-      maxHeight="80vh"
-      overflowY="auto"
-    >
-      <Flex align="center" justify="space-between" px="3" py="2" borderBottom="1px solid" borderColor={borderColor}>
-        <Text fontWeight="semibold" userSelect="none">
-          {props.title}
-        </Text>
-        <CloseButton size="sm" onClick={props.onClose} />
-      </Flex>
-      <Box p="3">{props.children}</Box>
-    </Box>
+    <>
+      {/* Same shield the ring uses: the click that dismisses the panel must not
+          reach the board underneath */}
+      <Box position="fixed" top="0" left="0" right="0" bottom="0" zIndex={9999} />
+
+      <Box
+        ref={panelRef}
+        position="fixed"
+        left={offset ? `${offset.left}px` : `${props.center.x}px`}
+        top={offset ? `${offset.top}px` : `${props.center.y}px`}
+        visibility={offset ? 'visible' : 'hidden'}
+        zIndex={10000}
+        background={bgColor}
+        border="1px solid"
+        borderColor={borderColor}
+        borderRadius="md"
+        boxShadow="xl"
+        maxHeight="80vh"
+        overflowY="auto"
+      >
+        <Flex align="center" justify="space-between" px="3" py="2" borderBottom="1px solid" borderColor={borderColor}>
+          <Text fontWeight="semibold" userSelect="none">
+            {props.title}
+          </Text>
+          <CloseButton size="sm" onClick={props.onClose} />
+        </Flex>
+        <Box p="3">{props.children}</Box>
+      </Box>
+    </>
   );
 }
