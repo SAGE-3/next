@@ -9,6 +9,8 @@
 // Electron
 const electron = require('electron');
 const fs = require('fs');
+const { join } = require('path');
+const { homedir, platform } = require('os');
 
 // URL Stuff
 const { sanitizeUrl } = require('@braintree/sanitize-url');
