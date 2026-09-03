@@ -6,13 +6,16 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Box, useColorModeValue } from '@chakra-ui/react';
+import { ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Box, IconButton, useColorModeValue } from '@chakra-ui/react';
+
+import { SAGEColors } from '@sage3/shared';
+import { useHexColor } from '@sage3/frontend';
 
 export type RadialMenuItem = {
   // Unique id, returned by onSelect
   id: string;
-  icon: ReactNode;
+  icon: ReactElement;
   label: string;
   // Highlighted as the currently active item (i.e. the current interaction mode)
   active?: boolean;
@@ -24,17 +27,17 @@ type RadialMenuProps = {
   items: RadialMenuItem[];
   onSelect: (id: string) => void;
   onCancel: () => void;
-  // Highlight color, an hex color string
-  color: string;
+  // Color scheme of the buttons, matching the toolbar buttons by default
+  colorScheme?: SAGEColors;
   // The clamped center actually used for the ring, so callers can anchor to it
   onCenterChange?: (center: { x: number; y: number }) => void;
 };
 
 // Distance from center to menu items
 const RADIUS = 135;
-// Diameter of an item
+// Size of an item button
 const ITEM_SIZE = 46;
-// Diameter of the center hub
+// Size of the center hub
 const HUB_SIZE = 56;
 // Minimum distance from the center to activate an item, avoids a center deadzone
 const MIN_ACTIVATION_DISTANCE = 30;
@@ -48,11 +51,14 @@ const MIN_ACTIVATION_DISTANCE = 30;
  * @returns JSX.Element
  */
 export function RadialMenu(props: RadialMenuProps) {
-  const { position, items, onSelect, onCancel, color, onCenterChange } = props;
+  const { position, items, onSelect, onCancel, onCenterChange } = props;
+  const colorScheme = props.colorScheme ?? 'teal';
 
-  const hubColor = useColorModeValue('white', 'var(--chakra-colors-gray-700)');
-  const itemColor = useColorModeValue('var(--chakra-colors-gray-100)', 'var(--chakra-colors-gray-600)');
-  const iconColor = useColorModeValue('var(--chakra-colors-gray-700)', 'white');
+  // Same colors the toolbar buttons use: the scheme in light mode, the .200
+  // shade in dark mode, gray.600 in dark mode when inactive
+  const activeColor = useHexColor(`${colorScheme}.200`);
+  const lineColor = useHexColor(colorScheme);
+  const hubBg = useColorModeValue('var(--chakra-colors-gray-100)', 'var(--chakra-colors-gray-600)');
   const labelBg = useColorModeValue('var(--chakra-colors-gray-700)', 'white');
   const labelColor = useColorModeValue('white', 'var(--chakra-colors-gray-800)');
 
@@ -195,7 +201,7 @@ export function RadialMenu(props: RadialMenuProps) {
             y1={RADIUS * 2}
             x2={cursor.x - center.x + RADIUS * 2}
             y2={cursor.y - center.y + RADIUS * 2}
-            stroke={color}
+            stroke={lineColor}
             strokeWidth="2"
             strokeDasharray="4 4"
           />
@@ -210,7 +216,7 @@ export function RadialMenu(props: RadialMenuProps) {
         left={`${-HUB_SIZE / 2}px`}
         top={`${-HUB_SIZE / 2}px`}
         borderRadius="full"
-        background={hubColor}
+        background={hubBg}
         boxShadow="lg"
       />
 
@@ -219,26 +225,28 @@ export function RadialMenu(props: RadialMenuProps) {
         const offset = itemOffset(item.angle);
         const highlighted = hoveredId === item.id || item.active;
         return (
-          <Box
+          <IconButton
             key={item.id}
+            aria-label={item.label}
+            icon={item.icon}
+            size="sm"
+            fontSize="lg"
+            colorScheme={highlighted ? colorScheme : 'gray'}
+            sx={{
+              _dark: {
+                bg: highlighted ? activeColor : 'gray.600', // 'inherit' didnt seem to work
+              },
+            }}
             position="absolute"
-            width={`${ITEM_SIZE}px`}
-            height={`${ITEM_SIZE}px`}
+            borderRadius="full"
+            boxSize={`${ITEM_SIZE}px`}
+            minWidth={`${ITEM_SIZE}px`}
             left={`${offset.x - ITEM_SIZE / 2}px`}
             top={`${offset.y - ITEM_SIZE / 2}px`}
-            borderRadius="full"
             boxShadow="lg"
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            fontSize="20px"
             transition="transform 150ms"
             transform={hoveredId === item.id ? 'scale(1.15)' : 'scale(1)'}
-            background={highlighted ? color : itemColor}
-            color={highlighted ? 'white' : iconColor}
-          >
-            {item.icon}
-          </Box>
+          />
         );
       })}
 

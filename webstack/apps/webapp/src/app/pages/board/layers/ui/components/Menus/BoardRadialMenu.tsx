@@ -17,7 +17,7 @@ import { IoSparklesSharp } from 'react-icons/io5';
 import { LiaHandPaperSolid, LiaMousePointerSolid } from 'react-icons/lia';
 import { MdApps, MdArrowBack, MdFolder, MdMap, MdPeople, MdScreenShare } from 'react-icons/md';
 
-import { useHexColor, useLinkStore, useUIStore, useUser, useUserSettings } from '@sage3/frontend';
+import { useLinkStore, useUIStore, useUserSettings } from '@sage3/frontend';
 
 import { RadialMenu, RadialMenuItem } from './RadialMenu';
 import { ScreenshareMenu } from './Menus/ScreenshareMenu';
@@ -60,9 +60,6 @@ export function BoardRadialMenu(props: BoardRadialMenuProps) {
   const { settings, setPrimaryActionMode } = useUserSettings();
   const primaryActionMode = settings.primaryActionMode;
 
-  const { user } = useUser();
-  const highlight = useHexColor(user ? user.data.color : 'teal');
-
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const setSelectedAppsIds = useUIStore((state) => state.setSelectedAppsIds);
   const clearLinkAppId = useLinkStore((state) => state.clearLinkAppId);
@@ -72,20 +69,24 @@ export function BoardRadialMenu(props: BoardRadialMenuProps) {
   const [center, setCenter] = useState(props.position);
 
   const items: RadialMenuItem[] = [
-    { id: 'lasso', icon: <LiaMousePointerSolid />, label: 'Selection', active: primaryActionMode === 'lasso' },
-    { id: 'grab', icon: <LiaHandPaperSolid />, label: 'Grab', active: primaryActionMode === 'grab' },
-    { id: 'pen', icon: <BiPencil />, label: 'Annotate', active: primaryActionMode === 'pen' },
-    { id: 'eraser', icon: <BsEraserFill />, label: 'Eraser', active: primaryActionMode === 'eraser' },
-    { id: 'linker', icon: <FaLink />, label: 'Link', active: primaryActionMode === 'linker' },
-    { id: 'applications', icon: <MdApps />, label: 'Applications' },
-    { id: 'assets', icon: <MdFolder />, label: 'Assets' },
+    // { id: 'linker', icon: <FaLink />, label: 'Link', active: primaryActionMode === 'linker' },
+
     { id: 'plugins', icon: <HiPuzzle />, label: 'Plugins' },
-    { id: 'kernels', icon: <HiChip />, label: 'Kernels' },
-    { id: 'users', icon: <MdPeople />, label: 'Users' },
-    { id: 'screenshare', icon: <MdScreenShare />, label: 'Screenshares' },
+    { id: 'assets', icon: <MdFolder />, label: 'Assets' },
+
     { id: 'map', icon: <MdMap />, label: 'Map' },
     { id: 'alfred', icon: <IoSparklesSharp />, label: 'SAGE Intelligence' },
-    { id: 'home', icon: <MdArrowBack />, label: 'Back Home' },
+    // { id: 'home', icon: <MdArrowBack />, label: 'Back Home' },
+
+    { id: 'eraser', icon: <BsEraserFill />, label: 'Eraser', active: primaryActionMode === 'eraser' },
+    { id: 'pen', icon: <BiPencil />, label: 'Annotate', active: primaryActionMode === 'pen' },
+    { id: 'grab', icon: <LiaHandPaperSolid />, label: 'Grab', active: primaryActionMode === 'grab' },
+    { id: 'lasso', icon: <LiaMousePointerSolid />, label: 'Selection', active: primaryActionMode === 'lasso' },
+
+    { id: 'applications', icon: <MdApps />, label: 'Applications' },
+    { id: 'users', icon: <MdPeople />, label: 'Users' },
+    { id: 'screenshare', icon: <MdScreenShare />, label: 'Screenshares' },
+    { id: 'kernels', icon: <HiChip />, label: 'Kernels' },
   ];
 
   const selectMode = useCallback(
@@ -97,7 +98,7 @@ export function BoardRadialMenu(props: BoardRadialMenuProps) {
       }
       if (mode !== 'linker') clearLinkAppId();
     },
-    [setPrimaryActionMode, setSelectedApp, setSelectedAppsIds, clearLinkAppId]
+    [setPrimaryActionMode, setSelectedApp, setSelectedAppsIds, clearLinkAppId],
   );
 
   const handleSelect = useCallback(
@@ -116,7 +117,7 @@ export function BoardRadialMenu(props: BoardRadialMenuProps) {
         props.backHomeClick();
       }
     },
-    [selectMode, props.onClose, props.openAlfred, props.backHomeClick]
+    [selectMode, props.onClose, props.openAlfred, props.backHomeClick],
   );
 
   if (openPanel) {
@@ -135,16 +136,7 @@ export function BoardRadialMenu(props: BoardRadialMenuProps) {
     );
   }
 
-  return (
-    <RadialMenu
-      position={props.position}
-      items={items}
-      onSelect={handleSelect}
-      onCancel={props.onClose}
-      color={highlight}
-      onCenterChange={setCenter}
-    />
-  );
+  return <RadialMenu position={props.position} items={items} onSelect={handleSelect} onCancel={props.onClose} onCenterChange={setCenter} />;
 }
 
 /**
