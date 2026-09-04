@@ -38,6 +38,17 @@ Version 1.6 changes more than the docker images. After extracting the new packag
 
 5. **Check your `.env`** against the new `.env.template`: it now includes `CHROMA_SERVER_AUTHN_CREDENTIALS` / `CHROMA_CLIENT_AUTH_CREDENTIALS` (change the defaults) and the replica counts.
 
+# Screen sharing without Twilio (self-hosted LiveKit)
+
+Screen sharing no longer needs a Twilio account. The package now includes a self-hosted [LiveKit](https://livekit.io) video server, and Twilio is kept only for servers that already use it (when both are configured, LiveKit is used). To turn it on when updating an existing server:
+
+1. Generate the one credential in `.env`: `LIVEKIT_API_SECRET=$(uuidgen)` (32+ characters). Empty means no screen sharing, and the `livekit-server` container will then refuse to start, so comment it out of `docker-compose.yml` if you leave it empty.
+2. Copy the new `docker-compose.yml` (it contains the `livekit-server` service and passes the secret to `node-server`), and the new `configurations/livekit/livekit.yaml`. Nothing in that file needs editing.
+3. Open `7882/udp` and `7881/tcp` on the host firewall (forwarded, if behind NAT). Signaling uses the existing HTTPS port.
+4. Nothing changes in `sage3-prod.hjson`. After `./GO`, the `node-server` log shows `Configuration> screenshare backend: livekit`.
+
+The full step-by-step, including adding the service to an existing compose file by hand, is in `configurations/livekit/ADDING-LIVEKIT.md` in the package, and the ports and troubleshooting are in the [Server Deployment](Server-Deployment.md#screen-sharing) guide.
+
 # Docker
 
 - **Copy the new ‘docker-compose.yml’ file from the new folder into your installation directory.**  
@@ -55,11 +66,13 @@ Version 1.6 changes more than the docker images. After extracting the new packag
   - \`jupyter\`: jupyter server  
   - \`chromadb\`: vector database for AI services  
   - \`seer\`: Python backend for AI services  
-- Check your \`.env\` file, but it should not require an update:  
+  - \`livekit-server\`: self-hosted video server for screen sharing (optional, publishes 7881/tcp and 7882/udp)
+- Check your \`.env\` file; the only addition is the optional screen-sharing secret:  
   - SAGE3\_SERVER= \[full name of your server\]  
   - ENVIRONMENT=production  
   - TOKEN=  \[JWT token generated according to the documentation\]  
     - Might need a renewal after a year
+  - LIVEKIT\_API\_SECRET=  \[new, optional: any 32+ character value turns on self-hosted screen sharing, see above\]
 
 # Configuration
 
@@ -86,7 +99,7 @@ Each service has a folder inside the ‘configuration’ directory.
       * "certificateKeyFile": "XXX-server.key"  
       * Stored in the \`keys\` sub folder  
     * Services:  
-      * Twilio: screen sharing key (copy from old configuration)  
+      * Twilio: screen sharing key (copy from old configuration), or leave it empty and use the self-hosted screen sharing (see "Screen sharing without Twilio" above)  
       * Openai: API key, optional  
     * Authentication  
       * Auth services, copy the values from old configuration  
