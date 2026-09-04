@@ -17,7 +17,7 @@ init:
 
 install:
   - ps: Get-NodeJsLatestBuild 12.13
-  - ps: Install-Product node 12.13.0 x64
+  - ps: Install-Product node 22 x64
   - dir C:\avvm\node
   - node -v
   - cd %APPVEYOR_BUILD_FOLDER%
@@ -29,13 +29,13 @@ install:
   - mkdir public\uploads\apps
   - mkdir public\uploads\apps\Webview
   - copy /Y ..\public\uploads\apps\Webview\SAGE2_script_supplement.js public\uploads\apps\Webview\SAGE2_script_supplement.js
-  - .\node_modules\.bin\electron-packager . --platform=win32 --arch=x64 --icon=sage2.ico --overwrite
+  - .\node_modules\.bin\electron-packager . --platform=win32 --arch=x64 --icon=sage2.ico --overwrite --no-asar
   - copy /Y README.win      SAGE2_client-win32-x64\README
   - copy /Y View.win        SAGE2_client-win32-x64\Display0.bat
   - copy /Y Fullscreen.win  SAGE2_client-win32-x64\Fullscreen.bat
   - 7z a -sfx7z.sfx SAGE2_client-win64.exe SAGE2_client-win32-x64 > nul
   - move SAGE2_client-win64.exe ..
-  - node build_win.js
+  - node build_win.cjs
   - move windows-installer\SAGE2_client-Installer.exe ..
 
 build: off

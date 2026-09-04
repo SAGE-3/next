@@ -11,16 +11,15 @@
 // update, and uninstall so it can create/remove shortcuts. We handle those and
 // quit immediately. Returns true if a Squirrel event was handled (caller should
 // then exit rather than open a window). No-op / false on other platforms.
+import ChildProcess from 'child_process';
+import path from 'path';
+import { app } from 'electron';
+
 function handleSquirrelEvent() {
   // No extra args means a normal launch, not a Squirrel event
   if (process.argv.length === 1) {
     return false;
   }
-
-  const ChildProcess = require('child_process');
-  const path = require('path');
-  // Needed to quit after handling the event (the switch below calls app.quit)
-  const { app } = require('electron');
 
   // Locate Squirrel's Update.exe, which lives one level above the app folder
   const appFolder = path.resolve(process.execPath, '..');
@@ -69,6 +68,4 @@ function handleSquirrelEvent() {
   }
 }
 
-module.exports = {
-  handleSquirrelEvent,
-};
+export { handleSquirrelEvent };

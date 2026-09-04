@@ -20,15 +20,11 @@ async function GO() {
   console.log(`Notarizing ${appId} found at ${appPath}`);
   try {
     await electron_notarize.notarize({
-      // tool: 'legacy',
-      // appBundleId: appId,
       // appPath: appPath,
       // appleId: 'leluc@mac.com', // this is your apple ID it should be stored in an .env file
       // appleIdPassword: 'lbyb-ypil-xkyq-lwmb', // an application specific password
       // ascProvider: '63RP6MLQ63',
 
-      tool: 'notarytool',
-      appBundleId: appId,
       appPath: appPath,
       appleId: 'leluc@mac.com', // this is your apple ID it should be stored in an .env file
       appleIdPassword: 'lbyb-ypil-xkyq-lwmb', // an application specific password

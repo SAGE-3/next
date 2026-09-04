@@ -7,8 +7,8 @@
  */
 
 // Persistent store of SAGE3 server bookmarks the user can connect to.
-const Store = require('electron-store');
-const { randomUUID: genId } = require('crypto');
+import Store from 'electron-store';
+import { randomUUID as genId } from 'crypto';
 
 // On-disk store (bookmark-store.json in app.getPath('userData'))
 // Create a store
@@ -60,7 +60,7 @@ if (ccIdx > -1) {
 // Add it back to the store
 store.set('bookmarks', currentList);
 
-module.exports = {
+export default {
   // Return all saved bookmarks
   getBookmarks: function () {
     const list = store.get('bookmarks', defaultBookmarks);

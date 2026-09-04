@@ -49,6 +49,7 @@ import {
   useRouteNav,
   useRoomStore,
   useConfigStore,
+  useScreenshareBackend,
   Clock,
   useThrottleApps,
   useAbility,
@@ -70,6 +71,7 @@ import {
   ClearBoardModal,
   AppToolbar,
   Twilio,
+  LocalScreenshare,
   LassoToolbar,
   PresenceFollow,
   BoardTitle,
@@ -153,8 +155,14 @@ export function UILayer(props: UILayerProps) {
   // Alfred Modal
   const { isOpen: alfredIsOpen, onOpen: alfredOnOpen, onClose: alfredOnClose } = useDisclosure();
 
+  // Which screenshare backend the server offers; never connect to one it has not configured
+  const screenshareBackend = useScreenshareBackend();
+
   // Connect to Twilio only if there are Screenshares or Webcam apps
-  const twilioConnect = apps.filter((el) => el.data.type === 'Screenshare').length > 0;
+  const twilioConnect = screenshareBackend === 'twilio' && apps.filter((el) => el.data.type === 'Screenshare').length > 0;
+
+  // Connect to the LiveKit SFU only if there are LocalScreenshare apps
+  const livekitConnect = screenshareBackend === 'livekit' && apps.filter((el) => el.data.type === 'LocalScreenshare').length > 0;
 
   // Unhide UI
   const { toggleShowUI } = useUserSettings();
@@ -537,6 +545,9 @@ export function UILayer(props: UILayerProps) {
 
       {/* Twilio connection component */}
       <Twilio roomName={props.boardId} connect={twilioConnect} />
+
+      {/* LiveKit connection component */}
+      <LocalScreenshare roomName={props.boardId} connect={livekitConnect} />
 
       {/* Lasso Toolbar that is shown when apps are selected using the lasso tool */}
       {canLasso && <LassoToolbar downloadAssets={downloadBoardAssets} />}

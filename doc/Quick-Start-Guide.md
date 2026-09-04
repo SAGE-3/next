@@ -245,7 +245,7 @@ All board changes are synchronized in real time across every connected user.
 |---|---|
 | Create a sticky note | Press `Shift + S` or drag "Stickie" from the Applications panel |
 | Create a SageCell | Right-click board → SageCell |
-| Share your screen | Open "Screenshare" from the Applications panel |
+| Share your screen | Open the Screenshare panel and click **Start Sharing** |
 | Open a web page | Paste a URL onto the board |
 | Write collaborative notes | Open "Notepad" from the Applications panel |
 | Run Python code | Open "SageCell", select a kernel, write code, press `Shift + Enter` |

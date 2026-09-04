@@ -7,20 +7,19 @@
  */
 
 // Electron
-const electron = require('electron');
-const fs = require('fs');
+import electron, { dialog } from 'electron';
+import fs from 'fs';
+import { join } from 'path';
+import { homedir, platform } from 'os';
 
 // URL Stuff
-const { sanitizeUrl } = require('@braintree/sanitize-url');
-
-// Dialog
-const { dialog } = require('electron');
+import { sanitizeUrl } from '@braintree/sanitize-url';
 
 // Prompt  tools
-const prompt = require('electron-prompt');
+import prompt from 'electron-prompt';
 
 // Store
-const bookmarkStore = require('./bookmarkstore');
+import bookmarkStore from './bookmarkstore.js';
 
 /**
  * Check to see if the provided url is a SAGE 3 server
@@ -293,7 +292,7 @@ function updateLandingPage(window) {
   window.webContents.send('store-interface', { response: 'bookmarks-list', bookmarks });
 }
 
-module.exports = {
+export {
   checkServerIsSage,
   dialogShowErrorMessage,
   dialogUserTextInput,
