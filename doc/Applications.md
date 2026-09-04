@@ -378,6 +378,7 @@ Several people can share at the same time, and one person can share **up to four
 
 | Name | Type | Icon | Description |
 |------|------|------|-------------|
+| Show stream metrics | Button | <img src="icons/applications/MdSpeed.svg" width="20" /> | Overlay live statistics on the stream: the video layers being sent (resolution, frame rate, bandwidth) or received, and whether the encoder is limited by CPU or bandwidth. Useful when a stream looks blurry, choppy or blank. The overlay is only shown to you, and stays until you turn it off. |
 | Stop Stream | Button | <img src="icons/applications/MdScreenShare.svg" width="20" /> | End the screen sharing session (visible to the stream owner only) |
 
 ---

@@ -67,7 +67,7 @@ const MAX_LOCAL_SCREENSHARES = 4;
 const captureConstraints = {
   width: { ideal: 1920, max: 1920 },
   height: { ideal: 1920, max: 1920 },
-  frameRate: { ideal: 20, max: 20 },
+  frameRate: { ideal: 20, max: 30 },
 };
 
 type ElectronSource = {
