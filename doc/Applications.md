@@ -364,9 +364,11 @@ A computational code cell backed by a Jupyter kernel. Write and execute Python, 
 
 ## Screenshare
 
-Share your screen or a specific application window with everyone on the board. Multiple users can share simultaneously, and each stream appears as its own resizable window on the canvas. Video quality adjusts automatically to available bandwidth. Sessions are limited to 6 hours, but a new session can be started immediately.
+Share your screen or a specific application window with everyone on the board. Each stream appears as its own resizable window on the canvas. Sessions are limited to 6 hours, but a new session can be started immediately.
 
 Screen sharing is started from the **Screenshare panel**, which also lists the shares already on the board, not from the Applications panel. It is available only when the server has screen sharing enabled; otherwise the panel says so.
+
+Several people can share at the same time, and one person can share **up to four** screens or windows at once: pick "Start Sharing", then "Share Another Screen" for each additional one. Your shares are numbered so they can be told apart (for example `Alice #1` and `Alice #2`), and each one is stopped on its own with the stop button next to it in the Screenshare panel, or with **Stop Stream** in the app's toolbar. The panel's start button says "Limit reached (4)" once you have four running.
 
 <!-- TODO: Screenshot of Screenshare app -->
 ![Screenshare](images/applications/applications_screenshare.jpeg)
@@ -376,6 +378,7 @@ Screen sharing is started from the **Screenshare panel**, which also lists the s
 
 | Name | Type | Icon | Description |
 |------|------|------|-------------|
+| Show stream metrics | Button | <img src="icons/applications/MdSpeed.svg" width="20" /> | Overlay live statistics on the stream: the video layers being sent (resolution, frame rate, bandwidth) or received, and whether the encoder is limited by CPU or bandwidth. Useful when a stream looks blurry, choppy or blank. The overlay is only shown to you, and stays until you turn it off. |
 | Stop Stream | Button | <img src="icons/applications/MdScreenShare.svg" width="20" /> | End the screen sharing session (visible to the stream owner only) |
 
 ---
