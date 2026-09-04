@@ -118,7 +118,7 @@ async function startServer() {
   // Twilio (legacy, for servers that have not migrated to the self-hosted SFU)
   if (isTwilioEnabled(config.services)) {
     const twilio = new SAGETwilio(config.services.twilio, AppsCollection, PresenceCollection, 10000, screenShareTimeLimit);
-    app.get('/twilio/token', createRateLimiter(6), SAGEBase.Auth.authenticate, (req, res) => {
+    app.get('/twilio/token', createRateLimiter(60), SAGEBase.Auth.authenticate, (req, res) => {
       const authId = req.user.id;
       if (authId === undefined) {
         res.status(403).send();
@@ -135,7 +135,7 @@ async function startServer() {
   if (isLiveKitEnabled(config.services)) {
     const livekit = new SAGELiveKit(LIVEKIT_KEY, config.services.livekit.apiSecret as string, AppsCollection, 10000, screenShareTimeLimit);
 
-    app.get('/livekit/token', createRateLimiter(6), SAGEBase.Auth.authenticate, async (req, res) => {
+    app.get('/livekit/token', createRateLimiter(60), SAGEBase.Auth.authenticate, async (req, res) => {
       // The participant identity is built server-side from the session, so users cannot impersonate each other
       const authId = req.user.id;
       const room = req.query.room as string;
