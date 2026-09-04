@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@braintree/sanitize-url": "^7.1.2",
-    "electron-osx-sign": "^0.6.0",
     "commander": "^15.0.0",
     "electron-log": "^5.1.5",
     "electron-prompt": "^1.7.0",
@@ -18,8 +17,9 @@
     "update-electron-app": "^3.0.0"
   },
   "devDependencies": {
-    "@electron/notarize": "^2.3.2",
-    "@electron/packager": "^18.4.4",
+    "@electron/notarize": "^3.1.1",
+    "@electron/osx-sign": "^2.7.0",
+    "@electron/packager": "^20.3.0",
     "electron": "^44.1.1"
   },
   "optionalDependencies": {

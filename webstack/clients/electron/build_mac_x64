@@ -17,7 +17,7 @@ rm -fr SAGE3-darwin-x64/SAGE3.app/Contents/Frameworks/Electron\ Framework.framew
 # Sign and notarize
 npx electron-osx-sign --type=development --signature-flags=library --hardened-runtime \
   --entitlements=entitlements.mac.plist --entitlements-inherit=entitlements.mac.plist \
-  SAGE3-darwin-x64/SAGE3.app
+  --no-gatekeeper-assess SAGE3-darwin-x64/SAGE3.app
 
 node notarize_x64.cjs
 
