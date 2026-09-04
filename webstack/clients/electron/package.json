@@ -18,7 +18,7 @@
     "update-electron-app": "^3.0.0"
   },
   "devDependencies": {
-    "@electron/notarize": "^2.5.0",
+    "@electron/notarize": "^2.3.2",
     "@electron/packager": "^20.3.0",
     "electron": "^44.1.1"
   },
