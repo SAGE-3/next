@@ -7,17 +7,16 @@
  */
 
 // Electron
-const electron = require('electron');
-const { app, dialog, Menu, Tray, nativeImage } = require('electron');
+import electron, { app, dialog, Menu, Tray, nativeImage } from 'electron';
 const shell = electron.shell;
-const path = require('path');
+import path from 'path';
 
 // Stores
-const windowStore = require('./windowstore');
-const bookmarkStore = require('./bookmarkstore');
+import windowStore from './windowstore.js';
+import bookmarkStore from './bookmarkstore.js';
 
 // Utils
-const { updateLandingPage, dialogUserTextInput, checkServerIsSage, takeScreenshot } = require('./utils');
+import { updateLandingPage, dialogUserTextInput, checkServerIsSage, takeScreenshot } from './utils.js';
 
 /**
  * Build a menu template for a window
@@ -28,7 +27,7 @@ function buildSageMenu(window, commander) {
   // System tray (menubar) icon with its own quick-access context menu, built once the app is ready
   let tray = null;
   app.whenReady().then(() => {
-    tray = new Tray(nativeImage.createFromPath(path.join(__dirname, '..', 'images', 'trayTemplate.png')));
+    tray = new Tray(nativeImage.createFromPath(path.join(import.meta.dirname, '..', 'images', 'trayTemplate.png')));
     const contextMenu = Menu.buildFromTemplate([
       {
         label: 'Show Main Window',
@@ -549,6 +548,4 @@ function buildMenu(window, commander) {
   electron.Menu.setApplicationMenu(electron.Menu.buildFromTemplate(menu));
 }
 
-module.exports = {
-  buildMenu,
-};
+export { buildMenu };

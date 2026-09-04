@@ -14,7 +14,7 @@ async function GO() {
 
   // Same appId in electron-builder.
   let appId = 'app.sage3';
-  let appPath = 'SAGE3-darwin-arm64/SAGE3.app';
+  let appPath = 'SAGE3-darwin-x64/SAGE3.app';
   if (!fs.existsSync(appPath)) {
     throw new Error(`Cannot find application at: ${appPath}`);
   }
@@ -23,8 +23,6 @@ async function GO() {
 
   try {
     await electron_notarize.notarize({
-      tool: 'notarytool',
-      appBundleId: appId,
       appPath: appPath,
       // Apple ID  toto@mac.com
       appleId: process.env.APPLE_ID || 'XXXX',
