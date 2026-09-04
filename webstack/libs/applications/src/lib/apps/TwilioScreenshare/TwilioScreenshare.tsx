@@ -214,7 +214,10 @@ function AppComponent(props: App): JSX.Element {
           // window.electron.send('request-current-display');
 
           // Get sources from the main process
-          window.electron.on('set-source', async (sources: any) => {
+          // One reply per request: 'once' removes itself, and clearing first drops any listener a
+          // previous click left behind (the preload wraps callbacks, so removeListener cannot).
+          window.electron.removeAllListeners('set-source');
+          window.electron.once('set-source', async (sources: any) => {
             // Check all sources and list for screensharing
             const allSources = [] as ElectronSource[]; // Make separate object to pass into the state
             for (const source of sources) {

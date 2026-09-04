@@ -188,7 +188,10 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
   const startLiveKitScreenshare = async () => {
     if (isElectron()) {
       // Electron has no native picker: list the sources in a modal
-      window.electron.on('set-source', async (sources: ElectronSource[]) => {
+      // One reply per request: 'once' removes itself, and clearing first drops any listener a
+      // previous click left behind (the preload wraps callbacks, so removeListener cannot).
+      window.electron.removeAllListeners('set-source');
+      window.electron.once('set-source', async (sources: ElectronSource[]) => {
         setElectronSources(sources);
         setSelectedSource(null);
         onOpen();
