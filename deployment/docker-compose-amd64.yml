@@ -54,6 +54,8 @@ services:
       - "traefik.http.routers.node-server.middlewares=authheader"
     environment:
       - NODE_ENV=production
+      # Same secret the livekit-server container gets; enables screensharing when set
+      - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET}
     volumes:
       - ./configurations/node/keys:/app/keys
       - ./configurations/node/assets:/app/dist/apps/homebase/assets
@@ -134,6 +136,36 @@ services:
       timeout: 30s
       retries: 3
       start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+  livekit-server:
+    image: "livekit/livekit-server:v1.13"
+    command: --config /etc/livekit.yaml
+    environment:
+      # The one credential a deployment generates, shared with node-server below.
+      # The key ("SAGE3") is an identifier, not a secret, so it is fixed.
+      - "LIVEKIT_KEYS=SAGE3: ${LIVEKIT_API_SECRET}"
+    labels:
+      - "traefik.enable=true"
+      # Signaling (WebSocket) goes through traefik for TLS: wss://<server>/sfu
+      # (/livekit is NOT used as the prefix: the node-server owns /livekit/token)
+      - "traefik.http.routers.livekit-server.rule=Host(`${SAGE3_SERVER}`) && PathPrefix(`/sfu`)"
+      - "traefik.http.routers.livekit-server.priority=400"
+      - "traefik.http.routers.livekit-server.entrypoints=websecure"
+      - "traefik.http.services.livekit-server.loadbalancer.server.port=7880"
+      - "traefik.http.middlewares.livekit-strip.stripprefix.prefixes=/sfu"
+      - "traefik.http.routers.livekit-server.middlewares=livekit-strip"
+    # WebRTC media bypasses traefik: UDP (and TCP fallback) directly on the host
+    ports:
+      - "7881:7881"
+      - "7882:7882/udp"
+    volumes:
+      - ./configurations/livekit/livekit.yaml:/etc/livekit.yaml
+    deploy:
+      restart_policy:
+        condition: on-failure
     logging:
       driver: "json-file"
       options:

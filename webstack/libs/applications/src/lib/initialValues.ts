@@ -25,6 +25,7 @@ import { name as PluginAppName, init as defaultPluginApp } from './apps/PluginAp
 import { name as PollName, init as defaultPoll } from './apps/Poll';
 import { name as SageCellName, init as defaultSageCell } from './apps/SageCell';
 import { name as SageIdeatorName, init as defaultSageIdeator } from './apps/SageIdeator';
+import { name as ScreenshareName, init as defaultScreenshare } from './apps/Screenshare';
 import { name as StickieName, init as defaultStickie } from './apps/Stickie';
 import { name as TimerName, init as defaultTimer } from './apps/Timer';
 import { name as TwilioScreenshareName, init as defaultTwilioScreenshare } from './apps/TwilioScreenshare';
@@ -60,6 +61,7 @@ export const initialValues = {
   [PollName]: defaultPoll,
   [SageCellName]: defaultSageCell,
   [SageIdeatorName]: defaultSageIdeator,
+  [ScreenshareName]: defaultScreenshare,
   [StickieName]: defaultStickie,
   [TimerName]: defaultTimer,
   [TwilioScreenshareName]: defaultTwilioScreenshare,

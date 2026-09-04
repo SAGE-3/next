@@ -98,6 +98,8 @@ function AppComponent(props: App): JSX.Element {
   // Toasts
   const toast = useToast();
   const toastIdRef = useRef<ToastId>();
+  // Whether this screenshare has already been announced to this viewer
+  const announcedRef = useRef(false);
 
   // Other apps
   const apps = useAppStore((state) => state.apps);
@@ -143,7 +145,7 @@ function AppComponent(props: App): JSX.Element {
         const aspect = track.dimensions.width / track.dimensions.height;
         let w = props.data.size.width;
         let h = props.data.size.height;
-        aspect > 1 ? (h = w / aspect) : (w = h / aspect);
+        aspect > 1 ? (h = w / aspect) : (w = h * aspect);
         updateState(props._id, { aspectRatio: aspect });
         update(props._id, { size: { width: w, height: h, depth: props.data.size.depth } });
       }
@@ -155,7 +157,7 @@ function AppComponent(props: App): JSX.Element {
         const aspect = width / height;
         let w = props.data.size.width;
         let h = props.data.size.height;
-        aspect > 1 ? (h = w / aspect) : (w = h / aspect);
+        aspect > 1 ? (h = w / aspect) : (w = h * aspect);
         updateState(props._id, { aspectRatio: aspect });
         update(props._id, { size: { width: w, height: h, depth: props.data.size.depth } });
       }
@@ -212,7 +214,10 @@ function AppComponent(props: App): JSX.Element {
           // window.electron.send('request-current-display');
 
           // Get sources from the main process
-          window.electron.on('set-source', async (sources: any) => {
+          // One reply per request: 'once' removes itself, and clearing first drops any listener a
+          // previous click left behind (the preload wraps callbacks, so removeListener cannot).
+          window.electron.removeAllListeners('set-source');
+          window.electron.once('set-source', async (sources: any) => {
             // Check all sources and list for screensharing
             const allSources = [] as ElectronSource[]; // Make separate object to pass into the state
             for (const source of sources) {
@@ -297,26 +302,27 @@ function AppComponent(props: App): JSX.Element {
 
   useEffect(() => {
     if (yours) return;
-    tracks.forEach((track) => {
-      if (track.name === s.videoId && videoRef.current && track.kind === 'video') {
-        track.attach(videoRef.current);
-        // Close other toasts by this app
-        closeToast();
-        // Show a notification
-        toastIdRef.current = toast({
-          title: `${props.data.title} started a screenshare`,
-          description: (
-            <Box>
-              <Button size="md" colorScheme="orange" my="1" variant="solid" width="100%" onClick={goToScreenshare}>
-                Focus on their screen?
-              </Button>
-            </Box>
-          ),
-          status: 'info',
-          duration: 5000,
-          isClosable: true,
-        });
-      }
+    const track = tracks.find((t) => t.name === s.videoId);
+    // The kind check has to be out here: find() does not narrow the track union
+    if (!track || track.kind !== 'video' || !videoRef.current) return;
+    track.attach(videoRef.current);
+    // Announce this screenshare once. `tracks` changes whenever anyone on the board
+    // starts or stops sharing, so every mounted screenshare re-runs this effect —
+    // announcing again here is what stacked one toast per existing share.
+    if (announcedRef.current) return;
+    announcedRef.current = true;
+    toastIdRef.current = toast({
+      title: `${props.data.title} started a screenshare`,
+      description: (
+        <Box>
+          <Button size="md" colorScheme="orange" my="1" variant="solid" width="100%" onClick={goToScreenshare}>
+            Focus on their screen?
+          </Button>
+        </Box>
+      ),
+      status: 'info',
+      duration: 5000,
+      isClosable: true,
     });
   }, [tracks, s.videoId]);
 

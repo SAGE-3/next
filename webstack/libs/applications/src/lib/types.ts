@@ -25,6 +25,7 @@ import { state as PluginAppState, name as PluginAppName } from './apps/PluginApp
 import { state as PollState, name as PollName } from './apps/Poll';
 import { state as SageCellState, name as SageCellName } from './apps/SageCell';
 import { state as SageIdeatorState, name as SageIdeatorName } from './apps/SageIdeator';
+import { state as ScreenshareState, name as ScreenshareName } from './apps/Screenshare';
 import { state as StickieState, name as StickieName } from './apps/Stickie';
 import { state as TimerState, name as TimerName } from './apps/Timer';
 import { state as TwilioScreenshareState, name as TwilioScreenshareName } from './apps/TwilioScreenshare';
@@ -62,6 +63,7 @@ export type AppState =
   | PollState
   | SageCellState
   | SageIdeatorState
+  | ScreenshareState
   | StickieState
   | TimerState
   | TwilioScreenshareState
@@ -72,4 +74,4 @@ export type AppState =
   | WebviewState;
 
 
-export type AppName = typeof AssetLinkName | typeof BoardLinkName | typeof CSVViewerName | typeof CalculatorName | typeof ChatName | typeof ClockName | typeof CobrowseName | typeof CodeEditorName | typeof CounterName | typeof DeepZoomImageName | typeof DrawingName | typeof GLTFViewerName | typeof IFrameName | typeof ImageViewerName | typeof LeafLetName | typeof LinkerName | typeof MapName | typeof MermaidName | typeof NotepadName | typeof PDFResultName | typeof PDFViewerName | typeof PluginAppName | typeof PollName | typeof SageCellName | typeof SageIdeatorName | typeof StickieName | typeof TimerName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebpageLinkName | typeof WebviewName;
+export type AppName = typeof AssetLinkName | typeof BoardLinkName | typeof CSVViewerName | typeof CalculatorName | typeof ChatName | typeof ClockName | typeof CobrowseName | typeof CodeEditorName | typeof CounterName | typeof DeepZoomImageName | typeof DrawingName | typeof GLTFViewerName | typeof IFrameName | typeof ImageViewerName | typeof LeafLetName | typeof LinkerName | typeof MapName | typeof MermaidName | typeof NotepadName | typeof PDFResultName | typeof PDFViewerName | typeof PluginAppName | typeof PollName | typeof SageCellName | typeof SageIdeatorName | typeof ScreenshareName | typeof StickieName | typeof TimerName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebpageLinkName | typeof WebviewName;

@@ -102,7 +102,7 @@ export function Alfred(props: props) {
   const fitApps = useUIStore((state) => state.fitApps);
 
   // User
-  const { user, accessId } = useUser();
+  const { user } = useUser();
   const { getBoardCursor } = useCursorBoardPosition();
   const [, setUsername] = useState('');
 
@@ -119,19 +119,16 @@ export function Alfred(props: props) {
   const newApplication = (appName: AppName) => {
     if (!user) return;
 
+    // Screenshares can only be started from the ScreenshareMenu, which knows which
+    // backend the server offers ('Screenshare' is Twilio, 'LocalScreenshare' is LiveKit)
+    if (appName === 'Screenshare' || appName === 'LocalScreenshare') return;
+
     let w = 400;
     let h = 400;
 
     const state = {} as AppState;
     // Check if the app is enabled in the config
     if (appName === 'SageCell' && config.features && !config.features.apps.includes('SageCell')) return;
-    if (appName === 'Screenshare' && config.features && !config.features.apps.includes('Screenshare')) {
-      return;
-    } else {
-      w = 1280;
-      h = 720;
-      state.accessId = accessId;
-    }
     if (appName === 'Calculator') {
       w = 260;
       h = 369;

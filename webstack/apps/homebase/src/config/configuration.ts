@@ -15,7 +15,7 @@ import packageInfo from '../../../../package.json';
 const { version } = packageInfo;
 
 // Import some definitions for the server
-import { ServerConfiguration, TASK_TYPES, LLMConfigManager, LLMTasks } from '@sage3/shared/types';
+import { ServerConfiguration, TASK_TYPES, LLMConfigManager, LLMTasks, LIVEKIT_DEV_SECRET, getScreenshareBackend } from '@sage3/shared/types';
 
 /**
  * Server configuration file that can be imported around the app.
@@ -24,12 +24,28 @@ import { ServerConfiguration, TASK_TYPES, LLMConfigManager, LLMTasks } from '@sa
 let config: ServerConfiguration;
 
 /**
+ * Resolves the LiveKit secret, which is the whole of the LiveKit configuration.
+ *
+ * Production takes it from LIVEKIT_API_SECRET (set in deployment/.env, which also hands
+ * the same value to the LiveKit container). No secret means no screensharing: nothing is
+ * mounted and the UI hides it. Development falls back to the loopback-only secret that
+ * matches the local LiveKit container, so a developer configures nothing.
+ *
+ * @param conf - The configuration object to update in place
+ * @param production - Whether the server is running in production mode
+ */
+function applyLiveKitConfiguration(conf: ServerConfiguration, production: boolean): void {
+  const secret = process.env.LIVEKIT_API_SECRET || (production ? '' : LIVEKIT_DEV_SECRET);
+  conf.services.livekit = secret ? { apiSecret: secret } : {};
+}
+
+/**
  * Validates the server configuration object
  *
  * @param conf - The configuration object to validate
  * @returns boolean indicating if configuration is valid
  */
-function validateConfig(conf: ServerConfiguration): ServerConfiguration {
+function validateConfig(conf: ServerConfiguration, production: boolean): ServerConfiguration {
   const tasks = conf.services.models.tasks || ({} as LLMTasks);
 
   const default_provider = conf.services.models.settings.default_provider;
@@ -52,6 +68,10 @@ function validateConfig(conf: ServerConfiguration): ServerConfiguration {
   conf.services.models.tasks = tasks;
 
   console.log('Configuration> LLM tasks validated LLM');
+
+  applyLiveKitConfiguration(conf, production);
+  console.log('Configuration> screenshare backend:', getScreenshareBackend(conf.services));
+
   return conf;
 }
 
@@ -88,7 +108,7 @@ async function loadConfig(): Promise<ServerConfiguration> {
   console.log('Configuration> loaded from', filename);
 
   // Validate the configuration
-  config = validateConfig(config);
+  config = validateConfig(config, production);
 
   // Return the typed value
   return conf as ServerConfiguration;
