@@ -78,7 +78,7 @@ function AppComponent(props: App): JSX.Element {
     const aspect = width / height;
     let w = props.data.size.width;
     let h = props.data.size.height;
-    aspect > 1 ? (h = w / aspect) : (w = h / aspect);
+    aspect > 1 ? (h = w / aspect) : (w = h * aspect);
     updateState(props._id, { aspectRatio: aspect });
     update(props._id, { size: { width: w, height: h, depth: props.data.size.depth } });
   };
