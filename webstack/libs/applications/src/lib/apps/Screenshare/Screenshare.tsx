@@ -31,9 +31,6 @@ import { MdScreenShare } from 'react-icons/md';
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
-  // Current User
-  const { user } = useUser();
-
   // Screenshare Store (LiveKit)
   const tracks = useScreenshareStore((state) => state.tracks);
   const localStreams = useScreenshareStore((state) => state.localStreams);
@@ -83,12 +80,13 @@ function AppComponent(props: App): JSX.Element {
     update(props._id, { size: { width: w, height: h, depth: props.data.size.depth } });
   };
 
-  // Publisher: show the local capture as preview
+  // Publisher: show the local capture as preview.
+  // The title is set once when the share is created (it carries the label that
+  // tells a user's simultaneous shares apart), so it is not overwritten here.
   useEffect(() => {
     if (yours && localStream && videoRef.current) {
       videoRef.current.srcObject = localStream;
       videoRef.current.play();
-      update(props._id, { title: `${user?.data.name}` });
     }
   }, [yours, localStream]);
 

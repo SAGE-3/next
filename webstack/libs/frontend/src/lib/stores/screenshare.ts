@@ -74,10 +74,14 @@ async function publishStream(room: Room, appId: string, stream: MediaStream) {
   if (published) return;
   // Screen content: favor sharpness over frame rate
   mediaTrack.contentHint = 'detail';
+  // No simulcast for screen share. Each layer is a separate encode, so a user
+  // sharing several screens at once starves them and subscribers get a layer
+  // with no data (a window that opens but never paints). livekit-client
+  // disables simulcasted screen share on Firefox for this same reason.
   await room.localParticipant.publishTrack(mediaTrack, {
     name: appId,
     source: Track.Source.ScreenShare,
-    simulcast: true,
+    simulcast: false,
   });
 }
 
