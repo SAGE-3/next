@@ -37,6 +37,7 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
   const boardLocked = useUIStore((state) => state.boardLocked);
   const setBoardSynced = useUIStore((state) => state.setBoardSynced);
   const setScale = useUIStore((state) => state.setScale);
+  const contextMenuOpen = useUIStore((state) => state.contextMenuOpen);
 
   // Local States with Delayed Syncing to useUIStore
   const [localBoardPosition, setLocalBoardPosition] = useState({ x: boardPosition.x, y: boardPosition.y, scale: scale });
@@ -211,6 +212,14 @@ export function BackgroundLayer(props: BackgroundLayerProps) {
       return prev;
     });
   };
+
+  // A touch keeps being delivered to the element it started on, and our own
+  // mousedown listener is on window with capture, so nothing we put on top can
+  // stop a pan already in flight. Forget what the drag started on instead: every
+  // pan branch below requires something other than 'other'.
+  useEffect(() => {
+    if (contextMenuOpen) setStartedDragOn('other');
+  }, [contextMenuOpen]);
 
   ///////////////////////////////////////////
   // Mouse/TouchPad/TouchScreen Behaviours //

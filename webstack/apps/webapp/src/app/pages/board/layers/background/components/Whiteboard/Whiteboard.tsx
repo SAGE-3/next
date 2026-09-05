@@ -248,6 +248,7 @@ export function Whiteboard(props: WhiteboardProps) {
   const canAnnotate = useAbility('update', 'boards');
 
   // UI Store state
+  const contextMenuOpen = useUIStore((state) => state.contextMenuOpen);
   const boardPosition = useUIStore((state) => state.boardPosition);
   const boardWidth = useUIStore((state) => state.boardWidth);
   const boardHeight = useUIStore((state) => state.boardHeight);
@@ -469,6 +470,14 @@ export function Whiteboard(props: WhiteboardProps) {
     setDraftPoints([]);
     setCursorPosition(null);
   }
+
+  // A touch that opens the radial menu started as a stroke 400ms earlier, and
+  // the pointer capture taken in handlePointerDown keeps delivering moves to us
+  // no matter what the menu puts on top, so drop the draft when it opens.
+  // Nothing has reached Yjs yet, so there is nothing to undo.
+  useEffect(() => {
+    if (contextMenuOpen) cancelInProgressStroke();
+  }, [contextMenuOpen]);
 
   /**
    * Convert pointer coordinates from client space to board space, accounting

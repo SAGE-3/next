@@ -33,6 +33,7 @@ export function Lasso(props: LassoProps) {
   const boardHeight = useUIStore((state) => state.boardHeight);
 
   // Lasso mode apps & Selected apps
+  const contextMenuOpen = useUIStore((state) => state.contextMenuOpen);
   const setLassoMode = useUIStore((state) => state.setLassoMode);
   const selectedApps = useUIStore((state) => state.selectedAppsIds);
   const clearSelectedApps = useUIStore((state) => state.clearSelectedApps);
@@ -60,6 +61,16 @@ export function Lasso(props: LassoProps) {
 
   // Drag and Drop On Board
   const { dragProps, renderContent } = useDragAndDropBoard({ roomId: props.roomId, boardId: props.boardId });
+
+  // A touch keeps being delivered to the element it started on, so the radial
+  // menu opening over us does not stop the lasso. End it instead, keeping the
+  // selection: the user asked for the menu, not for a lasso.
+  useEffect(() => {
+    if (!contextMenuOpen) return;
+    setMouseDown(false);
+    setLassoMode(false);
+    setIsDragging(false);
+  }, [contextMenuOpen]);
 
   // Get initial position — x, y are client coordinates (from mouse or touch)
   const lassoStart = (x: number, y: number) => {
