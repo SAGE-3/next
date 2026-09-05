@@ -8,5 +8,6 @@
 
 export * from './Menus';
 export * from './ToolbarButton';
-export * from './BoardContextMenu';
+export * from './RadialMenu';
+export * from './BoardRadialMenu';
 export * from './ContextButton';

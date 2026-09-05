@@ -40,7 +40,7 @@ import { format as formatDate } from 'date-fns';
 import JSZip from 'jszip';
 
 import {
-  ContextMenu,
+  RadialContextMenu,
   downloadFile,
   useAssetStore,
   useAppStore,
@@ -67,7 +67,7 @@ import {
 import { SAGEColors } from '@sage3/shared';
 
 import {
-  BoardContextMenu,
+  BoardRadialMenu,
   ClearBoardModal,
   AppToolbar,
   Twilio,
@@ -525,18 +525,20 @@ export function UILayer(props: UILayerProps) {
       {/* App Toolbar to show when the user selects an app */}
       {selectedApp && <AppToolbar boardId={props.boardId} roomId={props.roomId}></AppToolbar>}
 
-      {/* Right click context menu */}
-      <ContextMenu divIds={['board', 'lasso', 'whiteboard']}>
-        <BoardContextMenu
-          boardId={props.boardId}
-          roomId={props.roomId}
-          clearBoard={clearOnOpen}
-          showAllApps={showAllApps}
-          downloadRoomAssets={downloadRoomAssets}
-          backHomeClick={handleHomeClick}
-          openAlfred={handleOpenAlfred}
-        />
-      </ContextMenu>
+      {/* Right click radial menu */}
+      <RadialContextMenu divIds={['board', 'lasso', 'whiteboard']}>
+        {({ position, onClose }) => (
+          <BoardRadialMenu
+            boardId={props.boardId}
+            roomId={props.roomId}
+            position={position}
+            onClose={onClose}
+            downloadRoomAssets={downloadRoomAssets}
+            backHomeClick={handleHomeClick}
+            openAlfred={handleOpenAlfred}
+          />
+        )}
+      </RadialContextMenu>
 
       {/* Clear board dialog */}
       <Modal isCentered isOpen={clearIsOpen} onClose={clearOnClose}>

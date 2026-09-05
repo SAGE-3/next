@@ -8,6 +8,7 @@
 
 export * from './modals';
 export * from './context-menu/context-menu';
+export * from './context-menu/radial-context-menu';
 export * from './paste-handler/paste-handler';
 export * from './general';
 export * from './party/index';
