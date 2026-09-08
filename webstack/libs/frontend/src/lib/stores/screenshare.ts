@@ -9,7 +9,7 @@
 // Zustand
 import { create } from 'zustand';
 
-import { ConnectionState, RemoteTrack, Room, RoomEvent, Track } from 'livekit-client';
+import { ConnectionState, RemoteTrack, Room, RoomEvent, ScreenSharePresets, Track } from 'livekit-client';
 
 import { mountStoreDevtool } from 'simple-zustand-devtools';
 
@@ -74,10 +74,21 @@ async function publishStream(room: Room, appId: string, stream: MediaStream) {
   if (published) return;
   // Screen content: favor sharpness over frame rate
   mediaTrack.contentHint = 'detail';
+  // Two simulcast layers instead of the default three (original + h180 + h360).
+  // Every layer is a separate encode, and a user sharing several screens at once
+  // starved them: subscribers ended up on a layer carrying no data, so the window
+  // opened but never painted. Keeping one extra layer preserves adaptivity for
+  // viewers watching a share in a small window at two thirds of the encode cost.
+  // Codec stays the default (VP8): VP9/AV1 would force LiveKit's SVC screenshare
+  // path, which allows a single spatial layer and overrides contentHint.
   await room.localParticipant.publishTrack(mediaTrack, {
     name: appId,
     source: Track.Source.ScreenShare,
     simulcast: true,
+    screenShareSimulcastLayers: [ScreenSharePresets.h360fps3],
+    // Shed frame rate, not resolution, when the encoder is constrained: shared
+    // text stays readable where the default (balanced) softens it.
+    degradationPreference: 'maintain-resolution',
   });
 }
 

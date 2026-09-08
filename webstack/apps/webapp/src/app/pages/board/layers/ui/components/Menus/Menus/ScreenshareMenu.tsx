@@ -12,6 +12,7 @@ import {
   Box,
   Button,
   Divider,
+  IconButton,
   Image,
   Modal,
   ModalBody,
@@ -29,7 +30,7 @@ import {
   useColorModeValue,
   useDisclosure,
 } from '@chakra-ui/react';
-import { MdPerson } from 'react-icons/md';
+import { MdPerson, MdStop } from 'react-icons/md';
 
 // SAGE3 Imports
 import { App } from '@sage3/applications/schema';
@@ -58,11 +59,15 @@ interface ScreensharesMenuProps {
 // from the other implementation shows them all in one place.
 const screenshareTypes = ['Screenshare', 'LocalScreenshare'];
 
+// Most simultaneous LiveKit shares one user may run at once (each is a separate
+// uplink encode, so this bounds a user's CPU/bandwidth cost). Twilio is unaffected.
+const MAX_LOCAL_SCREENSHARES = 4;
+
 // Capture constraints: cap resolution and framerate
 const captureConstraints = {
   width: { ideal: 1920, max: 1920 },
   height: { ideal: 1920, max: 1920 },
-  frameRate: { ideal: 20, max: 20 },
+  frameRate: { ideal: 20, max: 30 },
 };
 
 type ElectronSource = {
@@ -101,7 +106,12 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
 
   // Local State
   const [screenshares, setScreenshares] = useState<App[]>([]);
-  const [yourScreenshare, setYourScreenshare] = useState<App | null>(null);
+  // All shares you own. LiveKit ('LocalScreenshare') allows several at once
+  // (e.g. two windows); Twilio ('Screenshare', legacy) stays one-per-user.
+  const [yourScreenshares, setYourScreenshares] = useState<App[]>([]);
+  const yourTwilioShare = yourScreenshares.find((app) => app.data.type === 'Screenshare') ?? null;
+  const yourLiveKitShareCount = yourScreenshares.filter((app) => app.data.type === 'LocalScreenshare').length;
+  const atLiveKitLimit = yourLiveKitShareCount >= MAX_LOCAL_SCREENSHARES;
 
   // Electron source picker
   const [electronSources, setElectronSources] = useState<ElectronSource[]>([]);
@@ -116,8 +126,7 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
   // Use effect that tracks the lenght of the apps array and updates the screenshares state
   useEffect(() => {
     setScreenshares(apps.filter((app) => screenshareTypes.includes(app.data.type)));
-    const yourScreenshare = apps.find((app) => screenshareTypes.includes(app.data.type) && app._createdBy === user?._id);
-    yourScreenshare ? setYourScreenshare(yourScreenshare) : setYourScreenshare(null);
+    setYourScreenshares(apps.filter((app) => screenshareTypes.includes(app.data.type) && app._createdBy === user?._id));
     // Depend on the apps themselves: a share can be replaced without the count changing
   }, [apps, user?._id]);
 
@@ -129,11 +138,23 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
     }
   };
 
-  // Stop your Screenshare
-  const stopYourScreenshare = () => {
-    if (yourScreenshare) {
-      deleteApp(yourScreenshare?._id);
-    }
+  // Stop one specific screenshare (deleting the app tears down its track)
+  const stopScreenshare = (appId: string) => {
+    deleteApp(appId);
+  };
+
+  // A user can run several shares at once, so each title carries a number that
+  // tells them apart: the lowest one not already in use by your shares.
+  const buildShareTitle = () => {
+    const name = user?.data.name ?? 'Screenshare';
+    const used = new Set(
+      yourScreenshares
+        .filter((app) => app.data.type === 'LocalScreenshare')
+        .map((app) => Number(/#(\d+)\s*$/.exec(app.data.title ?? '')?.[1] ?? 0)),
+    );
+    let n = 1;
+    while (used.has(n)) n++;
+    return `${name} #${n}`;
   };
 
   // Create the screenshare app for an already-captured stream and hand the stream to the store.
@@ -145,11 +166,13 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
     const width = 1280;
     const height = width / aspectRatio;
     const size = { height, width, depth: 0 };
-    const x = Math.floor(-boardPosition.x + window.innerWidth / 2 / scale - width / 2);
-    const y = Math.floor(-boardPosition.y + window.innerHeight / 2 / scale - height / 2);
+    // Offset each additional share so a second one does not land exactly on top of the first
+    const offset = yourLiveKitShareCount * 40;
+    const x = Math.floor(-boardPosition.x + window.innerWidth / 2 / scale - width / 2) + offset;
+    const y = Math.floor(-boardPosition.y + window.innerHeight / 2 / scale - height / 2) + offset;
     const position = { x, y, z: 0 };
     const result = await createApp({
-      title: 'Screenshare by ' + user.data.name,
+      title: buildShareTitle(),
       roomId: props.roomId,
       boardId: props.boardId,
       position,
@@ -177,11 +200,18 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
   // selectable: a server with both configured would otherwise let users start a share on
   // the one nobody else is connected to, which shows up as a blank screenshare.
   const startYourScreenshare = async () => {
-    if (!user || yourScreenshare) return;
+    if (!user) return;
     // Log which one was used, for debugging on servers that have both configured
     console.log('Screenshare> starting with backend:', backend);
-    if (backend === 'twilio') return startTwilioScreenshare();
-    if (backend === 'livekit') return startLiveKitScreenshare();
+    // Twilio (legacy) stays one-per-user; LiveKit allows multiple simultaneous shares
+    if (backend === 'twilio') {
+      if (yourTwilioShare) return;
+      return startTwilioScreenshare();
+    }
+    if (backend === 'livekit') {
+      if (atLiveKitLimit) return;
+      return startLiveKitScreenshare();
+    }
   };
 
   // LiveKit: capture first (inside the click gesture), then create the app
@@ -258,12 +288,15 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
   };
 
   return (
-    <Box maxHeight="60svh" overflowY={'auto'} overflowX="clip" width="200px">
+    <Box maxHeight="60svh" overflowY={'auto'} overflowX="clip" width="300px">
       {screenshares.map((app) => {
         const user = users.find((u) => u._id === app._createdBy);
         if (!user) return null;
         const userName = user.data.name;
-        const trimName = truncateWithEllipsis(userName, 14);
+        // With several shares per user, the app title carries what tells them apart
+        // (Twilio shares keep showing just the user's name)
+        const rowLabel = app.data.type === 'LocalScreenshare' ? app.data.title || userName : userName;
+        const trimName = truncateWithEllipsis(rowLabel, 18);
         // const color = user.data.color;
         const yours = app._createdBy === uid;
         return (
@@ -282,9 +315,23 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
             alignItems={'center'}
           >
             <MdPerson size="16px" />
-            <Text fontSize="14px">
+            <Text fontSize="14px" flex="1" noOfLines={1}>
               {trimName} {yours ? '(Yours)' : ''}
             </Text>
+            {/* Per-share stop for your own LiveKit shares (you can have several). */}
+            {yours && app.data.type === 'LocalScreenshare' && (
+              <IconButton
+                aria-label="Stop this screenshare"
+                icon={<MdStop />}
+                size="xs"
+                colorScheme="red"
+                variant="ghost"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  stopScreenshare(app._id);
+                }}
+              />
+            )}
           </Box>
         );
       })}
@@ -300,13 +347,33 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
         <Text ml="6px" fontSize="12px" opacity={0.8} cursor="default">
           Screensharing is not enabled on this server
         </Text>
-      ) : yourScreenshare == null ? (
-        <Button onClick={() => startYourScreenshare()} py="1px" m="0" width="100%" size="xs" colorScheme="green">
-          Start Sharing
-        </Button>
+      ) : backend === 'twilio' ? (
+        // Twilio (legacy): one share per user — Start/Stop toggle, unchanged
+        yourTwilioShare == null ? (
+          <Button onClick={() => startYourScreenshare()} py="1px" m="0" width="100%" size="xs" colorScheme="green">
+            Start Sharing
+          </Button>
+        ) : (
+          <Button onClick={() => stopScreenshare(yourTwilioShare._id)} py="1px" m="0" width="100%" size="xs" colorScheme="red">
+            Stop Sharing
+          </Button>
+        )
       ) : (
-        <Button onClick={() => stopYourScreenshare()} py="1px" m="0" width="100%" size="xs" colorScheme="red">
-          Stop Sharing
+        // LiveKit: up to MAX_LOCAL_SCREENSHARES at once; stop each from its row above
+        <Button
+          onClick={() => startYourScreenshare()}
+          isDisabled={atLiveKitLimit}
+          py="1px"
+          m="0"
+          width="100%"
+          size="xs"
+          colorScheme="green"
+        >
+          {atLiveKitLimit
+            ? `Limit reached (${MAX_LOCAL_SCREENSHARES})`
+            : yourLiveKitShareCount > 0
+              ? 'Share Another Screen'
+              : 'Start Sharing'}
         </Button>
       )}
 

@@ -8,7 +8,7 @@
 
 // Chakra and React imports
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Box, Button, ButtonGroup, Text, useToast, ToastId } from '@chakra-ui/react';
+import { Box, Button, ButtonGroup, Text, Tooltip, useToast, ToastId } from '@chakra-ui/react';
 
 // SAGE imports
 import { useAppStore, useUser, useScreenshareStore, useHexColor, useUIStore, apiUrls } from '@sage3/frontend';
@@ -17,7 +17,22 @@ import { useAppStore, useUser, useScreenshareStore, useHexColor, useUIStore, api
 import { App } from '../../schema';
 import { state as AppState } from './index';
 import { AppWindow } from '../../components';
-import { MdScreenShare } from 'react-icons/md';
+import { MdScreenShare, MdSpeed } from 'react-icons/md';
+import { create } from 'zustand';
+
+// Debug overlay showing which simulcast layer a share actually sends/receives.
+// Toggled per share from the toolbar; ?sharestats=1 in the URL starts it on.
+// The toggle is per browser and never leaves it: nobody else's view changes.
+const STATS_ON_BY_DEFAULT = typeof window !== 'undefined' && /[?&]sharestats=1/.test(window.location.href);
+
+interface StatsStore {
+  show: { [appId: string]: boolean };
+  toggle: (appId: string) => void;
+}
+const useStatsStore = create<StatsStore>()((set) => ({
+  show: {},
+  toggle: (appId: string) => set((state) => ({ show: { ...state.show, [appId]: !(state.show[appId] ?? STATS_ON_BY_DEFAULT) } })),
+}));
 
 /* App component for Screenshare
  *
@@ -31,14 +46,12 @@ import { MdScreenShare } from 'react-icons/md';
 function AppComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
 
-  // Current User
-  const { user } = useUser();
-
   // Screenshare Store (LiveKit)
   const tracks = useScreenshareStore((state) => state.tracks);
   const localStreams = useScreenshareStore((state) => state.localStreams);
   const connectionState = useScreenshareStore((state) => state.connectionState);
   const shareTimeLimit = useScreenshareStore((state) => state.shareTimeLimit);
+  const room = useScreenshareStore((state) => state.room);
 
   // This session owns the share if it holds the capture for this app
   const localStream = localStreams[props._id];
@@ -83,12 +96,13 @@ function AppComponent(props: App): JSX.Element {
     update(props._id, { size: { width: w, height: h, depth: props.data.size.depth } });
   };
 
-  // Publisher: show the local capture as preview
+  // Publisher: show the local capture as preview.
+  // The title is set once when the share is created (it carries the label that
+  // tells a user's simultaneous shares apart), so it is not overwritten here.
   useEffect(() => {
     if (yours && localStream && videoRef.current) {
       videoRef.current.srcObject = localStream;
       videoRef.current.play();
-      update(props._id, { title: `${user?.data.name}` });
     }
   }, [yours, localStream]);
 
@@ -170,6 +184,76 @@ function AppComponent(props: App): JSX.Element {
     return () => closeToast();
   }, []);
 
+  // Debug: report which simulcast layers are in play (toggled from the toolbar)
+  const showStats = useStatsStore((state) => state.show[props._id] ?? STATS_ON_BY_DEFAULT);
+  const [shareStats, setShareStats] = useState<string[]>([]);
+  // Previous byte counters per layer, so bandwidth is a rate and not a running total
+  const prevBytesRef = useRef<Record<string, { bytes: number; timestamp: number }>>({});
+  // Bits/s between two samples, formatted; blank on the first sample
+  const rate = (key: string, bytes: number | undefined, timestamp: number) => {
+    const prev = prevBytesRef.current[key];
+    prevBytesRef.current[key] = { bytes: bytes ?? 0, timestamp };
+    if (!prev || timestamp <= prev.timestamp) return '';
+    const mbps = (((bytes ?? 0) - prev.bytes) * 8) / (timestamp - prev.timestamp) / 1000;
+    return `  ${mbps.toFixed(2)}Mbps`;
+  };
+  useEffect(() => {
+    if (!showStats) return;
+    const sample = async () => {
+      try {
+        if (yours) {
+          // Publisher: one entry per simulcast layer, with why a layer is being throttled
+          const publication = room
+            ? Array.from(room.localParticipant.trackPublications.values()).find((p) => p.trackName === props._id)
+            : undefined;
+          const track = publication?.videoTrack;
+          if (!track) return setShareStats(['sending: no publication']);
+          const layers = await track.getSenderStats();
+          setShareStats([
+            `sending ${layers.length} layer${layers.length === 1 ? '' : 's'}`,
+            ...layers.map((l) => {
+              const limit = l.qualityLimitationReason && l.qualityLimitationReason !== 'none' ? `  LIMIT:${l.qualityLimitationReason}` : '';
+              return `  ${l.rid || '-'}  ${l.frameWidth}x${l.frameHeight}  ${Math.round(l.framesPerSecond || 0)}fps${rate(
+                l.rid || '-',
+                l.bytesSent,
+                l.timestamp
+              )}${limit}`;
+            }),
+          ]);
+        } else {
+          // Viewer: received dimensions say which layer arrived; quality is what we asked for
+          const named = tracks.find((t) => t.name === props._id);
+          if (!named) return setShareStats(['receiving: no track']);
+          const stats = await (named.track as any).getReceiverStats?.();
+          let quality: string | undefined;
+          room?.remoteParticipants.forEach((participant) => {
+            participant.trackPublications.forEach((publication) => {
+              if (publication.trackName === props._id) quality = publication.videoQuality?.toString();
+            });
+          });
+          setShareStats(
+            stats
+              ? [
+                  `receiving ${stats.frameWidth ?? '?'}x${stats.frameHeight ?? '?'}${quality !== undefined ? `  layer ${quality}` : ''}`,
+                  `  decoded ${stats.framesDecoded ?? 0}  dropped ${stats.framesDropped ?? 0}${rate(
+                    'rx',
+                    stats.bytesReceived,
+                    stats.timestamp
+                  )}`,
+                  `  ${stats.decoderImplementation ?? ''} ${named.track.isMuted ? '(paused)' : ''}`.trimEnd(),
+                ]
+              : ['receiving: no stats']
+          );
+        }
+      } catch (err) {
+        setShareStats(['stats error']);
+      }
+    };
+    sample();
+    const interval = setInterval(sample, 2000);
+    return () => clearInterval(interval);
+  }, [showStats, yours, room, tracks, props._id]);
+
   // Update the remaining time label periodically
   useEffect(() => {
     const updateExpirationTime = () => {
@@ -194,6 +278,16 @@ function AppComponent(props: App): JSX.Element {
           {expirationTime}
         </Text>
 
+        {showStats && shareStats.length > 0 && (
+          <Box position="absolute" left={0} top={0} m={2} px={3} py={2} borderRadius="md" backgroundColor="blackAlpha.700">
+            {shareStats.map((line, i) => (
+              <Text key={i} fontSize="20px" lineHeight="1.4" fontFamily="monospace" fontWeight="bold" color="white" whiteSpace="pre">
+                {line}
+              </Text>
+            ))}
+          </Box>
+        )}
+
         {connectionState === 'reconnecting' && (
           <Text position="absolute" left={0} top={0} m={1} size="sm" fontWeight={'bold'} color={red}>
             Reconnecting...
@@ -214,8 +308,17 @@ function ToolbarComponent(props: App): JSX.Element {
   // App Store
   const deleteApp = useAppStore((state) => state.delete);
 
+  // Debug overlay toggle (local to this browser)
+  const showStats = useStatsStore((state) => state.show[props._id] ?? STATS_ON_BY_DEFAULT);
+  const toggleStats = useStatsStore((state) => state.toggle);
+
   return (
     <ButtonGroup>
+      <Tooltip placement="top" hasArrow label="Show stream metrics" openDelay={400}>
+        <Button onClick={() => toggleStats(props._id)} colorScheme={showStats ? 'teal' : 'gray'} size="xs" mr="1">
+          <MdSpeed />
+        </Button>
+      </Tooltip>
       {yours ? (
         <Button onClick={() => deleteApp(props._id)} colorScheme="red" size="xs">
           Stop Stream
