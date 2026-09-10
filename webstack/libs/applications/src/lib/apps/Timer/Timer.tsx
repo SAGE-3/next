@@ -5,9 +5,9 @@
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-import { Box, Button, ButtonGroup, Text, Tooltip, HStack, VStack, useColorModeValue, AspectRatio } from '@chakra-ui/react';
+import { Box, Button, ButtonGroup, Text, Tooltip, HStack, VStack, useColorModeValue } from '@chakra-ui/react';
 import { MdAdd, MdRemove, MdPlayArrow, MdPause, MdReplay } from 'react-icons/md';
 
 import { useAppStore, zeroPad, serverTime } from '@sage3/frontend';
@@ -91,8 +91,8 @@ function AppComponent(props: App): JSX.Element {
 
   // Increment or decrement the time by the given amount
   const adjustTotal = (amount: number) => {
-    updateState(props._id, { total: total + amount })
-    updateState(props._id, { originalTotal: total + amount })
+    updateState(props._id, { total: total + amount });
+    updateState(props._id, { originalTotal: total + amount });
   };
 
   // Updates global states
@@ -113,28 +113,58 @@ function AppComponent(props: App): JSX.Element {
     }
   };
 
-  // Track the width of the app window and set the scale accordingly
+  // Fit the content to the window. The content is laid out at its natural size and
+  // measured, then scaled to fit both dimensions with a small margin. Measuring instead
+  // of assuming a design size means the layout never has to match the window exactly,
+  // and any window shape (including Timers created before the app became resizable) works.
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [natural, setNatural] = useState({ width: 0, height: 0 });
   useEffect(() => {
-    setScale(props.data.size.width / 330);
-  }, [props.data.size.width]);
+    const el = contentRef.current;
+    if (!el) return;
+    // offsetWidth/Height are layout sizes, unaffected by the element's own transform
+    const measure = () => setNatural({ width: el.offsetWidth, height: el.offsetHeight });
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  useEffect(() => {
+    if (!natural.width || !natural.height) return;
+    const fit = Math.min(props.data.size.width / natural.width, props.data.size.height / natural.height);
+    setScale(fit * 0.98);
+  }, [props.data.size.width, props.data.size.height, natural]);
 
   return (
     <AppWindow app={props} lockAspectRatio={true}>
-      <AspectRatio width={"100%"} height="100%" ratio={1.46} p={0} m={0} background={backgroundColor}>
-        <Box transform={`scale(${scale})`} transformOrigin={'center'} p={0} m={0}>
+      <Box
+        width="100%"
+        height="100%"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        overflow="hidden"
+        background={backgroundColor}
+      >
+        {/* Natural-size content (max-content, never shrunk by the container), scaled to fit */}
+        <Box ref={contentRef} flexShrink={0} width="max-content" transform={`scale(${scale})`} transformOrigin="center" p={0} m={0}>
           <VStack p={0} m={0}>
-
-            <Text fontFamily={"monospace"} fontSize="5xl" align="center" lineHeight="1.2"
-              color={total > -1 ? total < 60 ? "orange.600" : "green.600" : "red.600"}
-              animation={(total < 0) && s.isRunning ? `scaleAnimation infinite 1s linear` : 'none'}
+            <Text
+              fontFamily={'monospace'}
+              fontSize="5xl"
+              align="center"
+              lineHeight="1.2"
+              color={total > -1 ? (total < 60 ? 'orange.600' : 'green.600') : 'red.600'}
+              animation={total < 0 && s.isRunning ? `scaleAnimation infinite 1s linear` : 'none'}
             >
               {formatTime(total)}
             </Text>
 
             <HStack display="flex" justifyContent="center">
-
               <VStack>
-                <Text fontSize="xl" display="inline">Hour</Text>
+                <Text fontSize="xl" display="inline">
+                  Hour
+                </Text>
                 <ButtonGroup isAttached size="md" colorScheme="teal">
                   <Tooltip placement="bottom" hasArrow={true} label={'+1 Hour'} openDelay={400}>
                     <Button isDisabled={s.isRunning} onClick={() => adjustTotal(3600)}>
@@ -150,7 +180,9 @@ function AppComponent(props: App): JSX.Element {
               </VStack>
 
               <VStack>
-                <Text fontSize="xl" display="inline">Minute</Text>
+                <Text fontSize="xl" display="inline">
+                  Minute
+                </Text>
                 <ButtonGroup isAttached size="md" colorScheme="teal">
                   <Tooltip placement="bottom" hasArrow={true} label={'+1 Minute'} openDelay={400}>
                     <Button isDisabled={s.isRunning} onClick={() => adjustTotal(60)}>
@@ -166,7 +198,9 @@ function AppComponent(props: App): JSX.Element {
               </VStack>
 
               <VStack>
-                <Text fontSize="xl" display="inline">Second</Text>
+                <Text fontSize="xl" display="inline">
+                  Second
+                </Text>
                 <ButtonGroup isAttached size="md" colorScheme="teal">
                   <Tooltip placement="bottom" hasArrow={true} label={'+1 Second'} openDelay={400}>
                     <Button isDisabled={s.isRunning} onClick={() => adjustTotal(1)}>
@@ -180,32 +214,38 @@ function AppComponent(props: App): JSX.Element {
                   </Tooltip>
                 </ButtonGroup>
               </VStack>
-
             </HStack>
 
-            <HStack display="flex" justifyContent="center" w="sm" mt={5}>
+            <HStack display="flex" justifyContent="center" w="100%" mt={5} mb={2}>
               <Tooltip placement="bottom" hasArrow={true} label={s.isRunning ? 'Pause' : 'Start'} openDelay={400}>
-                <Button w="37%" colorScheme="orange" onClick={setTimerRunning}>{s.isRunning ? <MdPause /> : <MdPlayArrow />}</Button>
+                <Button w="37%" colorScheme="orange" onClick={setTimerRunning}>
+                  {s.isRunning ? <MdPause /> : <MdPlayArrow />}
+                </Button>
               </Tooltip>
               <Tooltip placement="bottom" hasArrow={true} label={'Reset'} openDelay={400}>
-                <Button w="37%" ml={3} colorScheme="orange" onClick={resetTimer}><MdReplay /></Button>
+                <Button w="37%" ml={3} colorScheme="orange" onClick={resetTimer}>
+                  <MdReplay />
+                </Button>
               </Tooltip>
             </HStack>
-
           </VStack>
         </Box>
-      </AspectRatio>
+      </Box>
     </AppWindow>
   );
 }
 
 /* App toolbar component for the app Timer */
-const ToolbarComponent = () => { return null; };
+const ToolbarComponent = () => {
+  return null;
+};
 
 /**
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = () => { return null; };
+const GroupedToolbarComponent = () => {
+  return null;
+};
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
