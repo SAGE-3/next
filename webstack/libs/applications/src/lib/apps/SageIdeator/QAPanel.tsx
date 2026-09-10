@@ -6,8 +6,9 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { Flex, Box, Text, HStack, VStack, Input, IconButton, Spinner, Center } from '@chakra-ui/react';
-import { MdSend, MdClear } from 'react-icons/md';
+import { useRef, useState, useEffect } from 'react';
+import { Flex, Box, Text, HStack, VStack, Input, IconButton, Spinner, Center, Collapse } from '@chakra-ui/react';
+import { MdSend, MdClear, MdChevronRight, MdExpandMore } from 'react-icons/md';
 
 import { state as AppState } from './index';
 
@@ -41,6 +42,27 @@ export function QAPanel({
 }: QAPanelProps) {
   const s = (px: number) => `${Math.round(px * 1.5)}px`;
 
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const latestEntryRef = useRef<HTMLDivElement>(null);
+
+  // Auto-expand and scroll to the newest entry when it arrives
+  useEffect(() => {
+    if (qaEntries.length === 0) return;
+    const latest = qaEntries[qaEntries.length - 1];
+    setExpandedIds((prev) => new Set(prev).add(latest.id));
+    // Small delay to let Collapse animate open before scrolling
+    setTimeout(() => latestEntryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+  }, [qaEntries.length]);
+
+  const toggleExpand = (id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
   return (
     <Flex direction="column" w="300px" minW="300px" h="100%" bg={panelBgHex} borderLeft="1px solid" borderColor={borderHex} flexShrink={0}>
       {/* Header */}
@@ -59,7 +81,7 @@ export function QAPanel({
         </Center>
       ) : (
         <>
-          {/* Scrollable body: summary + Q&A entries together */}
+          {/* Scrollable body */}
           <Box flex={1} overflowY="auto" px={3} py={2} onWheel={(e) => e.stopPropagation()}>
             {/* Node summary */}
             <Text fontSize={s(13)} fontWeight="500" color={textColor} lineHeight="1.6">
@@ -83,7 +105,6 @@ export function QAPanel({
               </VStack>
             )}
 
-            {/* Divider before Q&A */}
             <Box borderTop="1px solid" borderColor="gray.200" _dark={{ borderColor: 'gray.600' }} my={2} />
 
             {/* Q&A entries */}
@@ -92,22 +113,46 @@ export function QAPanel({
                 No questions yet. Ask one below.
               </Text>
             )}
-            <VStack align="stretch" spacing={3}>
-              {qaEntries.map((e) => (
-                <Box key={e.id}>
-                  <Text fontSize={s(13)} fontWeight="700" color="teal.600" _dark={{ color: 'teal.300' }} mb={1}>
-                    Q: {e.question}
-                  </Text>
-                  <Text fontSize={s(13)} color={textColor} lineHeight="1.6">
-                    {e.answer}
-                  </Text>
-                  <Text fontSize={s(11)} color="gray.400" mt={1}>
-                    {e.userName}
-                  </Text>
-                </Box>
-              ))}
+
+            <VStack align="stretch" spacing={1}>
+              {qaEntries.map((e, idx) => {
+                const isExpanded = expandedIds.has(e.id);
+                const isLatest = idx === qaEntries.length - 1;
+                return (
+                  <Box key={e.id} ref={isLatest ? latestEntryRef : undefined}>
+                    {/* Question row — always visible, click to toggle */}
+                    <HStack
+                      spacing={1}
+                      cursor="pointer"
+                      onClick={() => toggleExpand(e.id)}
+                      py={1}
+                      _hover={{ opacity: 0.8 }}
+                    >
+                      <Box color="teal.500" _dark={{ color: 'teal.300' }} flexShrink={0} mt="1px">
+                        {isExpanded ? <MdExpandMore size={16} /> : <MdChevronRight size={16} />}
+                      </Box>
+                      <Text fontSize={s(13)} fontWeight="700" color="teal.600" _dark={{ color: 'teal.300' }} flex={1}>
+                        {e.question}
+                      </Text>
+                    </HStack>
+
+                    {/* Answer — collapsed by default, expanded when toggled */}
+                    <Collapse in={isExpanded} animateOpacity>
+                      <Box pl={5} pb={2}>
+                        <Text fontSize={s(13)} color={textColor} lineHeight="1.6">
+                          {e.answer}
+                        </Text>
+                        <Text fontSize={s(11)} color="gray.400" mt={1}>
+                          {e.userName}
+                        </Text>
+                      </Box>
+                    </Collapse>
+                  </Box>
+                );
+              })}
+
               {askingNodeId === node.ID && (
-                <HStack spacing={2}>
+                <HStack spacing={2} py={1}>
                   <Spinner size="xs" color="teal.400" />
                   <Text fontSize={s(13)} color="teal.500">
                     Answering…

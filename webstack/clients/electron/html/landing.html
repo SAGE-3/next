@@ -89,9 +89,19 @@
       });
     }
 
-    // Change the user's page to the given url
+    // Change the user's page to the given url (http/https only — a javascript:
+    // URL assigned to window.location would execute in this page)
     async function changePage(url) {
-      window.location = url;
+      try {
+        const u = new URL(url);
+        if (u.protocol === 'https:' || u.protocol === 'http:') {
+          window.location = u.href;
+          return;
+        }
+      } catch {
+        // invalid URL: fall through to the notification
+      }
+      showNotification('Invalid hub URL', true);
     }
 
     // Function to show a notification at the bottom of the screen; removes it after 3 seconds
@@ -173,6 +183,14 @@
     // Add a new hub to the list
     function addNewHub(form) {
       const url = form.serverurl.value;
+      // Only web URLs may become hub bookmarks
+      try {
+        const u = new URL(url);
+        if (u.protocol !== 'https:' && u.protocol !== 'http:') throw new Error();
+      } catch {
+        showNotification('Invalid hub URL', true);
+        return;
+      }
       // Get server Info
       fetchServerInfo(url).then((info) => {
         if (info) {

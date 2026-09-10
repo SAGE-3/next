@@ -6,6 +6,8 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import { LLMConfiguration } from './llm';
+
 /**
  * Configuration parameters for the SAGE3 server
  *
@@ -58,21 +60,20 @@ export interface ServerConfiguration {
     uploadLimit: string; // in bytes with optional units (KB, MB, GB, TB)
   };
 
-  // Feedback server
-  feedback: { url: string };
-
   // External Services
   services: {
     twilio: TwilioConfiguration;
-    openai: OpenAIConfiguration;
-    llama: LlamaConfiguration;
-    azure: AzureConfig;
+    livekit: LiveKitConfiguration;
+    models: LLMConfiguration;
   };
 
   // Feature flags
   features: {
     plugins: boolean;
     apps: string[];
+    // Which screenshare backend the server offers. Not set in the configuration
+    // file: computed from the credentials in `services` and sent to clients.
+    screenshare?: ScreenshareBackend;
   };
 
   // ID management API keys
@@ -90,17 +91,12 @@ export type PublicInformation = Pick<ServerConfiguration, 'serverName' | 'versio
 };
 
 // Public to authenticated users from server to the configuration request, for security reasons
-export type OpenConfiguration = Pick<
-  ServerConfiguration,
-  'serverName' | 'version' | 'production' | 'namespace' | 'features' | 'feedback'
-> & {
+export type OpenConfiguration = Pick<ServerConfiguration, 'serverName' | 'version' | 'production' | 'namespace' | 'features'> & {
   token: string;
   admins: ServerConfiguration['auth']['admins'];
   logins: ServerConfiguration['auth']['strategies'];
   features: ServerConfiguration['features'];
-  openai: ServerConfiguration['services']['openai'];
-  llama: ServerConfiguration['services']['llama'];
-  azure: ServerConfiguration['services']['azure'];
+  models: ServerConfiguration['services']['models'];
   fluentd: ServerConfiguration['fluentd'];
   veoServer: ServerConfiguration['veoServer'];
 };
@@ -117,8 +113,8 @@ export interface AuthConfiguration {
   sessionMaxAge: number;
   sessionSecret: string;
 
-  // List of login strategies: guest, google, apple, jwt, cilogon, keycloak, spectator
-  strategies: ('google' | 'apple' | 'cilogon' | 'guest' | 'jwt' | 'keycloak' | 'spectator')[];
+  // List of login strategies: guest, google, apple, jwt, cilogon, keycloak, ldap, spectator
+  strategies: ('google' | 'apple' | 'cilogon' | 'guest' | 'jwt' | 'keycloak' | 'ldap' | 'spectator')[];
 
   // Admin users
   admins: string[];
@@ -157,6 +153,23 @@ export interface AuthConfiguration {
     routeEndpoint: string;
     callbackURL: string;
   };
+  // LDAP / Active Directory
+  ldapConfig?: {
+    url: string;
+    bindDN: string;
+    bindCredentials: string;
+    searchBase: string;
+    searchFilter: string;
+    groupMapping: {
+      admin?: string;
+      user?: string;
+      spectator?: string;
+    };
+    defaultRole: string;
+    tlsOptions?: {
+      rejectUnauthorized: boolean;
+    };
+  };
 }
 
 // The Twilio Configuration
@@ -166,35 +179,56 @@ export interface TwilioConfiguration {
   apiSecret: string; // API Secret
 }
 
-// The OpenAI Configuration
-export interface OpenAIConfiguration {
-  apiKey: string; // API Key
-  model: string; // LLM model
-  label?: string; // Model label in the UI
+/**
+ * The LiveKit Configuration (self-hosted SFU for screensharing).
+ *
+ * There is deliberately nothing to configure but the secret. The SFU always runs as part
+ * of this deployment and clients always reach it at wss://<the server they loaded>/sfu,
+ * so there is no url to set and no way to point SAGE3 at somebody else's LiveKit server.
+ */
+export interface LiveKitConfiguration {
+  // The only value a deployment supplies, via LIVEKIT_API_SECRET. No secret, no
+  // screensharing. LiveKit requires at least 32 characters — a UUID is 36.
+  apiSecret?: string;
 }
 
-// Llama Configuration
-export interface LlamaConfiguration {
-  url: string;
-  model: string; // LLM model
-  apiKey: string; // API Key
-  max_tokens: number;
-  label?: string; // Model label in the UI
+// Which screenshare implementation a server offers to its users
+export type ScreenshareBackend = 'livekit' | 'twilio' | 'none';
+
+// The LiveKit API key. An identifier rather than a credential, so it is a fixed
+// constant: the secret alone is what a deployment generates.
+export const LIVEKIT_KEY = 'SAGE3';
+
+// Path the SFU is served on, relative to the SAGE3 server's own origin
+export const LIVEKIT_PATH = '/sfu';
+
+// Loopback-only secret used when running SAGE3 in development, matching
+// deployment/configurations/livekit/livekit-local.yaml. The local LiveKit container
+// binds to 127.0.0.1, so this never leaves the developer's machine.
+export const LIVEKIT_DEV_SECRET = 'sage3-livekit-dev-secret-not-for-production';
+
+/**
+ * Is the self-hosted LiveKit SFU usable? The secret is the only value there is,
+ * so it alone decides.
+ */
+export function isLiveKitEnabled(services: ServerConfiguration['services']): boolean {
+  return !!services?.livekit?.apiSecret;
 }
 
-// Azure Configuration
-export type AzureServiceConfig = {
-  url: string;
-  model: string;
-  apiKey: string;
-  api_version: string;
-  label?: string; // Model label in the UI
-};
+/**
+ * Is Twilio usable? All three values come from the Twilio console and none can be defaulted.
+ */
+export function isTwilioEnabled(services: ServerConfiguration['services']): boolean {
+  const twilio = services?.twilio;
+  return !!twilio?.accountSid && !!twilio?.apiKey && !!twilio?.apiSecret;
+}
 
-export type AzureConfig = {
-  text: AzureServiceConfig;
-  embedding: AzureServiceConfig;
-  transcription: AzureServiceConfig;
-  reasoning: AzureServiceConfig;
-  vision: AzureServiceConfig;
-};
+/**
+ * Which screenshare backend to offer. LiveKit is self-hosted and wins when both are
+ * configured; Twilio remains for servers that have not migrated yet.
+ */
+export function getScreenshareBackend(services: ServerConfiguration['services']): ScreenshareBackend {
+  if (isLiveKitEnabled(services)) return 'livekit';
+  if (isTwilioEnabled(services)) return 'twilio';
+  return 'none';
+}

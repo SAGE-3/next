@@ -8,7 +8,7 @@
 
 import { ClientRequest, IncomingMessage, ServerResponse } from 'http';
 import { Socket } from 'net';
-import * as express from 'express';
+import express from 'express';
 import { Request, Response } from 'express';
 import { createProxyServer } from 'http-proxy-3';
 

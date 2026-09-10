@@ -4,8 +4,15 @@
     "allowJs": true,
     "resolveJsonModule": true,
     "outDir": "../../dist/out-tsc",
-    "types": ["node", "express"]
+    "types": [
+      "node",
+      "express"
+    ]
   },
-  "exclude": ["**/*.spec.ts"],
-  "include": ["**/*.ts"]
+  "exclude": [
+    "**/*.spec.ts"
+  ],
+  "include": [
+    "**/*.ts"
+  ]
 }

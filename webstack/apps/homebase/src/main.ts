@@ -23,8 +23,8 @@ import { IncomingMessage } from 'http';
 import * as dns from 'node:dns';
 
 // Websocket
-import { WebSocket } from 'ws';
-import { SAGEnlp, SAGE_PRESENCE, SocketPresence, SubscriptionCache } from '@sage3/backend';
+import { WebSocket, WebSocketServer } from 'ws';
+import { SAGE_PRESENCE, SocketPresence, SubscriptionCache } from '@sage3/backend';
 import { setupWsforLogs } from './api/routers/custom';
 
 // Create the web server with Express
@@ -40,14 +40,14 @@ import { loadConfig } from './config';
 // import { AssetService } from './services';
 import { expressAPIRouter, wsAPIRouter } from './api/routers';
 import { AppsCollection, loadCollections, PresenceCollection } from './api/collections';
-import { SAGEBase, SAGEBaseConfig } from '@sage3/sagebase';
+import { SAGEBase, SAGEBaseConfig, createRateLimiter } from '@sage3/sagebase';
 
-import { APIClientWSMessage, ServerConfiguration } from '@sage3/shared/types';
+import { APIClientWSMessage, ServerConfiguration, isLiveKitEnabled, isTwilioEnabled, LIVEKIT_KEY } from '@sage3/shared/types';
 import { SBAuthDB, JWTPayload } from '@sage3/sagebase';
 
 // SAGE Twilio Helper Import
-import { SAGETwilio } from '@sage3/backend';
-import * as express from 'express';
+import { SAGETwilio, SAGELiveKit } from '@sage3/backend';
+import express from 'express';
 
 // Exception handling
 process.on('unhandledRejection', (reason: Error) => {
@@ -106,33 +106,76 @@ async function startServer() {
   };
   await SAGEBase.init(sbConfig, app);
 
-  // init AI models
-  await SAGEnlp.init();
-
   // Load all the models: user, board, ...
   await loadCollections();
 
-  // Twilio Setup
+  // Screenshare Setup.
+  // A backend is only wired up when its credentials are present, so a server that has
+  // not configured one never exposes its routes and never runs its cleanup timers.
+  // The configuration endpoint reports the result, and the UI offers only what exists.
   const screenShareTimeLimit = 3600 * 6 * 1000; // 6 hours
-  const twilio = new SAGETwilio(config.services.twilio, AppsCollection, PresenceCollection, 10000, screenShareTimeLimit);
-  app.get('/twilio/token', SAGEBase.Auth.authenticate, (req, res) => {
-    const authId = req.user.id;
-    if (authId === undefined) {
-      res.status(403).send();
-    }
-    const room = req.query.room as string;
-    const identity = req.query.identity as string;
-    const token = twilio.generateVideoToken(identity, room);
-    res.send({ token });
-  });
+
+  // Twilio (legacy, for servers that have not migrated to the self-hosted SFU)
+  if (isTwilioEnabled(config.services)) {
+    const twilio = new SAGETwilio(config.services.twilio, AppsCollection, PresenceCollection, 10000, screenShareTimeLimit);
+    app.get('/twilio/token', createRateLimiter(60), SAGEBase.Auth.authenticate, (req, res) => {
+      const authId = req.user.id;
+      if (authId === undefined) {
+        res.status(403).send();
+        return;
+      }
+      const room = req.query.room as string;
+      const identity = req.query.identity as string;
+      const token = twilio.generateVideoToken(identity, room);
+      res.send({ token });
+    });
+  }
+
+  // LiveKit (self-hosted SFU)
+  if (isLiveKitEnabled(config.services)) {
+    const livekit = new SAGELiveKit(LIVEKIT_KEY, config.services.livekit.apiSecret as string, AppsCollection, 10000, screenShareTimeLimit);
+
+    app.get('/livekit/token', createRateLimiter(60), SAGEBase.Auth.authenticate, async (req, res) => {
+      // The participant identity is built server-side from the session, so users cannot impersonate each other
+      const authId = req.user.id;
+      const room = req.query.room as string;
+      const accessId = req.query.accessId as string;
+      if (authId === undefined) {
+        res.status(403).send();
+        return;
+      }
+      if (!room || !accessId) {
+        res.status(400).send();
+        return;
+      }
+      try {
+        const token = await livekit.generateVideoToken(`${authId}--${accessId}`, room);
+        // No url: the SFU is always this deployment's own, reached at /sfu on this host
+        res.send({ token, shareTimeLimit: screenShareTimeLimit });
+      } catch (error) {
+        res.status(500).send();
+      }
+    });
+
+    // LiveKit webhook receiver: cleans up screenshare apps when their tracks disappear.
+    // No auth middleware: the request signature is verified against the LiveKit API secret.
+    app.post('/livekit/webhook', express.raw({ type: 'application/webhook+json' }), async (req, res) => {
+      try {
+        await livekit.handleWebhook(req.body.toString(), req.get('Authorization'));
+        res.status(200).send();
+      } catch (error) {
+        res.status(400).send();
+      }
+    });
+  }
 
   // Load the API Routes
   app.use('/api', expressAPIRouter());
 
   // Websocket setup
-  const apiWebSocketServer = new WebSocket.Server({ noServer: true });
+  const apiWebSocketServer = new WebSocketServer({ noServer: true });
 
-  const logsServer = new WebSocket.Server({ noServer: true });
+  const logsServer = new WebSocketServer({ noServer: true });
 
   logsServer.on('connection', (socket: WebSocket) => {
     setupWsforLogs(socket);
@@ -159,7 +202,7 @@ async function startServer() {
         wsAPIRouter(socket, message, user, subCache);
       } catch (err) {
         console.error('Server> Error parsing message:', msg.toString());
-        console.error('       ', err.message);
+        console.error('       ', err instanceof Error ? err.message : String(err));
       }
     });
 
@@ -249,7 +292,20 @@ async function startServer() {
 
   // Serve the static react files from webapp folder
   serveApp(app, path.join(__dirname, 'webapp'));
-  // Serve the plugins folder
+  // Serve the plugins folder. Plugin documents run in their own same-origin
+  // iframes and load third-party (CDN, inline) scripts, so they get their own
+  // permissive CSP — CSP is per-document, so this does not weaken the main
+  // app's policy. frame-ancestors 'self' keeps plugin pages embeddable only
+  // by SAGE3 itself.
+  app.use('/plugins', (req, res, next) => {
+    res.setHeader(
+      'Content-Security-Policy',
+      "default-src 'self' https: data: blob:; script-src 'self' https: 'unsafe-inline' 'unsafe-eval'; " +
+        "style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data: blob:; " +
+        "connect-src 'self' https: wss: data: blob:; worker-src 'self' blob:; frame-ancestors 'self'",
+    );
+    next();
+  });
   app.use('/plugins', express.static(path.join(__dirname, 'plugins'), { cacheControl: false }));
 
   // Handle termination

@@ -15,6 +15,8 @@ import {
   ModalBody,
   ModalCloseButton,
   Button,
+  IconButton,
+  Tooltip,
   Text,
   VStack,
   HStack,
@@ -26,6 +28,7 @@ import {
   Divider,
   useColorModeValue,
 } from '@chakra-ui/react';
+import { MdRefresh } from 'react-icons/md';
 
 export type ImportPreview = {
   Title: string;
@@ -122,9 +125,16 @@ export function StickyImportDialog({ isOpen, isLoading, originalText, preview, o
           <Button size="sm" variant="ghost" onClick={onCancel}>
             Cancel
           </Button>
-          <Button size="sm" variant="outline" onClick={onRegenerate} isDisabled={isLoading}>
-            Try Again
-          </Button>
+          <Tooltip label="Reroll" placement="top" hasArrow openDelay={300}>
+            <IconButton
+              aria-label="Reroll"
+              icon={<MdRefresh />}
+              size="sm"
+              variant="outline"
+              onClick={onRegenerate}
+              isDisabled={isLoading}
+            />
+          </Tooltip>
           <Button size="sm" colorScheme="teal" onClick={onConfirm} isDisabled={isLoading || !preview}>
             Add Idea
           </Button>

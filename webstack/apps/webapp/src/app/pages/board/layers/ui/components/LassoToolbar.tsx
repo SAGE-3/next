@@ -241,8 +241,8 @@ export function LassoToolbar(props: LassoToolbarProps) {
       const firstApp = selectedApps[0];
       if (!firstApp) return false;
       // return AI_ENABLED_APPS.includes(firstApp.data.type);
-      // for now, only Chat and PDFViewer are AI_Enabled in multi-select
-      return ['Stickie', 'PDFViewer'].includes(firstApp.data.type);
+      // Apps that support multi-select AI (open all together in one Chat)
+      return ['Stickie', 'PDFViewer', 'ImageViewer'].includes(firstApp.data.type);
     } else {
       return false;
     }
@@ -825,6 +825,8 @@ for b in bits:
 const GrowingPacker = function () {};
 
 GrowingPacker.prototype = {
+  root: null as any,
+
   fit: function (blocks: any[]) {
     var n,
       node,
@@ -840,7 +842,7 @@ GrowingPacker.prototype = {
     }
   },
 
-  findNode: function (root: any, w: number, h: number) {
+  findNode: function (root: any, w: number, h: number): any {
     if (root.used) return this.findNode(root.right, w, h) || this.findNode(root.down, w, h);
     else if (w <= root.w && h <= root.h) return root;
     else return null;

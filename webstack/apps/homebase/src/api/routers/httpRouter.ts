@@ -14,7 +14,7 @@
  */
 
 // NPM imports
-import * as express from 'express';
+import express from 'express';
 
 // Asset imports
 
@@ -35,10 +35,10 @@ import {
 } from '../collections';
 
 // SAGEBase Imports
-import { SAGEBase } from '@sage3/sagebase';
+import { SAGEBase, createRateLimiter } from '@sage3/sagebase';
 
 // Custom Routes
-import { ConfigRouter, InfoRouter, TimeRouter, NLPRouter, LogsRouter, KernelsRouter, PresenceThrottle, AgentRouter } from './custom';
+import { ConfigRouter, InfoRouter, TimeRouter, LogsRouter, KernelsRouter, PresenceThrottle, AgentRouter } from './custom';
 
 import { config } from '../../config';
 
@@ -57,7 +57,8 @@ export function expressAPIRouter(): express.Router {
   router.use('/time', TimeRouter());
   router.use('/logs', LogsRouter());
 
-  // Authenticate all API Routes
+  // Rate limit (generous per-IP backstop), then authenticate all API Routes
+  router.use(createRateLimiter(400));
   router.use(SAGEBase.Auth.authenticate);
 
   // Kernels Routes
@@ -83,9 +84,6 @@ export function expressAPIRouter(): express.Router {
 
   // Configuration Route
   router.use('/configuration', ConfigRouter());
-
-  // Experimental NLP route
-  router.use('/nlp', NLPRouter());
 
   // Agent Routes (includes ideator routes under /agents/ideator/...)
   router.use('/agents', AgentRouter());

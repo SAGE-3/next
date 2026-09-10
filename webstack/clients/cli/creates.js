@@ -186,7 +186,7 @@ async function start() {
         while (stickiecount < maxstickies) {
           px = randomNumber(1500000, 1501000);
           py = randomNumber(1500000, 1501000);
-          createStickie(socket, roomId, boardId, faker.name.fullName(), px, py);
+          createStickie(socket, roomId, boardId, faker.person.fullName(), px, py);
           stickiecount++;
         }
 

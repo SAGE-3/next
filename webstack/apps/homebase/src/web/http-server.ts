@@ -12,15 +12,15 @@ import { AddressInfo } from 'net';
 import { Server } from 'http';
 
 // Express web server framework
-import * as express from 'express';
+import express from 'express';
 
 // Express middlewares
 import helmet from 'helmet';
-import * as compression from 'compression';
-import * as cors from 'cors';
-import * as morgan from 'morgan';
-import * as favicon from 'serve-favicon';
-import * as cookieParser from 'cookie-parser';
+import compression from 'compression';
+import cors from 'cors';
+import morgan from 'morgan';
+import favicon from 'serve-favicon';
+import cookieParser from 'cookie-parser';
 import { ServerConfiguration } from '@sage3/shared/types';
 
 /**
@@ -77,8 +77,23 @@ export function createApp(assetPath: string, config: ServerConfiguration): expre
   // Disabling a few rules for now, easier during development
   app.use(
     helmet({
-      // Content-Security-Policy
-      contentSecurityPolicy: false,
+      // Content-Security-Policy: keep script-src 'self' for the app document,
+      // but open the subresource directives the webapp needs in production
+      // (external map tiles, blob workers for pdf.js/Monaco, service embeds,
+      // Twilio websockets). Plugin documents get their own policy on the
+      // /plugins route (CSP is per-document).
+      contentSecurityPolicy: {
+        useDefaults: true,
+        directives: {
+          'img-src': ["'self'", 'data:', 'blob:', 'https:'],
+          'media-src': ["'self'", 'blob:', 'https:'],
+          'worker-src': ["'self'", 'blob:'],
+          'frame-src': ["'self'", 'https:'],
+          // data:/blob: cover fetch() of generated images (AI image data URLs
+          // are converted to blobs before asset upload) — local decoding only
+          'connect-src': ["'self'", 'https:', 'wss:', 'data:', 'blob:'],
+        },
+      },
       // Strict-Transport-Security
       hsts: true,
       // Cross-Origin-Embedder-Policy: disable to enable map images and zoom images to load
@@ -107,8 +122,10 @@ export function listenApp(app: express.Express, listenPort: number | string): Se
   const PORT = parseInt(listenPort as string, 10);
   // HTTP server
   const server = app.listen(PORT, '0.0.0.0', () => {
-    const { port } = server.address() as AddressInfo;
-    console.log('HTTP> listening on port', port);
+    const addr = server.address();
+    if (addr && typeof addr !== 'string') {
+      console.log('HTTP> listening on port', addr.port);
+    }
   });
   return server;
 }

@@ -427,14 +427,14 @@ def build_seer_tools(agent: "SeerAgent", qq: Question) -> list[Any]:
             if agent.image_agent is None:
                 raise ValueError("Image analysis is not configured.")
             result = await agent.image_agent.process(
-                ImageQuery(ctx=qq.ctx, asset=asset_id, user=qq.user, model=qq.model, q=question)
+                ImageQuery(ctx=qq.ctx, assets=[asset_id], user=qq.user, model=qq.model, userllm=qq.userllm, q=question)
             )
             return {"app": target_app, "asset": asset_summary, "answer": result.r}
 
         if asset_kind == "pdf":
             if agent.pdf_agent is None:
                 raise ValueError("PDF analysis is not configured.")
-            pdf_query = PDFQuery(ctx=qq.ctx, assetids=[asset_id], user=qq.user, model=qq.model, q=question)
+            pdf_query = PDFQuery(ctx=qq.ctx, assetids=[asset_id], user=qq.user, model=qq.model, userllm=qq.userllm, q=question)
             try:
                 result = await agent.pdf_agent.process(pdf_query)
                 return {"app": target_app, "asset": asset_summary, "answer": result.r}

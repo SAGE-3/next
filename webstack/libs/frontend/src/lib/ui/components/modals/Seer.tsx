@@ -55,15 +55,7 @@ import {
 
 // Icons for file types
 import { IoSparklesSharp } from 'react-icons/io5';
-import {
-  MdDeleteSweep,
-  MdHelpOutline,
-  MdNoteAdd,
-  MdSettings,
-  MdMic,
-  MdOpenInNew,
-  MdStop,
-} from 'react-icons/md';
+import { MdDeleteSweep, MdHelpOutline, MdNoteAdd, MdSettings, MdMic, MdOpenInNew, MdStop } from 'react-icons/md';
 import { v5 as uuidv5 } from 'uuid';
 import Markdown from 'markdown-to-jsx';
 
@@ -81,6 +73,8 @@ import {
   useYjs,
   useUserSettings,
   EditUserSettingsModal,
+  USER_PROVIDER_NAME,
+  userLLMPayload,
 } from '@sage3/frontend';
 import { apiUrls } from '../../../config/urls';
 import { ConfirmModal } from './ConfirmModal';
@@ -256,8 +250,7 @@ export function Seer(props: props) {
     if (appName === 'Timer') {
       w = 330;
       h = 226;
-    }
-    else if (appName === 'Clock') {
+    } else if (appName === 'Clock') {
       w = 320 * 1.5;
       h = 130 * 1.5;
     }
@@ -448,7 +441,7 @@ export function Seer(props: props) {
 
       return false;
     },
-    [user, apps, props.boardId, colorMode]
+    [user, apps, props.boardId, colorMode],
   );
 
   return (
@@ -499,11 +492,7 @@ function SeerUI(props: SeerUIProps): JSX.Element {
   // colors
   const intelligenceColor = useColorModeValue('purple.500', 'purple.300');
   const { isOpen: editSettingsIsOpen, onOpen: editSettingsOnOpen, onClose: editSettingsOnClose } = useDisclosure();
-  const {
-    isOpen: clearSessionConfirmIsOpen,
-    onOpen: clearSessionConfirmOnOpen,
-    onClose: clearSessionConfirmOnClose,
-  } = useDisclosure();
+  const { isOpen: clearSessionConfirmIsOpen, onOpen: clearSessionConfirmOnOpen, onClose: clearSessionConfirmOnClose } = useDisclosure();
   const toast = useToast();
   // Default mic color
   const [recording, setRecording] = useState(false);
@@ -549,7 +538,7 @@ function SeerUI(props: SeerUIProps): JSX.Element {
         },
         function (e) {
           console.log('Location> error', e);
-        }
+        },
       );
     }
   }, [user]);
@@ -593,6 +582,7 @@ function SeerUI(props: SeerUIProps): JSX.Element {
         user: user.data.name,
         location,
         model: settings.aiModel || 'openai',
+        ...(settings.aiModel === USER_PROVIDER_NAME ? { userllm: userLLMPayload() } : {}),
       };
 
       setProcessingAI(true);
@@ -653,7 +643,7 @@ function SeerUI(props: SeerUIProps): JSX.Element {
       settings.aiModel,
       startSessionRequest,
       user,
-    ]
+    ],
   );
 
   const normalizeAction = useCallback((action: any) => {
@@ -824,7 +814,7 @@ function SeerUI(props: SeerUIProps): JSX.Element {
         return { success: false as const, action: normalizedAction, message };
       }
     },
-    [createApp, normalizeAction, props.boardId, props.currentBoardApps, props.roomId, toast, updateApp, updateAppState, yApps]
+    [createApp, normalizeAction, props.boardId, props.currentBoardApps, props.roomId, toast, updateApp, updateAppState, yApps],
   );
 
   const applyAllActions = useCallback(async () => {
@@ -900,13 +890,15 @@ function SeerUI(props: SeerUIProps): JSX.Element {
 
       toast({
         title: res?.success ? 'Stickie created' : 'Unable to create stickie',
-        description: res?.success ? 'SEER response added to the board as a stickie.' : res?.message || 'The response could not be turned into a stickie.',
+        description: res?.success
+          ? 'SEER response added to the board as a stickie.'
+          : res?.message || 'The response could not be turned into a stickie.',
         status: res?.success ? 'success' : 'error',
         duration: 3000,
         isClosable: true,
       });
     },
-    [createApp, getBoardCursor, props.boardId, props.roomId, toast, user]
+    [createApp, getBoardCursor, props.boardId, props.roomId, toast, user],
   );
 
   // Keyboard handler: press enter to activate command
@@ -1007,20 +999,12 @@ function SeerUI(props: SeerUIProps): JSX.Element {
         blockScrollOnMount={false}
         scrollBehavior={'inside'}
         isCentered
-
       >
         <ModalOverlay />
         <ModalContent maxH="78vh" minWidth="860px" display="flex" flexDirection="column">
           <ModalHeader borderBottomWidth="1px" py={4}>
             <HStack alignItems="flex-start" spacing={4} pr={20}>
-              <Box
-                p={2}
-                backgroundColor={intelligenceColor}
-                borderRadius="md"
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-              >
+              <Box p={2} backgroundColor={intelligenceColor} borderRadius="md" display="flex" alignItems="center" justifyContent="center">
                 <IoSparklesSharp size="22px" color={'white'} />
               </Box>
               <Box flex="1">
@@ -1040,10 +1024,7 @@ function SeerUI(props: SeerUIProps): JSX.Element {
               {conversation.length > 0 ? (
                 <VStack align="stretch" spacing={3} mb={showAISection ? 4 : 0}>
                   {conversation.map((message) => (
-                    <Flex
-                      key={message.id}
-                      justifyContent={message.role === 'user' ? 'flex-end' : 'flex-start'}
-                    >
+                    <Flex key={message.id} justifyContent={message.role === 'user' ? 'flex-end' : 'flex-start'}>
                       <Box
                         maxWidth="78%"
                         borderWidth="1px"
@@ -1103,7 +1084,15 @@ function SeerUI(props: SeerUIProps): JSX.Element {
               )}
 
               {processingAI && (
-                <Box borderWidth="1px" borderRadius="xl" px={4} py={3} mb={4} backgroundColor={processingBg} borderColor={processingBorderColor}>
+                <Box
+                  borderWidth="1px"
+                  borderRadius="xl"
+                  px={4}
+                  py={3}
+                  mb={4}
+                  backgroundColor={processingBg}
+                  borderColor={processingBorderColor}
+                >
                   <HStack alignItems="center" spacing={3}>
                     <Spinner size="sm" color={intelligenceColor} />
                     <Text fontSize="sm">SEER is inspecting the board and preparing a response.</Text>
@@ -1169,7 +1158,6 @@ function SeerUI(props: SeerUIProps): JSX.Element {
               )}
 
               <Box ref={conversationEndRef} h="1px" />
-
             </Box>
           </ModalBody>
 
@@ -1251,13 +1239,21 @@ function SeerUI(props: SeerUIProps): JSX.Element {
                           <ListItem>
                             <b>clear</b>: Close all applications
                           </ListItem>
-                          <ListItem>Natural language requests stay in SEER and show reviewable board changes before you apply them</ListItem>
+                          <ListItem>
+                            Natural language requests stay in SEER and show reviewable board changes before you apply them
+                          </ListItem>
                         </UnorderedList>
                       </PopoverBody>
                     </PopoverContent>
                   </Popover>
                   <Tooltip fontSize={'xs'} placement="top" hasArrow={true} label={'Settings'} openDelay={400}>
-                    <IconButton aria-label="SEER settings" icon={<MdSettings size="20px" />} size="sm" variant="ghost" onClick={editSettingsOnOpen} />
+                    <IconButton
+                      aria-label="SEER settings"
+                      icon={<MdSettings size="20px" />}
+                      size="sm"
+                      variant="ghost"
+                      onClick={editSettingsOnOpen}
+                    />
                   </Tooltip>
                 </HStack>
               </Flex>

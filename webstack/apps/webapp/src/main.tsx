@@ -6,8 +6,10 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import './monaco-setup';
+
 import { createRoot } from 'react-dom/client';
-import { HashRouter } from 'react-router-dom';
+import { HashRouter } from 'react-router';
 
 import App from './app/app';
 

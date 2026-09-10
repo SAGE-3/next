@@ -42,13 +42,12 @@
     "uploadLimit": "5GB" // file upload size limit in string, optional units: KB, MB, GB, TB
   },
 
-  // Feedback URL
-  "feedback": {
-    "url": "http://sage3-server-status.cis230038.projects.jetstream-cloud.org:3000/feedback"
-  },
 
   // External Services
   "services": {
+    // Screensharing (self-hosted LiveKit SFU) has nothing to configure here: set
+    // LIVEKIT_API_SECRET in deployment/.env and it turns on. Without it, the server
+    // offers no LiveKit screensharing. See deployment/README.md.
     "twilio": {
       // Your Account SID from www.twilio.com/console
       "accountSid": "",

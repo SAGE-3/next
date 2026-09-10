@@ -7,7 +7,7 @@
  */
 
 // NPM imports
-import * as express from 'express';
+import express from 'express';
 
 // SAGEBase Imports
 import { SBAuthSchema } from '@sage3/sagebase';
@@ -29,13 +29,28 @@ const providerToRoleMap = {
   apple: 'user',
   jwt: 'user',
   keycloak: 'user',
+  ldap: 'user',
   spectator: 'spectator',
   guest: 'guest',
 };
 
-// Conversion to RoleArg
-const convertProviderToRole = (provider: string): RoleArg | undefined => {
-  const role = providerToRoleMap[provider as keyof typeof providerToRoleMap] as RoleArg;
+// Providers that resolve a role dynamically at login time (LDAP group→role
+// mapping) and persist it on the auth record — see LDAPAdapter.resolveRole
+// and SBAuthDatabase's role field. Every other provider is only ever
+// resolved via the coarse map above. Scoping this explicitly (rather than
+// trusting any auth.role that happens to be set) means a stray/forged role
+// field on a different provider's record can't grant elevated access.
+const PROVIDERS_WITH_DYNAMIC_ROLE = ['ldap'];
+
+// Conversion to RoleArg. Prefers the role resolved by the provider itself
+// (e.g. LDAP group mapping) over the coarse per-provider default, so that
+// e.g. an LDAP group mapped to "spectator" actually grants read-only access
+// instead of the provider-wide default of "user".
+const convertProviderToRole = (auth: SBAuthSchema): RoleArg | undefined => {
+  if (auth.role && PROVIDERS_WITH_DYNAMIC_ROLE.includes(auth.provider)) {
+    return auth.role as RoleArg;
+  }
+  const role = providerToRoleMap[auth.provider as keyof typeof providerToRoleMap] as RoleArg;
   return role;
 };
 
@@ -71,8 +86,16 @@ export function checkPermissionsREST(subj: AuthSubject): Middleware {
     // user is already logged in
     const auth = req.user as SBAuthSchema;
     // Get Role
-    const role = convertProviderToRole(auth.provider);
-    if (!role) return false;
+    const role = convertProviderToRole(auth);
+    if (!role) {
+      // `return false;` here previously did neither — Middleware's return
+      // type is void, so this was a silent no-op: no next(), no response.
+      // Any auth record with a provider missing from providerToRoleMap
+      // (e.g. a provider added without updating the map) made the request
+      // hang forever. Respond the same way an unauthorized role does.
+      res.status(403).json({ message: 'Forbidden user' });
+      return;
+    }
     // Convert Method to Action
     const action = convertMethodToAction(req.method as AuthAction);
     // Convert Subject to Resource
@@ -89,7 +112,7 @@ export function checkPermissionsREST(subj: AuthSubject): Middleware {
 
 export function checkPermissionsWS(auth: SBAuthSchema, act: AuthAction, subj: AuthSubject): boolean {
   // Get Role
-  const role = convertProviderToRole(auth.provider);
+  const role = convertProviderToRole(auth);
   if (!role) return false;
   // Convert Method to Action
   const action = convertMethodToAction(act);

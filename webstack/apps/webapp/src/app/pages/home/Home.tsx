@@ -8,7 +8,7 @@
 
 // React Imports
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 
 // Chakra Imports
 import {

@@ -33,7 +33,7 @@ import { getStaticAssetUrl } from '@sage3/backend';
 import { ExtraPDFType } from '@sage3/shared/types';
 
 // Image processing tool
-import * as sharp from 'sharp';
+import sharp, { type OutputInfo } from 'sharp';
 
 function parsePositiveInteger(value: string | undefined): number | undefined {
   if (!value) return undefined;
@@ -346,7 +346,7 @@ async function pdfProcessing(job: any): Promise<ExtraPDFType> {
         //   compressionLevel: 1,
         //   filters: canvasAndContext.canvas.PNG_FILTER_NONE,
         // });
-        // const sharpStream = sharp(cdata, { failOnError: false });
+        // const sharpStream = sharp(cdata, { failOn: 'none' });
 
         // Round the dimensions to the nearest integer for sharp library
         const vw = Math.floor(viewport.width);
@@ -354,10 +354,10 @@ async function pdfProcessing(job: any): Promise<ExtraPDFType> {
 
         // Get RGBA buffer
         const cdata = await canvasAndContext.context.getImageData(0, 0, vw, vh).data;
-        const sharpStream = sharp(cdata, { raw: { width: vw, height: vh, channels: 4 }, failOnError: false });
+        const sharpStream = sharp(cdata, { raw: { width: vw, height: vh, channels: 4 }, failOn: 'none' });
 
         // Generate the WebP in multiple resolutions
-        const renderResult = await Promise.all<sharp.OutputInfo>([
+        const renderResult = await Promise.all<OutputInfo>([
           // resize multiple versions based on the option set
           ...options.map(({ width, quality }) =>
             sharpStream
@@ -439,9 +439,11 @@ async function pdfProcessing(job: any): Promise<ExtraPDFType> {
     );
     throw err;
   } finally {
-    if (pdf && typeof pdf.destroy === 'function') {
+    // pdf.js 6 removed PDFDocumentProxy.destroy(); the loading task's destroy()
+    // is the supported way to release the document and its worker
+    if (pdfTask && typeof pdfTask.destroy === 'function') {
       try {
-        await pdf.destroy();
+        await pdfTask.destroy();
       } catch (err) {
         console.warn('PDF> document cleanup failed', err);
       }

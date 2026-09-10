@@ -1,0 +1,97 @@
+#!/bin/bash
+#
+# Release — publish the SAGE3 server install packages to GitHub.
+#
+# Usage:
+#   ./Release        # asks for confirmation before publishing
+#   ./Release -y     # no confirmation prompt
+#
+# Expects the tarballs built by ./Package for both architectures to be
+# present in this directory. Publishes two releases:
+#
+#   server-<major.minor>   the versioned release (never marked "Latest",
+#                          so Electron client releases keep that pointer)
+#   server-latest          a rolling release refreshed every time, holding
+#                          the same assets plus version-stable copies
+#                          (SAGE3-amd64.tgz / SAGE3-arm64.tgz) so that
+#                          download URLs never change:
+#     https://github.com/SAGE-3/next/releases/tag/server-latest
+#     https://github.com/SAGE-3/next/releases/download/server-latest/SAGE3-amd64.tgz
+#
+set -euo pipefail
+cd "$(dirname "$0")"
+
+CONFIRM="${1:-}"
+
+# ── Version from webstack/package.json (same source as ./Package) ────────────
+VERSION=$(sed -n 's/^[[:space:]]*"version":[[:space:]]*"\([^"]*\)".*/\1/p' ../webstack/package.json | head -1)
+if [[ -z "$VERSION" ]]; then
+  echo "Error: could not read version from ../webstack/package.json" >&2
+  exit 1
+fi
+MAJMIN=${VERSION%.*}
+TAG="server-${MAJMIN}"
+
+# ── Check the artifacts exist ────────────────────────────────────────────────
+ASSETS=()
+for arch in amd64 arm64; do
+  f="SAGE3-${MAJMIN}-${arch}.tgz"
+  if [[ ! -f "$f" || ! -f "$f.sha256" ]]; then
+    echo "Error: $f (or its .sha256) not found — run ./Package ${arch} first" >&2
+    exit 1
+  fi
+  ASSETS+=("$f" "$f.sha256")
+done
+
+if gh release view "$TAG" >/dev/null 2>&1; then
+  echo "Error: release $TAG already exists." >&2
+  echo "Delete it first if you want to republish: gh release delete $TAG --cleanup-tag" >&2
+  exit 1
+fi
+
+echo "About to publish:"
+echo "  $TAG          <- ${ASSETS[*]}"
+echo "  server-latest (refreshed) <- same assets + version-stable copies"
+if [[ "$CONFIRM" != "-y" ]]; then
+  read -r -p "Publish? [y/N] " answer
+  [[ "$answer" == "y" || "$answer" == "Y" ]] || { echo "Aborted."; exit 1; }
+fi
+
+# ── Versioned release ────────────────────────────────────────────────────────
+gh release create "$TAG" "${ASSETS[@]}" \
+  --title "Server Install ${MAJMIN}" \
+  --latest=false \
+  --notes "SAGE3 server install packages, version ${VERSION}.
+
+Verify a download with: \`shasum -a 256 -c <file>.sha256\`
+
+See the [server deployment guide](https://github.com/SAGE-3/next/blob/main/doc/Server-Deployment.md) for install instructions."
+
+# ── Rolling server-latest release ────────────────────────────────────────────
+# Version-stable copies give permanent download URLs.
+STAGE=$(mktemp -d)
+trap 'rm -rf "$STAGE"' EXIT
+for arch in amd64 arm64; do
+  cp "SAGE3-${MAJMIN}-${arch}.tgz" "$STAGE/SAGE3-${arch}.tgz"
+  (cd "$STAGE" && { command -v sha256sum >/dev/null && sha256sum "SAGE3-${arch}.tgz" || shasum -a 256 "SAGE3-${arch}.tgz"; } >"SAGE3-${arch}.tgz.sha256")
+done
+
+gh release delete server-latest --cleanup-tag -y 2>/dev/null || true
+gh release create server-latest \
+  "${ASSETS[@]}" \
+  "$STAGE"/SAGE3-amd64.tgz "$STAGE"/SAGE3-amd64.tgz.sha256 \
+  "$STAGE"/SAGE3-arm64.tgz "$STAGE"/SAGE3-arm64.tgz.sha256 \
+  --title "SAGE3 Server Install (latest)" \
+  --latest=false \
+  --notes "Always points to the newest SAGE3 server install package. Currently: **${VERSION}**.
+
+Permanent download URLs:
+- https://github.com/SAGE-3/next/releases/download/server-latest/SAGE3-amd64.tgz
+- https://github.com/SAGE-3/next/releases/download/server-latest/SAGE3-arm64.tgz
+
+For the versioned release, see [${TAG}](https://github.com/SAGE-3/next/releases/tag/${TAG})."
+
+echo ""
+echo "Published:"
+echo "  https://github.com/SAGE-3/next/releases/tag/${TAG}"
+echo "  https://github.com/SAGE-3/next/releases/tag/server-latest"

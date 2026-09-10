@@ -70,6 +70,43 @@ export const useStore = create<WebviewStore>()((set) => ({
   setLocalURL: (id: string, url: string) => set((state) => ({ localURL: { ...state.localURL, ...{ [id]: url } } })),
 }));
 
+// Shared cookie/session partitions per service, so users stay logged in across
+// app instances. Matched against the URL hostname (exact or subdomain), never
+// substrings — a lookalike host must not join an authenticated partition.
+// Ordered most-specific first: colab would otherwise be shadowed by google.com.
+const SHARED_PARTITIONS: { partition: string; domains: string[] }[] = [
+  { partition: 'persist:colab', domains: ['colab.research.google.com'] },
+  { partition: 'persist:office', domains: ['sharepoint.com', 'live.com', 'office.com'] },
+  { partition: 'persist:whereby', domains: ['appear.in', 'whereby.com'] },
+  { partition: 'persist:youtube', domains: ['youtube.com'] },
+  { partition: 'persist:github', domains: ['github.com'] },
+  { partition: 'persist:google', domains: ['google.com'] },
+];
+
+/**
+ * Pick the session partition for a URL: a shared per-service partition for
+ * known hosts, or a unique isolated one. Unparseable and non-http(s) URLs
+ * are isolated.
+ */
+function partitionForURL(raw: string, appId: string): string {
+  const isolated = 'partition_' + appId;
+  let u: URL;
+  try {
+    u = new URL(raw);
+  } catch {
+    return isolated;
+  }
+  if (u.protocol !== 'https:' && u.protocol !== 'http:') return isolated;
+  const host = u.hostname.toLowerCase();
+  const matches = (d: string) => host === d || host.endsWith('.' + d);
+  for (const { partition, domains } of SHARED_PARTITIONS) {
+    if (domains.some(matches)) return partition;
+  }
+  if (u.pathname.toLowerCase().endsWith('.pdf')) return 'persist:pdf';
+  if (host === window.location.hostname) return 'persist:jupyter';
+  return isolated;
+}
+
 /* App component for Webview */
 
 function AppComponent(props: App): JSX.Element {
@@ -125,26 +162,7 @@ function AppComponent(props: App): JSX.Element {
 
       // Set partition to persist login info and settings per service
       // This allows users to stay logged in across app instances
-      if (url.indexOf('sharepoint.com') >= 0 || url.indexOf('live.com') >= 0 || url.indexOf('office.com') >= 0) {
-        webview.partition = 'persist:office';
-      } else if (url.indexOf('appear.in') >= 0 || url.indexOf('whereby.com') >= 0) {
-        webview.partition = 'persist:whereby';
-      } else if (url.indexOf('youtube.com') >= 0) {
-        webview.partition = 'persist:youtube';
-      } else if (url.indexOf('github.com') >= 0) {
-        webview.partition = 'persist:github';
-      } else if (url.indexOf('google.com') >= 0) {
-        webview.partition = 'persist:google';
-      } else if (url.includes('.pdf')) {
-        webview.partition = 'persist:pdf';
-      } else if (url.includes(window.location.hostname)) {
-        webview.partition = 'persist:jupyter';
-      } else if (url.includes('colab.research.google.com')) {
-        webview.partition = 'persist:colab';
-      } else {
-        // Unique partition for isolation
-        webview.partition = 'partition_' + props._id;
-      }
+      webview.partition = partitionForURL(url, props._id);
 
       // Callback when the webview is ready
       webview.addEventListener('dom-ready', domReadyCallback);

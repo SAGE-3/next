@@ -8,14 +8,15 @@
 
 import { PluginSchema } from '@sage3/shared/types';
 import { SAGE3Collection, sageRouter } from '@sage3/backend';
+import { createRateLimiter } from '@sage3/sagebase';
 
 // Node modules
 import * as fs from 'fs';
 import { promises as fsPromises } from 'fs';
-import * as multer from 'multer';
+import multer from 'multer';
 import * as path from 'path';
 
-import * as jszip from 'jszip';
+import jszip from 'jszip';
 import { isZip } from '@sage3/shared';
 
 // Plugin Paths
@@ -68,6 +69,20 @@ function getPluginFolderName(roomId: string, pluginName: string): string {
   return `${sanitizedRoomId}_${pluginName}`;
 }
 
+/**
+ * Resolve path segments inside a base directory. Throws if the resolved
+ * path escapes the base — every filesystem access below goes through this
+ * so no user- or database-provided value can reach outside the plugin dirs.
+ */
+function resolveWithin(base: string, ...parts: string[]): string {
+  const resolvedBase = path.resolve(base);
+  const resolved = path.resolve(resolvedBase, ...parts);
+  if (resolved !== resolvedBase && !resolved.startsWith(resolvedBase + path.sep)) {
+    throw new Error('Path escapes base directory');
+  }
+  return resolved;
+}
+
 class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
   constructor() {
     super('PLUGINS', {
@@ -84,7 +99,7 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
     ensureDirectoryExistence(appsPath);
 
     // Upload a new Plugin App
-    router.post('/upload', upload.single('plugin'), async (req, res) => {
+    router.post('/upload', createRateLimiter(4), upload.single('plugin'), async (req, res) => {
       // Check for file.
       const file = req.file;
       if (file == undefined) {
@@ -102,7 +117,7 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
       const uploadName = req.file?.filename as string;
       const removeUploadedFile = async () => {
         try {
-          await fsPromises.rm(path.join(uploadPath, uploadName), { force: true });
+          await fsPromises.rm(resolveWithin(uploadPath, uploadName), { force: true });
         } catch (err) {
           console.error('Error removing uploaded file:', err);
         }
@@ -151,7 +166,7 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
           // If it is yours, remove the old files and store the ID for update
           const folderName = getPluginFolderName(roomId, pluginName);
           try {
-            await fsPromises.rm(path.join(appsPath, folderName), { recursive: true, force: true });
+            await fsPromises.rm(resolveWithin(appsPath, folderName), { recursive: true, force: true });
             foundPreviousVersion = true;
             existingPluginId = existingPluginInRoom._id;
           } catch (err) {
@@ -166,13 +181,16 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
       // Generate folder name using roomId_name format
       const folderName = getPluginFolderName(roomId, pluginName);
       // Make the directory
-      ensureDirectoryExistence(path.join(appsPath, folderName));
+      ensureDirectoryExistence(resolveWithin(appsPath, folderName));
 
-      const p = req.file?.path;
-      if (p == undefined) {
+      if (req.file?.filename == undefined) {
         res.status(400).send({ success: false, message: 'Failed upload.' });
         return;
       }
+      // multer stores the upload under uploadPath with the generated name held
+      // in uploadName (above); rebuild the path from it rather than trusting
+      // req.file.path, so resolveWithin guarantees it stays inside uploadPath
+      const p = resolveWithin(uploadPath, uploadName);
 
       // Read and process the zip file
       try {
@@ -193,14 +211,14 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
         const keys = Object.keys(result.files);
         if (keys.length === 0) {
           await removeUploadedFile();
-          await fsPromises.rm(path.join(appsPath, folderName), { recursive: true, force: true }).catch(() => {});
+          await fsPromises.rm(resolveWithin(appsPath, folderName), { recursive: true, force: true }).catch(() => {});
           res.status(400).send({ success: false, message: 'ZIP file is empty.' });
           return;
         }
 
         if (keys.length > 10000) {
           await removeUploadedFile();
-          await fsPromises.rm(path.join(appsPath, folderName), { recursive: true, force: true }).catch(() => {});
+          await fsPromises.rm(resolveWithin(appsPath, folderName), { recursive: true, force: true }).catch(() => {});
           res.status(400).send({ success: false, message: 'ZIP file contains too many files (maximum 10,000).' });
           return;
         }
@@ -225,21 +243,21 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
               // Check for dangerous path components
               if (truePath.includes('..') || truePath.startsWith('/') || truePath.startsWith('\\')) {
                 await removeUploadedFile();
-                await fsPromises.rm(path.join(appsPath, folderName), { recursive: true, force: true }).catch(() => {});
+                await fsPromises.rm(resolveWithin(appsPath, folderName), { recursive: true, force: true }).catch(() => {});
                 res.status(400).send({ success: false, message: 'Invalid file path in ZIP file.' });
                 return;
               }
               
               // Resolve both paths to absolute and normalize them for comparison
               const resolvedAppsPath = path.resolve(appsPath);
-              const fullPath = path.resolve(path.join(appsPath, truePath));
+              const fullPath = resolveWithin(appsPath, truePath);
               const normalizedFullPath = path.normalize(fullPath);
               const normalizedAppsPath = path.normalize(resolvedAppsPath);
               
               // Ensure the full path is within the apps directory
               if (!normalizedFullPath.startsWith(normalizedAppsPath + path.sep) && normalizedFullPath !== normalizedAppsPath) {
                 await removeUploadedFile();
-                await fsPromises.rm(path.join(appsPath, folderName), { recursive: true, force: true }).catch(() => {});
+                await fsPromises.rm(resolveWithin(appsPath, folderName), { recursive: true, force: true }).catch(() => {});
                 res.status(400).send({ success: false, message: 'Invalid file path in ZIP file.' });
                 return;
               }
@@ -261,14 +279,14 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
           await Promise.all(extractPromises);
         } catch (extractErr) {
           await removeUploadedFile();
-          await fsPromises.rm(path.join(appsPath, folderName), { recursive: true, force: true }).catch(() => {});
+          await fsPromises.rm(resolveWithin(appsPath, folderName), { recursive: true, force: true }).catch(() => {});
           res.status(500).send({ success: false, message: 'Error extracting ZIP file.' });
           return;
         }
 
         if (!foundIndex) {
           await removeUploadedFile();
-          await fsPromises.rm(path.join(appsPath, folderName), { recursive: true, force: true }).catch(() => {});
+          await fsPromises.rm(resolveWithin(appsPath, folderName), { recursive: true, force: true }).catch(() => {});
           res.status(400).send({ success: false, message: 'Index.html not found in ZIP file.' });
           return;
         }
@@ -287,7 +305,7 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
           } catch (updateErr) {
             console.error('Error updating plugin:', updateErr);
             await removeUploadedFile();
-            await fsPromises.rm(path.join(appsPath, folderName), { recursive: true, force: true }).catch(() => {});
+            await fsPromises.rm(resolveWithin(appsPath, folderName), { recursive: true, force: true }).catch(() => {});
             res.status(500).send({ success: false, message: 'Error updating plugin in database.' });
           }
         } else {
@@ -302,22 +320,23 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
           } catch (addErr) {
             console.error('Error adding plugin:', addErr);
             await removeUploadedFile();
-            await fsPromises.rm(path.join(appsPath, folderName), { recursive: true, force: true }).catch(() => {});
+            await fsPromises.rm(resolveWithin(appsPath, folderName), { recursive: true, force: true }).catch(() => {});
             res.status(500).send({ success: false, message: 'Error adding plugin to database.' });
           }
         }
       } catch (e) {
         console.error('Error processing plugin upload:', e);
         await removeUploadedFile();
-        await fsPromises.rm(path.join(appsPath, folderName), { recursive: true, force: true }).catch(() => {});
+        await fsPromises.rm(resolveWithin(appsPath, folderName), { recursive: true, force: true }).catch(() => {});
         res.status(500).send({ success: false, message: 'Error reading zip file.' });
       }
     });
 
     // REMOVE: Remove the plugin db reference and the files locally.
-    router.delete('/remove/:id', async ({ params }, res) => {
+    router.delete('/remove/:id', createRateLimiter(4), async ({ params }, res) => {
       try {
-        const docRef = this.collection.docRef(params.id);
+        const id = String(params.id);
+        const docRef = this.collection.docRef(id);
         const doc = await docRef.read();
         if (doc === undefined) {
           res.status(404).send({ success: false, message: 'Plugin not found.' });
@@ -330,14 +349,14 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
         const folderName = getPluginFolderName(roomId, name);
         
         try {
-          await fsPromises.rm(path.join(appsPath, folderName), { recursive: true, force: true });
+          await fsPromises.rm(resolveWithin(appsPath, folderName), { recursive: true, force: true });
         } catch (fsErr) {
           console.error('Error removing plugin files:', fsErr);
           // Continue with database deletion even if file removal fails
         }
 
         // Delete the document
-        const del = await this.delete(params.id);
+        const del = await this.delete(id);
         if (del) {
           res.status(200).send({ success: true });
         } else {
@@ -397,7 +416,7 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
       const folderName = getPluginFolderName(roomId, name);
       
       try {
-        await fsPromises.rm(path.join(appsPath, folderName), { recursive: true, force: true });
+        await fsPromises.rm(resolveWithin(appsPath, folderName), { recursive: true, force: true });
       } catch (fsErr) {
         console.error('Error removing plugin files:', fsErr);
         // Continue with database deletion even if file removal fails
@@ -456,11 +475,11 @@ class SAGE3PluginsCollection extends SAGE3Collection<PluginSchema> {
           continue;
         }
 
-        const oldFolderPath = path.join(appsPath, pluginName);
-        const newFolderName = getPluginFolderName(roomId, pluginName);
-        const newFolderPath = path.join(appsPath, newFolderName);
-
         try {
+          const oldFolderPath = resolveWithin(appsPath, pluginName);
+          const newFolderName = getPluginFolderName(roomId, pluginName);
+          const newFolderPath = resolveWithin(appsPath, newFolderName);
+
           // Check if old folder exists
           const oldFolderExists = fs.existsSync(oldFolderPath);
           const newFolderExists = fs.existsSync(newFolderPath);

@@ -8,9 +8,10 @@
 
 // Sends anonymous usage analytics (app start/stop) to the SAGE3 events server.
 
-const { screen } = require('electron');
-const os = require('os');
-const { randomUUID } = require('crypto');
+import { screen } from 'electron';
+import pkg from '../package.json' with { type: 'json' };
+import os from 'os';
+import { randomUUID } from 'crypto';
 
 // Endpoint that collects the analytics events
 const server_url = 'https://sage3.evl.uic.edu/events';
@@ -24,13 +25,13 @@ function analyticsOnStart(userId, arg_url) {
   // Get the screen sizes
   const displays = screen.getAllDisplays();
   const screens = [];
-  for (d of displays) {
+  for (const d of displays) {
     const { label, size, scaleFactor, rotation } = d;
     screens.push({ label, width: size.width, height: size.height, scaleFactor, rotation });
   }
 
   // Get the version from the package file
-  var version = require('../package.json').version;
+  const version = pkg.version;
 
   // OS information
   const osInfo = { platform: os.platform(), release: os.release(), arch: os.arch() };
@@ -110,15 +111,10 @@ function genUserId() {
   return randomUUID();
 }
 
-module.exports = {
-  analyticsOnStart,
-  analyticsOnStop,
-  genUserId,
-};
+export { analyticsOnStart, analyticsOnStop, genUserId };
 
 // Return the first external IPv4 address, or a fallback if none is found
 function getMachineIP() {
-  var os = require('os');
   var ifaces = os.networkInterfaces();
   var values = Object.keys(ifaces).map(function (name) {
     return ifaces[name];

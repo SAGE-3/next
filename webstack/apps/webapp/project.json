@@ -1,0 +1,40 @@
+{
+  "name": "webapp",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/webapp/src",
+  "projectType": "application",
+  "targets": {
+    "build": {
+      "defaultConfiguration": "production",
+      "configurations": {
+        "production": {
+          "env": {
+            "NODE_ENV": "production"
+          }
+        },
+        "development": {
+          "env": {
+            "NODE_ENV": "development"
+          }
+        }
+      },
+      "outputs": [
+        "{workspaceRoot}/dist/apps/webapp"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ]
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node ../../node_modules/typescript-native/bin/tsc -p tsconfig.check.json --noEmit",
+        "cwd": "apps/webapp"
+      }
+    }
+  },
+  "tags": []
+}

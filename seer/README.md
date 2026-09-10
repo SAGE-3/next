@@ -20,7 +20,7 @@ Seer currently handles:
 - image analysis
 - PDF question answering
 - webpage extraction and screenshot workflows
-- Mesonet-specific workflows
+- image generation and SageIdeator workflows
 
 ## How It Fits Into SAGE3
 
@@ -34,7 +34,7 @@ At startup, Seer:
 
 For SEER board requests, the flow is:
 
-1. the frontend sends a request to `/seer`
+1. the frontend sends a request to Homebase's `/api/agents/seer`, which forwards it to Seer's `/seer`
 2. Seer gives the model a scoped set of board-aware tools
 3. the model requests tool calls
 4. Seer executes those tools against live SAGE3 state
@@ -55,7 +55,8 @@ That means the model does the reasoning, but Seer controls the actual data acces
 - [app/image.py](./app/image.py): image-related workflows
 - [app/pdf.py](./app/pdf.py): PDF understanding and follow-up content generation
 - [app/web.py](./app/web.py): website extraction and screenshot workflows
-- [app/mesonet.py](./app/mesonet.py): Mesonet-specific workflows
+- [app/imagegen.py](./app/imagegen.py): image generation
+- [app/ideator.py](./app/ideator.py): SageIdeator workflows
 - [libs/localtypes.py](./libs/localtypes.py): shared request/response schemas
 - `libs/utils.py`: provider/model config helpers and error parsing
 - `libs/ai_logging.py`: Fluentd logging setup and LangChain logging hooks
@@ -71,10 +72,12 @@ Seer currently exposes these FastAPI routes from [main.py](./main.py):
 | `/ask` | `POST` | general chat and action proposal flow |
 | `/code` | `POST` | code generation/refactor flow |
 | `/image` | `POST` | image-related AI flow |
-| `/mesonet` | `POST` | Mesonet-specific data flow |
 | `/pdf` | `POST` | PDF analysis flow |
 | `/web` | `POST` | webpage extraction and analysis |
 | `/webshot` | `POST` | webpage screenshot workflow |
+| `/image-generation` | `POST` | generic image generation |
+
+SageIdeator routes are also registered in `main.py`.
 
 Notes:
 
@@ -121,14 +124,17 @@ Seer re-queries live board state on the backend and only falls back to client-pr
 
 ## Model Providers
 
-Seer reads provider/model configuration from SAGE3 config plus the local environment.
+Seer uses the shared model registry through `libs/llm_manager.py`. The board
+agent selects a chat-capable model from the requested provider; that model must
+also support tool calling. OpenAI, Azure, and OpenAI-compatible providers use
+the same construction path as the other agents.
 
-The board-planning SEER route currently supports:
+When the user selects their own provider, the frontend attaches the existing
+`userllm` payload. Those credentials are used for that request only, including
+delegated image/PDF analysis, and the resulting model client is not cached.
 
-- `openai`
-- `azure`
-
-If an unsupported provider is selected for the SEER route, Seer returns a clear error message instead of trying to guess.
+An empty registry does not prevent the board agent from initializing. Requests
+without an available chat model receive a failure response with no actions.
 
 ## Local Development
 
@@ -191,3 +197,11 @@ http://127.0.0.1:9999/seer
 - user approval stays in the loop for board changes
 
 That keeps the assistant useful without turning it into a direct data mutation surface.
+
+## Regression Checks
+
+From `seer/`, run `python -m unittest discover -s tests -v` using the Seer
+environment. These checks use synthetic boards and mocked external services to
+cover startup and route wiring, provider selection, the planning/tool loop,
+personal-provider isolation, image request compatibility, and PDF fallback.
+They do not make model calls or mutate a live board.

@@ -14,6 +14,7 @@ export * from './useKeyPress';
 export * from './useHexColor';
 export * from './useRouteNav';
 export * from './useWindowResize';
+export * from './useScreenshare';
 export * from './usePluginListener';
 export * from './useFiles';
 export * from './useThrottleApps';

@@ -4,17 +4,15 @@ services:
     container_name: traefik
     restart: always
     ports:
-      - "443:443"  # HTTPS for secure traffic
+      - "443:443" # HTTPS for secure traffic
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock  # Allow Traefik to access Docker API
+      - /var/run/docker.sock:/var/run/docker.sock # Allow Traefik to access Docker API
       - ./configurations/traefik:/etc/traefik
   redis-server:
     image: "redis/redis-stack-server:latest"
     volumes:
       - ./configurations/redis/data:/data
       - ./configurations/redis/conf:/conf
-    ports:
-      - "127.0.0.1:6379:6379"
     entrypoint: redis-server
     command: /conf/redis.conf
     deploy:
@@ -22,8 +20,6 @@ services:
         condition: on-failure
   chromadb:
     image: "chromadb/chroma:0.5.16"
-    ports:
-      - "127.0.0.1:8100:8000"
     volumes:
       - ./configurations/chroma/data:/chroma/chroma
     environment:
@@ -56,6 +52,10 @@ services:
       - "traefik.http.middlewares.ws-headers.headers.customrequestheaders.Connection=Upgrade"
       - "traefik.http.middlewares.authheader.headers.accesscontrolallowheaders=Authorization,Content-Type"
       - "traefik.http.routers.node-server.middlewares=authheader"
+    environment:
+      - NODE_ENV=production
+      # Same secret the livekit-server container gets; enables screensharing when set
+      - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET}
     volumes:
       - ./configurations/node/keys:/app/keys
       - ./configurations/node/assets:/app/dist/apps/homebase/assets
@@ -90,6 +90,8 @@ services:
       - "traefik.http.middlewares.ws-headers.headers.customrequestheaders.Connection=Upgrade"
       - "traefik.http.middlewares.authheader.headers.accesscontrolallowheaders=Authorization,Content-Type"
       - "traefik.http.routers.yjs-server.middlewares=authheader"
+    environment:
+      - NODE_ENV=production
     volumes:
       - ./configurations/node/keys:/app/keys
       - ./configurations/node/sage3-prod.hjson:/app/sage3-prod.hjson
@@ -118,6 +120,8 @@ services:
       - "traefik.http.services.files-server.loadbalancer.server.port=3002"
       - "traefik.http.middlewares.authheader.headers.accesscontrolallowheaders=Authorization,Content-Type"
       - "traefik.http.routers.files-server.middlewares=authheader"
+    environment:
+      - NODE_ENV=production
     volumes:
       - ./configurations/node/keys:/app/keys
       - ./configurations/node/assets:/app/dist/apps/homebase/assets
@@ -136,10 +140,38 @@ services:
       driver: "json-file"
       options:
         max-size: "100m"
+  livekit-server:
+    image: "livekit/livekit-server:v1.13"
+    command: --config /etc/livekit.yaml
+    environment:
+      # The one credential a deployment generates, shared with node-server below.
+      # The key ("SAGE3") is an identifier, not a secret, so it is fixed.
+      - "LIVEKIT_KEYS=SAGE3: ${LIVEKIT_API_SECRET}"
+    labels:
+      - "traefik.enable=true"
+      # Signaling (WebSocket) goes through traefik for TLS: wss://<server>/sfu
+      # (/livekit is NOT used as the prefix: the node-server owns /livekit/token)
+      - "traefik.http.routers.livekit-server.rule=Host(`${SAGE3_SERVER}`) && PathPrefix(`/sfu`)"
+      - "traefik.http.routers.livekit-server.priority=400"
+      - "traefik.http.routers.livekit-server.entrypoints=websecure"
+      - "traefik.http.services.livekit-server.loadbalancer.server.port=7880"
+      - "traefik.http.middlewares.livekit-strip.stripprefix.prefixes=/sfu"
+      - "traefik.http.routers.livekit-server.middlewares=livekit-strip"
+    # WebRTC media bypasses traefik: UDP (and TCP fallback) directly on the host
+    ports:
+      - "7881:7881"
+      - "7882:7882/udp"
+    volumes:
+      - ./configurations/livekit/livekit.yaml:/etc/livekit.yaml
+    deploy:
+      restart_policy:
+        condition: on-failure
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
   fluentd-server:
     image: "fluent/fluentd:edge-debian"
-    ports:
-      - "127.0.0.1:24224:24224"
     volumes:
       - ./configurations/fluentd/log:/fluentd/log
       - ./configurations/fluentd/conf:/fluentd/etc
@@ -149,8 +181,6 @@ services:
         max-size: "100m"
   kernelserver:
     image: "ghcr.io/sage-3/sagekernelserver:amd64"
-    ports:
-      - "127.0.0.1:8000:8000"
     environment:
       - ENVIRONMENT=production
       - SAGE3_SERVER=${SAGE3_SERVER}
@@ -174,8 +204,6 @@ services:
         condition: on-failure
   seer:
     image: "ghcr.io/sage-3/agents:amd64"
-    ports:
-      - "127.0.0.1:9999:9999"
     environment:
       - ENVIRONMENT=production
       - SAGE3_SERVER=${SAGE3_SERVER}
@@ -200,8 +228,6 @@ services:
     volumes:
       - ./configurations/jupyter/conf:/conf
       - ./configurations/jupyter/notebooks:/home/jovyan/notebooks
-    ports:
-      - "127.0.0.1:8888:8888"
     environment:
       - ENVIRONMENT=production
       - SAGE3_SERVER=${SAGE3_SERVER}

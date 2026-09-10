@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import * as urlMetadata from 'url-metadata';
+import urlMetadata from 'url-metadata';
 
 // Data we need to the WebpageLink app
 export type URLMetadata = {

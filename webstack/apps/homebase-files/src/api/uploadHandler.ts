@@ -14,7 +14,7 @@
  */
 
 // Express web server framework
-import * as express from 'express';
+import express from 'express';
 import { decode as decode8 } from 'utf8';
 import { v4 as getUUID } from 'uuid';
 

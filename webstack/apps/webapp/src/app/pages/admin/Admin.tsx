@@ -35,11 +35,12 @@ import { throttle } from 'throttle-debounce';
 import { MdFileDownload, MdRefresh, MdSearch } from 'react-icons/md';
 
 // Collection specific schemas
-import { Board, Asset, User, Room, Message, Presence, Insight, } from '@sage3/shared/types';
+import { Board, Asset, User, Room, Message, Presence, Insight } from '@sage3/shared/types';
 import { App } from '@sage3/applications/schema';
 
 // Components
 import { humanFileSize } from '@sage3/shared';
+import { escapeHtml } from '@sage3/frontend';
 import { APIHttp, apiUrls, CollectionDocs, downloadFile, useRouteNav, useUser, AccountDeletion } from '@sage3/frontend';
 import { TableViewer } from './components';
 
@@ -87,39 +88,42 @@ export function AdminPage() {
 
   // Fetch Data with loading states
   const fetchData = useCallback(async <T extends CollectionDocs>(collection: string) => {
-    setLoadingStates(prev => ({ ...prev, [collection]: true }));
-    setErrorStates(prev => ({ ...prev, [collection]: '' }));
+    setLoadingStates((prev) => ({ ...prev, [collection]: true }));
+    setErrorStates((prev) => ({ ...prev, [collection]: '' }));
 
     try {
       const response = await APIHttp.GET<T>(`/${collection}`);
       if (response.success && response.data) {
-        setCollectionsData(prev => ({ ...prev, [collection]: response.data as any[] }));
+        setCollectionsData((prev) => ({ ...prev, [collection]: response.data as any[] }));
       } else {
-        setErrorStates(prev => ({ ...prev, [collection]: 'Failed to fetch data' }));
+        setErrorStates((prev) => ({ ...prev, [collection]: 'Failed to fetch data' }));
       }
     } catch (error) {
-      setErrorStates(prev => ({ ...prev, [collection]: error instanceof Error ? error.message : 'Unknown error' }));
+      setErrorStates((prev) => ({ ...prev, [collection]: error instanceof Error ? error.message : 'Unknown error' }));
     } finally {
-      setLoadingStates(prev => ({ ...prev, [collection]: false }));
+      setLoadingStates((prev) => ({ ...prev, [collection]: false }));
     }
   }, []);
 
   // Tab Index
   const [tabIndex, setTabIndex] = useState(0);
-  const handleTabChange = useCallback((index: number) => {
-    setTabIndex(index);
-    setSearch('');
-    setSearchValue('');
+  const handleTabChange = useCallback(
+    (index: number) => {
+      setTabIndex(index);
+      setSearch('');
+      setSearchValue('');
 
-    // Get collection name from index
-    const collectionNames = Object.keys(COLLECTIONS);
-    const collectionName = collectionNames[index];
+      // Get collection name from index
+      const collectionNames = Object.keys(COLLECTIONS);
+      const collectionName = collectionNames[index];
 
-    // Only fetch if not already loaded
-    if (!collectionsData[collectionName] && !loadingStates[collectionName]) {
-      fetchData(collectionName);
-    }
-  }, [collectionsData, loadingStates, fetchData]);
+      // Only fetch if not already loaded
+      if (!collectionsData[collectionName] && !loadingStates[collectionName]) {
+        fetchData(collectionName);
+      }
+    },
+    [collectionsData, loadingStates, fetchData],
+  );
 
   const handleRefreshData = useCallback(() => {
     const collectionNames = Object.keys(COLLECTIONS);
@@ -134,7 +138,8 @@ export function AdminPage() {
       const entries = data.data as any[];
       entries.forEach((entry) => {
         if (preRef.current) {
-          preRef.current.innerHTML += `<b>${entry.tag}</b> ${JSON.stringify(entry.doc.data, null, 0)}<br>`;
+          const text = escapeHtml(JSON.stringify(entry.doc.data, null, 0));
+          preRef.current.innerHTML += `<b>${escapeHtml(entry.tag)}</b> ${text}<br>`;
           preRef.current.scrollTop = preRef.current.scrollHeight;
         }
       });
@@ -170,15 +175,18 @@ export function AdminPage() {
   }, []);
 
   // Delete an item
-  const deleteItem = useCallback((id: string, collection: string) => {
-    APIHttp.DELETE(`/${collection}/` + id).then((resp) => {
-      if (resp.success) {
-        toast({ title: 'Item Deleted', status: 'info', duration: 2000, isClosable: true });
-        // Refresh the current collection
-        handleRefreshData();
-      }
-    });
-  }, [toast, handleRefreshData]);
+  const deleteItem = useCallback(
+    (id: string, collection: string) => {
+      APIHttp.DELETE(`/${collection}/` + id).then((resp) => {
+        if (resp.success) {
+          toast({ title: 'Item Deleted', status: 'info', duration: 2000, isClosable: true });
+          // Refresh the current collection
+          handleRefreshData();
+        }
+      });
+    },
+    [toast, handleRefreshData],
+  );
 
   // Search of the data
   const [search, setSearch] = useState('');
@@ -198,19 +206,22 @@ export function AdminPage() {
   // Account Deletion Modal Disclosure
   const { isOpen: accountDelIsOpen, onOpen: accountDelOnOpen, onClose: accountDelOnClose } = useDisclosure();
   const [accountDelUser, setAccountDelUser] = useState<User | null>(null);
-  const handleAccountDeletion = useCallback((userId: string) => {
-    const collectionNames = Object.keys(COLLECTIONS);
-    const collectionName = collectionNames[tabIndex];
-    const data = collectionsData[collectionName] as User[];
-    const user = data?.find((u) => u._id === userId);
-    if (!user) {
-      // toast to inform user that the user was not found
-      toast({ title: 'User not found', status: 'error', duration: 2000, isClosable: true });
-      return;
-    }
-    setAccountDelUser(user);
-    accountDelOnOpen();
-  }, [collectionsData, tabIndex, toast, accountDelOnOpen]);
+  const handleAccountDeletion = useCallback(
+    (userId: string) => {
+      const collectionNames = Object.keys(COLLECTIONS);
+      const collectionName = collectionNames[tabIndex];
+      const data = collectionsData[collectionName] as User[];
+      const user = data?.find((u) => u._id === userId);
+      if (!user) {
+        // toast to inform user that the user was not found
+        toast({ title: 'User not found', status: 'error', duration: 2000, isClosable: true });
+        return;
+      }
+      setAccountDelUser(user);
+      accountDelOnOpen();
+    },
+    [collectionsData, tabIndex, toast, accountDelOnOpen],
+  );
 
   // Handle download the data
   const handleDownloadData = useCallback(() => {
@@ -234,17 +245,20 @@ export function AdminPage() {
   }, [collectionsData, tabIndex, toast]);
 
   // Handle download asset
-  const handleDownloadAsset = useCallback(async (id: string) => {
-    const data = collectionsData.assets as Asset[];
-    const asset = data?.find((a) => a._id === id);
-    if (!asset) {
-      toast({ title: 'Asset not found', status: 'error', duration: 2000, isClosable: true });
-      return;
-    }
-    const filename = asset.data.originalfilename;
-    const fileURL = apiUrls.assets.getAssetById(asset.data.file);
-    downloadFile(fileURL, filename);
-  }, [collectionsData, toast]);
+  const handleDownloadAsset = useCallback(
+    async (id: string) => {
+      const data = collectionsData.assets as Asset[];
+      const asset = data?.find((a) => a._id === id);
+      if (!asset) {
+        toast({ title: 'Asset not found', status: 'error', duration: 2000, isClosable: true });
+        return;
+      }
+      const filename = asset.data.originalfilename;
+      const fileURL = apiUrls.assets.getAssetById(asset.data.file);
+      downloadFile(fileURL, filename);
+    },
+    [collectionsData, toast],
+  );
 
   // Get current collection data and loading state
   const currentCollectionName = useMemo(() => {
@@ -275,7 +289,7 @@ export function AdminPage() {
         data: [],
         search: searchValue,
         columns: [],
-        actions: []
+        actions: [],
       };
     }
 
@@ -350,7 +364,7 @@ export function AdminPage() {
           ...baseProps,
           heading: 'No Data',
           data: [],
-          actions: []
+          actions: [],
         };
     }
   };
@@ -425,28 +439,28 @@ export function AdminPage() {
 
             <TabPanels flex="1" overflow="hidden" height="100%">
               <TabPanel p={0} height="100%">
-                <TableViewer {...getTableProps() as any} isLoading={isLoading} error={error} />
+                <TableViewer {...(getTableProps() as any)} isLoading={isLoading} error={error} />
               </TabPanel>
               <TabPanel p={0} height="100%">
-                <TableViewer {...getTableProps() as any} isLoading={isLoading} error={error} />
+                <TableViewer {...(getTableProps() as any)} isLoading={isLoading} error={error} />
               </TabPanel>
               <TabPanel p={0} height="100%">
-                <TableViewer {...getTableProps() as any} isLoading={isLoading} error={error} />
+                <TableViewer {...(getTableProps() as any)} isLoading={isLoading} error={error} />
               </TabPanel>
               <TabPanel p={0} height="100%">
-                <TableViewer {...getTableProps() as any} isLoading={isLoading} error={error} />
+                <TableViewer {...(getTableProps() as any)} isLoading={isLoading} error={error} />
               </TabPanel>
               <TabPanel p={0} height="100%">
-                <TableViewer {...getTableProps() as any} isLoading={isLoading} error={error} />
+                <TableViewer {...(getTableProps() as any)} isLoading={isLoading} error={error} />
               </TabPanel>
               <TabPanel p={0} height="100%">
-                <TableViewer {...getTableProps() as any} isLoading={isLoading} error={error} />
+                <TableViewer {...(getTableProps() as any)} isLoading={isLoading} error={error} />
               </TabPanel>
               <TabPanel p={0} height="100%">
-                <TableViewer {...getTableProps() as any} isLoading={isLoading} error={error} />
+                <TableViewer {...(getTableProps() as any)} isLoading={isLoading} error={error} />
               </TabPanel>
               <TabPanel p={0} height="100%">
-                <TableViewer {...getTableProps() as any} isLoading={isLoading} error={error} />
+                <TableViewer {...(getTableProps() as any)} isLoading={isLoading} error={error} />
               </TabPanel>
               <TabPanel p={0} height="100%">
                 <Heading>Logs</Heading>

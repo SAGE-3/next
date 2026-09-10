@@ -9,7 +9,7 @@
 // Node Imports
 import { IncomingMessage, createServer } from 'http';
 import { WebSocket, WebSocketServer } from 'ws';
-import * as express from 'express';
+import express from 'express';
 
 // SAGE3 Imports
 import { loadConfig } from './config';
@@ -72,7 +72,7 @@ async function startServer() {
   });
 
   // Websocket API for WebRTC
-  const rtcSocketServer = new WebSocket.Server({ noServer: true });
+  const rtcSocketServer = new WebSocketServer({ noServer: true });
   const clients: Map<string, WebSocket[]> = new Map();
   // Broadcast to all clients in the room
   function emitRTC(room: string, type: string, params: any) {

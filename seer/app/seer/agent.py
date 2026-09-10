@@ -14,7 +14,6 @@ from logging import Logger
 from typing import Any
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
-from langchain_openai import AzureChatOpenAI, ChatOpenAI
 
 from pysage3.client import PySage3
 
@@ -22,6 +21,7 @@ from app.seer.app_support import seer_state_support_hint
 from app.seer.helpers import format_content, step_summary
 from app.seer.tools import build_seer_tools
 from libs.localtypes import Question, SeerAnswer
+from libs.llm_manager import LLMManager
 from libs.utils import getModelsInfo, parse_openai_error
 
 
@@ -35,37 +35,12 @@ class SeerAgent:
         self.image_agent = image_agent
         self.pdf_agent = pdf_agent
 
-        models = getModelsInfo(ps3)
-        openai = models["openai"]
-        azure = models["azure"]
+        self.manager = LLMManager(getModelsInfo(ps3), logger)
 
-        self.session_openai = None
-        self.session_azure = None
-
-        if openai["apiKey"] and openai["model"]:
-            self.session_openai = ChatOpenAI(api_key=openai["apiKey"], model=openai["model"], temperature=0)
-
-        if azure["text"]["apiKey"] and azure["text"]["model"]:
-            model = azure["text"]["model"]
-            endpoint = azure["text"]["url"]
-            credential = azure["text"]["apiKey"]
-            api_version = azure["text"]["api_version"]
-
-            self.session_azure = AzureChatOpenAI(
-                azure_deployment=model,
-                api_version=api_version,
-                azure_endpoint=endpoint,
-                azure_ad_token=credential,
-                model=model,
-                temperature=0,
-            )
-
-    def _get_model(self, model_name: str):
-        if model_name == "openai":
-            return self.session_openai
-        if model_name == "azure":
-            return self.session_azure
-        return None
+    def _get_model(self, qq: Question):
+        return self.manager.build_chat_model(
+            qq.model, ["chat"], user_llm=LLMManager.user_credentials(qq), temperature=0
+        )
 
     def _history_messages(self, qq: Question) -> list[Any]:
         """Convert the recent SEER question/answer history into model messages."""
@@ -85,9 +60,9 @@ class SeerAgent:
     async def process(self, qq: Question):
         self.logger.info("Got SeerAgent> from %s using %s on board %s", qq.user, qq.model, qq.ctx.boardId)
 
-        llm = self._get_model(qq.model)
+        llm = self._get_model(qq)
         if llm is None:
-            message = "SEER currently supports OpenAI and Azure. Please switch SEER away from Llama in User Settings."
+            message = f"Provider '{qq.model}' has no model capable of chat. Please choose a configured provider in User Settings."
             return SeerAnswer(id=qq.id, r=message, success=False, actions=[], toolCalls=[])
 
         tools = build_seer_tools(self, qq)

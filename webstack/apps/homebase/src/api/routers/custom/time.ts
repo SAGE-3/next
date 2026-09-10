@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import * as express from 'express';
+import express from 'express';
 
 /**
  * Route for clients to get the SERVER time

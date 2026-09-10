@@ -19,7 +19,6 @@ from pysage3.config import config as conf, prod_type
 import logging
 logger = logging.getLogger(__name__)
 
-# TODO : CONVERT JupyterKernelProxy INTO singleton (use BORG)
 def format_execute_request_msg(exec_uuid, code, msg_type='execute_request'):
     content = {'code': code, 'silent': False}
     hdr = {'msg_id': uuid.UUID(exec_uuid).hex,
@@ -94,7 +93,19 @@ class JupyterKernelProxy:
                 self.parent_proxy_instance.callback_info[msg_id_uuid](result)
 
 
+    # Borg pattern: every instance shares the same state, so no matter how
+    # many smartbits construct a proxy (one per SageCell app on any board),
+    # there is only ever ONE WebSocketManager poller thread, one Redis
+    # connection, and one websocket per kernel. Without this, a server with
+    # hundreds of SageCells spawns hundreds of threads/file descriptors at
+    # startup and the process aborts on resource exhaustion.
+    _shared_state = {}
+
     def __init__(self):
+        self.__dict__ = self._shared_state
+        if self._shared_state:
+            # Already initialized by a previous instance
+            return
         self.connections = {}
         self.redis_server = redis.StrictRedis(host=conf[prod_type]["redis_server"], port=6379, db=0)
 
@@ -183,8 +194,9 @@ class JupyterKernelProxy:
             raise Exception("couldn't communicate with the Jupyter Kernel Gateway.")
 
     def clean_up(self):
-        pass
         self.conn_manager.close_all()
         self.conn_manager.stop()
         self.conn_manager.join()
+        # Reset the shared state so a future proxy re-initializes cleanly
+        JupyterKernelProxy._shared_state.clear()
 

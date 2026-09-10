@@ -1,5 +1,5 @@
 /**
- * Copyright (c) SAGE3 Development Team 2023. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
@@ -9,7 +9,7 @@
 // Ky for HTTP requests
 import ky, { HTTPError } from 'ky';
 
-import { apiUrls } from '@sage3/frontend';
+import { apiUrls, withUserCredentials, toSError } from '@sage3/frontend';
 import {
   SError,
   AgentRoutes,
@@ -24,8 +24,6 @@ import {
   PDFAnswer,
   WebScreenshot,
   WebScreenshotAnswer,
-  MesonetRequest,
-  MesonetResponse,
 } from '@sage3/shared';
 
 /**
@@ -37,15 +35,16 @@ import {
 const makeRpcPost = async (mth: string, data: object) => {
   try {
     const base = apiUrls.ai.agents.base;
-    const response = await ky.post<Response>(`${base}${mth}`, { json: data, timeout: 120 * 1000 }).json();
+    // withUserCredentials attaches the user's own key only when the request
+    // names their own provider; every other request is sent unchanged
+    const response = await ky.post<Response>(`${base}${mth}`, { json: withUserCredentials(data), timeout: 120 * 1000 }).json();
     return response;
   } catch (e) {
     const error = e as HTTPError<Response>;
     if (error.name === 'HTTPError') {
-      const err: SError = await error.response.json();
-      return err;
+      return await toSError(error);
     } else {
-      return { message: 'Unknown error' };
+      return { message: e instanceof Error ? e.message : 'Unknown error' };
     }
   }
 };
@@ -57,10 +56,9 @@ const makeRpcGet = async (mth: string) => {
   } catch (e) {
     const error = e as HTTPError<Response>;
     if (error.name === 'HTTPError') {
-      const err: SError = await error.response.json();
-      return err;
+      return await toSError(error);
     } else {
-      return { message: 'Unknown error' };
+      return { message: e instanceof Error ? e.message : 'Unknown error' };
     }
   }
 };
@@ -73,9 +71,6 @@ const makeRpcGet = async (mth: string) => {
  */
 export const callStatus = async () => {
   return makeRpcGet(AgentRoutes.status) as Promise<HealthResponse | SError>;
-};
-export const callMesonet = async (data: MesonetRequest) => {
-  return makeRpcPost(AgentRoutes.mesonet, data) as Promise<MesonetResponse | SError>;
 };
 export const callAsk = async (data: AskRequest) => {
   return makeRpcPost(AgentRoutes.ask, data) as Promise<AskResponse | SError>;

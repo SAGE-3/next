@@ -1,0 +1,51 @@
+{
+  "name": "homebase-yjs",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/homebase-yjs/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "build": {
+      "defaultConfiguration": "production",
+      "configurations": {
+        "production": {
+          "env": {
+            "NODE_ENV": "production"
+          }
+        },
+        "development": {
+          "env": {
+            "NODE_ENV": "development"
+          }
+        }
+      },
+      "outputs": [
+        "{workspaceRoot}/dist/apps/homebase-yjs"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ]
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "options": {
+        "buildTarget": "homebase-yjs:build:development"
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "homebase-yjs:build:production"
+        }
+      }
+    },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "node ../../node_modules/typescript-native/bin/tsc -p tsconfig.check.json --noEmit",
+        "cwd": "apps/homebase-yjs"
+      }
+    }
+  }
+}

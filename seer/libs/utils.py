@@ -7,11 +7,14 @@
 # -----------------------------------------------------------------------------
 
 import json
+import logging
 
 # Image
 from PIL import Image
 from io import BytesIO
 import re, time, os, base64
+import ipaddress, socket, requests
+from urllib.parse import urlparse
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -100,14 +103,19 @@ def getModelsInfo(ps3):
       ps3: SAGE3 API handle.
 
     Returns:
-      dict: A dictionary containing the "llama" and "openai" model information.
+      dict: The "models" configuration block, or an empty dict if the server
+      config has not been migrated to the unified models schema. Returning {}
+      lets LLMManager degrade gracefully instead of crashing Seer at startup.
     """
-    sage3_config = ps3.s3_comm.web_config
-    openai = sage3_config["openai"]
-    llama = sage3_config["llama"]
-    azure = sage3_config["azure"]
-    return {"llama": llama, "openai": openai, "azure": azure}
-
+    web_config = ps3.s3_comm.web_config or {}
+    sage3_config = web_config.get('models')
+    if not sage3_config:
+        logging.getLogger(__name__).warning(
+            "SAGE3 server config has no 'models' block; AI features will be "
+            "unavailable until the server is migrated to the unified models schema."
+        )
+        return {}
+    return sage3_config
 
 def getRoomInfo(ps3, room_id):
     """
@@ -130,6 +138,53 @@ def getRoomInfo(ps3, room_id):
         res = r.json()
         return DotDict(res).data[0]
     return None
+
+
+# How to read the text content out of each app type's state. Mirrors the
+# frontend app schemas; keep in sync if an app's state shape changes.
+APP_CONTENT_FIELDS = {
+    "Stickie": "text",
+    "CodeEditor": "content",
+    "SageCell": "code",
+    "Notepad": "text",
+}
+
+
+def getApp(ps3, app_id):
+    """Fetch a single app document by id from the SAGE3 server, or None."""
+    url = (
+        ps3.s3_comm.conf[ps3.s3_comm.prod_type]["web_server"] + "/api/apps/" + app_id
+    )
+    headers = ps3.s3_comm._SageCommunication__headers
+    r = ps3.s3_comm.httpx_client.get(url, headers=headers)
+    if r.is_success:
+        data = r.json().get("data") or []
+        return data[0] if data else None
+    return None
+
+
+def getAppContent(ps3, app_id):
+    """Return (app_type, text) for an app's content, or (type, '') / (None, '')."""
+    app = getApp(ps3, app_id)
+    if not app:
+        return None, ""
+    atype = app.get("data", {}).get("type")
+    field = APP_CONTENT_FIELDS.get(atype)
+    if not field:
+        return atype, ""
+    text = app.get("data", {}).get("state", {}).get(field) or ""
+    return atype, text
+
+
+def buildContextFromApps(ps3, app_ids):
+    """Concatenate the text content of the given apps (server-side), so the
+    frontend can send app ids instead of extracting and shipping content."""
+    parts = []
+    for aid in app_ids or []:
+        _atype, text = getAppContent(ps3, aid)
+        if text:
+            parts.append(text)
+    return "\n\n".join(parts)
 
 
 def getBoardInfo(ps3, board_id):
@@ -283,6 +338,23 @@ def getUsers(ps3):
     return None
 
 
+def mdCachePath(asset_id):
+    """
+    Build the /tmp/{id}.md cache path for a PDF asset, rejecting ids that
+    would escape /tmp (path injection). Asset ids come from client requests,
+    so they must be treated as untrusted.
+    """
+    name = str(asset_id)
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", name):
+        raise ValueError(f"Invalid asset id: {asset_id!r}")
+    # /tmp may itself be a symlink (e.g. /private/tmp on macOS)
+    base = os.path.realpath("/tmp")
+    path = os.path.realpath(os.path.join(base, name + ".md"))
+    if not path.startswith(base + os.sep):
+        raise ValueError(f"Invalid asset id: {asset_id!r}")
+    return path
+
+
 def getMDfromPDF(id, content):
     """
     Converts a PDF content to Markdown format and caches the result in a temporary file.
@@ -297,7 +369,7 @@ def getMDfromPDF(id, content):
     If the Markdown file already exists in the temporary directory, it reads and returns the content from the file.
     Otherwise, it converts the PDF content to Markdown, writes it to a temporary file, and returns the Markdown content.
     """
-    file_path = f"/tmp/{id}.md"
+    file_path = mdCachePath(id)
     if os.path.exists(file_path):
         with open(file_path, "r") as file:
             return file.read()
@@ -419,6 +491,93 @@ def isURL(string):
     return bool(url_pattern.match(string))
 
 
+# Limits for fetching user-provided image URLs
+FETCH_TIMEOUT = 10  # seconds
+FETCH_MAX_BYTES = 20 * 1024 * 1024  # 20 MB
+FETCH_MAX_REDIRECTS = 3
+
+
+def assertPublicHost(url):
+    """
+    Raise ValueError unless every address the URL's hostname resolves to is public.
+
+    Blocks loopback, private (RFC 1918), link-local, multicast, and reserved
+    ranges so a user-provided URL cannot reach internal services (SSRF).
+
+    Args:
+      url (str): The URL to check.
+
+    Returns:
+      The parsed URL (urllib.parse.ParseResult).
+    """
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https"):
+        raise ValueError(f"Unsupported URL scheme: {parsed.scheme}")
+    if not parsed.hostname:
+        raise ValueError("URL has no hostname")
+    port = parsed.port or (443 if parsed.scheme == "https" else 80)
+    try:
+        infos = socket.getaddrinfo(parsed.hostname, port, proto=socket.IPPROTO_TCP)
+    except socket.gaierror:
+        raise ValueError(f"Cannot resolve host: {parsed.hostname}")
+    # Every resolved address must be public, not just the first one
+    for info in infos:
+        ip = ipaddress.ip_address(info[4][0])
+        if not ip.is_global or ip.is_multicast:
+            raise ValueError(f"URL resolves to a non-public address: {ip}")
+    return parsed
+
+
+def fetch_public_image(url):
+    """
+    Fetch an image from a user-provided URL, refusing non-public destinations.
+
+    Redirects are followed manually and each hop is re-validated with
+    assertPublicHost. The download is bounded by FETCH_TIMEOUT and
+    FETCH_MAX_BYTES, and the response must be an image.
+
+    Note: the address check happens before the request (resolve-then-fetch),
+    so a hostile DNS server flipping records between the two lookups is a
+    residual risk; network egress rules are the backstop for that.
+
+    Args:
+      url (str): The http(s) URL of the image.
+
+    Returns:
+      bytes: The raw image content.
+
+    Raises:
+      ValueError: If the URL is unsafe, unreachable, redirects too many
+        times, is too large, or does not contain an image.
+    """
+    for _ in range(FETCH_MAX_REDIRECTS + 1):
+        assertPublicHost(url)
+        try:
+            response = requests.get(
+                url, timeout=FETCH_TIMEOUT, allow_redirects=False, stream=True
+            )
+        except requests.RequestException as e:
+            raise ValueError(f"Failed to fetch URL: {e}")
+        if response.is_redirect or response.is_permanent_redirect:
+            location = response.headers.get("Location")
+            if not location:
+                raise ValueError("Redirect without a Location header")
+            url = requests.compat.urljoin(url, location)
+            continue
+        if response.status_code != 200:
+            raise ValueError(f"Fetch failed with status {response.status_code}")
+        content_type = response.headers.get("Content-Type", "").split(";")[0].strip()
+        if not (content_type.startswith("image/") or content_type == "application/octet-stream"):
+            raise ValueError(f"Not an image: {content_type}")
+        data = BytesIO()
+        for chunk in response.iter_content(chunk_size=64 * 1024):
+            data.write(chunk)
+            if data.tell() > FETCH_MAX_BYTES:
+                raise ValueError("Image too large")
+        return data.getvalue()
+    raise ValueError("Too many redirects")
+
+
 def getImageFile(ps3, assetid):
     """
     Retrieve the image file content from the SAGE3 server based on the provided asset ID.
@@ -467,12 +626,19 @@ def scaleImage(imageContent, imageSize):
     # Convert the image to RGB format
     img = img.convert("RGB")
 
-    # Check if the width is zero to avoid division by zero error
-    if width == 0:
-        raise ValueError("Image width cannot be zero.")
+    # Check if dimensions are zero to avoid invalid resize operations
+    if width == 0 or height == 0:
+      raise ValueError("Image dimensions cannot be zero.")
 
-    # Resize the image while maintaining the aspect ratio
-    img = img.resize((imageSize, int(imageSize / (width / height))))
+    # Resize only if necessary, while maintaining aspect ratio so the longest side is imageSize
+    if max(width, height) > imageSize:
+      if width >= height:
+        new_width = imageSize
+        new_height = max(1, int(round((height / width) * imageSize)))
+      else:
+        new_height = imageSize
+        new_width = max(1, int(round((width / height) * imageSize)))
+      img = img.resize((new_width, new_height))
 
     # Save the resized image to a bytes buffer in JPEG format
     buffered = BytesIO()

@@ -158,7 +158,7 @@ async function start() {
     //   }, updateRate);
 
     // setInterval(() => {
-    //   createStickie(socket, roomId, boardId, faker.name.fullName(), px, py);
+    //   createStickie(socket, roomId, boardId, faker.person.fullName(), px, py);
     // }, params.delay * 1000);
   });
 }

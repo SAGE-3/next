@@ -13,6 +13,7 @@ export * from './board';
 export * from './asset';
 export * from './presence';
 export * from './twilio';
+export * from './screenshare';
 export * from './ui';
 export * from './message';
 export * from './plugin';

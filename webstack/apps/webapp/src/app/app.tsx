@@ -8,7 +8,7 @@
 
 // React
 import { useEffect, useState } from 'react';
-import { Routes, Route, Navigate, RouteProps, useParams } from 'react-router-dom';
+import { Routes, Route, Navigate, RouteProps, useParams } from 'react-router';
 
 // Chakra UI
 import { Box, Button, ChakraProvider, Text, useToast } from '@chakra-ui/react';

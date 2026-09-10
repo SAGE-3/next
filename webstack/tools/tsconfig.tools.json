@@ -5,7 +5,12 @@
     "rootDir": ".",
     "module": "commonjs",
     "target": "es5",
-    "types": ["node"]
+    "types": [
+      "node"
+    ],
+    "moduleResolution": "node10"
   },
-  "include": ["**/*.ts"]
+  "include": [
+    "**/*.ts"
+  ]
 }
