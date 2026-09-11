@@ -1,0 +1,191 @@
+name: AI Fix Issue
+
+# Owner labels an issue `ai_fix_it` -> agent branches off dev, attempts the
+# fix, and opens a PR back into dev for owner review.
+#
+# WHY THE LABEL IS THE TRIGGER: on a public repo only users with triage or
+# write access can apply a label, so the gate is enforced by GitHub itself
+# and needs no author check of our own. Anyone can *open* an issue; only an
+# owner can point the agent at one.
+#
+# NOTE: `issues` is a repository-scoped event, so GitHub reads this file from
+# the DEFAULT branch (main) -- not from dev, and not from the PR that adds it.
+# It does nothing until it has been promoted to main.
+
+on:
+  issues:
+    types: [labeled]
+
+# The job's own GITHUB_TOKEN needs nothing: every write goes through the App
+# installation token created below.
+permissions:
+  contents: read
+
+# Re-labelling a busy issue should queue, not race two agents onto one branch.
+concurrency:
+  group: ai-fix-issue-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  fix:
+    if: github.event.label.name == 'ai_fix_it'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      # An App installation token, NOT secrets.GITHUB_TOKEN. A run's own
+      # GITHUB_TOKEN cannot trigger further workflow runs, so a PR opened with
+      # it would never fire Webstack CI -- leaving the required `run (24)`
+      # check pending forever and the PR permanently unmergeable, because
+      # `Dev Branch CI Rules` has an empty bypass list (verified in #1407).
+      - name: Mint App token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.SAGE3_BOT_APP_ID }}
+          private-key: ${{ secrets.SAGE3_BOT_PRIVATE_KEY }}
+
+      - name: Checkout dev
+        uses: actions/checkout@v6
+        with:
+          ref: dev
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # LITELLM_BASE_URL is stored without the /v1 suffix (matching how
+      # seer/libs/llm_manager.py normalizes it). Aider talks OpenAI-compatible
+      # and wants the versioned path, so add it here if absent rather than
+      # depending on how the secret happened to be typed.
+      - name: Normalize proxy base URL
+        env:
+          RAW_BASE: ${{ secrets.LITELLM_BASE_URL }}
+        run: |
+          set -euo pipefail
+          base="${RAW_BASE%/}"
+          case "$base" in
+            */v1) ;;
+            *) base="$base/v1" ;;
+          esac
+          echo "OPENAI_API_BASE=$base" >> "$GITHUB_ENV"
+
+      # Fail loudly and early if the proxy is unreachable or the configured
+      # model is not one it serves. Without this the run dies deep inside
+      # Aider with an opaque routing error.
+      - name: Preflight proxy and model
+        env:
+          OPENAI_API_KEY: ${{ secrets.LITELLM_API_KEY }}
+          MODEL: ${{ vars.AIDER_MODEL || 'gpt-5.6-terra' }}
+          EDITOR_MODEL: ${{ vars.AIDER_EDITOR_MODEL || vars.AIDER_MODEL || 'gpt-5.6-terra' }}
+        run: |
+          set -euo pipefail
+          curl -sS --max-time 20 -H "Authorization: Bearer $OPENAI_API_KEY" \
+            "$OPENAI_API_BASE/models" > /tmp/models.json
+          python3 - <<'PY'
+          import json, os, sys
+          ids = {m.get("id") for m in json.load(open("/tmp/models.json")).get("data", [])}
+          missing = [m for m in {os.environ["MODEL"], os.environ["EDITOR_MODEL"]} if m not in ids]
+          if missing:
+              print(f"::error::Model(s) not served by the proxy: {', '.join(sorted(missing))}")
+              print("Available: " + ", ".join(sorted(ids)))
+              sys.exit(1)
+          print("Preflight OK. Models available: " + ", ".join(sorted(ids)))
+          PY
+
+      - name: Install Aider
+        run: pipx install aider-chat
+
+      # The issue body is untrusted, attacker-authored text. It is passed via
+      # env and written with printf -- never interpolated into the shell as
+      # ${{ }}, which would be a command injection on a public repo.
+      - name: Build task prompt
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: |
+          set -euo pipefail
+          {
+            printf '%s\n\n' "Fix the following GitHub issue in this repository."
+            printf '%s\n' "Make the smallest change that resolves it. Do not refactor"
+            printf '%s\n\n' "unrelated code. Follow the conventions already in the files you touch."
+            printf 'Issue #%s: %s\n\n' "$ISSUE_NUMBER" "$ISSUE_TITLE"
+            printf '%s\n' "$ISSUE_BODY"
+          } > /tmp/ai-task.md
+
+      - name: Configure git identity
+        env:
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+        run: |
+          set -euo pipefail
+          git config user.name "$APP_SLUG[bot]"
+          git config user.email "$APP_SLUG[bot]@users.noreply.github.com"
+
+      - name: Create working branch
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+          echo "BRANCH=ai/issue-$ISSUE_NUMBER" >> "$GITHUB_ENV"
+          git checkout -b "ai/issue-$ISSUE_NUMBER"
+
+      # --architect splits planning from editing so a stronger (pricier) model
+      # reasons about the change and a cheaper one writes the diff. Both point
+      # at the same model until a second one is chosen; the split costs
+      # nothing to leave wired.
+      - name: Run Aider
+        env:
+          OPENAI_API_KEY: ${{ secrets.LITELLM_API_KEY }}
+          MODEL: ${{ vars.AIDER_MODEL || 'gpt-5.6-terra' }}
+          EDITOR_MODEL: ${{ vars.AIDER_EDITOR_MODEL || vars.AIDER_MODEL || 'gpt-5.6-terra' }}
+        run: |
+          set -euo pipefail
+          aider \
+            --architect \
+            --model "openai/$MODEL" \
+            --editor-model "openai/$EDITOR_MODEL" \
+            --message-file /tmp/ai-task.md \
+            --yes-always \
+            --no-stream \
+            --no-analytics \
+            --no-check-update \
+            --auto-commits
+
+      - name: Push branch and open PR
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+        run: |
+          set -euo pipefail
+
+          if git diff --quiet origin/dev...HEAD; then
+            echo "::warning::Aider produced no changes for issue #$ISSUE_NUMBER."
+            gh issue comment "$ISSUE_NUMBER" \
+              --body "The AI agent ran but produced no changes. The issue may need more detail, or the fix may be outside what the agent can infer from the description alone."
+            exit 0
+          fi
+
+          git push --force-with-lease origin "$BRANCH"
+
+          if gh pr view "$BRANCH" --json number >/dev/null 2>&1; then
+            echo "PR already open for $BRANCH; new commits pushed to it."
+            exit 0
+          fi
+
+          {
+            printf '%s\n\n' "Automated attempt at #$ISSUE_NUMBER, opened by the CI coding agent."
+            printf '%s\n\n' "Closes #$ISSUE_NUMBER"
+            printf '%s\n' "**This is unreviewed machine-generated code.** Comment on this PR to"
+            printf '%s\n' "send the agent another pass; merge only after an owner review and a"
+            printf '%s\n' "green \`run (24)\`."
+          } > /tmp/pr-body.md
+
+          gh pr create \
+            --base dev \
+            --head "$BRANCH" \
+            --title "ai: $ISSUE_TITLE (#$ISSUE_NUMBER)" \
+            --body-file /tmp/pr-body.md

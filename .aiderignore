@@ -1,0 +1,21 @@
+# Files the CI coding agent must never edit.
+#
+# On a public repo anyone can open an issue, and the issue body becomes the
+# agent's prompt. An owner applying `ai_fix_it` is vouching for intent, not
+# sanitizing content -- so a crafted issue could try to talk the agent into
+# rewriting its own guardrails or leaking a key into a commit.
+#
+# CODEOWNERS already means none of this could MERGE without an owner
+# approving, but keeping it out of the diff entirely makes those PRs
+# reviewable instead of alarming.
+
+# CI config, including the agent's own workflows and the CODEOWNERS file.
+.github/
+
+# Deployment config and anything that holds credentials.
+deployment/
+*.hjson
+*.pem
+*.key
+.env
+.env.*
