@@ -35,6 +35,7 @@ interface ToolbarButtonProps {
 
 interface ClosableToolbarMenuProps {
   onActionComplete?: () => void;
+  menuIsOpen?: boolean;
 }
 
 export function ToolbarButton(props: ToolbarButtonProps) {
@@ -43,7 +44,7 @@ export function ToolbarButton(props: ToolbarButtonProps) {
 
   const childrenWithCloseBehavior = Children.map(props.children, (child) => {
     if (!isValidElement(child)) return child;
-    return cloneElement(child as ReactElement<ClosableToolbarMenuProps>, { onActionComplete: onClose });
+    return cloneElement(child as ReactElement<ClosableToolbarMenuProps>, { onActionComplete: onClose, menuIsOpen: isOpen });
   });
 
   const handleClick = () => {

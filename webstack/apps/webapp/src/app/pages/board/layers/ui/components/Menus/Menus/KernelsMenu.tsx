@@ -17,6 +17,7 @@ import { KernelInfo } from '@sage3/shared/types';
 
 // Props to the Kernels Panel component
 export interface KernelsMenuProps {
+  menuIsOpen?: boolean;
   boardId: string;
   roomId: string;
 }
@@ -54,7 +55,6 @@ export function KernelsMenu(props: KernelsMenuProps) {
   const restartKernel = useKernelStore((state) => state.restartKernel);
   const apiStatus = useKernelStore((state) => state.apiStatus);
   const keepChecking = useKernelStore((state) => state.keepChecking);
-  const stopChecking = useKernelStore((state) => state.stopChecking);
 
   // Local kernel state
   const [myKernels, setMyKernels] = useState<KernelInfo[]>([]);
@@ -168,11 +168,8 @@ export function KernelsMenu(props: KernelsMenuProps) {
 
   // Start checking for kernels and stopping when leaving the board
   useEffect(() => {
-    keepChecking();
-    return () => {
-      stopChecking();
-    };
-  }, []);
+    return props.menuIsOpen ? keepChecking() : undefined;
+  }, [props.menuIsOpen, keepChecking]);
 
   return (
     <Box display="flex" flexDirection="column" fontSize={'xs'}>

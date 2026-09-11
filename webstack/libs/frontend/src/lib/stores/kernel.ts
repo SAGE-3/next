@@ -20,7 +20,7 @@ type KernelStoreState = {
   kernels: KernelInfo[];
   apiStatus: boolean;
   kernelTypes: string[];
-  keepChecking: () => void;
+  keepChecking: () => () => void;
   stopChecking: () => void;
   fetchKernels: () => Promise<KernelInfo[]>;
   fetchKernelTypes: () => Promise<string[]>;
@@ -36,24 +36,29 @@ type KernelStoreState = {
  * The Kernel Store
  */
 export const useKernelStore = create<KernelStoreState>()((set, get) => {
-  // Heartbeat check for status of the API
-  const checkKernelsStatus = async () => {
-    const online = await Kernels.checkStatus();
-    set({ apiStatus: online });
+  let typesRequest: Promise<string[]> | undefined;
+  const fetchKernelTypes = () => {
+    typesRequest ??= Kernels.fetchKernelTypes()
+      .then((kernelTypes) => {
+        if (JSON.stringify(kernelTypes) !== JSON.stringify(get().kernelTypes)) set({ kernelTypes });
+        return kernelTypes;
+      })
+      .finally(() => {
+        typesRequest = undefined;
+      });
+    return typesRequest;
   };
-
-  // Get Kernel Types
-  const fetchKernelTypes = async () => {
-    const kernelTypes = await Kernels.fetchKernelTypes();
-    set({ kernelTypes });
-    return kernelTypes;
-  };
-
-  // Fetch kernels
-  const fetchKernels = async () => {
-    const kernels = await Kernels.fetchKernels();
-    set({ kernels });
-    return kernels;
+  let kernelsRequest: Promise<KernelInfo[]> | undefined;
+  const fetchKernels = () => {
+    kernelsRequest ??= Kernels.fetchKernels()
+      .then((kernels) => {
+        if (JSON.stringify(kernels) !== JSON.stringify(get().kernels)) set({ kernels });
+        return kernels;
+      })
+      .finally(() => {
+        kernelsRequest = undefined;
+      });
+    return kernelsRequest;
   };
 
   // Create a kernel
@@ -93,32 +98,56 @@ export const useKernelStore = create<KernelStoreState>()((set, get) => {
     return response;
   };
 
-  let timerAPI: number | null = null;
-  let timerTypes: number | null = null;
-  let timerKernels: number | null = null;
-
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const owners = new Set<symbol>();
+  let inFlight = false;
+  let failures = 0;
+  let lastTypes = 0;
+  const poll = async () => {
+    if (!owners.size || inFlight) return;
+    inFlight = true;
+    try {
+      if (document.visibilityState !== 'hidden') {
+        const online = await Kernels.checkStatus();
+        if (online !== get().apiStatus) set({ apiStatus: online });
+        failures = online ? 0 : Math.min(failures + 1, 5);
+        if (online && owners.size) {
+          await fetchKernels();
+          if (Date.now() - lastTypes >= 30_000) {
+            await fetchKernelTypes();
+            lastTypes = Date.now();
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('Kernel status refresh failed:', error);
+      failures = Math.min(failures + 1, 5);
+    } finally {
+      inFlight = false;
+      if (owners.size) timer = setTimeout(poll, Math.min(10_000 * 2 ** failures, 300_000));
+    }
+  };
   const keepChecking = () => {
-    // 10 second interval
-    timerAPI = window.setInterval(checkKernelsStatus, 10000);
-
-    // 30 second interval
-    timerTypes = window.setInterval(fetchKernelTypes, 30000);
-
-    // 10 second interval
-    timerKernels = window.setInterval(fetchKernels, 10000);
+    const owner = Symbol();
+    owners.add(owner);
+    if (owners.size === 1) {
+      failures = 0;
+      void poll();
+    }
+    return () => {
+      owners.delete(owner);
+      if (!owners.size && timer) {
+        clearTimeout(timer);
+        timer = undefined;
+      }
+    };
   };
-
+  // Compatibility with callers that explicitly stop all polling.
   const stopChecking = () => {
-    // Clear the timers
-    if (timerAPI) window.clearInterval(timerAPI);
-    if (timerTypes) window.clearInterval(timerTypes);
-    if (timerKernels) window.clearInterval(timerKernels);
+    owners.clear();
+    if (timer) clearTimeout(timer);
+    timer = undefined;
   };
-
-  // First checks
-  checkKernelsStatus();
-  fetchKernelTypes();
-  fetchKernels();
 
   return {
     kernels: [],
