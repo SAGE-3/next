@@ -122,7 +122,7 @@ export function BoardRow(props: BoardRowProps) {
         onClick={handleEnterBoard}
         cursor="pointer"
       >
-        <EnterBoardModal board={props.board} isOpen={isOpen} onClose={onClose} />
+        {isOpen && <EnterBoardModal board={props.board} isOpen={isOpen} onClose={onClose} />}
 
         <Box display="flex" flexDir="column" maxWidth="260px">
           <Box overflow="hidden" textOverflow={'ellipsis'} whiteSpace={'nowrap'} mr="2" fontSize="lg" fontWeight={'bold'}>
@@ -215,19 +215,23 @@ export function BoardRow(props: BoardRowProps) {
           </Tooltip>
         </Box>
       </Box>
-      <EditBoardModal
-        isOpen={editBoardModalIsOpen}
-        onOpen={editBoardModalOnOpen}
-        onClose={editBoardModalOnClose}
-        board={props.board}
-      ></EditBoardModal>
-      <BoardInformationModal
-        isOpen={boardInformationModalIsOpen}
-        onOpen={boardInformationModalOnOpen}
-        onClose={boardInformationModalOnClose}
-        board={props.board}
-        room={props.room}
-      ></BoardInformationModal>
+      {editBoardModalIsOpen && (
+        <EditBoardModal
+          isOpen={editBoardModalIsOpen}
+          onOpen={editBoardModalOnOpen}
+          onClose={editBoardModalOnClose}
+          board={props.board}
+        ></EditBoardModal>
+      )}
+      {boardInformationModalIsOpen && (
+        <BoardInformationModal
+          isOpen={boardInformationModalIsOpen}
+          onOpen={boardInformationModalOnOpen}
+          onClose={boardInformationModalOnClose}
+          board={props.board}
+          room={props.room}
+        ></BoardInformationModal>
+      )}
     </>
   );
 }

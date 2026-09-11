@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { throttle } from 'throttle-debounce';
 
 import { Presence, User } from '@sage3/shared/types';
@@ -24,31 +24,31 @@ export type UserAndPresence = { presence: Presence; user: User };
 export function useThrottlePresenceUsers(delay: number, myId: string, boardId?: string) {
   const [userPresence, setUserPresence] = useState<UserAndPresence[]>([]);
 
-  const updateThrottle = throttle(delay, () => {
-    const users = useUsersStore.getState().users;
-    const presences = usePresenceStore.getState().presences;
-    const newUserPresence: UserAndPresence[] = [];
-    users.forEach((u) => {
-      const presence = presences.find((p) => p.data.userId === u._id);
-      if (presence && presence.data.userId !== myId) {
-        if (boardId && presence.data.boardId !== boardId) {
-          return;
-        } else {
-          newUserPresence.push({ user: u, presence });
-        }
-      }
-    });
-    setUserPresence(newUserPresence);
-  });
-  // Keep the reference
-  const updateRef = useCallback(updateThrottle, []);
-  // Connect to the store on mount, disconnect on unmount, catch state-changes in a reference
   useEffect(() => {
-    usePresenceStore.subscribe((state) => {
-      updateRef();
+    const updateThrottle = throttle(delay, () => {
+      const users = useUsersStore.getState().users;
+      const presences = usePresenceStore.getState().presences;
+      const newUserPresence: UserAndPresence[] = [];
+      users.forEach((u) => {
+        const presence = presences.find((p) => p.data.userId === u._id);
+        if (presence && presence.data.userId !== myId) {
+          if (boardId && presence.data.boardId !== boardId) {
+            return;
+          } else {
+            newUserPresence.push({ user: u, presence });
+          }
+        }
+      });
+      setUserPresence(newUserPresence);
     });
-    updateRef();
-  }, []);
+    const unsubscribe = usePresenceStore.subscribe(() => updateThrottle());
+    updateThrottle();
+
+    return () => {
+      unsubscribe();
+      updateThrottle.cancel();
+    };
+  }, [delay, myId, boardId]);
 
   return userPresence;
 }
