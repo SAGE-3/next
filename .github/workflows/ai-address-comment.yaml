@@ -1,8 +1,12 @@
 name: AI Address PR Comment
 
-# An owner comments on an agent-authored PR -> the agent takes another pass
-# and pushes more commits to the same branch. Repeat until it is good enough
-# to merge.
+# An owner comments `@ai <instruction>` on an agent-authored PR -> the agent
+# takes another pass and pushes more commits to the same branch. Repeat until
+# it is good enough to merge.
+#
+# The mention is required so that ordinary review chatter ("lgtm", "why this
+# approach?") costs nothing. Each pass is a 30-minute run billed to the NAIRR
+# credits, so it is opt-in per comment rather than opt-out.
 #
 # NOTE: `issue_comment` and `pull_request_review_comment` are repository-scoped
 # events, so GitHub reads this file from the DEFAULT branch (main) -- not from
@@ -35,12 +39,13 @@ jobs:
     # key is used.
     #   - not a bot, or the agent's own summary comment retriggers it forever
     #   - must be a PR, since issue_comment also fires on plain issues
-    #   - `[skip ai]` lets owners talk to each other without paying for a run
+    #   - must mention @ai; a loose substring match here, tightened to a word
+    #     boundary in the step below so "@aiden" does not summon the agent
     if: >-
       github.event.comment.user.type != 'Bot' &&
       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association) &&
       (github.event_name == 'pull_request_review_comment' || github.event.issue.pull_request != null) &&
-      !contains(github.event.comment.body, '[skip ai]')
+      contains(github.event.comment.body, '@ai')
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -62,6 +67,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
           ORG: ${{ github.repository_owner }}
           ACTOR: ${{ github.event.comment.user.login }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
           PR_NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
         run: |
           set -euo pipefail
@@ -71,6 +77,13 @@ jobs:
           state=$(gh api "orgs/$ORG/teams/owners/memberships/$ACTOR" --jq '.state' 2>/dev/null || echo "none")
           if [ "$state" != "active" ]; then
             echo "$ACTOR is not in $ORG/owners; ignoring." && echo "run=false" >> "$GITHUB_OUTPUT" && exit 0
+          fi
+
+          # The job-level `if` matched @ai as a bare substring. Require a real
+          # word boundary so "@aiden", "@ai-team" and an email address do not
+          # spend a run.
+          if ! printf '%s' "$COMMENT_BODY" | grep -qiE '(^|[^A-Za-z0-9_./-])@ai([^A-Za-z0-9_-]|$)'; then
+            echo "No @ai mention; ignoring." && echo "run=false" >> "$GITHUB_OUTPUT" && exit 0
           fi
 
           head=$(gh pr view "$PR_NUMBER" --json headRefName --jq '.headRefName')
