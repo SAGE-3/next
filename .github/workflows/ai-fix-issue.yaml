@@ -3,10 +3,12 @@ name: AI Fix Issue
 # Owner labels an issue `ai_fix_it` -> agent branches off dev, attempts the
 # fix, and opens a PR back into dev for owner review.
 #
-# WHY THE LABEL IS THE TRIGGER: on a public repo only users with triage or
-# write access can apply a label, so the gate is enforced by GitHub itself
-# and needs no author check of our own. Anyone can *open* an issue; only an
-# owner can point the agent at one.
+# WHY THE LABEL IS NOT SUFFICIENT ON ITS OWN: applying a label only requires
+# triage or write access, and this repo has 30 collaborators with write. The
+# label narrows the trigger to the team, not to the two people in
+# SAGE-3/owners, so the `authorize` job below checks team membership
+# explicitly and strips the label back off if someone else applied it.
+# Anyone can *open* an issue; only an owner can point the agent at one.
 #
 # NOTE: `issues` is a repository-scoped event, so GitHub reads this file from
 # the DEFAULT branch (main) -- not from dev, and not from the PR that adds it.
@@ -27,8 +29,46 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  fix:
+  # Runs before anything touches the proxy key. An unauthorized label is
+  # removed rather than merely ignored, so the issue does not sit there
+  # looking queued for an agent that will never come.
+  authorize:
     if: github.event.label.name == 'ai_fix_it'
+    runs-on: ubuntu-latest
+    outputs:
+      authorized: ${{ steps.check.outputs.authorized }}
+    steps:
+      - name: Mint App token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.SAGE3_BOT_APP_ID }}
+          private-key: ${{ secrets.SAGE3_BOT_PRIVATE_KEY }}
+
+      - name: Check actor is in SAGE-3/owners
+        id: check
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_REPO: ${{ github.repository }}
+          ORG: ${{ github.repository_owner }}
+          ACTOR: ${{ github.event.sender.login }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+          state=$(gh api "orgs/$ORG/teams/owners/memberships/$ACTOR" --jq '.state' 2>/dev/null || echo "none")
+          if [ "$state" = "active" ]; then
+            echo "authorized=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "authorized=false" >> "$GITHUB_OUTPUT"
+          echo "::warning::$ACTOR is not in $ORG/owners; removing the label."
+          gh issue edit "$ISSUE_NUMBER" --remove-label ai_fix_it
+          gh issue comment "$ISSUE_NUMBER" \
+            --body "@$ACTOR the \`ai_fix_it\` label can only be applied by a member of \`$ORG/owners\`, so it has been removed and no agent was run. Please ask an owner to label this issue."
+
+  fix:
+    needs: authorize
+    if: needs.authorize.outputs.authorized == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
