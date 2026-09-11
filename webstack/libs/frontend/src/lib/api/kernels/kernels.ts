@@ -14,15 +14,14 @@ import { apiUrls } from '../../config';
  * @returns An array of all the kernels
  */
 async function fetchKernels(): Promise<KernelInfo[]> {
-  const response = await fetch(apiUrls.kernels.getKernels, {
-    method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
-  });
-  if (!response.ok) {
+  try {
+    const response = await fetch(apiUrls.kernels.getKernels, { signal: AbortSignal.timeout(10_000) });
+    if (!response.ok) return [];
+    return await response.json();
+  } catch (error) {
+    console.warn('Unable to read kernels:', error);
     return [];
   }
-  const kernels = await response.json();
-  return kernels;
 }
 
 /**
@@ -51,6 +50,7 @@ async function checkStatus(): Promise<boolean> {
   let online = true;
   try {
     const response = await fetch(apiUrls.kernels.heartbeat, {
+      signal: AbortSignal.timeout(10_000),
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
     });
@@ -165,16 +165,14 @@ async function interruptKernel(kernelId: string): Promise<any> {
  *
  */
 async function fetchKernelTypes(): Promise<string[]> {
-  const response = await fetch(apiUrls.kernels.getKernelsSpecs, {
-    method: 'GET',
-    headers: { 'Content-Type': 'application/json' },
-  });
-  const data = await response.json();
-  const kernelTypes = [];
-  for (const key in data) {
-    kernelTypes.push(key);
+  try {
+    const response = await fetch(apiUrls.kernels.getKernelsSpecs, { signal: AbortSignal.timeout(10_000) });
+    if (!response.ok) return [];
+    return Object.keys(await response.json());
+  } catch (error) {
+    console.warn('Unable to read kernel types:', error);
+    return [];
   }
-  return kernelTypes;
 }
 
 /**
@@ -209,7 +207,7 @@ async function fetchResults(msgId: string): Promise<{ ok: boolean; execOutput: E
 
 function startServerSentEventsStream(
   msgId: string,
-  messageCallback: (event: MessageEvent<unknown>) => void
+  messageCallback: (event: MessageEvent<unknown>) => void,
   // errorCallback: (error: MessageEvent<unknown>) => void
 ): EventSource {
   const eventSource = new EventSource(apiUrls.kernels.getMessageStream(msgId));
