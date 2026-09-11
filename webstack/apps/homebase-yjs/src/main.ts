@@ -74,6 +74,15 @@ async function startServer() {
   // Websocket API for WebRTC
   const rtcSocketServer = new WebSocketServer({ noServer: true });
   const clients: Map<string, WebSocket[]> = new Map();
+  // Remove a socket from one room, dropping the room once it is empty.
+  // Guards against indexOf returning -1, which would otherwise splice the last member.
+  function leaveRoom(room: string, socket: WebSocket) {
+    const sockets = clients.get(room);
+    if (!sockets) return;
+    const index = sockets.indexOf(socket);
+    if (index >= 0) sockets.splice(index, 1);
+    if (sockets.length === 0) clients.delete(room);
+  }
   // Broadcast to all clients in the room
   function emitRTC(room: string, type: string, params: any) {
     const msg = JSON.stringify({ type, params });
@@ -86,33 +95,31 @@ async function startServer() {
       const datastr = data.toString();
       const msg = JSON.parse(datastr);
       switch (msg.type) {
-        case 'join':
+        case 'join': {
           if (!clients.has(msg.params.room)) {
             clients.set(msg.params.room, []);
           }
-          clients.get(msg.params.room)?.push(socket);
+          const members = clients.get(msg.params.room)!;
+          if (!members.includes(socket)) members.push(socket);
           break;
+        }
         case 'pixels':
           // broadcast to all clients in the room
           emitRTC(msg.params.room, 'data', msg.params);
           break;
         case 'leave':
-          clients.get(msg.params.room)?.splice(clients.get(msg.params.room)?.indexOf(socket) || 0, 1);
+          leaveRoom(msg.params.room, socket);
           break;
       }
     });
     // close handler
     socket.on('close', () => {
-      clients.forEach((sockets) => {
-        sockets.splice(sockets.indexOf(socket) || 0, 1);
-      });
+      clients.forEach((_sockets, room) => leaveRoom(room, socket));
     });
     // error handler
     socket.on('error', (msg) => {
       console.log('WebRTC> error', msg);
-      clients.forEach((sockets) => {
-        sockets.splice(sockets.indexOf(socket) || 0, 1);
-      });
+      clients.forEach((_sockets, room) => leaveRoom(room, socket));
     });
   });
 
