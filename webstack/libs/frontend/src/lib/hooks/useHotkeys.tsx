@@ -63,3 +63,6 @@ export function useHotkeys<T extends Element>(
 
   return ref;
 }
+
+// TEMPORARY: deliberate type error to verify CI blocks merges. Do not merge.
+const __ci_gate_probe: number = "this is a string";
