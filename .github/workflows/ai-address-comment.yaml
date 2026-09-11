@@ -17,11 +17,14 @@ on:
 permissions:
   contents: read
 
-# Two quick comments must not run two agents against one branch; the second
-# would push over the first. Queue instead of racing.
+# Two agents must never run against one branch; the second would push over
+# the first. Cancel rather than queue: submitting a review with a dozen inline
+# comments fires a dozen events, and queueing them would mean a dozen
+# sequential 30-minute runs billed to the NAIRR credits. The last comment
+# wins, which is also the one that reflects the reviewer's final intent.
 concurrency:
   group: ai-comment-${{ github.event.issue.number || github.event.pull_request.number }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   address:
@@ -58,14 +61,11 @@ jobs:
           PR_NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
         run: |
           set -euo pipefail
-          gh pr view "$PR_NUMBER" \
-            --json headRefName,isCrossRepository,state > /tmp/pr.json
+          head=$(gh pr view "$PR_NUMBER" --json headRefName --jq '.headRefName')
+          fork=$(gh pr view "$PR_NUMBER" --json isCrossRepository --jq '.isCrossRepository')
+          state=$(gh pr view "$PR_NUMBER" --json state --jq '.state')
 
-          head=$(python3 -c "import json;print(json.load(open('/tmp/pr.json'))['headRefName'])")
-          fork=$(python3 -c "import json;print(json.load(open('/tmp/pr.json'))['isCrossRepository'])")
-          state=$(python3 -c "import json;print(json.load(open('/tmp/pr.json'))['state'])")
-
-          if [ "$fork" != "False" ]; then
+          if [ "$fork" = "true" ]; then
             echo "Refusing to run against a fork PR." && echo "run=false" >> "$GITHUB_OUTPUT" && exit 0
           fi
           if [ "$state" != "OPEN" ]; then

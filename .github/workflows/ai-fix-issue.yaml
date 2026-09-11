@@ -124,13 +124,23 @@ jobs:
           git config user.name "$APP_SLUG[bot]"
           git config user.email "$APP_SLUG[bot]@users.noreply.github.com"
 
-      - name: Create working branch
+      # Re-labelling an issue that already has an agent branch continues that
+      # work instead of starting from dev again -- otherwise the push below
+      # would be a non-fast-forward against an open PR.
+      - name: Create or resume working branch
         env:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
           set -euo pipefail
-          echo "BRANCH=ai/issue-$ISSUE_NUMBER" >> "$GITHUB_ENV"
-          git checkout -b "ai/issue-$ISSUE_NUMBER"
+          branch="ai/issue-$ISSUE_NUMBER"
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+            git fetch --quiet origin "$branch"
+            git checkout -B "$branch" "origin/$branch"
+          else
+            git checkout -b "$branch"
+          fi
+          echo "BRANCH=$branch" >> "$GITHUB_ENV"
+          echo "BEFORE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
       # --architect splits planning from editing so a stronger (pricier) model
       # reasons about the change and a cheaper one writes the diff. Both point
@@ -162,17 +172,23 @@ jobs:
         run: |
           set -euo pipefail
 
-          if git diff --quiet origin/dev...HEAD; then
+          # Compare against the SHA recorded before Aider ran. Diffing against
+          # origin/dev instead would misreport whenever dev has moved on.
+          if [ "$(git rev-parse HEAD)" = "$BEFORE_SHA" ]; then
             echo "::warning::Aider produced no changes for issue #$ISSUE_NUMBER."
             gh issue comment "$ISSUE_NUMBER" \
               --body "The AI agent ran but produced no changes. The issue may need more detail, or the fix may be outside what the agent can infer from the description alone."
             exit 0
           fi
 
-          git push --force-with-lease origin "$BRANCH"
+          # Fast-forward only: the branch was based on its own remote head
+          # above, so this never needs --force and must never rewrite history
+          # under a PR someone is already reviewing.
+          git push origin "HEAD:$BRANCH"
 
-          if gh pr view "$BRANCH" --json number >/dev/null 2>&1; then
-            echo "PR already open for $BRANCH; new commits pushed to it."
+          existing=$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh pr comment "$existing" --body "Pushed another pass after the issue was re-labelled."
             exit 0
           fi
 
