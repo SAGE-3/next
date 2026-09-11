@@ -41,6 +41,16 @@ jobs:
       - name: Install Dependencies
         run: yarn install --frozen-lockfile --silent
 
+      # Typecheck runs before the test suite because it is the only signal in
+      # this workflow that covers the frontend at all: webapp, libs/frontend and
+      # libs/applications have no jest config or spec files today, so the test
+      # step below exercises none of them. The app tsconfigs resolve @sage3/*
+      # through tsconfig.base.json paths to lib *source*, so typechecking these
+      # four apps also typechecks the libs they import. It catches type errors,
+      # broken imports and changed call signatures -- not behavior.
+      - name: Typecheck
+        run: yarn nx run-many --target=typecheck --projects=webapp,homebase,homebase-files,homebase-yjs --parallel=4
+
       - name: Run tests
         # Scoped to projects with a working jest config today, not --all: most
         # other Nx projects (webapp, sageplugin, homebase*) have a test target
