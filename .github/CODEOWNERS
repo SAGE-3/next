@@ -1,0 +1,48 @@
+# CODEOWNERS
+#
+# Every file has an owner: the catch-all below means no pull request merges
+# into `dev` or `main` without an approving review from the owners team. The
+# specific paths after it are redundant today (same owners) but are kept so
+# the sensitive areas are explicit and can be reassigned later without
+# rewriting this file.
+#
+# Order matters: the LAST matching pattern wins, so `*` goes first.
+#
+# Any ONE member of a listed team satisfies the requirement -- not all of them.
+#
+# GitHub reads this file from the BASE branch of a pull request, so a change
+# here takes effect for PRs into `dev` once merged to `dev`, and for PRs into
+# `main` after the next `dev` -> `main` release merge.
+#
+# Listed owners must have write access to the repository for the rule to
+# apply. Owners are auto-requested as reviewers on every matching PR, and on
+# `main` their approval is required (Main Branch Rules -> Require review from
+# Code Owners).
+
+# ---------------------------------------------------------------------------
+# Default owner for everything not matched more specifically below.
+# ---------------------------------------------------------------------------
+*                                                       @SAGE-3/owners
+
+# ---------------------------------------------------------------------------
+# CI, automation policy, and this file itself.
+# An agent that can edit its own workflow or its own rules is not gated.
+# ---------------------------------------------------------------------------
+/.github/                                               @SAGE-3/owners
+/AGENTS.md                                              @SAGE-3/owners
+
+# ---------------------------------------------------------------------------
+# Authentication: login adapters, session handling, rate limiting.
+# ---------------------------------------------------------------------------
+/webstack/libs/sagebase/src/lib/modules/auth/           @SAGE-3/owners
+
+# ---------------------------------------------------------------------------
+# Authorization: the ability model and the REST/WS permission gates.
+# ---------------------------------------------------------------------------
+/webstack/libs/shared/src/lib/permissions/              @SAGE-3/owners
+/webstack/libs/backend/src/lib/generics/permissions.ts  @SAGE-3/owners
+
+# ---------------------------------------------------------------------------
+# Deployment and runtime configuration.
+# ---------------------------------------------------------------------------
+/deployment/                                            @SAGE-3/owners
