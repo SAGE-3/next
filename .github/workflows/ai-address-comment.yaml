@@ -66,14 +66,24 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           GH_REPO: ${{ github.repository }}
           ORG: ${{ github.repository_owner }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
           ACTOR: ${{ github.event.comment.user.login }}
           COMMENT_BODY: ${{ github.event.comment.body }}
           PR_NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
         run: |
           set -euo pipefail
 
-          # The real authorization gate. Checked first, before the proxy key
-          # is read by any later step.
+          # The real authorization gate, and the first thing this step does:
+          # no later step reads LITELLM_API_KEY or checks out any code until
+          # it passes.
+          #
+          # It is NOT true that no secret is touched before this point: the
+          # App token is minted in the step above, so any COLLABORATOR whose
+          # comment contains `@ai` causes a contents:write installation token
+          # to be created. That ordering is forced -- GITHUB_TOKEN cannot read
+          # org team membership, so we need the App token to ask this very
+          # question. The token is never exposed to repo content before the
+          # check, but do not read this gate as "no secret exists yet".
           state=$(gh api "orgs/$ORG/teams/owners/memberships/$ACTOR" --jq '.state' 2>/dev/null || echo "none")
           if [ "$state" != "active" ]; then
             echo "$ACTOR is not in $ORG/owners; ignoring." && echo "run=false" >> "$GITHUB_OUTPUT" && exit 0
@@ -86,9 +96,13 @@ jobs:
             echo "No @ai mention; ignoring." && echo "run=false" >> "$GITHUB_OUTPUT" && exit 0
           fi
 
-          head=$(gh pr view "$PR_NUMBER" --json headRefName --jq '.headRefName')
-          fork=$(gh pr view "$PR_NUMBER" --json isCrossRepository --jq '.isCrossRepository')
-          state=$(gh pr view "$PR_NUMBER" --json state --jq '.state')
+          pr=$(gh pr view "$PR_NUMBER" \
+                 --json headRefName,headRefOid,isCrossRepository,state,author)
+          head=$(printf '%s' "$pr" | jq -r '.headRefName')
+          sha=$(printf '%s' "$pr" | jq -r '.headRefOid')
+          fork=$(printf '%s' "$pr" | jq -r '.isCrossRepository')
+          state=$(printf '%s' "$pr" | jq -r '.state')
+          author=$(printf '%s' "$pr" | jq -r '.author.login')
 
           if [ "$fork" = "true" ]; then
             echo "Refusing to run against a fork PR." && echo "run=false" >> "$GITHUB_OUTPUT" && exit 0
@@ -96,6 +110,26 @@ jobs:
           if [ "$state" != "OPEN" ]; then
             echo "PR is $state, nothing to do." && echo "run=false" >> "$GITHUB_OUTPUT" && exit 0
           fi
+
+          # The real trust boundary. This job checks out the head branch and
+          # runs an agent inside it, so that tree must be one WE produced.
+          #
+          # A branch name is not a boundary: this repo has 30 collaborators
+          # with write access and nothing stops any of them pushing `ai/x`,
+          # opening a PR, and waiting for an owner to type `@ai`. The owner
+          # gate above would pass -- the owner is genuine -- and we would then
+          # execute their tree with the proxy key in the environment. So
+          # require that the agent itself opened this PR.
+          #
+          # GraphQL returns a Bot actor's login without the `[bot]` suffix
+          # that the REST API uses; normalize so either form matches.
+          expected="${APP_SLUG}[bot]"
+          if [ "${author%\[bot\]}" != "${expected%\[bot\]}" ]; then
+            echo "PR #$PR_NUMBER was opened by '$author', not the agent ($expected); ignoring." \
+              && echo "run=false" >> "$GITHUB_OUTPUT" && exit 0
+          fi
+
+          # Defense in depth, not the boundary -- see above.
           case "$head" in
             ai/*) ;;
             *) echo "Head branch '$head' is not agent-owned; ignoring." && echo "run=false" >> "$GITHUB_OUTPUT" && exit 0 ;;
@@ -103,15 +137,35 @@ jobs:
 
           echo "run=true" >> "$GITHUB_OUTPUT"
           echo "head=$head" >> "$GITHUB_OUTPUT"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
           echo "number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
 
+      # Pinned to the exact commit the gate above inspected, not to the branch
+      # name. Resolving the name here instead would re-read the ref after the
+      # checks ran, so a push landing in between would be what we check out.
+      # The final `git push origin HEAD:$HEAD_REF` is the counterpart: if the
+      # branch did move underneath us it fails non-fast-forward, which is the
+      # correct outcome. Do not add --force to "fix" that.
       - name: Checkout PR branch
         if: steps.pr.outputs.run == 'true'
         uses: actions/checkout@v6
         with:
-          ref: ${{ steps.pr.outputs.head }}
+          ref: ${{ steps.pr.outputs.sha }}
           fetch-depth: 0
           token: ${{ steps.app-token.outputs.token }}
+
+      # Aider auto-loads .aider.conf.yml from the git root and, separately,
+      # .env -- and that config can set lint-cmd/test-cmd (arbitrary commands)
+      # and openai-api-base (which would redirect the proxy key to another
+      # host). There is no flag to disable that loading; --config only adds a
+      # file. So delete them. .aiderignore does not cover this: it stops the
+      # agent EDITING those paths, not aider READING its own config.
+      #
+      # With the PR-author gate above these should never be hostile, but this
+      # is what keeps a checked-out tree from choosing what commands run.
+      - name: Drop repo-supplied agent config
+        if: steps.pr.outputs.run == 'true'
+        run: rm -f .aider.conf.yml .aider.conf.json .env
 
       - uses: actions/setup-python@v5
         if: steps.pr.outputs.run == 'true'
@@ -176,6 +230,8 @@ jobs:
             --editor-model "openai/$EDITOR_MODEL" \
             --message-file /tmp/ai-task.md \
             --yes-always \
+            --no-auto-lint \
+            --no-auto-test \
             --no-stream \
             --no-analytics \
             --no-check-update \
