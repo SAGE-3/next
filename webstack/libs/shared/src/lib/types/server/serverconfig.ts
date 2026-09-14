@@ -63,6 +63,7 @@ export interface ServerConfiguration {
   // External Services
   services: {
     twilio: TwilioConfiguration;
+    livekit: LiveKitConfiguration;
     models: LLMConfiguration;
   };
 
@@ -70,6 +71,9 @@ export interface ServerConfiguration {
   features: {
     plugins: boolean;
     apps: string[];
+    // Which screenshare backend the server offers. Not set in the configuration
+    // file: computed from the credentials in `services` and sent to clients.
+    screenshare?: ScreenshareBackend;
   };
 
   // ID management API keys
@@ -173,4 +177,58 @@ export interface TwilioConfiguration {
   accountSid: string; // Your Account SID from www.twilio.com/console
   apiKey: string; // API Key
   apiSecret: string; // API Secret
+}
+
+/**
+ * The LiveKit Configuration (self-hosted SFU for screensharing).
+ *
+ * There is deliberately nothing to configure but the secret. The SFU always runs as part
+ * of this deployment and clients always reach it at wss://<the server they loaded>/sfu,
+ * so there is no url to set and no way to point SAGE3 at somebody else's LiveKit server.
+ */
+export interface LiveKitConfiguration {
+  // The only value a deployment supplies, via LIVEKIT_API_SECRET. No secret, no
+  // screensharing. LiveKit requires at least 32 characters — a UUID is 36.
+  apiSecret?: string;
+}
+
+// Which screenshare implementation a server offers to its users
+export type ScreenshareBackend = 'livekit' | 'twilio' | 'none';
+
+// The LiveKit API key. An identifier rather than a credential, so it is a fixed
+// constant: the secret alone is what a deployment generates.
+export const LIVEKIT_KEY = 'SAGE3';
+
+// Path the SFU is served on, relative to the SAGE3 server's own origin
+export const LIVEKIT_PATH = '/sfu';
+
+// Loopback-only secret used when running SAGE3 in development, matching
+// deployment/configurations/livekit/livekit-local.yaml. The local LiveKit container
+// binds to 127.0.0.1, so this never leaves the developer's machine.
+export const LIVEKIT_DEV_SECRET = 'sage3-livekit-dev-secret-not-for-production';
+
+/**
+ * Is the self-hosted LiveKit SFU usable? The secret is the only value there is,
+ * so it alone decides.
+ */
+export function isLiveKitEnabled(services: ServerConfiguration['services']): boolean {
+  return !!services?.livekit?.apiSecret;
+}
+
+/**
+ * Is Twilio usable? All three values come from the Twilio console and none can be defaulted.
+ */
+export function isTwilioEnabled(services: ServerConfiguration['services']): boolean {
+  const twilio = services?.twilio;
+  return !!twilio?.accountSid && !!twilio?.apiKey && !!twilio?.apiSecret;
+}
+
+/**
+ * Which screenshare backend to offer. LiveKit is self-hosted and wins when both are
+ * configured; Twilio remains for servers that have not migrated yet.
+ */
+export function getScreenshareBackend(services: ServerConfiguration['services']): ScreenshareBackend {
+  if (isLiveKitEnabled(services)) return 'livekit';
+  if (isTwilioEnabled(services)) return 'twilio';
+  return 'none';
 }

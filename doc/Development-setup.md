@@ -120,6 +120,7 @@ The `./Backend` script automatically selects the correct docker-compose file for
 | `fluentd-server` | 24224 | Log aggregation |
 | `kernelserver` | 8000 | Jupyter kernel management |
 | `jupyter` | 8888 | JupyterLab execution environment |
+| `livekit-server` | 7880–7882 | Screen-sharing video server, bound to 127.0.0.1. Uses a built-in development secret, nothing to configure |
 
 ---
 
@@ -177,7 +178,7 @@ yarn start
 
 This starts the main Homebase server. It takes ~1 minute to compile TypeScript on first run, then watches for changes and restarts automatically.
 
-> Homebase listens on port 3000 in development. The React dev server (port 4200) proxies `/api`, `/auth`, `/twilio`, `/logs`, and `/plugins` requests to it. In production, all traffic goes through port 443 via Traefik.
+> Homebase listens on port 3000 in development. The React dev server (port 4200) proxies `/api`, `/auth`, `/twilio`, `/livekit`, `/logs`, and `/plugins` requests to it, and `/sfu` (WebSocket) to the local LiveKit container. In production, all traffic goes through port 443 via Traefik.
 
 ### Terminal 2 — React Frontend (port 4200)
 

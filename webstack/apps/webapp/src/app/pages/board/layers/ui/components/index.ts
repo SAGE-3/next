@@ -10,6 +10,7 @@ export * from './AppToolbar';
 export * from './ClearBoardModal';
 export * from './LassoToolbar';
 export * from './Twilio';
+export * from './LocalScreenshare';
 export * from './PresenceFollow';
 export * from './BoardTitle';
 export * from './TagsDisplay';

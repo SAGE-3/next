@@ -57,6 +57,14 @@
       // API Secret
       "apiSecret": ""
     },
+    "livekit": {
+      // WebSocket URL clients use to reach the LiveKit server
+      "url": "ws://localhost:7880",
+      // API Key, must match the LiveKit server config (deployment/configurations/livekit/livekit.yaml)
+      "apiKey": "SAGE3KEY",
+      // API Secret, must match the LiveKit server config
+      "apiSecret": "sage3-livekit-dev-secret-not-for-production"
+    },
     "models": {
       "providers": {
         "azure": {
@@ -147,7 +155,8 @@
               "context_window": 131072
             }
           }
-        }      },
+        }
+      },
       // NeMo Retriever embeddings NIM — set url to where your embed NIM listens
       "embed": {
         "url": "http://localhost:8000",

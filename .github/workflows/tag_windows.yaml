@@ -69,13 +69,13 @@ jobs:
 
       # Build the electron application
       - name: Build SAGE3 Electron Application
-        run: npx electron-packager . SAGE3 --platform=win32 --arch=x64 --icon=s3.ico --overwrite --appCopyright="SAGE3 Team" --executable-name=SAGE3
+        run: npx electron-packager . SAGE3 --platform=win32 --arch=x64 --icon=s3.ico --overwrite --appCopyright="SAGE3 Team" --executable-name=SAGE3 --no-asar
         shell: bash
         working-directory: webstack/clients/electron
 
       # Build the windows installer
       - name: Building Windows Installer
-        run: node build_win.js
+        run: node build_win.cjs
         shell: bash
         working-directory: webstack/clients/electron
 

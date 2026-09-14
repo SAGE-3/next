@@ -25,6 +25,7 @@ import { name as PluginAppName } from './apps/PluginApp';
 import { name as PollName } from './apps/Poll';
 import { name as SageCellName } from './apps/SageCell';
 import { name as SageIdeatorName } from './apps/SageIdeator';
+import { name as ScreenshareName } from './apps/Screenshare';
 import { name as StickieName } from './apps/Stickie';
 import { name as TimerName } from './apps/Timer';
 import { name as TwilioScreenshareName } from './apps/TwilioScreenshare';
@@ -62,6 +63,7 @@ import PluginApp from './apps/PluginApp/PluginApp';
 import Poll from './apps/Poll/Poll';
 import SageCell from './apps/SageCell/SageCell';
 import SageIdeator from './apps/SageIdeator/SageIdeator';
+import Screenshare from './apps/Screenshare/Screenshare';
 import Stickie from './apps/Stickie/Stickie';
 import Timer from './apps/Timer/Timer';
 import TwilioScreenshare from './apps/TwilioScreenshare/TwilioScreenshare';
@@ -196,6 +198,11 @@ export const Applications = {
     AppComponent: React.memo(SageIdeator.AppComponent),
     ToolbarComponent: SageIdeator.ToolbarComponent,
     GroupedToolbarComponent: SageIdeator.GroupedToolbarComponent,
+  },
+  [ScreenshareName]: {
+    AppComponent: React.memo(Screenshare.AppComponent),
+    ToolbarComponent: Screenshare.ToolbarComponent,
+    GroupedToolbarComponent: Screenshare.GroupedToolbarComponent,
   },
   [StickieName]: {
     AppComponent: React.memo(Stickie.AppComponent),

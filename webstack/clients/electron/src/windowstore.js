@@ -7,7 +7,7 @@
  */
 
 // Persistent store of the app window's position/size so it reopens where it was.
-const Store = require('electron-store');
+import Store from 'electron-store';
 
 // On-disk store (sage3-window.json in app.getPath('userData'))
 // Persistent data store to store window postion/size
@@ -29,7 +29,7 @@ const defaultWindowState = {
 store.get('window-state', defaultWindowState);
 store.get('clean', false);
 
-module.exports = {
+export default {
   // Saved window geometry (falls back to defaults if none stored)
   getWindow: function () {
     return store.get('window-state', defaultWindowState);

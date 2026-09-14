@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { PublicInformation, OpenConfiguration, sanitizeLLMConfiguration } from '@sage3/shared/types';
+import { PublicInformation, OpenConfiguration, sanitizeLLMConfiguration, getScreenshareBackend } from '@sage3/shared/types';
 import { SBAuthSchema } from '@sage3/sagebase';
 import express from 'express';
 import { createClient } from 'redis';
@@ -50,7 +50,9 @@ export function ConfigRouter(): express.Router {
       serverName: config.serverName,
       production: config.production,
       version: config.version,
-      features: config.features,
+      // Which screenshare backend this server offers, derived from the credentials
+      // in `services`. The UI offers screensharing only when this is not 'none'.
+      features: { ...config.features, screenshare: getScreenshareBackend(config.services) },
       // Namespace for signing uuid v5 keys
       namespace: config.namespace,
       // Jupyter token

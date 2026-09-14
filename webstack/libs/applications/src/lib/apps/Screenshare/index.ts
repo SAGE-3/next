@@ -1,25 +1,27 @@
 /**
- * Copyright (c) SAGE3 Development Team 2022. All Rights Reserved
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
  * University of Hawaii, University of Illinois Chicago, Virginia Tech
  *
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
 
-/**
- * SAGE3 application: Screenshare
- * created by: SAGE3 Team
- */
-
 import { z } from 'zod';
 
+/**
+ * SAGE3 application: Screenshare (self-hosted LiveKit SFU)
+ * created by: Ryan
+ */
+
+// The published track is named after the app _id, and ownership of the capture
+// lives in the session's screenshare store, so neither needs to be in the app state.
 export const schema = z.object({
-  running: z.boolean(),
+  aspectRatio: z.number(),
 });
 export type state = z.infer<typeof schema>;
 
 export const init: Partial<state> = {
-  running: false,
+  aspectRatio: 16 / 9,
 };
 
-export const name = 'Screenshare';
+export const name = 'LocalScreenshare';

@@ -12,6 +12,7 @@ The SAGE3 server can be deployed on a Window, Mac or Linux machine with a fully 
   - \`jupyter\`: jupyter server  
   - \`chromadb\`: Vector database for AI services  
   - \`seer\`: Python backend for AI services  
+  - \`livekit-server\`: self-hosted video server (SFU) for screen sharing, optional
 
 To update a server, here are the files to keep/move/backup:
 
@@ -35,7 +36,7 @@ To update a server, here are the files to keep/move/backup:
   - Google OAuth credentials, for authentication
   - CILogin OAuth credentials, for authentication
   - Apple with 'Sign in with Apple' credentials, for authentication
-  - Twilio API registration, for screen sharing
+  - For screen sharing: UDP port 7882 and TCP port 7881 reachable on the host — see [Screen sharing](#screen-sharing). Servers already on Twilio may keep using it.
   - LLM provider credentials (API keys and/or endpoints), for AI services — see [AI Configuration](#ai-configuration)
 
 ## Installation
@@ -156,6 +157,7 @@ cd ~/SAGE3-1.6
 vim .env
 SAGE3_SERVER=YOUR_SERVERS_HOST_NAME
 TOKEN= # token value copied without “” from: configurations/node/keys/token.json
+LIVEKIT_API_SECRET= # optional, turns on screen sharing: any value of 32+ characters, e.g. the output of `uuidgen`. See "Screen sharing" below.
 CHROMA_SERVER_AUTHN_CREDENTIALS=...
 CHROMA_CLIENT_AUTH_CREDENTIALS=...
 ```
@@ -192,6 +194,7 @@ docker compose pull
  ✔ jupyter Pulled                                                                                 1.1s 
  ✔ chromadb Pulled                                                                                0.3s 
  ✔ kernelserver Pulled                                                                            0.2s 
+ ✔ livekit-server Pulled                                                                          0.4s
 ```
 
 10. Start the Server
@@ -294,6 +297,7 @@ cd ~/SAGE3-1.6
 vim .env
 SAGE3_SERVER=YOUR_SERVERS_HOST_NAME
 TOKEN= # token value copied without “” from: configurations/node/keys/token.json
+LIVEKIT_API_SECRET= # optional, turns on screen sharing: any value of 32+ characters, e.g. the output of `uuidgen`. See "Screen sharing" below.
 ```
 
 8. Edit the Configuration file `sage3-prod.hjson`
@@ -418,6 +422,7 @@ cd ~/SAGE3-1.6
 vim .env
 SAGE3_SERVER=YOUR_SERVERS_HOST_NAME
 TOKEN= # token value copied without “” from: configurations/node/keys/token.json
+LIVEKIT_API_SECRET= # optional, turns on screen sharing: any value of 32+ characters, e.g. the output of `uuidgen`. See "Screen sharing" below.
 ```
 
 7. Edit the Configuration file `sage3-prod.hjson`
@@ -454,6 +459,7 @@ docker compose pull
  ✔ jupyter Pulled                                                                                 1.1s 
  ✔ chromadb Pulled                                                                                0.3s 
  ✔ kernelserver Pulled                                                                            0.2s 
+ ✔ livekit-server Pulled                                                                          0.4s
 ```
 
 10. Start the Server
@@ -540,9 +546,11 @@ This file allows you to configure your server to your specific needs.
 
  // External Services
  "services": {
-    // To enable screen sharing you must register for a Twilio account.
-    // Video Rooms is the Twilio feature we use for ScreenSharing.
-    // After setting this, ensure 'Screenshare' is in the 'features.apps` array.
+    // Screen sharing: nothing to configure here. It runs on the self-hosted LiveKit
+    // server included in the deployment and is turned on by setting LIVEKIT_API_SECRET
+    // in the .env file (see the "Screen sharing" section of this guide).
+    // The twilio block is only for servers that still use Twilio Video; leave it
+    // empty otherwise. When both are configured, LiveKit is used.
     twilio: {
       // Your Account SID from www.twilio.com/console
       accountSid: "",
@@ -868,7 +876,7 @@ b6a3ae3c7244   chromadb/chroma:0.5.16                            "/docker_entryp
 b2d60836dee3   fluent/fluentd:edge-debian                        "tini -- /bin/entryp…"   22 hours ago   Up 22 hours             5140/tcp, 24224/tcp        sage3-10-fluentd-server-1
 ```
 
-Note: only Traefik publishes a host port (443). All the other services communicate over the internal Docker network using service names, so their ports are not reachable from the host. To poke at an internal service, go through its container, e.g. `docker compose exec seer curl localhost:9999/status` or `docker compose exec redis-server redis-cli`.
+Note: only Traefik publishes a host port (443), plus `livekit-server` (7881/tcp and 7882/udp for WebRTC media) when screen sharing is enabled. All the other services communicate over the internal Docker network using service names, so their ports are not reachable from the host. To poke at an internal service, go through its container, e.g. `docker compose exec seer curl localhost:9999/status` or `docker compose exec redis-server redis-cli`.
 
 - See logs of a container
 
@@ -1052,7 +1060,43 @@ Which should redirect to a page that looks like:
 <br />
 <br />
 
-### Twilio
+### Screen sharing
+
+Screen sharing runs on a self-hosted [LiveKit](https://livekit.io) server (an SFU: users send their screen once, the server relays it to everyone on the board). It is part of the standard deployment, and there is nothing to configure in `sage3-prod.hjson`: no URL, no key. Clients always reach the video server at `/sfu` on the SAGE3 server they loaded the page from, so a SAGE3 server can only ever use its own.
+
+**To enable it**, set one value in `.env`:
+
+```bash
+# Any value of 32 characters or more; a UUID is 36
+LIVEKIT_API_SECRET=$(uuidgen)
+```
+
+That is the whole configuration. The same secret is handed to both the `livekit-server` container and the SAGE3 server by the compose file. Keep it out of version control and backups you share.
+
+**Leave it empty and there is no screen sharing**: the server mounts no screen-sharing routes and the Screenshare panel tells users it is not enabled on this server. The `livekit-server` container refuses to start without a secret, so if you run without screen sharing, also comment out the `livekit-server` service in `docker-compose.yml`, otherwise it will restart in a loop.
+
+**Open these ports** on the host firewall, forwarded to the machine if it is behind NAT. Signaling needs no new port: it rides the existing HTTPS port through Traefik.
+
+| Port | Purpose |
+|---|---|
+| `7882/udp` | All WebRTC media, multiplexed on one port. Screenshares connect but show no video without it. |
+| `7881/tcp` | Media fallback for clients on networks that block UDP. |
+
+**Verifying.** After `./GO`, the `node-server` log reports which screen-sharing backend is active:
+
+```
+Configuration> screenshare backend: livekit
+```
+
+`twilio` means the secret did not reach the container; `none` means neither backend is configured. Then share a screen from a client on a *different network* than the server: joining proves signaling works, but only video actually flowing proves the media ports are open. Stopping a share should remove its window within a second or two; if it lingers, the video server cannot reach `node-server` for its webhooks.
+
+**If video never appears** (the window opens but stays black), the media path is the problem. Confirm `7882/udp` is open and forwarded. If the host has no outbound STUN access, or STUN reports the wrong address, edit `configurations/livekit/livekit.yaml` and set both `use_external_ip: false` and `node_ip: <the address clients actually reach>`; `node_ip` is ignored while `use_external_ip` is `true`.
+
+**Existing servers** upgrading from a Twilio-only version: the step-by-step is in [`configurations/livekit/ADDING-LIVEKIT.md`](https://github.com/SAGE-3/next/blob/main/deployment/configurations/livekit/ADDING-LIVEKIT.md), included in the package. Nothing is needed in `features.apps`: screen sharing is started from the Screenshare panel, not the Applications panel.
+
+### Twilio (legacy screen sharing)
+
+Servers that have not moved to the self-hosted video server above may keep using Twilio by filling in the `services.twilio` block. When both are configured, LiveKit is used; existing Twilio screenshare windows on boards keep working either way. Twilio support will be removed in a future release.
 
 [Twilio](https://www.twilio.com) provides programmable communication tools for handling the Screenshare portion of SAGE3. It's an affordable option and allows multiple screenshares within board. SAGE3 uses Twilio's `Video Groups` and more information about it can be found [here](https://www.twilio.com/en-us/video/pricing).
 
@@ -1108,7 +1152,7 @@ Then click `Get Started with Twilio`.
 - apiKey: `SID`
 - apiSecret: `Secret`
 
-12. Ensure the "Screenshare" app is enabled by adding "Screenshare" to the `features.apps` array in the SAGE3 Server Configuration file located `/configurations/node/sage3-prod.hjson`.
+12. Nothing is needed in `features.apps`: screen sharing is started from the Screenshare panel, not the Applications panel.
 
 ### CoBrowser
 

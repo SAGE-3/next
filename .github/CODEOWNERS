@@ -1,0 +1,14 @@
+# CODEOWNERS
+#
+# @SAGE-3/owners (renambot, rctheriot) owns everything. Combined with
+# "Require review from Code Owners" in the dev and main rulesets, no pull
+# request reaches a protected branch without one of them approving it.
+#
+# Any ONE member satisfies the requirement -- not both.
+#
+# Two things that make this file silently do nothing if they lapse:
+#   - the owners team must keep write-or-higher access on this repository
+#   - GitHub reads CODEOWNERS from the BASE branch of a pull request, so
+#     changes here apply to `dev` PRs once merged to `dev`, and to `main`
+#     PRs after the next `dev` -> `main` release merge
+*  @SAGE-3/owners

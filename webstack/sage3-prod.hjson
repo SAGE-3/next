@@ -45,6 +45,9 @@
 
   // External Services
   "services": {
+    // Screensharing (self-hosted LiveKit SFU) has nothing to configure here: set
+    // LIVEKIT_API_SECRET in deployment/.env and it turns on. Without it, the server
+    // offers no LiveKit screensharing. See deployment/README.md.
     "twilio": {
       // Your Account SID from www.twilio.com/console
       "accountSid": "",

@@ -18,10 +18,12 @@ SAGE3 is a distributed real-time collaborative platform. The backend is composed
 | **Redis Stack** | — | Primary database and pub/sub message bus |
 | **Jupyter** | Python | Kernel execution for SageCell |
 | **ChromaDB** | — | Vector database for AI semantic search |
+| **LiveKit** | — | Self-hosted video server (SFU) for screen sharing, optional |
 
 All external traffic enters through a **Traefik** reverse proxy that routes requests based on path:
 - `/yjs`, `/rtc` → Homebase-YJS
 - `/api/assets/upload`, `/api/assets/static` → Homebase-Files
+- `/sfu` → LiveKit (screen-sharing signaling; the media itself goes directly to LiveKit over UDP 7882 / TCP 7881)
 - Everything else → Homebase
 
 ---
@@ -284,7 +286,8 @@ webstack/libs/frontend/src/lib/stores/
 | `AnnotationStore` | Whiteboard drawing strokes |
 | `LinkStore` | App-to-app property links |
 | `KernelStore` | Jupyter kernel sessions |
-| `TwilioStore` | Screen sharing video state |
+| `ScreenshareStore` | Screen sharing: LiveKit room connection, remote tracks, local captures |
+| `TwilioStore` | Screen sharing video state (legacy Twilio backend) |
 
 ### 2.B.3 React Hooks
 
@@ -332,9 +335,11 @@ User authentication is delegated to third-party identity providers via [Passport
 
 Configuration lives in the `auth` section of `sage3-prod.hjson`. See [Server Deployment](Server-Deployment.md) for setup.
 
-## 3.C Twilio (Screen Sharing)
+## 3.C Screen Sharing (LiveKit)
 
-[Twilio Video](https://www.twilio.com/en-us/video) provides TURN server infrastructure for WebRTC peer-to-peer connections used by screen sharing. Without Twilio, screen sharing may not work across NATs or firewalls. It is optional but recommended for production deployments.
+Screen sharing runs on a self-hosted [LiveKit](https://livekit.io) server deployed alongside SAGE3. It is an SFU (selective forwarding unit): a user publishes their screen once and the server relays it to every viewer on the board, so bandwidth does not grow with the number of viewers as it would peer-to-peer. One LiveKit room exists per board, named after the board id. Homebase mints short-lived join tokens (`/livekit/token`, identity derived from the session), and LiveKit calls back into Homebase (`/livekit/webhook`, signature-verified) when a published track disappears, which is what removes a screenshare window the moment its publisher stops. The only configuration is a shared secret in the deployment's `.env`; without it the server offers no screen sharing. Which backend a server offers (`livekit`, `twilio`, or `none`) is reported to clients in the public configuration, and the UI only offers what exists.
+
+[Twilio Video](https://www.twilio.com/en-us/video) remains supported as a legacy backend for servers that have not migrated. When both are configured, LiveKit is used. Twilio support will be removed in a future release.
 
 ## 3.D Fluentd (Logging)
 

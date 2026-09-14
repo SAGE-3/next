@@ -164,6 +164,8 @@ function AppComponent(props: App): JSX.Element {
   const titleBarBorderColorHex = useHexColor(titleBarBorderColor);
 
   // Kernel Store
+  const keepChecking = useKernelStore((state) => state.keepChecking);
+  useEffect(() => keepChecking(), [keepChecking]);
   const apiStatus = useKernelStore((state) => state.apiStatus);
   const kernels = useKernelStore((state) => state.kernels);
   const executeCode = useKernelStore((state) => state.executeCode);
