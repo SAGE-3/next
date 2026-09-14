@@ -18,14 +18,12 @@ import {
   ModalContent,
   ModalHeader,
   ModalBody,
-  Progress,
   ModalOverlay,
 } from '@chakra-ui/react';
 import { v5 as uuidv5 } from 'uuid';
 
 import { useRouteNav } from '../../../hooks';
 
-import { timeout } from '../../../utils';
 import { Board } from '@sage3/shared/types';
 import { useConfigStore } from '@sage3/frontend';
 
@@ -54,27 +52,19 @@ export const EnterBoardModal = (props: EnterBoardProps) => {
     setPrivateText(e.target.value);
   };
 
-  // State for loading and password prompt
   const isPrivate = props.board.data.isPrivate;
-  const [loading, setLoading] = useState(isPrivate ? false : true);
-  const [passwordPrompt, setPasswordPrompt] = useState(isPrivate ? true : false);
 
   useEffect(() => {
-    setLoading(isPrivate ? false : true);
-    setPasswordPrompt(isPrivate ? true : false);
     setPrivateText(undefined);
   }, [JSON.stringify(props.board)]);
 
-  const enterBoard = useCallback(async () => {
+  const enterBoard = useCallback(() => {
     if (props.isOpen) {
       setPrivateText(undefined);
-      setLoading(true);
-      setPasswordPrompt(false);
-      await timeout(300);
       toBoard(props.board.data.roomId, props.board._id);
       props.onClose();
     }
-  }, [props, toBoard, setLoading]);
+  }, [props, toBoard]);
 
   // Check if the board is private
   // If it is, prompt the user for a password
@@ -115,43 +105,35 @@ export const EnterBoardModal = (props: EnterBoardProps) => {
     <Modal
       isCentered
       initialFocusRef={initialRef}
-      closeOnEsc={loading ? false : true}
-      closeOnOverlayClick={loading ? false : true}
       size="md"
-      isOpen={props.isOpen}
+      isOpen={props.isOpen && isPrivate}
       onClose={props.onClose}
       blockScrollOnMount={false}
     >
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>{loading ? 'Entering Board' : 'Enter the Board Password'}</ModalHeader>
+        <ModalHeader>Enter the Board Password</ModalHeader>
         <ModalBody>
-          {passwordPrompt && !loading ? (
-            <>
-              <InputGroup>
-                <InputLeftAddon children="Password" />
-                <Input
-                  onKeyDown={handleKeyClick}
-                  ref={initialRef}
-                  width="full"
-                  value={privateText}
-                  type="password"
-                  autoCapitalize="off"
-                  onChange={updatePrivateText}
-                />
-              </InputGroup>
-              <ModalFooter>
-                <Button colorScheme="blue" mr={5} onClick={props.onClose}>
-                  Cancel
-                </Button>
-                <Button colorScheme="green" onClick={compareKey}>
-                  Enter
-                </Button>
-              </ModalFooter>
-            </>
-          ) : (
-            <Progress size="md" colorScheme="teal" isIndeterminate mb="4" borderRadius="md" />
-          )}
+          <InputGroup>
+            <InputLeftAddon children="Password" />
+            <Input
+              onKeyDown={handleKeyClick}
+              ref={initialRef}
+              width="full"
+              value={privateText}
+              type="password"
+              autoCapitalize="off"
+              onChange={updatePrivateText}
+            />
+          </InputGroup>
+          <ModalFooter>
+            <Button colorScheme="blue" mr={5} onClick={props.onClose}>
+              Cancel
+            </Button>
+            <Button colorScheme="green" onClick={compareKey}>
+              Enter
+            </Button>
+          </ModalFooter>
         </ModalBody>
       </ModalContent>
     </Modal>
