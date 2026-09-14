@@ -20,7 +20,7 @@ const container = document.getElementById('root');
 if (container) {
   const root = createRoot(container);
   root.render(
-    <HashRouter>
+    <HashRouter useTransitions={false}>
       <ColorModeScript initialColorMode={theme.config.initialColorMode} />
       <App />
     </HashRouter>

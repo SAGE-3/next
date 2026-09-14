@@ -38,3 +38,50 @@ h6 {
   // resize observer problem in dev
   iframe#webpack-dev-server-client-overlay{display:none!important}
 }
+
+::view-transition-old(root) {
+  animation: 400ms ease-in both slide-out-left;
+}
+
+::view-transition-new(root) {
+  animation: 400ms ease-out both slide-in-right;
+}
+
+@keyframes slide-out-left {
+  to {
+    transform: translateX(-15%);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+}
+
+.board-transition-back::view-transition-old(root) {
+  animation: 400ms ease-in both slide-out-right;
+}
+
+.board-transition-back::view-transition-new(root) {
+  animation: 400ms ease-out both slide-in-left;
+}
+
+@keyframes slide-out-right {
+  to {
+    transform: translateX(15%);
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.01ms !important;
+  }
+}
