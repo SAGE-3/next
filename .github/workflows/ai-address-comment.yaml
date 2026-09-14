@@ -1,0 +1,202 @@
+name: AI Address PR Comment
+
+# An owner comments `@ai <instruction>` on an agent-authored PR -> the agent
+# takes another pass and pushes more commits to the same branch. Repeat until
+# it is good enough to merge.
+#
+# The mention is required so that ordinary review chatter ("lgtm", "why this
+# approach?") costs nothing. Each pass is a 30-minute run billed to the NAIRR
+# credits, so it is opt-in per comment rather than opt-out.
+#
+# NOTE: `issue_comment` and `pull_request_review_comment` are repository-scoped
+# events, so GitHub reads this file from the DEFAULT branch (main) -- not from
+# dev. It does nothing until it has been promoted to main.
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+permissions:
+  contents: read
+
+# Two agents must never run against one branch; the second would push over
+# the first. Cancel rather than queue: submitting a review with a dozen inline
+# comments fires a dozen events, and queueing them would mean a dozen
+# sequential 30-minute runs billed to the NAIRR credits. The last comment
+# wins, which is also the one that reflects the reviewer's final intent.
+concurrency:
+  group: ai-comment-${{ github.event.issue.number || github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  address:
+    # A cheap pre-filter only. It is NOT the authorization check: this repo
+    # has 30 collaborators with write access, so COLLABORATOR would let any
+    # of them spend NAIRR credits. Membership of SAGE-3/owners is verified
+    # against the API in the "Resolve target PR" step below, before the proxy
+    # key is used.
+    #   - not a bot, or the agent's own summary comment retriggers it forever
+    #   - must be a PR, since issue_comment also fires on plain issues
+    #   - must mention @ai; a loose substring match here, tightened to a word
+    #     boundary in the step below so "@aiden" does not summon the agent
+    if: >-
+      github.event.comment.user.type != 'Bot' &&
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association) &&
+      (github.event_name == 'pull_request_review_comment' || github.event.issue.pull_request != null) &&
+      contains(github.event.comment.body, '@ai')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Mint App token
+        id: app-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.SAGE3_BOT_APP_ID }}
+          private-key: ${{ secrets.SAGE3_BOT_PRIVATE_KEY }}
+
+      # Resolved at runtime because a comment event carries no ref for the PR
+      # branch. Also the fork check: this job holds the proxy key, so it must
+      # never check out code from a repository we do not control.
+      - name: Resolve target PR
+        id: pr
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_REPO: ${{ github.repository }}
+          ORG: ${{ github.repository_owner }}
+          ACTOR: ${{ github.event.comment.user.login }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          PR_NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+
+          # The real authorization gate. Checked first, before the proxy key
+          # is read by any later step.
+          state=$(gh api "orgs/$ORG/teams/owners/memberships/$ACTOR" --jq '.state' 2>/dev/null || echo "none")
+          if [ "$state" != "active" ]; then
+            echo "$ACTOR is not in $ORG/owners; ignoring." && echo "run=false" >> "$GITHUB_OUTPUT" && exit 0
+          fi
+
+          # The job-level `if` matched @ai as a bare substring. Require a real
+          # word boundary so "@aiden", "@ai-team" and an email address do not
+          # spend a run.
+          if ! printf '%s' "$COMMENT_BODY" | grep -qiE '(^|[^A-Za-z0-9_./-])@ai([^A-Za-z0-9_-]|$)'; then
+            echo "No @ai mention; ignoring." && echo "run=false" >> "$GITHUB_OUTPUT" && exit 0
+          fi
+
+          head=$(gh pr view "$PR_NUMBER" --json headRefName --jq '.headRefName')
+          fork=$(gh pr view "$PR_NUMBER" --json isCrossRepository --jq '.isCrossRepository')
+          state=$(gh pr view "$PR_NUMBER" --json state --jq '.state')
+
+          if [ "$fork" = "true" ]; then
+            echo "Refusing to run against a fork PR." && echo "run=false" >> "$GITHUB_OUTPUT" && exit 0
+          fi
+          if [ "$state" != "OPEN" ]; then
+            echo "PR is $state, nothing to do." && echo "run=false" >> "$GITHUB_OUTPUT" && exit 0
+          fi
+          case "$head" in
+            ai/*) ;;
+            *) echo "Head branch '$head' is not agent-owned; ignoring." && echo "run=false" >> "$GITHUB_OUTPUT" && exit 0 ;;
+          esac
+
+          echo "run=true" >> "$GITHUB_OUTPUT"
+          echo "head=$head" >> "$GITHUB_OUTPUT"
+          echo "number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout PR branch
+        if: steps.pr.outputs.run == 'true'
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.pr.outputs.head }}
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+
+      - uses: actions/setup-python@v5
+        if: steps.pr.outputs.run == 'true'
+        with:
+          python-version: '3.12'
+
+      - name: Normalize proxy base URL
+        if: steps.pr.outputs.run == 'true'
+        env:
+          RAW_BASE: ${{ secrets.LITELLM_BASE_URL }}
+        run: |
+          set -euo pipefail
+          base="${RAW_BASE%/}"
+          case "$base" in
+            */v1) ;;
+            *) base="$base/v1" ;;
+          esac
+          echo "OPENAI_API_BASE=$base" >> "$GITHUB_ENV"
+
+      - name: Install Aider
+        if: steps.pr.outputs.run == 'true'
+        run: pipx install aider-chat
+
+      # Comment body is untrusted text -- passed via env, written with printf,
+      # never interpolated into the shell.
+      - name: Build task prompt
+        if: steps.pr.outputs.run == 'true'
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          COMMENT_PATH: ${{ github.event.comment.path }}
+        run: |
+          set -euo pipefail
+          {
+            printf '%s\n' "A reviewer left this feedback on your pull request."
+            printf '%s\n\n' "Address it with the smallest change that satisfies the comment."
+            if [ -n "${COMMENT_PATH:-}" ]; then
+              printf 'The comment is on file: %s\n\n' "$COMMENT_PATH"
+            fi
+            printf '%s\n' "$COMMENT_BODY"
+          } > /tmp/ai-task.md
+
+      - name: Configure git identity
+        if: steps.pr.outputs.run == 'true'
+        env:
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+        run: |
+          set -euo pipefail
+          git config user.name "$APP_SLUG[bot]"
+          git config user.email "$APP_SLUG[bot]@users.noreply.github.com"
+
+      - name: Run Aider
+        if: steps.pr.outputs.run == 'true'
+        env:
+          OPENAI_API_KEY: ${{ secrets.LITELLM_API_KEY }}
+          MODEL: ${{ vars.AIDER_MODEL || 'gpt-5.6-terra' }}
+          EDITOR_MODEL: ${{ vars.AIDER_EDITOR_MODEL || vars.AIDER_MODEL || 'gpt-5.6-terra' }}
+        run: |
+          set -euo pipefail
+          aider \
+            --architect \
+            --model "openai/$MODEL" \
+            --editor-model "openai/$EDITOR_MODEL" \
+            --message-file /tmp/ai-task.md \
+            --yes-always \
+            --no-stream \
+            --no-analytics \
+            --no-check-update \
+            --auto-commits
+
+      - name: Push and report
+        if: steps.pr.outputs.run == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_REPO: ${{ github.repository }}
+          HEAD_REF: ${{ steps.pr.outputs.head }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+        run: |
+          set -euo pipefail
+
+          if git diff --quiet "origin/$HEAD_REF" HEAD; then
+            gh pr comment "$PR_NUMBER" \
+              --body "The AI agent ran but made no changes in response to that comment. It may need a more specific instruction, or the requested change may be outside the files it can edit (see \`.aiderignore\`)."
+            exit 0
+          fi
+
+          git push origin "HEAD:$HEAD_REF"
+          gh pr comment "$PR_NUMBER" \
+            --body "Pushed a new pass addressing the latest comment. Re-review when \`run (24)\` reports."
