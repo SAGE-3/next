@@ -199,6 +199,8 @@ jobs:
             --editor-model "openai/$EDITOR_MODEL" \
             --message-file /tmp/ai-task.md \
             --yes-always \
+            --no-auto-lint \
+            --no-auto-test \
             --no-stream \
             --no-analytics \
             --no-check-update \
