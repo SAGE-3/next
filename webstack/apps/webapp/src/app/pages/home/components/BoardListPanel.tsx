@@ -15,18 +15,10 @@
  * whenever the user switches rooms (React unmounts/remounts on key change).
  */
 
-import { useMemo, useRef, useState } from 'react';
-import {
-  Box,
-  Flex,
-  IconButton,
-  Input,
-  InputGroup,
-  InputLeftElement,
-  Tooltip,
-  VStack,
-  useColorModeValue,
-} from '@chakra-ui/react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Box, Flex, IconButton, Input, InputGroup, InputLeftElement, Tooltip, useColorModeValue } from '@chakra-ui/react';
+
+import { Virtuoso, VirtuosoGrid, VirtuosoGridHandle, VirtuosoHandle } from 'react-virtuoso';
 
 import { MdAdd, MdGridView, MdList, MdRefresh, MdSearch } from 'react-icons/md';
 
@@ -46,15 +38,19 @@ type BoardListPanelProps = {
   boardPreviews: Map<string, AppInfo[]>;
   previewsLoading: boolean;
   canCreateBoards: boolean;
-  scrollToBoardRef: React.RefObject<HTMLDivElement>;
   onCreateBoard: () => void;
   onRefreshPreviews: () => void;
   onBoardClick: (board: Board) => void;
 };
 
+const NO_USERS: PresencePartial[] = [];
+const NO_APPS: AppInfo[] = [];
+
 export function BoardListPanel(props: BoardListPanelProps) {
   const { setBoardListView, settings } = useUserSettings();
   const boardListView = settings.selectedBoardListView ?? 'grid';
+  const grid = useRef<VirtuosoGridHandle>(null);
+  const list = useRef<VirtuosoHandle>(null);
 
   // Debounced search — uncontrolled input so typing never re-renders this component
   const [boardSearch, setBoardSearch] = useState('');
@@ -74,7 +70,20 @@ export function BoardListPanel(props: BoardListPanelProps) {
         .filter((b) => b.data.roomId === props.selectedRoom?._id)
         .filter((b) => fuzzySearch(b.data.name + ' ' + b.data.description, boardSearch))
         .sort((a, b) => a.data.name.localeCompare(b.data.name)),
-    [props.boards, props.selectedRoom?._id, boardSearch]
+    [props.boards, props.selectedRoom?._id, boardSearch],
+  );
+
+  const selectedIndex = filteredBoards.findIndex((board) => board._id === props.selectedBoard?._id);
+  useEffect(() => {
+    if (selectedIndex < 0) return;
+    if (boardListView === 'grid') grid.current?.scrollToIndex({ index: selectedIndex, align: 'center' });
+    else list.current?.scrollIntoView({ index: selectedIndex });
+  }, [selectedIndex, boardListView]);
+  useEffect(
+    () => () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    },
+    [],
   );
 
   const scrollbarCss = {
@@ -144,65 +153,59 @@ export function BoardListPanel(props: BoardListPanelProps) {
         </Tooltip>
       </Flex>
 
-      {/* Grid view */}
-      {boardListView === 'grid' && (
-        <Flex
-          gap="4"
-          pl="2"
-          py="1"
-          flexWrap="wrap"
-          justifyContent="left"
-          style={{ maxHeight: 'calc(100svh - 270px)', width: '100%', maxWidth: '2200px' }}
-          margin="0"
-          overflowY="scroll"
-          overflowX="hidden"
-          minWidth="420px"
-          css={scrollbarCss}
-        >
-          {filteredBoards.map((board) => (
-            <Box key={board._id} ref={board._id === props.selectedBoard?._id ? props.scrollToBoardRef : undefined}>
+      <Box
+        minWidth="420px"
+        maxWidth="2200px"
+        css={{
+          '& [data-virtuoso-scroller]': scrollbarCss,
+          '& .sage-board-grid': { display: 'flex', flexWrap: 'wrap', gap: '16px', padding: '4px 8px' },
+          '& .sage-board-grid-item': { width: '250px', height: '190px', flex: 'none' },
+        }}
+      >
+        {boardListView === 'grid' ? (
+          <VirtuosoGrid
+            ref={grid}
+            data={filteredBoards}
+            style={{ height: 'calc(100svh - 270px)', width: '100%' }}
+            listClassName="sage-board-grid"
+            itemClassName="sage-board-grid-item"
+            increaseViewportBy={206}
+            initialTopMostItemIndex={Math.max(0, selectedIndex)}
+            computeItemKey={(_index, board) => board._id}
+            itemContent={(_index, board) => (
               <BoardCard
                 board={board}
                 room={props.selectedRoom!}
-                onClick={() => props.onBoardClick(board)}
+                onClick={props.onBoardClick}
                 selected={props.selectedBoard?._id === board._id}
-                usersPresent={props.presenceByBoard.get(board._id) ?? []}
-                appInfo={props.boardPreviews.get(board._id) ?? []}
+                usersPresent={props.presenceByBoard.get(board._id) ?? NO_USERS}
+                appInfo={props.boardPreviews.get(board._id) ?? NO_APPS}
               />
-            </Box>
-          ))}
-        </Flex>
-      )}
-
-      {/* List view */}
-      {boardListView === 'list' && (
-        <VStack
-          gap="3"
-          alignItems="left"
-          pl="2"
-          style={{ height: 'calc(100svh - 270px)' }}
-          overflowY="scroll"
-          overflowX="hidden"
-          minWidth="420px"
-          css={{
-            '&::-webkit-scrollbar': { background: 'transparent', width: '5px' },
-            '&::-webkit-scrollbar-thumb': { background: scrollBarColor, borderRadius: '48px' },
-          }}
-        >
-          {filteredBoards.map((board) => (
-            <Box key={board._id} ref={board._id === props.selectedBoard?._id ? props.scrollToBoardRef : undefined}>
-              <BoardRow
-                key={board._id}
-                board={board}
-                room={props.selectedRoom!}
-                onClick={() => props.onBoardClick(board)}
-                selected={props.selectedBoard?._id === board._id}
-                usersPresent={(props.presenceByBoard.get(board._id) ?? []).length}
-              />
-            </Box>
-          ))}
-        </VStack>
-      )}
+            )}
+          />
+        ) : (
+          <Virtuoso
+            ref={list}
+            data={filteredBoards}
+            style={{ height: 'calc(100svh - 270px)', width: '100%' }}
+            fixedItemHeight={68}
+            increaseViewportBy={136}
+            initialTopMostItemIndex={Math.max(0, selectedIndex)}
+            computeItemKey={(_index, board) => board._id}
+            itemContent={(_index, board) => (
+              <Box pl="2" pb="3" height="68px" boxSizing="border-box">
+                <BoardRow
+                  board={board}
+                  room={props.selectedRoom!}
+                  onClick={props.onBoardClick}
+                  selected={props.selectedBoard?._id === board._id}
+                  usersPresent={(props.presenceByBoard.get(board._id) ?? NO_USERS).length}
+                />
+              </Box>
+            )}
+          />
+        )}
+      </Box>
     </Flex>
   );
 }

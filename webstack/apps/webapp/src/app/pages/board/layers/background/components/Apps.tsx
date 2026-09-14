@@ -113,7 +113,7 @@ export function Apps() {
           });
       }
     },
-    { dependencies: [JSON.stringify(apps)] }
+    { dependencies: [apps] },
   );
 
   // Select all apps
@@ -124,7 +124,7 @@ export function Apps() {
         setSelectedApps(apps.map((el) => el._id));
       }
     },
-    { dependencies: [JSON.stringify(apps)] }
+    { dependencies: [apps] },
   );
 
   const { settings, toggleShowUI } = useUserSettings();
@@ -193,7 +193,7 @@ export function Apps() {
         }
       }
     },
-    { dependencies: [JSON.stringify(apps)] }
+    { dependencies: [apps] },
   );
 
   // Throttle the paste function
@@ -269,7 +269,7 @@ export function Apps() {
         });
       }
     },
-    { dependencies: [] }
+    { dependencies: [] },
   );
 
   // Zoom to app when pressing z over an app
@@ -320,8 +320,8 @@ export function Apps() {
       }
     },
     {
-      dependencies: [previousLocation.set, appDragging, scale, boardPosition.x, boardPosition.y, JSON.stringify(apps)],
-    }
+      dependencies: [previousLocation.set, appDragging, scale, boardPosition.x, boardPosition.y, apps],
+    },
   );
 
   // Focus to app when pressing f over an app
@@ -360,7 +360,7 @@ export function Apps() {
   //     }
   //   },
   //   {
-  //     dependencies: [previousLocation.set, appDragging, scale, boardPosition.x, boardPosition.y, JSON.stringify(apps)],
+  //     dependencies: [previousLocation.set, appDragging, scale, boardPosition.x, boardPosition.y, apps],
   //   }
   // );
 

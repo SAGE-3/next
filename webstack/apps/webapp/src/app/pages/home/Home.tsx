@@ -72,10 +72,11 @@ import {
   apiUrls,
 } from '@sage3/frontend';
 
-import { AppInfo } from './components/BoardPreview';
+import { BoardStrip } from './components/BoardStrip';
+import { useBoardPreviews } from './components/useBoardPreviews';
 
 // Home Page Components
-import { BoardCard, RoomSearchModal, PasswordJoinRoomModal, AssetList, PluginsList, MembersList, BoardListPanel } from './components';
+import { RoomSearchModal, PasswordJoinRoomModal, AssetList, PluginsList, MembersList, BoardListPanel } from './components';
 import SearchRow from './components/search/SearchRow';
 
 /**
@@ -133,18 +134,11 @@ export function HomePage() {
 
   const [passwordProtectedRoom, setPasswordProtectedRoom] = useState<Room | undefined>(undefined);
 
-  // Board preview data: boardId -> AppInfo[]. Fetched in batch on room switch; never auto-cleared.
-  const [boardPreviews, setBoardPreviews] = useState<Map<string, AppInfo[]>>(new Map());
-  const [previewsLoading, setPreviewsLoading] = useState(false);
-
   // searchSage: debounced value used for filtering; searchSageInput: live input display value
   const [searchSage, setSearchSage] = useState<string>('');
   const [searchSageInput, setSearchSageInput] = useState<string>('');
   const searchSageDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isSearchSageFocused, setSearchSageFocused] = useState<boolean>(false);
-
-  // Selected board ref — used to scroll the card into view
-  const scrollToBoardRef = useRef<HTMLDivElement>(null);
 
   // Sidebar width — user-resizable via drag handle, persisted in localStorage
   const SIDEBAR_MIN = 180;
@@ -343,45 +337,7 @@ export function HomePage() {
     return [...ids];
   }, [selectedRoom?._id, boards, members, recentBoards, savedBoards, presenceByBoard, user?.data.userRole, userId]);
 
-  // Fetch batch previews for the given boardIds, merging results into state.
-  // Pass force=true to bypass the server-side cache (used by the refresh button).
-  const fetchPreviews = async (boardIds: string[], force = false) => {
-    if (boardIds.length === 0) return;
-    setPreviewsLoading(true);
-    try {
-      const response = await fetch(apiUrls.boards.preview, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-        body: JSON.stringify({ boardIds, force }),
-      });
-      const res = await response.json();
-      if (res.success && res.data) {
-        setBoardPreviews((prev) => {
-          const next = new Map(prev);
-          Object.entries(res.data as Record<string, AppInfo[]>).forEach(([id, apps]) => next.set(id, apps));
-          return next;
-        });
-      }
-    } catch {
-      // Preview is non-critical — fail silently
-    } finally {
-      setPreviewsLoading(false);
-    }
-  };
-
-  // Re-fetch previews for the current context (room view or home view), bypassing cached entries
-  const refreshPreviews = async () => {
-    const idsToRefresh = previewBoardIds;
-
-    // Clear existing entries so fetchPreviews treats them as missing
-    setBoardPreviews((prev) => {
-      const next = new Map(prev);
-      idsToRefresh.forEach((id) => next.delete(id));
-      return next;
-    });
-    await fetchPreviews(idsToRefresh, true);
-  };
+  const { boardPreviews, previewsLoading, refreshPreviews } = useBoardPreviews(apiUrls.boards.preview, previewBoardIds);
 
   const sageSearchFilter = (item: Board | Room) => {
     return fuzzySearch(item.data.name + '' + item.data.description, searchSage);
@@ -488,25 +444,6 @@ export function HomePage() {
       updatePresence(userId, { roomId });
     }
   }, [selectedRoom]);
-
-  // Fetch previews for whichever board cards are currently visible.
-  useEffect(() => {
-    const ids = previewBoardIds.filter((id) => !boardPreviews.has(id));
-    fetchPreviews(ids);
-  }, [previewBoardIds, boardPreviews]);
-
-  // Scroll selected board into view
-  useEffect(() => {
-    if (scrollToBoardRef?.current) {
-      const rect = scrollToBoardRef.current.getBoundingClientRect();
-      if (!(rect.top >= 350 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) - 50)) {
-        scrollToBoardRef.current.scrollIntoView({
-          behavior: 'smooth',
-          block: rect.top < 350 ? 'start' : 'end',
-        });
-      }
-    }
-  }, [scrollToBoardRef?.current]);
 
   // Function to handle states for when a user clicks on a room
   function handleRoomClick(room: Room | undefined) {
@@ -799,15 +736,7 @@ export function HomePage() {
         {hubs.length > 0 ? (
           <Box ref={hubNameRef}>
             <Menu placement="bottom-start">
-              <MenuButton
-                as={Button}
-                colorScheme="teal"
-                variant="solid"
-                size="sm"
-                width="100%"
-                borderRadius="10"
-                px={4}
-              >
+              <MenuButton as={Button} colorScheme="teal" variant="solid" size="sm" width="100%" borderRadius="10" px={4}>
                 <Box display="flex" justifyContent="space-between" alignItems="center" width="100%">
                   <Text fontWeight="bold" whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden">
                     {config.serverName}
@@ -834,15 +763,7 @@ export function HomePage() {
             </Menu>
           </Box>
         ) : (
-          <Button
-            colorScheme="teal"
-            variant="solid"
-            size="sm"
-            width="100%"
-            borderRadius="10"
-            px={4}
-            pointerEvents="none"
-          >
+          <Button colorScheme="teal" variant="solid" size="sm" width="100%" borderRadius="10" px={4} pointerEvents="none">
             <Text fontWeight="bold" whiteSpace="nowrap" textOverflow="ellipsis" overflow="hidden" width="100%" textAlign="left">
               {config.serverName}
             </Text>
@@ -1029,7 +950,9 @@ export function HomePage() {
                 />
                 <MenuList>
                   <Box p="3" pt="0" borderBottom="1px solid" borderColor={useColorModeValue('gray.200', 'gray.600')}>
-                    <Text fontSize="sm" fontWeight="bold" mb="1" mt="0">Room Details</Text>
+                    <Text fontSize="sm" fontWeight="bold" mb="1" mt="0">
+                      Room Details
+                    </Text>
                     <Text fontSize="xs" color={useColorModeValue('gray.600', 'gray.400')}>
                       Created by: {users.find((u) => u._id === selectedRoom.data.ownerId)?.data.name || 'sage3'}
                     </Text>
@@ -1037,7 +960,8 @@ export function HomePage() {
                       Created on: {new Date(selectedRoom._createdAt).toLocaleDateString()}
                     </Text>
                     <Text fontSize="xs" color={useColorModeValue('gray.600', 'gray.400')}>
-                      Members: {(() => {
+                      Members:{' '}
+                      {(() => {
                         const roomMembership = members.find((m) => m.data.roomId === selectedRoom._id);
                         return roomMembership && roomMembership.data.members ? roomMembership.data.members.length : 0;
                       })()}
@@ -1071,7 +995,7 @@ export function HomePage() {
                         leaveRoomModalOnOpen();
                       }}
                       isDisabled={selectedRoom.data.ownerId === userId}
-                      color={""}
+                      color={''}
                       fontStyle={'bold'}
                     >
                       Unjoin
@@ -1115,7 +1039,6 @@ export function HomePage() {
                       boardPreviews={boardPreviews}
                       previewsLoading={previewsLoading}
                       canCreateBoards={canCreateBoards}
-                      scrollToBoardRef={scrollToBoardRef}
                       onCreateBoard={createBoardModalOnOpen}
                       onRefreshPreviews={refreshPreviews}
                       onBoardClick={handleBoardClick}
@@ -1261,31 +1184,30 @@ export function HomePage() {
                   {/* If it doesn't start with https:// or http:// and filtered roomsAndBoards have more than 1 item */}
                   {roomAndBoards &&
                     roomAndBoards.filter(sageSearchFilter).length > 0 &&
-                    (!searchSage.startsWith('https://') || !searchSage.startsWith('http://')) && (
-                      (() => {
-                        // Separate boards and rooms
-                        const filteredItems = roomAndBoards.filter(sageSearchFilter);
-                        const boards = filteredItems.filter((item): item is Board & { roomName: string } =>
-                          (item as Board & { roomName: string }).data.roomId !== undefined
-                        );
-                        const rooms = filteredItems.filter((item): item is Room =>
-                          (item as Board & { roomName: string }).data.roomId === undefined
-                        );
+                    (!searchSage.startsWith('https://') || !searchSage.startsWith('http://')) &&
+                    (() => {
+                      // Separate boards and rooms
+                      const filteredItems = roomAndBoards.filter(sageSearchFilter);
+                      const boards = filteredItems.filter(
+                        (item): item is Board & { roomName: string } => (item as Board & { roomName: string }).data.roomId !== undefined,
+                      );
+                      const rooms = filteredItems.filter(
+                        (item): item is Room => (item as Board & { roomName: string }).data.roomId === undefined,
+                      );
 
-                        return (
-                          <SearchRow.Grouped
-                            boards={boards}
-                            rooms={rooms}
-                            onBoardClick={(board) => {
-                              handleBoardClick(board);
-                            }}
-                            onRoomClick={(room) => {
-                              handleRoomClick(room);
-                            }}
-                          />
-                        );
-                      })()
-                    )}
+                      return (
+                        <SearchRow.Grouped
+                          boards={boards}
+                          rooms={rooms}
+                          onBoardClick={(board) => {
+                            handleBoardClick(board);
+                          }}
+                          onRoomClick={(room) => {
+                            handleRoomClick(room);
+                          }}
+                        />
+                      );
+                    })()}
 
                   {/* If there are no roomAndBoards and it's not a valid URL*/}
                   {roomAndBoards && roomAndBoards.filter(sageSearchFilter).length === 0 && !isValidURL() && 'No items match your search'}
@@ -1310,50 +1232,15 @@ export function HomePage() {
                   alignItems="center"
                 >
                   {recentBoards.length > 0 && boards.filter(recentBoardsFilter).length > 0 ? (
-                    <HStack
-                      gap="3"
-                      width="100%"
-                      height="240px"
-                      overflowX="auto"
-                      overflowY="hidden"
-
-                      px="2"
-                      css={{
-                        '&::-webkit-scrollbar': {
-                          background: 'transparent',
-                          height: '10px',
-                        },
-                        '&::-webkit-scrollbar-thumb': {
-                          background: scrollBarColor,
-                          borderRadius: '48px',
-                        },
-                      }}
-                    >
-                      {boards
-                        .filter(recentBoardsFilter)
-                        .sort((boardA, boardB) => {
-                          // Sort by most recent
-                          const indexOfA = recentBoards.indexOf(boardA._id);
-                          const indexOfB = recentBoards.indexOf(boardB._id);
-                          return indexOfA - indexOfB;
-                        })
-                        .map((board) => {
-                          const room = rooms.find((room) => board.data.roomId === room._id);
-                          if (!room) return null;
-                          return (
-                            <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
-                              <BoardCard
-                                board={board}
-                                room={room}
-                                onClick={() => handleBoardClick(board)}
-                                selected={selectedBoard ? selectedBoard._id === board._id : false}
-                                usersPresent={presenceByBoard.get(board._id) ?? []}
-                                appInfo={boardPreviews.get(board._id) ?? []}
-                              />
-                            </Box>
-                          );
-                        })}
-                    </HStack>
+                    <BoardStrip
+                      boards={boards.filter(recentBoardsFilter).sort((a, b) => recentBoards.indexOf(a._id) - recentBoards.indexOf(b._id))}
+                      rooms={rooms}
+                      selectedBoard={selectedBoard}
+                      presenceByBoard={presenceByBoard}
+                      boardPreviews={boardPreviews}
+                      scrollBarColor={scrollBarColor}
+                      onBoardClick={handleBoardClick}
+                    />
                   ) : (
                     <Text p="3" px="6">
                       No recent boards.
@@ -1378,44 +1265,15 @@ export function HomePage() {
                   alignItems="center"
                 >
                   {boards.filter(boardStarredFilter).length > 0 ? (
-                    <HStack
-                      gap="3"
-                      width="100%"
-                      overflowX="auto"
-                      overflowY="hidden"
-                      height="240px"
-                      px="2"
-                      css={{
-                        '&::-webkit-scrollbar': {
-                          background: 'transparent',
-                          height: '10px',
-                        },
-                        '&::-webkit-scrollbar-thumb': {
-                          background: scrollBarColor,
-                          borderRadius: '48px',
-                        },
-                      }}
-                    >
-                      {boards
-                        .filter(boardStarredFilter)
-                        .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                        .map((board) => {
-                          const room = rooms.find((room) => board.data.roomId === room._id);
-                          if (!room) return null;
-                          return (
-                            <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
-                              <BoardCard
-                                board={board}
-                                room={room}
-                                onClick={() => handleBoardClick(board)}
-                                selected={selectedBoard ? selectedBoard._id === board._id : false}
-                                usersPresent={presenceByBoard.get(board._id) ?? []}
-                                appInfo={boardPreviews.get(board._id) ?? []}
-                              />
-                            </Box>
-                          );
-                        })}
-                    </HStack>
+                    <BoardStrip
+                      boards={boards.filter(boardStarredFilter).sort((a, b) => a.data.name.localeCompare(b.data.name))}
+                      rooms={rooms}
+                      selectedBoard={selectedBoard}
+                      presenceByBoard={presenceByBoard}
+                      boardPreviews={boardPreviews}
+                      scrollBarColor={scrollBarColor}
+                      onBoardClick={handleBoardClick}
+                    />
                   ) : (
                     <Text p="3" px="6">
                       No favorite boards.
@@ -1440,50 +1298,21 @@ export function HomePage() {
                   alignItems="center"
                 >
                   {boards.filter(boardActiveFilter).length > 0 ? (
-                    <HStack
-                      gap="3"
-                      width="100%"
-                      overflowX="auto"
-                      overflowY="hidden"
-                      height="240px"
-                      px="2"
-                      css={{
-                        '&::-webkit-scrollbar': {
-                          background: 'transparent',
-                          height: '10px',
-                        },
-                        '&::-webkit-scrollbar-thumb': {
-                          background: scrollBarColor,
-                          borderRadius: '48px',
-                        },
-                      }}
-                    >
-                      {boards
+                    <BoardStrip
+                      boards={boards
                         .filter(boardActiveFilter)
-                        .sort((a, b) => a.data.name.localeCompare(b.data.name))
-                        .sort((a, b) => {
-                          // Sorted by alpha then user count
-                          const userCountA = (presenceByBoard.get(a._id) ?? []).length;
-                          const userCountB = (presenceByBoard.get(b._id) ?? []).length;
-                          return userCountB - userCountA;
-                        })
-                        .map((board) => {
-                          const room = rooms.find((room) => board.data.roomId === room._id);
-                          if (!room) return null;
-                          return (
-                            <Box key={board._id} ref={board._id === selectedBoard?._id ? scrollToBoardRef : undefined}>
-                              <BoardCard
-                                board={board}
-                                room={room}
-                                onClick={() => handleBoardClick(board)}
-                                selected={selectedBoard ? selectedBoard._id === board._id : false}
-                                usersPresent={presenceByBoard.get(board._id) ?? []}
-                                appInfo={boardPreviews.get(board._id) ?? []}
-                              />
-                            </Box>
-                          );
-                        })}
-                    </HStack>
+                        .sort(
+                          (a, b) =>
+                            (presenceByBoard.get(b._id)?.length ?? 0) - (presenceByBoard.get(a._id)?.length ?? 0) ||
+                            a.data.name.localeCompare(b.data.name),
+                        )}
+                      rooms={rooms}
+                      selectedBoard={selectedBoard}
+                      presenceByBoard={presenceByBoard}
+                      boardPreviews={boardPreviews}
+                      scrollBarColor={scrollBarColor}
+                      onBoardClick={handleBoardClick}
+                    />
                   ) : (
                     <Text p="3" px="6">
                       No active boards.
@@ -1491,7 +1320,6 @@ export function HomePage() {
                   )}
                 </Box>
               </Box>
-
             </VStack>
           </Box>
         </Box>

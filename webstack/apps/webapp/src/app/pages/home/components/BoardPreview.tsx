@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { memo, useMemo, useEffect, useRef } from 'react';
 import { Box, Text, Icon, useColorModeValue } from '@chakra-ui/react';
 import { MdLock } from 'react-icons/md';
 
@@ -19,13 +19,13 @@ export type AppInfo = { position: Position; size: Size; type: AppName; id: strin
 
 const PADDING = 2;
 
-export function BoardPreview(props: { board: Board; width: number; height: number; isSelected?: boolean; appInfo: AppInfo[] }): JSX.Element {
-  const [boardWidth, setBoardWidth] = useState(0);
-  const [boardHeight, setBoardHeight] = useState(0);
-  const [appsX, setAppsX] = useState(0);
-  const [appsY, setAppsY] = useState(0);
-  const [mapScale, setMapScale] = useState(1);
-
+export const BoardPreview = memo(function BoardPreview(props: {
+  board: Board;
+  width: number;
+  height: number;
+  isSelected?: boolean;
+  appInfo: AppInfo[];
+}): JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const boardColor = useHexColor(props.board.data.color);
@@ -33,28 +33,25 @@ export function BoardPreview(props: { board: Board; width: number; height: numbe
   const appBorderColor = useHexColor(appBorderColorValue);
   const linearBGColor = useColorModeValue(
     `linear-gradient(172deg, #fafafa, #fbfbfb, #eeeeee)`,
-    `linear-gradient(172deg, #2e2e2e, #313131, #292929)`
+    `linear-gradient(172deg, #2e2e2e, #313131, #292929)`,
   );
 
-  // Recompute layout whenever the appInfo prop changes
-  useEffect(() => {
-    const apps = props.appInfo;
-    if (!apps || apps.length === 0) return;
-
-    const appsLeft = apps.map((app) => app.position.x);
-    const appsRight = apps.map((app) => app.position.x + app.size.width);
-    const appsTop = apps.map((app) => app.position.y);
-    const appsBottom = apps.map((app) => app.position.y + app.size.height);
-
-    const width = Math.max(...appsRight) - Math.min(...appsLeft);
-    const height = Math.max(...appsBottom) - Math.min(...appsTop);
-    const scale = Math.min((props.width - 2 * PADDING) / width, (props.height - 2 * PADDING) / height) * 0.85;
-
-    setBoardWidth(width * scale);
-    setBoardHeight(height * scale);
-    setAppsX(Math.min(...appsLeft));
-    setAppsY(Math.min(...appsTop));
-    setMapScale(scale);
+  const { boardWidth, boardHeight, appsX, appsY, mapScale } = useMemo(() => {
+    let left = Infinity,
+      top = Infinity,
+      right = -Infinity,
+      bottom = -Infinity;
+    for (const app of props.appInfo) {
+      left = Math.min(left, app.position.x);
+      top = Math.min(top, app.position.y);
+      right = Math.max(right, app.position.x + app.size.width);
+      bottom = Math.max(bottom, app.position.y + app.size.height);
+    }
+    if (!props.appInfo.length) return { boardWidth: 0, boardHeight: 0, appsX: 0, appsY: 0, mapScale: 1 };
+    const width = right - left;
+    const height = bottom - top;
+    const scale = Math.min((props.width - 2 * PADDING) / (width || 1), (props.height - 2 * PADDING) / (height || 1)) * 0.85;
+    return { boardWidth: width * scale, boardHeight: height * scale, appsX: left, appsY: top, mapScale: scale };
   }, [props.appInfo, props.width, props.height]);
 
   // Redraw canvas when layout or colors change
@@ -87,7 +84,7 @@ export function BoardPreview(props: { board: Board; width: number; height: numbe
         });
       }
     }
-  }, [props.appInfo, boardColor, appBorderColor, mapScale, appsX, appsY, boardWidth, boardHeight]);
+  }, [props.appInfo, props.board.data.isPrivate, boardColor, appBorderColor, mapScale, appsX, appsY, boardWidth, boardHeight]);
 
   return (
     <Box
@@ -130,4 +127,4 @@ export function BoardPreview(props: { board: Board; width: number; height: numbe
       )}
     </Box>
   );
-}
+});

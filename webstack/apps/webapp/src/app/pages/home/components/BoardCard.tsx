@@ -122,6 +122,7 @@ export function BoardCard(props: BoardCardProps) {
   // https://github.com/chakra-ui/chakra-ui/issues/7359#issuecomment-1698485043
   useOutsideClick({
     ref: popoverRef,
+    enabled: optionsPopoverIsOpen,
     handler: optionPopoverOnClose,
   });
 
@@ -163,11 +164,7 @@ export function BoardCard(props: BoardCardProps) {
           <Box gridArea="preview" position="relative" overflow="hidden">
             <Box display="flex">
               <Box position="absolute" height={0} width="100%" bottom="6">
-                <UserPresenceIcons
-                  usersPresent={props.usersPresent}
-                  maxUsersDisplayed={5}
-                  anonymousNames={props.board.data.isPrivate}
-                />
+                <UserPresenceIcons usersPresent={props.usersPresent} maxUsersDisplayed={5} anonymousNames={props.board.data.isPrivate} />
               </Box>
             </Box>
             <BoardPreview board={props.board} width={230} height={120} isSelected={props.selected} appInfo={props.appInfo} />
@@ -191,7 +188,7 @@ export function BoardCard(props: BoardCardProps) {
             </Tooltip>
           </Box>
 
-          <EnterBoardModal board={props.board} isOpen={isOpen} onClose={onClose} />
+          {isOpen && <EnterBoardModal board={props.board} isOpen={isOpen} onClose={onClose} />}
 
           <Tooltip hasArrow={true} label={`Room: ${props.room?.data.name}`} openDelay={400}>
             <Box display="flex" flexDir="column" pl="1" width="200px">
@@ -275,19 +272,23 @@ export function BoardCard(props: BoardCardProps) {
             </Popover>
           </Box>
         </Box>
-        <EditBoardModal
-          isOpen={editBoardModalIsOpen}
-          onOpen={editBoardModalOnOpen}
-          onClose={editBoardModalOnClose}
-          board={props.board}
-        ></EditBoardModal>
-        <BoardInformationModal
-          isOpen={boardInformationModalIsOpen}
-          onOpen={boardInformationModalOnOpen}
-          onClose={boardInformationModalOnClose}
-          board={props.board}
-          room={props.room}
-        ></BoardInformationModal>
+        {editBoardModalIsOpen && (
+          <EditBoardModal
+            isOpen={editBoardModalIsOpen}
+            onOpen={editBoardModalOnOpen}
+            onClose={editBoardModalOnClose}
+            board={props.board}
+          ></EditBoardModal>
+        )}
+        {boardInformationModalIsOpen && (
+          <BoardInformationModal
+            isOpen={boardInformationModalIsOpen}
+            onOpen={boardInformationModalOnOpen}
+            onClose={boardInformationModalOnClose}
+            board={props.board}
+            room={props.room}
+          ></BoardInformationModal>
+        )}
       </Box>
     </>
   );
