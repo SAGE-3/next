@@ -110,14 +110,18 @@ class PresenceThrottleClass {
     const removeClients = [] as string[];
     // Filter out the presences that are offline
     const filteredPresences = this._presences.filter((p) => p.data.status === 'online');
+    // Pre-stringify the shared payload to avoid repeated JSON.stringify calls
+    const docJson = JSON.stringify(filteredPresences);
+    const eventJson = `{"doc":${docJson}}`;
     this._subscriptions.forEach((socket, key) => {
       // Check if socket is still alive
       if (socket.readyState !== WebSocket.OPEN) {
         removeClients.push(key);
         return;
       }
-      const msg = { id: key, event: { doc: filteredPresences } };
-      socket.send(JSON.stringify(msg));
+      // Build message string with per-client id but shared payload
+      const msgJson = `{"id":${JSON.stringify(key)},"event":${eventJson}}`;
+      socket.send(msgJson);
     });
     // Remove the clients that are no longer alive
     removeClients.forEach((id) => this.removeClient(id));
