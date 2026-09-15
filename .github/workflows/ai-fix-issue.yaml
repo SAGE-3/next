@@ -255,6 +255,21 @@ jobs:
       # reasons about the change and a cheaper one writes the diff. Both point
       # at the same model until a second one is chosen; the split costs
       # nothing to leave wired.
+      #
+      # --editor-edit-format is NOT cosmetic. --architect defaults the editor
+      # to `editor-whole`, which makes it reproduce the entire file to change
+      # one line. On a 1,100-line file that is ~9.5k output tokens and a
+      # minute of wall clock, and it walks straight into upstream aider bug
+      # #5706: aider scans the editor's reply for anything that looks like a
+      # repo filename, and our copyright header ends every source file with
+      # "the file LICENSE, distributed as part of this software." It matches
+      # the tracked `LICENSE` at the repo root, auto-adds it under
+      # --yes-always, and then RETURNS BEFORE apply_updates() -- discarding
+      # the correct edit it had just produced. That is the whole reason #1417
+      # produced a perfect one-word diff, committed nothing, and still went
+      # green. `editor-diff` emits a SEARCH/REPLACE block instead, so the
+      # header never enters the reply. See also .aiderignore, which closes
+      # the same hole from the other side.
       - name: Run Aider
         env:
           OPENAI_API_KEY: ${{ secrets.LITELLM_API_KEY }}
@@ -275,6 +290,7 @@ jobs:
             --architect \
             --model "openai/$MODEL" \
             --editor-model "openai/$EDITOR_MODEL" \
+            --editor-edit-format editor-diff \
             --message-file /tmp/ai-task.md \
             --yes-always \
             --no-auto-lint \
@@ -294,11 +310,18 @@ jobs:
 
           # Compare against the SHA recorded before Aider ran. Diffing against
           # origin/dev instead would misreport whenever dev has moved on.
+          #
+          # This is exit 1, not exit 0. A run that spends real money on the
+          # proxy and lands nothing is a failure, and three of them in a row
+          # reported as green checks while #1417 sat untouched -- the old
+          # comment even blamed the issue for lacking detail when the issue
+          # was fine and aider had thrown the edit away (upstream #5706).
+          # Upstream has no fix merged, so assume this recurs and make it red.
           if [ "$(git rev-parse HEAD)" = "$BEFORE_SHA" ]; then
-            echo "::warning::Aider produced no changes for issue #$ISSUE_NUMBER."
+            echo "::error::Aider produced no commits for issue #$ISSUE_NUMBER."
             gh issue comment "$ISSUE_NUMBER" \
-              --body "The AI agent ran but produced no changes. The issue may need more detail, or the fix may be outside what the agent can infer from the description alone."
-            exit 0
+              --body "The AI agent ran but committed nothing, so no PR was opened. Check the run log: if it printed a diff and then a bare filename (aider auto-adding a file it thought was requested), the edit was discarded by upstream aider bug #5706 and re-labelling may succeed. Otherwise the issue may need more detail, or a \`Files:\` line naming the file to change."
+            exit 1
           fi
 
           # Fast-forward only: the branch was based on its own remote head
