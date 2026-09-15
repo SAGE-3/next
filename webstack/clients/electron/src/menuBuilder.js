@@ -7,7 +7,7 @@
  */
 
 // Electron
-import electron, { app, dialog, Menu, Tray, nativeImage } from 'electron';
+import electron, { app, dialog, Menu, Tray, nativeImage, nativeTheme } from 'electron';
 const shell = electron.shell;
 import path from 'path';
 
@@ -39,6 +39,14 @@ function buildSageMenu(window, commander) {
         label: 'Hide Main Window',
         click: function () {
           window.blur();
+        },
+      },
+      {
+        label: 'Dark Mode',
+        type: 'checkbox',
+        checked: nativeTheme.shouldUseDarkColors,
+        click: function (item) {
+          nativeTheme.themeSource = item.checked ? 'dark' : 'light';
         },
       },
       {
