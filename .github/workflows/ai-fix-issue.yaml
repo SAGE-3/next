@@ -182,6 +182,75 @@ jobs:
           echo "BRANCH=$branch" >> "$GITHUB_ENV"
           echo "BEFORE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
+      # Aider only edits files that are in its chat. Naming them in the issue
+      # text is not enough -- the model reads the prose, but the editable set
+      # stays empty, so the editor produces a diff with nowhere to land and
+      # the "which files should I add?" fallback guesses. That is exactly what
+      # happened on issue #1417: the right one-word diff was generated and
+      # then dropped, because LICENSE was what the fallback picked.
+      #
+      # So resolve `Files:` / `Folder:` here and pass the paths to aider as
+      # real arguments. Absent the line, behaviour is unchanged -- aider falls
+      # back to the repo map, which is lossy across 3 Node services, 44 apps
+      # and a Python tree, but still works for an obvious change.
+      - name: Resolve target files
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          MAX_FILES: ${{ vars.AIDER_MAX_FILES || 20 }}
+        run: |
+          set -euo pipefail
+          : > /tmp/ai-files.txt
+
+          # `|| true` because no match is the normal case, not an error, and
+          # pipefail would otherwise abort the step.
+          raw=$(printf '%s\n' "$ISSUE_BODY" \
+                  | grep -iE '^[[:space:]]*(files?|folders?|dirs?):' || true)
+
+          if [ -z "$raw" ]; then
+            echo "No Files:/Folder: line; aider will fall back to the repo map."
+            exit 0
+          fi
+
+          # Untrusted text even though only owners can label: reject absolute
+          # paths, traversal and anything that would read as a flag, and keep
+          # only paths that actually exist in the checkout.
+          printf '%s\n' "$raw" \
+            | sed -E 's/^[[:space:]]*[A-Za-z]+:[[:space:]]*//' \
+            | tr ',' '\n' \
+            | tr -d '`"'"'" \
+            | tr -s '[:space:]' '\n' \
+            | while IFS= read -r p; do
+                [ -n "$p" ] || continue
+                p="${p%/}"
+                case "$p" in
+                  /*|*..*|-*)
+                    echo "::warning::Ignoring unsafe path in Files: '$p'"; continue ;;
+                esac
+                if [ -f "$p" ]; then
+                  printf '%s\n' "$p" >> /tmp/ai-files.txt
+                elif [ -d "$p" ]; then
+                  n=$(git ls-files -- "$p" | wc -l | tr -d ' ')
+                  if [ "$n" -eq 0 ]; then
+                    echo "::warning::'$p' holds no tracked files; ignoring."
+                  elif [ "$n" -gt "$MAX_FILES" ]; then
+                    # Fail here, before a single token is spent. Silently
+                    # editing an arbitrary subset of a large folder is worse
+                    # than refusing: it looks like it worked.
+                    echo "::error::'$p' holds $n tracked files, over the $MAX_FILES cap. Name individual files or a narrower folder."
+                    exit 3
+                  else
+                    echo "Folder '$p' -> $n files"
+                    git ls-files -- "$p" >> /tmp/ai-files.txt
+                  fi
+                else
+                  echo "::warning::Files: names '$p', which does not exist in the repo; ignoring."
+                fi
+              done
+
+          sort -u -o /tmp/ai-files.txt /tmp/ai-files.txt
+          echo "Resolved $(wc -l < /tmp/ai-files.txt | tr -d ' ') file(s):"
+          cat /tmp/ai-files.txt
+
       # --architect splits planning from editing so a stronger (pricier) model
       # reasons about the change and a cheaper one writes the diff. Both point
       # at the same model until a second one is chosen; the split costs
@@ -193,7 +262,16 @@ jobs:
           EDITOR_MODEL: ${{ vars.AIDER_EDITOR_MODEL || vars.AIDER_MODEL || 'gpt-5.6-terra' }}
         run: |
           set -euo pipefail
-          aider \
+
+          # Positional paths go in aider's chat, which is the set it is allowed
+          # to edit. Read line-by-line rather than word-splitting so a path
+          # containing a space survives.
+          files=()
+          if [ -s /tmp/ai-files.txt ]; then
+            while IFS= read -r f; do files+=("$f"); done < /tmp/ai-files.txt
+          fi
+
+          aider ${files[@]+"${files[@]}"} \
             --architect \
             --model "openai/$MODEL" \
             --editor-model "openai/$EDITOR_MODEL" \

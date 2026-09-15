@@ -20,8 +20,15 @@ export default class ContextMenuHandler {
   }
 
   onTouchStart = (e: any) => {
-    this.contextMenuPossible = true;
     this.callback(e.type, e);
+    // A second finger means a pinch or a two finger pan, never a long press, so
+    // drop the countdown the first finger armed rather than restarting it
+    if (e.touches && e.touches.length > 1) {
+      this.contextMenuPossible = false;
+      window.clearTimeout(this.longPressCountdown);
+      return;
+    }
+    this.contextMenuPossible = true;
     this.longPressCountdown = window.setTimeout(() => {
       this.contextMenuPossible = false;
       this.callback("contextmenu", e);

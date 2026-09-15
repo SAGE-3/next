@@ -207,6 +207,64 @@ jobs:
             printf '%s\n' "$COMMENT_BODY"
           } > /tmp/ai-task.md
 
+      # Same reason as in ai-fix-issue.yaml: naming a file in the text does not
+      # put it in aider's editable set, so the edit lands nowhere. Here there
+      # are two sources -- an inline review comment already carries the file it
+      # was left on, and the body may add a `Files:` line.
+      - name: Resolve target files
+        if: steps.pr.outputs.run == 'true'
+        env:
+          COMMENT_BODY: ${{ github.event.comment.body }}
+          COMMENT_PATH: ${{ github.event.comment.path }}
+          MAX_FILES: ${{ vars.AIDER_MAX_FILES || 20 }}
+        run: |
+          set -euo pipefail
+          : > /tmp/ai-files.txt
+
+          # An inline review comment knows its own file; trust it directly.
+          if [ -n "${COMMENT_PATH:-}" ] && [ -f "$COMMENT_PATH" ]; then
+            printf '%s\n' "$COMMENT_PATH" >> /tmp/ai-files.txt
+          fi
+
+          raw=$(printf '%s\n' "$COMMENT_BODY" \
+                  | grep -iE '^[[:space:]]*(files?|folders?|dirs?):' || true)
+
+          if [ -n "$raw" ]; then
+            printf '%s\n' "$raw" \
+              | sed -E 's/^[[:space:]]*[A-Za-z]+:[[:space:]]*//' \
+              | tr ',' '\n' \
+              | tr -d '`"'"'" \
+              | tr -s '[:space:]' '\n' \
+              | while IFS= read -r p; do
+                  [ -n "$p" ] || continue
+                  p="${p%/}"
+                  case "$p" in
+                    /*|*..*|-*)
+                      echo "::warning::Ignoring unsafe path in Files: '$p'"; continue ;;
+                  esac
+                  if [ -f "$p" ]; then
+                    printf '%s\n' "$p" >> /tmp/ai-files.txt
+                  elif [ -d "$p" ]; then
+                    n=$(git ls-files -- "$p" | wc -l | tr -d ' ')
+                    if [ "$n" -eq 0 ]; then
+                      echo "::warning::'$p' holds no tracked files; ignoring."
+                    elif [ "$n" -gt "$MAX_FILES" ]; then
+                      echo "::error::'$p' holds $n tracked files, over the $MAX_FILES cap. Name individual files or a narrower folder."
+                      exit 3
+                    else
+                      echo "Folder '$p' -> $n files"
+                      git ls-files -- "$p" >> /tmp/ai-files.txt
+                    fi
+                  else
+                    echo "::warning::Files: names '$p', which does not exist in the repo; ignoring."
+                  fi
+                done
+          fi
+
+          sort -u -o /tmp/ai-files.txt /tmp/ai-files.txt
+          echo "Resolved $(wc -l < /tmp/ai-files.txt | tr -d ' ') file(s):"
+          cat /tmp/ai-files.txt
+
       - name: Configure git identity
         if: steps.pr.outputs.run == 'true'
         env:
@@ -224,7 +282,13 @@ jobs:
           EDITOR_MODEL: ${{ vars.AIDER_EDITOR_MODEL || vars.AIDER_MODEL || 'gpt-5.6-terra' }}
         run: |
           set -euo pipefail
-          aider \
+
+          files=()
+          if [ -s /tmp/ai-files.txt ]; then
+            while IFS= read -r f; do files+=("$f"); done < /tmp/ai-files.txt
+          fi
+
+          aider ${files[@]+"${files[@]}"} \
             --architect \
             --model "openai/$MODEL" \
             --editor-model "openai/$EDITOR_MODEL" \

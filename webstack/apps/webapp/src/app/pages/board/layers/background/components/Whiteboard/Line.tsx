@@ -12,7 +12,7 @@ import { getStroke } from 'perfect-freehand';
 import * as Y from 'yjs';
 
 
-import { useHexColor, useUserSettings } from '@sage3/frontend';
+import { useHexColor, useUIStore, useUserSettings } from '@sage3/frontend';
 
 /**
  * The presentational data needed to render a single annotation shape.  This is
@@ -55,6 +55,7 @@ export const ShapeView = memo(function ShapeView(props: ShapeViewProps) {
 
   const { settings } = useUserSettings();
   const primaryActionMode = settings.primaryActionMode;
+  const contextMenuOpen = useUIStore((state) => state.contextMenuOpen);
 
   const c = useHexColor(color ? color : 'red');
   const hoverColor = useColorModeValue(`${color}.600`, `${color}.100`);
@@ -79,6 +80,9 @@ export const ShapeView = memo(function ShapeView(props: ShapeViewProps) {
   const pathData = useMemo(() => getSvgPathFromStrokePolygon(strokeOutline), [strokeOutline]);
 
   const handleErase = (ev: any) => {
+    // A touch long press fires its compatibility mousedown once the radial menu
+    // is already up, so ignore erases while it is open
+    if (contextMenuOpen) return;
     // Left-click while in eraser mode deletes this shape
     if (interactive && ev.button === 0 && primaryActionMode === 'eraser') {
       onErase?.();
