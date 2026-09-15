@@ -813,7 +813,7 @@ export function AppToolbar(props: AppToolbarProps) {
         <ErrorBoundary
           fallbackRender={({ error, resetErrorBoundary }) => (
             <>
-              <Text whiteSpace="nowrap">An error has occured.</Text>
+              <Text whiteSpace="nowrap">An error has occurred.</Text>
               <Tooltip placement="top" hasArrow={true} label={'Delete App'} openDelay={400} ml="1">
                 <Button onClick={() => deleteApp(app._id)} backgroundColor={commonButtonColors} size="xs" mx="1">
                   <MdClose color={buttonTextColor} />
