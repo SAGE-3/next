@@ -19,3 +19,27 @@ deployment/
 *.key
 .env
 .env.*
+
+# LICENSE is here for a different reason than everything above: not to stop
+# the agent editing it, but to stop aider *mentioning* it.
+#
+# Every SAGE3 source file carries a copyright header ending with:
+#
+#   * the file LICENSE, distributed as part of this software.
+#
+# When the editor model reproduces a file, that sentence lands in its reply.
+# Aider scans replies for anything matching a repo path, and `LICENSE` at the
+# repo root is an exact match for the bare word. Under --yes-always it
+# auto-adds the file and returns BEFORE applying the edit it had just
+# written, so a correct change is silently discarded and nothing is committed
+# (aider 0.86.2, upstream issue #5706, base_coder.py:1561-1585). That is what
+# happened to #1417.
+#
+# Aider's own guard against matching dictionary words -- it wants a dot,
+# slash, underscore or dash in a basename before trusting it -- only covers
+# the basename branch. A root-level file matches on its full relative path
+# first, where there is no such guard, so `LICENSE` walks around it.
+#
+# Listing it here drops it from the addable set entirely, which is the only
+# fix that holds in every edit format.
+LICENSE
