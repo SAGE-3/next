@@ -189,6 +189,15 @@ function AppComponent(props: App): JSX.Element {
   const [shareStats, setShareStats] = useState<string[]>([]);
   // Previous byte counters per layer, so bandwidth is a rate and not a running total
   const prevBytesRef = useRef<Record<string, { bytes: number; timestamp: number }>>({});
+  // Last reported frame size per layer. WebRTC omits frameWidth/frameHeight (and
+  // framesPerSecond) from a sample when nothing was encoded in the last second, which
+  // is the normal state of a screen share whose content is not changing. Remembering
+  // the last size keeps the overlay readable instead of flickering to "undefined".
+  const lastSizeRef = useRef<Record<string, string>>({});
+  const size = (key: string, width: number | undefined, height: number | undefined, fallback?: { width: number; height: number }) => {
+    if (width && height) lastSizeRef.current[key] = `${width}x${height}`;
+    return lastSizeRef.current[key] ?? (fallback ? `${fallback.width}x${fallback.height}` : '?x?');
+  };
   // Bits/s between two samples, formatted; blank on the first sample
   const rate = (key: string, bytes: number | undefined, timestamp: number) => {
     const prev = prevBytesRef.current[key];
@@ -212,12 +221,16 @@ function AppComponent(props: App): JSX.Element {
           setShareStats([
             `sending ${layers.length} layer${layers.length === 1 ? '' : 's'}`,
             ...layers.map((l) => {
+              const key = l.rid || '-';
               const limit = l.qualityLimitationReason && l.qualityLimitationReason !== 'none' ? `  LIMIT:${l.qualityLimitationReason}` : '';
-              return `  ${l.rid || '-'}  ${l.frameWidth}x${l.frameHeight}  ${Math.round(l.framesPerSecond || 0)}fps${rate(
-                l.rid || '-',
-                l.bytesSent,
-                l.timestamp
-              )}${limit}`;
+              // No frames in the last second: the screen is not changing (or the SFU paused
+              // this layer). Say so rather than reporting 0fps / 0.00Mbps as if it were a fault.
+              const idle = !l.framesPerSecond;
+              // Always sample the byte counter so the next rate spans only the active interval
+              const bandwidth = rate(key, l.bytesSent, l.timestamp);
+              return `  ${key}  ${size(key, l.frameWidth, l.frameHeight, track.dimensions)}  ${
+                idle ? 'idle' : `${Math.round(l.framesPerSecond)}fps${bandwidth}`
+              }${limit}`;
             }),
           ]);
         } else {
@@ -234,7 +247,7 @@ function AppComponent(props: App): JSX.Element {
           setShareStats(
             stats
               ? [
-                  `receiving ${stats.frameWidth ?? '?'}x${stats.frameHeight ?? '?'}${quality !== undefined ? `  layer ${quality}` : ''}`,
+                  `receiving ${size('rx', stats.frameWidth, stats.frameHeight)}${quality !== undefined ? `  layer ${quality}` : ''}`,
                   `  decoded ${stats.framesDecoded ?? 0}  dropped ${stats.framesDropped ?? 0}${rate(
                     'rx',
                     stats.bytesReceived,
