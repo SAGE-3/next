@@ -7,6 +7,7 @@
  */
 
 import { useState } from 'react';
+import { flushSync } from 'react-dom';
 import { useNavigate } from 'react-router';
 
 // Global history stack (singleton)
@@ -25,12 +26,25 @@ export function useRouteNav() {
     setCanGoForward(currentIndex < history.length - 1);
   }
 
-  function toHome(roomId?: string) {
-    if (roomId) {
-      navigate(`/home/room/${roomId}`);
-    } else {
-      navigate('/home');
+  function navigateWithViewTransition(path: string, className?: string) {
+    if (typeof document.startViewTransition !== 'function') {
+      navigate(path);
+      return;
     }
+
+    if (className) document.documentElement.classList.add(className);
+    const transition = document.startViewTransition(() => {
+      flushSync(() => navigate(path));
+    });
+    transition.finished.finally(() => {
+      if (className) document.documentElement.classList.remove(className);
+    });
+  }
+
+  function toHome(roomId?: string) {
+    const homePath = roomId ? `/home/room/${roomId}` : '/home';
+    const isLeavingBoard = window.location.hash.includes('/board/');
+    isLeavingBoard ? navigateWithViewTransition(homePath, 'board-transition-back') : navigate(homePath);
     updateState();
   }
 
@@ -45,7 +59,7 @@ export function useRouteNav() {
     if (currentPath.includes(boardPath)) {
       return; // Already on the correct board
     }
-    navigate(boardPath);
+    navigateWithViewTransition(boardPath);
 
     // If moving forward in history, clear any forward entries
     if (currentIndex < history.length - 1) {
@@ -64,7 +78,7 @@ export function useRouteNav() {
   function back() {
     if (currentIndex > 0) {
       currentIndex -= 1;
-      navigate(history[currentIndex]);
+      navigateWithViewTransition(history[currentIndex], 'board-transition-back');
       updateState();
     }
   }
@@ -72,7 +86,7 @@ export function useRouteNav() {
   function forward() {
     if (currentIndex < history.length - 1) {
       currentIndex += 1;
-      navigate(history[currentIndex]);
+      navigateWithViewTransition(history[currentIndex]);
       updateState();
     }
   }
