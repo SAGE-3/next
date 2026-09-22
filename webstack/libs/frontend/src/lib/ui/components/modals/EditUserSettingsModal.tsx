@@ -40,6 +40,7 @@ import {
   InputRightElement,
   IconButton,
   FormHelperText,
+  FormErrorMessage,
   useToast,
 } from '@chakra-ui/react';
 import { MdInfo, MdVisibility, MdVisibilityOff } from 'react-icons/md';
@@ -51,10 +52,14 @@ import { useConfigStore } from '../../../stores';
 import {
   isElectron,
   getUserLLM,
+  getUserLLMInfo,
+  hasUserLLM,
+  UserLLMCredentials,
   setUserLLM,
   clearUserLLM,
   maskApiKey,
   fetchAvailableModels,
+  isAzureOpenAI,
   withUserProvider,
   USER_PROVIDER_NAME,
   USER_MODEL_CAPABILITIES,
@@ -128,7 +133,8 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
   const [userModelId, setUserModelId] = useState('');
   const [showKey, setShowKey] = useState(false);
   // The credentials as last saved, so the form can show what is stored
-  const [savedUserLLM, setSavedUserLLM] = useState(() => getUserLLM());
+  // Loaded asynchronously: the key is decrypted from storage when the modal opens
+  const [savedUserLLM, setSavedUserLLM] = useState<UserLLMCredentials | undefined>();
   // Models offered by the endpoint, looked up whenever the key or URL changes
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [modelsLoading, setModelsLoading] = useState(false);
@@ -140,17 +146,24 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
     if (!canUseOwnKey) {
       // A key left behind by a previous account in this browser must not be
       // usable by a guest: drop it rather than merely hiding the form
-      clearUserLLM();
+      void clearUserLLM();
       setSavedUserLLM(undefined);
       return;
     }
-    const stored = getUserLLM();
-    setSavedUserLLM(stored);
-    setUserBaseUrl(stored?.baseUrl ?? '');
-    setUserModelId(stored?.modelId ?? '');
+    // Model and URL are readable at once; the key arrives once decrypted
+    const info = getUserLLMInfo();
+    setUserBaseUrl(info?.baseUrl ?? '');
+    setUserModelId(info?.modelId ?? '');
     // The key itself is never put back on screen — only its masked form is shown
     setUserKey('');
     setShowKey(false);
+    let cancelled = false;
+    getUserLLM().then((stored) => {
+      if (!cancelled) setSavedUserLLM(stored);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [props.isOpen, canUseOwnKey]);
 
   // Look up the endpoint's models whenever the key or the base URL changes.
@@ -195,7 +208,7 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
     };
   }, [userKey, userBaseUrl, canUseOwnKey, props.isOpen, savedUserLLM]);
 
-  const handleSaveUserLLM = () => {
+  const handleSaveUserLLM = async () => {
     if (!canUseOwnKey) return;
     const key = userKey.trim();
     const modelId = userModelId.trim();
@@ -215,8 +228,8 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
       return;
     }
     try {
-      setUserLLM({ apiKey: effectiveKey, baseUrl: userBaseUrl, modelId });
-      setSavedUserLLM(getUserLLM());
+      await setUserLLM({ apiKey: effectiveKey, baseUrl: userBaseUrl, modelId });
+      setSavedUserLLM(await getUserLLM());
       setUserKey('');
       setShowKey(false);
       // Configuring it is the act of choosing it: select it rather than
@@ -230,7 +243,7 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
   };
 
   const handleClearUserLLM = () => {
-    clearUserLLM();
+    void clearUserLLM();
     setSavedUserLLM(undefined);
     setUserKey('');
     setUserBaseUrl('');
@@ -260,9 +273,16 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
     // Wait for the provider list to load before validating the saved model
     if (!models) return;
     // The user's own key is not a server provider, so validate it separately:
-    // it stays selected as long as credentials are stored in this browser
+    // it stays selected as long as credentials are stored in this browser.
+    // Read storage rather than trusting this instance's copy: the modal is
+    // mounted in several places at once, and a key saved in one instance is
+    // not yet in the others' state when the shared choice changes. Trusting
+    // the stale copy made those instances "correct" the choice back to the
+    // first server provider the moment the key was saved.
     if (userSettings.aiModel === USER_PROVIDER_NAME) {
-      if (savedUserLLM) {
+      if (savedUserLLM || hasUserLLM()) {
+        // Another instance saved the key: pick it up (decryption is async)
+        if (!savedUserLLM) getUserLLM().then((stored) => stored && setSavedUserLLM(stored));
         setSelectedModel(USER_PROVIDER_NAME);
         return;
       }
@@ -274,12 +294,14 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
       setSelectedModel(userSettings.aiModel);
     } else if (providerKeys.length > 0) {
       // Saved provider is missing or invalid (e.g. a legacy 'llama' value in
-      // localStorage): fall back to the first available provider and persist it
+      // localStorage): fall back to the first available provider. Only the
+      // open instance persists the fallback; hidden instances must not write
+      // the shared setting from their own view of the world.
       const val = providerKeys[0];
       setSelectedModel(val);
-      setAIModel(val);
+      if (props.isOpen) setAIModel(val);
     }
-  }, [userSettings.aiModel, models, savedUserLLM]);
+  }, [userSettings.aiModel, models, savedUserLLM, props.isOpen]);
 
   return (
     <Modal
@@ -542,10 +564,13 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
                                 autoComplete="off"
                                 borderRadius="md"
                               />
-                              <FormHelperText fontSize="xs">Leave blank for OpenAI.</FormHelperText>
+                              <FormHelperText fontSize="xs">
+                                Leave blank for OpenAI. For Azure OpenAI, the resource address is enough
+                                (https://myresource.openai.azure.com).
+                              </FormHelperText>
                             </FormControl>
 
-                            <FormControl>
+                            <FormControl isInvalid={!!modelsError && !modelsLoading}>
                               <FormLabel fontSize="sm" mb={1}>
                                 Model
                               </FormLabel>
@@ -575,15 +600,21 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
                                   borderRadius="md"
                                 />
                               )}
-                              <FormHelperText fontSize="xs">
-                                {modelsLoading
-                                  ? 'Checking the endpoint for available models…'
-                                  : modelsError
-                                    ? `${modelsError}. Type the model name instead.`
+                              {/* A failed lookup is shown as an error, not a hint: the user needs to
+                                  know the endpoint or key is the problem before typing a model */}
+                              {modelsError && !modelsLoading ? (
+                                <FormErrorMessage fontSize="xs">
+                                  {modelsError}. You can still type the {isAzureOpenAI(userBaseUrl) ? 'deployment' : 'model'} name.
+                                </FormErrorMessage>
+                              ) : (
+                                <FormHelperText fontSize="xs">
+                                  {modelsLoading
+                                    ? 'Checking the endpoint for available models…'
                                     : availableModels.length > 0
                                       ? `${availableModels.length} models at this endpoint. Assumed to handle chat, code, and vision.`
                                       : 'Assumed to handle chat, code, and vision. Image generation is not available.'}
-                              </FormHelperText>
+                                </FormHelperText>
+                              )}
                             </FormControl>
 
                             <HStack spacing={2} pb={1}>

@@ -162,6 +162,22 @@ class LLMManager:
             return None
         return u.model_dump() if hasattr(u, "model_dump") else dict(u)
 
+    def model_label(
+        self,
+        provider: str,
+        capabilities: Union[str, List[Capability]],
+        user_llm: Optional[dict] = None,
+    ) -> str:
+        """The model name to show users in an answer's attribution line.
+
+        Requests name a *provider* ("azure", or the user's own-key marker), which
+        is meaningless to readers; the resolved model id ("gpt-4o", or the
+        deployment the user typed) is what they want to see. Falls back to the
+        provider name when nothing resolves.
+        """
+        info = self.resolve_model(provider, capabilities, user_llm)
+        return (info or {}).get("model_id") or provider
+
     def resolve_model(
         self,
         provider: str,

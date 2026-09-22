@@ -119,8 +119,10 @@ function AppComponent(props: App): JSX.Element {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   // Processing
   const [processing, setProcessing] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
   const [newMessages, setNewMessages] = useState(false);
+  // True while the user has scrolled away from the bottom; a ref because the
+  // resize observer below reads it outside React's render cycle
+  const scrolledAwayRef = useRef(false);
 
   const [previousQuestion, setPreviousQuestion] = useState(s.previousQ);
   const [previousAnswer, setPreviousAnswer] = useState(s.previousA);
@@ -131,6 +133,8 @@ function AppComponent(props: App): JSX.Element {
 
   const isSelected = useUIStore.getState().selectedAppId === props._id;
   const chatBox = useRef<null | HTMLDivElement>(null);
+  // The scrollable box's content, observed for height changes
+  const chatContent = useRef<HTMLDivElement>(null);
   const ctrlRef = useRef<null | AbortController>(null);
 
   // Display some notifications
@@ -307,7 +311,6 @@ function AppComponent(props: App): JSX.Element {
     } else {
       setStreamText('');
     }
-    goToBottom('auto');
   }, [s.token]);
 
   useEffect(() => {
@@ -1255,24 +1258,36 @@ function AppComponent(props: App): JSX.Element {
   const onCodeGenerate = () => askCode('generate', 'Generate code', 'Generate the best solution for this code/request.');
   const onCodeRefactor = () => askCode('refactor', 'Refactor the code', 'Refactor this code.');
 
+  // Auto-scroll. Two parts:
+  //  - "scrolled away" is any position more than a few pixels from the bottom.
+  //    The exact-zero test this replaces never held under the board's CSS
+  //    scale, where scrollTop is fractional, so auto-scroll switched itself
+  //    off as soon as the user had scrolled once (and 'scrollend' does not
+  //    fire in Safari at all).
+  //  - Content growth is followed with a ResizeObserver rather than a scroll
+  //    scheduled after a message arrives: Markdown images, code blocks, and
+  //    the swap from streamed text to the rendered answer all change the
+  //    height later than any fixed delay, and used to leave the box short.
   useEffect(() => {
-    // Scroll to bottom of chat box immediately
-    chatBox.current?.scrollTo({
-      top: chatBox.current?.scrollHeight,
-      behavior: 'instant',
+    const box = chatBox.current;
+    const content = chatContent.current;
+    if (!box) return;
+    const NEAR_BOTTOM_PX = 8;
+    box.scrollTo({ top: box.scrollHeight, behavior: 'instant' });
+    const onScroll = () => {
+      const away = box.scrollHeight - box.scrollTop - box.clientHeight > NEAR_BOTTOM_PX;
+      scrolledAwayRef.current = away;
+      if (!away) setNewMessages(false);
+    };
+    box.addEventListener('scroll', onScroll, { passive: true });
+    const observer = new ResizeObserver(() => {
+      if (!scrolledAwayRef.current) box.scrollTo({ top: box.scrollHeight, behavior: 'instant' });
     });
-    // Control the scrolling of the chat box
-    chatBox.current?.addEventListener('scrollend', () => {
-      if (chatBox.current && chatBox.current.scrollTop) {
-        const test = chatBox.current.scrollHeight - chatBox.current.scrollTop - chatBox.current.clientHeight;
-        if (test === 0) {
-          setScrolled(false);
-          setNewMessages(false);
-        } else {
-          setScrolled(true);
-        }
-      }
-    });
+    if (content) observer.observe(content);
+    return () => {
+      box.removeEventListener('scroll', onScroll);
+      observer.disconnect();
+    };
   }, []);
 
   useEffect(() => {
@@ -1281,13 +1296,10 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [settings.aiModel]);
 
-  // Wait for new messages to scroll to the bottom
+  // A message arriving while the user is scrolled up is flagged, not forced
+  // into view; the observer above scrolls for everyone else
   useEffect(() => {
-    if (!processing && !scrolled) {
-      // Scroll to bottom of chat box smoothly
-      goToBottom();
-    }
-    if (scrolled) setNewMessages(true);
+    if (scrolledAwayRef.current) setNewMessages(true);
   }, [s.messages]);
 
   const applyAction = (action: any) => async () => {
@@ -1354,80 +1366,82 @@ function AppComponent(props: App): JSX.Element {
             },
           }}
         >
-          {sortedMessages.map((message, index) => (
-            <MessageItem
-              key={index}
-              message={message}
-              isLast={index === sortedMessages.length - 1}
-              user={user}
-              users={users}
-              appId={props._id}
-              isFocused={isFocused}
-              myColor={myColor}
-              otherUserColor={otherUserColor}
-              sageColor={sageColor}
-              textColor={textColor}
-              bgColor={bgColor}
-              toast={toast}
-            />
-          ))}
+          <Box ref={chatContent}>
+            {sortedMessages.map((message, index) => (
+              <MessageItem
+                key={index}
+                message={message}
+                isLast={index === sortedMessages.length - 1}
+                user={user}
+                users={users}
+                appId={props._id}
+                isFocused={isFocused}
+                myColor={myColor}
+                otherUserColor={otherUserColor}
+                sageColor={sageColor}
+                textColor={textColor}
+                bgColor={bgColor}
+                toast={toast}
+              />
+            ))}
 
-          {/* In progress SAGE Messages */}
-          {streamText && (
-            <Box position="relative" my={1} maxWidth={'70%'}>
-              <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
-                <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
-                  AI is typing...
-                </Text>
-              </Box>
+            {/* In progress SAGE Messages */}
+            {streamText && (
+              <Box position="relative" my={1} maxWidth={'70%'}>
+                <Box top="0" left={'15px'} position={'absolute'} textAlign="left">
+                  <Text whiteSpace={'nowrap'} textOverflow="ellipsis" fontWeight="bold" color={textColor} fontSize="md">
+                    AI is typing...
+                  </Text>
+                </Box>
 
-              <Box display={'flex'} justifyContent="left" position={'relative'} top={'15px'} mb={'15px'}>
-                <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={aiTypingColor} p={1} m={3} fontFamily="Arial">
-                  {streamText}
+                <Box display={'flex'} justifyContent="left" position={'relative'} top={'15px'} mb={'15px'}>
+                  <Box boxShadow="md" color="white" rounded={'md'} textAlign={'left'} bg={aiTypingColor} p={1} m={3} fontFamily="Arial">
+                    {streamText}
+                  </Box>
                 </Box>
               </Box>
-            </Box>
-          )}
-
-          <Box display={'flex'} justifyContent={'left'}>
-            {actions && (
-              <List>
-                {actions.map((action, index) => {
-                  let propName = undefined;
-                  let chartType = undefined;
-                  try {
-                    propName = action.state.widget.yAxisNames[0];
-                    chartType = action.state.widget.visualizationType;
-                  } catch (e) {
-                    // console.log('ChatApp Exception> No property Name found.');
-                  }
-                  return (
-                    <Box
-                      color="black"
-                      rounded={'md'}
-                      boxShadow="md"
-                      fontFamily="Arial"
-                      textAlign={'left'}
-                      bg={textColor}
-                      p={1}
-                      m={3}
-                      userSelect={'none'}
-                      _hover={{ background: 'purple.300' }}
-                      background={'purple.200'}
-                      onClick={applyAction(action)}
-                      key={'list-' + index}
-                    >
-                      <Tooltip label="Click to show result on the board" aria-label="A tooltip">
-                        <ListItem key={index}>
-                          <ListIcon as={MdOpenInNew} color="white" fontWeight={'bold'} />
-                          {chartType === 'map' ? 'Show Map' : 'Show ' + (propName || action.app)} on the board
-                        </ListItem>
-                      </Tooltip>
-                    </Box>
-                  );
-                })}
-              </List>
             )}
+
+            <Box display={'flex'} justifyContent={'left'}>
+              {actions && (
+                <List>
+                  {actions.map((action, index) => {
+                    let propName = undefined;
+                    let chartType = undefined;
+                    try {
+                      propName = action.state.widget.yAxisNames[0];
+                      chartType = action.state.widget.visualizationType;
+                    } catch (e) {
+                      // console.log('ChatApp Exception> No property Name found.');
+                    }
+                    return (
+                      <Box
+                        color="black"
+                        rounded={'md'}
+                        boxShadow="md"
+                        fontFamily="Arial"
+                        textAlign={'left'}
+                        bg={textColor}
+                        p={1}
+                        m={3}
+                        userSelect={'none'}
+                        _hover={{ background: 'purple.300' }}
+                        background={'purple.200'}
+                        onClick={applyAction(action)}
+                        key={'list-' + index}
+                      >
+                        <Tooltip label="Click to show result on the board" aria-label="A tooltip">
+                          <ListItem key={index}>
+                            <ListIcon as={MdOpenInNew} color="white" fontWeight={'bold'} />
+                            {chartType === 'map' ? 'Show Map' : 'Show ' + (propName || action.app)} on the board
+                          </ListItem>
+                        </Tooltip>
+                      </Box>
+                    );
+                  })}
+                </List>
+              )}
+            </Box>
           </Box>
         </Box>
         <HStack>
