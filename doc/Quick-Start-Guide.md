@@ -172,6 +172,7 @@ Applications are content windows on the board. There are two ways to open them:
 **By dropping files on the board:**
 - Drop an image → **ImageViewer**
 - Drop a PDF → **PDFViewer**
+- Drop a PowerPoint file (.pptx) → **PPTXViewer**
 - Drop a video → **VideoViewer**
 - Drop a CSV → **CSVViewer**
 - Drop a Markdown file → **Stickie**

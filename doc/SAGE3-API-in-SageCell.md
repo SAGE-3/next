@@ -215,6 +215,8 @@ for app in apps:
         print("   data> asset:", app["data"]["state"]["assetid"])
     if app["data"]["type"] == "PDFViewer":
         print("   data> page#:", app["data"]["state"]["currentPage"])
+    if app["data"]["type"] == "PPTXViewer":
+        print("   data> slide#:", app["data"]["state"]["currentSlide"], "of", app["data"]["state"]["numSlides"])
     if app["data"]["type"] == "GLTFViewer":
         print("   data> P/A/D:",
             app["data"]["state"]["p"], app["data"]["state"]["a"], app["data"]["state"]["d"])

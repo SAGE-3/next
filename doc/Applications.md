@@ -324,6 +324,29 @@ Select one or more PDFs and choose **Open in Chat** to ask the AI questions abou
 
 ---
 
+## PPTXViewer
+
+> *Opens automatically when a PowerPoint file (.pptx) is uploaded to the board, or when one is opened from the asset manager.*
+
+View PowerPoint presentations uploaded to the asset manager. Slides are rendered directly in the browser, including text, shapes, tables, charts, and images, and the window takes the shape of the slides. The slide on screen is shared: when anyone changes slide, everyone viewing the board follows.
+
+Embedded videos and audio clips play inside their slide. When someone plays or stops a clip, it plays or stops for everyone viewing that slide. Only play and stop are shared, not the position in the clip. A browser may refuse to start a clip with sound until someone has clicked on that page, which can happen on an unattended wall display.
+
+**Keyboard:** select the app, then with the pointer over it use **→**, **↓**, **Page Down**, or **Space** for the next slide, **←**, **↑**, or **Page Up** for the previous one, and **Home** / **End** for the first and last.
+
+Only the newer `.pptx` format is supported. Older `.ppt` files open as an **AssetLink** with a download button. Videos play only in formats the browser supports, in practice MP4 (H.264); Windows Media (`.wmv`) clips and online videos linked from the deck do not play.
+
+| Name | Type | Icon | Description |
+|------|------|------|-------------|
+| First Slide | Button | <img src="icons/applications/MdSkipPrevious.svg" width="20" /> | Jump to the first slide |
+| Previous Slide | Button | <img src="icons/applications/MdNavigateBefore.svg" width="20" /> | Go to the previous slide |
+| Next Slide | Button | <img src="icons/applications/MdNavigateNext.svg" width="20" /> | Go to the next slide |
+| Last Slide | Button | <img src="icons/applications/MdSkipNext.svg" width="20" /> | Jump to the last slide |
+| Slide counter | Text | | Current slide and total, e.g. `3 / 34` |
+| Download Presentation | Button | <img src="icons/applications/MdFileDownload.svg" width="20" /> | Download the original .pptx file |
+
+---
+
 ## Poll
 
 Create polls and vote on options in real time. Set a question, add multiple answer choices, and let participants vote. Results are displayed as a horizontal bar graph that updates live as votes come in.
