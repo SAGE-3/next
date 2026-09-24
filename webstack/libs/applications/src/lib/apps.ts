@@ -21,6 +21,7 @@ import { name as MermaidName } from './apps/Mermaid';
 import { name as NotepadName } from './apps/Notepad';
 import { name as PDFResultName } from './apps/PDFResult';
 import { name as PDFViewerName } from './apps/PDFViewer';
+import { name as PPTXViewerName } from './apps/PPTXViewer';
 import { name as PluginAppName } from './apps/PluginApp';
 import { name as PollName } from './apps/Poll';
 import { name as SageCellName } from './apps/SageCell';
@@ -59,6 +60,7 @@ import Mermaid from './apps/Mermaid/Mermaid';
 import Notepad from './apps/Notepad/Notepad';
 import PDFResult from './apps/PDFResult/PDFResult';
 import PDFViewer from './apps/PDFViewer/PDFViewer';
+import PPTXViewer from './apps/PPTXViewer/PPTXViewer';
 import PluginApp from './apps/PluginApp/PluginApp';
 import Poll from './apps/Poll/Poll';
 import SageCell from './apps/SageCell/SageCell';
@@ -178,6 +180,11 @@ export const Applications = {
     AppComponent: React.memo(PDFViewer.AppComponent),
     ToolbarComponent: PDFViewer.ToolbarComponent,
     GroupedToolbarComponent: PDFViewer.GroupedToolbarComponent,
+  },
+  [PPTXViewerName]: {
+    AppComponent: React.memo(PPTXViewer.AppComponent),
+    ToolbarComponent: PPTXViewer.ToolbarComponent,
+    GroupedToolbarComponent: PPTXViewer.GroupedToolbarComponent,
   },
   [PluginAppName]: {
     AppComponent: React.memo(PluginApp.AppComponent),
