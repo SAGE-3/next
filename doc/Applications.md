@@ -328,6 +328,8 @@ Select one or more PDFs and choose **Open in Chat** to ask the AI questions abou
 
 > *Opens automatically when a PowerPoint file (.pptx) is uploaded to the board, or when one is opened from the asset manager.*
 
+![PPTXViewer](images/applications/applications_pptxviewer.jpeg)
+
 View PowerPoint presentations uploaded to the asset manager. Slides are rendered directly in the browser, including text, shapes, tables, charts, and images, and the window takes the shape of the slides. The slide on screen is shared: when anyone changes slide, everyone viewing the board follows.
 
 Embedded videos and audio clips play inside their slide. When someone plays or stops a clip, it plays or stops for everyone viewing that slide. Only play and stop are shared, not the position in the clip. A browser may refuse to start a clip with sound until someone has clicked on that page, which can happen on an unattended wall display.
