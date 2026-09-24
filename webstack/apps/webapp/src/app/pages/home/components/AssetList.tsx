@@ -41,6 +41,7 @@ import {
   MdPerson,
   MdPersonOff,
   MdSearch,
+  MdSlideshow,
 } from 'react-icons/md';
 
 import {
@@ -64,6 +65,7 @@ import {
   isVideo,
   isGIF,
   isPDF,
+  isPPTX,
   isImage,
   mimeToCode,
   isGeoJSON,
@@ -444,6 +446,8 @@ const whichIcon = (type: string) => {
     return <MdOutlineImage style={{ color: 'lightblue' }} size={'24px'} />;
   } else if (isPDF(type)) {
     return <MdOutlinePictureAsPdf style={{ color: 'tomato' }} size={'24px'} />;
+  } else if (isPPTX(type)) {
+    return <MdSlideshow style={{ color: 'orange' }} size={'24px'} />;
   } else {
     return <MdOutlineFilePresent size={'24px'} />;
   }

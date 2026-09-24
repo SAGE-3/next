@@ -43,6 +43,7 @@ import {
   MdOutlineImage,
   MdOutlineFilePresent,
   MdOndemandVideo,
+  MdSlideshow,
 } from 'react-icons/md';
 import { FaPython } from 'react-icons/fa';
 import { LuFileCode, LuFileJson } from 'react-icons/lu';
@@ -230,6 +231,8 @@ export function RowFile({ file, clickCB, dragCB, scale }: RowFileProps) {
         return <FaPython style={{ color: 'lightblue' }} size={'20px'} />;
       case 'pdf':
         return <MdOutlinePictureAsPdf style={{ color: 'tomato' }} size={'20px'} />;
+      case 'pptx':
+        return <MdSlideshow style={{ color: 'orange' }} size={'20px'} />;
       case 'jpeg':
       case 'png':
       case 'gif':

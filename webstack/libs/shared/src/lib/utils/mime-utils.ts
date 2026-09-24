@@ -212,6 +212,17 @@ export function isGIF(mimeType: string): boolean {
 export function isPDF(mimeType: string): boolean {
   return mimeType === 'application/pdf';
 }
+
+/**
+ * Test if a given mime type is a PowerPoint presentation (.pptx)
+ *
+ * @export
+ * @param {string} mimeType
+ * @returns {boolean}
+ */
+export function isPPTX(mimeType: string): boolean {
+  return mimeType === 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+}
 /**
  * Test if a given mime type is a video file
  *
@@ -390,6 +401,7 @@ export function isValid(mimeType: string): boolean {
     isFileURL(mimeType) ||
     isImage(mimeType) ||
     isPDF(mimeType) ||
+    isPPTX(mimeType) ||
     isVideo(mimeType) ||
     isText(mimeType) ||
     isMD(mimeType) ||
