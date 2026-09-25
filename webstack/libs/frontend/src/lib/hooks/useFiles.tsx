@@ -29,6 +29,7 @@ import {
   isPython,
   isR,
   isGLTF,
+  isPPTX,
   isGIF,
   isFileURL,
   isTiff,
@@ -234,6 +235,9 @@ async function openApplication(a: Asset, xDrop: number, yDrop: number, roomId: s
       return setupApp('', 'DeepZoomImage', xDrop, yDrop, roomId, boardId, { w: 800, h: 400 }, { assetid: fileID });
     } else if (isGLTF(fileType)) {
       return setupApp('', 'GLTFViewer', xDrop, yDrop, roomId, boardId, { w: 600, h: 600 }, { assetid: fileID });
+    } else if (isPPTX(fileType)) {
+      // 16:9 to start; the viewer adopts the deck's own aspect ratio once loaded
+      return setupApp('', 'PPTXViewer', xDrop, yDrop, roomId, boardId, { w: 960, h: 540 }, { assetid: fileID });
     } else if (isMermaid(fileType)) {
       return setupApp('', 'Mermaid', xDrop, yDrop, roomId, boardId, { w: 800, h: 600 }, { assetid: fileID });
     } else if (isGeoJSON(fileType)) {
