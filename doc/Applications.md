@@ -209,6 +209,8 @@ A viewer for DeepZoom images -- a tiled format for displaying extremely large, h
 
 > *Opens automatically when a Word document (.docx) is uploaded to the board, or when one is opened from the asset manager.*
 
+![DOCXViewer](images/applications/applications_docxviewer.jpeg)
+
 View Word documents uploaded to the asset manager. The document is rendered directly in the browser, including text, styles, tables, lists, headers and footers, and images, and shown page by page like a printed document: each page fills the window, and the window takes the shape of the pages. The page on screen is shared: when anyone changes page, everyone viewing the board follows.
 
 The renderer lays text out continuously, so SAGE3 splits it into pages itself: paragraphs move whole to the next page, long tables are split between rows, and each page repeats the section's header and footer. Page breaks can therefore fall in slightly different places than in Word, and an image taller than a page is cut off at the bottom of its page.
