@@ -9,6 +9,7 @@ import { name as ClockName } from './apps/Clock';
 import { name as CobrowseName } from './apps/Cobrowse';
 import { name as CodeEditorName } from './apps/CodeEditor';
 import { name as CounterName } from './apps/Counter';
+import { name as DOCXViewerName } from './apps/DOCXViewer';
 import { name as DeepZoomImageName } from './apps/DeepZoomImage';
 import { name as DrawingName } from './apps/Drawing';
 import { name as GLTFViewerName } from './apps/GLTFViewer';
@@ -48,6 +49,7 @@ import Clock from './apps/Clock/Clock';
 import Cobrowse from './apps/Cobrowse/Cobrowse';
 import CodeEditor from './apps/CodeEditor/CodeEditor';
 import Counter from './apps/Counter/Counter';
+import DOCXViewer from './apps/DOCXViewer/DOCXViewer';
 import DeepZoomImage from './apps/DeepZoomImage/DeepZoomImage';
 import Drawing from './apps/Drawing/Drawing';
 import GLTFViewer from './apps/GLTFViewer/GLTFViewer';
@@ -120,6 +122,11 @@ export const Applications = {
     AppComponent: React.memo(Counter.AppComponent),
     ToolbarComponent: Counter.ToolbarComponent,
     GroupedToolbarComponent: Counter.GroupedToolbarComponent,
+  },
+  [DOCXViewerName]: {
+    AppComponent: React.memo(DOCXViewer.AppComponent),
+    ToolbarComponent: DOCXViewer.ToolbarComponent,
+    GroupedToolbarComponent: DOCXViewer.GroupedToolbarComponent,
   },
   [DeepZoomImageName]: {
     AppComponent: React.memo(DeepZoomImage.AppComponent),
