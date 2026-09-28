@@ -30,6 +30,7 @@ import {
   isR,
   isGLTF,
   isPPTX,
+  isDOCX,
   isGIF,
   isFileURL,
   isTiff,
@@ -238,6 +239,9 @@ async function openApplication(a: Asset, xDrop: number, yDrop: number, roomId: s
     } else if (isPPTX(fileType)) {
       // 16:9 to start; the viewer adopts the deck's own aspect ratio once loaded
       return setupApp('', 'PPTXViewer', xDrop, yDrop, roomId, boardId, { w: 960, h: 540 }, { assetid: fileID });
+    } else if (isDOCX(fileType)) {
+      // A page's proportions (US Letter); the document is fitted to the width
+      return setupApp('', 'DOCXViewer', xDrop, yDrop, roomId, boardId, { w: 612, h: 792 }, { assetid: fileID });
     } else if (isMermaid(fileType)) {
       return setupApp('', 'Mermaid', xDrop, yDrop, roomId, boardId, { w: 800, h: 600 }, { assetid: fileID });
     } else if (isGeoJSON(fileType)) {
