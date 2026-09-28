@@ -205,6 +205,33 @@ A viewer for DeepZoom images -- a tiled format for displaying extremely large, h
 
 ---
 
+## DOCXViewer
+
+> *Opens automatically when a Word document (.docx) is uploaded to the board, or when one is opened from the asset manager.*
+
+View Word documents uploaded to the asset manager. The document is rendered directly in the browser, including text, styles, tables, lists, headers and footers, and images, and shown page by page like a printed document: each page fills the window, and the window takes the shape of the pages. The page on screen is shared: when anyone changes page, everyone viewing the board follows.
+
+The renderer lays text out continuously, so SAGE3 splits it into pages itself: paragraphs move whole to the next page, long tables are split between rows, and each page repeats the section's header and footer. Page breaks can therefore fall in slightly different places than in Word, and an image taller than a page is cut off at the bottom of its page.
+
+**Several pages:** the **+** and **−** buttons show more or fewer pages side by side, starting at the current one, like the PDF viewer. The window widens or narrows so the pages keep their size. Only the first page's links respond; the pages beside it are pictures of their pages.
+
+**Keyboard:** select the app, then with the pointer over it use **→**, **↓**, **Page Down**, or **Space** for the next page, **←**, **↑**, or **Page Up** for the previous one, **Home** / **End** or **1** / **0** for the first and last, and **+** / **−** to show more or fewer pages side by side.
+
+Only the newer `.docx` format is supported. Older `.doc` files open as an **AssetLink** with a download button. Links to web pages open in a new tab, links inside the document go to the page of their target, and embedded HTML content is not shown.
+
+| Name | Type | Icon | Description |
+|------|------|------|-------------|
+| Show Fewer Pages | Button | <img src="icons/applications/MdRemove.svg" width="20" /> | Decrease the number of pages shown side by side |
+| Show More Pages | Button | <img src="icons/applications/MdAdd.svg" width="20" /> | Increase the number of pages shown side by side |
+| First Page | Button | <img src="icons/applications/MdSkipPrevious.svg" width="20" /> | Jump to the first page |
+| Previous Page | Button | <img src="icons/applications/MdNavigateBefore.svg" width="20" /> | Go to the previous page |
+| Next Page | Button | <img src="icons/applications/MdNavigateNext.svg" width="20" /> | Go to the next page |
+| Last Page | Button | <img src="icons/applications/MdSkipNext.svg" width="20" /> | Jump to the last page |
+| Page counter | Text | | Current page (or pages) and total, e.g. `3 / 12` or `3–4 / 12` |
+| Download Document | Button | <img src="icons/applications/MdFileDownload.svg" width="20" /> | Download the original .docx file |
+
+---
+
 ## Drawing
 
 A collaborative drawing application built on the TLDraw library. Draw freehand, create shapes, and add text on a shared canvas. All actions are synchronized in real time across users, making it great for brainstorming, sketching diagrams, or visual communication.
