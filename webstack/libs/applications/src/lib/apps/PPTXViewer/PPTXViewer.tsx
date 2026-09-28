@@ -6,14 +6,24 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Box, Button, ButtonGroup, Spinner, Text, Tooltip } from '@chakra-ui/react';
-import { MdFileDownload, MdNavigateBefore, MdNavigateNext, MdSkipNext, MdSkipPrevious, MdSlideshow } from 'react-icons/md';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import { Box, Button, ButtonGroup, Spinner, Text, Tooltip, useColorModeValue } from '@chakra-ui/react';
+import {
+  MdAdd,
+  MdFileDownload,
+  MdNavigateBefore,
+  MdNavigateNext,
+  MdRemove,
+  MdSkipNext,
+  MdSkipPrevious,
+  MdSlideshow,
+  MdViewSidebar,
+} from 'react-icons/md';
 
 // Parses the .pptx in the browser and renders slides as HTML/SVG. Only the type is
 // imported here: the library (about 1.5 MB with its chart engine) is loaded on first
 // use, so boards without a presentation never download it.
-import type { PptxViewer } from '@aiden0z/pptx-renderer';
+import type { PptxViewer, SlideHandle } from '@aiden0z/pptx-renderer';
 
 import { useAppStore, useAssetStore, apiUrls, downloadFile } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
@@ -24,6 +34,182 @@ import { AppWindow } from '../../components';
 
 // Styling
 import './styling.css';
+
+// Width of the thumbnails panel, as a fraction of the window's height: it keeps its size
+// when slides are added beside the first, and scales with the window like the slides
+const THUMBS_WIDTH = 0.35;
+
+// Gap between slides shown side by side, also as a fraction of the window's height
+const SLIDE_GAP = 0.02;
+
+// Number of slides shown side by side (apps created before this option show one)
+const shownSlides = (s: AppState) => Math.max(1, Math.min(s.displaySlides ?? 1, s.numSlides || 1));
+
+// Width / height of the window: the slides side by side, plus the thumbnails panel when open
+const windowAspect = (aspect: number, shown: number, thumbnails: boolean) =>
+  aspect * shown + (shown - 1) * SLIDE_GAP + (thumbnails ? THUMBS_WIDTH : 0);
+
+// Window size after changing what is on screen: widened or narrowed so the slides keep their size
+function layoutSize(size: App['data']['size'], s: AppState, displaySlides: number, showThumbnails: boolean): App['data']['size'] {
+  const shown = shownSlides(s);
+  // The slides' shape, from the window's current (locked) shape
+  const aspect = (size.width / size.height - (shown - 1) * SLIDE_GAP - (s.showThumbnails ? THUMBS_WIDTH : 0)) / shown;
+  return { ...size, width: Math.round(size.height * windowAspect(aspect, displaySlides, showThumbnails)) };
+}
+
+/**
+ * Slide thumbnails in a scrollable column; clicking one goes to that slide.
+ * Only thumbnails scrolled into view are drawn: drawing one makes the renderer decode
+ * that slide's images and videos, which it then keeps cached (all 34 thumbnails of a
+ * 255 MB deck cost ~255 MB), so the lazy loading of the main view would otherwise be lost.
+ */
+function SlideThumbnails(props: {
+  viewer: PptxViewer;
+  count: number;
+  current: number;
+  shown: number;
+  aspect: number;
+  onSelect: (index: number) => void;
+}) {
+  const { viewer, count, current, shown, aspect, onSelect } = props;
+  const panelBg = useColorModeValue('gray.200', 'gray.800');
+  const slotBg = useColorModeValue('gray.100', 'black');
+  const labelColor = useColorModeValue('gray.600', 'gray.300');
+  const highlight = useColorModeValue('teal.500', 'teal.300');
+  const hover = useColorModeValue('gray.400', 'gray.500');
+  const panelRef = useRef<HTMLDivElement>(null);
+  const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
+  // Thumbnail width in CSS pixels, following the panel's width
+  const [width, setWidth] = useState(0);
+  const PAD = 8,
+    BORDER = 2;
+
+  useEffect(() => {
+    const panel = panelRef.current;
+    if (!panel) return;
+    const observer = new ResizeObserver(() => setWidth(Math.floor(panel.clientWidth - 2 * PAD - 2 * BORDER)));
+    observer.observe(panel);
+    return () => observer.disconnect();
+  }, []);
+
+  // Draw thumbnails as they come into view; everything is redrawn when the width changes
+  useEffect(() => {
+    const panel = panelRef.current;
+    if (!panel || width < 20) return;
+    const handles = new Map<number, SlideHandle>();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const slot = entry.target as HTMLElement;
+          const index = Number(slot.dataset.index);
+          if (!entry.isIntersecting || handles.has(index)) continue;
+          const handle = viewer.renderThumbnailToContainer(index, slot, { width });
+          if (handle) handles.set(index, handle);
+        }
+      },
+      { root: panel, rootMargin: '200px 0px' },
+    );
+    itemRefs.current.slice(0, count).forEach((slot) => slot && observer.observe(slot));
+    return () => {
+      observer.disconnect();
+      handles.forEach((handle) => handle.dispose());
+      itemRefs.current.forEach((slot) => slot && (slot.innerHTML = ''));
+    };
+  }, [viewer, width, count]);
+
+  // Keep the current slide's thumbnail in view (scrolls the panel only, never the page)
+  useEffect(() => {
+    const panel = panelRef.current;
+    const item = itemRefs.current[current]?.parentElement;
+    if (!panel || !item) return;
+    if (item.offsetTop < panel.scrollTop) panel.scrollTop = item.offsetTop - PAD;
+    else if (item.offsetTop + item.offsetHeight > panel.scrollTop + panel.clientHeight)
+      panel.scrollTop = item.offsetTop + item.offsetHeight - panel.clientHeight + PAD;
+  }, [current, width]);
+
+  return (
+    <Box
+      ref={panelRef}
+      position="relative"
+      h="100%"
+      style={{ aspectRatio: THUMBS_WIDTH }}
+      flexShrink={0}
+      overflowY="auto"
+      bg={panelBg}
+      p={`${PAD}px`}
+      onWheel={(e) => e.stopPropagation()} // scroll the thumbnails, don't zoom the board
+    >
+      {Array.from({ length: count }, (_, index) => {
+        // Every slide on screen is highlighted
+        const onScreen = index >= current && index < current + shown;
+        return (
+          <Box
+            key={index}
+            mb={`${PAD}px`}
+            cursor="pointer"
+            onClick={() => onSelect(index)}
+            border={`${BORDER}px solid`}
+            borderColor={onScreen ? highlight : 'transparent'}
+            borderRadius="3px"
+            _hover={{ borderColor: onScreen ? highlight : hover }}
+          >
+            {/* The renderer draws here; its content ignores the pointer so a click always
+              selects the slide (a thumbnail can contain a real video player) */}
+            <Box
+              ref={(el: HTMLDivElement | null) => (itemRefs.current[index] = el)}
+              data-index={index}
+              className="pptx-viewer-thumb"
+              h={width > 0 ? `${width / aspect}px` : undefined}
+              bg={slotBg}
+              overflow="hidden"
+              pointerEvents="none"
+            />
+            <Text fontSize="xs" color={labelColor} textAlign="center" lineHeight="1.4">
+              {index + 1}
+            </Text>
+          </Box>
+        );
+      })}
+    </Box>
+  );
+}
+
+/**
+ * A slide shown beside the first one when several are displayed. It is drawn like a
+ * thumbnail, at the size that fits its slot: a static picture whose videos and links
+ * don't respond (those of the first slide do).
+ */
+function ExtraSlide(props: { viewer: PptxViewer; index: number; aspect: number }) {
+  const { viewer, index, aspect } = props;
+  const slotRef = useRef<HTMLDivElement>(null);
+  const drawRef = useRef<HTMLDivElement>(null);
+  // Slide width in CSS pixels, fitted (contain) in the slot
+  const [width, setWidth] = useState(0);
+
+  useEffect(() => {
+    const slot = slotRef.current;
+    if (!slot) return;
+    const observer = new ResizeObserver(() => setWidth(Math.floor(Math.min(slot.clientWidth, slot.clientHeight * aspect))));
+    observer.observe(slot);
+    return () => observer.disconnect();
+  }, [aspect]);
+
+  useEffect(() => {
+    const target = drawRef.current;
+    if (!target || width < 20) return;
+    const handle = viewer.renderThumbnailToContainer(index, target, { width });
+    return () => {
+      handle?.dispose();
+      target.innerHTML = '';
+    };
+  }, [viewer, index, width]);
+
+  return (
+    <Box ref={slotRef} flex={1} minW={0} h="100%" className="pptx-viewer-slide">
+      <Box ref={drawRef} w={`${width}px`} h={`${width / aspect}px`} overflow="hidden" pointerEvents="none" />
+    </Box>
+  );
+}
 
 /* App component for PPTXViewer */
 
@@ -51,6 +237,8 @@ function AppComponent(props: App): JSX.Element {
   // Latest shared state, read inside renderer callbacks and key handlers
   const stateRef = useRef(s);
   stateRef.current = s;
+  const sizeRef = useRef(props.data.size);
+  sizeRef.current = props.data.size;
 
   // Get the asset from the state id value, and name the window after the file
   useEffect(() => {
@@ -135,7 +323,8 @@ function AppComponent(props: App): JSX.Element {
         // First load of this deck on the board: shape the window like the slides
         if (current.numSlides === 0 && ratio) {
           const size = props.data.size;
-          update(props._id, { size: { width: size.width, height: Math.round(size.width / ratio), depth: size.depth } });
+          const windowRatio = windowAspect(ratio, Math.max(1, current.displaySlides ?? 1), !!current.showThumbnails);
+          update(props._id, { size: { width: size.width, height: Math.round(size.width / windowRatio), depth: size.depth } });
         }
         updateState(props._id, { numSlides: count });
       }
@@ -199,10 +388,28 @@ function AppComponent(props: App): JSX.Element {
   // Keyboard navigation while the pointer is over the app
   const handleUserKeyPress = useCallback(
     (evt: KeyboardEvent) => {
-      const { currentSlide, numSlides } = stateRef.current;
-      const last = Math.max(0, numSlides - 1);
+      const current = stateRef.current;
+      const { currentSlide, numSlides } = current;
+      const shown = shownSlides(current);
+      // First slide of the last full set on screen
+      const last = Math.max(0, numSlides - shown);
+      // Show more or fewer slides side by side, like the toolbar's + and - buttons
+      const showSlides = (displaySlides: number) => {
+        if (displaySlides < 1 || displaySlides > numSlides || displaySlides === shown) return;
+        updateState(props._id, { displaySlides });
+        update(props._id, { size: layoutSize(sizeRef.current, current, displaySlides, !!current.showThumbnails) });
+      };
       let next: number | undefined;
       switch (evt.key) {
+        case '+':
+        case '=':
+          showSlides(shown + 1);
+          next = currentSlide;
+          break;
+        case '-':
+          showSlides(shown - 1);
+          next = currentSlide;
+          break;
         case 'ArrowRight':
         case 'ArrowDown':
         case 'PageDown':
@@ -215,9 +422,11 @@ function AppComponent(props: App): JSX.Element {
           next = Math.max(currentSlide - 1, 0);
           break;
         case 'Home':
+        case '1':
           next = 0;
           break;
         case 'End':
+        case '0':
           next = last;
           break;
         default:
@@ -245,15 +454,45 @@ function AppComponent(props: App): JSX.Element {
     };
   }, [handleUserKeyPress]);
 
+  const shown = shownSlides(s);
+  const viewer = !loading && !error ? viewerRef.current : null;
+  // Around the slides, between them, and over them while loading
+  const background = useColorModeValue('gray.100', 'black');
+  const gapColor = useColorModeValue('gray.300', 'gray.800');
+  const overlay = useColorModeValue('whiteAlpha.700', 'blackAlpha.700');
+  const errorColor = useColorModeValue('red.500', 'red.300');
+
   return (
-    <AppWindow app={props} lockAspectRatio={aspect ?? false} hideBackgroundIcon={MdSlideshow}>
-      <Box ref={divRef} tabIndex={1} position="relative" w="100%" h="100%" bg="black" overflow="hidden" outline="none">
-        {/* The renderer owns this element's content */}
-        <Box ref={slideRef} w="100%" h="100%" className="pptx-viewer-slide" />
+    <AppWindow
+      app={props}
+      lockAspectRatio={aspect ? windowAspect(aspect, shown, !!s.showThumbnails) : false}
+      hideBackgroundIcon={MdSlideshow}
+    >
+      <Box ref={divRef} tabIndex={1} position="relative" w="100%" h="100%" bg={background} overflow="hidden" outline="none" display="flex">
+        {s.showThumbnails && viewer && (
+          <SlideThumbnails
+            viewer={viewer}
+            count={s.numSlides}
+            current={s.currentSlide}
+            shown={shown}
+            aspect={aspect ?? 16 / 9}
+            onSelect={(index) => updateState(props._id, { currentSlide: Math.min(index, Math.max(0, s.numSlides - shown)) })}
+          />
+        )}
+        {/* The renderer owns this element's content; it re-fits the slide when the
+            thumbnails open or close, or slides are added beside it */}
+        <Box ref={slideRef} flex={1} minW={0} h="100%" className="pptx-viewer-slide" />
+        {/* The next slides, when several are shown, each after a gap (an empty slot past the last slide) */}
+        {Array.from({ length: shown - 1 }, (_, i) => s.currentSlide + 1 + i).map((index, i) => (
+          <Fragment key={i}>
+            <Box h="100%" flexShrink={0} bg={gapColor} style={{ aspectRatio: SLIDE_GAP }} />
+            {viewer && index < s.numSlides ? <ExtraSlide viewer={viewer} index={index} aspect={aspect ?? 16 / 9} /> : <Box flex={1} />}
+          </Fragment>
+        ))}
         {(loading || error) && (
-          <Box position="absolute" inset={0} display="flex" alignItems="center" justifyContent="center" bg="blackAlpha.700">
+          <Box position="absolute" inset={0} display="flex" alignItems="center" justifyContent="center" bg={overlay}>
             {error ? (
-              <Text color="red.300" fontSize="lg" px={4} textAlign="center">
+              <Text color={errorColor} fontSize="lg" px={4} textAlign="center">
                 {error}
               </Text>
             ) : (
@@ -270,6 +509,7 @@ function AppComponent(props: App): JSX.Element {
 function ToolbarComponent(props: App): JSX.Element {
   const s = props.data.state as AppState;
   const updateState = useAppStore((state) => state.updateState);
+  const update = useAppStore((state) => state.update);
   const assets = useAssetStore((state) => state.assets);
   const [file, setFile] = useState<Asset>();
 
@@ -279,11 +519,44 @@ function ToolbarComponent(props: App): JSX.Element {
     if (appasset) setFile(appasset);
   }, [s.assetid, assets]);
 
-  const last = Math.max(0, s.numSlides - 1);
+  const shown = shownSlides(s);
+  // First slide of the last full set on screen
+  const last = Math.max(0, s.numSlides - shown);
   const goTo = (index: number) => updateState(props._id, { currentSlide: Math.min(Math.max(0, index), last) });
+
+  // Change what is on screen, resizing the window to match
+  const setLayout = (displaySlides: number, showThumbnails: boolean) => {
+    updateState(props._id, { displaySlides, showThumbnails });
+    update(props._id, { size: layoutSize(props.data.size, s, displaySlides, showThumbnails) });
+  };
 
   return (
     <>
+      <Tooltip placement="top" hasArrow={true} label={s.showThumbnails ? 'Hide Thumbnails' : 'Show Thumbnails'} openDelay={400}>
+        <Button
+          size="xs"
+          p={0}
+          mr={1}
+          colorScheme="teal"
+          variant={s.showThumbnails ? 'solid' : 'outline'}
+          isDisabled={s.numSlides === 0}
+          onClick={() => setLayout(shown, !s.showThumbnails)}
+        >
+          <MdViewSidebar size="16px" />
+        </Button>
+      </Tooltip>
+      <ButtonGroup isAttached size="xs" colorScheme="teal" mr={1}>
+        <Tooltip placement="top" hasArrow={true} label={'Show Fewer Slides'} openDelay={400}>
+          <Button isDisabled={shown <= 1} onClick={() => setLayout(shown - 1, !!s.showThumbnails)} size="xs" p={0}>
+            <MdRemove size="16px" />
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top" hasArrow={true} label={'Show More Slides'} openDelay={400}>
+          <Button isDisabled={shown >= s.numSlides} onClick={() => setLayout(shown + 1, !!s.showThumbnails)} size="xs" p={0}>
+            <MdAdd size="16px" />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
       <ButtonGroup isAttached size="xs" colorScheme="teal" mr={1}>
         <Tooltip placement="top" hasArrow={true} label={'First Slide'} openDelay={400}>
           <Button isDisabled={s.currentSlide <= 0} onClick={() => goTo(0)} size="xs" p={0}>
@@ -307,7 +580,11 @@ function ToolbarComponent(props: App): JSX.Element {
         </Tooltip>
       </ButtonGroup>
       <Text fontSize="xs" mx={1} whiteSpace="nowrap">
-        {s.numSlides > 0 ? `${s.currentSlide + 1} / ${s.numSlides}` : '…'}
+        {s.numSlides === 0
+          ? '…'
+          : shown > 1
+            ? `${s.currentSlide + 1}–${Math.min(s.currentSlide + shown, s.numSlides)} / ${s.numSlides}`
+            : `${s.currentSlide + 1} / ${s.numSlides}`}
       </Text>
       <ButtonGroup isAttached size="xs" colorScheme="teal" ml={1}>
         <Tooltip placement="top" hasArrow={true} label={'Download Presentation'} openDelay={400}>

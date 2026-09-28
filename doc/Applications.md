@@ -334,17 +334,24 @@ View PowerPoint presentations uploaded to the asset manager. Slides are rendered
 
 Embedded videos and audio clips play inside their slide. When someone plays or stops a clip, it plays or stops for everyone viewing that slide. Only play and stop are shared, not the position in the clip. A browser may refuse to start a clip with sound until someone has clicked on that page, which can happen on an unattended wall display.
 
-**Keyboard:** select the app, then with the pointer over it use **→**, **↓**, **Page Down**, or **Space** for the next slide, **←**, **↑**, or **Page Up** for the previous one, and **Home** / **End** for the first and last.
+**Thumbnails:** a column of slide thumbnails is shown on the left of the app; click one to go to that slide, for everyone. The thumbnail button in the toolbar hides or shows it. The column is shared like the current slide, so everyone viewing the board sees it open or close.
+
+**Several slides:** the **+** and **−** buttons show more or fewer slides side by side, starting at the current one, like the PDF viewer's pages. The window widens or narrows so the slides keep their size, and the slides on screen are highlighted in the thumbnails. Only the first slide plays its videos and follows its links; the others are pictures of their slides.
+
+**Keyboard:** select the app, then with the pointer over it use **→**, **↓**, **Page Down**, or **Space** for the next slide, **←**, **↑**, or **Page Up** for the previous one, **Home** / **End** or **1** / **0** for the first and last, and **+** / **−** to show more or fewer slides side by side.
 
 Only the newer `.pptx` format is supported. Older `.ppt` files open as an **AssetLink** with a download button. Videos play only in formats the browser supports, in practice MP4 (H.264); Windows Media (`.wmv`) clips and online videos linked from the deck do not play.
 
 | Name | Type | Icon | Description |
 |------|------|------|-------------|
+| Thumbnails | Button | <img src="icons/applications/MdViewSidebar.svg" width="20" /> | Show or hide the slide thumbnails on the left |
+| Show Fewer Slides | Button | <img src="icons/applications/MdRemove.svg" width="20" /> | Decrease the number of slides shown side by side |
+| Show More Slides | Button | <img src="icons/applications/MdAdd.svg" width="20" /> | Increase the number of slides shown side by side |
 | First Slide | Button | <img src="icons/applications/MdSkipPrevious.svg" width="20" /> | Jump to the first slide |
 | Previous Slide | Button | <img src="icons/applications/MdNavigateBefore.svg" width="20" /> | Go to the previous slide |
 | Next Slide | Button | <img src="icons/applications/MdNavigateNext.svg" width="20" /> | Go to the next slide |
 | Last Slide | Button | <img src="icons/applications/MdSkipNext.svg" width="20" /> | Jump to the last slide |
-| Slide counter | Text | | Current slide and total, e.g. `3 / 34` |
+| Slide counter | Text | | Current slide (or slides) and total, e.g. `3 / 34` or `3–4 / 34` |
 | Download Presentation | Button | <img src="icons/applications/MdFileDownload.svg" width="20" /> | Download the original .pptx file |
 
 ---
