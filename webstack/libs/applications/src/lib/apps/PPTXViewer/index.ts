@@ -24,6 +24,10 @@ export const schema = z.object({
   // mirrored on every client
   mediaKey: z.string(),
   mediaPlaying: z.boolean(),
+  // Slide thumbnails shown on the left of the app (toggled from the toolbar)
+  showThumbnails: z.boolean(),
+  // Number of slides shown side by side, starting at currentSlide
+  displaySlides: z.number(),
 });
 export type state = z.infer<typeof schema>;
 
@@ -33,6 +37,8 @@ export const init: Partial<state> = {
   numSlides: 0,
   mediaKey: '',
   mediaPlaying: false,
+  showThumbnails: true,
+  displaySlides: 1,
 };
 
 export const name = 'PPTXViewer';
