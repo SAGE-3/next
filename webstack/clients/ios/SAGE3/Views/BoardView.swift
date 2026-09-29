@@ -105,16 +105,6 @@ struct BoardView: View {
         // Above the gestures, so the handle gets the touch first
         if let app = selected, moving == nil {
           let frame = screenFrame(app)
-          if resizing == nil {
-            AppToolbar(
-              app: app,
-              pages: app.data.type == "PDFViewer" && session.canMoveApps
-                ? AppToolbar.Pages(page: page(of: app), count: pageCount(of: app), shown: pagesShown(by: app)) { setPage(of: app, to: $0) }
-                : nil,
-              onClose: session.canDeleteApps ? { confirmDelete = app } : nil
-            )
-            .position(x: min(max(frame.midX, 170), viewSize.width - 170), y: min(frame.maxY + 34, viewSize.height - 30))
-          }
           if canChange(app) {
             ResizeHandle()
               .position(x: frame.maxX, y: frame.maxY)
@@ -125,8 +115,22 @@ struct BoardView: View {
       .onAppear { viewSize = geometry.size }
       .onChange(of: geometry.size) { _, size in viewSize = size }
     }
+    .overlay(alignment: .bottom) {
+      // The selected app's toolbar: always on screen, above the board's toolbar
+      if let app = selected, moving == nil, resizing == nil {
+        AppToolbar(
+          app: app,
+          pages: app.data.type == "PDFViewer" && session.canMoveApps
+            ? AppToolbar.Pages(page: page(of: app), count: pageCount(of: app), shown: pagesShown(by: app)) { setPage(of: app, to: $0) }
+            : nil,
+          onClose: session.canDeleteApps ? { confirmDelete = app } : nil
+        )
+        .padding(.bottom, 12)
+        .padding(.horizontal, 8)
+      }
+    }
     .overlay(alignment: .bottomLeading) {
-      if apps.loaded && !apps.items.isEmpty {
+      if apps.loaded && !apps.items.isEmpty && selected == nil {
         Text(statusText)
           .font(.caption.monospacedDigit())
           .padding(.horizontal, 10)
@@ -476,8 +480,8 @@ private struct ResizeHandle: View {
   }
 }
 
-/// Under the selected app: its kind and title, its own controls (a PDF's pages), and a
-/// close button that deletes it
+/// The selected app's toolbar, at the bottom of the board: its name, its own controls (a
+/// PDF's pages), and a close button that deletes it
 private struct AppToolbar: View {
   /// A PDF's page controls
   struct Pages {
@@ -494,6 +498,8 @@ private struct AppToolbar: View {
   var pages: Pages?
   /// nil: this user may not delete apps
   var onClose: (() -> Void)?
+  // On a phone, the first and last page buttons give way
+  @Environment(\.horizontalSizeClass) private var sizeClass
 
   private var name: String {
     if let title = app.data.title, !title.isEmpty { return title }
@@ -506,17 +512,21 @@ private struct AppToolbar: View {
         .font(.subheadline.weight(.semibold))
         .lineLimit(1)
         .truncationMode(.middle)
-        .frame(maxWidth: pages == nil ? 200 : 110)
+        .frame(maxWidth: pages == nil ? 220 : (sizeClass == .compact ? 90 : 160))
         .padding(.horizontal, 8)
       if let pages {
         Divider().frame(height: 22)
-        button("First Page", "backward.end.fill", enabled: pages.page > 0) { pages.go(0) }
+        if sizeClass != .compact {
+          button("First Page", "backward.end.fill", enabled: pages.page > 0) { pages.go(0) }
+        }
         button("Previous Page", "chevron.left", enabled: pages.page > 0) { pages.go(pages.page - 1) }
         Text(pages.label)
           .font(.callout.monospacedDigit())
           .frame(minWidth: 56)
         button("Next Page", "chevron.right", enabled: pages.page < pages.last) { pages.go(pages.page + 1) }
-        button("Last Page", "forward.end.fill", enabled: pages.page < pages.last) { pages.go(pages.last) }
+        if sizeClass != .compact {
+          button("Last Page", "forward.end.fill", enabled: pages.page < pages.last) { pages.go(pages.last) }
+        }
       }
       if let onClose {
         Divider().frame(height: 22)
