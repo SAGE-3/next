@@ -1,0 +1,46 @@
+# SAGE3 for iOS
+
+A native SwiftUI client for iPhone and iPad (iOS 17+). No third-party packages.
+
+**Phase 1** (this version):
+
+- **Hubs:** the Electron client's default list, plus a local development hub in debug builds. You can add and remove hubs; each hub is checked with `GET /api/info`.
+- **Sign in:** guest only, shown when the hub allows guests. Other sign-in methods need a server change, since the web logins end in a browser cookie and the server has no way to hand a native app a session.
+- **Rooms and boards:** listed and kept up to date live; private ones ask for their PIN. The create buttons are there but disabled for guests, because the server refuses rooms and boards from guests.
+- **Boards:** pan with one finger, zoom with two, double-tap or the toolbar button to show all apps. Images (the resized copy that fits the zoom) and Stickies (their saved text) are drawn; every other app is a placeholder with its type and title.
+
+## Run
+
+Open `SAGE3.xcodeproj` in Xcode 16 or later (tested with Xcode 27), pick an iPhone or iPad simulator, and run. For the local development hub, run the SAGE3 dev servers first (`http://localhost:4200`).
+
+From the command line:
+
+```sh
+xcodebuild -project SAGE3.xcodeproj -scheme SAGE3 -destination 'platform=iOS Simulator,name=iPhone 17' build
+```
+
+Debug builds can open a hub's rooms, a room's boards, or a board directly as a guest, which is handy in the simulator:
+
+```sh
+xcrun simctl launch booted app.sage3.ios -SAGE3Hub http://localhost:4200 [-SAGE3Room <room id> [-SAGE3Board <board id>]]
+```
+
+## How it talks to the hub
+
+The same APIs as the web client (`libs/frontend`):
+
+- REST over HTTP (`/api/rooms`, `/api/boards?roomId=`, `/api/apps?boardId=`, `/api/assets/<id>`), with the session cookie kept in the shared cookie storage.
+- The `/api` websocket for live updates: `{ id, route, method: "SUB" }`, then `CREATE` / `UPDATE` / `DELETE` events carrying the documents.
+- A guest login is `POST /auth/guest`; the guest's user is then created with `POST /api/users/create`, as the web client does.
+- Private PINs are stored as `uuidv5(pin, namespace)`, with the namespace from `/api/configuration`.
+
+The Swift models in `SAGE3/Models` mirror the zod schemas in `libs/shared` and `libs/applications`: update them when those change.
+
+## Layout
+
+- `SAGE3/Models`: server documents (rooms, boards, apps, assets, users) and a loose JSON type for app state
+- `SAGE3/Network`: HTTP client, websocket client, UUID v5
+- `SAGE3/Stores`: saved hubs, the signed-in session, live collections
+- `SAGE3/Views`: hubs, sign-in, rooms, boards, the board canvas, app tiles
+
+`clients/swift` is an earlier 2022 websocket prototype, kept for reference.
