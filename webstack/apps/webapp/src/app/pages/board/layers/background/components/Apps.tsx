@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useParams } from 'react-router';
 import { throttle } from 'throttle-debounce';
@@ -29,6 +29,9 @@ import {
 import { initialValues } from '@sage3/applications/initialValues';
 import { App, AppName, AppSchema, AppState } from '@sage3/applications/schema';
 
+// How long after creating an app the board waits for it to arrive before zooming to it
+const NEW_APP_WAIT_MS = 10000;
+
 // Renders all the apps
 export function Apps() {
   // Params
@@ -39,6 +42,7 @@ export function Apps() {
   const appsFetched = useAppStore((state) => state.fetched);
   const deleteApp = useAppStore((state) => state.delete);
   const createBatch = useAppStore((state) => state.createBatch);
+  const lastCreated = useAppStore((state) => state.lastCreated);
 
   // Save the previous location and scale when zoming to an application
   const scale = useThrottleScale(250);
@@ -55,6 +59,7 @@ export function Apps() {
   const setBoardPosition = useUIStore((state) => state.setBoardPosition);
   const setScale = useUIStore((state) => state.setScale);
   const boardSynced = useUIStore((state) => state.boardSynced);
+  const setSelectedApp = useUIStore((state) => state.setSelectedApp);
 
   // Cursor Position
   const { getBoardCursor } = useCursorBoardPosition();
@@ -296,7 +301,9 @@ export function Apps() {
             // If the cursor is inside the app, delete it. Only delete the top one
             if (cx >= x1 && cx <= x2 && cy >= y1 && cy <= y2) {
               if (previousLocation.set && previousLocation.app === el._id) {
-                // if action is pressed again on the same app, zoom out
+                // if action is pressed again on the same app, zoom out (and stop there: an
+                // app underneath would otherwise be zoomed to instead)
+                found = true;
                 setBoardPosition({ x: previousLocation.x, y: previousLocation.y });
                 setScale(previousLocation.s);
                 setPreviousLocation((prev) => ({ ...prev, set: false, app: '' }));
@@ -323,6 +330,22 @@ export function Apps() {
       dependencies: [previousLocation.set, appDragging, scale, boardPosition.x, boardPosition.y, apps],
     },
   );
+
+  // Zoom to each app the user creates, and select it (setting zoomToNewApps): the same
+  // as pressing Z over it, so pressing Z again zooms back out. The app reaches the store
+  // shortly after it is created, so wait for it, but not for long: an app created on
+  // another board, or long ago, is left alone.
+  const zoomedToRef = useRef('');
+  useEffect(() => {
+    if (!settings.zoomToNewApps || !lastCreated || zoomedToRef.current === lastCreated.id) return;
+    if (Date.now() - lastCreated.at > NEW_APP_WAIT_MS) return;
+    const app = apps.find((a) => a._id === lastCreated.id);
+    if (!app || app.data.boardId !== boardId) return;
+    zoomedToRef.current = app._id;
+    setPreviousLocation({ x: boardPosition.x, y: boardPosition.y, s: scale, set: true, app: app._id });
+    fitApps([app]);
+    setSelectedApp(app._id);
+  }, [lastCreated, apps, settings.zoomToNewApps]);
 
   // Focus to app when pressing f over an app
   // useHotkeys(

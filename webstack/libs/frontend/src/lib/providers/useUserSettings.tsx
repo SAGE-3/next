@@ -18,6 +18,7 @@ import { isElectron } from '../../../../applications/src/lib/apps/Cobrowse/util'
  * @property {boolean} showCursors - Indicates whether cursors should be displayed.
  * @property {boolean} showViewports - Indicates whether viewports should be displayed.
  * @property {boolean} showAppTitles - Indicates whether application titles should be displayed.
+ * @property {boolean} zoomToNewApps - Indicates whether the board zooms to each application the user creates, and selects it.
  * @property {'none'| 'selected' | 'all'} showLinks - Indicates whether provenance information should be displayed (arrows).
  * @property {boolean} showUI - Indicates whether the user interface should be displayed.
  * @property {boolean} showGrid - Indicates whether the background grid should be displayed.
@@ -30,6 +31,7 @@ type UserSettings = {
   showCursors: boolean;
   showViewports: boolean;
   showAppTitles: boolean;
+  zoomToNewApps: boolean;
   showLinks: 'none' | 'selected' | 'selected-path' | 'all';
   showUI: boolean;
   showGrid: boolean;
@@ -52,6 +54,8 @@ const defaultSettings: UserSettings = {
   showCursors: true,
   showViewports: true,
   showAppTitles: false,
+  // Off by default: it moves the view, which is disruptive on a shared wall display
+  zoomToNewApps: false,
   showLinks: 'all',
   showUI: true,
   showGrid: true,
@@ -69,6 +73,7 @@ type UserSettingsContextType = {
   toggleShowCursors: () => void;
   toggleShowViewports: () => void;
   toggleShowAppTitles: () => void;
+  toggleZoomToNewApps: () => void;
   setShowLinks: (value: UserSettings['showLinks']) => void;
   toggleShowUI: () => void;
   toggleShowGrid: () => void;
@@ -86,6 +91,7 @@ const UserSettingsContext = createContext<UserSettingsContextType>({
   toggleShowCursors: () => { },
   toggleShowViewports: () => { },
   toggleShowAppTitles: () => { },
+  toggleZoomToNewApps: () => { },
   setShowLinks: (value: UserSettings['showLinks']) => { },
   toggleShowUI: () => { },
   toggleShowGrid: () => { },
@@ -167,6 +173,15 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
     setSettings((prev) => {
       const newSettings = { ...prev };
       newSettings.showAppTitles = !prev.showAppTitles;
+      setUserSettings(newSettings);
+      return newSettings;
+    });
+  }, [setSettings]);
+
+  const toggleZoomToNewApps = useCallback(() => {
+    setSettings((prev) => {
+      const newSettings = { ...prev };
+      newSettings.zoomToNewApps = !prev.zoomToNewApps;
       setUserSettings(newSettings);
       return newSettings;
     });
@@ -282,6 +297,7 @@ export function UserSettingsProvider(props: React.PropsWithChildren<Record<strin
         toggleShowCursors,
         toggleShowViewports,
         toggleShowAppTitles,
+        toggleZoomToNewApps,
         toggleShowUI,
         toggleShowGrid,
         setShowLinks,
