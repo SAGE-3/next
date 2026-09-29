@@ -16,3 +16,4 @@ export * from './isElectron';
 export * from './browserType';
 export * from './setupAppForFiles';
 export * from './userllm';
+export * from './placeNewApp';
