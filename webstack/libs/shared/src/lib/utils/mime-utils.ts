@@ -223,6 +223,17 @@ export function isPDF(mimeType: string): boolean {
 export function isPPTX(mimeType: string): boolean {
   return mimeType === 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
 }
+
+/**
+ * Test if a given mime type is a Word document (.docx)
+ *
+ * @export
+ * @param {string} mimeType
+ * @returns {boolean}
+ */
+export function isDOCX(mimeType: string): boolean {
+  return mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+}
 /**
  * Test if a given mime type is a video file
  *
@@ -402,6 +413,7 @@ export function isValid(mimeType: string): boolean {
     isImage(mimeType) ||
     isPDF(mimeType) ||
     isPPTX(mimeType) ||
+    isDOCX(mimeType) ||
     isVideo(mimeType) ||
     isText(mimeType) ||
     isMD(mimeType) ||

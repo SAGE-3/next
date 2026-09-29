@@ -217,6 +217,8 @@ for app in apps:
         print("   data> page#:", app["data"]["state"]["currentPage"])
     if app["data"]["type"] == "PPTXViewer":
         print("   data> slide#:", app["data"]["state"]["currentSlide"], "of", app["data"]["state"]["numSlides"])
+    if app["data"]["type"] == "DOCXViewer":
+        print("   data> page#:", app["data"]["state"]["currentPage"], "of", app["data"]["state"]["numPages"])
     if app["data"]["type"] == "GLTFViewer":
         print("   data> P/A/D:",
             app["data"]["state"]["p"], app["data"]["state"]["a"], app["data"]["state"]["d"])

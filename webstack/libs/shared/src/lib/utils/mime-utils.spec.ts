@@ -6,9 +6,10 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { getMime, isPPTX, isValid } from './mime-utils';
+import { getMime, isDOCX, isPPTX, isValid } from './mime-utils';
 
 const PPTX = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+const DOCX = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
 describe('PowerPoint files', () => {
   it('resolves .pptx to the presentation type, as the files server does on upload', () => {
@@ -24,5 +25,22 @@ describe('PowerPoint files', () => {
 
   it('is a supported type, so it opens in a viewer instead of a generic asset link', () => {
     expect(isValid(PPTX)).toBe(true);
+  });
+});
+
+describe('Word documents', () => {
+  it('resolves .docx to the document type, as the files server does on upload', () => {
+    expect(getMime('report.docx')).toBe(DOCX);
+  });
+
+  it('recognizes the document type', () => {
+    expect(isDOCX(DOCX)).toBe(true);
+    expect(isDOCX(PPTX)).toBe(false);
+    // Legacy binary .doc is a different format the renderer does not read
+    expect(isDOCX('application/msword')).toBe(false);
+  });
+
+  it('is a supported type, so it opens in a viewer instead of a generic asset link', () => {
+    expect(isValid(DOCX)).toBe(true);
   });
 });
