@@ -23,6 +23,9 @@ struct BoardView: View {
   // people join, and a guest's user is made when they arrive)
   @State private var presences = LiveCollection<PresenceData>()
   @State private var users = LiveCollection<UserData>()
+  // The whiteboard's shapes
+  @State private var annotations = AnnotationStore()
+  @State private var annotating = false
   // This user's own presence, for the others
   @State private var presenceSender: PresenceSender?
   @State private var showingFiles = false
@@ -95,11 +98,20 @@ struct BoardView: View {
             .position(x: frame.midX, y: frame.midY)
             .animation(.easeOut(duration: 0.15), value: lifted)
         }
+        AnnotationLayer(annotations: annotations, offset: offset, scale: scale)
         PresenceLayer(presences: presences, users: users, me: session.user?.id, boardId: board.id, offset: offset, scale: scale)
       }
       .clipped()
       .overlay {
         BoardGestures(onTap: tap, onDoubleTap: doubleTap, onHold: hold, onPan: pan, onPinch: pinch)
+      }
+      .overlay {
+        // Above the board's gestures: while annotating, touches draw (the board stays put)
+        if annotating {
+          AnnotateOverlay(annotations: annotations, userId: session.user?.id, userColor: session.user?.data.color, offset: offset, scale: scale) {
+            annotating = false
+          }
+        }
       }
       .overlay(alignment: .topLeading) {
         // Above the gestures, so the handle gets the touch first
@@ -116,17 +128,18 @@ struct BoardView: View {
       .onChange(of: geometry.size) { _, size in viewSize = size }
     }
     .overlay(alignment: .bottom) {
-      // The selected app's toolbar: always on screen, above the board's toolbar
+      // The selected app's controls: always on screen, above the board's toolbar (none
+      // to show, no toolbar)
       if let app = selected, moving == nil, resizing == nil {
-        AppToolbar(
-          app: app,
-          pages: app.data.type == "PDFViewer" && session.canMoveApps
-            ? AppToolbar.Pages(page: page(of: app), count: pageCount(of: app), shown: pagesShown(by: app)) { setPage(of: app, to: $0) }
-            : nil,
-          onClose: session.canDeleteApps ? { confirmDelete = app } : nil
-        )
-        .padding(.bottom, 12)
-        .padding(.horizontal, 8)
+        let pages = app.data.type == "PDFViewer" && session.canMoveApps
+          ? AppToolbar.Pages(page: page(of: app), count: pageCount(of: app), shown: pagesShown(by: app)) { setPage(of: app, to: $0) }
+          : nil
+        let close: (() -> Void)? = session.canDeleteApps ? { confirmDelete = app } : nil
+        if pages != nil || close != nil {
+          AppToolbar(pages: pages, onClose: close)
+            .padding(.bottom, 12)
+            .padding(.horizontal, 8)
+        }
       }
     }
     .overlay(alignment: .bottomLeading) {
@@ -162,6 +175,18 @@ struct BoardView: View {
         Button { zoom(by: 1 / 1.5) } label: { Label("Zoom Out", systemImage: "minus.magnifyingglass") }
         Button { zoom(by: 1.5) } label: { Label("Zoom In", systemImage: "plus.magnifyingglass") }
         Spacer()
+        // The selected app's name
+        if let app = selected {
+          Text(app.data.title.flatMap { $0.isEmpty ? nil : $0 } ?? app.data.type)
+            .font(.subheadline.weight(.semibold))
+            .lineLimit(1)
+            .truncationMode(.middle)
+          Spacer()
+        }
+        if session.canAnnotate {
+          Button { annotating.toggle() } label: { Label("Annotate", systemImage: annotating ? "pencil.tip.crop.circle.fill" : "pencil.tip.crop.circle") }
+            .disabled(!annotations.live)
+        }
         Button { showingFiles = true } label: { Label("Files", systemImage: "folder") }
         Button {
           Appearance.set(colorScheme == .dark ? "light" : "dark")
@@ -201,12 +226,14 @@ struct BoardView: View {
         fitAll()
       }
       await users.start(socket: session.socket, route: "/users") { try await session.client.users() }
+      await annotations.start(client: session.client, socket: session.socket, boardId: board.id)
       await presences.start(socket: session.socket, route: "/presence?boardId=\(board.id)") { try await session.client.presence(boardId: board.id) }
     }
     .onDisappear {
       apps.stop()
       presences.stop()
       users.stop()
+      annotations.stop()
       presenceSender?.leave()
     }
   }
@@ -480,8 +507,8 @@ private struct ResizeHandle: View {
   }
 }
 
-/// The selected app's toolbar, at the bottom of the board: its name, its own controls (a
-/// PDF's pages), and a close button that deletes it
+/// The selected app's toolbar, at the bottom of the board: its own controls (a PDF's
+/// pages), and a close button that deletes it (its name is in the board's toolbar)
 private struct AppToolbar: View {
   /// A PDF's page controls
   struct Pages {
@@ -494,28 +521,15 @@ private struct AppToolbar: View {
     var label: String { shown > 1 ? "\(page + 1)–\(min(page + shown, count)) / \(count)" : "\(page + 1) / \(count)" }
   }
 
-  let app: SageApp
   var pages: Pages?
   /// nil: this user may not delete apps
   var onClose: (() -> Void)?
   // On a phone, the first and last page buttons give way
   @Environment(\.horizontalSizeClass) private var sizeClass
 
-  private var name: String {
-    if let title = app.data.title, !title.isEmpty { return title }
-    return app.data.type
-  }
-
   var body: some View {
     HStack(spacing: 2) {
-      Text(name)
-        .font(.subheadline.weight(.semibold))
-        .lineLimit(1)
-        .truncationMode(.middle)
-        .frame(maxWidth: pages == nil ? 220 : (sizeClass == .compact ? 90 : 160))
-        .padding(.horizontal, 8)
       if let pages {
-        Divider().frame(height: 22)
         if sizeClass != .compact {
           button("First Page", "backward.end.fill", enabled: pages.page > 0) { pages.go(0) }
         }
@@ -529,7 +543,7 @@ private struct AppToolbar: View {
         }
       }
       if let onClose {
-        Divider().frame(height: 22)
+        if pages != nil { Divider().frame(height: 22) }
         button("Delete App", "xmark", enabled: true, action: onClose)
           .foregroundStyle(.red)
       }

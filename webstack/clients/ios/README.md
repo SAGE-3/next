@@ -36,10 +36,25 @@ The same APIs as the web client (`libs/frontend`):
 
 The Swift models in `SAGE3/Models` mirror the zod schemas in `libs/shared` and `libs/applications`: update them when those change.
 
+## Annotations (Yjs)
+
+The whiteboard's strokes are shared live through Yjs, as on the web: the app joins the
+board's room (`annotations-<boardId>` on the hub's `/yjs` websocket) with the web
+client's own `yjs`, run in JavaScriptCore. `YjsBridge/bridge.js` wraps it (sync
+messages in and out, shapes as JSON, add, erase, load the saved copy); `YjsBridge/build.sh`
+bundles it with webstack's webpack into `SAGE3/Resources/yjs-bridge.js`, which is
+committed, so building the app needs only Xcode. Rebuild it after updating `yjs` in
+webstack.
+
+Strokes are saved to the board's annotations document as the web whiteboard saves them:
+new strokes appended (`POST /api/annotations/<boardId>/lines`), the whole list rewritten
+after an erase. The app doesn't announce itself in the room's awareness, so a web client
+that arrives alone still loads the saved copy.
+
 ## Layout
 
 - `SAGE3/Models`: server documents (rooms, boards, apps, assets, users) and a loose JSON type for app state
-- `SAGE3/Network`: HTTP client, websocket client, UUID v5
+- `SAGE3/Network`: HTTP client, websocket client, Yjs engine, UUID v5, PKCE login
 - `SAGE3/Stores`: saved hubs, the signed-in session, live collections
 - `SAGE3/Views`: hubs, sign-in, rooms, boards, the board canvas, app tiles
 

@@ -162,6 +162,21 @@ final class HubClient {
 
   func presence(boardId: String) async throws -> [Presence] { try await documents("GET", "/api/presence", query: ["boardId": boardId]) }
 
+  /// A board's annotations (the document's id is the board's)
+  func annotations(boardId: String) async throws -> SBDoc<AnnotationData>? {
+    let docs: [SBDoc<AnnotationData>] = try await documents("GET", "/api/annotations/\(boardId)")
+    return docs.first
+  }
+
+  /// Add shapes to a board's saved annotations, as the web whiteboard does for new
+  /// strokes (the full list is only rewritten after an erase)
+  func appendAnnotationLines(boardId: String, lines: [JSONValue]) async throws {
+    let body = try encoder.encode(["lines": JSONValue.array(lines)])
+    let (data, http) = try await send("POST", "/api/annotations/\(boardId)/lines", body: body)
+    let reply = try? decoder.decode(APIReply<JSONValue>.self, from: data)
+    guard http.statusCode == 200, reply?.success == true else { throw HubError.server(reply?.message ?? "Could not save the annotation.") }
+  }
+
   func users() async throws -> [User] { try await documents("GET", "/api/users") }
 
   func assets(roomId: String) async throws -> [Asset] { try await documents("GET", "/api/assets", query: ["room": roomId]) }

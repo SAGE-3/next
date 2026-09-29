@@ -108,6 +108,13 @@ struct PresenceData: Codable {
   var viewport: Viewport?
 }
 
+/// A board's saved annotations (libs/shared/src/lib/types/schemas/annotation.ts): the
+/// whiteboard's shapes, each { id, type, points: [x, y, x, y, ...], userColor, alpha,
+/// size, userId, ... } as the web whiteboard stores them
+struct AnnotationData: Codable {
+  var whiteboardLines: [JSONValue]?
+}
+
 typealias Room = SBDoc<RoomData>
 typealias Board = SBDoc<BoardData>
 typealias SageApp = SBDoc<AppData>
