@@ -21,6 +21,10 @@
  *      verifier against the challenge, uses up the code, and logs the app in, setting a
  *      normal session cookie (makeMobileExchangeHandler).
  * A web login without ?mobile works exactly as before.
+ *
+ * Apple's callback is a cross-site form POST, which the session cookie (sameSite lax)
+ * doesn't come with: there the challenge goes to Apple and back in the OAuth state
+ * instead (mobileLoginState, mobileChallengeFromState).
  */
 
 import { createHash, randomBytes, timingSafeEqual } from 'crypto';
@@ -75,6 +79,26 @@ export function takeMobileChallenge(req: Request): string | undefined {
   const challenge = session?.mobileChallenge;
   if (session && challenge) delete session.mobileChallenge;
   return challenge;
+}
+
+/** OAuth state carrying the app's challenge: 'mobile.<challenge>' */
+const STATE_PREFIX = 'mobile.';
+
+/**
+ * For a login whose callback comes back without the session (Apple): the OAuth state to
+ * send, carrying the app's challenge; undefined for a web login (the strategy's own state)
+ */
+export function mobileLoginState(req: Request): string | undefined {
+  const challenge = req.query['mobile'];
+  return typeof challenge === 'string' && TOKEN.test(challenge) ? STATE_PREFIX + challenge : undefined;
+}
+
+/** The app's challenge from the callback's OAuth state (form POST or query), if the app started it */
+export function mobileChallengeFromState(req: Request): string | undefined {
+  const state = req.body?.state ?? req.query['state'];
+  if (typeof state !== 'string' || !state.startsWith(STATE_PREFIX)) return undefined;
+  const challenge = state.slice(STATE_PREFIX.length);
+  return TOKEN.test(challenge) ? challenge : undefined;
 }
 
 /** Store a one-time code for the logged-in account; returns the code */

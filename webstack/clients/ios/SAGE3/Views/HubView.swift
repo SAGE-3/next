@@ -9,13 +9,14 @@
 import AuthenticationServices
 import SwiftUI
 
-/// A hub: sign in (Google or guest), then its rooms
+/// A hub: sign in (Apple, Google or guest), then its rooms
 struct HubView: View {
   let session: Session
   @State private var loginSheet = LoginSheet()
   @State private var checking = true
   @State private var signingIn = false
   @State private var error: String?
+  @Environment(\.colorScheme) private var colorScheme
 
   var body: some View {
     Group {
@@ -40,6 +41,7 @@ struct HubView: View {
 
   private var guestAllowed: Bool { session.info?.logins?.contains("guest") ?? false }
   private var googleAllowed: Bool { session.info?.logins?.contains("google") ?? false }
+  private var appleAllowed: Bool { session.info?.logins?.contains("apple") ?? false }
 
   private var signIn: some View {
     VStack(spacing: 20) {
@@ -50,7 +52,21 @@ struct HubView: View {
       }
       if session.info == nil {
         Text("This hub is not reachable.").foregroundStyle(.red)
-      } else if guestAllowed || googleAllowed {
+      } else if guestAllowed || googleAllowed || appleAllowed {
+        if appleAllowed {
+          // Apple's look for its sign-in button: black (white in dark mode), its logo
+          Button {
+            Task { await signIn { try await session.loginWithApple(authenticate: openLoginSheet) } }
+          } label: {
+            Label("Sign in with Apple", systemImage: "apple.logo")
+              .frame(maxWidth: 280)
+          }
+          .buttonStyle(.borderedProminent)
+          .tint(colorScheme == .dark ? .white : .black)
+          .foregroundStyle(colorScheme == .dark ? .black : .white)
+          .controlSize(.large)
+          .disabled(signingIn)
+        }
         if googleAllowed {
           Button {
             Task { await signIn { try await session.loginWithGoogle(authenticate: openLoginSheet) } }
@@ -78,7 +94,7 @@ struct HubView: View {
             .multilineTextAlignment(.center)
         }
       } else {
-        Text("This hub allows neither Google nor guest sign-in. Other sign-in methods will come in a later version.")
+        Text("This hub allows neither Apple, Google nor guest sign-in. Other sign-in methods will come in a later version.")
           .font(.footnote)
           .foregroundStyle(.secondary)
           .multilineTextAlignment(.center)

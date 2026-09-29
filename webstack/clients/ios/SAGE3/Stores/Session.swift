@@ -77,14 +77,24 @@ final class Session {
   /// the address it ends on). The hub hands the login back as a one-time code, which only
   /// the verifier behind the challenge can use (PKCE).
   func loginWithGoogle(authenticate: (URL, String) async throws -> URL) async throws {
+    try await webLogin("google", "Google", authenticate: authenticate)
+  }
+
+  func loginWithApple(authenticate: (URL, String) async throws -> URL) async throws {
+    try await webLogin("apple", "Apple", authenticate: authenticate)
+  }
+
+  /// The hub's web login for a provider (/auth/<provider>) in the login sheet, handed to
+  /// the app with a one-time code (see WebLogin)
+  private func webLogin(_ provider: String, _ name: String, authenticate: (URL, String) async throws -> URL) async throws {
     let login = WebLogin()
-    guard let url = client.url("/auth/google", query: ["mobile": login.challenge]) else { throw HubError.badURL }
+    guard let url = client.url("/auth/\(provider)", query: ["mobile": login.challenge]) else { throw HubError.badURL }
     let callback = try await authenticate(url, WebLogin.callbackScheme)
     guard let code = URLComponents(url: callback, resolvingAgainstBaseURL: false)?.queryItems?.first(where: { $0.name == "code" })?.value else {
       throw HubError.server("The hub did not complete the login.")
     }
     try await client.exchangeLoginCode(code, verifier: login.verifier)
-    guard let auth = try await client.verify() else { throw HubError.server("The Google login did not work.") }
+    guard let auth = try await client.verify() else { throw HubError.server("The \(name) login did not work.") }
     guard await start(auth) else { throw HubError.server("Could not open the session.") }
   }
 

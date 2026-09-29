@@ -8,7 +8,8 @@
 
 /**
  * Tests for the iOS app's web-login handoff (SBMobileLogin): the start route keeps the
- * app's challenge, the callback's one-time code, and POST /auth/mobile/exchange.
+ * app's challenge (in the session, or the OAuth state for Apple), the callback's one-time
+ * code, and POST /auth/mobile/exchange.
  */
 
 import { randomBytes } from 'crypto';
@@ -18,8 +19,10 @@ import supertest from 'supertest';
 import {
   issueMobileCode,
   makeMobileExchangeHandler,
+  mobileChallengeFromState,
   mobileChallengeOf,
   MobileCodeStore,
+  mobileLoginState,
   rememberMobileLogin,
   takeMobileChallenge,
 } from './SBMobileLogin';
@@ -94,6 +97,30 @@ describe('rememberMobileLogin / takeMobileChallenge', () => {
   it('does nothing without a session', () => {
     expect(() => run(undefined, { mobile: mobileChallengeOf(newVerifier()) })).not.toThrow();
     expect(takeMobileChallenge({} as any)).toBeUndefined();
+  });
+});
+
+describe('mobileLoginState / mobileChallengeFromState (Apple)', () => {
+  it("carries the app's challenge in the OAuth state, back in the callback's form POST", () => {
+    const challenge = mobileChallengeOf(newVerifier());
+    const state = mobileLoginState({ query: { mobile: challenge } } as any);
+    expect(state).toBe(`mobile.${challenge}`);
+    expect(mobileChallengeFromState({ body: { state }, query: {} } as any)).toBe(challenge);
+    expect(mobileChallengeFromState({ query: { state } } as any)).toBe(challenge);
+  });
+
+  it("leaves a web login to the strategy's own state", () => {
+    expect(mobileLoginState({ query: {} } as any)).toBeUndefined();
+    expect(mobileChallengeFromState({ body: { state: 'a1b2c3d4e5' }, query: {} } as any)).toBeUndefined();
+  });
+
+  it('ignores a malformed challenge or state', () => {
+    for (const mobile of ['short', 'x'.repeat(44), ['a', 'b']]) {
+      expect(mobileLoginState({ query: { mobile } } as any)).toBeUndefined();
+    }
+    for (const state of ['mobile.', 'mobile.short', `mobile.${'x'.repeat(44)}`, 42]) {
+      expect(mobileChallengeFromState({ body: { state }, query: {} } as any)).toBeUndefined();
+    }
   });
 });
 

@@ -5,7 +5,7 @@ A native SwiftUI client for iPhone and iPad (iOS 17+). No third-party packages.
 **Phase 1** (this version):
 
 - **Hubs:** the Electron client's default list, plus a local development hub in debug builds. You can add and remove hubs; each hub is checked with `GET /api/info`.
-- **Sign in:** guest only, shown when the hub allows guests. Other sign-in methods need a server change, since the web logins end in a browser cookie and the server has no way to hand a native app a session.
+- **Sign in:** Apple, Google and guest, each shown when the hub allows it. Apple and Google run the hub's web login in the system's login sheet, which hands the app a one-time code (`SBMobileLogin` on the server, PKCE). Apple's callback is a cross-site form POST without the session cookie, so for Apple the app's challenge travels in the OAuth state.
 - **Rooms and boards:** listed and kept up to date live; private ones ask for their PIN. The create buttons are there but disabled for guests, because the server refuses rooms and boards from guests.
 - **Boards:** pan with one finger, zoom with two, double-tap or the toolbar button to show all apps. Images (the resized copy that fits the zoom) and Stickies (their saved text) are drawn; every other app is a placeholder with its type and title.
 
