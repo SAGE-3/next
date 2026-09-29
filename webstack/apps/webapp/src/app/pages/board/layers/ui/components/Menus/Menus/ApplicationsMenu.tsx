@@ -26,6 +26,8 @@ export interface ApplicationProps {
   boardId: string;
   roomId: string;
   onActionComplete?: () => void;
+  // Board point to place new apps around (the radial menu's spot), else the view's center
+  target?: { x: number; y: number };
 }
 
 export function ApplicationsMenu(props: ApplicationProps) {
@@ -95,8 +97,8 @@ export function ApplicationsMenu(props: ApplicationProps) {
       h = 130 * 1.5;
     }
 
-    // Near the center of the view, clear of the other apps (in the center if there's no room)
-    const { x, y } = placeNewApp({ width: w, height: h });
+    // Near the target or the center of the view, clear of the other apps (right there if there's no room)
+    const { x, y } = placeNewApp({ width: w, height: h }, { target: props.target });
 
     const title = appName == 'Stickie' ? user.data.name : ''; // Gross
     const result = await createApp({

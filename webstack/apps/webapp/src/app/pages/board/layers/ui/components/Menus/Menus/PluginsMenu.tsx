@@ -16,6 +16,8 @@ export interface PluginsMenuProps {
   boardId: string;
   roomId: string;
   onActionComplete?: () => void;
+  // Board point to place new apps around (the radial menu's spot), else the view's center
+  target?: { x: number; y: number };
 }
 
 /**
@@ -48,8 +50,8 @@ export function PluginsMenu(props: PluginsMenuProps) {
     // Setup initial size
     let w = 400;
     let h = 400;
-    // Near the center of the view, clear of the other apps
-    const { x, y } = placeNewApp({ width: w, height: h });
+    // Near the target or the center of the view, clear of the other apps
+    const { x, y } = placeNewApp({ width: w, height: h }, { target: props.target });
 
     const result = await createApp({
       title: pluginName,

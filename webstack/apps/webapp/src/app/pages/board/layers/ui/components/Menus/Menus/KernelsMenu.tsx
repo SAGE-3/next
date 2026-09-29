@@ -20,6 +20,8 @@ export interface KernelsMenuProps {
   menuIsOpen?: boolean;
   boardId: string;
   roomId: string;
+  // Board point to place new apps around (the radial menu's spot), else the view's center
+  target?: { x: number; y: number };
 }
 
 /**
@@ -120,8 +122,8 @@ export function KernelsMenu(props: KernelsMenuProps) {
    */
   const handleCreateSageCell = (kernelInfo: KernelInfo) => {
     if (!user) return;
-    // Near the center of the view, clear of the other apps
-    const { x, y } = placeNewApp({ width: 600, height: 600 });
+    // Near the target or the center of the view, clear of the other apps
+    const { x, y } = placeNewApp({ width: 600, height: 600 }, { target: props.target });
     createApp({
       title: `${kernelInfo.alias}`,
       roomId: props.roomId,

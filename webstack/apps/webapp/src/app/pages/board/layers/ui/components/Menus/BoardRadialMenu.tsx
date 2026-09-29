@@ -70,6 +70,11 @@ export function BoardRadialMenu(props: BoardRadialMenuProps) {
   // The panel opened by the radial menu, if any, and where the ring was drawn
   const [openPanel, setOpenPanel] = useState<PanelId | null>(null);
   const [center, setCenter] = useState(props.position);
+  // Where the menu was opened, on the board: new apps go there (as close as free space allows)
+  const [target] = useState(() => {
+    const { boardPosition, scale } = useUIStore.getState();
+    return { x: props.position.x / scale - boardPosition.x, y: props.position.y / scale - boardPosition.y };
+  });
 
   const items: RadialMenuItem[] = [
     // { id: 'linker', icon: <FaLink />, label: 'Link', active: primaryActionMode === 'linker' },
@@ -128,13 +133,15 @@ export function BoardRadialMenu(props: BoardRadialMenuProps) {
       <MenuPanel center={center} title={PANEL_TITLES[openPanel]} onClose={props.onClose}>
         {openPanel === 'users' && <UsersMenu boardId={props.boardId} />}
         {/* Closes once a screenshare has started, like the toolbar's Screenshares menu */}
-        {openPanel === 'screenshare' && <ScreenshareMenu boardId={props.boardId} roomId={props.roomId} onActionComplete={props.onClose} />}
-        {openPanel === 'applications' && <ApplicationsMenu roomId={props.roomId} boardId={props.boardId} />}
-        {openPanel === 'plugins' && <PluginsMenu roomId={props.roomId} boardId={props.boardId} />}
+        {openPanel === 'screenshare' && (
+          <ScreenshareMenu boardId={props.boardId} roomId={props.roomId} target={target} onActionComplete={props.onClose} />
+        )}
+        {openPanel === 'applications' && <ApplicationsMenu roomId={props.roomId} boardId={props.boardId} target={target} />}
+        {openPanel === 'plugins' && <PluginsMenu roomId={props.roomId} boardId={props.boardId} target={target} />}
         {openPanel === 'assets' && (
           <AssetsMenu roomId={props.roomId} boardId={props.boardId} downloadRoomAssets={props.downloadRoomAssets} />
         )}
-        {openPanel === 'kernels' && <KernelsMenu roomId={props.roomId} boardId={props.boardId} />}
+        {openPanel === 'kernels' && <KernelsMenu roomId={props.roomId} boardId={props.boardId} target={target} />}
         {openPanel === 'map' && <NavigationMenu />}
       </MenuPanel>
     );
