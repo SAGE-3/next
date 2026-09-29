@@ -29,8 +29,8 @@
     var body: some View {
       NavigationStack {
         Group {
-          if let session, room != nil, let board {
-            BoardView(session: session, board: board)
+          if let session, let room, let board {
+            BoardView(session: session, board: board, roomName: room.data.name)
           } else if let session, let room {
             BoardsView(session: session, room: room)
           } else if let session, session.user != nil {

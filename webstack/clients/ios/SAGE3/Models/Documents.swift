@@ -76,6 +76,10 @@ struct AssetData: Codable {
   var originalfilename: String?
   var mimetype: String?
   var room: String?
+  var owner: String?
+  /// In bytes
+  var size: Double?
+  var dateAdded: String?
   /// Files the server made from the upload: image sizes, video info, PDF pages, ...
   var derived: JSONValue?
 }
@@ -91,11 +95,25 @@ struct UserData: Codable {
   var recentBoards: [String]?
 }
 
+/// Where someone is: their board, cursor, and view (libs/shared/src/lib/types/schemas/presence.ts)
+struct PresenceData: Codable {
+  struct Viewport: Codable {
+    var position: Position
+    var size: Size
+  }
+  var userId: String
+  var status: String?
+  var boardId: String?
+  var cursor: Position?
+  var viewport: Viewport?
+}
+
 typealias Room = SBDoc<RoomData>
 typealias Board = SBDoc<BoardData>
 typealias SageApp = SBDoc<AppData>
 typealias Asset = SBDoc<AssetData>
 typealias User = SBDoc<UserData>
+typealias Presence = SBDoc<PresenceData>
 
 /// GET /api/info: public, no login needed
 struct ServerInfo: Codable {

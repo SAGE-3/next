@@ -37,6 +37,12 @@ final class Session {
     return role == "user" || role == "admin" || role == "guest"
   }
 
+  /// Guests may not delete apps (SAGEAbility: create, read, update only)
+  var canDeleteApps: Bool { canCreateRoomsAndBoards }
+
+  /// Guests may not upload (SAGEAbility: assets are download-only for them)
+  var canUpload: Bool { canCreateRoomsAndBoards }
+
   var canCreateRoomsAndBoards: Bool {
     guard let role = user?.data.userRole else { return false }
     return role == "user" || role == "admin"

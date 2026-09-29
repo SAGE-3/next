@@ -143,7 +143,7 @@ struct BoardsView: View {
     }
     .onDisappear { boards.stop() }
     .navigationDestination(item: $openBoardId) { id in
-      if let board = boards.items.first(where: { $0.id == id }) { BoardView(session: session, board: board) }
+      if let board = boards.items.first(where: { $0.id == id }) { BoardView(session: session, board: board, roomName: room.data.name) }
     }
     .pinPrompt(item: $pinFor, session: session, hashed: { $0.data.privatePin }) { openBoardId = $0.id }
     .sheet(isPresented: $creating) { CreateSpaceSheet(session: session, room: room) }

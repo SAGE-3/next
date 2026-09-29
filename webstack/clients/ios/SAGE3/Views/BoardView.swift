@@ -16,7 +16,17 @@ import UIKit
 struct BoardView: View {
   let session: Session
   let board: Board
+  /// For the title: hub / room / board
+  var roomName: String?
   @State private var apps = LiveCollection<AppData>()
+  // The other people on the board, and everyone's name and color (both kept up to date:
+  // people join, and a guest's user is made when they arrive)
+  @State private var presences = LiveCollection<PresenceData>()
+  @State private var users = LiveCollection<UserData>()
+  // This user's own presence, for the others
+  @State private var presenceSender: PresenceSender?
+  @State private var showingFiles = false
+  @State private var confirmDelete: SageApp?
   @State private var assets: AssetCache
   @State private var offset = CGPoint.zero
   @State private var scale: CGFloat = 1
@@ -29,9 +39,10 @@ struct BoardView: View {
   @State private var fitted = false
   @Environment(\.colorScheme) private var colorScheme
 
-  init(session: Session, board: Board) {
+  init(session: Session, board: Board, roomName: String? = nil) {
     self.session = session
     self.board = board
+    self.roomName = roomName
     _assets = State(initialValue: AssetCache(client: session.client))
   }
 
@@ -84,6 +95,7 @@ struct BoardView: View {
             .position(x: frame.midX, y: frame.midY)
             .animation(.easeOut(duration: 0.15), value: lifted)
         }
+        PresenceLayer(presences: presences, users: users, me: session.user?.id, boardId: board.id, offset: offset, scale: scale)
       }
       .clipped()
       .overlay {
@@ -93,9 +105,15 @@ struct BoardView: View {
         // Above the gestures, so the handle gets the touch first
         if let app = selected, moving == nil {
           let frame = screenFrame(app)
-          if app.data.type == "PDFViewer", resizing == nil, session.canMoveApps {
-            PageBar(page: page(of: app), count: pageCount(of: app), shown: pagesShown(by: app)) { setPage(of: app, to: $0) }
-              .position(x: min(max(frame.midX, 150), viewSize.width - 150), y: min(frame.maxY + 34, viewSize.height - 30))
+          if resizing == nil {
+            AppToolbar(
+              app: app,
+              pages: app.data.type == "PDFViewer" && session.canMoveApps
+                ? AppToolbar.Pages(page: page(of: app), count: pageCount(of: app), shown: pagesShown(by: app)) { setPage(of: app, to: $0) }
+                : nil,
+              onClose: session.canDeleteApps ? { confirmDelete = app } : nil
+            )
+            .position(x: min(max(frame.midX, 170), viewSize.width - 170), y: min(frame.maxY + 34, viewSize.height - 30))
           }
           if canChange(app) {
             ResizeHandle()
@@ -127,11 +145,20 @@ struct BoardView: View {
     .navigationTitle(board.data.name)
     .navigationBarTitleDisplayMode(.inline)
     .toolbar {
+      ToolbarItem(placement: .principal) {
+        // Where you are: hub / room / board (the middle gives way on narrow screens)
+        Text([session.info?.serverName ?? session.hub.name, roomName, board.data.name].compactMap { $0 }.joined(separator: " / "))
+          .font(.headline)
+          .lineLimit(1)
+          .truncationMode(.middle)
+          .minimumScaleFactor(0.8)
+      }
       ToolbarItemGroup(placement: .bottomBar) {
         Button { fitAll() } label: { Label("Show All Apps", systemImage: "arrow.up.left.and.arrow.down.right") }
         Button { zoom(by: 1 / 1.5) } label: { Label("Zoom Out", systemImage: "minus.magnifyingglass") }
         Button { zoom(by: 1.5) } label: { Label("Zoom In", systemImage: "plus.magnifyingglass") }
         Spacer()
+        Button { showingFiles = true } label: { Label("Files", systemImage: "folder") }
         Button {
           Appearance.set(colorScheme == .dark ? "light" : "dark")
         } label: {
@@ -139,14 +166,45 @@ struct BoardView: View {
         }
       }
     }
+    .confirmationDialog(
+      "Delete \(confirmDelete?.data.title.flatMap { $0.isEmpty ? nil : $0 } ?? confirmDelete?.data.type ?? "this app")?",
+      isPresented: Binding(get: { confirmDelete != nil }, set: { if !$0 { confirmDelete = nil } }),
+      titleVisibility: .visible
+    ) {
+      Button("Delete", role: .destructive) {
+        if let app = confirmDelete { delete(app) }
+        confirmDelete = nil
+      }
+      Button("Cancel", role: .cancel) { confirmDelete = nil }
+    } message: {
+      Text("It is removed from the board for everyone.")
+    }
+    .sheet(isPresented: $showingFiles) {
+      AssetsSheet(session: session, roomId: board.data.roomId, open: openOnBoard)
+    }
+    .onChange(of: [offset.x, offset.y, scale, viewSize.width, viewSize.height]) { _, _ in
+      presenceSender?.viewport(visibleBoard)
+    }
     .task(id: session.socket == nil) {
+      if let me = session.user?.id {
+        let sender = PresenceSender(socket: session.socket, userId: me)
+        sender.enter(roomId: board.data.roomId, boardId: board.id)
+        presenceSender = sender
+      }
       await apps.start(socket: session.socket, route: "/apps?boardId=\(board.id)") { try await session.client.apps(boardId: board.id) }
       if !fitted {
         fitted = true
         fitAll()
       }
+      await users.start(socket: session.socket, route: "/users") { try await session.client.users() }
+      await presences.start(socket: session.socket, route: "/presence?boardId=\(board.id)") { try await session.client.presence(boardId: board.id) }
     }
-    .onDisappear { apps.stop() }
+    .onDisappear {
+      apps.stop()
+      presences.stop()
+      users.stop()
+      presenceSender?.leave()
+    }
   }
 
   // MARK: Geometry
@@ -170,6 +228,47 @@ struct BoardView: View {
     var s = app.data.size
     if let resizing, resizing.id == app.id { s = resizing.size }
     return CGRect(x: (p.x + offset.x) * scale, y: (p.y + offset.y) * scale, width: s.width * scale, height: s.height * scale)
+  }
+
+  /// The part of the board on screen, in board coordinates
+  private var visibleBoard: CGRect {
+    CGRect(x: -offset.x, y: -offset.y, width: viewSize.width / scale, height: viewSize.height / scale)
+  }
+
+  /// A screen point on the board
+  private func boardPoint(_ point: CGPoint) -> CGPoint {
+    CGPoint(x: point.x / scale - offset.x, y: point.y / scale - offset.y)
+  }
+
+  /// Put files on the board, as the web client does: side by side in a row (10 apart),
+  /// the row at the free spot closest to the center of the view, then created on the hub
+  private func openOnBoard(_ files: [Asset]) {
+    let made = files.map(NewApp.showing)
+    guard !made.isEmpty else { return }
+    var x: CGFloat = 0
+    let frames = made.map { app -> CGRect in
+      defer { x += app.size.width + 10 }
+      return CGRect(origin: CGPoint(x: x, y: 0), size: app.size)
+    }
+    let row = frames.dropFirst().reduce(frames[0]) { $0.union($1) }
+    let others = apps.items.map { CGRect(x: $0.data.position.x, y: $0.data.position.y, width: $0.data.size.width, height: $0.data.size.height) }
+    let spot = Placement.find(view: visibleBoard, apps: others, size: row.size)
+    let documents = zip(made, frames).map { app, frame in
+      app.document(at: CGPoint(x: spot.x + frame.minX, y: spot.y + frame.minY), roomId: board.data.roomId, boardId: board.id)
+    }
+    Task {
+      if documents.count == 1 {
+        _ = try? await session.socket?.request("/apps", method: "POST", body: documents[0])
+      } else {
+        _ = try? await session.socket?.request("/apps", method: "POST", body: .object(["batch": .array(documents)]))
+      }
+    }
+  }
+
+  /// Remove an app from the board, for everyone (as the web client's close button)
+  private func delete(_ app: SageApp) {
+    if selectedId == app.id { selectedId = nil }
+    Task { _ = try? await session.socket?.request("/apps/\(app.id)", method: "DELETE") }
   }
 
   /// May this user move or resize this app
@@ -218,6 +317,7 @@ struct BoardView: View {
 
   /// A tap selects the app under it, or nothing
   private func tap(at location: CGPoint) {
+    presenceSender?.cursor(boardPoint(location))
     selectedId = app(at: location)?.id
   }
 
@@ -274,6 +374,7 @@ struct BoardView: View {
       UIImpactFeedbackGenerator(style: .medium).impactOccurred()
     case .changed:
       moving?.delta = CGSize(width: moved.width / scale, height: moved.height / scale)
+      presenceSender?.cursor(boardPoint(CGPoint(x: start.x + moved.width, y: start.y + moved.height)))
     case .ended:
       if var final = moving {
         final.delta = CGSize(width: moved.width / scale, height: moved.height / scale)
@@ -284,8 +385,9 @@ struct BoardView: View {
   }
 
   /// One finger: pan the board (not while an app is being moved)
-  private func pan(_ phase: BoardGestures.Phase, by delta: CGSize) {
+  private func pan(_ phase: BoardGestures.Phase, by delta: CGSize, at location: CGPoint) {
     guard phase == .changed, moving == nil else { return }
+    presenceSender?.cursor(boardPoint(location))
     offset.x += delta.width / scale
     offset.y += delta.height / scale
   }
@@ -374,33 +476,59 @@ private struct ResizeHandle: View {
   }
 }
 
-/// Under a selected PDF: first, previous, the pages shown and the count, next, last
-private struct PageBar: View {
-  let page: Int
-  let count: Int
-  let shown: Int
-  let go: (Int) -> Void
+/// Under the selected app: its kind and title, its own controls (a PDF's pages), and a
+/// close button that deletes it
+private struct AppToolbar: View {
+  /// A PDF's page controls
+  struct Pages {
+    var page: Int
+    var count: Int
+    var shown: Int
+    var go: (Int) -> Void
 
-  private var last: Int { max(0, count - shown) }
+    var last: Int { max(0, count - shown) }
+    var label: String { shown > 1 ? "\(page + 1)–\(min(page + shown, count)) / \(count)" : "\(page + 1) / \(count)" }
+  }
 
-  private var label: String {
-    shown > 1 ? "\(page + 1)–\(min(page + shown, count)) / \(count)" : "\(page + 1) / \(count)"
+  let app: SageApp
+  var pages: Pages?
+  /// nil: this user may not delete apps
+  var onClose: (() -> Void)?
+
+  private var name: String {
+    if let title = app.data.title, !title.isEmpty { return title }
+    return app.data.type
   }
 
   var body: some View {
     HStack(spacing: 2) {
-      button("First Page", "backward.end.fill", enabled: page > 0) { go(0) }
-      button("Previous Page", "chevron.left", enabled: page > 0) { go(page - 1) }
-      Text(label)
-        .font(.callout.monospacedDigit())
-        .frame(minWidth: 64)
-      button("Next Page", "chevron.right", enabled: page < last) { go(page + 1) }
-      button("Last Page", "forward.end.fill", enabled: page < last) { go(last) }
+      Text(name)
+        .font(.subheadline.weight(.semibold))
+        .lineLimit(1)
+        .truncationMode(.middle)
+        .frame(maxWidth: pages == nil ? 200 : 110)
+        .padding(.horizontal, 8)
+      if let pages {
+        Divider().frame(height: 22)
+        button("First Page", "backward.end.fill", enabled: pages.page > 0) { pages.go(0) }
+        button("Previous Page", "chevron.left", enabled: pages.page > 0) { pages.go(pages.page - 1) }
+        Text(pages.label)
+          .font(.callout.monospacedDigit())
+          .frame(minWidth: 56)
+        button("Next Page", "chevron.right", enabled: pages.page < pages.last) { pages.go(pages.page + 1) }
+        button("Last Page", "forward.end.fill", enabled: pages.page < pages.last) { pages.go(pages.last) }
+      }
+      if let onClose {
+        Divider().frame(height: 22)
+        button("Delete App", "xmark", enabled: true, action: onClose)
+          .foregroundStyle(.red)
+      }
     }
     .padding(.horizontal, 6)
     .padding(.vertical, 4)
     .background(.regularMaterial, in: Capsule())
     .shadow(color: .black.opacity(0.2), radius: 4, y: 2)
+    .fixedSize()
   }
 
   private func button(_ label: String, _ symbol: String, enabled: Bool, action: @escaping () -> Void) -> some View {

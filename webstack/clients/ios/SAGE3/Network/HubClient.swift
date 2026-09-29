@@ -160,6 +160,67 @@ final class HubClient {
 
   func apps(boardId: String) async throws -> [SageApp] { try await documents("GET", "/api/apps", query: ["boardId": boardId]) }
 
+  func presence(boardId: String) async throws -> [Presence] { try await documents("GET", "/api/presence", query: ["boardId": boardId]) }
+
+  func users() async throws -> [User] { try await documents("GET", "/api/users") }
+
+  func assets(roomId: String) async throws -> [Asset] { try await documents("GET", "/api/assets", query: ["room": roomId]) }
+
+  /// A file to upload
+  struct Upload {
+    var filename: String
+    var mimetype: String
+    var data: Data
+  }
+
+  /// Upload files to a room's assets, as the web client does (a multipart form with the
+  /// files and the room). The hub processes them (image sizes, PDF pages, ...) before it
+  /// answers with the new assets' ids.
+  func upload(_ files: [Upload], roomId: String) async throws -> [String] {
+    guard let url = url("/api/assets/upload") else { throw HubError.badURL }
+    let boundary = "SAGE3-\(UUID().uuidString)"
+    var body = Data()
+    func field(_ name: String, filename: String? = nil, type: String? = nil, _ content: Data) {
+      body.append(Data("--\(boundary)\r\n".utf8))
+      var disposition = "Content-Disposition: form-data; name=\"\(name)\""
+      if let filename { disposition += "; filename=\"\(filename.replacingOccurrences(of: "\"", with: "'"))\"" }
+      body.append(Data((disposition + "\r\n").utf8))
+      if let type { body.append(Data("Content-Type: \(type)\r\n".utf8)) }
+      body.append(Data("\r\n".utf8))
+      body.append(content)
+      body.append(Data("\r\n".utf8))
+    }
+    field("room", Data(roomId.utf8))
+    for file in files { field("files", filename: file.filename, type: file.mimetype, file.data) }
+    body.append(Data("--\(boundary)--\r\n".utf8))
+
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+    request.setValue(roomId, forHTTPHeaderField: "x-sage3-room")
+    request.timeoutInterval = 600
+    let (data, response) = try await session.upload(for: request, from: body)
+    let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+    if status == 401 || status == 403 { throw HubError.forbidden }
+    guard status == 200, let ids = try? decoder.decode([String].self, from: data) else {
+      throw HubError.server(String(data: data, encoding: .utf8).flatMap { $0.isEmpty ? nil : $0 } ?? "The upload failed.")
+    }
+    return ids
+  }
+
+  /// Download an asset's file to a temporary file named like the original
+  func download(_ asset: Asset) async throws -> URL {
+    guard let url = url("/api/assets/static/\(asset.data.file)") else { throw HubError.badURL }
+    let (temporary, response) = try await session.download(from: url)
+    guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw HubError.server("The download failed.") }
+    let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
+    try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+    let name = (asset.data.originalfilename ?? asset.data.file).replacingOccurrences(of: "/", with: "-")
+    let destination = folder.appendingPathComponent(name)
+    try FileManager.default.moveItem(at: temporary, to: destination)
+    return destination
+  }
+
   func asset(id: String) async throws -> Asset? {
     let assets: [Asset] = try await documents("GET", "/api/assets/\(id)")
     return assets.first

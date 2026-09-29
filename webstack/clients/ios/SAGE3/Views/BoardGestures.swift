@@ -19,8 +19,8 @@ struct BoardGestures: UIViewRepresentable {
   var onDoubleTap: (CGPoint) -> Void
   /// Touch and hold, then drag: where it started, and how far it has moved
   var onHold: (Phase, CGPoint, CGSize) -> Void
-  /// One-finger pan: the movement since the last call
-  var onPan: (Phase, CGSize) -> Void
+  /// One-finger pan: the movement since the last call, and where the finger is
+  var onPan: (Phase, CGSize, CGPoint) -> Void
   /// Pinch: the zoom factor since the last call, around a point
   var onPinch: (Phase, CGFloat, CGPoint) -> Void
 
@@ -88,15 +88,16 @@ struct BoardGestures: UIViewRepresentable {
 
     @objc func pan(_ recognizer: UIPanGestureRecognizer) {
       let translation = recognizer.translation(in: recognizer.view)
+      let location = recognizer.location(in: recognizer.view)
       switch recognizer.state {
       case .began:
         panLast = translation
-        gestures.onPan(.began, .zero)
+        gestures.onPan(.began, .zero, location)
       case .changed:
-        gestures.onPan(.changed, CGSize(width: translation.x - panLast.x, height: translation.y - panLast.y))
+        gestures.onPan(.changed, CGSize(width: translation.x - panLast.x, height: translation.y - panLast.y), location)
         panLast = translation
       case .ended, .cancelled, .failed:
-        gestures.onPan(.ended, .zero)
+        gestures.onPan(.ended, .zero, location)
       default:
         break
       }
@@ -118,9 +119,12 @@ struct BoardGestures: UIViewRepresentable {
       }
     }
 
-    // Pinch and pan together, and a hold that starts while a finger is down
+    // Pinch and pan together; but a hold and a pan exclude each other: whichever starts
+    // first wins, so moving an app never pans the board, and panning never picks one up
     func gestureRecognizer(_ recognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool {
-      true
+      let pair = [recognizer, other]
+      let holdAndPan = pair.contains { $0 is UILongPressGestureRecognizer } && pair.contains { $0 is UIPanGestureRecognizer }
+      return !holdAndPan
     }
   }
 }

@@ -30,6 +30,17 @@ enum SageColor {
   }
 
   static let names = ["red", "orange", "yellow", "green", "teal", "blue", "cyan", "purple", "pink"]
+
+  /// A person's color, as the web client draws cursors and viewports: the .400 shade of
+  /// a SAGE color (useHexColor), or the color itself when it's a hex code
+  static func person(_ name: String?) -> Color {
+    if let name, name.hasPrefix("#"), let hex = Int(name.dropFirst().prefix(6), radix: 16) { return Color(hex: hex) }
+    let hex = [
+      "red": 0xF56565, "orange": 0xED8936, "yellow": 0xECC94B, "green": 0x48BB78, "teal": 0x38B2AC,
+      "blue": 0x4299E1, "cyan": 0x0BC5EA, "purple": 0x9F7AEA, "pink": 0xED64A6,
+    ][name ?? ""] ?? 0xA0AEC0
+    return Color(hex: hex)
+  }
 }
 
 /// The board's background and grid, as the web client draws them (Background.tsx, theme.ts)

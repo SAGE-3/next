@@ -3,6 +3,9 @@
 <plist version="1.0">
 <dict>
 	<!-- Development hubs run over plain http on the local network (http://localhost:4200) -->
+	<!-- The Files panel's Take Photo, which uploads the photo to the room -->
+	<key>NSCameraUsageDescription</key>
+	<string>Take a photo to add it to the board.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsLocalNetworking</key>
