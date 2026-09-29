@@ -129,7 +129,7 @@ export function makeMobileExchangeHandler(store: MobileCodeStore, prefix: string
     if (expected.length !== actual.length || !timingSafeEqual(expected, actual)) {
       return res.status(401).send({ success: false, message: 'Invalid or expired code' });
     }
-    req.logIn(user, (err) => {
+    return req.logIn(user, (err) => {
       if (err) return res.status(500).send({ success: false, message: 'Login failed' });
       return res.send({ success: true });
     });
