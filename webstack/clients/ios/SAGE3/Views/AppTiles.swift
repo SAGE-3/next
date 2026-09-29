@@ -16,12 +16,15 @@ struct AppTile: View {
   let scale: CGFloat
   let assets: AssetCache
   let client: HubClient
+  var videos: VideoPlayers?
 
   var body: some View {
     switch app.data.type {
     case "Stickie": StickieTile(state: app.data.state, scale: scale)
     case "ImageViewer": ImageTile(app: app, scale: scale, assets: assets, client: client)
     case "PDFViewer": PDFTile(app: app, scale: scale, assets: assets, client: client)
+    case "VideoViewer":
+      if let videos { VideoTile(app: app, scale: scale, assets: assets, client: client, videos: videos) } else { PlaceholderTile(app: app, scale: scale) }
     default: PlaceholderTile(app: app, scale: scale)
     }
   }
@@ -127,6 +130,40 @@ private struct PDFTile: View {
   private func url(closestTo pixels: Double, in images: [(width: Double, url: String)]) -> URL? {
     guard let best = images.min(by: { abs($0.width - pixels) < abs($1.width - pixels) }) else { return nil }
     return best.url.hasPrefix("http") ? URL(string: best.url) : client.url(best.url)
+  }
+}
+
+/// A VideoViewer: the server's copy of the video (derived.url), playing in step with the
+/// board (controls in the selected app's toolbar)
+private struct VideoTile: View {
+  let app: SageApp
+  let scale: CGFloat
+  let assets: AssetCache
+  let client: HubClient
+  let videos: VideoPlayers
+
+  var body: some View {
+    if let url = videoURL() {
+      let playback = videos.playback(for: app.id, url: url, sync: VideoSync(app.data.state))
+      ZStack {
+        Color.black
+        PlayerLayerView(player: playback.player)
+        if !playback.isPlaying {
+          Image(systemName: "play.fill")
+            .font(.system(size: max(12, min(app.data.size.width, app.data.size.height) * scale * 0.18)))
+            .foregroundStyle(.white.opacity(0.85))
+            .shadow(radius: 4)
+        }
+      }
+    } else {
+      PlaceholderTile(app: app, scale: scale)
+    }
+  }
+
+  private func videoURL() -> URL? {
+    guard let id = app.data.state?["assetid"]?.string, let asset = assets.asset(id) else { return nil }
+    let path = asset.data.derived?["url"]?.string ?? "/api/assets/static/\(asset.data.file)"
+    return path.hasPrefix("http") ? URL(string: path) : client.url(path)
   }
 }
 

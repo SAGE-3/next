@@ -26,6 +26,8 @@ struct BoardView: View {
   // The whiteboard's shapes
   @State private var annotations = AnnotationStore()
   @State private var annotating = false
+  // The board's video players (this device only)
+  @State private var videos = VideoPlayers()
   // This user's own presence, for the others
   @State private var presenceSender: PresenceSender?
   @State private var showingFiles = false
@@ -86,7 +88,7 @@ struct BoardView: View {
         ForEach(ordered.filter { isVisible($0, in: geometry.size) }) { app in
           let frame = screenFrame(app)
           let lifted = app.id == moving?.id
-          AppTile(app: app, scale: scale, assets: assets, client: session.client)
+          AppTile(app: app, scale: scale, assets: assets, client: session.client, videos: videos)
             .frame(width: frame.width, height: frame.height)
             .overlay {
               if app.id == selectedId {
@@ -135,8 +137,9 @@ struct BoardView: View {
           ? AppToolbar.Pages(page: page(of: app), count: pageCount(of: app), shown: pagesShown(by: app)) { setPage(of: app, to: $0) }
           : nil
         let close: (() -> Void)? = session.canDeleteApps ? { confirmDelete = app } : nil
-        if pages != nil || close != nil {
-          AppToolbar(pages: pages, onClose: close)
+        let video = app.data.type == "VideoViewer" && session.canMoveApps ? videos.existing(app.id) : nil
+        if pages != nil || close != nil || video != nil {
+          AppToolbar(pages: pages, video: video, onClose: close)
             .padding(.bottom, 12)
             .padding(.horizontal, 8)
         }
@@ -220,6 +223,9 @@ struct BoardView: View {
         sender.enter(roomId: board.data.roomId, boardId: board.id)
         presenceSender = sender
       }
+      // Videos: our actions go to the board, and play in step with the hub's clock
+      videos.send = { id, fields in sendVideo(id, fields) }
+      Task { await videos.clock.start(session.client) }
       await apps.start(socket: session.socket, route: "/apps?boardId=\(board.id)") { try await session.client.apps(boardId: board.id) }
       if !fitted {
         fitted = true
@@ -229,7 +235,16 @@ struct BoardView: View {
       await annotations.start(client: session.client, socket: session.socket, boardId: board.id)
       await presences.start(socket: session.socket, route: "/presence?boardId=\(board.id)") { try await session.client.presence(boardId: board.id) }
     }
+    .onChange(of: apps.items.map(\.id)) { _, ids in
+      // Players of deleted videos stop
+      videos.keep(only: Set(ids))
+    }
+    .onChange(of: videoSyncs) { before, now in
+      // Videos follow the board's play, pause and seek (ours too, once more)
+      for (id, sync) in now where before[id] != sync { videos.existing(id)?.apply(sync) }
+    }
     .onDisappear {
+      videos.keep(only: [])
       apps.stop()
       presences.stop()
       users.stop()
@@ -378,6 +393,26 @@ struct BoardView: View {
     return max(1, assets.asset(id)?.data.derived?.array?.count ?? 1)
   }
 
+  /// Every video's shared playback state
+  private var videoSyncs: [String: VideoSync] {
+    Dictionary(uniqueKeysWithValues: apps.items.filter { $0.data.type == "VideoViewer" }.map { ($0.id, VideoSync($0.data.state)) })
+  }
+
+  /// Send a video's play, pause or seek to the board, as the web's updateState: shown
+  /// here at once, and undone if the hub refuses
+  private func sendVideo(_ id: String, _ fields: [String: JSONValue]) {
+    guard session.canMoveApps, let before = apps.items.first(where: { $0.id == id })?.data.state else { return }
+    apps.updateLocally(id) { doc in
+      for (key, value) in fields { doc.data.state = (doc.data.state ?? .object([:])).setting(key, to: value) }
+    }
+    let body = JSONValue.object(Dictionary(uniqueKeysWithValues: fields.map { ("state.\($0.key)", $0.value) }))
+    Task {
+      let reply = try? await session.socket?.request("/apps/\(id)", method: "PUT", body: body)
+      let accepted = reply.flatMap { try? JSONDecoder().decode(APIReply<JSONValue>.self, from: $0) }?.success ?? false
+      if !accepted { apps.updateLocally(id) { $0.data.state = before } }
+    }
+  }
+
   /// Go to a page (kept within the pages, leaving room for all the pages shown), for
   /// everyone: shown here at once, then sent to the hub as the web toolbar does
   private func setPage(of app: SageApp, to wanted: Int) {
@@ -522,6 +557,8 @@ private struct AppToolbar: View {
   }
 
   var pages: Pages?
+  /// A video's player on this device
+  var video: VideoPlayback?
   /// nil: this user may not delete apps
   var onClose: (() -> Void)?
   // On a phone, the first and last page buttons give way
@@ -542,8 +579,14 @@ private struct AppToolbar: View {
           button("Last Page", "forward.end.fill", enabled: pages.page < pages.last) { pages.go(pages.last) }
         }
       }
+      if let video {
+        button("Back to Start", "backward.end.fill", enabled: true) { video.restart() }
+        button(video.loops ? "Stop Looping" : "Loop", video.loops ? "repeat.circle.fill" : "repeat", enabled: true) { video.toggleLoop() }
+        button(video.isPlaying ? "Pause" : "Play", video.isPlaying ? "pause.fill" : "play.fill", enabled: true) { video.togglePlay() }
+        button(video.isMuted ? "Unmute" : "Mute", video.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill", enabled: true) { video.isMuted.toggle() }
+      }
       if let onClose {
-        if pages != nil { Divider().frame(height: 22) }
+        if pages != nil || video != nil { Divider().frame(height: 22) }
         button("Delete App", "xmark", enabled: true, action: onClose)
           .foregroundStyle(.red)
       }

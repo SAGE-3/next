@@ -145,6 +145,13 @@ final class HubClient {
     return try decoder.decode(ServerConfiguration.self, from: data)
   }
 
+  /// The hub's clock (ms since 1970), for playing videos in step
+  func serverEpoch() async throws -> Double {
+    let (data, _) = try await send("GET", "/api/time")
+    guard let epoch = try decoder.decode(JSONValue.self, from: data)["epoch"]?.number else { throw HubError.server("No time from the hub.") }
+    return epoch
+  }
+
   func logout() async {
     _ = try? await send("GET", "/auth/logout")
     if let cookies = HTTPCookieStorage.shared.cookies(for: base) {
