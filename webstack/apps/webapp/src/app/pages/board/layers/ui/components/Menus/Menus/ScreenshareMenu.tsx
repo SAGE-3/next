@@ -53,6 +53,8 @@ interface ScreensharesMenuProps {
   roomId: string;
   boardId: string;
   onActionComplete?: () => void;
+  // Board point to place new apps around (the radial menu's spot), else the view's center
+  target?: { x: number; y: number };
 }
 
 // Screenshare app types: 'Screenshare' is Twilio, 'LocalScreenshare' is the self-hosted LiveKit SFU.
@@ -165,8 +167,8 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
     const width = 1280;
     const height = width / aspectRatio;
     const size = { height, width, depth: 0 };
-    // Near the center of the view, clear of the other apps (a second share goes beside the first)
-    const { x, y } = placeNewApp({ width, height });
+    // Near the target or the center of the view, clear of the other apps (a second share goes beside the first)
+    const { x, y } = placeNewApp({ width, height }, { target: props.target });
     const position = { x, y, z: 0 };
     const result = await createApp({
       title: buildShareTitle(),
@@ -262,8 +264,8 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
     const width = 1280;
     const height = 720;
     const size = { height, width, depth: 0 };
-    // Near the center of the view, clear of the other apps
-    const { x, y } = placeNewApp({ width, height });
+    // Near the target or the center of the view, clear of the other apps
+    const { x, y } = placeNewApp({ width, height }, { target: props.target });
     const position = { x, y, z: 0 };
     const result = await createApp({
       title: 'Screenshare by ' + user.data.name,
