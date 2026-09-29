@@ -15,6 +15,13 @@ import * as passport from 'passport';
 
 import { SBAuthDatabase, SBAuthDB, SBAuthSchema } from './SBAuthDatabase';
 import { createRateLimiter } from './SBRateLimit';
+import {
+  MOBILE_LOGIN_REDIRECT,
+  issueMobileCode,
+  makeMobileExchangeHandler,
+  rememberMobileLogin,
+  takeMobileChallenge,
+} from './SBMobileLogin';
 export type { SBAuthSchema } from './SBAuthDatabase';
 export type { JWTPayload } from './adapters';
 import {
@@ -117,6 +124,9 @@ export class SBAuth {
         );
       }
 
+      // A login started by the iOS app (see SBMobileLogin); read before req.logIn replaces the session
+      const mobileChallenge = takeMobileChallenge(req);
+
       passport.authenticate(strategyName, (err: any, user: any, info: any) => {
         if (err) {
           console.error(`${providerName}> Authentication error:`, err);
@@ -154,6 +164,13 @@ export class SBAuth {
           //   sessionId: req.sessionID,
           //   timestamp: new Date().toISOString(),
           // });
+
+          // Started by the iOS app: hand it a one-time code for its own session
+          if (mobileChallenge) {
+            return issueMobileCode(this._redisClient, this._prefix, user, mobileChallenge)
+              .then((code) => res.redirect(`${MOBILE_LOGIN_REDIRECT}?code=${code}`))
+              .catch(next);
+          }
 
           return res.redirect('/');
         });
@@ -208,6 +225,7 @@ export class SBAuth {
         if (passportGoogleSetup(config.googleConfig)) {
           express.get(
             config.googleConfig.routeEndpoint,
+            rememberMobileLogin,
             passport.authenticate('google', {
               prompt: 'select_account',
               scope: ['profile', 'email'],
@@ -215,6 +233,8 @@ export class SBAuth {
             }),
           );
           express.get(config.googleConfig.callbackURL, loginLimiter, this.createOAuthCallbackHandler('google', 'google'));
+          // The iOS app trades a login's one-time code for its session (SBMobileLogin)
+          express.post('/auth/mobile/exchange', createRateLimiter(10), makeMobileExchangeHandler(this._redisClient, this._prefix));
         }
       }
 
