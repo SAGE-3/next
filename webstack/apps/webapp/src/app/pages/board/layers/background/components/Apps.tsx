@@ -31,6 +31,8 @@ import { App, AppName, AppSchema, AppState } from '@sage3/applications/schema';
 
 // How long after creating an app the board waits for it to arrive before zooming to it
 const NEW_APP_WAIT_MS = 10000;
+// Pause between a new app appearing and zooming to it, so it is seen landing on the board
+const NEW_APP_ZOOM_DELAY_MS = 500;
 
 // Renders all the apps
 export function Apps() {
@@ -46,7 +48,8 @@ export function Apps() {
 
   // Save the previous location and scale when zoming to an application
   const scale = useThrottleScale(250);
-  const [previousLocation, setPreviousLocation] = useState({ x: 0, y: 0, s: 1, set: false, app: '' });
+  // (apps: the apps zoomed to, so Z over any of them zooms back out)
+  const [previousLocation, setPreviousLocation] = useState({ x: 0, y: 0, s: 1, set: false, apps: [] as string[] });
 
   // UI Store
   const fitAllApps = useUIStore((state) => state.fitAllApps);
@@ -300,17 +303,17 @@ export function Apps() {
             const y2 = y1 + el.data.size.height;
             // If the cursor is inside the app, delete it. Only delete the top one
             if (cx >= x1 && cx <= x2 && cy >= y1 && cy <= y2) {
-              if (previousLocation.set && previousLocation.app === el._id) {
+              if (previousLocation.set && previousLocation.apps.includes(el._id)) {
                 // if action is pressed again on the same app, zoom out (and stop there: an
                 // app underneath would otherwise be zoomed to instead)
                 found = true;
                 setBoardPosition({ x: previousLocation.x, y: previousLocation.y });
                 setScale(previousLocation.s);
-                setPreviousLocation((prev) => ({ ...prev, set: false, app: '' }));
+                setPreviousLocation((prev) => ({ ...prev, set: false, apps: [] }));
               } else {
                 found = true;
                 fitApps([el]);
-                setPreviousLocation((prev) => ({ x: boardPosition.x, y: boardPosition.y, s: scale, set: true, app: el._id }));
+                setPreviousLocation((prev) => ({ x: boardPosition.x, y: boardPosition.y, s: scale, set: true, apps: [el._id] }));
               }
             }
           });
@@ -318,7 +321,7 @@ export function Apps() {
           if (previousLocation.set) {
             setBoardPosition({ x: previousLocation.x, y: previousLocation.y });
             setScale(previousLocation.s);
-            setPreviousLocation((prev) => ({ ...prev, set: false, app: '' }));
+            setPreviousLocation((prev) => ({ ...prev, set: false, apps: [] }));
           } else {
             // zoom out to show all apps
             fitApps(apps);
@@ -332,19 +335,29 @@ export function Apps() {
   );
 
   // Zoom to each app the user creates, and select it (setting zoomToNewApps): the same
-  // as pressing Z over it, so pressing Z again zooms back out. The app reaches the store
-  // shortly after it is created, so wait for it, but not for long: an app created on
-  // another board, or long ago, is left alone.
-  const zoomedToRef = useRef('');
+  // as pressing Z over it, so pressing Z again zooms back out. Apps created together
+  // (dropping several files) are zoomed to as a group and selected together. The apps
+  // reach the store shortly after they are created, so wait for all of them, but not
+  // for long: apps created on another board, or long ago, are left alone.
+  const zoomedToRef = useRef<typeof lastCreated>(null);
+  const zoomTimerRef = useRef<number>();
+  useEffect(() => () => window.clearTimeout(zoomTimerRef.current), []);
   useEffect(() => {
-    if (!settings.zoomToNewApps || !lastCreated || zoomedToRef.current === lastCreated.id) return;
+    if (!settings.zoomToNewApps || !lastCreated || zoomedToRef.current === lastCreated) return;
     if (Date.now() - lastCreated.at > NEW_APP_WAIT_MS) return;
-    const app = apps.find((a) => a._id === lastCreated.id);
-    if (!app || app.data.boardId !== boardId) return;
-    zoomedToRef.current = app._id;
-    setPreviousLocation({ x: boardPosition.x, y: boardPosition.y, s: scale, set: true, app: app._id });
-    fitApps([app]);
-    setSelectedApp(app._id);
+    const created = apps.filter((a) => lastCreated.ids.includes(a._id));
+    if (created.length < lastCreated.ids.length || created.some((a) => a.data.boardId !== boardId)) return;
+    zoomedToRef.current = lastCreated;
+    const ids = lastCreated.ids;
+    // Not cancelled when the apps update meanwhile, only when the board closes
+    window.clearTimeout(zoomTimerRef.current);
+    zoomTimerRef.current = window.setTimeout(() => {
+      const { boardPosition, scale } = useUIStore.getState();
+      setPreviousLocation({ x: boardPosition.x, y: boardPosition.y, s: scale, set: true, apps: ids });
+      fitApps(created);
+      if (created.length === 1) setSelectedApp(created[0]._id);
+      else setSelectedApps(ids);
+    }, NEW_APP_ZOOM_DELAY_MS);
   }, [lastCreated, apps, settings.zoomToNewApps]);
 
   // Focus to app when pressing f over an app

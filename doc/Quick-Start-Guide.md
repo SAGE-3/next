@@ -81,11 +81,17 @@ Once you enter a board, you'll see the **infinite canvas**. This is where everyt
 | Zoom in/out | Mouse wheel or two-finger trackpad scroll |
 | Zoom to fit all apps | Navigation panel → "Show All Apps" |
 | Zoom to a specific app | Select the app, press `Z` |
-| Zoom to each new app automatically | Main Menu → **Settings** → turn on **Zoom to New Applications**. Every app you create is zoomed to and selected; press `Z` over it to zoom back out |
+| Zoom to each new app automatically | Main Menu → **Settings** → turn on **Zoom to New Applications**. Every app you create is zoomed to and selected (apps created together, as a group); press `Z` over it to zoom back out |
 | Revert zoom | `Shift + Z` |
 | Reset view | Right-click → Reset View |
 
 ![BoardPage](images/quick-start/board-page.jpeg)
+
+**Zoom to New Applications:** with this setting on (Main Menu → **Settings** → **Board Visibility**), each app you create is zoomed to and selected, ready to use. Apps created together, such as several files dropped at once, are zoomed to as a group.
+
+![Zoom to New Applications setting](images/quick-start/zoom-to-new-apps-setting.jpeg)
+
+![Dropping a file with Zoom to New Applications on](images/quick-start/zoom-to-new-apps.gif)
 
 ---
 
