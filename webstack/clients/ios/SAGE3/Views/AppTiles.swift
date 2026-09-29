@@ -9,8 +9,8 @@
 import SwiftUI
 import UIKit
 
-/// One app on the board. Images and stickies are drawn; every other app is a labeled
-/// rectangle for now.
+/// One app on the board. Images, PDFs, and stickies are drawn; every other app is a
+/// labeled rectangle for now.
 struct AppTile: View {
   let app: SageApp
   let scale: CGFloat
@@ -21,6 +21,7 @@ struct AppTile: View {
     switch app.data.type {
     case "Stickie": StickieTile(state: app.data.state, scale: scale)
     case "ImageViewer": ImageTile(app: app, scale: scale, assets: assets, client: client)
+    case "PDFViewer": PDFTile(app: app, scale: scale, assets: assets, client: client)
     default: PlaceholderTile(app: app, scale: scale)
     }
   }
@@ -76,6 +77,59 @@ private struct ImageTile: View {
   }
 }
 
+/// A PDFViewer: the pages the server made images of when the PDF was uploaded, as the web
+/// client shows them (PDFViewer.tsx): displayPages pages side by side from currentPage,
+/// each on a white card, each the image closest to the width it takes on screen
+private struct PDFTile: View {
+  let app: SageApp
+  let scale: CGFloat
+  let assets: AssetCache
+  let client: HubClient
+  @Environment(\.displayScale) private var displayScale
+
+  var body: some View {
+    let state = app.data.state
+    let first = max(0, Int(state?["currentPage"]?.number ?? 0))
+    let count = max(1, Int(state?["displayPages"]?.number ?? 1))
+    let pages = pageImages()
+    let shown = Array(pages.dropFirst(first).prefix(count))
+    // Each page's share of the window, in device pixels
+    let pagePixels = app.data.size.width / Double(count) * scale * displayScale
+    if shown.isEmpty {
+      // Not loaded yet, or its file is gone: the placeholder, not an empty white box
+      PlaceholderTile(app: app, scale: scale)
+    } else {
+      HStack(spacing: 4 * scale) {
+        ForEach(shown.indices, id: \.self) { index in
+          RemoteImage(url: url(closestTo: pagePixels, in: shown[index]), fit: true)
+            .padding(4 * scale)
+            .background(Color.white, in: RoundedRectangle(cornerRadius: 6 * scale))
+            .shadow(color: .black.opacity(0.15), radius: 2 * scale, y: scale)
+        }
+      }
+      .padding(4 * scale)
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
+      .background(Color.white.opacity(0.7))
+    }
+  }
+
+  /// derived: one array of images (url, width) per page
+  private func pageImages() -> [[(width: Double, url: String)]] {
+    guard let assetId = app.data.state?["assetid"]?.string, let asset = assets.asset(assetId) else { return [] }
+    return (asset.data.derived?.array ?? []).map { page in
+      (page.array ?? []).compactMap { image in
+        guard let width = image["width"]?.number, let url = image["url"]?.string else { return nil }
+        return (width, url)
+      }
+    }
+  }
+
+  private func url(closestTo pixels: Double, in images: [(width: Double, url: String)]) -> URL? {
+    guard let best = images.min(by: { abs($0.width - pixels) < abs($1.width - pixels) }) else { return nil }
+    return best.url.hasPrefix("http") ? URL(string: best.url) : client.url(best.url)
+  }
+}
+
 /// Any other app: its type and title, until it has a real view
 private struct PlaceholderTile: View {
   let app: SageApp
@@ -122,6 +176,9 @@ private struct PlaceholderTile: View {
 /// a sharper one loads (zooming in picks a larger copy), and caches images in memory.
 struct RemoteImage: View {
   let url: URL?
+  /// Fit the whole image (PDF pages), rather than fill the frame (images, which the web
+  /// client shows in a window of their own shape)
+  var fit = false
   @State private var image: UIImage?
   @State private var loadedURL: URL?
 
@@ -134,7 +191,7 @@ struct RemoteImage: View {
   var body: some View {
     ZStack {
       if let image {
-        Image(uiImage: image).resizable().scaledToFill()
+        Image(uiImage: image).resizable().aspectRatio(contentMode: fit ? .fit : .fill)
       }
     }
     .clipped()

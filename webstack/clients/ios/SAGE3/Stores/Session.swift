@@ -31,6 +31,12 @@ final class Session {
   /// (libs/shared/src/lib/permissions/SAGEAbility.ts), and not upload
   var isGuest: Bool { user?.data.userRole == "guest" }
 
+  /// Guests may move apps too; spectators only watch
+  var canMoveApps: Bool {
+    guard let role = user?.data.userRole else { return false }
+    return role == "user" || role == "admin" || role == "guest"
+  }
+
   var canCreateRoomsAndBoards: Bool {
     guard let role = user?.data.userRole else { return false }
     return role == "user" || role == "admin"

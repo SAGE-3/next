@@ -7,9 +7,12 @@
  */
 
 import SwiftUI
+import UIKit
 
 /// A board: its apps, kept up to date, on a canvas you pan with one finger and zoom with
-/// two. Like the web client, a screen point is (board point + offset) × scale.
+/// two. Tap an app to select it; touch and hold one, then drag, to move it; drag the
+/// selected app's corner handle to resize it. Like the web client, a screen point is
+/// (board point + offset) × scale.
 struct BoardView: View {
   let session: Session
   let board: Board
@@ -17,8 +20,11 @@ struct BoardView: View {
   @State private var assets: AssetCache
   @State private var offset = CGPoint.zero
   @State private var scale: CGFloat = 1
-  @State private var dragStart: CGPoint?
-  @State private var zoomStart: (scale: CGFloat, offset: CGPoint)?
+  // The app picked up to move, the one being resized, and the selected one
+  @State private var moving: Moving?
+  @State private var resizing: Resizing?
+  @State private var selectedId: String?
+  @State private var pinching = false
   @State private var viewSize = CGSize.zero
   @State private var fitted = false
   @Environment(\.colorScheme) private var colorScheme
@@ -29,10 +35,35 @@ struct BoardView: View {
     _assets = State(initialValue: AssetCache(client: session.client))
   }
 
-  /// Back to front: raised apps (higher z) last
-  private var ordered: [SageApp] {
-    apps.items.sorted { ($0.data.position.z ?? 0, $0._updatedAt ?? 0) < ($1.data.position.z ?? 0, $1._updatedAt ?? 0) }
+  private struct Moving {
+    var id: String
+    var origin: Position
+    var delta = CGSize.zero  // in board units
   }
+
+  private struct Resizing {
+    var id: String
+    var origin: Size
+    var size: Size
+  }
+
+  // The web client's limits (AppWindow.tsx)
+  private static let minSize = CGSize(width: 200, height: 100)
+  private static let maxSize = CGSize(width: 8 * 1024, height: 8 * 1024)
+  /// Apps whose window keeps its shape when resized, as on the web (lockAspectRatio)
+  private static let keepsShape: Set<String> = [
+    "Calculator", "Clock", "DOCXViewer", "ImageViewer", "PDFViewer", "PPTXViewer", "Screenshare", "LocalScreenshare",
+    "TwilioScreenshare", "SensorOverview", "Timer", "VideoViewer",
+  ]
+
+  /// Back to front: raised apps (higher z) last, and the app being moved on top
+  private var ordered: [SageApp] {
+    apps.items.sorted {
+      ($0.id == moving?.id ? 1 : 0, $0.data.position.z ?? 0, $0._updatedAt ?? 0) < ($1.id == moving?.id ? 1 : 0, $1.data.position.z ?? 0, $1._updatedAt ?? 0)
+    }
+  }
+
+  private var selected: SageApp? { apps.items.first { $0.id == selectedId } }
 
   var body: some View {
     GeometryReader { geometry in
@@ -40,21 +71,45 @@ struct BoardView: View {
         BoardGrid(offset: offset, scale: scale)
         ForEach(ordered.filter { isVisible($0, in: geometry.size) }) { app in
           let frame = screenFrame(app)
+          let lifted = app.id == moving?.id
           AppTile(app: app, scale: scale, assets: assets, client: session.client)
             .frame(width: frame.width, height: frame.height)
+            .overlay {
+              if app.id == selectedId {
+                RoundedRectangle(cornerRadius: 4).strokeBorder(Color.teal, lineWidth: 3)
+              }
+            }
+            .scaleEffect(lifted ? 1.03 : 1)
+            .shadow(color: .black.opacity(lifted ? 0.35 : 0), radius: lifted ? 12 : 0, y: lifted ? 6 : 0)
             .position(x: frame.midX, y: frame.midY)
+            .animation(.easeOut(duration: 0.15), value: lifted)
         }
       }
       .clipped()
-      .contentShape(Rectangle())
-      .gesture(pan.simultaneously(with: zoom))
-      .onTapGesture(count: 2) { fitAll() }
+      .overlay {
+        BoardGestures(onTap: tap, onDoubleTap: doubleTap, onHold: hold, onPan: pan, onPinch: pinch)
+      }
+      .overlay(alignment: .topLeading) {
+        // Above the gestures, so the handle gets the touch first
+        if let app = selected, moving == nil {
+          let frame = screenFrame(app)
+          if app.data.type == "PDFViewer", resizing == nil, session.canMoveApps {
+            PageBar(page: page(of: app), count: pageCount(of: app), shown: pagesShown(by: app)) { setPage(of: app, to: $0) }
+              .position(x: min(max(frame.midX, 150), viewSize.width - 150), y: min(frame.maxY + 34, viewSize.height - 30))
+          }
+          if canChange(app) {
+            ResizeHandle()
+              .position(x: frame.maxX, y: frame.maxY)
+              .gesture(resize(app))
+          }
+        }
+      }
       .onAppear { viewSize = geometry.size }
       .onChange(of: geometry.size) { _, size in viewSize = size }
     }
     .overlay(alignment: .bottomLeading) {
       if apps.loaded && !apps.items.isEmpty {
-        Text("\(apps.items.count) apps · \(Int((scale * 100).rounded()))%")
+        Text(statusText)
           .font(.caption.monospacedDigit())
           .padding(.horizontal, 10)
           .padding(.vertical, 5)
@@ -96,10 +151,35 @@ struct BoardView: View {
 
   // MARK: Geometry
 
+  /// The selected app's type and title, or the app count; and the zoom
+  private var statusText: String {
+    let zoom = "\(Int((scale * 100).rounded()))%"
+    if let app = selected {
+      let title = app.data.title.flatMap { $0.isEmpty ? nil : $0 }
+      return [app.data.type, title, zoom].compactMap { $0 }.joined(separator: " · ")
+    }
+    return "\(apps.items.count) apps · \(zoom)"
+  }
+
   private func screenFrame(_ app: SageApp) -> CGRect {
-    let p = app.data.position
-    let s = app.data.size
+    var p = app.data.position
+    if let moving, moving.id == app.id {
+      p.x += moving.delta.width
+      p.y += moving.delta.height
+    }
+    var s = app.data.size
+    if let resizing, resizing.id == app.id { s = resizing.size }
     return CGRect(x: (p.x + offset.x) * scale, y: (p.y + offset.y) * scale, width: s.width * scale, height: s.height * scale)
+  }
+
+  /// May this user move or resize this app
+  private func canChange(_ app: SageApp) -> Bool {
+    session.canMoveApps && app.data.pinned != true
+  }
+
+  /// The frontmost app under a screen point
+  private func app(at point: CGPoint) -> SageApp? {
+    ordered.last { screenFrame($0).contains(point) }
   }
 
   private func isVisible(_ app: SageApp, in size: CGSize) -> Bool {
@@ -136,30 +216,198 @@ struct BoardView: View {
 
   // MARK: Gestures
 
-  private var pan: some Gesture {
-    DragGesture(minimumDistance: 2)
-      .onChanged { value in
-        let start = dragStart ?? offset
-        dragStart = start
-        offset = CGPoint(x: start.x + value.translation.width / scale, y: start.y + value.translation.height / scale)
-      }
-      .onEnded { _ in dragStart = nil }
+  /// A tap selects the app under it, or nothing
+  private func tap(at location: CGPoint) {
+    selectedId = app(at: location)?.id
   }
 
-  private var zoom: some Gesture {
-    MagnifyGesture()
-      .onChanged { value in
-        let start = zoomStart ?? (scale, offset)
-        zoomStart = start
-        let newScale = min(max(start.scale * value.magnification, 0.01), 4)
-        // Keep the board point under the fingers in place
-        let anchor = value.startLocation
-        let boardX = anchor.x / start.scale - start.offset.x
-        let boardY = anchor.y / start.scale - start.offset.y
-        scale = newScale
-        offset = CGPoint(x: anchor.x / newScale - boardX, y: anchor.y / newScale - boardY)
-        dragStart = nil
+  /// A double tap on a PDF turns its page, as on the web (right part: next, left: previous);
+  /// anywhere else it shows all apps
+  private func doubleTap(at location: CGPoint) {
+    guard let target = app(at: location), target.data.type == "PDFViewer", session.canMoveApps else { return fitAll() }
+    let frame = screenFrame(target)
+    let forward = (location.x - frame.minX) / max(frame.width, 1) > 0.4
+    setPage(of: target, to: page(of: target) + (forward ? 1 : -1))
+  }
+
+  // MARK: PDF pages
+
+  private func page(of app: SageApp) -> Int {
+    Int(app.data.state?["currentPage"]?.number ?? 0)
+  }
+
+  private func pagesShown(by app: SageApp) -> Int {
+    max(1, Int(app.data.state?["displayPages"]?.number ?? 1))
+  }
+
+  /// numPages, or the number of page images of its asset when the state doesn't say
+  private func pageCount(of app: SageApp) -> Int {
+    if let count = app.data.state?["numPages"]?.number, count > 0 { return Int(count) }
+    guard let id = app.data.state?["assetid"]?.string else { return 1 }
+    return max(1, assets.asset(id)?.data.derived?.array?.count ?? 1)
+  }
+
+  /// Go to a page (kept within the pages, leaving room for all the pages shown), for
+  /// everyone: shown here at once, then sent to the hub as the web toolbar does
+  private func setPage(of app: SageApp, to wanted: Int) {
+    let last = max(0, pageCount(of: app) - pagesShown(by: app))
+    let before = page(of: app)
+    let target = min(max(wanted, 0), last)
+    guard target != before else { return }
+    apps.updateLocally(app.id) { $0.data.state = ($0.data.state ?? .object([:])).setting("currentPage", to: .number(Double(target))) }
+    Task {
+      let reply = try? await session.socket?.request("/apps/\(app.id)", method: "PUT", body: .object(["state.currentPage": .number(Double(target))]))
+      let accepted = reply.flatMap { try? JSONDecoder().decode(APIReply<JSONValue>.self, from: $0) }?.success ?? false
+      if !accepted {
+        apps.updateLocally(app.id) { $0.data.state = ($0.data.state ?? .object([:])).setting("currentPage", to: .number(Double(before))) }
       }
-      .onEnded { _ in zoomStart = nil }
+    }
+  }
+
+  /// Touch and hold an app, then drag: pick it up, move it, put it down
+  private func hold(_ phase: BoardGestures.Phase, at start: CGPoint, moved: CGSize) {
+    switch phase {
+    case .began:
+      guard !pinching, resizing == nil, let target = app(at: start), canChange(target) else { return }
+      moving = Moving(id: target.id, origin: target.data.position)
+      selectedId = target.id
+      UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+    case .changed:
+      moving?.delta = CGSize(width: moved.width / scale, height: moved.height / scale)
+    case .ended:
+      if var final = moving {
+        final.delta = CGSize(width: moved.width / scale, height: moved.height / scale)
+        drop(final)
+      }
+      moving = nil
+    }
+  }
+
+  /// One finger: pan the board (not while an app is being moved)
+  private func pan(_ phase: BoardGestures.Phase, by delta: CGSize) {
+    guard phase == .changed, moving == nil else { return }
+    offset.x += delta.width / scale
+    offset.y += delta.height / scale
+  }
+
+  /// Two fingers: zoom, keeping the board point between them in place
+  private func pinch(_ phase: BoardGestures.Phase, by factor: CGFloat, around anchor: CGPoint) {
+    switch phase {
+    case .began, .changed:
+      pinching = true
+      let newScale = min(max(scale * factor, 0.01), 4)
+      let boardX = anchor.x / scale - offset.x
+      let boardY = anchor.y / scale - offset.y
+      scale = newScale
+      offset = CGPoint(x: anchor.x / newScale - boardX, y: anchor.y / newScale - boardY)
+    case .ended:
+      pinching = false
+    }
+  }
+
+  /// Drag the corner handle: resize with the top-left corner in place, within the web client's
+  /// limits, keeping the shape of apps that do on the web; one update when it ends
+  private func resize(_ app: SageApp) -> some Gesture {
+    DragGesture(minimumDistance: 0, coordinateSpace: .global)
+      .onChanged { value in
+        let origin = resizing?.origin ?? app.data.size
+        var width = origin.width + value.translation.width / scale
+        var height = origin.height + value.translation.height / scale
+        if Self.keepsShape.contains(app.data.type), origin.height > 0 {
+          let ratio = origin.width / origin.height
+          if abs(value.translation.width) >= abs(value.translation.height) { height = width / ratio } else { width = height * ratio }
+        }
+        width = min(max(width, Self.minSize.width), Self.maxSize.width)
+        height = min(max(height, Self.minSize.height), Self.maxSize.height)
+        resizing = Resizing(id: app.id, origin: origin, size: Size(width: width.rounded(), height: height.rounded(), depth: origin.depth))
+      }
+      .onEnded { _ in
+        if let resizing { commitResize(resizing, position: app.data.position) }
+        resizing = nil
+      }
+  }
+
+  private func commitResize(_ change: Resizing, position: Position) {
+    guard change.size.width != change.origin.width || change.size.height != change.origin.height else { return }
+    apps.updateLocally(change.id) { $0.data.size = change.size }
+    let body = JSONValue.object([
+      "position": .object(["x": .number(position.x), "y": .number(position.y), "z": .number(position.z ?? 0)]),
+      "size": .object(["width": .number(change.size.width), "height": .number(change.size.height), "depth": .number(change.size.depth ?? 0)]),
+    ])
+    Task {
+      let reply = try? await session.socket?.request("/apps/\(change.id)", method: "PUT", body: body)
+      let accepted = reply.flatMap { try? JSONDecoder().decode(APIReply<JSONValue>.self, from: $0) }?.success ?? false
+      if !accepted { apps.updateLocally(change.id) { $0.data.size = change.origin } }
+    }
+  }
+
+  /// Put a moved app down: show it there at once, then tell the hub (as the web client
+  /// does, one update when the move ends); back where it was if the hub refuses
+  private func drop(_ move: Moving) {
+    let distance = hypot(move.delta.width, move.delta.height)
+    // Not moved, or an implausible jump (the web client's limit)
+    guard distance > 0.5, distance <= 50_000 else { return }
+    let position = Position(x: (move.origin.x + move.delta.width).rounded(), y: (move.origin.y + move.delta.height).rounded(), z: move.origin.z)
+    apps.updateLocally(move.id) { $0.data.position = position }
+    let body = JSONValue.object(["position": .object(["x": .number(position.x), "y": .number(position.y), "z": .number(position.z ?? 0)])])
+    Task {
+      let reply = try? await session.socket?.request("/apps/\(move.id)", method: "PUT", body: body)
+      let accepted = reply.flatMap { try? JSONDecoder().decode(APIReply<JSONValue>.self, from: $0) }?.success ?? false
+      if !accepted { apps.updateLocally(move.id) { $0.data.position = move.origin } }
+    }
+  }
+}
+
+/// The corner handle of the selected app: a fixed size on screen, easy to touch
+private struct ResizeHandle: View {
+  var body: some View {
+    Image(systemName: "arrow.up.left.and.arrow.down.right")
+      .font(.system(size: 11, weight: .bold))
+      .foregroundStyle(.white)
+      .frame(width: 26, height: 26)
+      .background(Circle().fill(Color.teal))
+      .overlay(Circle().strokeBorder(.white, lineWidth: 2))
+      .shadow(color: .black.opacity(0.3), radius: 3, y: 1)
+      .frame(width: 44, height: 44)
+      .contentShape(Rectangle())
+      .accessibilityLabel("Resize")
+  }
+}
+
+/// Under a selected PDF: first, previous, the pages shown and the count, next, last
+private struct PageBar: View {
+  let page: Int
+  let count: Int
+  let shown: Int
+  let go: (Int) -> Void
+
+  private var last: Int { max(0, count - shown) }
+
+  private var label: String {
+    shown > 1 ? "\(page + 1)–\(min(page + shown, count)) / \(count)" : "\(page + 1) / \(count)"
+  }
+
+  var body: some View {
+    HStack(spacing: 2) {
+      button("First Page", "backward.end.fill", enabled: page > 0) { go(0) }
+      button("Previous Page", "chevron.left", enabled: page > 0) { go(page - 1) }
+      Text(label)
+        .font(.callout.monospacedDigit())
+        .frame(minWidth: 64)
+      button("Next Page", "chevron.right", enabled: page < last) { go(page + 1) }
+      button("Last Page", "forward.end.fill", enabled: page < last) { go(last) }
+    }
+    .padding(.horizontal, 6)
+    .padding(.vertical, 4)
+    .background(.regularMaterial, in: Capsule())
+    .shadow(color: .black.opacity(0.2), radius: 4, y: 2)
+  }
+
+  private func button(_ label: String, _ symbol: String, enabled: Bool, action: @escaping () -> Void) -> some View {
+    Button(action: action) {
+      Image(systemName: symbol).frame(width: 40, height: 36).contentShape(Rectangle())
+    }
+    .disabled(!enabled)
+    .accessibilityLabel(label)
   }
 }

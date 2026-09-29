@@ -62,6 +62,14 @@ enum JSONValue: Codable, Hashable {
     return nil
   }
 
+  /// A copy of this object with one field set (an empty object if this isn't one)
+  func setting(_ key: String, to value: JSONValue) -> JSONValue {
+    var object: [String: JSONValue] = [:]
+    if case .object(let current) = self { object = current }
+    object[key] = value
+    return .object(object)
+  }
+
   var array: [JSONValue]? {
     if case .array(let value) = self { return value }
     return nil

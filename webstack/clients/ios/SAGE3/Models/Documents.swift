@@ -67,6 +67,8 @@ struct AppData: Codable {
   var size: Size
   var type: String
   var state: JSONValue?
+  /// A pinned app can't be moved
+  var pinned: Bool?
 }
 
 struct AssetData: Codable {

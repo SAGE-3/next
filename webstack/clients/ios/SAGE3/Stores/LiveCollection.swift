@@ -40,6 +40,11 @@ final class LiveCollection<T: Codable> {
     subscription = nil
   }
 
+  /// Change a document here before the hub confirms it (the next UPDATE event replaces it)
+  func updateLocally(_ id: String, _ change: (inout SBDoc<T>) -> Void) {
+    if let index = items.firstIndex(where: { $0.id == id }) { change(&items[index]) }
+  }
+
   private func apply(_ data: Data) {
     guard let message = try? JSONDecoder().decode(SubscriptionMessage<T>.self, from: data) else { return }
     let docs = message.event.doc
