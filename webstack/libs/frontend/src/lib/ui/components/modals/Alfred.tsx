@@ -65,6 +65,9 @@ import {
   apiUrls,
   useUserSettings,
   EditUserSettingsModal,
+  placeNewApp,
+  placeNewApps,
+  viewCenter,
 } from '@sage3/frontend';
 
 import { AppName, AppState } from '@sage3/applications/schema';
@@ -140,13 +143,6 @@ export function Alfred(props: props) {
       w = 320 * 1.5;
       h = 130 * 1.5;
     }
-    // Get around  the center of the board
-    const bx = useUIStore.getState().boardPosition.x;
-    const by = useUIStore.getState().boardPosition.y;
-    const scale = useUIStore.getState().scale;
-    const x = Math.floor(-bx + window.innerWidth / scale / 2);
-    const y = Math.floor(-by + window.innerHeight / scale / 2);
-
     // Per-app size overrides (applied last so they're never clobbered)
     const appSizeOverrides: Record<string, { w: number; h: number }> = {
       SageIdeator: { w: 1400, h: 800 },
@@ -154,11 +150,14 @@ export function Alfred(props: props) {
     const sizeOverride = appSizeOverrides[appName as string];
     if (sizeOverride) { w = sizeOverride.w; h = sizeOverride.h; }
 
+    // Near the center of the view, clear of the other apps
+    const { x, y } = placeNewApp({ width: w, height: h });
+
     createApp({
       title: appName,
       roomId: props.roomId,
       boardId: props.boardId,
-      position: { x: x - 200, y: y - 200, z: 0 },
+      position: { x, y, z: 0 },
       size: { width: w, height: h, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       type: appName,
@@ -324,14 +323,10 @@ export function Alfred(props: props) {
         // redo the calculations for the position
         const ww = 820;
         const hh = 620;
-        // Get around  the center of the board
-        const bx = useUIStore.getState().boardPosition.x;
-        const by = useUIStore.getState().boardPosition.y;
-        const scale = useUIStore.getState().scale;
-        let px = Math.floor(-bx + window.innerWidth / scale / 2); // center
-        let py = Math.floor(-by + window.innerHeight / scale / 3); // 1/3 down
-        px -= ww / 2;
-        py -= hh / 2;
+        // Around a point a third of the way down the view, clear of the other apps
+        const { boardPosition, scale } = useUIStore.getState();
+        const target = { x: -boardPosition.x + window.innerWidth / scale / 2, y: -boardPosition.y + window.innerHeight / scale / 3 };
+        const { x: px, y: py } = placeNewApp({ width: ww, height: hh }, { target });
 
         // Build the question
         const question = {
@@ -526,15 +521,10 @@ function AlfredUI(props: AlfredUIProps): JSX.Element {
     // Create the app
     const file = assetsList.find((a) => a.id === id);
     if (file) {
-      // Get around  the center of the board
-      const bx = useUIStore.getState().boardPosition.x;
-      const by = useUIStore.getState().boardPosition.y;
-      const scale = useUIStore.getState().scale;
-      const x = Math.floor(-bx + window.innerWidth / scale / 2);
-      const y = Math.floor(-by + window.innerHeight / scale / 2);
-      // Create the app
+      // Set up the app around the center of the view, then move it to a free spot near there
+      const { x, y } = viewCenter();
       const setup = await setupAppForFile(file, x, y, props.roomId, props.boardId, user);
-      if (setup) createApp(setup);
+      if (setup) createApp(placeNewApps([setup])[0]);
     }
   };
 

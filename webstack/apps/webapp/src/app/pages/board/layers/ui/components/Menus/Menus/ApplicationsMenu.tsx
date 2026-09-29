@@ -12,7 +12,7 @@ import { useColorModeValue, VStack } from '@chakra-ui/react';
 import { Applications } from '@sage3/applications/apps';
 import { initialValues } from '@sage3/applications/initialValues';
 import { AppName, AppState } from '@sage3/applications/schema';
-import { useAppStore, useUIStore, useUser, GetConfiguration, useThrottleScale } from '@sage3/frontend';
+import { useAppStore, useUser, GetConfiguration, placeNewApp } from '@sage3/frontend';
 
 import { MenuButton } from './MenuButton';
 
@@ -33,10 +33,6 @@ export function ApplicationsMenu(props: ApplicationProps) {
 
   // App Store
   const createApp = useAppStore((state) => state.create);
-
-  // UI store
-  const boardPosition = useUIStore((state) => state.boardPosition);
-  const scale = useThrottleScale(250);
 
   // Screenshares can only be started from the ScreenshareMenu, never from this list
   const hiddenApps = ['Screenshare', 'LocalScreenshare'];
@@ -71,8 +67,6 @@ export function ApplicationsMenu(props: ApplicationProps) {
     if (!user) return;
 
     const state = {} as AppState;
-    const x = Math.floor(-boardPosition.x + window.innerWidth / 2 / scale - 200);
-    const y = Math.floor(-boardPosition.y + window.innerHeight / 2 / scale - 200);
 
     // Setup initial size
     let w = 400;
@@ -100,6 +94,9 @@ export function ApplicationsMenu(props: ApplicationProps) {
       w = 320 * 1.5;
       h = 130 * 1.5;
     }
+
+    // Near the center of the view, clear of the other apps (in the center if there's no room)
+    const { x, y } = placeNewApp({ width: w, height: h });
 
     const title = appName == 'Stickie' ? user.data.name : ''; // Gross
     const result = await createApp({

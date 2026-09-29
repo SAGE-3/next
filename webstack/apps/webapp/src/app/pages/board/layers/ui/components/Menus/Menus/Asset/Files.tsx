@@ -34,7 +34,7 @@ import {
 import { getExtension } from '@sage3/shared';
 import { FileEntry } from '@sage3/shared/types';
 import { AppSchema } from '@sage3/applications/schema';
-import { useUser, useUIStore, useAppStore, AssetHTTPService, setupAppForFile, useThrottleScale } from '@sage3/frontend';
+import { useUser, useAppStore, AssetHTTPService, setupAppForFile, viewCenter, placeNewApps } from '@sage3/frontend';
 
 import { RowFile } from './RowFile';
 
@@ -71,9 +71,6 @@ export function Files(props: FilesProps): JSX.Element {
   const initialRef = useRef<HTMLInputElement>(null);
   const [sorted, setSorted] = useState<sortType>({ order: 'added', reverse: false });
   const [searchTerm, setSearchTerm] = useState<string>('');
-  // UI Store
-  const boardPosition = useUIStore((state) => state.boardPosition);
-  const scale = useThrottleScale(250);
   // How to create some applications
   const createBatch = useAppStore((state) => state.createBatch);
 
@@ -384,9 +381,8 @@ export function Files(props: FilesProps): JSX.Element {
   const doOpenFiles = async () => {
     if (!user) return;
     const selected = filesList.filter((k) => k.selected);
-    // Get around  the center of the board
-    const xDrop = Math.floor(-boardPosition.x + window.innerWidth / scale / 2);
-    const yDrop = Math.floor(-boardPosition.y + window.innerHeight / scale / 2);
+    // Set up a row of apps from the center of the view (moved as one block below)
+    const { x: xDrop, y: yDrop } = viewCenter();
     // Array for batch creation
     const setupArray: AppSchema[] = [];
     let xpos = xDrop;
@@ -398,8 +394,8 @@ export function Files(props: FilesProps): JSX.Element {
         xpos += setup.size.width + 10;
       }
     }
-    // Create all the apps in batch
-    createBatch(setupArray);
+    // Create all the apps in batch, at a free spot near the center of the view
+    createBatch(placeNewApps(setupArray));
   };
 
   // Select the file when clicked
@@ -501,7 +497,7 @@ export function Files(props: FilesProps): JSX.Element {
           totalCount={filesList.length}
           onKeyDown={onKeyboard}
           // Content of the table
-          itemContent={(idx) => <RowFile key={filesList[idx].id} file={filesList[idx]} clickCB={onClick} dragCB={dragCB} scale={scale} />}
+          itemContent={(idx) => <RowFile key={filesList[idx].id} file={filesList[idx]} clickCB={onClick} dragCB={dragCB} />}
         />
       </VStack>
 
