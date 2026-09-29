@@ -7,6 +7,7 @@
  */
 
 import SwiftUI
+import UIKit
 
 /// The SAGE3 colors (libs/shared/src/lib/ui/colors.ts) at the shades the web client uses
 enum SageColor {
@@ -31,7 +32,20 @@ enum SageColor {
   static let names = ["red", "orange", "yellow", "green", "teal", "blue", "cyan", "purple", "pink"]
 }
 
+/// The board's background and grid, as the web client draws them (Background.tsx, theme.ts)
+enum BoardColors {
+  /// Page background: gray.50 in light mode, #323232 in dark mode
+  static let background = Color(light: 0xF7FAFC, dark: 0x323232)
+  /// Grid lines: gray.100 in light mode, gray.700 in dark mode
+  static let grid = Color(light: 0xEDF2F7, dark: 0x2D3748)
+}
+
 extension Color {
+  /// A color that follows light and dark mode
+  init(light: Int, dark: Int) {
+    self.init(UIColor { traits in UIColor(Color(hex: traits.userInterfaceStyle == .dark ? dark : light)) })
+  }
+
   init(hex: Int) {
     self.init(red: Double((hex >> 16) & 0xFF) / 255, green: Double((hex >> 8) & 0xFF) / 255, blue: Double(hex & 0xFF) / 255)
   }

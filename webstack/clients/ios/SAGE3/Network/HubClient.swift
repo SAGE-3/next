@@ -76,8 +76,23 @@ final class HubClient {
 
   /// Public information about the hub (name, version, login methods), no login needed
   func info() async throws -> ServerInfo {
-    let (data, _) = try await send("GET", "/api/info")
-    return try decoder.decode(ServerInfo.self, from: data)
+    try await resolve().info
+  }
+
+  /// The hub's information, and the address it actually answers on. A hub's public
+  /// address can redirect to its server (https://chicago.sage3.app to
+  /// https://sage3alpha.evl.uic.edu): logins, websockets, and cookies need the final one,
+  /// since a redirected POST arrives as a GET and a websocket doesn't follow redirects.
+  func resolve() async throws -> (info: ServerInfo, base: URL) {
+    let (data, response) = try await send("GET", "/api/info")
+    let info = try decoder.decode(ServerInfo.self, from: data)
+    var base = self.base
+    if let final = response.url, var components = URLComponents(url: final, resolvingAgainstBaseURL: false) {
+      components.path = ""
+      components.query = nil
+      if let resolved = components.url { base = resolved }
+    }
+    return (info, base)
   }
 
   /// Sign in as a guest, as the web client does: the server makes a new guest account and
@@ -85,6 +100,18 @@ final class HubClient {
   func loginAsGuest() async throws {
     let body = try encoder.encode(["username": "guest-username", "password": "guest-pass"])
     _ = try await send("POST", "/auth/guest", body: body)
+  }
+
+  /// Finish a web login run in the system's login sheet: trade its one-time code, and the
+  /// verifier behind the challenge it started with, for this app's own session cookie
+  /// (server: libs/sagebase/src/lib/modules/auth/SBMobileLogin.ts)
+  func exchangeLoginCode(_ code: String, verifier: String) async throws {
+    let body = try encoder.encode(["code": code, "verifier": verifier])
+    let (data, http) = try await send("POST", "/auth/mobile/exchange", body: body)
+    let reply = try? decoder.decode(APIReply<JSONValue>.self, from: data)
+    guard http.statusCode == 200, reply?.success == true else {
+      throw HubError.server(reply?.message ?? "The hub did not accept the login.")
+    }
   }
 
   /// The signed-in account, or nil when the session is missing or expired

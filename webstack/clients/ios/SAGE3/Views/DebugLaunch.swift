@@ -46,7 +46,7 @@
     private func open() async {
       guard let session = Session(hub: Hub(name: "Debug", url: url)) else { return error = "Invalid hub address" }
       do {
-        session.info = try await session.client.info()
+        await session.connect()
         try await session.loginAsGuest()
         if let roomId = DebugLaunch.room {
           room = try await session.client.rooms().first { $0.id == roomId }

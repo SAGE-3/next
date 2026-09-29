@@ -6,11 +6,13 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import AuthenticationServices
 import SwiftUI
 
-/// A hub: sign in (guest only for now), then its rooms
+/// A hub: sign in (Google or guest), then its rooms
 struct HubView: View {
   let session: Session
+  @State private var loginSheet = LoginSheet()
   @State private var checking = true
   @State private var signingIn = false
   @State private var error: String?
@@ -29,14 +31,15 @@ struct HubView: View {
       if session.user != nil {
         session.connectIfNeeded()
       } else {
-        session.info = try? await session.client.info()
-        _ = await session.resume()
+        await session.connect()
+        if session.info != nil { _ = await session.resume() }
       }
       checking = false
     }
   }
 
   private var guestAllowed: Bool { session.info?.logins?.contains("guest") ?? false }
+  private var googleAllowed: Bool { session.info?.logins?.contains("google") ?? false }
 
   private var signIn: some View {
     VStack(spacing: 20) {
@@ -47,22 +50,35 @@ struct HubView: View {
       }
       if session.info == nil {
         Text("This hub is not reachable.").foregroundStyle(.red)
-      } else if guestAllowed {
-        Button {
-          Task { await signInAsGuest() }
-        } label: {
-          Label("Continue as Guest", systemImage: "person.crop.circle")
-            .frame(maxWidth: 280)
+      } else if guestAllowed || googleAllowed {
+        if googleAllowed {
+          Button {
+            Task { await signIn { try await session.loginWithGoogle(authenticate: openLoginSheet) } }
+          } label: {
+            Label("Sign in with Google", systemImage: "person.badge.key")
+              .frame(maxWidth: 280)
+          }
+          .buttonStyle(.borderedProminent)
+          .controlSize(.large)
+          .disabled(signingIn)
         }
-        .buttonStyle(.borderedProminent)
-        .controlSize(.large)
-        .disabled(signingIn)
-        Text("Guests can browse rooms and boards and view them.\nOther sign-in methods will come in a later version.")
-          .font(.footnote)
-          .foregroundStyle(.secondary)
-          .multilineTextAlignment(.center)
+        if guestAllowed {
+          Button {
+            Task { await signIn { try await session.loginAsGuest() } }
+          } label: {
+            Label("Continue as Guest", systemImage: "person.crop.circle")
+              .frame(maxWidth: 280)
+          }
+          .buttonStyle(.bordered)
+          .controlSize(.large)
+          .disabled(signingIn)
+          Text("Guests can browse rooms and boards and view them.")
+            .font(.footnote)
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.center)
+        }
       } else {
-        Text("This hub does not allow guests. Other sign-in methods will come in a later version.")
+        Text("This hub allows neither Google nor guest sign-in. Other sign-in methods will come in a later version.")
           .font(.footnote)
           .foregroundStyle(.secondary)
           .multilineTextAlignment(.center)
@@ -75,14 +91,22 @@ struct HubView: View {
     .navigationTitle(session.hub.name)
   }
 
-  private func signInAsGuest() async {
+  private func signIn(_ login: () async throws -> Void) async {
     signingIn = true
     defer { signingIn = false }
     do {
-      try await session.loginAsGuest()
+      try await login()
+      error = nil
+    } catch let failure as ASWebAuthenticationSessionError where failure.code == .canceledLogin {
+      // Closed the login sheet: nothing to report
       error = nil
     } catch {
       self.error = error.localizedDescription
     }
+  }
+
+  /// The system's login sheet, returning the address the hub sends it back to
+  private func openLoginSheet(_ url: URL, _ scheme: String) async throws -> URL {
+    try await loginSheet.open(url, callbackScheme: scheme)
   }
 }

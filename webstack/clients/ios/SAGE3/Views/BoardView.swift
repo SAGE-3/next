@@ -21,6 +21,7 @@ struct BoardView: View {
   @State private var zoomStart: (scale: CGFloat, offset: CGPoint)?
   @State private var viewSize = CGSize.zero
   @State private var fitted = false
+  @Environment(\.colorScheme) private var colorScheme
 
   init(session: Session, board: Board) {
     self.session = session
@@ -36,7 +37,7 @@ struct BoardView: View {
   var body: some View {
     GeometryReader { geometry in
       ZStack(alignment: .topLeading) {
-        Color(.secondarySystemBackground)
+        BoardGrid(offset: offset, scale: scale)
         ForEach(ordered.filter { isVisible($0, in: geometry.size) }) { app in
           let frame = screenFrame(app)
           AppTile(app: app, scale: scale, assets: assets, client: session.client)
@@ -51,7 +52,6 @@ struct BoardView: View {
       .onAppear { viewSize = geometry.size }
       .onChange(of: geometry.size) { _, size in viewSize = size }
     }
-    .ignoresSafeArea(edges: .bottom)
     .overlay(alignment: .bottomLeading) {
       if apps.loaded && !apps.items.isEmpty {
         Text("\(apps.items.count) apps · \(Int((scale * 100).rounded()))%")
@@ -72,8 +72,16 @@ struct BoardView: View {
     .navigationTitle(board.data.name)
     .navigationBarTitleDisplayMode(.inline)
     .toolbar {
-      ToolbarItem(placement: .primaryAction) {
+      ToolbarItemGroup(placement: .bottomBar) {
         Button { fitAll() } label: { Label("Show All Apps", systemImage: "arrow.up.left.and.arrow.down.right") }
+        Button { zoom(by: 1 / 1.5) } label: { Label("Zoom Out", systemImage: "minus.magnifyingglass") }
+        Button { zoom(by: 1.5) } label: { Label("Zoom In", systemImage: "plus.magnifyingglass") }
+        Spacer()
+        Button {
+          Appearance.set(colorScheme == .dark ? "light" : "dark")
+        } label: {
+          Label(colorScheme == .dark ? "Light Mode" : "Dark Mode", systemImage: colorScheme == .dark ? "sun.max" : "moon")
+        }
       }
     }
     .task(id: session.socket == nil) {
@@ -113,6 +121,16 @@ struct BoardView: View {
     withAnimation(.easeInOut(duration: 0.3)) {
       scale = min(max(fit, 0.01), 4)
       offset = CGPoint(x: -box.midX + viewSize.width / scale / 2, y: -box.midY + viewSize.height / scale / 2)
+    }
+  }
+
+  /// Zoom around the center of the view (toolbar buttons)
+  private func zoom(by factor: CGFloat) {
+    let newScale = min(max(scale * factor, 0.01), 4)
+    let center = CGPoint(x: viewSize.width / 2, y: viewSize.height / 2)
+    withAnimation(.easeInOut(duration: 0.2)) {
+      offset = CGPoint(x: center.x / newScale - (center.x / scale - offset.x), y: center.y / newScale - (center.y / scale - offset.y))
+      scale = newScale
     }
   }
 

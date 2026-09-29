@@ -14,7 +14,8 @@ import Observation
 @Observable
 final class Session {
   let hub: Hub
-  let client: HubClient
+  /// Talks to the address the hub answers on (see connect())
+  private(set) var client: HubClient
   private(set) var socket: HubSocket?
   private(set) var user: User?
   private(set) var namespace: String?
@@ -35,6 +36,14 @@ final class Session {
     return role == "user" || role == "admin"
   }
 
+  /// Find the hub's server, following the redirect of its public address, and get its
+  /// information. Call before signing in.
+  func connect() async {
+    guard let (info, base) = try? await client.resolve() else { return }
+    self.info = info
+    if base != client.base { client = HubClient(base: base) }
+  }
+
   /// Use the session left by an earlier login, if it's still valid
   func resume() async -> Bool {
     guard let auth = try? await client.verify() else { return false }
@@ -45,6 +54,21 @@ final class Session {
     try await client.loginAsGuest()
     guard let auth = try await client.verify() else { throw HubError.server("The guest login did not work.") }
     guard await start(auth) else { throw HubError.server("Could not open the guest session.") }
+  }
+
+  /// Sign in with Google, in the system's login sheet (`authenticate` opens it and returns
+  /// the address it ends on). The hub hands the login back as a one-time code, which only
+  /// the verifier behind the challenge can use (PKCE).
+  func loginWithGoogle(authenticate: (URL, String) async throws -> URL) async throws {
+    let login = WebLogin()
+    guard let url = client.url("/auth/google", query: ["mobile": login.challenge]) else { throw HubError.badURL }
+    let callback = try await authenticate(url, WebLogin.callbackScheme)
+    guard let code = URLComponents(url: callback, resolvingAgainstBaseURL: false)?.queryItems?.first(where: { $0.name == "code" })?.value else {
+      throw HubError.server("The hub did not complete the login.")
+    }
+    try await client.exchangeLoginCode(code, verifier: login.verifier)
+    guard let auth = try await client.verify() else { throw HubError.server("The Google login did not work.") }
+    guard await start(auth) else { throw HubError.server("Could not open the session.") }
   }
 
   private func start(_ auth: AuthVerify.Auth) async -> Bool {
