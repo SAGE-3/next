@@ -127,7 +127,8 @@ export function BoardRadialMenu(props: BoardRadialMenuProps) {
     return (
       <MenuPanel center={center} title={PANEL_TITLES[openPanel]} onClose={props.onClose}>
         {openPanel === 'users' && <UsersMenu boardId={props.boardId} />}
-        {openPanel === 'screenshare' && <ScreenshareMenu boardId={props.boardId} roomId={props.roomId} />}
+        {/* Closes once a screenshare has started, like the toolbar's Screenshares menu */}
+        {openPanel === 'screenshare' && <ScreenshareMenu boardId={props.boardId} roomId={props.roomId} onActionComplete={props.onClose} />}
         {openPanel === 'applications' && <ApplicationsMenu roomId={props.roomId} boardId={props.boardId} />}
         {openPanel === 'plugins' && <PluginsMenu roomId={props.roomId} boardId={props.boardId} />}
         {openPanel === 'assets' && (

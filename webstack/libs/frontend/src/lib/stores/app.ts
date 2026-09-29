@@ -24,6 +24,11 @@ interface Applications {
   apps: App[];
   error: { id?: string; msg: string } | null;
   fetched: boolean;
+  // Apps last created from this client (one, or all of a batch such as a multi-file
+  // drop), and when: the board zooms to them when the user asked for it (setting
+  // zoomToNewApps). Created apps reach the store later, over the websocket, so the
+  // board waits for them to arrive.
+  lastCreated: { ids: string[]; at: number } | null;
 
   clearError: () => void;
   create: (newApp: AppSchema) => Promise<{ success: boolean; message: string; data: App }>;
@@ -52,6 +57,7 @@ const AppStore = create<Applications>()((set, get) => {
     apps: [],
     error: null,
     fetched: false,
+    lastCreated: null,
 
     clearError: () => {
       set({ error: null });
@@ -61,6 +67,9 @@ const AppStore = create<Applications>()((set, get) => {
       const app = await SocketAPI.sendRESTMessage('/apps', 'POST', newApp);
       if (!app.success) {
         set({ error: { msg: app.message } });
+      } else {
+        const doc = Array.isArray(app.data) ? app.data[0] : app.data;
+        if (doc?._id) set({ lastCreated: { ids: [doc._id], at: Date.now() } });
       }
       return app;
     },
@@ -69,6 +78,8 @@ const AppStore = create<Applications>()((set, get) => {
       const res = await SocketAPI.sendRESTMessage('/apps', 'POST', { batch: newApps });
       if (!res.success) {
         set({ error: { msg: res.message } });
+      } else if (Array.isArray(res.data) && res.data.length > 0) {
+        set({ lastCreated: { ids: res.data.map((doc: App) => doc._id), at: Date.now() } });
       }
     },
     update: async (id: string, updates: Partial<AppSchema>) => {

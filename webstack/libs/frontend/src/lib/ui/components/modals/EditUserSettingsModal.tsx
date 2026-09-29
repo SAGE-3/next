@@ -96,6 +96,7 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
     toggleShowCursors,
     toggleShowViewports,
     toggleShowAppTitles,
+    toggleZoomToNewApps,
     toggleShowUI,
     toggleShowGrid,
     setShowLinks,
@@ -108,6 +109,7 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
   const showCursors = userSettings.showCursors;
   const showViewports = userSettings.showViewports;
   const showAppTitles = userSettings.showAppTitles;
+  const zoomToNewApps = userSettings.zoomToNewApps;
   const showUI = userSettings.showUI;
   const showGrid = userSettings.showGrid;
   const showTags = userSettings.showTags;
@@ -385,6 +387,13 @@ export function EditUserSettingsModal(props: EditUserSettingsModalProps): JSX.El
                   </FormLabel>
 
                   <Switch id="other-cursors" colorScheme="teal" isChecked={showAppTitles} onChange={toggleShowAppTitles} />
+                </FormControl>
+                <FormControl display="flex" my="2" alignItems="center" justifyContent="space-between">
+                  <FormLabel htmlFor="zoom-new-apps" mb="0">
+                    Zoom to New Applications
+                    <InfoTooltip label={'Zoom to each application you create and select it, ready to use. Press Z to zoom back out.'} />
+                  </FormLabel>
+                  <Switch id="zoom-new-apps" colorScheme="teal" isChecked={zoomToNewApps} onChange={toggleZoomToNewApps} />
                 </FormControl>
 
                 <FormControl display="flex" my="2" alignItems="center" justifyContent="space-between">
