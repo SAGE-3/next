@@ -135,19 +135,19 @@ Lists all currently opened screenshares on the board, listed by usernames. Click
 ![Screenshare](images/quick-start/board-page-screenshare.jpeg)
 
 ### Applications Panel
-Lists all available applications. Click to open an app at the center of your view, or **drag** the app name to place it at a specific location on the board.
+Lists all available applications. Click to open an app near the center of your view, or **drag** the app name to place it at a specific location on the board.
 
 ![Applications](images/quick-start/board-page-applications.jpeg)
 
 ### Plugins Panel
-Lists custom plugin applications uploaded to the server.  Click to open a plugin at the center of your view, or **drag** the app name to place it at a specific location on the board. To upload a new Plugin click the **Upload** button.
+Lists custom plugin applications uploaded to the server.  Click to open a plugin near the center of your view, or **drag** the app name to place it at a specific location on the board. To upload a new Plugin click the **Upload** button.
 
 ![Plugins](images/quick-start/board-page-plugins.jpeg)
 
 ### Assets Panel
 Shows all files uploaded to the current room.
 - **Drag** a file name onto the board to open it in its default viewer.
-- **Double-click** a file name to open it at the center of your view.
+- **Double-click** a file name to open it near the center of your view.
 - Click **Upload** to add files (supports folder upload).
 - Or simply **drag files from your desktop** directly onto the board.
 
@@ -173,8 +173,10 @@ Contains a **minimap** showing all apps on the board and user positions. Clickin
 Applications are content windows on the board. There are two ways to open them:
 
 **From the Applications Panel:**
-- Click an app name → opens at the center of your view
+- Click an app name → opens near the center of your view
 - Drag an app name → places it where you drop it
+
+> **Where new apps open:** an app opened from a menu, the asset manager, or Alfred's `app` command goes to the free spot closest to the center of your view, at least 40 pixels away from the other apps, so it never covers what's already there. It may stick out of the screen a little, but at least half of it stays in view. When there's no free spot, it opens in the center, on top of the others. Apps you drag, drop, or paste go exactly where you put them.
 
 **By dropping files on the board:**
 - Drop an image → **ImageViewer**

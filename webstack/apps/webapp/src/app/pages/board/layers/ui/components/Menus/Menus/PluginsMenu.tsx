@@ -9,7 +9,7 @@
 import { useColorModeValue, VStack, Tooltip, Box, Badge, Text, Divider, useDisclosure, Button } from '@chakra-ui/react';
 import { format } from 'date-fns';
 
-import { PluginUploadModal, useAppStore, useHexColor, usePluginStore, useThrottleScale, useUIStore, useUser } from '@sage3/frontend';
+import { PluginUploadModal, useAppStore, useHexColor, usePluginStore, useUser, placeNewApp } from '@sage3/frontend';
 import { MenuButton } from './MenuButton';
 
 export interface PluginsMenuProps {
@@ -34,9 +34,7 @@ export function PluginsMenu(props: PluginsMenuProps) {
   // User
   const { user } = useUser();
 
-  // UI store
-  const boardPosition = useUIStore((state) => state.boardPosition);
-  const scale = useThrottleScale(250);
+  // Colors
   const gripColor = useColorModeValue('#c1c1c1', '#2b2b2b');
   const uploadButtonColor = useColorModeValue('teal.400', 'teal.600');
   const uploadButtonColorHex = useHexColor(uploadButtonColor);
@@ -47,11 +45,11 @@ export function PluginsMenu(props: PluginsMenuProps) {
   const newApplication = async (pluginName: string) => {
     if (!user) return;
 
-    const x = Math.floor(-boardPosition.x + window.innerWidth / 2 / scale - 200);
-    const y = Math.floor(-boardPosition.y + window.innerHeight / 2 / scale - 200);
     // Setup initial size
     let w = 400;
     let h = 400;
+    // Near the center of the view, clear of the other apps
+    const { x, y } = placeNewApp({ width: w, height: h });
 
     const result = await createApp({
       title: pluginName,

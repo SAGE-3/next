@@ -27,7 +27,7 @@ Now your new kernel is listed in the 'Kernel' panel. Three buttons are available
 
 ### Python Kernel
 
-Clicking 'Create Cell' in the 'Kernel' panel, creates a SageCell in the center of the view. The cell is linked to the kernel. You can see the kernel alias (name) in the top of the cell, or when selecting the application, you see the kernel name in the application toolbar. You can switch kernel by selecting another kernel in the pulldown menu.
+Clicking 'Create Cell' in the 'Kernel' panel, creates a SageCell near the center of the view, in a free spot. The cell is linked to the kernel. You can see the kernel alias (name) in the top of the cell, or when selecting the application, you see the kernel name in the application toolbar. You can switch kernel by selecting another kernel in the pulldown menu.
 
 ![Screenshot 2023-09-20 at 6 27 58 PM](images/sage-api/sage-api_python_kernel_1.jpeg)
 

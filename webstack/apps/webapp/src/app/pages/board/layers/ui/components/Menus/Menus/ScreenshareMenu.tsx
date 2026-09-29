@@ -45,6 +45,7 @@ import {
   useScreenshareBackend,
   truncateWithEllipsis,
   isElectron,
+  placeNewApp,
 } from '@sage3/frontend';
 
 // Props for the ScreensharesMenu component
@@ -93,8 +94,6 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
   const apps = useAppStore((state) => state.apps);
   const deleteApp = useAppStore((state) => state.delete);
   const createApp = useAppStore((state) => state.create);
-  const boardPosition = useUIStore((state) => state.boardPosition);
-  const scale = useUIStore((state) => state.scale);
   const goToApp = useUIStore((state) => state.fitApps);
 
   // Screenshare Store (LiveKit)
@@ -166,10 +165,8 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
     const width = 1280;
     const height = width / aspectRatio;
     const size = { height, width, depth: 0 };
-    // Offset each additional share so a second one does not land exactly on top of the first
-    const offset = yourLiveKitShareCount * 40;
-    const x = Math.floor(-boardPosition.x + window.innerWidth / 2 / scale - width / 2) + offset;
-    const y = Math.floor(-boardPosition.y + window.innerHeight / 2 / scale - height / 2) + offset;
+    // Near the center of the view, clear of the other apps (a second share goes beside the first)
+    const { x, y } = placeNewApp({ width, height });
     const position = { x, y, z: 0 };
     const result = await createApp({
       title: buildShareTitle(),
@@ -265,8 +262,8 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
     const width = 1280;
     const height = 720;
     const size = { height, width, depth: 0 };
-    const x = Math.floor(-boardPosition.x + window.innerWidth / 2 / scale - height / 2);
-    const y = Math.floor(-boardPosition.y + window.innerHeight / 2 / scale - width / 2);
+    // Near the center of the view, clear of the other apps
+    const { x, y } = placeNewApp({ width, height });
     const position = { x, y, z: 0 };
     const result = await createApp({
       title: 'Screenshare by ' + user.data.name,

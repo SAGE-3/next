@@ -12,7 +12,7 @@ import { Tooltip, Box, Text, useToast, Flex, IconButton, Divider, useDisclosure,
 import { MdCode, MdDelete, MdLock, MdLockOpen, MdRestartAlt } from 'react-icons/md';
 
 // SAGE3 imports
-import { CreateKernelModal, useAppStore, useHexColor, useKernelStore, useThrottleScale, useUIStore, useUser } from '@sage3/frontend';
+import { CreateKernelModal, useAppStore, useHexColor, useKernelStore, useUser, placeNewApp } from '@sage3/frontend';
 import { KernelInfo } from '@sage3/shared/types';
 
 // Props to the Kernels Panel component
@@ -30,10 +30,6 @@ export interface KernelsMenuProps {
 export function KernelsMenu(props: KernelsMenuProps) {
   // Create new sagecells
   const createApp = useAppStore((state) => state.create);
-
-  // Board Position
-  const scale = useThrottleScale(250);
-  const boardPosition = useUIStore((state) => state.boardPosition);
 
   // User
   const { user } = useUser();
@@ -124,8 +120,8 @@ export function KernelsMenu(props: KernelsMenuProps) {
    */
   const handleCreateSageCell = (kernelInfo: KernelInfo) => {
     if (!user) return;
-    const x = Math.floor(-boardPosition.x + window.innerWidth / 2 / scale - 300);
-    const y = Math.floor(-boardPosition.y + window.innerHeight / 2 / scale - 300);
+    // Near the center of the view, clear of the other apps
+    const { x, y } = placeNewApp({ width: 600, height: 600 });
     createApp({
       title: `${kernelInfo.alias}`,
       roomId: props.roomId,
