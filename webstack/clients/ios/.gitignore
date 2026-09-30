@@ -1,4 +1,5 @@
-# Xcode per-user and build files
+# Xcode per-user and build files (Local.xcconfig: your signing team)
+Local.xcconfig
 xcuserdata/
 DerivedData/
 build/

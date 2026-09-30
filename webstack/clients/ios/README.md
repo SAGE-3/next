@@ -13,6 +13,14 @@ A native SwiftUI client for iPhone and iPad (iOS 17+). No third-party packages.
 
 Open `SAGE3.xcodeproj` in Xcode 16 or later (tested with Xcode 27), pick an iPhone or iPad simulator, and run. For the local development hub, run the SAGE3 dev servers first (`http://localhost:4200`).
 
+To run on your own iPhone or iPad, put your signing team in `Local.xcconfig` next to `Base.xcconfig` (git ignores it), rather than in Xcode's Signing tab, which would write it into the project:
+
+```
+DEVELOPMENT_TEAM = <your team ID>
+```
+
+Your team ID is on the Membership page of developer.apple.com.
+
 From the command line:
 
 ```sh
