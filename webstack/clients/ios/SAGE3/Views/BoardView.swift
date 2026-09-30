@@ -29,6 +29,8 @@ struct BoardView: View {
   // The board's live app texts (Stickies), and the one being edited
   @State private var texts = AppTextStore()
   @State private var editingStickie: SageApp?
+  // The board's shared screens, watched while the board has any
+  @State private var screens = ScreenShareStore()
   // The board's video players (this device only)
   @State private var videos = VideoPlayers()
   // This user's own presence, for the others
@@ -107,7 +109,7 @@ struct BoardView: View {
         ForEach(ordered.filter { isVisible($0, in: geometry.size) }) { app in
           let frame = screenFrame(app)
           let lifted = app.id == moving?.id
-          AppTile(app: app, scale: scale, assets: assets, client: session.client, videos: videos, clock: videos.clock, texts: texts)
+          AppTile(app: app, scale: scale, assets: assets, client: session.client, videos: videos, clock: videos.clock, texts: texts, screens: screens)
             .frame(width: frame.width, height: frame.height)
             .overlay {
               if app.id == selectedId {
@@ -312,6 +314,11 @@ struct BoardView: View {
       // Players of deleted videos stop
       videos.keep(only: Set(ids))
     }
+    .onChange(of: hasScreenShares, initial: true) { _, has in
+      // In the board's LiveKit room only while it has shared screens (the video costs
+      // battery and data)
+      if has && session.hasLiveKit { screens.start(client: session.client, boardId: board.id) } else { screens.stop() }
+    }
     .onChange(of: videoSyncs) { before, now in
       // Videos follow the board's play, pause and seek (ours too, once more)
       for (id, sync) in now where before[id] != sync { videos.existing(id)?.apply(sync) }
@@ -319,6 +326,7 @@ struct BoardView: View {
     .onDisappear {
       videos.keep(only: [])
       texts.stop()
+      screens.stop()
       apps.stop()
       presences.stop()
       users.stop()
@@ -590,6 +598,8 @@ struct BoardView: View {
       break
     }
   }
+
+  private var hasScreenShares: Bool { apps.items.contains { $0.data.type == "LocalScreenshare" } }
 
   /// Every video's shared playback state
   private var videoSyncs: [String: VideoSync] {

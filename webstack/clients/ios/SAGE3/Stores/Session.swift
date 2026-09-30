@@ -21,6 +21,8 @@ final class Session {
   private(set) var namespace: String?
   /// The apps a production hub offers (nil: all, as the web client in development)
   private(set) var offeredApps: [String]?
+  /// The hub shares screens through its own LiveKit SFU (LocalScreenshare apps)
+  private(set) var hasLiveKit = false
   var info: ServerInfo?
 
   init?(hub: Hub) {
@@ -41,6 +43,9 @@ final class Session {
 
   /// Guests may not delete apps (SAGEAbility: create, read, update only)
   var canDeleteApps: Bool { canCreateRoomsAndBoards }
+
+  /// Joining rooms is for users and admins (SAGEAbility: guests only read room members)
+  var canJoinRooms: Bool { canCreateRoomsAndBoards }
 
   /// Annotating needs the right to update boards, which guests don't have
   var canAnnotate: Bool { canCreateRoomsAndBoards }
@@ -104,6 +109,7 @@ final class Session {
     let configuration = try? await client.configuration()
     namespace = configuration?.namespace
     offeredApps = info?.production == true ? configuration?.features?.apps : nil
+    hasLiveKit = configuration?.features?.screenshare == "livekit"
     socket?.close()
     socket = HubSocket(base: client.base)
     socket?.connect()

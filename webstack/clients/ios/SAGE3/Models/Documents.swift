@@ -71,6 +71,12 @@ struct AppData: Codable {
   var pinned: Bool?
 }
 
+/// Who joined a room (libs/shared/src/lib/types/schemas/roommembers.ts); its id is the room's
+struct RoomMembersData: Codable {
+  var roomId: String
+  var members: [String]?
+}
+
 struct AssetData: Codable {
   var file: String
   var originalfilename: String?
@@ -119,6 +125,7 @@ typealias Room = SBDoc<RoomData>
 typealias Board = SBDoc<BoardData>
 typealias SageApp = SBDoc<AppData>
 typealias Asset = SBDoc<AssetData>
+typealias RoomMembers = SBDoc<RoomMembersData>
 typealias User = SBDoc<UserData>
 typealias Presence = SBDoc<PresenceData>
 
@@ -137,6 +144,8 @@ struct ServerConfiguration: Codable {
   struct Features: Codable {
     /// The apps a production hub offers in its Applications menu
     var apps: [String]?
+    /// Its screen sharing: "livekit", "twilio", or "none"
+    var screenshare: String?
   }
   /// Namespace of the uuid v5 hashes that protect private rooms and boards
   var namespace: String?

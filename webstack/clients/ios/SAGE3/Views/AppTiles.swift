@@ -21,6 +21,8 @@ struct AppTile: View {
   var clock: ServerClock?
   /// The board's live app texts (Stickies)
   var texts: AppTextStore?
+  /// The board's shared screens
+  var screens: ScreenShareStore?
 
   var body: some View {
     switch app.data.type {
@@ -34,6 +36,7 @@ struct AppTile: View {
     case "WebpageLink": WebpageLinkTile(app: app)
     case "BoardLink": BoardLinkTile(app: app, client: client)
     case "AssetLink": AssetLinkTile(app: app, assets: assets)
+    case "LocalScreenshare": ScreenShareTile(app: app, screens: screens)
     default: PlaceholderTile(app: app, scale: scale)
     }
   }

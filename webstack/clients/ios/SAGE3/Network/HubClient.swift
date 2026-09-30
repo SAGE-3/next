@@ -164,6 +164,18 @@ final class HubClient {
   func rooms() async throws -> [Room] { try await documents("GET", "/api/rooms") }
 
   func board(id: String) async throws -> Board? { try await documents("GET", "/api/boards/\(id)").first }
+  /// Every room's members
+  func roomMembers() async throws -> [RoomMembers] { try await documents("GET", "/api/roommembers") }
+
+  /// Join a room, or leave it, as the web's room search does
+  func joinRoom(_ roomId: String) async throws {
+    _ = try await documents("POST", "/api/roommembers/join", body: try encoder.encode(RoomMembersData(roomId: roomId, members: []))) as [RoomMembers]
+  }
+
+  func leaveRoom(_ roomId: String) async throws {
+    _ = try await documents("POST", "/api/roommembers/leave", body: try encoder.encode(RoomMembersData(roomId: roomId, members: []))) as [RoomMembers]
+  }
+
   func boards(roomId: String) async throws -> [Board] { try await documents("GET", "/api/boards", query: ["roomId": roomId]) }
 
   func apps(boardId: String) async throws -> [SageApp] { try await documents("GET", "/api/apps", query: ["boardId": boardId]) }
@@ -186,6 +198,16 @@ final class HubClient {
   }
 
   func users() async throws -> [User] { try await documents("GET", "/api/users") }
+
+  /// A token to join a board's LiveKit room, as the web's screenshare store gets it: the
+  /// hub makes the identity from the login (<user>--<accessId>)
+  func liveKitToken(room: String, accessId: String) async throws -> String {
+    let (data, http) = try await send("GET", "/livekit/token", query: ["room": room, "accessId": accessId])
+    guard http.statusCode == 200, let token = try decoder.decode(JSONValue.self, from: data)["token"]?.string else {
+      throw HubError.server("The hub gave no screen sharing token.")
+    }
+    return token
+  }
 
   /// Change fields of a user (name, color, type), as the web's profile does
   func updateUser(id: String, _ fields: [String: String]) async throws -> User? {

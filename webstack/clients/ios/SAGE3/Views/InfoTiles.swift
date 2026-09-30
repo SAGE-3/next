@@ -7,10 +7,11 @@
  */
 
 
+import LiveKit
 import SwiftUI
 
-// The Clock, the Timer, and the link apps (web page, board, file), drawn as the web
-// client draws them. Their controls are in the selected app's toolbar (BoardView).
+// The Clock, the Timer, the link apps (web page, board, file), and shared screens,
+// drawn as the web client draws them. Their controls are in the selected app's toolbar (BoardView).
 
 /// A Clock: the time in its time zone (the device's when it has none), in its color
 struct ClockTile: View {
@@ -263,6 +264,32 @@ struct AssetLinkTile: View {
     let size = asset?.data.size.map { ByteCountFormatter.string(fromByteCount: Int64($0), countStyle: .file) }
     LinkCard(color: Color(hex: 0xED8936), title: asset?.data.originalfilename ?? "File", subtitle: size.map { "Size: \($0)" } ?? "") {
       CardSymbol(name: asset?.symbol ?? "doc")
+    }
+  }
+}
+
+/// A shared screen (LocalScreenshare): its video from the board's LiveKit room, fitted
+/// in the app, or a wait until it arrives
+struct ScreenShareTile: View {
+  let app: SageApp
+  let screens: ScreenShareStore?
+
+  var body: some View {
+    ZStack {
+      Color.black
+      if let track = screens?.tracks[app.id] {
+        SwiftUIVideoView(track, layoutMode: .fit)
+      } else {
+        VStack(spacing: 10) {
+          Image(systemName: "rectangle.on.rectangle").font(.largeTitle)
+          Text(screens?.problem ?? "Waiting for the shared screen…")
+            .font(.callout)
+            .multilineTextAlignment(.center)
+        }
+        .foregroundStyle(.white.opacity(0.7))
+        .padding()
+        .minimumScaleFactor(0.3)
+      }
     }
   }
 }
