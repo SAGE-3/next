@@ -19,6 +19,8 @@ final class Session {
   private(set) var socket: HubSocket?
   private(set) var user: User?
   private(set) var namespace: String?
+  /// The apps a production hub offers (nil: all, as the web client in development)
+  private(set) var offeredApps: [String]?
   var info: ServerInfo?
 
   init?(hub: Hub) {
@@ -99,7 +101,9 @@ final class Session {
   private func start(_ auth: AuthVerify.Auth) async -> Bool {
     guard let user = try? await client.currentUser(auth) else { return false }
     self.user = user
-    namespace = (try? await client.configuration())?.namespace
+    let configuration = try? await client.configuration()
+    namespace = configuration?.namespace
+    offeredApps = info?.production == true ? configuration?.features?.apps : nil
     socket?.close()
     socket = HubSocket(base: client.base)
     socket?.connect()
@@ -124,6 +128,12 @@ final class Session {
     socket = nil
     user = nil
     await client.logout()
+  }
+
+  /// Change the signed-in user's name, color, or type, for everyone
+  func updateProfile(_ fields: [String: String]) async throws {
+    guard let id = user?.id, !fields.isEmpty else { return }
+    if let updated = try await client.updateUser(id: id, fields) { user = updated }
   }
 
   /// Does a typed PIN open a private room or board

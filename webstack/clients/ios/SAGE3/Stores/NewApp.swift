@@ -58,6 +58,40 @@ struct NewApp {
     return NewApp(type: "AssetLink", title: "Asset", size: CGSize(width: 400, height: 375), state: ["assetid": id])
   }
 
+  /// The apps the menu adds, as the web's Applications menu makes them (its sizes, each
+  /// app's init state in libs/applications, a Stickie titled with its author's name)
+  static func blank(_ type: String, userName: String) -> NewApp? {
+    switch type {
+    case "Stickie":
+      return NewApp(type: type, title: userName, size: CGSize(width: 400, height: 420), state: [
+        "text": .string("stickie note"), "fontSize": .number(24), "color": .string("yellow"), "lock": .bool(false),
+        "sources": .array([]), "executeInfo": .object(["executeFunc": .string(""), "params": .object([:])]),
+      ])
+    case "Clock":
+      return NewApp(type: type, title: "", size: CGSize(width: 320 * 1.5, height: 130 * 1.5), state: [
+        "file": .string(""), "city": .string(""), "timeZone": .string(""), "is24Hour": .bool(false), "color": .string("green"),
+      ])
+    case "Timer":
+      return NewApp(type: type, title: "", size: CGSize(width: 330, height: 226), state: [
+        "originalTotal": .number(300), "total": .number(300), "clientStartTime": .number(0), "isRunning": .bool(false),
+      ])
+    default:
+      return nil
+    }
+  }
+
+  /// The apps the menu can add
+  static let blankTypes = ["Stickie", "Clock", "Timer"]
+
+  static func symbol(of type: String) -> String {
+    switch type {
+    case "Stickie": return "note.text"
+    case "Clock": return "clock"
+    case "Timer": return "timer"
+    default: return "app"
+    }
+  }
+
   /// The document the hub creates (POST /apps)
   func document(at origin: CGPoint, roomId: String, boardId: String) -> JSONValue {
     .object([

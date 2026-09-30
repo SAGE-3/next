@@ -19,6 +19,9 @@ struct PresenceLayer: View {
   let boardId: String
   let offset: CGPoint
   let scale: CGFloat
+  // This device's preferences (SettingsSheet)
+  var showCursors = true
+  var showViewports = true
   // When each person's cursor last moved, for the fade
   @State private var lastMoved: [String: (position: Position, time: Date)] = [:]
 
@@ -38,12 +41,12 @@ struct PresenceLayer: View {
     TimelineView(.periodic(from: .now, by: 1)) { timeline in
       ZStack(alignment: .topLeading) {
         ForEach(others, id: \.user.id) { item in
-          if item.user.data.userType == "wall", let viewport = item.presence.viewport {
+          if showViewports, item.user.data.userType == "wall", let viewport = item.presence.viewport {
             ViewportOutline(name: item.user.data.name, color: SageColor.person(item.user.data.color), frame: screenRect(viewport.position, viewport.size))
           }
         }
         ForEach(others, id: \.user.id) { item in
-          if let cursor = item.presence.cursor {
+          if showCursors, let cursor = item.presence.cursor {
             let faded = timeline.date.timeIntervalSince(lastMoved[item.user.id]?.time ?? timeline.date) > Self.fadeAfter
             RemoteCursor(name: item.user.data.name, color: SageColor.person(item.user.data.color))
               .offset(x: (cursor.x + offset.x) * scale, y: (cursor.y + offset.y) * scale)

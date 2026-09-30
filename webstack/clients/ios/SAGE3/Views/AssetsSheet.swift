@@ -6,6 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
+import AVFoundation
 import PhotosUI
 import SwiftUI
 import UIKit
@@ -53,7 +54,7 @@ struct AssetsSheet: View {
               open([asset])
               dismiss()
             } label: {
-              AssetRow(asset: asset)
+              AssetRow(asset: asset, client: session.client)
             }
             .foregroundStyle(.primary)
             .contextMenu {
@@ -189,22 +190,11 @@ struct AssetsSheet: View {
 /// A file: its kind, name, size, and when it was added
 private struct AssetRow: View {
   let asset: Asset
-
-  private var symbol: String {
-    let mime = asset.data.mimetype ?? ""
-    if mime.hasPrefix("image/") { return "photo" }
-    if mime.hasPrefix("video/") { return "film" }
-    if mime.hasPrefix("audio/") { return "waveform" }
-    if mime == "application/pdf" { return "doc.richtext" }
-    if mime.contains("presentationml") { return "rectangle.on.rectangle" }
-    if mime.contains("wordprocessingml") { return "doc.text" }
-    if mime == "text/csv" || mime.contains("spreadsheet") { return "tablecells" }
-    return "doc"
-  }
+  let client: HubClient
 
   var body: some View {
     HStack(spacing: 12) {
-      Image(systemName: symbol).font(.title3).foregroundStyle(.tint).frame(width: 28)
+      AssetThumbnail(asset: asset, client: client)
       VStack(alignment: .leading, spacing: 2) {
         Text(asset.data.originalfilename ?? asset.data.file).lineLimit(2)
         Text(details).font(.caption).foregroundStyle(.secondary)
@@ -266,6 +256,104 @@ struct ShareSheet: UIViewControllerRepresentable {
   }
 
   func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
+}
+
+extension SBDoc where T == AssetData {
+  /// A symbol for the file's kind
+  var symbol: String {
+    let mime = data.mimetype ?? ""
+    if mime.hasPrefix("image/") { return "photo" }
+    if mime.hasPrefix("video/") { return "film" }
+    if mime.hasPrefix("audio/") { return "waveform" }
+    if mime == "application/pdf" { return "doc.richtext" }
+    if mime.contains("presentationml") { return "rectangle.on.rectangle" }
+    if mime.contains("wordprocessingml") { return "doc.text" }
+    if mime == "text/csv" || mime.contains("spreadsheet") { return "tablecells" }
+    return "doc"
+  }
+}
+
+/// A file's picture, as the web's asset list previews it: the smallest of an image's
+/// resized copies that is sharp enough, a PDF's first page, a video's first second; the
+/// file kind's symbol for the rest, and until the picture is there
+private struct AssetThumbnail: View {
+  let asset: Asset
+  let client: HubClient
+
+  private static let side: CGFloat = 48
+  // Sharp on a 3× screen
+  private static let pixels: Double = 150
+
+  var body: some View {
+    ZStack {
+      RoundedRectangle(cornerRadius: 6).fill(Color(.secondarySystemFill))
+      Image(systemName: asset.symbol).font(.title3).foregroundStyle(.tint)
+      if let url = pictureURL {
+        RemoteImage(url: url)
+      } else if asset.data.mimetype?.hasPrefix("video/") == true, let url = videoURL {
+        VideoFrame(url: url, pixels: Self.pixels)
+      }
+    }
+    .frame(width: Self.side, height: Self.side)
+    .clipShape(RoundedRectangle(cornerRadius: 6))
+  }
+
+  private var pictureURL: URL? {
+    let mime = asset.data.mimetype ?? ""
+    // GIFs aren't resized by the hub
+    if mime == "image/gif" { return client.url("/api/assets/static/\(asset.data.file)") }
+    let images: [JSONValue]
+    if mime.hasPrefix("image/") {
+      images = asset.data.derived?["sizes"]?.array ?? []
+    } else if mime == "application/pdf" {
+      images = asset.data.derived?.array?.first?.array ?? []
+    } else {
+      return nil
+    }
+    let sizes = images.compactMap { image -> (width: Double, url: String)? in
+      guard let width = image["width"]?.number, let url = image["url"]?.string else { return nil }
+      return (width, url)
+    }.sorted { $0.width < $1.width }
+    guard let path = sizes.first(where: { $0.width >= Self.pixels })?.url ?? sizes.last?.url else {
+      return mime.hasPrefix("image/") ? client.url("/api/assets/static/\(asset.data.file)") : nil
+    }
+    return path.hasPrefix("http") ? URL(string: path) : client.url(path)
+  }
+
+  private var videoURL: URL? {
+    let path = asset.data.derived?["url"]?.string ?? "/api/assets/static/\(asset.data.file)"
+    return path.hasPrefix("http") ? URL(string: path) : client.url(path)
+  }
+}
+
+/// A video's frame at 1 s (or its first), read from the hub with the login's cookie; kept
+/// for the session
+private struct VideoFrame: View {
+  let url: URL
+  let pixels: Double
+  @State private var image: UIImage?
+
+  private static let cache = NSCache<NSURL, UIImage>()
+
+  var body: some View {
+    ZStack {
+      if let image { Image(uiImage: image).resizable().aspectRatio(contentMode: .fill) }
+    }
+    .task(id: url) {
+      if let cached = Self.cache.object(forKey: url as NSURL) { return image = cached }
+      let cookies = HTTPCookieStorage.shared.cookies(for: url) ?? []
+      let generator = AVAssetImageGenerator(asset: AVURLAsset(url: url, options: [AVURLAssetHTTPCookiesKey: cookies]))
+      generator.appliesPreferredTrackTransform = true
+      generator.maximumSize = CGSize(width: pixels, height: pixels)
+      var frame = try? await generator.image(at: CMTime(seconds: 1, preferredTimescale: 600)).image
+      // Shorter than a second
+      if frame == nil { frame = try? await generator.image(at: .zero).image }
+      guard let frame else { return }
+      let loaded = UIImage(cgImage: frame)
+      Self.cache.setObject(loaded, forKey: url as NSURL)
+      image = loaded
+    }
+  }
 }
 
 extension URL: @retroactive Identifiable {

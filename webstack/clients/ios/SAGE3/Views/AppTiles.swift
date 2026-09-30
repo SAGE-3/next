@@ -9,38 +9,52 @@
 import SwiftUI
 import UIKit
 
-/// One app on the board. Images, PDFs, and stickies are drawn; every other app is a
-/// labeled rectangle for now.
+/// One app on the board. Images, PDFs, videos, stickies, clocks, timers, and links are
+/// drawn; every other app is a labeled rectangle for now.
 struct AppTile: View {
   let app: SageApp
   let scale: CGFloat
   let assets: AssetCache
   let client: HubClient
   var videos: VideoPlayers?
+  /// The hub's clock (timers)
+  var clock: ServerClock?
+  /// The board's live app texts (Stickies)
+  var texts: AppTextStore?
 
   var body: some View {
     switch app.data.type {
-    case "Stickie": StickieTile(state: app.data.state, scale: scale)
+    case "Stickie": StickieTile(id: app.id, state: app.data.state, scale: scale, texts: texts)
     case "ImageViewer": ImageTile(app: app, scale: scale, assets: assets, client: client)
     case "PDFViewer": PDFTile(app: app, scale: scale, assets: assets, client: client)
     case "VideoViewer":
       if let videos { VideoTile(app: app, scale: scale, assets: assets, client: client, videos: videos) } else { PlaceholderTile(app: app, scale: scale) }
+    case "Clock": ClockTile(app: app)
+    case "Timer": TimerTile(app: app, clock: clock)
+    case "WebpageLink": WebpageLinkTile(app: app)
+    case "BoardLink": BoardLinkTile(app: app, client: client)
+    case "AssetLink": AssetLinkTile(app: app, assets: assets)
     default: PlaceholderTile(app: app, scale: scale)
     }
   }
 }
 
-/// A Stickie: its saved text on its color (live typing by others shows up once saved)
+/// A Stickie: its text on its color, live as people type (the saved text until then)
 private struct StickieTile: View {
+  let id: String
   let state: JSONValue?
   let scale: CGFloat
+  let texts: AppTextStore?
 
   var body: some View {
     let fontSize = (state?["fontSize"]?.number ?? 24) * scale
+    // Redrawn at each change in the room
+    let _ = texts?.version
+    let text = texts?.text(id) ?? state?["text"]?.string ?? ""
     ZStack(alignment: .topLeading) {
       SageColor.light(state?["color"]?.string ?? "yellow")
       if fontSize >= 2 {
-        Text(state?["text"]?.string ?? "")
+        Text(text)
           .font(.system(size: fontSize))
           .foregroundStyle(.black)
           .padding(12 * scale)

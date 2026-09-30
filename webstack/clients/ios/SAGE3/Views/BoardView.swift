@@ -26,12 +26,31 @@ struct BoardView: View {
   // The whiteboard's shapes
   @State private var annotations = AnnotationStore()
   @State private var annotating = false
+  // The board's live app texts (Stickies), and the one being edited
+  @State private var texts = AppTextStore()
+  @State private var editingStickie: SageApp?
   // The board's video players (this device only)
   @State private var videos = VideoPlayers()
   // This user's own presence, for the others
   @State private var presenceSender: PresenceSender?
   @State private var showingFiles = false
+  @State private var showingSettings = false
+  // The ring menu: where it was opened (on screen, and on the board), and its panel
+  @State private var ringAt: CGPoint?
+  @State private var ringBoardPoint: CGPoint?
+  @State private var panel: RingPanel?
+  // This device's preferences (SettingsSheet)
+  @AppStorage(BoardPreferences.showCursors) private var showCursors = true
+  @AppStorage(BoardPreferences.showViewports) private var showViewports = true
+  @AppStorage(BoardPreferences.showAppTitles) private var showAppTitles = false
+  @AppStorage(BoardPreferences.showGrid) private var showGrid = true
   @State private var confirmDelete: SageApp?
+  // A link app opened: a board of this hub to enter, a file to share, or why not
+  @State private var linkedBoard: Board?
+  @State private var linkedBoardId: String?
+  @State private var sharing: URL?
+  @State private var linkProblem: String?
+  @Environment(\.openURL) private var openURL
   @State private var assets: AssetCache
   @State private var offset = CGPoint.zero
   @State private var scale: CGFloat = 1
@@ -84,11 +103,11 @@ struct BoardView: View {
   var body: some View {
     GeometryReader { geometry in
       ZStack(alignment: .topLeading) {
-        BoardGrid(offset: offset, scale: scale)
+        if showGrid { BoardGrid(offset: offset, scale: scale) }
         ForEach(ordered.filter { isVisible($0, in: geometry.size) }) { app in
           let frame = screenFrame(app)
           let lifted = app.id == moving?.id
-          AppTile(app: app, scale: scale, assets: assets, client: session.client, videos: videos)
+          AppTile(app: app, scale: scale, assets: assets, client: session.client, videos: videos, clock: videos.clock, texts: texts)
             .frame(width: frame.width, height: frame.height)
             .overlay {
               if app.id == selectedId {
@@ -99,9 +118,21 @@ struct BoardView: View {
             .shadow(color: .black.opacity(lifted ? 0.35 : 0), radius: lifted ? 12 : 0, y: lifted ? 6 : 0)
             .position(x: frame.midX, y: frame.midY)
             .animation(.easeOut(duration: 0.15), value: lifted)
+          if showAppTitles {
+            // The app's title just above it, as the web's title bar
+            Text(app.data.title.flatMap { $0.isEmpty ? nil : $0 } ?? app.data.type)
+              .font(.caption.weight(.medium))
+              .lineLimit(1)
+              .frame(width: max(frame.width, 1), alignment: .leading)
+              .position(x: frame.midX, y: frame.minY - 9)
+              .allowsHitTesting(false)
+          }
         }
         AnnotationLayer(annotations: annotations, offset: offset, scale: scale)
-        PresenceLayer(presences: presences, users: users, me: session.user?.id, boardId: board.id, offset: offset, scale: scale)
+        PresenceLayer(
+          presences: presences, users: users, me: session.user?.id, boardId: board.id, offset: offset, scale: scale,
+          showCursors: showCursors, showViewports: showViewports
+        )
       }
       .clipped()
       .overlay {
@@ -113,6 +144,12 @@ struct BoardView: View {
           AnnotateOverlay(annotations: annotations, userId: session.user?.id, userColor: session.user?.data.color, offset: offset, scale: scale) {
             annotating = false
           }
+        }
+      }
+      .overlay {
+        // Above the gestures, so its buttons get the touches
+        if let ringAt {
+          RadialMenu(center: ringAt, items: ringItems) { withAnimation(.easeOut(duration: 0.15)) { self.ringAt = nil } }
         }
       }
       .overlay(alignment: .topLeading) {
@@ -138,8 +175,9 @@ struct BoardView: View {
           : nil
         let close: (() -> Void)? = session.canDeleteApps ? { confirmDelete = app } : nil
         let video = app.data.type == "VideoViewer" && session.canMoveApps ? videos.existing(app.id) : nil
-        if pages != nil || close != nil || video != nil {
-          AppToolbar(pages: pages, video: video, onClose: close)
+        let actions = actions(for: app)
+        if pages != nil || close != nil || video != nil || !actions.isEmpty {
+          AppToolbar(pages: pages, video: video, actions: actions, onClose: close)
             .padding(.bottom, 12)
             .padding(.horizontal, 8)
         }
@@ -172,6 +210,9 @@ struct BoardView: View {
           .lineLimit(1)
           .truncationMode(.middle)
           .minimumScaleFactor(0.8)
+      }
+      ToolbarItem(placement: .primaryAction) {
+        Button { showingSettings = true } label: { Label("Settings", systemImage: "person.crop.circle") }
       }
       ToolbarItemGroup(placement: .bottomBar) {
         Button { fitAll() } label: { Label("Show All Apps", systemImage: "arrow.up.left.and.arrow.down.right") }
@@ -211,6 +252,37 @@ struct BoardView: View {
     } message: {
       Text("It is removed from the board for everyone.")
     }
+    .navigationDestination(item: $linkedBoardId) { _ in
+      if let linkedBoard { BoardView(session: session, board: linkedBoard) }
+    }
+    .sheet(item: $sharing) { url in
+      ShareSheet(items: [url])
+    }
+    .alert("Can't Open the Link", isPresented: Binding(get: { linkProblem != nil }, set: { if !$0 { linkProblem = nil } })) {
+      Button("OK", role: .cancel) {}
+    } message: {
+      Text(linkProblem ?? "")
+    }
+    .sheet(item: $editingStickie) { stickie in
+      StickieEditor(app: stickie, texts: texts) { text in sendState(stickie.id, ["text": .string(text)]) }
+        .presentationDetents([.medium, .large])
+    }
+    .sheet(item: $panel) { panel in
+      switch panel {
+      case .map:
+        MinimapSheet(apps: apps.items, visible: visibleBoard) { center(on: $0) }
+          .presentationDetents([.medium, .large])
+      case .apps:
+        NewAppsSheet(choices: newAppChoices) { add($0) }
+          .presentationDetents([.medium])
+      case .users:
+        UsersSheet(presences: presences, users: users, me: session.user, boardId: board.id, go: { center(on: $0) }) { showingSettings = true }
+          .presentationDetents([.medium, .large])
+      }
+    }
+    .sheet(isPresented: $showingSettings) {
+      SettingsSheet(session: session)
+    }
     .sheet(isPresented: $showingFiles) {
       AssetsSheet(session: session, roomId: board.data.roomId, open: openOnBoard)
     }
@@ -223,8 +295,9 @@ struct BoardView: View {
         sender.enter(roomId: board.data.roomId, boardId: board.id)
         presenceSender = sender
       }
+      texts.start(client: session.client, boardId: board.id, user: session.user)
       // Videos: our actions go to the board, and play in step with the hub's clock
-      videos.send = { id, fields in sendVideo(id, fields) }
+      videos.send = { id, fields in sendState(id, fields) }
       Task { await videos.clock.start(session.client) }
       await apps.start(socket: session.socket, route: "/apps?boardId=\(board.id)") { try await session.client.apps(boardId: board.id) }
       if !fitted {
@@ -245,6 +318,7 @@ struct BoardView: View {
     }
     .onDisappear {
       videos.keep(only: [])
+      texts.stop()
       apps.stop()
       presences.stop()
       users.stop()
@@ -370,6 +444,8 @@ struct BoardView: View {
   /// A double tap on a PDF turns its page, as on the web (right part: next, left: previous);
   /// anywhere else it shows all apps
   private func doubleTap(at location: CGPoint) {
+    if let target = app(at: location), ["WebpageLink", "BoardLink", "AssetLink"].contains(target.data.type) { return open(target) }
+    if let target = app(at: location), target.data.type == "Stickie", canEditText(of: target) { return editingStickie = target }
     guard let target = app(at: location), target.data.type == "PDFViewer", session.canMoveApps else { return fitAll() }
     let frame = screenFrame(target)
     let forward = (location.x - frame.minX) / max(frame.width, 1) > 0.4
@@ -393,14 +469,136 @@ struct BoardView: View {
     return max(1, assets.asset(id)?.data.derived?.array?.count ?? 1)
   }
 
+  // MARK: The ring menu
+
+  enum RingPanel: String, Identifiable {
+    case map, apps, users
+    var id: String { rawValue }
+  }
+
+  private var ringItems: [RadialMenu.Item] {
+    [
+      .init(label: "Files", symbol: "folder") { showingFiles = true },
+      .init(label: "Map", symbol: "map") { panel = .map },
+      .init(label: "Annotate", symbol: "pencil.tip.crop.circle", enabled: session.canAnnotate && annotations.live) { annotating = true },
+      .init(label: "Apps", symbol: "square.grid.2x2", enabled: session.canMoveApps && !newAppChoices.isEmpty) { panel = .apps },
+      .init(label: "Users", symbol: "person.2") { panel = .users },
+    ]
+  }
+
+  /// The apps the menu adds: the ones this app can make, among those the hub offers
+  private var newAppChoices: [NewApp] {
+    NewApp.blankTypes
+      .filter { session.offeredApps?.contains($0) ?? true }
+      .compactMap { NewApp.blank($0, userName: session.user?.data.name ?? "") }
+  }
+
+  /// Add an app where the ring menu was opened, in the closest free spot
+  private func add(_ app: NewApp) {
+    let others = apps.items.map { CGRect(x: $0.data.position.x, y: $0.data.position.y, width: $0.data.size.width, height: $0.data.size.height) }
+    let spot = Placement.find(view: visibleBoard, apps: others, size: app.size, target: ringBoardPoint)
+    let document = app.document(at: spot, roomId: board.data.roomId, boardId: board.id)
+    Task { _ = try? await session.socket?.request("/apps", method: "POST", body: document) }
+  }
+
+  /// Move the board so a point of it is in the middle of the screen
+  private func center(on point: CGPoint) {
+    withAnimation(.easeInOut(duration: 0.3)) {
+      offset = CGPoint(x: viewSize.width / 2 / scale - point.x, y: viewSize.height / 2 / scale - point.y)
+    }
+  }
+
+  // MARK: Clocks, timers, and links
+
+  /// The selected app's own buttons, in its toolbar
+  private func actions(for app: SageApp) -> [AppToolbar.Action] {
+    switch app.data.type {
+    case "Clock":
+      guard session.canMoveApps else { return [] }
+      let is24Hour = app.data.state?["is24Hour"] == .bool(true)
+      return [.init(label: is24Hour ? "12-Hour Time" : "24-Hour Time", symbol: is24Hour ? "clock" : "24.circle") { sendState(app.id, ["is24Hour": .bool(!is24Hour)]) }]
+    case "Timer":
+      guard session.canMoveApps else { return [] }
+      let timer = TimerState(app.data.state)
+      // As the web's Timer: the minute buttons set the reset value too, and only while stopped
+      let adjust = { (seconds: Int) in
+        sendState(app.id, ["total": .number(Double(timer.total + seconds)), "originalTotal": .number(Double(timer.total + seconds))])
+      }
+      return [
+        .init(label: "Minus a Minute", symbol: "minus", enabled: !timer.isRunning) { adjust(-60) },
+        .init(label: "Plus a Minute", symbol: "plus", enabled: !timer.isRunning) { adjust(60) },
+        .init(label: timer.isRunning ? "Pause" : "Start", symbol: timer.isRunning ? "pause.fill" : "play.fill") {
+          let now = videos.clock.now
+          sendState(app.id, [
+            "clientStartTime": .number((now / 1000).rounded(.down)),
+            "total": .number(Double(timer.remaining(at: now))),
+            "isRunning": .bool(!timer.isRunning),
+          ])
+        },
+        .init(label: "Reset", symbol: "arrow.counterclockwise") {
+          sendState(app.id, ["isRunning": .bool(false), "total": .number(Double(timer.originalTotal))])
+        },
+      ]
+    case "Stickie":
+      guard session.canMoveApps else { return [] }
+      // As the web's Stickie toolbar: font size by 8, and a lock that stops changes
+      let locked = app.data.state?["lock"] == .bool(true)
+      let fontSize = app.data.state?["fontSize"]?.number ?? 24
+      return [
+        .init(label: "Edit Text", symbol: "pencil", enabled: canEditText(of: app)) { editingStickie = app },
+        .init(label: "Smaller Text", symbol: "textformat.size.smaller", enabled: !locked && fontSize > 8) { sendState(app.id, ["fontSize": .number(fontSize - 8)]) },
+        .init(label: "Larger Text", symbol: "textformat.size.larger", enabled: !locked && fontSize <= 128) { sendState(app.id, ["fontSize": .number(fontSize + 8)]) },
+        .init(label: locked ? "Unlock" : "Lock", symbol: locked ? "lock.fill" : "lock.open") { sendState(app.id, ["lock": .bool(!locked)]) },
+      ]
+    case "WebpageLink", "BoardLink":
+      return [.init(label: "Open", symbol: "arrow.up.forward.square") { open(app) }]
+    case "AssetLink":
+      return [.init(label: "Share", symbol: "square.and.arrow.up") { open(app) }]
+    default:
+      return []
+    }
+  }
+
+  /// A Stickie's text can change: the user may change apps, and it's not locked
+  private func canEditText(of app: SageApp) -> Bool {
+    session.canMoveApps && app.data.state?["lock"] != .bool(true)
+  }
+
+  /// Open a link app: a web page in Safari, a board of this hub here (another hub's in
+  /// Safari), a file in the share sheet
+  private func open(_ app: SageApp) {
+    switch app.data.type {
+    case "WebpageLink":
+      if let url = app.data.state?["url"]?.string.flatMap(URL.init(string:)) { openURL(url) }
+    case "BoardLink":
+      guard let address = BoardLinkAddress(app.data.state?["url"]?.string) else { return linkProblem = "The board's address is not valid." }
+      guard address.host == session.client.base.host else { return openURL(address.web) }
+      Task {
+        guard let board = try? await session.client.board(id: address.boardId) else { return linkProblem = "The board no longer exists." }
+        if board.data.isPrivate == true && board.data.ownerId != session.user?.id {
+          return linkProblem = "The board is private: open it from its room, with its PIN."
+        }
+        linkedBoard = board
+        linkedBoardId = board.id
+      }
+    case "AssetLink":
+      guard let asset = app.data.state?["assetid"]?.string.flatMap({ assets.asset($0) }) else { return }
+      Task {
+        do { sharing = try await session.client.download(asset) } catch { linkProblem = error.localizedDescription }
+      }
+    default:
+      break
+    }
+  }
+
   /// Every video's shared playback state
   private var videoSyncs: [String: VideoSync] {
     Dictionary(uniqueKeysWithValues: apps.items.filter { $0.data.type == "VideoViewer" }.map { ($0.id, VideoSync($0.data.state)) })
   }
 
-  /// Send a video's play, pause or seek to the board, as the web's updateState: shown
-  /// here at once, and undone if the hub refuses
-  private func sendVideo(_ id: String, _ fields: [String: JSONValue]) {
+  /// Send an app's state fields to the board (a video's play, a timer's start, ...), as
+  /// the web's updateState: shown here at once, and undone if the hub refuses
+  private func sendState(_ id: String, _ fields: [String: JSONValue]) {
     guard session.canMoveApps, let before = apps.items.first(where: { $0.id == id })?.data.state else { return }
     apps.updateLocally(id) { doc in
       for (key, value) in fields { doc.data.state = (doc.data.state ?? .object([:])).setting(key, to: value) }
@@ -434,7 +632,14 @@ struct BoardView: View {
   private func hold(_ phase: BoardGestures.Phase, at start: CGPoint, moved: CGSize) {
     switch phase {
     case .began:
-      guard !pinching, resizing == nil, let target = app(at: start), canChange(target) else { return }
+      guard !pinching, resizing == nil else { return }
+      // On the background: the ring menu, there
+      if app(at: start) == nil, !annotating {
+        ringBoardPoint = boardPoint(start)
+        withAnimation(.easeOut(duration: 0.15)) { ringAt = start }
+        return UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+      }
+      guard let target = app(at: start), canChange(target) else { return }
       moving = Moving(id: target.id, origin: target.data.position)
       selectedId = target.id
       UIImpactFeedbackGenerator(style: .medium).impactOccurred()
@@ -559,6 +764,14 @@ private struct AppToolbar: View {
   var pages: Pages?
   /// A video's player on this device
   var video: VideoPlayback?
+  /// The app's own buttons (a clock, a timer, a link)
+  struct Action {
+    var label: String
+    var symbol: String
+    var enabled = true
+    var run: () -> Void
+  }
+  var actions: [Action] = []
   /// nil: this user may not delete apps
   var onClose: (() -> Void)?
   // On a phone, the first and last page buttons give way
@@ -585,8 +798,12 @@ private struct AppToolbar: View {
         button(video.isPlaying ? "Pause" : "Play", video.isPlaying ? "pause.fill" : "play.fill", enabled: true) { video.togglePlay() }
         button(video.isMuted ? "Unmute" : "Mute", video.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill", enabled: true) { video.isMuted.toggle() }
       }
+      ForEach(actions.indices, id: \.self) { index in
+        let action = actions[index]
+        button(action.label, action.symbol, enabled: action.enabled, action: action.run)
+      }
       if let onClose {
-        if pages != nil || video != nil { Divider().frame(height: 22) }
+        if pages != nil || video != nil || !actions.isEmpty { Divider().frame(height: 22) }
         button("Delete App", "xmark", enabled: true, action: onClose)
           .foregroundStyle(.red)
       }

@@ -121,10 +121,25 @@ struct BoardGestures: UIViewRepresentable {
 
     // Pinch and pan together; but a hold and a pan exclude each other: whichever starts
     // first wins, so moving an app never pans the board, and panning never picks one up
+    // (only the board's own gestures: not the navigation's swipe back)
     func gestureRecognizer(_ recognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool {
+      guard other.view === recognizer.view else { return false }
       let pair = [recognizer, other]
       let holdAndPan = pair.contains { $0 is UILongPressGestureRecognizer } && pair.contains { $0 is UIPanGestureRecognizer }
       return !holdAndPan
+    }
+
+    // The navigation's swipe back from anywhere on the screen (iOS 26) waits for the
+    // board's gestures, so a drag on the board pans it; a swipe from the left edge still
+    // goes back
+    func gestureRecognizer(_ recognizer: UIGestureRecognizer, shouldBeRequiredToFailBy other: UIGestureRecognizer) -> Bool {
+      guard #available(iOS 26.0, *), let navigation = navigationController(of: recognizer.view) else { return false }
+      return other === navigation.interactiveContentPopGestureRecognizer
+    }
+
+    private func navigationController(of view: UIView?) -> UINavigationController? {
+      guard let view else { return nil }
+      return sequence(first: view as UIResponder, next: { $0.next }).lazy.compactMap { $0 as? UINavigationController }.first
     }
   }
 }

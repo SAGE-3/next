@@ -104,6 +104,40 @@ final class YjsEngine {
     bridge.invokeMethod("remove", withArguments: [id]).toBool()
   }
 
+  // MARK: Awareness (the apps room)
+
+  /// Announce us in the room (the web's awareness 'user': name, color, uid); the message to send
+  func announce(name: String, color: String, uid: String) -> Data? {
+    guard let data = try? JSONEncoder().encode(["user": ["name": name, "color": color, "uid": uid]]), let json = String(data: data, encoding: .utf8) else { return nil }
+    return Data(base64Encoded: bridge.invokeMethod("announce", withArguments: [json]).toString())
+  }
+
+  /// Our awareness again (every 15 s, before the server forgets it); nil if not announced
+  func renew() -> Data? {
+    let message = bridge.invokeMethod("renew", withArguments: []).toString() ?? ""
+    return message.isEmpty ? nil : Data(base64Encoded: message)
+  }
+
+  /// Leave the room's awareness; the message to send
+  func leave() -> Data? {
+    Data(base64Encoded: bridge.invokeMethod("leave", withArguments: []).toString())
+  }
+
+  /// How many other people are in the room
+  var peers: Int { Int(bridge.invokeMethod("peers", withArguments: []).toInt32()) }
+
+  // MARK: Texts (the apps room)
+
+  /// An app's text (a Stickie's)
+  func text(_ id: String) -> String {
+    bridge.invokeMethod("text", withArguments: [id]).toString() ?? ""
+  }
+
+  /// Change an app's text, as one edit where it differs
+  func setText(_ id: String, _ value: String) {
+    bridge.invokeMethod("setText", withArguments: [id, value])
+  }
+
   /// Load saved shapes into an empty document
   @discardableResult
   func hydrate(_ saved: [JSONValue]) -> Bool {

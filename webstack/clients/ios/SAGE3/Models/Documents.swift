@@ -134,8 +134,13 @@ struct ServerInfo: Codable {
 
 /// GET /api/configuration: the part this client uses
 struct ServerConfiguration: Codable {
+  struct Features: Codable {
+    /// The apps a production hub offers in its Applications menu
+    var apps: [String]?
+  }
   /// Namespace of the uuid v5 hashes that protect private rooms and boards
   var namespace: String?
+  var features: Features?
 }
 
 /// GET /auth/verify

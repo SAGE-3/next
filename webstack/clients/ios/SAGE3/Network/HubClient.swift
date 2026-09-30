@@ -163,6 +163,7 @@ final class HubClient {
 
   func rooms() async throws -> [Room] { try await documents("GET", "/api/rooms") }
 
+  func board(id: String) async throws -> Board? { try await documents("GET", "/api/boards/\(id)").first }
   func boards(roomId: String) async throws -> [Board] { try await documents("GET", "/api/boards", query: ["roomId": roomId]) }
 
   func apps(boardId: String) async throws -> [SageApp] { try await documents("GET", "/api/apps", query: ["boardId": boardId]) }
@@ -185,6 +186,11 @@ final class HubClient {
   }
 
   func users() async throws -> [User] { try await documents("GET", "/api/users") }
+
+  /// Change fields of a user (name, color, type), as the web's profile does
+  func updateUser(id: String, _ fields: [String: String]) async throws -> User? {
+    try await documents("PUT", "/api/users/\(id)", body: try encoder.encode(fields)).first
+  }
 
   func assets(roomId: String) async throws -> [Asset] { try await documents("GET", "/api/assets", query: ["room": roomId]) }
 
