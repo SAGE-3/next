@@ -209,6 +209,18 @@ final class HubClient {
     return token
   }
 
+  /// Delete the signed-in account, as the web's Account Deletion does: its rooms, boards and
+  /// files go to the hub's administrator, or are deleted too. The hub refuses guests and
+  /// admins.
+  func deleteAccount(id: String, deleteAllData: Bool) async throws {
+    struct Request: Encodable { var id: String; var deleteAllData: Bool }
+    let (data, _) = try await send("POST", "/api/users/accountDeletion", body: try encoder.encode(Request(id: id, deleteAllData: deleteAllData)))
+    let reply = try? decoder.decode(JSONValue.self, from: data)
+    guard reply?["success"] == .bool(true) else {
+      throw HubError.server(reply?["message"]?.string ?? "The hub did not delete the account.")
+    }
+  }
+
   /// Change fields of a user (name, color, type), as the web's profile does
   func updateUser(id: String, _ fields: [String: String]) async throws -> User? {
     try await documents("PUT", "/api/users/\(id)", body: try encoder.encode(fields)).first

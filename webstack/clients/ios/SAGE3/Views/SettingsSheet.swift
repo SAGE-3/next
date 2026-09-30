@@ -28,6 +28,8 @@ struct SettingsSheet: View {
   @State private var saving = false
   @State private var error: String?
   @State private var appearance = Appearance.saved
+  @State private var confirmingDeletion = false
+  @State private var deleting = false
   @AppStorage(BoardPreferences.showCursors) private var showCursors = true
   @AppStorage(BoardPreferences.showViewports) private var showViewports = true
   @AppStorage(BoardPreferences.showAppTitles) private var showAppTitles = false
@@ -97,11 +99,19 @@ struct SettingsSheet: View {
           Text("This Device")
         }
 
-        if let version = session.info?.version {
-          Section {
+        Section {
+          if let version = session.info?.version {
             LabeledContent("Hub", value: session.info?.serverName ?? session.hub.name)
             LabeledContent("SAGE3", value: version)
           }
+          NavigationLink("Acknowledgements") { AcknowledgementsView() }
+          // A hub account (not a guest's) can be deleted from here, as on the web
+          if user?.data.email.isEmpty == false {
+            Button("Delete Account…", role: .destructive) { confirmingDeletion = true }
+              .disabled(deleting)
+          }
+        } header: {
+          Text("Account")
         }
       }
       .navigationTitle("Settings")
@@ -118,11 +128,29 @@ struct SettingsSheet: View {
           }
         }
       }
+      .confirmationDialog("Delete your account on \(session.info?.serverName ?? session.hub.name)?", isPresented: $confirmingDeletion, titleVisibility: .visible) {
+        Button("Delete Account", role: .destructive) { Task { await deleteAccount(allData: false) } }
+        Button("Delete Account and All My Data", role: .destructive) { Task { await deleteAccount(allData: true) } }
+        Button("Cancel", role: .cancel) {}
+      } message: {
+        Text("This can't be undone. Your rooms, boards and files go to the hub's administrator, unless you also delete all your data.")
+      }
       .onAppear {
         name = user?.data.name ?? ""
         color = user?.data.color ?? ""
         userType = user?.data.userType ?? "client"
       }
+    }
+  }
+
+  private func deleteAccount(allData: Bool) async {
+    deleting = true
+    defer { deleting = false }
+    do {
+      try await session.deleteAccount(deleteAllData: allData)
+      dismiss()
+    } catch {
+      self.error = "Could not delete the account: \(error.localizedDescription)"
     }
   }
 
@@ -137,5 +165,25 @@ struct SettingsSheet: View {
     } catch {
       self.error = "Could not save: \(error.localizedDescription)"
     }
+  }
+}
+
+/// The open source software in the app, and its licenses (Resources/Acknowledgements.txt)
+private struct AcknowledgementsView: View {
+  private var text: String {
+    guard let url = Bundle.main.url(forResource: "Acknowledgements", withExtension: "txt"), let text = try? String(contentsOf: url, encoding: .utf8) else { return "" }
+    return text
+  }
+
+  var body: some View {
+    ScrollView {
+      Text(text)
+        .font(.system(.footnote, design: .monospaced))
+        .textSelection(.enabled)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+    }
+    .navigationTitle("Acknowledgements")
+    .navigationBarTitleDisplayMode(.inline)
   }
 }

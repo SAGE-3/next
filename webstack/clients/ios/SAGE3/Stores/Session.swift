@@ -136,6 +136,13 @@ final class Session {
     await client.logout()
   }
 
+  /// Delete the signed-in account on the hub, then sign out
+  func deleteAccount(deleteAllData: Bool) async throws {
+    guard let id = user?.id else { return }
+    try await client.deleteAccount(id: id, deleteAllData: deleteAllData)
+    await logout()
+  }
+
   /// Change the signed-in user's name, color, or type, for everyone
   func updateProfile(_ fields: [String: String]) async throws {
     guard let id = user?.id, !fields.isEmpty else { return }
