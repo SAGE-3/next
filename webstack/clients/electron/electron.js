@@ -828,13 +828,14 @@ function createWindow() {
     }
   });
 
-  // Main window: never open popups; only hand off explicit external links to the OS browser
+  // Main window: never open popups; hand web links off to the OS browser: the ones the
+  // user opened in a new tab (target="_blank" links, e.g. Chakra's <Link isExternal> and
+  // markdown), and explicit ones (window name 'sage3', discord). Only http(s): openExternal
+  // would also launch file:// and custom protocols.
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    if (details.frameName === 'sage3') {
-      shell.openExternal(details.url);
-    }
-    // Allow to open discord links
-    if (details.url.startsWith('https://discord.gg/')) {
+    const isWebLink = /^https?:\/\//i.test(details.url);
+    const isUserLink = details.disposition === 'foreground-tab' || details.disposition === 'background-tab';
+    if (isWebLink && (isUserLink || details.frameName === 'sage3' || details.url.startsWith('https://discord.gg/'))) {
       shell.openExternal(details.url);
     }
     return { action: 'deny' };
