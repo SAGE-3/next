@@ -40,10 +40,8 @@ final class Session {
   /// Guests may not delete apps (SAGEAbility: create, read, update only)
   var canDeleteApps: Bool { canCreateRoomsAndBoards }
 
-  /// Annotating needs the right to update boards, which guests don't have.
-  /// TEMPORARY, for testing: everyone signed in may annotate. A guest's strokes are shared
-  /// live (the Yjs room has no permissions) but the hub refuses to save them.
-  var canAnnotate: Bool { user != nil }  // was: canCreateRoomsAndBoards
+  /// Annotating needs the right to update boards, which guests don't have
+  var canAnnotate: Bool { canCreateRoomsAndBoards }
 
   /// Guests may not upload (SAGEAbility: assets are download-only for them)
   var canUpload: Bool { canCreateRoomsAndBoards }
