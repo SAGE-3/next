@@ -41,10 +41,18 @@ struct RoomsView: View {
   @State private var creating = false
   @State private var problem: String?
 
-  // Listed rooms, and unlisted ones the user owns (as the web client shows them)
+  // Listed rooms, and unlisted ones the user owns (as the web's room search shows them)
   private var visible: [Room] {
+    matching.filter { $0.data.isListed != false || $0.data.ownerId == session.user?.id }
+  }
+
+  // The rooms the user owns or joined, listed or not (as the web home shows them)
+  private var mine: [Room] {
+    matching.filter(isMine)
+  }
+
+  private var matching: [Room] {
     rooms.items
-      .filter { $0.data.isListed != false || $0.data.ownerId == session.user?.id }
       .filter { search.isEmpty || $0.data.name.localizedCaseInsensitiveContains(search) }
       .sorted { $0.data.name.localizedCaseInsensitiveCompare($1.data.name) == .orderedAscending }
   }
@@ -60,7 +68,10 @@ struct RoomsView: View {
       if session.canJoinRooms {
         // As the web: your rooms, and the others to join (from its room search)
         Section("Your Rooms") {
-          ForEach(visible.filter(isMine)) { room in
+          if members.loaded && mine.isEmpty {
+            Text(search.isEmpty ? "You haven't joined a room yet." : "None of your rooms match.").foregroundStyle(.secondary)
+          }
+          ForEach(mine) { room in
             row(room)
               .swipeActions {
                 if room.data.ownerId != session.user?.id {
@@ -96,7 +107,7 @@ struct RoomsView: View {
       }
     }
     .overlay {
-      if rooms.loaded && visible.isEmpty {
+      if rooms.loaded && visible.isEmpty && mine.isEmpty {
         ContentUnavailableView(search.isEmpty ? "No Rooms" : "No Matching Rooms", systemImage: "square.grid.2x2", description: Text(rooms.error ?? ""))
       } else if !rooms.loaded {
         ProgressView()
