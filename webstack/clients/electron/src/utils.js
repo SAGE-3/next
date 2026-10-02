@@ -214,6 +214,16 @@ function takeScreenshot(window) {
 }
 
 /**
+ * Is this the address of a board page (/board/<roomId>/<boardId>)
+ *
+ * @param {string} url a page address
+ * @return {boolean}
+ */
+function isBoardURL(url) {
+  return /\/board\/[^/?#]+\/[^/?#]+/.test(url || '');
+}
+
+/**
  * Capture the Zoom window (the meeting, with its shared screen) at full resolution and hand
  * it to the board page ('captured-window'), which adds it to the board being viewed.
  * On macOS this needs the Screen Recording permission, which the first capture asks for.
@@ -222,8 +232,8 @@ function takeScreenshot(window) {
  */
 async function captureZoomWindow(window) {
   if (!window) return;
-  // Only a board page can add the image (/board/<roomId>/<boardId>)
-  if (!/\/board\/[^/?#]+\/[^/?#]+/.test(window.webContents.getURL())) {
+  // Only a board page can add the image (the menu item is also disabled elsewhere)
+  if (!isBoardURL(window.webContents.getURL())) {
     dialog.showMessageBox(window, {
       type: 'info',
       message: 'Open a board first',
@@ -353,6 +363,7 @@ export {
   myParseInt,
   takeScreenshot,
   captureZoomWindow,
+  isBoardURL,
   getAppDataPath,
   updateLandingPage,
 };
