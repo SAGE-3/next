@@ -176,46 +176,56 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
         toast({ title: 'Guests cannot upload assets', status: 'warning', duration: 4000, isClosable: true });
         return;
       }
-      const now = new Date();
-      const stamp = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()} ${now.getHours()}.${String(now.getMinutes()).padStart(2, '0')}.${String(now.getSeconds()).padStart(2, '0')}`;
-      let image: Blob = new Blob([capture.data], { type: 'image/png' });
-      let name = capture.name;
-      let caption: string | undefined;
-      if (canSeeRef.current()) {
-        const slide = await findSlide(image, modelRef.current);
-        if (slide) {
-          image = slide.image;
-          name = 'Slide';
-          // A note with the slide's number and title, or whichever of them was read
-          if (slide.number && slide.title) caption = `Slide ${slide.number}: ${slide.title}`;
-          else if (slide.title) caption = slide.title;
-          else if (slide.number) caption = `Slide ${slide.number}`;
+      // Shown while the slide is found and uploaded (a few seconds), then turned into the result
+      const progress = toast({ title: 'Capturing the slide…', status: 'loading', duration: null });
+      const finish = (title: string, status: 'success' | 'info' | 'warning' | 'error', description?: string) =>
+        toast.update(progress, { title, description, status, duration: 4000, isClosable: true });
+      try {
+        const now = new Date();
+        const stamp = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()} ${now.getHours()}.${String(now.getMinutes()).padStart(2, '0')}.${String(now.getSeconds()).padStart(2, '0')}`;
+        let image: Blob = new Blob([capture.data], { type: 'image/png' });
+        let name = capture.name;
+        let caption: string | undefined;
+        let result: Parameters<typeof finish> = ['Window added', 'success'];
+        if (canSeeRef.current()) {
+          const slide = await findSlide(image, modelRef.current);
+          if ('image' in slide) {
+            image = slide.image;
+            name = 'Slide';
+            // A note with the slide's number and title, or whichever of them was read
+            if (slide.number && slide.title) caption = `Slide ${slide.number}: ${slide.title}`;
+            else if (slide.title) caption = slide.title;
+            else if (slide.number) caption = `Slide ${slide.number}`;
+            result = ['Slide added', 'success', caption];
+          } else {
+            result = [slide.problem, slide.status, 'The whole window was added.'];
+          }
         }
+        const file = new File([image], `${name} ${stamp}.png`, { type: 'image/png' });
+        const center = viewCenter();
+        await uploadRef.current([file], center.x, center.y, props.roomId, props.boardId, (apps) => arrangeRef.current(apps, caption));
+        finish(...result);
+      } catch (error) {
+        finish('Could not add the capture', 'error', error instanceof Error ? error.message : undefined);
       }
-      const file = new File([image], `${name} ${stamp}.png`, { type: 'image/png' });
-      const center = viewCenter();
-      uploadRef.current([file], center.x, center.y, props.roomId, props.boardId, (apps) => arrangeRef.current(apps, caption));
     });
     return () => window.electron.removeAllListeners('captured-window');
   }, [props.roomId, props.boardId, auth?.provider]);
 
   // The presentation slide in a screenshot, cropped by seer, with its number and title when
-  // read; or null (none found, or an error: the whole screenshot is used then)
-  const findSlide = async (image: Blob, model: string): Promise<{ image: Blob; number?: number; title?: string } | null> => {
+  // read; or why there is none (the whole screenshot is used then)
+  const findSlide = async (
+    image: Blob,
+    model: string,
+  ): Promise<{ image: Blob; number?: number; title?: string } | { problem: string; status: 'info' | 'warning' }> => {
     const dataURL = await new Promise<string>((resolve) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result as string);
       reader.readAsDataURL(image);
     });
     const answer = await seerAgents.slide({ user: user?.data.name ?? '', model, image: dataURL });
-    if (!('found' in answer)) {
-      toast({ title: 'Could not look for a slide', description: answer.message, status: 'warning', duration: 4000, isClosable: true });
-      return null;
-    }
-    if (!answer.found || !answer.image) {
-      toast({ title: 'No slide found', description: 'The whole window was added.', status: 'info', duration: 3000, isClosable: true });
-      return null;
-    }
+    if (!('found' in answer)) return { problem: `Could not look for a slide: ${answer.message}`, status: 'warning' };
+    if (!answer.found || !answer.image) return { problem: 'No slide found', status: 'info' };
     return {
       image: dataURLtoBlob(answer.image),
       number: answer.slideNumber ?? undefined,

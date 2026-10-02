@@ -120,7 +120,7 @@ export type ArrangeApps = (apps: AppSchema[]) => AppSchema[];
 
 // Functions to export
 type UseFiles = {
-  uploadFiles: (input: File[], dx: number, dy: number, roomId: string, boardId: string, arrange?: ArrangeApps) => void;
+  uploadFiles: (input: File[], dx: number, dy: number, roomId: string, boardId: string, arrange?: ArrangeApps) => Promise<void>;
   openAppForFile: (fileID: string, xDrop: number, yDrop: number, roomId: string, boardId: string) => Promise<AppSchema | null>;
   uploadInProgress: boolean;
 };
