@@ -16,7 +16,7 @@ import windowStore from './windowstore.js';
 import bookmarkStore from './bookmarkstore.js';
 
 // Utils
-import { updateLandingPage, dialogUserTextInput, checkServerIsSage, takeScreenshot } from './utils.js';
+import { updateLandingPage, dialogUserTextInput, checkServerIsSage, takeScreenshot, captureZoomWindow } from './utils.js';
 
 /**
  * Build a menu template for a window
@@ -42,22 +42,10 @@ function buildSageMenu(window, commander) {
         },
       },
       {
-        label: 'Check for Updates...',
+        // Handy from the menubar while Zoom is in front
+        label: 'Capture Zoom Window',
         click() {
-          // Trigger the electron auto-updater; only show a dialog when already up to date
-          const autoUpdater = electron.autoUpdater;
-          autoUpdater.once('update-not-available', (e) => {
-            const version = electron.app.getVersion();
-            const dialogOpts = {
-              type: 'info',
-              buttons: ['Ok'],
-              title: 'Application Update',
-              message: 'No SAGE3 update available.',
-              detail: `You are running the latest version (${version}) of the SAGE3 client.`,
-            };
-            dialog.showMessageBox(dialogOpts);
-          });
-          autoUpdater.checkForUpdates();
+          captureZoomWindow(window);
         },
       },
       {
