@@ -214,6 +214,70 @@ function takeScreenshot(window) {
 }
 
 /**
+ * Is this the address of a board page (/board/<roomId>/<boardId>)
+ *
+ * @param {string} url a page address
+ * @return {boolean}
+ */
+function isBoardURL(url) {
+  return /\/board\/[^/?#]+\/[^/?#]+/.test(url || '');
+}
+
+/**
+ * Capture the Zoom window (the meeting, with its shared screen) at full resolution and hand
+ * it to the board page ('captured-window'), which adds it to the board being viewed.
+ * On macOS this needs the Screen Recording permission, which the first capture asks for.
+ *
+ * @param {BrowserWindow} window the main window, showing a board
+ */
+async function captureZoomWindow(window) {
+  if (!window) return;
+  // Only a board page can add the image (the menu item is also disabled elsewhere)
+  if (!isBoardURL(window.webContents.getURL())) {
+    dialog.showMessageBox(window, {
+      type: 'info',
+      message: 'Open a board first',
+      detail: 'The Zoom window is added to the board you are viewing.',
+    });
+    return;
+  }
+  if (platform() === 'darwin' && electron.systemPreferences.getMediaAccessStatus('screen') === 'denied') {
+    dialog.showMessageBox(window, {
+      type: 'warning',
+      message: 'SAGE3 cannot capture windows',
+      detail: 'Allow SAGE3 in System Settings > Privacy & Security > Screen & System Audio Recording, then restart SAGE3.',
+    });
+    return;
+  }
+  // Full resolution: thumbnails fit in this size, so as large as the largest display, in pixels
+  const thumbnailSize = electron.screen.getAllDisplays().reduce(
+    (max, display) => ({
+      width: Math.max(max.width, Math.round(display.size.width * display.scaleFactor)),
+      height: Math.max(max.height, Math.round(display.size.height * display.scaleFactor)),
+    }),
+    { width: 0, height: 0 }
+  );
+  const sources = await electron.desktopCapturer.getSources({ types: ['window'], thumbnailSize, fetchWindowIcons: false });
+  // Zoom's windows ("Zoom Meeting", "Zoom Workplace", ...), not SAGE3's own
+  const own = window.getMediaSourceId();
+  const zoom = sources.filter((source) => source.id !== own && /\bzoom\b/i.test(source.name) && !source.thumbnail.isEmpty());
+  if (zoom.length === 0) {
+    dialog.showMessageBox(window, {
+      type: 'info',
+      message: 'No Zoom window found',
+      detail: 'Open the Zoom meeting window (it can be behind other windows, but not minimized), then try again.',
+    });
+    return;
+  }
+  // The meeting window first (it shows the shared screen), then the largest
+  const area = (source) => source.thumbnail.getSize().width * source.thumbnail.getSize().height;
+  const isMeeting = (source) => (/meeting/i.test(source.name) ? 1 : 0);
+  zoom.sort((a, b) => isMeeting(b) - isMeeting(a) || area(b) - area(a));
+  // PNG keeps slide text sharp
+  window.webContents.send('captured-window', { name: zoom[0].name, data: zoom[0].thumbnail.toPNG() });
+}
+
+/**
  * Gets the windows path to a temporary folder to store data
  *
  * @return {String} the path
@@ -298,6 +362,8 @@ export {
   dialogUserTextInput,
   myParseInt,
   takeScreenshot,
+  captureZoomWindow,
+  isBoardURL,
   getAppDataPath,
   updateLandingPage,
 };

@@ -14,6 +14,7 @@ import httpx
 
 # Image
 from io import BytesIO
+from PIL import Image
 import base64
 from typing import List
 
@@ -24,7 +25,7 @@ from pysage3.client import PySage3
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, BaseMessage
 
 # Typing for RPC
-from libs.localtypes import ImageQuery, ImageAnswer
+from libs.localtypes import ImageQuery, ImageAnswer, SlideQuery, SlideAnswer
 from libs.utils import (
     getModelsInfo,
     getImageFile,
@@ -99,6 +100,109 @@ def _parse_selection(raw: str, num_images: int):
     return answer, indices
 
 
+# Finding a presentation slide in a screenshot (a video call window, a screen)
+SLIDE_SYSTEM = """You are given a screenshot of a video call (e.g. Zoom or Teams) in which someone
+is sharing a presentation application (PowerPoint, Keynote, Google Slides, etc.).
+
+Task: locate the single slide currently being displayed at the largest size,
+meaning the main slide canvas or the full-screen slide if it is in presentation mode.
+
+Do NOT select:
+- slide thumbnails in the sidebar/filmstrip
+- the application window as a whole, toolbars, ribbons, or the notes pane
+- participant video tiles, names, chat, or meeting control panels
+- the grey/white pasteboard area surrounding the slide
+
+The slide is a filled rectangle, usually close to 16:9 or 4:3. Its edge is where
+the slide's own background meets the surrounding pasteboard or window background.
+Fit the box tightly to that edge, not to the content inside it.
+
+Also read the slide's number, if visible (on the slide, or in the application, e.g.
+"Slide 6 of 15"), and the slide's title as written on it.
+
+Respond with ONLY a JSON object, no prose, with exactly these keys:
+{"found": true, "box": [x_min, y_min, x_max, y_max], "slide_number": 6, "slide_title": "Results", "confidence": 0.9}
+- box: the slide's edges as fractions (0.0 to 1.0) of the full image's width and height
+- slide_number: an integer, or null if not visible
+- slide_title: a string, or null if the slide has no title
+- confidence: how sure you are that the box is the slide, from 0.0 to 1.0
+
+If no slide is visible, respond {"found": false, "box": [], "slide_number": null, "slide_title": null, "confidence": 0}."""
+
+# Size of the copy the model looks at; the crop is made in the full-resolution screenshot
+SlideImageSize = 1024
+# A box smaller than this share of the screenshot is not taken for a slide
+SlideMinArea = 0.05
+# Below this confidence, the model's box is not trusted (the whole window is kept)
+SlideMinConfidence = 0.5
+
+
+def _parse_slide_box(raw: str, width: int = 0, height: int = 0):
+    """The model's box as [left, top, right, bottom] fractions, or None if there is no usable one.
+
+    Models name the box differently ("box", "bbox", "bbox_normalized", "bounding_box", ...), so
+    any key with "box" in it holding 4 numbers is taken. Values above 1 are read as pixels of the
+    image the model saw (width x height)."""
+    start, end = raw.find("{"), raw.rfind("}")
+    if start == -1 or end <= start:
+        return None
+    try:
+        obj = json.loads(raw[start : end + 1])
+        if obj.get("found") is False:
+            return None
+        box = obj.get("box")
+        if box is None:
+            box = next((v for k, v in obj.items() if "box" in k.lower() and isinstance(v, list) and len(v) == 4), None)
+        values = [float(v) for v in box]
+        if len(values) != 4:
+            return None
+        if max(values) > 1:
+            if not width or not height:
+                return None
+            values = [values[0] / width, values[1] / height, values[2] / width, values[3] / height]
+        left, top, right, bottom = [min(max(v, 0.0), 1.0) for v in values]
+    except (ValueError, TypeError, AttributeError):
+        return None
+    if right <= left or bottom <= top or (right - left) * (bottom - top) < SlideMinArea:
+        return None
+    return [left, top, right, bottom]
+
+
+def _parse_slide_confidence(raw: str):
+    """The model's confidence in its box (0 to 1), or None when not given."""
+    start, end = raw.find("{"), raw.rfind("}")
+    if start == -1 or end <= start:
+        return None
+    try:
+        value = json.loads(raw[start : end + 1]).get("confidence")
+        return None if value is None or isinstance(value, bool) else min(max(float(value), 0.0), 1.0)
+    except (ValueError, TypeError, AttributeError):
+        return None
+
+
+def _parse_slide_info(raw: str):
+    """The slide's number and title from the model's answer, each None when not given."""
+    start, end = raw.find("{"), raw.rfind("}")
+    if start == -1 or end <= start:
+        return None, None
+    try:
+        obj = json.loads(raw[start : end + 1])
+    except ValueError:
+        return None, None
+    if not isinstance(obj, dict):
+        return None, None
+    number = obj.get("slide_number")
+    try:
+        number = int(number) if number is not None and not isinstance(number, bool) else None
+    except (TypeError, ValueError):
+        number = None
+    if number is not None and number < 1:
+        number = None
+    title = obj.get("slide_title")
+    title = title.strip()[:200] if isinstance(title, str) and title.strip() else None
+    return number, title
+
+
 class ImageAgent:
     def __init__(
         self,
@@ -138,6 +242,74 @@ class ImageAgent:
         if not imageContent:
             return None
         return base64.b64encode(scaleImage(imageContent, ImageSize)).decode("utf-8")
+
+    async def find_slide(self, qq: SlideQuery) -> SlideAnswer:
+        """Find the presentation slide in a screenshot with a vision model, and crop it from the
+        full-resolution screenshot."""
+        self.logger.info("Got slide> from " + qq.user + " - " + qq.model)
+        if not isDataURL(qq.image):
+            return SlideAnswer(success=False, r="The screenshot must be a data URL.")
+        data = base64.b64decode(qq.image.split(",", 1)[1])
+        full = Image.open(BytesIO(data))
+        full.load()
+        # The model sees a smaller copy; the crop uses the full resolution
+        small = scaleImage(data, SlideImageSize)
+        small_size = Image.open(BytesIO(small)).size
+        b64 = base64.b64encode(small).decode("utf-8")
+
+        llm = self.manager.build_chat_model(qq.model, ["vision"], user_llm=LLMManager.user_credentials(qq))
+        if llm is None:
+            from fastapi import HTTPException
+
+            raise HTTPException(status_code=400, detail=f"Provider '{qq.model}' has no model capable of vision")
+
+        ai_handler.setAI(qq.model)
+        ai_handler.setPrompt("find slide")
+        messages: List[BaseMessage] = [
+            SystemMessage(content=SLIDE_SYSTEM),
+            HumanMessage(
+                content=[
+                    {"type": "text", "text": "Find the slide in this screenshot."},
+                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}},
+                ]
+            ),
+        ]
+        try:
+            # JSON mode: the answer is a JSON object, with no fence or text around it
+            response = await llm.bind(response_format={"type": "json_object"}).ainvoke(
+                messages, config={"callbacks": [ai_handler]}
+            )
+        except Exception as first:
+            # Some OpenAI-compatible servers don't support JSON mode: ask again without it
+            self.logger.info(f"Slide> JSON mode failed for [{qq.model}] ({first}), asking without it")
+            try:
+                response = await llm.ainvoke(messages, config={"callbacks": [ai_handler]})
+            except Exception as e:
+                code, message = parse_openai_error(e)
+                self.logger.error(f"Error from AI [{qq.model}]: {code + ', ' if code else ''}{message}")
+                return SlideAnswer(success=False, r=f"Error from AI [{qq.model}]: {code + ', ' if code else ''}{message}")
+        self.logger.info(f"AI response from [{qq.model}]: {response.content}")
+        raw = str(response.content)
+        box = _parse_slide_box(raw, *small_size)
+        confidence = _parse_slide_confidence(raw)
+        # No box, or one the model isn't sure of: the whole window is kept
+        if box is None or (confidence is not None and confidence < SlideMinConfidence):
+            return SlideAnswer(success=True, found=False)
+        width, height = full.size
+        crop = full.crop(
+            (round(box[0] * width), round(box[1] * height), round(box[2] * width), round(box[3] * height))
+        )
+        out = BytesIO()
+        crop.save(out, format="PNG")
+        number, title = _parse_slide_info(raw)
+        return SlideAnswer(
+            success=True,
+            found=True,
+            box=box,
+            slideNumber=number,
+            slideTitle=title,
+            image="data:image/png;base64," + base64.b64encode(out.getvalue()).decode("utf-8"),
+        )
 
     async def process(self, qq: ImageQuery):
         self.logger.info(

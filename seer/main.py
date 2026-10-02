@@ -10,6 +10,7 @@ from libs.ai_logging import initFluent
 
 from libs.localtypes import (
     ImageQuery,
+    SlideQuery,
     Question,
     WebQuery,
     PDFQuery,
@@ -209,6 +210,15 @@ async def image(qq: ImageQuery):
         # Get the error message
         text = e.detail
         raise HTTPException(status_code=500, detail=text)
+
+
+@app.post("/slide")
+async def slide(qq: SlideQuery):
+    # Find a presentation slide in a screenshot, and return it cropped
+    try:
+        return await asyncio.wait_for(imageAG.find_slide(qq), timeout=60)
+    except asyncio.TimeoutError as e:
+        raise HTTPException(status_code=408, detail=str(e))
 
 
 @app.post("/pdf")

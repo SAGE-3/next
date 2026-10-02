@@ -39,10 +39,10 @@ var gotoURL = '';
 const version = pkg.version;
 
 // Utilities
-import { checkServerIsSage, myParseInt, takeScreenshot, updateLandingPage } from './src/utils.js';
+import { checkServerIsSage, myParseInt, takeScreenshot, updateLandingPage, isBoardURL } from './src/utils.js';
 
 // MenuBuilder
-import { buildMenu } from './src/menuBuilder.js';
+import { buildMenu, setCaptureEnabled } from './src/menuBuilder.js';
 
 // Stores
 import windowStore from './src/windowstore.js';
@@ -536,6 +536,11 @@ function createWindow() {
   console.log('Electron>	Opening', location);
 
   mainWindow.loadURL(location);
+
+  // The tray's Capture Presentation Slide works only on a board: follow the page's address,
+  // full loads and the web app's own route changes
+  mainWindow.webContents.on('did-navigate', (event, url) => setCaptureEnabled(isBoardURL(url)));
+  mainWindow.webContents.on('did-navigate-in-page', (event, url) => setCaptureEnabled(isBoardURL(url)));
 
   // Did navigate event
   mainWindow.webContents.on('did-navigate', (event, url) => {
