@@ -101,20 +101,40 @@ def _parse_selection(raw: str, num_images: int):
 
 
 # Finding a presentation slide in a screenshot (a video call window, a screen)
-SLIDE_SYSTEM = """You are shown a screenshot, for example of a video call where someone shares a presentation.
-Find the presentation slide in it: the shared slide or screen content only, without the window's
-toolbars, buttons, participant videos or thumbnails, names, chat, or borders.
-Respond with ONLY a JSON object (no markdown, no code fence, no other fields), using exactly these keys:
-{"found": true, "box": [left, top, right, bottom], "slide_number": 15, "slide_title": "Results"}
-where the box is the slide's edges as fractions of the screenshot's width and height (0 to 1,
-left and top first). slide_number is the slide's number if it is visible (on the slide, or in the
-presentation's window), else null; slide_title is the slide's title as written on it, else null.
-If there is no slide or shared content, respond {"found": false, "box": []}."""
+SLIDE_SYSTEM = """You are given a screenshot of a video call (e.g. Zoom or Teams) in which someone
+is sharing a presentation application (PowerPoint, Keynote, Google Slides, etc.).
+
+Task: locate the single slide currently being displayed at the largest size,
+meaning the main slide canvas or the full-screen slide if it is in presentation mode.
+
+Do NOT select:
+- slide thumbnails in the sidebar/filmstrip
+- the application window as a whole, toolbars, ribbons, or the notes pane
+- participant video tiles, names, chat, or meeting control panels
+- the grey/white pasteboard area surrounding the slide
+
+The slide is a filled rectangle, usually close to 16:9 or 4:3. Its edge is where
+the slide's own background meets the surrounding pasteboard or window background.
+Fit the box tightly to that edge, not to the content inside it.
+
+Also read the slide's number, if visible (on the slide, or in the application, e.g.
+"Slide 6 of 15"), and the slide's title as written on it.
+
+Respond with ONLY a JSON object, no prose, with exactly these keys:
+{"found": true, "box": [x_min, y_min, x_max, y_max], "slide_number": 6, "slide_title": "Results", "confidence": 0.9}
+- box: the slide's edges as fractions (0.0 to 1.0) of the full image's width and height
+- slide_number: an integer, or null if not visible
+- slide_title: a string, or null if the slide has no title
+- confidence: how sure you are that the box is the slide, from 0.0 to 1.0
+
+If no slide is visible, respond {"found": false, "box": [], "slide_number": null, "slide_title": null, "confidence": 0}."""
 
 # Size of the copy the model looks at; the crop is made in the full-resolution screenshot
 SlideImageSize = 1024
 # A box smaller than this share of the screenshot is not taken for a slide
 SlideMinArea = 0.05
+# Below this confidence, the model's box is not trusted (the whole window is kept)
+SlideMinConfidence = 0.5
 
 
 def _parse_slide_box(raw: str, width: int = 0, height: int = 0):
@@ -146,6 +166,18 @@ def _parse_slide_box(raw: str, width: int = 0, height: int = 0):
     if right <= left or bottom <= top or (right - left) * (bottom - top) < SlideMinArea:
         return None
     return [left, top, right, bottom]
+
+
+def _parse_slide_confidence(raw: str):
+    """The model's confidence in its box (0 to 1), or None when not given."""
+    start, end = raw.find("{"), raw.rfind("}")
+    if start == -1 or end <= start:
+        return None
+    try:
+        value = json.loads(raw[start : end + 1]).get("confidence")
+        return None if value is None or isinstance(value, bool) else min(max(float(value), 0.0), 1.0)
+    except (ValueError, TypeError, AttributeError):
+        return None
 
 
 def _parse_slide_info(raw: str):
@@ -233,41 +265,11 @@ class ImageAgent:
 
         ai_handler.setAI(qq.model)
         ai_handler.setPrompt("find slide")
-        prompt = """You are given a screenshot of a video call (e.g. Zoom or Teams) in which someone
-is sharing a presentation application (PowerPoint, Keynote, Google Slides, etc.).
-
-Task: locate the single slide currently being displayed at the largest size,
-meaning the main slide canvas or the full-screen slide if it is in presentation mode.
-
-Do NOT select:
-- slide thumbnails in the sidebar/filmstrip
-- the application window as a whole, toolbars, ribbons, or the notes pane
-- participant video tiles, chat, or meeting control panels
-- the grey/white pasteboard area surrounding the slide
-
-The slide is a filled rectangle, usually close to 16:9 or 4:3. Its edge is where
-the slide's own background meets the surrounding pasteboard or window background.
-Fit the box tightly to that edge, not to the content inside it.
-
-Find the slide number and the slide title if visible in the image. Add them to the JSON output accordingly.
-
-Return ONLY JSON, no prose:
-{
-  "found": true | false,
-  "bbox_normalized": [x_min, y_min, x_max, y_max],   // 0.0–1.0, relative to full image width/height
-  "aspect_ratio": <width/height of your box in pixels>,
-  "slide_number": <int or null, if visible in the UI, e.g. "Slide 6 of 15">,
-  "slide_title": <string or null>,
-  "mode": "editor" | "presenting" | "unknown",
-  "confidence": 0.0–1.0
-}
-
-If no slide is visible, return {"found": false} with the other fields null."""
         messages: List[BaseMessage] = [
             SystemMessage(content=SLIDE_SYSTEM),
             HumanMessage(
                 content=[
-                    {"type": "text", "text": prompt},
+                    {"type": "text", "text": "Find the slide in this screenshot."},
                     {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}},
                 ]
             ),
@@ -289,7 +291,9 @@ If no slide is visible, return {"found": false} with the other fields null."""
         self.logger.info(f"AI response from [{qq.model}]: {response.content}")
         raw = str(response.content)
         box = _parse_slide_box(raw, *small_size)
-        if box is None:
+        confidence = _parse_slide_confidence(raw)
+        # No box, or one the model isn't sure of: the whole window is kept
+        if box is None or (confidence is not None and confidence < SlideMinConfidence):
             return SlideAnswer(success=True, found=False)
         width, height = full.size
         crop = full.crop(
