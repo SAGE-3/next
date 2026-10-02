@@ -166,7 +166,7 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
   const arrangeRef = useRef(arrangeCapture);
   arrangeRef.current = arrangeCapture;
 
-  // Electron: the tray menu's "Capture Zoom Window" sends the captured window. When the
+  // Electron: the tray menu's "Capture Presentation Slide" sends the captured window. When the
   // user's AI model can see images, seer crops it to the presentation slide in it; then it's
   // uploaded like a pasted image and placed by arrangeCapture
   useEffect(() => {

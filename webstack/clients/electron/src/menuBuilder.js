@@ -43,7 +43,7 @@ function buildSageMenu(window, commander) {
       },
       {
         // Handy from the menubar while Zoom is in front
-        label: 'Capture Zoom Window',
+        label: 'Capture Presentation Slide',
         click() {
           captureZoomWindow(window);
         },
