@@ -39,6 +39,7 @@ struct RoomsView: View {
   @State private var pinFor: Room?
   @State private var openRoomId: String?
   @State private var creating = false
+  @State private var showingSettings = false
   @State private var problem: String?
 
   // Listed rooms, and unlisted ones the user owns (as the web's room search shows them)
@@ -117,6 +118,9 @@ struct RoomsView: View {
     .navigationTitle(session.info?.serverName ?? session.hub.name)
     .toolbar {
       ToolbarItem(placement: .primaryAction) {
+        Button { showingSettings = true } label: { Label("Settings", systemImage: "person.crop.circle") }
+      }
+      ToolbarItem(placement: .primaryAction) {
         Button { creating = true } label: { Label("New Room", systemImage: "plus") }
           .disabled(!session.canCreateRoomsAndBoards)
       }
@@ -142,6 +146,7 @@ struct RoomsView: View {
       if session.canJoinRooms && !isMine(room) { Task { await joinAndOpen(room) } } else { openRoomId = room.id }
     }
     .sheet(isPresented: $creating) { CreateSpaceSheet(session: session, room: nil) }
+    .sheet(isPresented: $showingSettings) { SettingsSheet(session: session) }
   }
 
   private func row(_ room: Room) -> some View {
@@ -198,6 +203,7 @@ struct BoardsView: View {
   @State private var pinFor: Board?
   @State private var openBoardId: String?
   @State private var creating = false
+  @State private var showingSettings = false
 
   private var sorted: [Board] {
     boards.items.sorted { $0.data.name.localizedCaseInsensitiveCompare($1.data.name) == .orderedAscending }
@@ -226,6 +232,9 @@ struct BoardsView: View {
     .navigationTitle(room.data.name)
     .toolbar {
       ToolbarItem(placement: .primaryAction) {
+        Button { showingSettings = true } label: { Label("Settings", systemImage: "person.crop.circle") }
+      }
+      ToolbarItem(placement: .primaryAction) {
         Button { creating = true } label: { Label("New Board", systemImage: "plus") }
           .disabled(!session.canCreateRoomsAndBoards)
       }
@@ -239,6 +248,7 @@ struct BoardsView: View {
     }
     .pinPrompt(item: $pinFor, session: session, hashed: { $0.data.privatePin }) { openBoardId = $0.id }
     .sheet(isPresented: $creating) { CreateSpaceSheet(session: session, room: room) }
+    .sheet(isPresented: $showingSettings) { SettingsSheet(session: session) }
   }
 
   private func open(_ board: Board) {
