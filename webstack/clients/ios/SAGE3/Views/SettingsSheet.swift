@@ -15,6 +15,9 @@ enum BoardPreferences {
   static let showViewports = "sage3.showViewports"
   static let showAppTitles = "sage3.showAppTitles"
   static let showGrid = "sage3.showGrid"
+  /// Zoom to each app you create, and select it (the web's zoomToNewApps; on by default here,
+  /// where apps are small on a phone's screen)
+  static let zoomToNewApps = "sage3.zoomToNewApps"
 }
 
 /// The signed-in user's profile (on the hub, as the web's Edit Account: name, color, type)
@@ -34,6 +37,7 @@ struct SettingsSheet: View {
   @AppStorage(BoardPreferences.showViewports) private var showViewports = true
   @AppStorage(BoardPreferences.showAppTitles) private var showAppTitles = false
   @AppStorage(BoardPreferences.showGrid) private var showGrid = true
+  @AppStorage(BoardPreferences.zoomToNewApps) private var zoomToNewApps = true
 
   /// The web's limit on names
   private static let nameMax = 50
@@ -95,8 +99,11 @@ struct SettingsSheet: View {
           Toggle("Walls' Views", isOn: $showViewports)
           Toggle("App Titles", isOn: $showAppTitles)
           Toggle("Grid", isOn: $showGrid)
+          Toggle("Zoom to New Apps", isOn: $zoomToNewApps)
         } header: {
           Text("This Device")
+        } footer: {
+          Text("Zoom to New Apps: the board zooms to each app you add, and selects it.")
         }
 
         Section {

@@ -46,6 +46,9 @@ struct BoardView: View {
   @AppStorage(BoardPreferences.showViewports) private var showViewports = true
   @AppStorage(BoardPreferences.showAppTitles) private var showAppTitles = false
   @AppStorage(BoardPreferences.showGrid) private var showGrid = true
+  @AppStorage(BoardPreferences.zoomToNewApps) private var zoomToNewApps = true
+  // Apps last created from this device, and when: zoomed to once they arrive (zoomToNewApps)
+  @State private var lastCreated: (ids: [String], at: Date)?
   @State private var confirmDelete: SageApp?
   // A link app opened: a board of this hub to enter, a file to share, or why not
   @State private var linkedBoard: Board?
@@ -313,6 +316,11 @@ struct BoardView: View {
     .onChange(of: apps.items.map(\.id)) { _, ids in
       // Players of deleted videos stop
       videos.keep(only: Set(ids))
+      zoomToCreated()
+    }
+    .onChange(of: lastCreated?.at) { _, _ in
+      // The apps may already be here when the hub's answer comes
+      zoomToCreated()
     }
     .onChange(of: hasScreenShares, initial: true) { _, has in
       // In the board's LiveKit room only while it has shared screens (the video costs
@@ -384,13 +392,7 @@ struct BoardView: View {
     let documents = zip(made, frames).map { app, frame in
       app.document(at: CGPoint(x: spot.x + frame.minX, y: spot.y + frame.minY), roomId: board.data.roomId, boardId: board.id)
     }
-    Task {
-      if documents.count == 1 {
-        _ = try? await session.socket?.request("/apps", method: "POST", body: documents[0])
-      } else {
-        _ = try? await session.socket?.request("/apps", method: "POST", body: .object(["batch": .array(documents)]))
-      }
-    }
+    Task { await create(documents) }
   }
 
   /// Remove an app from the board, for everyone (as the web client's close button)
@@ -422,7 +424,13 @@ struct BoardView: View {
       offset = CGPoint(x: -1_500_000 + viewSize.width / 2, y: -1_500_000 + viewSize.height / 2)
       return
     }
-    let frames = apps.items.map { CGRect(x: $0.data.position.x, y: $0.data.position.y, width: $0.data.size.width, height: $0.data.size.height) }
+    fit(apps.items)
+  }
+
+  /// Frame apps at 75% of the view (the web's fitApps)
+  private func fit(_ shown: [SageApp]) {
+    guard viewSize.width > 0, viewSize.height > 0, !shown.isEmpty else { return }
+    let frames = shown.map { CGRect(x: $0.data.position.x, y: $0.data.position.y, width: $0.data.size.width, height: $0.data.size.height) }
     let box = frames.dropFirst().reduce(frames[0]) { $0.union($1) }
     let fit = min(0.75 * viewSize.width / max(box.width, 1), 0.75 * viewSize.height / max(box.height, 1))
     withAnimation(.easeInOut(duration: 0.3)) {
@@ -506,7 +514,37 @@ struct BoardView: View {
     let others = apps.items.map { CGRect(x: $0.data.position.x, y: $0.data.position.y, width: $0.data.size.width, height: $0.data.size.height) }
     let spot = Placement.find(view: visibleBoard, apps: others, size: app.size, target: ringBoardPoint)
     let document = app.document(at: spot, roomId: board.data.roomId, boardId: board.id)
-    Task { _ = try? await session.socket?.request("/apps", method: "POST", body: document) }
+    Task { await create([document]) }
+  }
+
+  // MARK: New apps
+
+  /// Create apps on the board (one, or a batch), remembering them to zoom to them
+  private func create(_ documents: [JSONValue]) async {
+    guard !documents.isEmpty else { return }
+    let body = documents.count == 1 ? documents[0] : .object(["batch": .array(documents)])
+    guard let reply = try? await session.socket?.request("/apps", method: "POST", body: body),
+          let answer = try? JSONDecoder().decode(APIReply<JSONValue>.self, from: reply), answer.success
+    else { return }
+    // The hub answers with the created documents (one, or a list)
+    let docs = answer.data?.array ?? (answer.data.map { [$0] } ?? [])
+    let ids = docs.compactMap { $0["_id"]?.string }
+    if !ids.isEmpty { lastCreated = (ids, Date()) }
+  }
+
+  /// Zoom to the apps last created here once they're all on the board, as the web does with
+  /// zoomToNewApps: framed at 75% of the view, half a second after they arrive, and selected
+  /// (the first of them, when several). Apps not arriving within 10 s are left alone.
+  private func zoomToCreated() {
+    guard zoomToNewApps, let created = lastCreated else { return }
+    guard Date().timeIntervalSince(created.at) < 10 else { return lastCreated = nil }
+    let arrived = apps.items.filter { created.ids.contains($0.id) }
+    guard arrived.count == created.ids.count else { return }
+    lastCreated = nil
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+      fit(arrived)
+      selectedId = arrived.first?.id
+    }
   }
 
   /// Move the board so a point of it is in the middle of the screen
