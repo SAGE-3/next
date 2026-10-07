@@ -83,6 +83,9 @@ class RemoteCursors {
 
   destroy() {
     this.conf.awareness.off('change', this.listener);
+    // The note's editor goes away (the note shown plain): take back this user's cursor if in it
+    const current = this.conf.awareness.getLocalState()?.cursor as Cursor | undefined;
+    if (current != null && current.head != null && this.inThisNote(current)) this.conf.awareness.setLocalStateField('cursor', null);
   }
 
   /** Is a shared cursor in this note's text */
