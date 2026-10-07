@@ -29,6 +29,7 @@ import { name as SageCellName } from './apps/SageCell';
 import { name as SageIdeatorName } from './apps/SageIdeator';
 import { name as ScreenshareName } from './apps/Screenshare';
 import { name as StickieName } from './apps/Stickie';
+import { name as Stickie2Name } from './apps/Stickie2';
 import { name as TimerName } from './apps/Timer';
 import { name as TwilioScreenshareName } from './apps/TwilioScreenshare';
 import { name as VegaLiteName } from './apps/VegaLite';
@@ -69,6 +70,7 @@ import SageCell from './apps/SageCell/SageCell';
 import SageIdeator from './apps/SageIdeator/SageIdeator';
 import Screenshare from './apps/Screenshare/Screenshare';
 import Stickie from './apps/Stickie/Stickie';
+import Stickie2 from './apps/Stickie2/Stickie2';
 import Timer from './apps/Timer/Timer';
 import TwilioScreenshare from './apps/TwilioScreenshare/TwilioScreenshare';
 import VegaLite from './apps/VegaLite/VegaLite';
@@ -222,6 +224,11 @@ export const Applications = {
     AppComponent: React.memo(Stickie.AppComponent),
     ToolbarComponent: Stickie.ToolbarComponent,
     GroupedToolbarComponent: Stickie.GroupedToolbarComponent,
+  },
+  [Stickie2Name]: {
+    AppComponent: React.memo(Stickie2.AppComponent),
+    ToolbarComponent: Stickie2.ToolbarComponent,
+    GroupedToolbarComponent: Stickie2.GroupedToolbarComponent,
   },
   [TimerName]: {
     AppComponent: React.memo(Timer.AppComponent),
