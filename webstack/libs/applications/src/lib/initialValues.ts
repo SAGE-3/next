@@ -29,6 +29,7 @@ import { name as SageCellName, init as defaultSageCell } from './apps/SageCell';
 import { name as SageIdeatorName, init as defaultSageIdeator } from './apps/SageIdeator';
 import { name as ScreenshareName, init as defaultScreenshare } from './apps/Screenshare';
 import { name as StickieName, init as defaultStickie } from './apps/Stickie';
+import { name as Stickie2Name, init as defaultStickie2 } from './apps/Stickie2';
 import { name as TimerName, init as defaultTimer } from './apps/Timer';
 import { name as TwilioScreenshareName, init as defaultTwilioScreenshare } from './apps/TwilioScreenshare';
 import { name as VegaLiteName, init as defaultVegaLite } from './apps/VegaLite';
@@ -67,6 +68,7 @@ export const initialValues = {
   [SageIdeatorName]: defaultSageIdeator,
   [ScreenshareName]: defaultScreenshare,
   [StickieName]: defaultStickie,
+  [Stickie2Name]: defaultStickie2,
   [TimerName]: defaultTimer,
   [TwilioScreenshareName]: defaultTwilioScreenshare,
   [VegaLiteName]: defaultVegaLite,
