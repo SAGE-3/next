@@ -7,7 +7,7 @@
  */
 
 /**
- * Others' cursors and selections in a Stickie2, in place of y-codemirror.next's
+ * Others' cursors and selections in a Stickie, in place of y-codemirror.next's
  * yRemoteSelections (MIT, Kevin Jahns), which works the same way but leaves a person's cursor
  * in the awareness after they leave the note. Here it's taken back when the note loses the
  * focus (deselected), so others' notes show no stale cursor. A cursor is also redrawn when

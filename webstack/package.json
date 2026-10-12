@@ -135,7 +135,6 @@
     "y-codemirror.next": "^0.3.6",
     "y-monaco": "^0.1.4",
     "y-quill": "1.0.0",
-    "y-textarea": "^1.0.0",
     "y-utility": "^0.1.4",
     "y-websocket": "^2.0.2",
     "yjs": "^13.6.27",

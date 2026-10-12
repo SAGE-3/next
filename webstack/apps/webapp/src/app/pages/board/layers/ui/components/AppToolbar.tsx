@@ -956,22 +956,20 @@ export function AppToolbar(props: AppToolbarProps) {
   function getTextSelection(id: string): string | null {
     const elt = document.getElementById(`app_${id}`);
     if (elt) {
+      // A textarea (the Monaco editors have a hidden one)
       const ta = elt.getElementsByTagName('textarea');
-      if (ta) {
+      if (ta.length > 0) {
         const start = ta[0].selectionStart;
         const end = ta[0].selectionEnd;
-        if (start !== end) {
-          return ta[0].value.substring(start, end);
-        } else {
-          return null;
-        }
+        return start !== end ? ta[0].value.substring(start, end) : null;
+      }
+      // Otherwise the page selection, if it is inside the app (the Stickie's editor is contentEditable)
+      const selection = window.getSelection();
+      if (selection && selection.anchorNode && elt.contains(selection.anchorNode)) {
+        const text = selection.toString();
+        return text.length > 0 ? text : null;
       }
     }
-    // Get the text selected by the user: maybe get the text from other apps
-    // const selObj = window.getSelection();
-    // if (selObj && selObj.anchorNode) {
-    //   return selObj.toString();
-    // }
     return null;
   }
 
