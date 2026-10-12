@@ -448,6 +448,8 @@ Several people can share at the same time, and one person can share **up to four
 
 Virtual sticky notes for quick text entry. Choose from multiple colors, resize the note, and adjust the font size. Notes can be locked to prevent editing by other users. Content can be saved or downloaded as Markdown. Uploading a `.md` file from the asset manager will open it as a new Stickie.
 
+The text is Markdown, shown as a live preview: headings, bold and italic text, lists, task lists (`- [ ]`), quotes, links and code are rendered, and only the line where your cursor is shows the raw Markdown characters. When nobody is editing a note, the whole note is rendered. Several people can type in the same note at once; their cursors and selections are shown in their colors. Undo and redo (Cmd/Ctrl+Z, Shift+Cmd/Ctrl+Z) only affect your own changes. Press Escape to leave the note and Shift-Tab to open another note to the right.
+
 <!-- TODO: Screenshot of Stickie app -->
 ![Stickie](images/applications/applications_stickie.jpeg)
 

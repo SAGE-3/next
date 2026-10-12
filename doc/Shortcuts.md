@@ -35,6 +35,8 @@
 | Remove a page            | \- key                                     |                                              |
 | **Stickie**                  |                                            |                                              |
 | Shift-Tab                | opens another stickie                      | Opens to the right                           |
+| Escape                   | leaves the note                            | Deselects the stickie                        |
+| Undo / Redo              | Cmd + Z / Shift + Cmd + Z                  | Your own changes only (Ctrl on Windows and Linux) |
 | Open from clipboard      | Paste text on the board                    |                                              |
 | **SageCell**                 |                                            |                                              |
 | Evaluate code            | Shift + Enter                              |                                              |
