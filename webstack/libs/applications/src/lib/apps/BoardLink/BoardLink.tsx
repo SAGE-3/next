@@ -22,8 +22,8 @@ import { MdDashboard } from 'react-icons/md';
 
 /* App component for BoardLink */
 
-function AppComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function AppComponent(props: App<'BoardLink'>): JSX.Element {
+  const s = props.data.state;
 
   // Check if this is another server
   const otherServer = new URL(s.url.replace('sage3://', 'https://')).hostname !== window.location.hostname;

@@ -12,12 +12,12 @@ import { MdLock, MdPerson, MdRefresh } from 'react-icons/md';
 import { APIHttp, apiUrls, useThrottlePresenceUsers } from '@sage3/frontend';
 import { Board, Position, Size } from '@sage3/shared/types';
 
-import { App, AppName, AppState } from '../../../schema';
+import { App, AppName } from '../../../schema';
 
 /* App component for BoardLink */
 
-export function BoardCard(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+export function BoardCard(props: App<'BoardLink'>): JSX.Element {
+  const s = props.data.state;
 
   // Board
   const [board, setBoard] = useState<undefined | Board>(undefined);
@@ -58,8 +58,7 @@ export function BoardCard(props: App): JSX.Element {
       const apps = res.data;
       const appArray = [] as { position: Position; size: Size; type: AppName; id: string }[];
       apps.forEach((app) => {
-        const aInfo = { position: app.data.position, size: app.data.size, type: app.data.type, id: app._id };
-        appArray.push(aInfo);
+        appArray.push({ position: app.data.position, size: app.data.size, type: app.data.type, id: app._id });
       });
       const appsLeft = apps.map((app) => app.data.position.x);
       const appsRight = apps.map((app) => app.data.position.x + app.data.size.width);

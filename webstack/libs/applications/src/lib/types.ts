@@ -38,44 +38,45 @@ import { state as WebpageLinkState, name as WebpageLinkName } from './apps/Webpa
 import { state as WebviewState, name as WebviewName } from './apps/Webview';
 
 
-export type AppState =
-  | {}
-  | AssetLinkState
-  | BoardLinkState
-  | CSVViewerState
-  | CalculatorState
-  | ChatState
-  | ClockState
-  | CobrowseState
-  | CodeEditorState
-  | CounterState
-  | DOCXViewerState
-  | DeepZoomImageState
-  | DrawingState
-  | GLTFViewerState
-  | IFrameState
-  | ImageViewerState
-  | LeafLetState
-  | LinkerState
-  | MapState
-  | MermaidState
-  | NotepadState
-  | PDFResultState
-  | PDFViewerState
-  | PPTXViewerState
-  | PluginAppState
-  | PollState
-  | SageCellState
-  | SageIdeatorState
-  | ScreenshareState
-  | StickieState
-  | TimerState
-  | TwilioScreenshareState
-  | VegaLiteState
-  | VegaLiteViewerState
-  | VideoViewerState
-  | WebpageLinkState
-  | WebviewState;
+export type AppStateMap = {
+  readonly [AssetLinkName]: AssetLinkState;
+  readonly [BoardLinkName]: BoardLinkState;
+  readonly [CSVViewerName]: CSVViewerState;
+  readonly [CalculatorName]: CalculatorState;
+  readonly [ChatName]: ChatState;
+  readonly [ClockName]: ClockState;
+  readonly [CobrowseName]: CobrowseState;
+  readonly [CodeEditorName]: CodeEditorState;
+  readonly [CounterName]: CounterState;
+  readonly [DOCXViewerName]: DOCXViewerState;
+  readonly [DeepZoomImageName]: DeepZoomImageState;
+  readonly [DrawingName]: DrawingState;
+  readonly [GLTFViewerName]: GLTFViewerState;
+  readonly [IFrameName]: IFrameState;
+  readonly [ImageViewerName]: ImageViewerState;
+  readonly [LeafLetName]: LeafLetState;
+  readonly [LinkerName]: LinkerState;
+  readonly [MapName]: MapState;
+  readonly [MermaidName]: MermaidState;
+  readonly [NotepadName]: NotepadState;
+  readonly [PDFResultName]: PDFResultState;
+  readonly [PDFViewerName]: PDFViewerState;
+  readonly [PPTXViewerName]: PPTXViewerState;
+  readonly [PluginAppName]: PluginAppState;
+  readonly [PollName]: PollState;
+  readonly [SageCellName]: SageCellState;
+  readonly [SageIdeatorName]: SageIdeatorState;
+  readonly [ScreenshareName]: ScreenshareState;
+  readonly [StickieName]: StickieState;
+  readonly [TimerName]: TimerState;
+  readonly [TwilioScreenshareName]: TwilioScreenshareState;
+  readonly [VegaLiteName]: VegaLiteState;
+  readonly [VegaLiteViewerName]: VegaLiteViewerState;
+  readonly [VideoViewerName]: VideoViewerState;
+  readonly [WebpageLinkName]: WebpageLinkState;
+  readonly [WebviewName]: WebviewState;
+};
 
+export type AppName = keyof AppStateMap;
 
-export type AppName = typeof AssetLinkName | typeof BoardLinkName | typeof CSVViewerName | typeof CalculatorName | typeof ChatName | typeof ClockName | typeof CobrowseName | typeof CodeEditorName | typeof CounterName | typeof DOCXViewerName | typeof DeepZoomImageName | typeof DrawingName | typeof GLTFViewerName | typeof IFrameName | typeof ImageViewerName | typeof LeafLetName | typeof LinkerName | typeof MapName | typeof MermaidName | typeof NotepadName | typeof PDFResultName | typeof PDFViewerName | typeof PPTXViewerName | typeof PluginAppName | typeof PollName | typeof SageCellName | typeof SageIdeatorName | typeof ScreenshareName | typeof StickieName | typeof TimerName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebpageLinkName | typeof WebviewName;
+export type AppState = AppStateMap[AppName];

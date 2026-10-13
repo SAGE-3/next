@@ -553,7 +553,7 @@ function AppComponent(props: App): JSX.Element {
       if (apps && apps[0].data.type === 'ImageViewer') {
         if (roomId && boardId) {
           // All linked images, so the model can describe or compare several at once
-          const assetids = apps.filter((a) => a.data.type === 'ImageViewer').map((a) => a.data.state.assetid);
+          const assetids = apps.filter((a): a is App<'ImageViewer'> => a.data.type === 'ImageViewer').map((a) => a.data.state.assetid);
           // Too many images overwhelm the vision model: block before posting anything to the transcript
           if (assetids.length > MAX_IMAGES) {
             toast({
@@ -670,7 +670,7 @@ function AppComponent(props: App): JSX.Element {
       // Only consider linked PDFViewer apps: a Chat can be linked to a mix of
       // app types, so mapping asset ids over all apps would inflate the PDF
       // count and send undefined ids for non-PDF apps.
-      const pdfApps = apps.filter((a) => a.data.type === 'PDFViewer');
+      const pdfApps = apps.filter((a): a is App<'PDFViewer'> => a.data.type === 'PDFViewer');
       if (pdfApps.length > 0) {
         if (roomId && boardId) {
           // Too many PDFs overwhelm the context: block the question before posting anything to the transcript
@@ -924,7 +924,7 @@ function AppComponent(props: App): JSX.Element {
   };
 
   // Get a screenshot of the web content
-  const onContentWebScreenshot = async () => {
+  const onContentWebScreenshot = async (prompt: string) => {
     if (!user) return;
     if (sourceApps.length > 0) {
       // Update the context
@@ -979,7 +979,7 @@ function AppComponent(props: App): JSX.Element {
             // Add messages
             updateState(props._id, {
               ...s,
-              previousQ: [...s.previousQ, 'Describe the content'],
+              previousQ: [...s.previousQ, prompt],
               previousA: [...s.previousA, response.r],
               messages: [
                 ...s.messages,

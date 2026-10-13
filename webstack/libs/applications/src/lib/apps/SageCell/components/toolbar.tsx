@@ -370,7 +370,7 @@ export function ToolbarComponent(props: App): JSX.Element {
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
+export const GroupedToolbarComponent = (props: { apps: AppGroup<'SageCell'> }) => {
   // Disclousre for the create kernel modal
   const { isOpen, onOpen, onClose } = useDisclosure();
 
@@ -454,7 +454,8 @@ export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
   // Execute the app without any checks, used for sequential execution
   async function executeAppNoChecks(appid: string, userid: string) {
     // Get the code from the store
-    const code = useAppStore.getState().apps.find((app) => app._id === appid)?.data.state.code;
+    const app = useAppStore.getState().apps.find((app) => app._id === appid);
+    const code = app?.data.type === 'SageCell' ? app.data.state.code : undefined;
     // Get the kernel from the store, since function executed from monaco editor
     const kernel = useStore.getState().kernel[appid];
     if (kernel && code) {

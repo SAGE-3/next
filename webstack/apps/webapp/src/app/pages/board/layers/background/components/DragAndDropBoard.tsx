@@ -38,7 +38,7 @@ import {
 } from '@sage3/frontend';
 
 import { initialValues } from '@sage3/applications/initialValues';
-import { AppName, AppSchema, AppState } from '@sage3/applications/schema';
+import { AppName, AppCreateInput, AppState } from '@sage3/applications/schema';
 
 type useDragAndDropBoardProps = {
   roomId: string;
@@ -216,7 +216,7 @@ export const useDragAndDropBoard = (props: useDragAndDropBoardProps) => {
             const appstatestr = event.dataTransfer.getData('app_state');
             if (appstatestr) {
               const appstate = JSON.parse(appstatestr);
-              const newState = {
+              const newState: AppCreateInput = {
                 title: user.data.name,
                 roomId: props.roomId,
                 boardId: props.boardId,
@@ -251,7 +251,7 @@ export const useDragAndDropBoard = (props: useDragAndDropBoardProps) => {
               // Open the file at the drop location
               const num = fileIDs.length;
               if (num < 20) {
-                const batch: AppSchema[] = [];
+                const batch: AppCreateInput[] = [];
                 let xpos = xdrop;
                 for (let i = 0; i < num; i++) {
                   const res = await openAppForFile(fileIDs[i], xpos, ydrop, props.roomId, props.boardId);

@@ -177,13 +177,14 @@ export function Alfred(props: props) {
     if (!filename.endsWith('.s3json')) filename += '.s3json';
     const namespace = useConfigStore.getState().config.namespace;
     const assets = apps.reduce<{ id: string; url: string; filename: string }[]>(function (arr, app) {
-      if (app.data.state.assetid) {
+      const state = app.data.state;
+      if ('assetid' in state && state.assetid) {
         // Generate a public URL of the file
-        const token = uuidv5(app.data.state.assetid, namespace);
-        const publicURL = apiUrls.assets.getPublicURL(app.data.state.assetid, token);
-        const asset = useAssetStore.getState().assets.find((a) => a._id === app.data.state.assetid);
+        const token = uuidv5(state.assetid, namespace);
+        const publicURL = apiUrls.assets.getPublicURL(state.assetid, token);
+        const asset = useAssetStore.getState().assets.find((a) => a._id === state.assetid);
         if (asset) {
-          arr.push({ id: app.data.state.assetid, url: window.location.origin + publicURL, filename: asset.data.originalfilename });
+          arr.push({ id: state.assetid, url: window.location.origin + publicURL, filename: asset.data.originalfilename });
         }
       }
       return arr;

@@ -68,7 +68,7 @@ export function ApplicationsMenu(props: ApplicationProps) {
   const newApplication = async (appName: AppName) => {
     if (!user) return;
 
-    const state = {} as AppState;
+    let state: Partial<AppState> = {};
 
     // Setup initial size
     let w = 400;
@@ -88,7 +88,7 @@ export function ApplicationsMenu(props: ApplicationProps) {
     } else if (appName === 'Screenshare') {
       w = 1280;
       h = 720;
-      state.accessId = accessId;
+      state = { accessId };
       // } else if (appName === 'Hawaii Mesonet') {
       //   w = 650;
       //   h = 650;

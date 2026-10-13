@@ -14,7 +14,7 @@ import { throttle } from 'throttle-debounce';
 import { Box, useToast, Text, Icon } from '@chakra-ui/react';
 import { MdError } from 'react-icons/md';
 
-import { AppError, Applications, AppWindow } from '@sage3/applications/apps';
+import { AppError, Applications, getApplication, AppWindow } from '@sage3/applications/apps';
 import {
   useAppStore,
   useCursorBoardPosition,
@@ -27,7 +27,7 @@ import {
 } from '@sage3/frontend';
 
 import { initialValues } from '@sage3/applications/initialValues';
-import { App, AppName, AppSchema, AppState } from '@sage3/applications/schema';
+import { App, AppName, AppSchema, AppCreateInput, AppState } from '@sage3/applications/schema';
 
 // How long after creating an app the board waits for it to arrive before zooming to it
 const NEW_APP_WAIT_MS = 10000;
@@ -216,7 +216,7 @@ export function Apps() {
             const parsed = JSON.parse(data);
             // Test if sage3 JSON data
             if (parsed.sage3) {
-              const batch: AppSchema[] = [];
+              const batch: AppCreateInput[] = [];
               const app0 = parsed.sage3[0].data as AppSchema;
               const pos0 = app0.position;
               for (let i = 0; i < parsed.sage3.length; i++) {
@@ -227,7 +227,7 @@ export function Apps() {
                 const pos = data.position;
                 const state = data.state;
                 // Create a new duplicate app
-                const app: AppSchema = {
+                const app: AppCreateInput = {
                   title: type,
                   roomId: roomId!,
                   boardId: boardId!,
@@ -408,7 +408,7 @@ export function Apps() {
 
 function AppRender(props: { app: App }) {
   const [hasType] = useState(props.app.data.type in Applications);
-  const [AppComponent] = useState(() => (hasType ? Applications[props.app.data.type].AppComponent : null));
+  const [AppComponent] = useState(() => (hasType ? getApplication(props.app.data.type).AppComponent : null));
   const iconSize = Math.min(500, Math.max(40, props.app.data.size.height - 200));
   const fontSize = 15 + props.app.data.size.height / 100;
   const iconColorAppNotFound = useHexColor('red');
@@ -422,7 +422,7 @@ function AppRender(props: { app: App }) {
             <AppError error={error} resetErrorBoundary={resetErrorBoundary} app={props.app} />
           )}
         >
-          {AppComponent && <AppComponent {...(props.app as any)}></AppComponent>}
+          {AppComponent && <AppComponent {...props.app}></AppComponent>}
         </ErrorBoundary>
       ) : (
         <AppWindow key={props.app._id} app={props.app}>

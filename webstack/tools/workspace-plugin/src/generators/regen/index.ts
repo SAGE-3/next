@@ -69,7 +69,7 @@ async function updateApps(root: string) {
 
   output += `\n`;
   output += `import React from 'react';\n`;
-  output += `import { AppGroup } from './schema';\n`;
+  output += `import { App, AppGroup, AppName } from './schema';\n`;
   output += `\n`;
   for (let i in apps) {
     const it = apps[i];
@@ -77,12 +77,13 @@ async function updateApps(root: string) {
   }
 
   output += `\n`;
-  output += `export const Applications = {\n`;
+  output += `type ApplicationComponents<N extends AppName> = {\n  readonly AppComponent: React.ComponentType<App<N>>;\n  readonly ToolbarComponent: React.ComponentType<App<N>>;\n  readonly GroupedToolbarComponent: React.ComponentType<{ apps: AppGroup<N> }>;\n};\n\n`;
+  output += `export const Applications: { readonly [N in AppName]: ApplicationComponents<N> } = {\n`;
   for (let i in apps) {
     const it = apps[i];
     output += `  [${it}Name]: {\n    AppComponent: React.memo(${it}.AppComponent),\n    ToolbarComponent: ${it}.ToolbarComponent,\n    GroupedToolbarComponent: ${it}.GroupedToolbarComponent,\n  },\n`;
   }
-  output += `} as unknown as Record<\n  string,\n  {\n    AppComponent: () => JSX.Element;\n    ToolbarComponent: () => JSX.Element;\n    GroupedToolbarComponent: (props: { apps: AppGroup }) => JSX.Element;\n  }\n>;\n`;
+  output += `};\n\nexport function getApplication<N extends AppName>(name: N): ApplicationComponents<N> {\n  return Applications[name];\n}\n`;
 
   output += `\n`;
   output += `export * from './components';\n`;
@@ -147,30 +148,12 @@ async function updateTypes(root: string) {
   }
   output += `\n`;
   output += `\n`;
-  output += `export type AppState =\n`;
-  output += `  | {}\n`;
+  output += `export type AppStateMap = {\n`;
   for (let i in apps) {
     const it = apps[i];
-    const idx = Number(i);
-    if (idx == apps.length - 1) {
-      output += `  | ${it}State;\n`;
-    } else {
-      output += `  | ${it}State\n`;
-    }
+    output += `  readonly [${it}Name]: ${it}State;\n`;
   }
-
-  output += `\n`;
-  output += `\n`;
-  output += `export type AppName = `;
-  for (let i in apps) {
-    const it = apps[i];
-    const idx = Number(i);
-    if (idx == apps.length - 1) {
-      output += `typeof ${it}Name;`;
-    } else {
-      output += `typeof ${it}Name | `;
-    }
-  }
+  output += `};\n\nexport type AppName = keyof AppStateMap;\n\nexport type AppState = AppStateMap[AppName];\n`;
 
   // Export all the applications and save
   await fs.writeFile(indexPath, output);

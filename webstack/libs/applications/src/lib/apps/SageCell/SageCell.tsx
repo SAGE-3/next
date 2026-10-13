@@ -380,7 +380,6 @@ function AppComponent(props: App): JSX.Element {
         updateState(props._id, {
           streaming: false,
           kernel: '',
-          kernels: [],
           msgId: '',
         });
       }
@@ -397,7 +396,8 @@ function AppComponent(props: App): JSX.Element {
   const handleExecuteChain = async (type: 'up' | 'down' | 'all') => {
     async function executeAppNoChecks(appid: string) {
       // Get the code from the store
-      const code = useAppStore.getState().apps.find((app) => app._id === appid)?.data.state.code;
+      const app = useAppStore.getState().apps.find((app) => app._id === appid);
+      const code = app?.data.type === 'SageCell' ? app.data.state.code : undefined;
       const userId = user?._id;
       const kernel = useStore.getState().kernel[appid];
 

@@ -33,7 +33,7 @@ import {
 import { apiUrls } from '@sage3/frontend';
 import { ExtraImageType, ExtraPDFType, FileEntry, User } from '@sage3/shared/types';
 import { initialValues } from '@sage3/applications/initialValues';
-import { AppState, AppSchema } from '@sage3/applications/schema';
+import { AppState, AppCreateInput } from '@sage3/applications/schema';
 
 /**
  * Setup an application for a given file type
@@ -45,7 +45,7 @@ import { AppState, AppSchema } from '@sage3/applications/schema';
  * @param {string} roomId
  * @param {string} boardId
  * @param {string} userId
- * @returns {Promise<AppSchema>}
+ * @returns {Promise<AppCreateInput>}
  */
 export async function setupAppForFile(
   file: FileEntry,
@@ -54,7 +54,7 @@ export async function setupAppForFile(
   roomId: string,
   boardId: string,
   user: User,
-): Promise<AppSchema | null> {
+): Promise<AppCreateInput | null> {
   const w = 400;
   // Check if the file is valid
   if (!isValid(file.type)) {

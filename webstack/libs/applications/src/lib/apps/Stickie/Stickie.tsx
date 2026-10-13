@@ -660,7 +660,7 @@ function getSet(appid: string, oldvalue: string, newvalue: string): string[] {
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
+const GroupedToolbarComponent = (props: { apps: AppGroup<'Stickie'> }) => {
   const updateStateBatch = useAppStore((state) => state.updateStateBatch);
   const updateInsightBatch = useInsightStore((state) => state.updateBatch);
   const { user } = useUser();

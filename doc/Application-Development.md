@@ -219,27 +219,37 @@ Every app exports two components: `AppComponent` (the window) and `ToolbarCompon
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
 ```
 
-Both components receive the full application element as a React prop (`props: App`) and return a `JSX.Element`. The prop includes the app's state, position, size, and the system-managed fields `_id`, `_createdAt`, `_updatedAt`, `_updatedBy`, and `_createdBy`.
+Both components receive the full application element as a React prop (`props: App<'MyApp'>`) and return a `JSX.Element`. The app-name parameter selects its state without a cast. Grouped toolbars use `{ apps: AppGroup<'MyApp'> }`; the board only dispatches them for selections of that type. The prop includes position, size, and the system-managed fields `_id`, `_createdAt`, `_updatedAt`, `_updatedBy`, and `_createdBy`.
 
 ---
 
 ### App Schema Reference
 
-Every SAGE3 app instance is stored in the `apps` collection with the following shape:
+Every SAGE3 app instance is stored in the `apps` collection with the following shape. `AppStateMap` is generated from each app's exported name and state; `AppSchema` is a discriminated union, so checking `data.type` narrows `data.state`.
 
 ```typescript
-type AppSchema = {
-  title: string;       // Display title in the app title bar
-  roomId: string;      // Room the app belongs to
-  boardId: string;     // Board the app is placed on
-  position: { x: number; y: number; z: number };
-  size: { width: number; height: number; depth: number };
-  rotation: { x: number; y: number; z: number };
-  type: AppName;       // e.g. 'Stickie', 'PDFViewer', 'Counter'
-  state: AppState;     // Your app's custom state
-  raised: boolean;     // Whether the app is raised above others
-};
+type AppSchema<N extends AppName = AppName> = {
+  [K in N]: {
+    title: string;       // Display title in the app title bar
+    roomId: string;      // Room the app belongs to
+    boardId: string;     // Board the app is placed on
+
+    position: { x: number; y: number; z: number };
+    size: { width: number; height: number; depth: number };
+    rotation: { x: number; y: number; z: number };
+
+    type: K;
+    state: AppStateMap[K];
+
+    raised: boolean;
+    dragging: boolean;
+    pinned: boolean;
+    sourceApps?: string[];
+  };
+}[N];
 ```
+
+Use `AppCreateInput` for app creation requests, where some state fields may be omitted. For saved apps, use `AppSchema` or `App`; the app's name determines its state type.
 
 Every document in SAGEBase also gets these system-managed fields added automatically — do not write to them:
 
@@ -260,8 +270,8 @@ Every document in SAGEBase also gets these system-managed fields added automatic
 Extract the typed state at the start of each component:
 
 ```typescript
-function AppComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function AppComponent(props: App<'Counter'>): JSX.Element {
+  const s = props.data.state;
   // s.count is typed as number — hover in VSCode to inspect
 }
 ```
@@ -325,8 +335,8 @@ useEffect(() => {
 The toolbar appears below the app when it is selected. Put your most-used controls there. SAGE3 automatically adds Zoom, Duplicate, and Close buttons — your controls appear alongside them.
 
 ```typescript
-function ToolbarComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function ToolbarComponent(props: App<'Counter'>): JSX.Element {
+  const s = props.data.state;
   const updateState = useAppStore((state) => state.updateState);
 
   return (
@@ -567,12 +577,12 @@ export const name = 'Counter';
 import { useAppStore } from '@sage3/frontend';
 import { Box, Button, ButtonGroup, Text, Tooltip } from '@chakra-ui/react';
 import { App } from '../../schema';
-import { state as AppState } from './index';
 import { AppWindow } from '../../components';
 import { MdAdd, MdRemove } from 'react-icons/md';
 
-function AppComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function AppComponent(props: App<'Counter'>): JSX.Element {
+  const s = props.data.state;
+
   return (
     <AppWindow app={props}>
       <Box width="100%" height="100%" display="flex" alignItems="center" justifyContent="center">
@@ -582,9 +592,10 @@ function AppComponent(props: App): JSX.Element {
   );
 }
 
-function ToolbarComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function ToolbarComponent(props: App<'Counter'>): JSX.Element {
+  const s = props.data.state;
   const updateState = useAppStore((state) => state.updateState);
+
   return (
     <ButtonGroup isAttached size="xs" colorScheme="teal">
       <Tooltip label="Decrease" placement="top" hasArrow openDelay={400}>

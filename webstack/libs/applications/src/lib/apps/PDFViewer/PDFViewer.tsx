@@ -687,7 +687,7 @@ function ToolbarComponent(props: App): JSX.Element {
  * Grouped App toolbar component
  * Provides navigation controls for multiple selected PDF viewers simultaneously
  */
-const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
+const GroupedToolbarComponent = (props: { apps: AppGroup<'PDFViewer'> }) => {
   const updateStateBatch = useAppStore((state) => state.updateStateBatch);
 
   // Batch operation: Add pages to all selected viewers

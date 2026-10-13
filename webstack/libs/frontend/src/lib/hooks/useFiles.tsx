@@ -39,7 +39,7 @@ import {
   isMermaid,
   mimeToCode,
 } from '@sage3/shared';
-import { App, AppName, AppSchema, AppState } from '@sage3/applications/schema';
+import { App, AppName, AppCreateInput, AppState } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
 import { Asset, ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 
@@ -99,7 +99,7 @@ export function setupApp(
   boardId: string,
   { w, h }: { w: number; h: number } = { w: 400, h: 400 },
   init: Partial<AppState> = {},
-): AppSchema {
+): AppCreateInput {
   return {
     title: title,
     roomId: roomId,
@@ -118,7 +118,7 @@ export function setupApp(
 // Functions to export
 type UseFiles = {
   uploadFiles: (input: File[], dx: number, dy: number, roomId: string, boardId: string) => void;
-  openAppForFile: (fileID: string, xDrop: number, yDrop: number, roomId: string, boardId: string) => Promise<AppSchema | null>;
+  openAppForFile: (fileID: string, xDrop: number, yDrop: number, roomId: string, boardId: string) => Promise<AppCreateInput | null>;
   uploadInProgress: boolean;
 };
 
@@ -130,9 +130,9 @@ type UseFiles = {
  * @param {number} yDrop - The y-coordinate where the file was dropped
  * @param {string} roomId - The ID of the room
  * @param {string} boardId - The ID of the board
- * @returns {Promise<AppSchema | null>} - The schema of the created application or null
+ * @returns {Promise<AppCreateInput | null>} - The schema of the created application or null
  */
-async function openApplication(a: Asset, xDrop: number, yDrop: number, roomId: string, boardId: string): Promise<AppSchema | null> {
+async function openApplication(a: Asset, xDrop: number, yDrop: number, roomId: string, boardId: string): Promise<AppCreateInput | null> {
   const w = 400;
   const fileType = a.data.mimetype;
   const fileID = a._id;
@@ -353,7 +353,7 @@ async function openApplication(a: Asset, xDrop: number, yDrop: number, roomId: s
  * @param boardId Current board ID
  * @returns Array of app schemas or null
  */
-async function openSession(a: Asset, xDrop: number, yDrop: number, roomId: string, boardId: string): Promise<AppSchema[] | null> {
+async function openSession(a: Asset, xDrop: number, yDrop: number, roomId: string, boardId: string): Promise<AppCreateInput[] | null> {
   const localurl = apiUrls.assets.getAssetById(a.data.file);
   // Get the session file content
   const response = await fetch(localurl, {
@@ -374,13 +374,14 @@ async function openSession(a: Asset, xDrop: number, yDrop: number, roomId: strin
     if (pos.x < xmin) xmin = pos.x;
     if (pos.y < ymin) ymin = pos.y;
   }
-  const batch: AppSchema[] = [];
+  const batch: AppCreateInput[] = [];
   // Rebuild each app from the session
   for (const app of apps) {
     // Handle apps with associated assets
-    if (app.data.state.assetid) {
+    const state = app.data.state;
+    if ('assetid' in state && state.assetid) {
       // Find the asset in the session
-      const asset = newassets.find((a) => a.id === app.data.state.assetid);
+      const asset = newassets.find((a) => a.id === state.assetid);
       // download the old asset
       if (asset) {
         // Get the content of the file
@@ -397,11 +398,11 @@ async function openSession(a: Asset, xDrop: number, yDrop: number, roomId: strin
         const result = await up.json();
         const newasset = result[0];
         // Rebuild the app with the new asset
-        app.data.state.assetid = newasset;
+        state.assetid = newasset;
       }
     }
     // Create an application
-    const newapp = {
+    const newapp: AppCreateInput = {
       title: app.data.title,
       roomId: roomId,
       boardId: boardId,
@@ -431,7 +432,7 @@ async function openSession(a: Asset, xDrop: number, yDrop: number, roomId: strin
  * @param {number} ypos - The y-coordinate where the file was dropped
  * @param {string} roomId - The ID of the room
  * @param {string} boardId - The ID of the board
- * @returns {Promise<AppSchema[] | null>} - The schema of the created application(s) or null
+ * @returns {Promise<AppCreateInput[] | null>} - The schema of the created application(s) or null
  */
 async function createApplicationAfterUpload(
   assetid: string,
@@ -439,7 +440,7 @@ async function createApplicationAfterUpload(
   ypos: number,
   roomId: string,
   boardId: string,
-): Promise<AppSchema[] | null> {
+): Promise<AppCreateInput[] | null> {
   const assets = useAssetStore.getState().assets;
   for (const a of assets) {
     if (a._id === assetid) {
@@ -478,7 +479,7 @@ export function useFiles(): UseFiles {
       const createBatch = useAppStore.getState().createBatch;
       if (uploadSuccess.length > 0) {
         let xpos = configDrop.xDrop;
-        const batch: AppSchema[] = [];
+        const batch: AppCreateInput[] = [];
         for (const up of uploadSuccess) {
           const res = await createApplicationAfterUpload(up, xpos, configDrop.yDrop, configDrop.roomId, configDrop.boardId);
           if (res) {
@@ -661,9 +662,9 @@ export function useFiles(): UseFiles {
    * @param {number} yDrop - The y-coordinate where the file was dropped
    * @param {string} roomId - The ID of the room
    * @param {string} boardId - The ID of the board
-   * @returns {Promise<AppSchema | null>} - The schema of the created application or null
+   * @returns {Promise<AppCreateInput | null>} - The schema of the created application or null
    */
-  async function openAppForFile(fileID: string, xDrop: number, yDrop: number, roomId: string, boardId: string): Promise<AppSchema | null> {
+  async function openAppForFile(fileID: string, xDrop: number, yDrop: number, roomId: string, boardId: string): Promise<AppCreateInput | null> {
     if (!user) return null;
     for (const a of useAssetStore.getState().assets) {
       if (a._id === fileID) {

@@ -33,7 +33,7 @@ import {
 
 import { getExtension } from '@sage3/shared';
 import { FileEntry } from '@sage3/shared/types';
-import { AppSchema } from '@sage3/applications/schema';
+import { AppCreateInput } from '@sage3/applications/schema';
 import { useUser, useAppStore, AssetHTTPService, setupAppForFile, viewCenter, placeNewApps } from '@sage3/frontend';
 
 import { RowFile } from './RowFile';
@@ -384,7 +384,7 @@ export function Files(props: FilesProps): JSX.Element {
     // Set up a row of apps from the center of the view (moved as one block below)
     const { x: xDrop, y: yDrop } = viewCenter();
     // Array for batch creation
-    const setupArray: AppSchema[] = [];
+    const setupArray: AppCreateInput[] = [];
     let xpos = xDrop;
     for (let k in selected) {
       // Create the apps, 400 pixels + 20 padding

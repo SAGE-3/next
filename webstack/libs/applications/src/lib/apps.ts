@@ -38,7 +38,7 @@ import { name as WebpageLinkName } from './apps/WebpageLink';
 import { name as WebviewName } from './apps/Webview';
 
 import React from 'react';
-import { AppGroup } from './schema';
+import { App, AppGroup, AppName } from './schema';
 
 import AssetLink from './apps/AssetLink/AssetLink';
 import BoardLink from './apps/BoardLink/BoardLink';
@@ -77,7 +77,13 @@ import VideoViewer from './apps/VideoViewer/VideoViewer';
 import WebpageLink from './apps/WebpageLink/WebpageLink';
 import Webview from './apps/Webview/Webview';
 
-export const Applications = {
+type ApplicationComponents<N extends AppName> = {
+  readonly AppComponent: React.ComponentType<App<N>>;
+  readonly ToolbarComponent: React.ComponentType<App<N>>;
+  readonly GroupedToolbarComponent: React.ComponentType<{ apps: AppGroup<N> }>;
+};
+
+export const Applications: { readonly [N in AppName]: ApplicationComponents<N> } = {
   [AssetLinkName]: {
     AppComponent: React.memo(AssetLink.AppComponent),
     ToolbarComponent: AssetLink.ToolbarComponent,
@@ -258,14 +264,11 @@ export const Applications = {
     ToolbarComponent: Webview.ToolbarComponent,
     GroupedToolbarComponent: Webview.GroupedToolbarComponent,
   },
-} as unknown as Record<
-  string,
-  {
-    AppComponent: () => JSX.Element;
-    ToolbarComponent: () => JSX.Element;
-    GroupedToolbarComponent: (props: { apps: AppGroup }) => JSX.Element;
-  }
->;
+};
+
+export function getApplication<N extends AppName>(name: N): ApplicationComponents<N> {
+  return Applications[name];
+}
 
 export * from './components';
 export * from './ai-apps';

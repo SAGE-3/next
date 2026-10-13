@@ -93,7 +93,7 @@ import {
   useLinkStore,
 } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
-import { AI_ENABLED_APPS, Applications } from '@sage3/applications/apps';
+import { AI_ENABLED_APPS, Applications, getApplication } from '@sage3/applications/apps';
 import { Link, Position, Size } from '@sage3/shared/types';
 import ky from 'ky';
 import { FaLink, FaUnlink } from 'react-icons/fa';
@@ -784,7 +784,7 @@ export function AppToolbar(props: AppToolbarProps) {
   function getAppToolbar() {
     if (app && Applications[app.data.type]) {
       // Get the component from the app definition
-      const Component = Applications[app.data.type].ToolbarComponent;
+      const Component = getApplication(app.data.type).ToolbarComponent;
       // Get some application information
       const ownerName = users.find((el) => el._id === app._createdBy)?.data.name;
       const now = new Date();
@@ -991,7 +991,8 @@ export function AppToolbar(props: AppToolbarProps) {
         context = `Language ${app.data.state.language}:\n\n${code}`;
       } else if (app.data.type === 'CSVViewer') {
         // Get information about the asset
-        const asset = useAssetStore.getState().assets.find((a) => a._id === app.data.state.assetid);
+        const assetId = app.data.state.assetid;
+        const asset = useAssetStore.getState().assets.find((a) => a._id === assetId);
         if (asset) {
           const dl = apiUrls.assets.getAssetById(asset.data.file);
           // get the content of the CSV file
