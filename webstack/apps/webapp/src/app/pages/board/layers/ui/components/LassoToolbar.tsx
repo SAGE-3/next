@@ -78,7 +78,7 @@ import {
   useLinkStore,
 } from '@sage3/frontend';
 import { AI_ENABLED_APPS, Applications } from '@sage3/applications/apps';
-import { AppSchema } from '@sage3/applications/schema';
+import { AppSchema, isApp } from '@sage3/applications/schema';
 import { SAGEColors } from '@sage3/shared';
 import { Board } from '@sage3/shared/types';
 import { initialValues } from '@sage3/applications/initialValues';
@@ -383,13 +383,14 @@ export function LassoToolbar(props: LassoToolbarProps) {
       selectedapps.length > 0 ? useAppStore.getState().apps.filter((a) => selectedapps.includes(a._id)) : useAppStore.getState().apps;
     const namespace = useConfigStore.getState().config.namespace;
     const assets = apps.reduce<{ id: string; url: string; filename: string }[]>(function (arr, app) {
-      if (app.data.state.assetid) {
+      const state = app.data.state;
+      if ('assetid' in state && state.assetid) {
         // Generate a public URL of the file
-        const token = uuidv5(app.data.state.assetid, namespace);
-        const publicURL = apiUrls.assets.getPublicURL(app.data.state.assetid, token);
-        const asset = useAssetStore.getState().assets.find((a) => a._id === app.data.state.assetid);
+        const token = uuidv5(state.assetid, namespace);
+        const publicURL = apiUrls.assets.getPublicURL(state.assetid, token);
+        const asset = useAssetStore.getState().assets.find((a) => a._id === state.assetid);
         if (asset) {
-          arr.push({ id: app.data.state.assetid, url: window.location.origin + publicURL, filename: asset.data.originalfilename });
+          arr.push({ id: state.assetid, url: window.location.origin + publicURL, filename: asset.data.originalfilename });
         }
       }
       return arr;
@@ -427,9 +428,9 @@ export function LassoToolbar(props: LassoToolbarProps) {
       let isAllOfSameType = selectedApps.every((element) => element.data.type === selectedApps[0].data.type);
       if (isAllOfSameType) {
         let context = '';
-        if (selectedApps[0].data.type === 'Stickie') {
+        if (isApp(selectedApps[0], 'Stickie')) {
           context = selectedApps.reduce((acc, el) => {
-            acc += el.data.state.text + '\n\n';
+            if (isApp(el, 'Stickie')) acc += el.data.state.text + '\n\n';
             return acc;
           }, '');
         }

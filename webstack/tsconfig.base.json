@@ -29,6 +29,9 @@
       "@sage3/applications/apps": [
         "./libs/applications/src/lib/apps.ts"
       ],
+      "@sage3/applications/apps/*": [
+        "./libs/applications/src/lib/apps/*/index.ts"
+      ],
       "@sage3/applications/initialValues": [
         "./libs/applications/src/lib/initialValues.ts"
       ],
@@ -37,6 +40,9 @@
       ],
       "@sage3/backend": [
         "./libs/backend/src/index.ts"
+      ],
+      "@sage3/backend/permissions": [
+        "./libs/backend/src/lib/generics/permissions.ts"
       ],
       "@sage3/frontend": [
         "./libs/frontend/src/index.ts"

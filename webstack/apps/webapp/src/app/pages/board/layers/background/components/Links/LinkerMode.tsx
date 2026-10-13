@@ -104,7 +104,7 @@ export function LinkerMode() {
     const boardId = firstApp.data.boardId;
 
     const sourceApp = apps.find((a) => a._id === selectedSourceId);
-    const kernel = sourceApp?.data.state.kernel;
+    const kernel = sourceApp && isApp(sourceApp, 'SageCell') ? sourceApp.data.state.kernel : '';
 
     const newApp = {
       title: 'SageCell',

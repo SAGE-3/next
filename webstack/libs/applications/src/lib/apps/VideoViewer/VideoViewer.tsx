@@ -692,7 +692,7 @@ async function captureFrame(video: HTMLVideoElement) {
       title: 'Screenshot',
       rotation: { x: 0, y: 0, z: 0 },
       type: 'ImageViewer',
-      state: { ...(initialValues['ImageViewer'] as AppState), assetid: image },
+      state: { ...initialValues['ImageViewer'], assetid: image },
       raised: false,
     };
   }

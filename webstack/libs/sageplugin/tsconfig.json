@@ -1,5 +1,4 @@
 {
-  "extends": "../../tsconfig.base.json",
   "files": [],
   "include": [],
   "references": [
@@ -8,6 +7,13 @@
     }
   ],
   "compilerOptions": {
+    "target": "ES2020",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "ignoreDeprecations": "6.0",
+    "lib": ["ES2023", "DOM"],
+    "esModuleInterop": true,
+    "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "noImplicitReturns": true,
