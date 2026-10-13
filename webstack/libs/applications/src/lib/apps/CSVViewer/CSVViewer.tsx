@@ -15,8 +15,7 @@ import { parse } from 'csv-parse/browser/esm';
 import { useAppStore, useAssetStore, apiUrls, downloadFile } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
 
-import { state as AppState } from './index';
-import { App } from '../../schema';
+import { CSVViewerApp } from './index';
 import { AppWindow } from '../../components';
 
 import { BsFiletypeCsv } from 'react-icons/bs';
@@ -24,9 +23,9 @@ import { BsFiletypeCsv } from 'react-icons/bs';
 // Styling
 import './styling.css';
 
-function AppComponent(props: App): JSX.Element {
+function AppComponent(props: CSVViewerApp): JSX.Element {
   // App state
-  const s = props.data.state as AppState;
+  const s = props.data.state;
   // Update the app
   const update = useAppStore((state) => state.update);
   // Asset store
@@ -150,8 +149,8 @@ function AppComponent(props: App): JSX.Element {
   );
 }
 
-function ToolbarComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function ToolbarComponent(props: CSVViewerApp): JSX.Element {
+  const s = props.data.state;
   const assets = useAssetStore((state) => state.assets);
   const [file, setFile] = useState<Asset>();
 

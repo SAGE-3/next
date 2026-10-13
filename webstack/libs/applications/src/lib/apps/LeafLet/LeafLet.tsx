@@ -12,9 +12,8 @@ import { MdAdd, MdMap, MdRemove, MdTerrain } from 'react-icons/md';
 
 import { useAppStore, useAssetStore, useHexColor, useHotkeys, useUIStore, apiUrls } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
-import { App } from '../../schema';
 
-import { state as AppState } from './index';
+import { LeafLetApp } from './index';
 import { AppWindow } from '../../components';
 
 // Leaflet plus React
@@ -47,8 +46,8 @@ const maxZoom = 18;
 const minZoom = 1;
 
 // Leaflet App
-function AppComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function AppComponent(props: LeafLetApp): JSX.Element {
+  const s = props.data.state;
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
 
@@ -298,8 +297,8 @@ function AppComponent(props: App): JSX.Element {
   );
 }
 
-function ToolbarComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function ToolbarComponent(props: LeafLetApp): JSX.Element {
+  const s = props.data.state;
   const updateState = useAppStore((state) => state.updateState);
   const [addrValue, setAddrValue] = useState('');
   const map = useStore((state) => state.map[props._id]);

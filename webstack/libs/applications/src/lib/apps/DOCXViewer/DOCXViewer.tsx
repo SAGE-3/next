@@ -22,8 +22,8 @@ import {
 import { useAppStore, useAssetStore, apiUrls, downloadFile } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
 
-import { state as AppState } from './index';
-import { App, AppGroup } from '../../schema';
+import { state as AppState, DOCXViewerApp } from './index';
+import { App } from '../../schema';
 import { AppWindow } from '../../components';
 
 // Styling
@@ -216,8 +216,8 @@ function sanitizeLinks(body: HTMLElement, goToAnchor: (anchor: string) => void) 
 
 /* App component for DOCXViewer */
 
-function AppComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function AppComponent(props: DOCXViewerApp): JSX.Element {
+  const s = props.data.state;
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
   const assets = useAssetStore((state) => state.assets);
@@ -492,8 +492,8 @@ function AppComponent(props: App): JSX.Element {
 }
 
 /* App toolbar component for the app DOCXViewer */
-function ToolbarComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function ToolbarComponent(props: DOCXViewerApp): JSX.Element {
+  const s = props.data.state;
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
   const assets = useAssetStore((state) => state.assets);
@@ -583,7 +583,7 @@ function ToolbarComponent(props: App): JSX.Element {
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
+const GroupedToolbarComponent = (props: { apps: DOCXViewerApp[] }) => {
   return null;
 };
 

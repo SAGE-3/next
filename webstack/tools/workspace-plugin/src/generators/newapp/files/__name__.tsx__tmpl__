@@ -11,8 +11,7 @@ import { Button, ButtonGroup, Tooltip } from '@chakra-ui/react';
 
 import { useAppStore } from '@sage3/frontend';
 
-import { state as AppState } from "./index";
-import { App, AppGroup } from "../../schema";
+import { <%= name %>App } from './index';
 import { AppWindow } from '../../components';
 
 // Styling
@@ -20,9 +19,9 @@ import './styling.css';
 
 /* App component for <%= name %> */
 
-function AppComponent(props: App): JSX.Element {
+function AppComponent(props: <%= name %>App): JSX.Element {
 
-  const s = props.data.state as AppState;
+  const s = props.data.state;
 
   const updateState = useAppStore(state => state.updateState);
 
@@ -36,8 +35,8 @@ function AppComponent(props: App): JSX.Element {
 }
 
 /* App toolbar component for the app <%= name %> */
-function ToolbarComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function ToolbarComponent(props: <%= name %>App): JSX.Element {
+  const s = props.data.state;
   const updateState = useAppStore((state) => state.updateState);
 
   return (
@@ -57,6 +56,6 @@ function ToolbarComponent(props: App): JSX.Element {
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = (props: { apps: AppGroup }) => { return null; };
+const GroupedToolbarComponent = (props: { apps: <%= name %>App[] }) => { return null; };
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

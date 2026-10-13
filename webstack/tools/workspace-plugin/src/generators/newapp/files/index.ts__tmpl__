@@ -7,6 +7,9 @@
  */
 
 import { z } from 'zod';
+import type { App } from '../../schema';
+
+export const name = '<%= name %>';
 
 /**
  * SAGE3 application: <%= name %>
@@ -22,4 +25,4 @@ export const init: Partial<state> = {
   <%= statename %>: <%= val %>,
 };
 
-export const name = '<%= name %>';
+export type <%= name %>App = App<typeof name>;

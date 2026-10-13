@@ -401,7 +401,7 @@ async function openSession(a: Asset, xDrop: number, yDrop: number, roomId: strin
       }
     }
     // Create an application
-    const newapp = {
+    const newapp: AppSchema = {
       title: app.data.title,
       roomId: roomId,
       boardId: boardId,
