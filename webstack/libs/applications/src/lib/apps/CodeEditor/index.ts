@@ -7,6 +7,9 @@
  */
 
 import { z } from 'zod';
+import type { App } from '../../schema';
+
+export const name = 'CodeEditor';
 
 /**
  * SAGE3 application: CodeEditor
@@ -23,7 +26,7 @@ export const schema = z.object({
 });
 export type state = z.infer<typeof schema>;
 
-export const init: Partial<state> = {
+export const init: state = {
   content: '',
   language: 'javascript',
   fontSize: 18,
@@ -31,4 +34,4 @@ export const init: Partial<state> = {
   sources: [],
 };
 
-export const name = 'CodeEditor';
+export type CodeEditorApp = App<typeof name>;

@@ -6,6 +6,9 @@
  * the file LICENSE, distributed as part of this software.
  */
 import { z } from 'zod';
+import type { App } from '../../schema';
+
+export const name = 'Poll';
 
 // Define Zod schema for PollOption
 const pollOptionSchema = z.object({
@@ -30,11 +33,11 @@ const pollDataStateSchema = z.object({
 
 export type state = z.infer<typeof pollDataStateSchema>;
 
-export const init: Partial<state> = {
-  poll: undefined,
+export const init: state = {
+  poll: null,
 };
-
-export const name = 'Poll';
 
 // Export the array schema
 export const schema = pollDataSchema;
+
+export type PollApp = App<typeof name>;

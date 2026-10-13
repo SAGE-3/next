@@ -7,6 +7,9 @@
  */
 
 import { z } from 'zod';
+import type { App } from '../../schema';
+
+export const name = 'Stickie';
 
 export const schema = z.object({
   text: z.string(),
@@ -30,4 +33,4 @@ export const init: state = {
   executeInfo: { executeFunc: '', params: {} },
 };
 
-export const name = 'Stickie';
+export type StickieApp = App<typeof name>;

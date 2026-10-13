@@ -7,6 +7,9 @@
  */
 
 import { z } from 'zod';
+import type { App } from '../../schema';
+
+export const name = 'Screenshare';
 
 /**
  * SAGE3 application: Twilio
@@ -20,10 +23,10 @@ export const schema = z.object({
 });
 export type state = z.infer<typeof schema>;
 
-export const init: Partial<state> = {
+export const init: state = {
   videoId: '',
   aspectRatio: 1,
   accessId: '',
 };
 
-export const name = 'Screenshare';
+export type TwilioScreenshareApp = App<typeof name>;

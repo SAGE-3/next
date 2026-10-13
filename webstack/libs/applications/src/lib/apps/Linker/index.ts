@@ -7,6 +7,9 @@
  */
 
 import { any, z } from 'zod';
+import type { App } from '../../schema';
+
+export const name = 'Linker';
 
 /**
  * SAGE3 application: LinkerApp
@@ -22,7 +25,7 @@ export const schema = z.object({
 });
 export type state = z.infer<typeof schema>;
 
-export const init: Partial<state> = {
+export const init: state = {
   app1Id: 'none',
   app2Id: 'none',
   app1Prop: 'none',
@@ -30,4 +33,4 @@ export const init: Partial<state> = {
   isLinked: false,
 };
 
-export const name = 'Linker';
+export type LinkerApp = App<typeof name>;

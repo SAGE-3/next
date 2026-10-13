@@ -5,76 +5,39 @@
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
-import { useEffect, useRef } from 'react';
-
-import { useUser } from '@sage3/frontend';
-
-import { App } from '../../schema';
-import { state as AppState } from './index';
+import { Text } from '@chakra-ui/react';
+import { PluginFrame, isPluginEnabled, usePluginStore } from '@sage3/frontend';
+import { PluginAppApp } from './index';
 import { AppWindow } from '../../components';
 
 // Styling
 import './styling.css';
 import { HiPuzzle } from 'react-icons/hi';
 
-declare module 'react' {
-  interface IframeHTMLAttributes<T> extends React.HTMLAttributes<T> {
-    credentialless?: string;
-  }
-}
-
-// React., HTMLIFrameElement>
-
 /* App component for PluginApp */
-function AppComponent(props: App): JSX.Element {
-  const pluginName = (props.data.state as AppState).pluginName;
-  const roomId = props.data.roomId;
-  const iRef = useRef<HTMLIFrameElement>(null);
-  const { user } = useUser();
-
-  useEffect(() => {
-    if (iRef.current) {
-      const win = iRef.current.contentWindow;
-      if (win) {
-        // Wait for the iframe to load until you send the init message
-        // This is a hacky way to do it, need a better solution
-        setTimeout(() => {
-          win.postMessage({
-            type: 'init',
-            state: props,
-            user: user?.data.name || '',
-          });
-        }, 1000);
-      }
-    }
-  }, [iRef.current]);
-
-  // If a State update happens, update the state
-  useEffect(() => {
-    if (iRef.current) {
-      const win = iRef.current.contentWindow;
-      if (win) {
-        win.postMessage({
-          type: 'update',
-          state: props,
-        });
-      }
-    }
-  }, [JSON.stringify(props)]);
-
-  const allow = 'clipboard-write *; clipboard-read *; geolocation *; microphone *; camera *;';
+function AppComponent(props: PluginAppApp): JSX.Element {
+  const state = props.data.state;
+  const plugin = usePluginStore((store) => store.plugins.find((candidate) => candidate._id === state.pluginId));
+  const enabledPlugin = plugin && isPluginEnabled(plugin, props.data.boardId) ? plugin : undefined;
+  const appView = enabledPlugin?.data.package.manifest.views?.find(
+    (view) => view.id === state.viewId && view.kind === 'app',
+  );
 
   return (
     <AppWindow app={props} hideBackgroundIcon={HiPuzzle}>
-      <>
-        <iframe
-          allow={allow}
-          ref={iRef}
-          loading="eager"
-          src={`/plugins/apps/${roomId}_${pluginName}`}
-          style={{ width: '100%', height: '100%' }}
-        ></iframe>
-      </>
+      {enabledPlugin && appView ? (
+        <PluginFrame
+          key={`${enabledPlugin._id}:${enabledPlugin.data.package.digest}`}
+          plugin={enabledPlugin}
+          boardId={props.data.boardId}
+          roomId={props.data.roomId}
+          appId={props._id}
+          viewId={appView.id}
+          entry={appView.entry}
+        />
+      ) : (
+        <Text padding={4}>This extension is unavailable or disabled. Its saved data has been preserved.</Text>
+      )}
     </AppWindow>
   );
 }

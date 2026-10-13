@@ -13,7 +13,7 @@ import { FaPython } from 'react-icons/fa';
 import { BsFiletypePdf } from 'react-icons/bs';
 import { MdImage, MdOutlineStickyNote2, MdMovie, MdWindow, MdChat } from 'react-icons/md';
 
-import { App } from '@sage3/applications/schema';
+import { App, isApp } from '@sage3/applications/schema';
 import { useThrottleApps, useHexColor, useUIStore, useUser } from '@sage3/frontend';
 
 // Icons for the minimap
@@ -108,7 +108,7 @@ export function NavigationMenu() {
               return (
                 <Tooltip key={app._id} placement="top" label={`${app.data.type} : ${app.data.title}`} openDelay={500} hasArrow>
                   <Box
-                    backgroundColor={app.data.type === 'Stickie' ? app.data.state.color + '.400' : borderColor}
+                    backgroundColor={isApp(app, 'Stickie') ? app.data.state.color + '.400' : borderColor}
                     position="absolute"
                     left={(app.data.position.x - appsX) * mapScale + 'px'}
                     top={(app.data.position.y - appsY) * mapScale + 'px'}

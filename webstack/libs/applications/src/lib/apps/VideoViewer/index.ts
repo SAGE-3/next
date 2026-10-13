@@ -12,6 +12,9 @@
  */
 
 import { z } from 'zod';
+import type { App } from '../../schema';
+
+export const name = 'VideoViewer';
 
 export const schema = z.object({
   assetid: z.string(),
@@ -30,4 +33,4 @@ export const init: state = {
   syncServerTime: undefined,
 };
 
-export const name = 'VideoViewer';
+export type VideoViewerApp = App<typeof name>;

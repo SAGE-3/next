@@ -7,6 +7,9 @@
  */
 
 import { z } from 'zod';
+import type { App } from '../../schema';
+
+export const name = 'CoBrowser';
 
 /**
  * SAGE3 application: CoBrowser
@@ -24,7 +27,7 @@ export const schema = z.object({
 });
 export type state = z.infer<typeof schema>;
 
-export const init: Partial<state> = {
+export const init: state = {
   nonOwnerViewOnly: false,
   clipboard: '',
   lastImage: undefined,
@@ -33,4 +36,4 @@ export const init: Partial<state> = {
   refreshSeed: 0,
 };
 
-export const name = 'CoBrowser';
+export type CobrowseApp = App<typeof name>;

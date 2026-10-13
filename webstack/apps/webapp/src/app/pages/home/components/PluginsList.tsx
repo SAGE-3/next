@@ -46,7 +46,6 @@ export interface PluginsListProps {
 export function PluginsList(props: PluginsListProps): JSX.Element {
   // User Info
   const { user } = useUser();
-  const isRoomOwner = user?._id == props.room._createdBy;
 
   // Plugins
   const plugins = usePluginStore((state) => state.plugins);
@@ -59,7 +58,7 @@ export function PluginsList(props: PluginsListProps): JSX.Element {
   const handleShowOnlyYours = () => setShowOnlyYours(!showOnlyYours);
 
   // Permissions
-  const canDeleteSelectedPlugin = selectedPlugin?.data.ownerId == user?._id || isRoomOwner;
+  const canDeleteSelectedPlugin = !!user && selectedPlugin?.data.ownerId === user._id;
   const canUploadPlugin = useAbility('upload', 'plugins');
 
   // Modal Disclosure
@@ -113,7 +112,7 @@ export function PluginsList(props: PluginsListProps): JSX.Element {
         onClose={deleteOnClose}
         onConfirm={handlePluginDelete}
         title={'Plugin Delete'}
-        message={`Are you sure you want to delete ${selectedPlugin?.data.name}?`}
+        message={`Delete ${selectedPlugin?.data.package?.manifest.name ?? selectedPlugin?.data.name}? This deletes its shared extension state and approvals. Board apps and native notes remain, but its extension views become unavailable. Disable it on the board instead to preserve all saved data.`}
       />
       {/* Plugin Upload Modal */}
       <PluginUploadModal roomId={props.room._id} isOpen={uploadIsOpen} onOpen={uploadOnOpen} onClose={uploadOnClose} />
@@ -212,7 +211,11 @@ export function PluginsList(props: PluginsListProps): JSX.Element {
             </HStack>
             <Box minHeight="50px">
               <Tooltip
-                label={canDeleteSelectedPlugin ? 'Delete Plugin' : 'Only the Plugin Author and Room Owner can delete this plugin.'}
+                label={
+                  canDeleteSelectedPlugin
+                    ? 'Delete Plugin'
+                    : 'Only the plugin author can delete this package. The room owner can disable it on a board.'
+                }
                 aria-label="Delete Plugin"
                 placement="top"
                 hasArrow
@@ -230,9 +233,36 @@ export function PluginsList(props: PluginsListProps): JSX.Element {
                 />
               </Tooltip>
             </Box>
-            <Box width="100%" height="500px" overflow="hidden" borderRadius="md">
-              <iframe loading="eager" src={`/plugins/apps/${selectedPlugin.data.roomId}_${selectedPlugin.data.name}`} style={{ width: '100%', height: '100%' }}></iframe>
-            </Box>
+            <VStack align="stretch" spacing="3" mt="4">
+              <Tag alignSelf="start" colorScheme={selectedPlugin.data.package ? 'teal' : 'orange'}>
+                {selectedPlugin.data.package ? 'Package available' : 'Unavailable: manifest package required'}
+              </Tag>
+              <Text fontSize="sm">
+                Packages do not run here. The room owner can review capabilities and enable this plugin from a board's Plugins menu.
+                Disabling a plugin preserves its apps and saved data.
+              </Text>
+              {selectedPlugin.data.package && (
+                <>
+                  <Text>
+                    Package: {selectedPlugin.data.package.manifest.id} · API {selectedPlugin.data.package.manifest.apiVersion}
+                  </Text>
+                  <Text fontWeight="bold">Requested capabilities</Text>
+                  <Text>
+                    {selectedPlugin.data.package.manifest.capabilities.join(', ') || 'None (own plugin state and app content only)'}
+                  </Text>
+                  <Text fontWeight="bold">Commands</Text>
+                  <Text>
+                    {selectedPlugin.data.package.manifest.commands?.map((command) => command.title).join(', ') || 'None'}
+                  </Text>
+                  <Text fontWeight="bold">Views</Text>
+                  <Text>
+                    {selectedPlugin.data.package.manifest.views
+                      ?.map((view) => `${view.title} (${view.kind})`)
+                      .join(', ') || 'None'}
+                  </Text>
+                </>
+              )}
+            </VStack>
           </Box>
         </Box>
       )}

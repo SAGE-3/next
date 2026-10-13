@@ -28,21 +28,30 @@ import { config } from '../config';
 export class UploadConnector {
   private static instance: UploadConnector;
   private upload: multer.Multer;
+  private pluginUpload: multer.Multer;
 
   private constructor() {
     const filesizeLimit = config.webserver?.uploadLimit ? parseFileSize(config.webserver.uploadLimit) : 1024 * 1024 * 1024 * 5;
     console.log('Upload> destination', config.public, 'limit', humanFileSize(filesizeLimit));
 
+    const storage = multer.diskStorage({
+      destination: function (_req: Express.Request, _file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) {
+        return cb(null, config.public);
+      },
+      filename: function (_req: Express.Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) {
+        return cb(null, getUUID() + file.originalname.substring(file.originalname.lastIndexOf('.')));
+      },
+    });
+
+    this.pluginUpload = multer({
+      storage,
+      // array('files', 1) admits one file; size follows the configured upload limit.
+      limits: { fileSize: filesizeLimit },
+    });
+
     this.upload = multer({
       // use local storage
-      storage: multer.diskStorage({
-        destination: function (_req: Express.Request, _file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) {
-          return cb(null, config.public);
-        },
-        filename: function (_req: Express.Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) {
-          return cb(null, getUUID() + file.originalname.substring(file.originalname.lastIndexOf('.')));
-        },
-      }),
+      storage,
       // filter allowed files
       fileFilter: function (_req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) {
         console.log('Upload> filter', file.originalname, file.mimetype);
@@ -69,6 +78,10 @@ export class UploadConnector {
    */
   public uploadMiddleware(fieldname: string): express.RequestHandler {
     return this.upload.array(fieldname);
+  }
+
+  public pluginUploadMiddleware(): express.RequestHandler {
+    return this.pluginUpload.array('files', 1);
   }
 }
 

@@ -11,6 +11,9 @@
  * created by: SAGE3 team
  */
 import { z } from 'zod';
+import type { App } from '../../schema';
+
+export const name = 'SageCell';
 
 const executeInfoSchema = z.object({
   executeFunc: z.string(),
@@ -33,7 +36,7 @@ export const schema = z.object({
 export type executeInfoType = z.infer<typeof executeInfoSchema>;
 export type state = z.infer<typeof schema>;
 
-export const init: Partial<state> = {
+export const init: state = {
   code: '',
   msgId: '',
   history: [],
@@ -46,4 +49,4 @@ export const init: Partial<state> = {
   executeInfo: { executeFunc: '', params: {} } as executeInfoType,
 };
 
-export const name = 'SageCell';
+export type SageCellApp = App<typeof name>;

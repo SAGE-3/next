@@ -12,6 +12,9 @@
  */
 
 import { z } from 'zod';
+import type { App } from '../../schema';
+
+export const name = 'LeafLet';
 
 const Baselayer = z.enum(['OpenStreetMap', 'World Imagery']);
 export type Baselayer = z.infer<typeof Baselayer>;
@@ -25,11 +28,11 @@ export const schema = z.object({
 });
 export type state = z.infer<typeof schema>;
 
-export const init: Partial<state> = {
+export const init: state = {
   location: [21.297, -157.816],
   zoom: 13,
   baseLayer: 'OpenStreetMap',
   overlay: true,
 };
 
-export const name = 'LeafLet';
+export type LeafLetApp = App<typeof name>;

@@ -7,6 +7,9 @@
  */
 
 import { z } from 'zod';
+import type { App } from '../../schema';
+
+export const name = 'Timer';
 
 /**
  * SAGE3 application: Timer
@@ -21,11 +24,11 @@ export const schema = z.object({
 });
 export type state = z.infer<typeof schema>;
 
-export const init: Partial<state> = {
+export const init: state = {
   originalTotal: 300,
   total: 300,
   clientStartTime: 0,
   isRunning: false,
 };
 
-export const name = 'Timer';
+export type TimerApp = App<typeof name>;

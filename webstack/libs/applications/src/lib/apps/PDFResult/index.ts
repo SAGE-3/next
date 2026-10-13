@@ -7,6 +7,9 @@
  */
 
 import { z } from 'zod';
+import type { App } from '../../schema';
+
+export const name = 'PDFResult';
 
 /**
  * SAGE3 application: PDFResult
@@ -18,8 +21,8 @@ export const schema = z.object({
 });
 export type state = z.infer<typeof schema>;
 
-export const init: Partial<state> = {
+export const init: state = {
   result: '',
 };
 
-export const name = 'PDFResult';
+export type PDFResultApp = App<typeof name>;

@@ -39,28 +39,34 @@ import {
   useHexColor,
   useMeasure,
   useThrottleScale,
+  usePluginContextStore,
 } from '@sage3/frontend';
 import { Asset, ExtraPDFType, ImageInfoType } from '@sage3/shared/types';
+import type { PluginSelection } from '@sage3/sageplugin';
 
 // App components and types
-import { App, AppGroup } from '../../schema';
-import { state as AppState } from './index';
+import { state as AppState, PDFViewerApp } from './index';
 import { AppWindow } from '../../components';
+import { PDFTextLayer, usePDFDocument } from './PDFTextLayer';
 
 /**
  * Main PDFViewer application component
  * Handles PDF display, navigation, and collaborative features
  */
-function AppComponent(props: App): JSX.Element {
+function AppComponent(props: PDFViewerApp): JSX.Element {
   // State management hooks
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
   const assets = useAssetStore((state) => state.assets);
-  const s = props.data.state as AppState;
+  const s = props.data.state;
   
   // Local state for PDF rendering
   const [pages, setPages] = useState<ExtraPDFType>([]);
-  const [file, setFile] = useState<Asset>();
+  const file = assets.find((asset) => asset._id === s.assetid);
+  const pdfDocument = usePDFDocument(file ? apiUrls.assets.getAssetById(file.data.file) : undefined);
+
+  const setDocument = usePluginContextStore((state) => state.setDocument);
+  const removeDocument = usePluginContextStore((state) => state.removeDocument);
   const [aspectRatio, setAspectRatio] = useState(1);
   const [displayRatio, setDisplayRatio] = useState(1);
   const [failedPageUrls, setFailedPageUrls] = useState<Record<string, boolean>>({});
@@ -84,12 +90,32 @@ function AppComponent(props: App): JSX.Element {
   // Reference to the main container div for event handling
   const divRef = useRef<HTMLDivElement>(null);
 
-  // Effect: Update file reference and initialize PDF metadata
+  useEffect(() => {
+    setDocument(props._id, { assetId: s.assetid, page: s.currentPage, numPages: s.numPages });
+
+    const selection = window.getSelection();
+    if (selection?.anchorNode && divRef.current?.contains(selection.anchorNode)) {
+      selection.removeAllRanges();
+    }
+  }, [props._id, s.assetid, s.currentPage, s.numPages, s.displayPages, setDocument]);
+
+  useEffect(() => {
+    return () => {
+      removeDocument(props._id);
+    };
+  }, [props._id, removeDocument]);
+
+  const handleSelection = useCallback(
+    (page: number, selection?: PluginSelection) => {
+      setDocument(props._id, { assetId: s.assetid, page, numPages: s.numPages, selection });
+    },
+    [props._id, s.assetid, s.numPages, setDocument],
+  );
+
+  // Effect: Initialize PDF metadata
   useEffect(() => {
     const asset = assets.find((a) => a._id === s.assetid);
     if (asset) {
-      setFile(asset);
-      
       // Update app state with PDF page count
       if (asset.data.derived) {
         const pages = asset.data.derived as ExtraPDFType;
@@ -130,6 +156,8 @@ function AppComponent(props: App): JSX.Element {
 
   // Effect: Store PDF pages and calculate aspect ratio
   useEffect(() => {
+    setPages([]);
+
     if (file) {
       const derivedPages = file.data.derived as ExtraPDFType;
       if (derivedPages) {
@@ -237,6 +265,18 @@ function AppComponent(props: App): JSX.Element {
   // Keyboard event handler for navigation and actions
   const handleUserKeyPress = useCallback(
     (evt: KeyboardEvent) => {
+      // Native passage selection, copying and keyboard selection take priority over page shortcuts.
+      const selection = window.getSelection();
+      if (
+        evt.ctrlKey ||
+        evt.metaKey ||
+        evt.shiftKey ||
+        (evt.target instanceof Element && evt.target.closest('[data-pdf-text-layer]')) ||
+        (selection && !selection.isCollapsed && divRef.current?.contains(selection.anchorNode))
+      ) {
+        return;
+      }
+
       evt.stopPropagation();
       switch (evt.key) {
         case 'ArrowRight':
@@ -378,20 +418,26 @@ function AppComponent(props: App): JSX.Element {
 
   // Effect: Attach and detach keyboard event listeners
   useEffect(() => {
-    const div = divRef.current;
-    if (div) {
-      div.addEventListener('keydown', handleUserKeyPress);
-      div.addEventListener('mouseleave', () => {
-        // Remove focus when mouse leaves the container
-        div.blur();
-      });
-      div.addEventListener('mouseenter', () => {
-        // Focus on container for keyboard events
-        div.focus({ preventScroll: true });
-      });
+    const container = divRef.current;
+    const handleMouseLeave = () => {
+      if (document.activeElement === container) {
+        container?.blur();
     }
+    };
+    const handleMouseEnter = () => {
+      container?.focus({ preventScroll: true });
+    };
+
+    if (container) {
+      container.addEventListener('keydown', handleUserKeyPress);
+      container.addEventListener('mouseleave', handleMouseLeave);
+      container.addEventListener('mouseenter', handleMouseEnter);
+    }
+
     return () => {
-      if (div) div.removeEventListener('keydown', handleUserKeyPress);
+      container?.removeEventListener('keydown', handleUserKeyPress);
+      container?.removeEventListener('mouseleave', handleMouseLeave);
+      container?.removeEventListener('mouseenter', handleMouseEnter);
     };
   }, [divRef, handleUserKeyPress]);
 
@@ -466,7 +512,7 @@ function AppComponent(props: App): JSX.Element {
               return (
                 <Box
                   id={'pane~' + props._id + idx}
-                  key={pageIndex}
+                  key={`${s.assetid}:${pageIndex}`}
                   p={1}
                   m={1}
                   rounded="lg"
@@ -476,6 +522,7 @@ function AppComponent(props: App): JSX.Element {
                   width="100%"
                   height="100%"
                 >
+                  <Box position="relative" width="100%" height="100%">
                   <Image
                     src={url}
                     onError={() => handlePDFImageError(url)}
@@ -486,10 +533,31 @@ function AppComponent(props: App): JSX.Element {
                     objectFit="contain"
                     alt={file?.data.originalfilename}
                   />
+                    {pdfDocument?.document && (
+                      <PDFTextLayer
+                        document={pdfDocument.document}
+                        page={pageIndex}
+                        onSelection={handleSelection}
+                      />
+                    )}
+                  </Box>
                 </Box>
               );
             })}
         </HStack>
+        {pdfDocument?.error && (
+          <Box
+            position="absolute"
+            bottom={0}
+            left={0}
+            bg="white"
+            color="gray.800"
+            fontSize="xs"
+            role="status"
+          >
+            {pdfDocument.error}
+          </Box>
+        )}
       </Box>
     </AppWindow >
   );
@@ -520,8 +588,8 @@ function getPDFPageImage(page: ImageInfoType[] | undefined, targetWidth: number,
  * Toolbar component for the PDFViewer app
  * Provides navigation controls and actions for individual PDF viewers
  */
-function ToolbarComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function ToolbarComponent(props: PDFViewerApp): JSX.Element {
+  const s = props.data.state;
   const updateState = useAppStore((state) => state.updateState);
   const assets = useAssetStore((state) => state.assets);
   const update = useAppStore((state) => state.update);
@@ -687,7 +755,7 @@ function ToolbarComponent(props: App): JSX.Element {
  * Grouped App toolbar component
  * Provides navigation controls for multiple selected PDF viewers simultaneously
  */
-const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
+const GroupedToolbarComponent = (props: { apps: PDFViewerApp[] }) => {
   const updateStateBatch = useAppStore((state) => state.updateStateBatch);
 
   // Batch operation: Add pages to all selected viewers

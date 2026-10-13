@@ -80,10 +80,10 @@ import { KernelInfo, ContentItem } from '@sage3/shared/types';
 import { SAGE3Ability } from '@sage3/shared';
 
 // App Imports
-import { App } from '../../schema';
+import { App, isApp } from '../../schema';
 import { useStore } from './components/store';
 import { AppWindow } from '../../components';
-import { state as AppState } from './index';
+import { SageCellApp } from './index';
 import { ToolbarComponent, GroupedToolbarComponent, PdfViewer, Markdown } from './components';
 import { getRunOrderChain } from '../../appLinks';
 
@@ -97,7 +97,7 @@ import './SageCell.css';
  * @returns {JSX.Element}
  */
 
-function AppComponent(props: App): JSX.Element {
+function AppComponent(props: SageCellApp): JSX.Element {
   const { user } = useUser();
   if (!user) return <></>;
 
@@ -105,7 +105,7 @@ function AppComponent(props: App): JSX.Element {
   const canExecuteCode = useAbility('execute', 'kernels');
 
   // App state
-  const s = props.data.state as AppState;
+  const s = props.data.state;
   const updateState = useAppStore((state) => state.updateState);
   const createApp = useAppStore((state) => state.create);
 
@@ -380,7 +380,6 @@ function AppComponent(props: App): JSX.Element {
         updateState(props._id, {
           streaming: false,
           kernel: '',
-          kernels: [],
           msgId: '',
         });
       }
@@ -397,7 +396,9 @@ function AppComponent(props: App): JSX.Element {
   const handleExecuteChain = async (type: 'up' | 'down' | 'all') => {
     async function executeAppNoChecks(appid: string) {
       // Get the code from the store
-      const code = useAppStore.getState().apps.find((app) => app._id === appid)?.data.state.code;
+      const app = useAppStore.getState().apps.find((app) => app._id === appid);
+      if (!app || !isApp(app, 'SageCell')) return false;
+      const code = app.data.state.code;
       const userId = user?._id;
       const kernel = useStore.getState().kernel[appid];
 

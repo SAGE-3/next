@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Create reading note</title>
+    <link rel="stylesheet" href="reading.css" />
+    <script src="panel.js" defer></script>
+  </head>
+
+  <body>
+    <h1>Create reading note</h1>
+    <p id="source">Connecting to SAGE3…</p>
+    <blockquote id="quote"></blockquote>
+
+    <form>
+      <label for="note">Your notes</label>
+      <textarea id="note" rows="7" placeholder="Write a note about this page or quote"></textarea>
+      <p>The saved note uses SAGE3’s native collaborative Notepad. Its source stays on the page captured when this panel opened.</p>
+
+      <button id="create" type="submit" disabled>Create linked note</button>
+      <button id="close" type="button">Close</button>
+    </form>
+
+    <p id="status" role="status" aria-live="polite"></p>
+  </body>
+</html>

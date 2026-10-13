@@ -12,7 +12,19 @@ import { SBCollectionRef } from './SBCollection';
 export { SBCollectionRef };
 import { SBJSON } from './SBDocument';
 import { SBLogConfig } from '../logger/SBLogger';
-export type { SBDocumentRef, SBDocument, SBJSON, SBPrimitive, SBDocumentUpdate, SBDocumentMessage } from './SBDocument';
+export { SBDocumentRef } from './SBDocument';
+export type {
+  SBDocument,
+  SBJSON,
+  SBPrimitive,
+  SBDocumentUpdate,
+  SBDocumentMessage,
+  SBDocWriteResult,
+  SBConditionalWriteResult,
+  SBJSONChange,
+  SBNestedChange,
+  SBNestedCondition,
+} from './SBDocument';
 
 /**
  * The SBDatabase instance.

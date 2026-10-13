@@ -7,7 +7,10 @@
  */
 
 import { colors } from '@sage3/shared';
+import type { App } from '../../schema';
 import { z } from 'zod';
+
+export const name = 'Map';
 
 const zColors = z.enum([...colors]);
 const colorScale = z.enum(['greys', 'inferno', 'viridis', 'turbo']);
@@ -37,7 +40,7 @@ export const schema = z.object({
 });
 export type state = z.infer<typeof schema>;
 
-export const init: Partial<state> = {
+export const init: state = {
   location: [-157.816, 21.297], // Lng, Lat
   zoom: 13,
   bearing: 0,
@@ -46,4 +49,4 @@ export const init: Partial<state> = {
   layers: [],
 };
 
-export const name = 'Map';
+export type MapApp = App<typeof name>;

@@ -7,6 +7,9 @@
  */
 
 import { z } from 'zod';
+import type { App } from '../../schema';
+
+export const name = 'Drawing';
 
 /**
  * SAGE3 application: Drawing
@@ -20,9 +23,9 @@ export const schema = z.object({
 });
 export type state = z.infer<typeof schema>;
 
-export const init: Partial<state> = {
+export const init: state = {
   fit: false,
   follow: '',
 };
 
-export const name = 'Drawing';
+export type DrawingApp = App<typeof name>;

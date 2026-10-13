@@ -7,6 +7,9 @@
  */
 
 import { z } from 'zod';
+import type { App } from '../../schema';
+
+export const name = 'WebpageLink';
 
 /**
  * SAGE3 application: WebpageLink
@@ -26,7 +29,7 @@ export const schema = z.object({
 });
 export type state = z.infer<typeof schema>;
 
-export const init: Partial<state> = {
+export const init: state = {
   url: 'http://google.com',
   streaming: false,
   meta: {
@@ -36,4 +39,4 @@ export const init: Partial<state> = {
   },
 };
 
-export const name = 'WebpageLink';
+export type WebpageLinkApp = App<typeof name>;

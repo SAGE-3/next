@@ -15,8 +15,7 @@ import { MdFileDownload, MdChat, MdChevronLeft, MdChevronRight } from 'react-ico
 
 import { useAppStore, useHexColor, downloadFile } from '@sage3/frontend';
 
-import { App } from '../../schema';
-import { state as AppState } from './index';
+import { SageIdeatorApp } from './index';
 import { AppWindow } from '../../components';
 
 // PDF load legacy pdf build
@@ -57,8 +56,8 @@ import { StickyImportDialog } from './StickyImportDialog';
 
 // ─── AppComponent ─────────────────────────────────────────────────────────────
 
-function AppComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function AppComponent(props: SageIdeatorApp): JSX.Element {
+  const s = props.data.state;
   const updateState = useAppStore((state) => state.updateState);
 
   const toast = useToast();
@@ -286,8 +285,8 @@ function AppComponent(props: App): JSX.Element {
 
 // ─── Toolbar ──────────────────────────────────────────────────────────────────
 
-function ToolbarComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function ToolbarComponent(props: SageIdeatorApp): JSX.Element {
+  const s = props.data.state;
 
   const downloadTxt = () => {
     const dt = format(new Date(), 'yyyy-MM-dd-HH:mm:ss');

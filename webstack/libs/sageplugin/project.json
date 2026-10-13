@@ -16,7 +16,16 @@
         "tsConfig": "libs/sageplugin/tsconfig.lib.json",
         "packageJson": "libs/sageplugin/package.json",
         "main": "libs/sageplugin/src/index.ts",
-        "assets": ["libs/sageplugin/*.md"]
+        "rootDir": "libs/sageplugin/src",
+        "generateExportsField": false,
+        "assets": [
+          "libs/sageplugin/README.md",
+          {
+            "input": "libs/sageplugin/tools",
+            "glob": "build.cjs",
+            "output": "tools"
+          }
+        ]
       }
     }
   },

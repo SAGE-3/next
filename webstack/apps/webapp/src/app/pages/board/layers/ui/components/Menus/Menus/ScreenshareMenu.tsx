@@ -33,7 +33,7 @@ import {
 import { MdPerson, MdStop } from 'react-icons/md';
 
 // SAGE3 Imports
-import { App } from '@sage3/applications/schema';
+import { App, isApp } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
 import {
   useAppStore,
@@ -110,8 +110,8 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
   // All shares you own. LiveKit ('LocalScreenshare') allows several at once
   // (e.g. two windows); Twilio ('Screenshare', legacy) stays one-per-user.
   const [yourScreenshares, setYourScreenshares] = useState<App[]>([]);
-  const yourTwilioShare = yourScreenshares.find((app) => app.data.type === 'Screenshare') ?? null;
-  const yourLiveKitShareCount = yourScreenshares.filter((app) => app.data.type === 'LocalScreenshare').length;
+  const yourTwilioShare = yourScreenshares.find((app) => isApp(app, 'Screenshare')) ?? null;
+  const yourLiveKitShareCount = yourScreenshares.filter((app) => isApp(app, 'LocalScreenshare')).length;
   const atLiveKitLimit = yourLiveKitShareCount >= MAX_LOCAL_SCREENSHARES;
 
   // Electron source picker
@@ -150,7 +150,7 @@ export function ScreenshareMenu(props: ScreensharesMenuProps) {
     const name = user?.data.name ?? 'Screenshare';
     const used = new Set(
       yourScreenshares
-        .filter((app) => app.data.type === 'LocalScreenshare')
+        .filter((app) => isApp(app, 'LocalScreenshare'))
         .map((app) => Number(/#(\d+)\s*$/.exec(app.data.title ?? '')?.[1] ?? 0)),
     );
     let n = 1;

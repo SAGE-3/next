@@ -7,6 +7,9 @@
  */
 
 import { z } from 'zod';
+import type { App } from '../../schema';
+
+export const name = 'DeepZoomImage';
 
 /**
  * SAGE3 application: DeepZoomImage
@@ -20,10 +23,10 @@ export const schema = z.object({
 });
 export type state = z.infer<typeof schema>;
 
-export const init: Partial<state> = {
+export const init: state = {
   assetid: '',
   zoomLevel: 1,
   zoomCenter: [0.5, 0.5],
 };
 
-export const name = 'DeepZoomImage';
+export type DeepZoomImageApp = App<typeof name>;

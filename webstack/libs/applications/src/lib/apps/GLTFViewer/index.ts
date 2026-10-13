@@ -12,6 +12,9 @@
  */
 
 import { z } from 'zod';
+import type { App } from '../../schema';
+
+export const name = 'GLTFViewer';
 
 export const schema = z.object({
   assetid: z.string(),
@@ -23,7 +26,7 @@ export const schema = z.object({
 });
 export type state = z.infer<typeof schema>;
 
-export const init: Partial<state> = {
+export const init: state = {
   assetid: '',
   p: 0,
   a: 0,
@@ -32,4 +35,4 @@ export const init: Partial<state> = {
   avatarOrientation: [0, 0, 0],
 };
 
-export const name = 'GLTFViewer';
+export type GLTFViewerApp = App<typeof name>;

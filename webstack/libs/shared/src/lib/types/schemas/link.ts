@@ -20,6 +20,8 @@ const LinkSchema = z.object({
   type: LinkType,
   color: z.optional(LinkColors),
   metadata: z.optional(z.record(z.any())), // optional extras: confidence, labels, etc.
+  pluginId: z.string().optional(),
+  pluginKey: z.string().optional(),
 });
 
 export type LinkSchema = z.infer<typeof LinkSchema>;

@@ -39,7 +39,7 @@ import {
   isMermaid,
   mimeToCode,
 } from '@sage3/shared';
-import { App, AppName, AppSchema, AppState } from '@sage3/applications/schema';
+import { App, AppName, AppSchema, AppStateMap } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
 import { Asset, ExtraImageType, ExtraPDFType } from '@sage3/shared/types';
 
@@ -90,16 +90,16 @@ async function fetchMediaMetadata(file: File) {
  * @param {string} boardId
  * @param {string} userId
  */
-export function setupApp(
+export function setupApp<T extends AppName>(
   title: string,
-  type: AppName,
+  type: T,
   x: number,
   y: number,
   roomId: string,
   boardId: string,
   { w, h }: { w: number; h: number } = { w: 400, h: 400 },
-  init: Partial<AppState> = {},
-): AppSchema {
+  init: Partial<AppStateMap[T]> = {},
+): AppSchema<T> {
   return {
     title: title,
     roomId: roomId,
@@ -108,7 +108,7 @@ export function setupApp(
     size: { width: w, height: h, depth: 0 },
     rotation: { x: 0, y: 0, z: 0 },
     type: type,
-    state: { ...(initialValues[type] as AppState), ...init },
+    state: { ...initialValues[type], ...init },
     raised: true,
     dragging: false,
     pinned: false,
@@ -378,9 +378,10 @@ async function openSession(a: Asset, xDrop: number, yDrop: number, roomId: strin
   // Rebuild each app from the session
   for (const app of apps) {
     // Handle apps with associated assets
-    if (app.data.state.assetid) {
+    if ('assetid' in app.data.state && app.data.state.assetid) {
       // Find the asset in the session
-      const asset = newassets.find((a) => a.id === app.data.state.assetid);
+      const assetId = app.data.state.assetid;
+      const asset = newassets.find((a) => a.id === assetId);
       // download the old asset
       if (asset) {
         // Get the content of the file
@@ -401,7 +402,7 @@ async function openSession(a: Asset, xDrop: number, yDrop: number, roomId: strin
       }
     }
     // Create an application
-    const newapp = {
+    const newapp: AppSchema = {
       title: app.data.title,
       roomId: roomId,
       boardId: boardId,

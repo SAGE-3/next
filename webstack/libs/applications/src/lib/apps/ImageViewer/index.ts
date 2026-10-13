@@ -12,6 +12,9 @@
  */
 
 import { z } from 'zod';
+import type { App } from '../../schema';
+
+export const name = 'ImageViewer';
 
 const bboxType = z.array(
   z.object({
@@ -34,11 +37,11 @@ export const schema = z.object({
 });
 export type state = z.infer<typeof schema>;
 
-export const init: Partial<state> = {
+export const init: state = {
   executeInfo: { executeFunc: '', params: {} },
   assetid: '',
   annotations: false,
   boxes: [],
 };
 
-export const name = 'ImageViewer';
+export type ImageViewerApp = App<typeof name>;
