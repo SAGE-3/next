@@ -8,6 +8,7 @@
 
 import { AssetsCollection } from './assetsCollection';
 import { FilesRouter } from './files';
+import { PluginAssetsRouter } from './plugin-assets';
 // NPM imports
 import express from 'express';
 import { MessageCollection } from './messageCollection';
@@ -34,6 +35,8 @@ export async function expressAPIRouter(): Promise<express.Router> {
   // Rate limit (generous per-IP backstop for asset traffic), then authenticate all API Routes
   router.use(createRateLimiter(600));
   router.use(SAGEBase.Auth.authenticate);
+
+  router.use('/assets/plugins', PluginAssetsRouter());
 
   // /api/assets/upload
   // /api/assets/static/:filename

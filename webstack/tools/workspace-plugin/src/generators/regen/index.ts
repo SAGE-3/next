@@ -108,13 +108,14 @@ async function updateInit(root: string) {
   // Parse it as an array
   const apps = Array.from(JSON.parse(filedata.toString())) as string[];
   let output = '// SAGE3 Generated from apps.json file\n\n';
+  output += `import type { AppStateMap } from './types';\n`;
   for (let i in apps) {
     const it = apps[i];
     output += `import { name as ${it}Name, init as default${it} } from './apps/${it}';\n`;
   }
 
   output += `\n`;
-  output += `export const initialValues = {\n`;
+  output += `export const initialValues: AppStateMap = {\n`;
   for (let i in apps) {
     const it = apps[i];
     output += `  [${it}Name]: default${it},\n`;

@@ -51,7 +51,7 @@ export interface PromptBarHandlers {
   onImageFacts: () => void;
   onContentPDF: (prompt: string) => void;
   onContentWeb: (prompt: string) => void;
-  onContentWebScreenshot: () => void;
+  onContentWebScreenshot: (prompt: string) => void;
 }
 
 // Static prompt text for the PDF / Web modes; each fires the matching handler.
@@ -166,7 +166,7 @@ export function PromptBars({ mode, handlers }: { mode: OperationMode; handlers: 
               key={i}
               label={p.title}
               tooltip={p.prompt}
-              onClick={() => (p.screenshot ? handlers.onContentWebScreenshot() : handlers.onContentWeb('@S ' + p.prompt))}
+              onClick={() => (p.screenshot ? handlers.onContentWebScreenshot(p.prompt) : handlers.onContentWeb('@S ' + p.prompt))}
             />
           ))}
         </HStack>

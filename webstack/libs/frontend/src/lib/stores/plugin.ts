@@ -19,19 +19,60 @@ import { SAGE3Ability } from '@sage3/shared';
 import { APIHttp, SocketAPI } from '../api';
 import { apiUrls } from '../config';
 
+type PluginActivation =
+  | { readonly enabled: false }
+  | {
+      readonly enabled: true;
+      readonly packageDigest: string;
+      readonly autoApprove: boolean;
+    };
+
 interface PluginState {
   plugins: Plugin[];
   error: string | null;
   fetched: boolean;
+
   upload: (
     file: File,
-    name: string,
-    description: string,
     username: string,
-    roomId: string
-  ) => Promise<{ success: boolean; message: string; status?: number }>;
+    roomId: string,
+  ) => Promise<{
+    success: boolean;
+    message: string;
+    status?: number;
+  }>;
   subscribeToPlugins: () => Promise<void>;
+  setEnabled: (
+    pluginId: string,
+    boardId: string,
+    activation: PluginActivation,
+  ) => Promise<{
+    success: boolean;
+    message?: string;
+  }>;
   delete: (id: string) => Promise<void>;
+}
+
+async function pluginResponse(response: Response): Promise<{
+  success: boolean;
+  message: string;
+  status: number;
+}> {
+  const body: unknown = await response.json();
+
+  if (!body || typeof body !== 'object' || !('success' in body) || typeof body.success !== 'boolean') {
+    return {
+      success: false,
+      message: 'Invalid response from the plugin service.',
+      status: response.status,
+    };
+  }
+
+  const success = response.ok && body.success;
+  const defaultMessage = success ? 'Plugin updated.' : `Plugin request failed (${response.status}).`;
+  const message = 'message' in body && typeof body.message === 'string' ? body.message : defaultMessage;
+
+  return { success, message, status: response.status };
 }
 
 /**
@@ -50,25 +91,59 @@ const PluginStore = create<PluginState>()((set, get) => {
       if (!SAGE3Ability.canCurrentUser('delete', 'plugins')) return;
       await APIHttp.DELETE('/plugins/remove/' + id);
     },
-    upload: async (file: File, name: string, description: string, username: string, roomId: string) => {
-      if (!SAGE3Ability.canCurrentUser('create', 'plugins')) {
-        return { success: false, message: 'You do not have permission to upload plugins.', status: 403 };
+    // Enabling is reachable only from the approval dialog, which passes the reviewed digest.
+    setEnabled: async (pluginId, boardId, activation) => {
+      try {
+        const response = await fetch(`/api/plugins/${encodeURIComponent(pluginId)}/boards/${encodeURIComponent(boardId)}/activation`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(activation),
+        });
+
+        return await pluginResponse(response);
+      } catch {
+        return {
+          success: false,
+          message: 'Unable to change plugin activation. Please try again.',
+        };
       }
-      // Uploaded with a Form object
-      const fd = new FormData();
-      fd.append('plugin', file);
-      fd.append('description', description);
-      fd.append('name', name);
-      fd.append('username', username);
-      if (roomId) fd.append('roomId', roomId);
-      const res = await fetch(apiUrls.plugins.upload, {
-        method: 'POST',
-        body: fd,
-      });
-      const resJson = await res.json();
-      // Include status code in response so UI can determine error vs warning
-      return { ...resJson, status: res.status };
     },
+
+    upload: async (file: File, username: string, roomId: string) => {
+      if (!SAGE3Ability.canCurrentUser('create', 'plugins')) {
+        return {
+          success: false,
+          message: 'You do not have permission to upload plugins.',
+          status: 403,
+        };
+      }
+
+      // Uploaded with a Form object
+      const formData = new FormData();
+      formData.append('plugin', file);
+      formData.append('username', username);
+
+      if (roomId) {
+        formData.append('roomId', roomId);
+      }
+
+      try {
+        const response = await fetch(apiUrls.plugins.upload, {
+        method: 'POST',
+          credentials: 'include',
+          body: formData,
+      });
+
+        return await pluginResponse(response);
+      } catch {
+        return {
+          success: false,
+          message: 'Unable to upload the plugin. Please try again.',
+        };
+      }
+    },
+
     subscribeToPlugins: async () => {
       if (!SAGE3Ability.canCurrentUser('read', 'plugins')) return;
       set({ ...get(), plugins: [], fetched: false });

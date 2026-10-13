@@ -30,7 +30,7 @@ import {
   PasteHandler,
   useUIStore,
   useUser,
-  usePluginListener,
+  BoardPluginRuntime,
   usePluginStore,
   useAuth,
   isElectron,
@@ -93,9 +93,6 @@ export function BoardPage() {
   const { isOpen, onOpen, onClose } = useDisclosure();
   // Element to set the focus to when opening the dialog
   const initialRef = useRef<HTMLButtonElement>(null);
-
-  // Plugin Listener: updates from plugin apps and sends them to the AppStore
-  usePluginListener();
 
   // UI Message
   const toast = useToast();
@@ -274,6 +271,7 @@ export function BoardPage() {
 
       {/* Upper layer for local UI stuff */}
       <UILayer boardId={boardId} roomId={roomId}></UILayer>
+      <BoardPluginRuntime boardId={boardId} roomId={roomId} />
 
       {/* Paste data on the board */}
       <PasteHandler boardId={boardId} roomId={roomId} />

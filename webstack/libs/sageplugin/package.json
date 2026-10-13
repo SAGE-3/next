@@ -1,5 +1,28 @@
 {
   "name": "@sage3/sageplugin",
-  "version": "0.0.15",
-  "dependencies": {}
+  "version": "0.1.0",
+  "description": "SAGE3 API 1 browser extension SDK and package builder",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
+    "./build": "./tools/build.cjs"
+  },
+  "bin": {
+    "sageplugin-build": "./tools/build.cjs"
+  },
+  "files": ["index.js", "index.d.ts", "lib", "tools/build.cjs", "README.md"],
+  "engines": {
+    "node": "^22.13 || ^24"
+  },
+  "dependencies": {
+    "jszip": "^3.10.1",
+    "typescript": "6.0.3",
+    "webpack": "5.108.4",
+    "yjs": "^13.6.27",
+    "y-textarea": "^1.0.0"
+  }
 }

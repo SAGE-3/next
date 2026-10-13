@@ -1,0 +1,69 @@
+:root {
+  --background: #fff;
+  --foreground: #222;
+  --border: #aaa;
+  --accent: #2563eb;
+  font-family: system-ui, sans-serif;
+  color: var(--foreground);
+  background: var(--background);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100vh;
+  padding: 16px;
+}
+
+label {
+  font-weight: bold;
+}
+
+textarea {
+  flex: 1;
+  min-height: 0;
+  resize: none;
+}
+
+textarea,
+button {
+  font: inherit;
+  color: inherit;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 8px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#status {
+  overflow-wrap: anywhere;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}

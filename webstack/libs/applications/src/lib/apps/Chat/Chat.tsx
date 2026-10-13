@@ -791,7 +791,7 @@ function AppComponent(props: ChatApp): JSX.Element {
       const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
 
       // Check for image
-      if (apps && apps[0].data.type === 'Webview') {
+      if (apps[0] && isApp(apps[0], 'Webview')) {
         if (roomId && boardId) {
           const now = await serverTime();
           const initialAnswer = {
@@ -874,7 +874,7 @@ function AppComponent(props: ChatApp): JSX.Element {
     if (!canPerform('chat')) return;
     if (sourceApps.length === 0 || !roomId || !boardId) return;
     const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
-    if (!apps[0] || apps[0].data.type !== 'Map') return;
+    if (!apps[0] || !isApp(apps[0], 'Map')) return;
 
     // Map content is derived (a GeoJSON asset or coordinates), so it's assembled
     // here and passed as the question rather than via appIds.
@@ -882,7 +882,7 @@ function AppComponent(props: ChatApp): JSX.Element {
     let ctx = '';
     const layers = apps[0].data.state.layers || [];
     if (layers.length > 0) {
-      const visibleLayers = layers.filter((l: any) => l.visible).map((l: any) => l.assetId);
+      const visibleLayers = layers.filter((l) => l.visible).map((l) => l.assetId);
       if (visibleLayers.length === 0) {
         toast({
           title: 'No visible layers',
@@ -923,14 +923,14 @@ function AppComponent(props: ChatApp): JSX.Element {
   };
 
   // Get a screenshot of the web content
-  const onContentWebScreenshot = async () => {
+  const onContentWebScreenshot = async (prompt: string) => {
     if (!user) return;
     if (sourceApps.length > 0) {
       // Update the context
       const apps = useAppStore.getState().apps.filter((app) => sourceApps.includes(app._id));
 
       // Check for image
-      if (apps && apps[0].data.type === 'Webview') {
+      if (apps[0] && isApp(apps[0], 'Webview')) {
         if (roomId && boardId) {
           const now = await serverTime();
           const initialAnswer = {
@@ -978,7 +978,7 @@ function AppComponent(props: ChatApp): JSX.Element {
             // Add messages
             updateState(props._id, {
               ...s,
-              previousQ: [...s.previousQ, 'Describe the content'],
+              previousQ: [...s.previousQ, prompt],
               previousA: [...s.previousA, response.r],
               messages: [
                 ...s.messages,

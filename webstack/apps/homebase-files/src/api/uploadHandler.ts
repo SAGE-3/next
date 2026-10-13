@@ -27,17 +27,31 @@ import { UploadConnector } from '../connectors/upload-connector';
 import { AssetsCollection } from './assetsCollection';
 import { addUploadMessage } from './messageCollection';
 import { AssetSchema } from '@sage3/shared/types';
+import { toPluginAsset } from '@sage3/backend';
+import { PluginAssetRequestError } from './plugin-asset-access';
 
 // Google storage and AWS S3 storage
 // import { multerGoogleMiddleware, multerS3Middleware } from './middleware-upload';
 
 export async function uploadHandler(req: express.Request, res: express.Response) {
+  return handleUpload(req, res);
+}
+
+export async function uploadPluginAsset(req: express.Request, res: express.Response, pluginRoomId: string) {
+  return handleUpload(req, res, pluginRoomId);
+}
+
+async function handleUpload(req: express.Request, res: express.Response, pluginRoomId?: string) {
   const uploadId = getUUID();
-  const headerRoomId = req.header('x-sage3-room') || undefined;
+  const headerRoomId = pluginRoomId ?? (req.header('x-sage3-room') || undefined);
   // Signal the start of the upload
   await addUploadMessage(req.user.id, `Uploading Assets`, { uploadId, roomId: headerRoomId, phase: 'uploading' });
 
-  return UploadConnector.getInstance().uploadMiddleware('files')(req, res, async (err) => {
+  const connector = UploadConnector.getInstance();
+  const middleware = pluginRoomId ? connector.pluginUploadMiddleware() : connector.uploadMiddleware('files');
+  let persisted = false;
+
+  const processFiles = async (err?: { message: string; code?: string }) => {
     let hasError = false;
     let processError = '';
     // multerGoogleMiddleware("files")(req, res, (err) => {
@@ -47,6 +61,11 @@ export async function uploadHandler(req: express.Request, res: express.Response)
       hasError = true;
       processError = err.message;
       await addUploadMessage(req.user.id, `Upload failed: ${processError}`, { uploadId, roomId: headerRoomId, phase: 'failed', close: true });
+      if (pluginRoomId) {
+        return res
+          .status(err.code === 'LIMIT_FILE_SIZE' ? 413 : 400)
+          .json({ error: 'Upload rejected. Supply one file within the upload limit.' });
+      }
       return res.status(500).send(processError);
     }
     // destructure the request into an array of file objects
@@ -61,10 +80,13 @@ export async function uploadHandler(req: express.Request, res: express.Response)
         id: string;
       }>;
     };
+    if (pluginRoomId && files?.length !== 1) {
+      throw new PluginAssetRequestError('Supply exactly one file.');
+    }
 
     // Get the current uploader information
     const user = req.user as SBAuthSchema;
-    const roomId = req.body.room || headerRoomId || '-';
+    const roomId = pluginRoomId ?? (req.body.room || headerRoomId || '-');
     const messageRoomId = roomId === '-' ? undefined : roomId;
 
     // Signal the start of the processing
@@ -163,7 +185,16 @@ export async function uploadHandler(req: express.Request, res: express.Response)
     }
 
     // Add all the new files to the collection
+    if (pluginRoomId && (hasError || newAssets.length !== 1)) {
+      throw new PluginAssetRequestError('Asset processing failed.', 500);
+    }
+
     const lots = await AssetsCollection.addBatch(newAssets, user.id);
+    if (pluginRoomId && lots?.length !== 1) {
+      throw new PluginAssetRequestError('Asset could not be saved.', 500);
+    }
+
+    persisted = Boolean(lots?.length);
     if (lots) {
       // Collect the ids of the new files
       const ids = lots.map((l) => l._id);
@@ -198,7 +229,20 @@ export async function uploadHandler(req: express.Request, res: express.Response)
         close: true,
       });
       // Return success with the ids of the new files
-      res.status(200).send(newIds);
+      res.status(200).send(pluginRoomId && lots?.[0] ? toPluginAsset(lots[0]) : newIds);
     }
+  };
+
+  return middleware(req, res, (err) => {
+    void processFiles(err).catch((error) => {
+      if (pluginRoomId && !persisted) {
+        const files = req.files as Express.Multer.File[] | undefined;
+        AssetsCollection.deleteAssetFiles((files ?? []).map((file) => ({ file: file.filename })));
+      }
+
+      const status = error instanceof PluginAssetRequestError ? error.status : 500;
+      const message = error instanceof PluginAssetRequestError ? error.message : 'Asset upload failed.';
+      res.status(status).json({ error: message });
+    });
   });
 }
