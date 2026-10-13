@@ -4,18 +4,44 @@
 
 This is the first release of the manifest-based SDK. Legacy plugin packages do not run. Existing board apps and saved data remain. The SDK has no `S3`, `frameElement`, `subscribeToUpdates`, or `update` compatibility interfaces.
 
-## Build the library
+## Build the library and examples
 
 Use Node.js 22.13+ in the 22.x series, or Node.js 24, with the workspace dependencies installed. From `webstack/`:
 
 ```sh
 yarn nx build sageplugin
 npm pack ./dist/libs/sageplugin --pack-destination /tmp
+node libs/sageplugin/examples/reading/build.cjs
+node libs/sageplugin/examples/study-notes/build.cjs
 ```
 
 The library artifact lives in `dist/libs/sageplugin`: CommonJS `index.js`, `index.d.ts` and their `lib/` modules, the reusable builder, package metadata, and this README. Examples, starter sources, tests, and repository configs are not shipped. `yjs` and `y-textarea` are runtime dependencies; TypeScript, webpack, and JSZip support the installed builder. No publish step is needed or performed.
 
+The example ZIPs are `dist/plugins/sage-reading.zip` and `dist/plugins/study-notes.zip`. Both accept an optional output path and `--watch`:
+
+```sh
+node libs/sageplugin/examples/study-notes/build.cjs /tmp/study-notes.zip --watch
+```
+
 Upload a ZIP through **Plugins → Upload**. The room owner enables it for the current board after reviewing its capabilities. Uploading alone does not run code. The owner can explicitly opt into auto-approval of future uploads by this package's uploader on this board within the approved capability set. Additional capabilities need fresh consent. Watch only rebuilds the local ZIP; it does not upload, change permissions, or bypass consent.
+
+Reading adds page-linked notes and bookmarks. Select a PDF before selecting its text. Study notes demonstrates collaborative card bodies, flashcards, comparison, source navigation, and portable import/export using explicit app/link/asset identity remapping. Both use the installed SDK import name, with a source alias supplied only by their repository build wrappers.
+
+### Study notes and portable boards
+
+Choose **New note card**, **New flashcards**, or **New comparison table** explicitly from the board menu. The card's in-view double-click and **edit note** command open its app-bound editor. Card metadata is field-patched; its body is one Yjs text document shared by the editor, card renderer, and **quote into note card** command. Quote provenance uses idempotent native links, not a second remembered link list.
+
+**Export or import board** packages `board.json`, original asset binaries, and referenced PDF page previews in a downloadable ZIP. `ui.download` hands the blob to the host under `downloads.write`; use its visible save confirmation if prompted. An acknowledgement means the host accepted the download, not proof that the browser saved a file. Import uploads those binaries through the host, creates apps in the current installation, and remaps board/installation/app/asset/link identities—including SDK document references inside note text—before restoring metadata, text, and board state. Asset names are display labels, never identity matches. New Yjs documents receive exported plaintext; CRDT client identities are not copied.
+
+Cards use `{assetId, page?}` for polaroid images, and body lines `img: ASSET_ID | caption | ZERO_BASED_PAGE` for figures (omit the page for an original image). These read scoped blobs through the host and display local object URLs. PDF reference chips use the SDK's structured document-reference formatter/parser; ordinary HTTP(S) links use `ui.openUrl`.
+
+Unsupported apps remain named in export/import diagnostics. SageCells are never executed or recreated through REST. Native Notepads export their saved plain-text Delta; rich formatting is explicitly reported as non-portable, and embedded non-text content is unsupported. Close or save active edits before exporting. Imports retain already-created records if a later operation fails and report the failure rather than silently dropping it.
+
+Example regression checks (from `webstack/`):
+
+```sh
+node --test libs/sageplugin/examples/reading/source.test.cjs libs/sageplugin/examples/study-notes/portable.test.cjs
+```
 
 ## Independent starter from a local tarball
 
@@ -223,7 +249,7 @@ A trusted host page confines the inner opaque-origin iframe to its immutable pac
 ## Integration checks (run by the integration owner)
 
 ```sh
-node --test libs/sageplugin/*.test.cjs libs/sageplugin/tools/*.test.cjs
+node --test libs/sageplugin/*.test.cjs libs/sageplugin/tools/*.test.cjs libs/sageplugin/examples/*/*.test.cjs
 node libs/applications/src/lib/apps/PDFViewer/PDFSelection.test.cjs
 yarn nx test homebase
 SAGE3_TEST_REDIS_URL=redis://127.0.0.1:16379 yarn nx run-many --target=test --projects=sagebase,homebase --skip-nx-cache

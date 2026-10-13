@@ -16,7 +16,7 @@
     "build": "nx build",
     "buildall": "nx run-many --target=build --configuration=development --parallel=4 --verbose",
     "buildallprod": "nx run-many --target=build --configuration=production --parallel=4 --verbose",
-    "test": "yarn nx run-many --target=test --projects=sagebase,shared,backend,homebase && node --test libs/sageplugin/*.test.cjs && node libs/applications/src/lib/apps/PDFViewer/PDFSelection.test.cjs",
+    "test": "yarn nx run-many --target=test --projects=sagebase,shared,backend,homebase && node --test libs/sageplugin/*.test.cjs libs/sageplugin/examples/*/*.test.cjs && node libs/applications/src/lib/apps/PDFViewer/PDFSelection.test.cjs",
     "homebase": "nx serve homebase",
     "homebase-files": "nx serve homebase-files",
     "homebase-yjs": "nx serve homebase-yjs",

@@ -17,7 +17,16 @@ Packages require a `manifest.json` containing their stable ID, display name, con
 
 Disabling preserves shared extension state and custom app content; unavailable custom apps remain as placeholders. Changing package bytes requires approval again unless the room owner opted into future uploads within the approved capabilities. Explicit deletion removes the catalogue and extension-level board state while leaving board apps and native notes.
 
-For the manifest, API, persistence rules, native app adapters, sandbox restrictions, and publication instructions, see the [SDK guide](../webstack/libs/sageplugin/README.md).
+For the manifest, API, persistence rules, native app adapters, sandbox restrictions, and publication instructions, see the [SDK guide](../webstack/libs/sageplugin/README.md). A complete [reading extension](../webstack/libs/sageplugin/examples/reading) demonstrates passage-linked native Notepad creation, provenance links, persistent bookmarks, and shared PDF navigation.
+
+Build that example from `webstack/`:
+
+```sh
+yarn nx build sageplugin
+node libs/sageplugin/examples/reading/build.cjs
+```
+
+Upload `dist/plugins/sage-reading.zip`. Select a PDF app before selecting its text, then use its toolbar or right-click menu to create a linked note.
 
 ---
 
