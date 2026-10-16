@@ -29,7 +29,6 @@ function AppComponent(props: CobrowseApp): JSX.Element {
     <AppWindow app={props} hideBackgroundColor={'orange'} hideBordercolor={'orange'} hideBackgroundIcon={TbWorld}>
       <VNCAudioWrapper
         veoUrl={veoUrl}
-        container="firefox-audio"
         envs={{}}
         props={props}
         sAudio={s.audio}

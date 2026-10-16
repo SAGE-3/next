@@ -19,7 +19,6 @@ import { AudioVncService } from '../../components/VNC/AudioVncService';
 
 export interface NoVncProps {
   veoUrl: string;
-  container: string;
   envs: {};
   props: App;
   sAudio: boolean;
@@ -33,7 +32,6 @@ export interface NoVncProps {
 
 const VNCAudioWrapperComponent = ({
   veoUrl,
-  container,
   envs,
   props,
   sAudio,
@@ -90,7 +88,7 @@ const VNCAudioWrapperComponent = ({
   useEffect(() => {
     if (isSelected && vmId && !vncScreenRef.current) {
       setRejoinSpinner(true);
-      VmsAPI.init(veoUrl, vmId, container, envs).then((jsonData) => {
+      VmsAPI.init(vmId, envs).then((jsonData) => {
         if ('url' in jsonData) {
           setWsUrl(jsonData['url']);
           setRejoinSpinner(false);
@@ -108,14 +106,14 @@ const VNCAudioWrapperComponent = ({
     if (sInit) {
       if ((startVmOnLoad && appIsMountingRef.current) || !appIsMountingRef.current) {
         // Start container or retrieve WS URL if already running
-        VmsAPI.init(veoUrl, vmId, container, envs).then((jsonData) => {
+        VmsAPI.init(vmId, envs).then((jsonData) => {
           if ('url' in jsonData) {
             setWsUrl(jsonData['url']);
           }
         });
       } else if (appIsMountingRef.current) {
         // On first mount: only check if container is already running — don't auto-start
-        VmsAPI.check(veoUrl, vmId).then((jsonData) => {
+        VmsAPI.check(vmId).then((jsonData) => {
           if ('url' in jsonData) {
             setWsUrl(jsonData['url']);
           }
@@ -137,7 +135,7 @@ const VNCAudioWrapperComponent = ({
   useEffect(() => {
     appIsMountingRef.current = false;
     if (!sInit && props._createdBy === user?._id) {
-      VmsAPI.init(veoUrl, vmId, 'firefox-audio', { FIREFOX_THEME: theme }).then((_jsonData) => {
+      VmsAPI.init(vmId, { FIREFOX_THEME: theme }).then((_jsonData) => {
         updateState(props._id, {
           refreshSeed: Math.random(),
           init: true,
@@ -247,7 +245,6 @@ export const VNCAudioWrapper = memo(VNCAudioWrapperComponent, (prevProps, nextPr
   // Return true if props are equal (skip re-render), false if different (re-render)
   return (
     prevProps.veoUrl === nextProps.veoUrl &&
-    prevProps.container === nextProps.container &&
     prevProps.sAudio === nextProps.sAudio &&
     prevProps.sNonOwnerViewOnly === nextProps.sNonOwnerViewOnly &&
     prevProps.sLastImage === nextProps.sLastImage &&
