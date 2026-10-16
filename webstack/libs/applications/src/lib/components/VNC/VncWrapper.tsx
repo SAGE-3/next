@@ -135,7 +135,7 @@ const VNCAudioWrapperComponent = ({
   useEffect(() => {
     appIsMountingRef.current = false;
     if (!sInit && props._createdBy === user?._id) {
-      VmsAPI.init(vmId, { FIREFOX_THEME: theme }).then((_jsonData) => {
+      VmsAPI.init(vmId, { ...envs, FIREFOX_THEME: theme }).then((_jsonData) => {
         updateState(props._id, {
           refreshSeed: Math.random(),
           init: true,

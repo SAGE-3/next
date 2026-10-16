@@ -20,7 +20,7 @@ import { veoSettings } from './settings';
  * There is no user session here: each request must carry the app's own callback
  * secret (HMAC of its uid) as a Bearer token, which only this server and VEO know.
  *
- *   POST /state/:uid  JSON state from the container, e.g. { lastImage }
+ *   POST /state/:uid  JSON state from the container: { lastImage } or { urls }
  *   POST /file/:uid   multipart file upload (no SAGE3 app uses it yet)
  *
  * VEO waits for the answer and never retries, so these answer quickly and honestly.
@@ -50,11 +50,14 @@ export function VeoCallbackRouter(): express.Router {
         res.status(404).json({ message: 'App not found' });
         return;
       }
-      // Dotted key, as the frontend's updateState uses, so other state fields are untouched.
-      // SBDocumentUpdate doesn't type paths into the per-app state union, hence the assertion.
-      if (parsed.state.lastImage !== undefined) {
-        const update = { 'state.lastImage': parsed.state.lastImage } as SBDocumentUpdate<AppSchema>;
-        await AppsCollection.update(app._id, 'VEO', update);
+      // Dotted keys, as the frontend's updateState uses, so other state fields are untouched
+      const update: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(parsed.state)) {
+        update[`state.${key}`] = value;
+      }
+      if (Object.keys(update).length > 0) {
+        // SBDocumentUpdate doesn't type paths into the per-app state union, hence the assertion
+        await AppsCollection.update(app._id, 'VEO', update as SBDocumentUpdate<AppSchema>);
       }
       res.status(204).send();
     } catch (error) {
