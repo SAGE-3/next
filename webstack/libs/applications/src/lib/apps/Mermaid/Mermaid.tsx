@@ -7,6 +7,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
+import { MermaidApp } from '.';
 
 import { Button, ButtonGroup, Tooltip, Box, useColorModeValue, border } from '@chakra-ui/react';
 import mermaid, { type MermaidConfig } from "mermaid";
@@ -18,7 +19,6 @@ import { Asset } from '@sage3/shared/types';
 import { MdCode } from 'react-icons/md';
 
 import { state as AppState } from "./index";
-import { App, AppGroup } from "../../schema";
 import { AppWindow } from '../../components';
 
 import './styles.css';
@@ -39,8 +39,8 @@ function CustomErrorComponent({ error, mermaidCode }: { error: string; mermaidCo
 
 
 /* App component for Mermaid */
-function AppComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function AppComponent(props: MermaidApp): JSX.Element {
+  const s = props.data.state;
   const assets = useAssetStore((state) => state.assets);
   const update = useAppStore((state) => state.update);
 
@@ -153,8 +153,8 @@ function AppComponent(props: App): JSX.Element {
 }
 
 /* App toolbar component for the app Mermaid */
-function ToolbarComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function ToolbarComponent(props: MermaidApp): JSX.Element {
+  const s = props.data.state;
   const updateState = useAppStore((state) => state.updateState);
 
   return (
@@ -174,6 +174,6 @@ function ToolbarComponent(props: App): JSX.Element {
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = (props: { apps: AppGroup }) => { return null; };
+const GroupedToolbarComponent = (props: { apps: MermaidApp[] }) => { return null; };
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

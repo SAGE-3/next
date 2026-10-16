@@ -10,7 +10,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import { useToast } from '@chakra-ui/react';
 
-import type { App } from '@sage3/applications/schema';
+import { App, isApp } from '@sage3/applications/schema';
 import { getAllowedLinkTypes } from '@sage3/applications/apps';
 import { useHexColor, useLinkStore, useThrottleApps, useUIStore, useAppStore, useUser, useAuth, useCursorBoardPosition, useUserSettings, useHotkeys } from '@sage3/frontend';
 import { initialValues } from '@sage3/applications/initialValues';
@@ -81,7 +81,7 @@ export function LinkerMode() {
       }
 
       // Get all SAGECell Apps
-      const sageCellApps = apps.filter((a) => a.data.type === 'SageCell');
+      const sageCellApps = apps.filter((a) => isApp(a, 'SageCell'));
       // Do any of these SAGECells Apps have a link going into it from another app?
       const newCandidates = sageCellApps.filter((a) => {
         const existingIncoming = links.filter((l) => l.data.targetAppId === a._id && l.data.type === 'run_order'); 

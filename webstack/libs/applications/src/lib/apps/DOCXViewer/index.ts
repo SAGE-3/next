@@ -7,6 +7,9 @@
  */
 
 import { z } from 'zod';
+import type { App } from '../../schema';
+
+export const name = 'DOCXViewer';
 
 /**
  * SAGE3 application: DOCXViewer
@@ -33,4 +36,4 @@ export const init: Partial<state> = {
   displayPages: 1,
 };
 
-export const name = 'DOCXViewer';
+export type DOCXViewerApp = App<typeof name>;

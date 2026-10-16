@@ -7,6 +7,9 @@
  */
 
 import { z } from 'zod';
+import type { App } from '../../schema';
+
+export const name = 'PPTXViewer';
 
 /**
  * SAGE3 application: PPTXViewer
@@ -41,4 +44,4 @@ export const init: Partial<state> = {
   displaySlides: 1,
 };
 
-export const name = 'PPTXViewer';
+export type PPTXViewerApp = App<typeof name>;

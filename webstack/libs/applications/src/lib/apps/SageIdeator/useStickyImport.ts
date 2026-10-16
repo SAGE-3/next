@@ -11,6 +11,7 @@ import { useToast } from '@chakra-ui/react';
 import { useAppStore } from '@sage3/frontend';
 import { genId } from '@sage3/shared';
 
+import { isApp } from '../../schema';
 import { state as AppState } from './index';
 import { abstractNode, buildRequirements } from './openai';
 import { useAiProvider } from './useAiProvider';
@@ -51,7 +52,7 @@ export function useStickyImport({ s, localDims, activeEntryId, appId, appPositio
   // App dragging in SAGE3 is local-only during the drag; the store position only updates
   // when the drag ends and the server confirms, so position changes == drag-end events.
   useEffect(() => {
-    const stickies = boardApps.filter((a) => a.data.type === 'Stickie');
+    const stickies = boardApps.filter((a) => isApp(a, 'Stickie'));
 
     for (const stickie of stickies) {
       const prev = prevPositionsRef.current[stickie._id];

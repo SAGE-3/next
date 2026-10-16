@@ -28,8 +28,8 @@ import type { PptxViewer, SlideHandle } from '@aiden0z/pptx-renderer';
 import { useAppStore, useAssetStore, apiUrls, downloadFile } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
 
-import { state as AppState } from './index';
-import { App, AppGroup } from '../../schema';
+import { state as AppState, PPTXViewerApp } from './index';
+import { App } from '../../schema';
 import { AppWindow } from '../../components';
 
 // Styling
@@ -213,8 +213,8 @@ function ExtraSlide(props: { viewer: PptxViewer; index: number; aspect: number }
 
 /* App component for PPTXViewer */
 
-function AppComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function AppComponent(props: PPTXViewerApp): JSX.Element {
+  const s = props.data.state;
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
   const assets = useAssetStore((state) => state.assets);
@@ -506,8 +506,8 @@ function AppComponent(props: App): JSX.Element {
 }
 
 /* App toolbar component for the app PPTXViewer */
-function ToolbarComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function ToolbarComponent(props: PPTXViewerApp): JSX.Element {
+  const s = props.data.state;
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
   const assets = useAssetStore((state) => state.assets);
@@ -610,7 +610,7 @@ function ToolbarComponent(props: App): JSX.Element {
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
+const GroupedToolbarComponent = (props: { apps: PPTXViewerApp[] }) => {
   return null;
 };
 

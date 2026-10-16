@@ -7,6 +7,9 @@
  */
 
 import { z } from 'zod';
+import type { App } from '../../schema';
+
+export const name = 'PluginApp';
 
 /**
  * SAGE3 application: PluginApp
@@ -21,4 +24,4 @@ export const init: Partial<state> = {
   pluginName: '',
 };
 
-export const name = 'PluginApp';
+export type PluginAppApp = App<typeof name>;

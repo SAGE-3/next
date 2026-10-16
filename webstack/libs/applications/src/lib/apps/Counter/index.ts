@@ -7,6 +7,9 @@
  */
 
 import { z } from 'zod';
+import type { App } from '../../schema';
+
+export const name = 'Counter';
 
 export const schema = z.object({
   count: z.number(),
@@ -22,4 +25,4 @@ export const init: Partial<state> = {
   executeInfo: { executeFunc: '', params: {} },
 };
 
-export const name = 'Counter';
+export type CounterApp = App<typeof name>;

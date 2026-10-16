@@ -143,34 +143,21 @@ async function updateTypes(root: string) {
   let output = '// SAGE3 Generated from apps.json file\n\n';
   for (let i in apps) {
     const it = apps[i];
-    output += `import { state as ${it}State, name as ${it}Name } from './apps/${it}';\n`;
-  }
-  output += `\n`;
-  output += `\n`;
-  output += `export type AppState =\n`;
-  output += `  | {}\n`;
-  for (let i in apps) {
-    const it = apps[i];
-    const idx = Number(i);
-    if (idx == apps.length - 1) {
-      output += `  | ${it}State;\n`;
-    } else {
-      output += `  | ${it}State\n`;
-    }
+    output += `import * as ${it} from './apps/${it}';\n`;
   }
 
+  // Map each app name to its state type: App<T> and isApp narrow through it
   output += `\n`;
-  output += `\n`;
-  output += `export type AppName = `;
+  output += `export type AppStateMap = {\n`;
   for (let i in apps) {
     const it = apps[i];
-    const idx = Number(i);
-    if (idx == apps.length - 1) {
-      output += `typeof ${it}Name;`;
-    } else {
-      output += `typeof ${it}Name | `;
-    }
+    output += `  [${it}.name]: ${it}.state;\n`;
   }
+  output += `};\n`;
+
+  output += `\n`;
+  output += `export type AppName = keyof AppStateMap;\n`;
+  output += `export type AppState = AppStateMap[AppName];\n`;
 
   // Export all the applications and save
   await fs.writeFile(indexPath, output);
