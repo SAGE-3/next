@@ -91,6 +91,12 @@ There are two ways to get an image:
 
 Either way the image is generated, saved into the room's assets, and opened as an ImageViewer window on the board, linked back to the Chat that made it. Image generation needs a model that declares the `imagegen` capability — see [AI Configuration](Server-Deployment.md#ai-configuration) — so it is not available with a personal API key, which is assumed to cover text tasks only.
 
+### Diagrams
+
+When an answer contains a Mermaid code block (a fenced block marked `mermaid`), its header shows an **Open in App** button <img src="icons/applications/BsDiagram3.svg" width="20" /> next to **Copy**. It opens the diagram in a [Mermaid](#mermaid) app next to the Chat, linked to it.
+
+Example prompts: *"Draw a flowchart of the steps to publish a dataset, as a Mermaid diagram."*, *"Show the classes of this code as a Mermaid class diagram."*
+
 ### Asking about content (images, PDFs, sticky notes)
 
 You can ask the AI about content already on the board:
@@ -155,7 +161,7 @@ A shared web browser that streams a live Firefox session to all users on the boa
 
 ## CodeEditor
 
-A collaborative code editor for writing and reviewing code in real time. Changes are synchronized across all users, making it ideal for pair programming, code reviews, or group problem-solving. Supports many languages including Python, JavaScript, TypeScript, C/C++, Java, HTML, CSS, JSON, Markdown, R, and YAML.
+A collaborative code editor for writing and reviewing code in real time. Changes are synchronized across all users, making it ideal for pair programming, code reviews, or group problem-solving. Supports many languages including Python, JavaScript, TypeScript, C/C++, Java, HTML, CSS, JSON, Markdown, Mermaid, R, and YAML.
 
 
 ![CodeEditor](images/applications/applications_codeeditor.jpeg)
@@ -168,9 +174,9 @@ A collaborative code editor for writing and reviewing code in real time. Changes
 | Font Size - | Button | <img src="icons/applications/MdRemove.svg" width="20" /> | Decrease the font size |
 | Font Size + | Button | <img src="icons/applications/MdAdd.svg" width="20" /> | Increase the font size |
 | Read Only / Edit | Toggle | <img src="icons/applications/MdLock.svg" width="20" /> <img src="icons/applications/MdLockOpen.svg" width="20" /> | Toggle between locked and editable modes |
-| Save to Asset Manager | Button | <img src="icons/applications/MdFileUpload.svg" width="20" /> | Upload the code to the server's asset manager |
+| Save to Asset Manager | Button | <img src="icons/applications/MdCloudUpload.svg" width="20" /> | Upload the code to the server's asset manager |
 | Download | Button | <img src="icons/applications/MdFileDownload.svg" width="20" /> | Download the code as a file |
-| Preview | Button | <img src="icons/applications/MdSlideshow.svg" width="20" /> | For Markdown or HTML, opens a rendered preview |
+| Preview | Button | <img src="icons/applications/MdSlideshow.svg" width="20" /> | For Markdown or HTML, opens a rendered preview. For Mermaid, opens the diagram in a [Mermaid](#mermaid) app that updates as you edit |
 
 ---
 
@@ -292,6 +298,29 @@ An interactive map powered by MapGL. Navigate by panning and zooming with the mo
 | Street Map | Button | <img src="icons/applications/MdMap.svg" width="20" /> | Switch to the OpenStreetMap base layer |
 | Satellite Map | Button | <img src="icons/applications/MdTerrain.svg" width="20" /> | Switch to the satellite imagery base layer |
 | Add Layer | Button | <img src="icons/applications/MdAdd.svg" width="20" /> | Overlay GeoJSON or GeoTIFF data from the asset manager |
+
+---
+
+## Mermaid
+
+> *Opens automatically when a Mermaid file (`.mmd`, `.mermaid`) is uploaded to the board.*
+
+Renders diagrams written in the [Mermaid](https://mermaid.js.org) text syntax: flowcharts, sequence, class, state and entity-relationship diagrams, Git graphs, Gantt charts, pie and XY charts, mind maps, timelines, and more. Diagrams are drawn with [pele](https://pele.run) and follow the board's light or dark mode.
+
+![Mermaid](images/applications/applications_mermaid.jpeg)
+
+*Sequence diagram, Git graph, flowchart, XY chart, entity-relationship and class diagrams.*
+
+You can also create a diagram without a file:
+
+- **From a CodeEditor:** set the language to **Mermaid** and click **Preview** <img src="icons/applications/MdSlideshow.svg" width="20" />. The diagram opens next to the editor and updates as you edit.
+- **From Chat:** when SAGE answers with a Mermaid code block, click **Open in App** in the block's header (see [Chat](#chat)).
+
+| Name | Type | Icon | Description |
+|------|------|------|-------------|
+| Edit in Code Editor | Button | <img src="icons/applications/MdEdit.svg" width="20" /> | Opens the diagram code in a CodeEditor next to the diagram, which then updates as you edit. If an editor is already linked, selects it |
+| Download Mermaid File | Button | <img src="icons/applications/PiGraph.svg" width="20" /> | Download the diagram code as a `.mmd` file |
+| Download as SVG | Button | <img src="icons/applications/BsFiletypeSvg.svg" width="20" /> | Download the rendered diagram as an `.svg` image |
 
 ---
 
@@ -418,7 +447,7 @@ A computational code cell backed by a Jupyter kernel. Write and execute Python, 
 | Help | Button | <img src="icons/applications/MdHelp.svg" width="20" /> | Open the SageCell help reference |
 | Font Size - | Button | <img src="icons/applications/MdRemove.svg" width="20" /> | Decrease the font size |
 | Font Size + | Button | <img src="icons/applications/MdAdd.svg" width="20" /> | Increase the font size |
-| Save to Asset Manager | Button | <img src="icons/applications/MdFileUpload.svg" width="20" /> | Upload the code to the asset manager |
+| Save to Asset Manager | Button | <img src="icons/applications/MdCloudUpload.svg" width="20" /> | Upload the code to the asset manager |
 | Download | Button | <img src="icons/applications/MdFileDownload.svg" width="20" /> | Download the code as a `.py`, `.R`, or `.jl` file |
 
 ---
@@ -462,7 +491,7 @@ The text is Markdown, shown as a live preview: headings, bold and italic text, l
 | Font Size + | Button | <img src="icons/applications/MdAdd.svg" width="20" /> | Increase the font size |
 | Lock / Unlock | Toggle | <img src="icons/applications/MdLock.svg" width="20" /> <img src="icons/applications/MdLockOpen.svg" width="20" /> | Prevent or allow editing by other users (owner only) |
 | Color | Color Picker | <img src="icons/applications/MdStickyNote2.svg" width="20" /> | Change the stickie color |
-| Save to Asset Manager | Button | <img src="icons/applications/MdFileUpload.svg" width="20" /> | Upload the note as a `.md` file |
+| Save to Asset Manager | Button | <img src="icons/applications/MdCloudUpload.svg" width="20" /> | Upload the note as a `.md` file |
 | Download as Markdown | Button | <img src="icons/applications/MdFileDownload.svg" width="20" /> | Download the note as a `.md` file |
 
 ---
@@ -518,7 +547,7 @@ Paste a URL onto the board to create a WebpageLink. It fetches and displays meta
 | Stream Webview | Button | <img src="icons/applications/MdViewSidebar.svg" width="20" /> | Stream the webview content (Electron client) |
 | Open in Desktop | Button | <img src="icons/applications/MdDesktopMac.svg" width="20" /> | Open the URL in your system browser |
 | Copy URL | Button | <img src="icons/applications/MdCopyAll.svg" width="20" /> | Copy the URL to your clipboard |
-| Save to Asset Manager | Button | <img src="icons/applications/MdFileUpload.svg" width="20" /> | Save the link as a `.url` file |
+| Save to Asset Manager | Button | <img src="icons/applications/MdCloudUpload.svg" width="20" /> | Save the link as a `.url` file |
 | Download Link | Button | <img src="icons/applications/MdFileDownload.svg" width="20" /> | Download as a `.url` file |
 
 ---
@@ -546,7 +575,7 @@ An embedded web browser within the board. Enter any URL to load a web page direc
 | Zoom In | Button | <img src="icons/applications/MdAdd.svg" width="20" /> | Increase the page zoom level |
 | Zoom Out | Button | <img src="icons/applications/MdRemove.svg" width="20" /> | Decrease the page zoom level |
 | Mute | Toggle | <img src="icons/applications/MdVolumeOff.svg" width="20" /> | Toggle audio |
-| Save URL | Button | <img src="icons/applications/MdFileUpload.svg" width="20" /> | Save the URL to the asset manager |
+| Save URL | Button | <img src="icons/applications/MdCloudUpload.svg" width="20" /> | Save the URL to the asset manager |
 | Copy URL | Button | <img src="icons/applications/MdCopyAll.svg" width="20" /> | Copy the URL to your clipboard |
 | Open in Desktop | Button | <img src="icons/applications/MdOpenInNew.svg" width="20" /> | Open the URL in your system browser |
 
