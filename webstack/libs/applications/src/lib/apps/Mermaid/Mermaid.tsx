@@ -13,10 +13,10 @@ import { Button, ButtonGroup, Tooltip, Box, useColorModeValue, useToken } from '
 import { renderAsync } from 'pele/lazy';
 
 // Utility functions from SAGE3
-import { useAppStore, isUUIDv4, useAssetStore, apiUrls } from '@sage3/frontend';
+import { useAppStore, isUUIDv4, useAssetStore, apiUrls, downloadFile } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
 
-import { MdCode } from 'react-icons/md';
+import { MdCode, MdFileDownload } from 'react-icons/md';
 
 import { AppWindow } from '../../components';
 
@@ -170,18 +170,34 @@ function AppComponent(props: MermaidApp): JSX.Element {
 /* App toolbar component for the app Mermaid */
 function ToolbarComponent(props: MermaidApp): JSX.Element {
   const s = props.data.state;
-  const updateState = useAppStore((state) => state.updateState);
+  const assets = useAssetStore((state) => state.assets);
+  const [file, setFile] = useState<Asset>();
+
+  useEffect(() => {
+    const asset = assets.find((a) => a._id === s.assetid);
+    if (asset) {
+      setFile(asset);
+    }
+  }, [s.assetid, assets]);
 
   return (
-    <>
-      <ButtonGroup isAttached size="xs" colorScheme="teal" mr="1">
-        <Tooltip placement="top-start" hasArrow={true} label={'Action'} openDelay={400}>
-          <Button onClick={console.log}>
-            Action
-          </Button>
-        </Tooltip>
-      </ButtonGroup>
-    </>
+    <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
+      <Tooltip placement="top" hasArrow={true} label={'Download Mermaid File'} openDelay={400}>
+        <Button
+          isDisabled={!file}
+          onClick={() => {
+            if (file) {
+              const dl = apiUrls.assets.getAssetById(file.data.file);
+              downloadFile(dl, file.data.originalfilename);
+            }
+          }}
+          size="xs"
+          px={0}
+        >
+          <MdFileDownload size="16px" />
+        </Button>
+      </Tooltip>
+    </ButtonGroup>
   );
 }
 
