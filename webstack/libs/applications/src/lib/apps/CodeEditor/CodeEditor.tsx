@@ -26,7 +26,7 @@ import {
   MenuItem,
 } from '@chakra-ui/react';
 import { debounce } from 'throttle-debounce';
-import { MdLock, MdLockOpen, MdRemove, MdAdd, MdFileDownload, MdFileUpload, MdCode, MdSlideshow } from 'react-icons/md';
+import { MdLock, MdLockOpen, MdRemove, MdAdd, MdFileDownload, MdCloudUpload, MdCode, MdSlideshow } from 'react-icons/md';
 
 // Markdown
 import Markdown from 'markdown-to-jsx';
@@ -296,6 +296,21 @@ function ToolbarComponent(props: CodeEditorApp): JSX.Element {
         const targetId = res.data._id;
         addLink(sourceId, targetId, props.data.boardId, 'provenance');
       }
+    } else if (s.language === 'mermaid') {
+      // Open a Mermaid app that follows this editor's code
+      const w = props.data.size.width;
+      const h = props.data.size.height;
+      const x = props.data.position.x + w + 20;
+      const y = props.data.position.y;
+      const app = setupApp('Mermaid', 'Mermaid', x, y, roomId, boardId, { w, h }, { content: s.content });
+      app.sourceApps = [props._id]; // Link to the original app
+      const res = await createApp(app);
+      // If the app was created successfully, add a link to the provenance
+      if (res.success === true) {
+        const sourceId = props._id;
+        const targetId = res.data._id;
+        addLink(sourceId, targetId, props.data.boardId, 'provenance');
+      }
     } else if (s.language === 'html') {
       // Create a new app with the HTML
       const htmlResult = s.content;
@@ -440,7 +455,7 @@ function ToolbarComponent(props: CodeEditorApp): JSX.Element {
       <ButtonGroup isAttached size="xs" colorScheme="teal" ml={1}>
         <Tooltip placement="top" hasArrow={true} label={'Save Code in Asset Manager'} openDelay={400}>
           <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }} isDisabled={s.content.length === 0} size='xs' px={0}>
-            <MdFileUpload size="16px" />
+            <MdCloudUpload size="16px" />
           </Button>
         </Tooltip>
 
@@ -450,7 +465,7 @@ function ToolbarComponent(props: CodeEditorApp): JSX.Element {
           </Button>
         </Tooltip>
       </ButtonGroup>
-      {(s.language === 'markdown' || s.language === 'html') && (
+      {(s.language === 'markdown' || s.language === 'html' || s.language === 'mermaid') && (
         <ButtonGroup isAttached size="xs" colorScheme="teal" ml={1}>
           <Tooltip placement="top" hasArrow={true} label={'Preview Content'} openDelay={400}>
             <Button onClick={previewContent} _hover={{ opacity: 0.7 }} size='xs' px={0}>

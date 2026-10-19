@@ -18,6 +18,8 @@ export const name = 'Mermaid';
 
 export const schema = z.object({
   assetid: z.string(),
+  // Diagram text, used instead of the asset (e.g. a CodeEditor preview)
+  content: z.string().optional(),
 });
 export type state = z.infer<typeof schema>;
 
