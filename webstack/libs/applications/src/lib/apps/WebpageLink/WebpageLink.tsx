@@ -25,7 +25,7 @@ import {
   DrawerHeader,
   DrawerBody,
 } from '@chakra-ui/react';
-import { MdWeb, MdViewSidebar, MdDesktopMac, MdCopyAll, MdFileDownload, MdFileUpload, MdLink } from 'react-icons/md';
+import { MdWeb, MdViewSidebar, MdDesktopMac, MdCopyAll, MdFileDownload, MdCloudUpload, MdLink } from 'react-icons/md';
 
 import { isElectron, useAppStore, processContentURL, downloadFile, ConfirmValueModal, apiUrls } from '@sage3/frontend';
 import { throttle } from 'throttle-debounce';
@@ -500,7 +500,7 @@ function ToolbarComponent(props: WebpageLinkApp): JSX.Element {
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top" hasArrow={true} label={'Save URL in Asset Manager'} openDelay={400}>
           <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }} size="xs" px={0}>
-            <MdFileUpload size="16px" />
+            <MdCloudUpload size="16px" />
           </Button>
         </Tooltip>
 

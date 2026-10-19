@@ -21,7 +21,7 @@ import {
   MdVolumeUp,
   MdOpenInNew,
   MdCopyAll,
-  MdFileUpload,
+  MdCloudUpload,
   MdWeb,
   MdCallMade,
   MdCallReceived,
@@ -677,7 +677,7 @@ function ToolbarComponent(props: WebviewApp): JSX.Element {
 
             <Tooltip placement="top" hasArrow={true} label={'Save URL in Asset Manager'} openDelay={400}>
               <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }} size="xs" px={0}>
-                <MdFileUpload size="16px" />
+                <MdCloudUpload size="16px" />
               </Button>
             </Tooltip>
 
