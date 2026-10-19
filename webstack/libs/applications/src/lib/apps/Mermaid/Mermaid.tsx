@@ -9,8 +9,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { MermaidApp } from '.';
 
-import { Button, ButtonGroup, Tooltip, Box, useColorModeValue, border } from '@chakra-ui/react';
-import mermaid, { type MermaidConfig } from "mermaid";
+import { Button, ButtonGroup, Tooltip, Box, useColorModeValue, useToken } from '@chakra-ui/react';
+import { renderAsync } from 'pele/lazy';
 
 // Utility functions from SAGE3
 import { useAppStore, isUUIDv4, useAssetStore, apiUrls } from '@sage3/frontend';
@@ -18,7 +18,6 @@ import { Asset } from '@sage3/shared/types';
 
 import { MdCode } from 'react-icons/md';
 
-import { state as AppState } from "./index";
 import { AppWindow } from '../../components';
 
 import './styles.css';
@@ -45,11 +44,26 @@ function AppComponent(props: MermaidApp): JSX.Element {
   const update = useAppStore((state) => state.update);
 
   // Styling
-  const theme = useColorModeValue('forest', 'dark');
   const bgColor = useColorModeValue('gray.100', 'gray.700');
   const borderColor = useColorModeValue('gray.700', 'gray.100');
-  // Unique ID for the mermaid container
-  const id = `mermaid-${props._id}`;
+  // Diagram colors, passed to pele as CSS variables
+  const [peleBg, peleFg, peleMuted, peleLine, peleSurface, peleSurfaceAlt, peleBorder, peleAccent] = useToken(
+    'colors',
+    useColorModeValue(
+      ['gray.100', 'gray.800', 'gray.500', 'gray.700', 'white', 'gray.50', 'gray.400', 'teal.500'],
+      ['gray.700', 'gray.100', 'gray.400', 'gray.200', 'gray.600', 'gray.800', 'gray.400', 'teal.200']
+    )
+  );
+  const peleTheme = {
+    '--pele-bg': peleBg,
+    '--pele-fg': peleFg,
+    '--pele-muted': peleMuted,
+    '--pele-line': peleLine,
+    '--pele-surface': peleSurface,
+    '--pele-surface-alt': peleSurfaceAlt,
+    '--pele-border': peleBorder,
+    '--pele-accent': peleAccent,
+  } as React.CSSProperties;
   // Ref for the mermaid container
   const mermaidRef = useRef<HTMLDivElement>(null);
   // Error state
@@ -96,18 +110,13 @@ function AppComponent(props: MermaidApp): JSX.Element {
 
   useEffect(() => {
     if (!mermaidRef.current || !data) return;
-    async function renderMermaid(diag: string) {
-      const mermaidConfig: MermaidConfig = {
-        theme: theme,
-        fontSize: 20,
-      };
-      mermaid.initialize({
-        startOnLoad: false,
-        suppressErrorRendering: true,
-        ...mermaidConfig,
-      });
+    // Ignore a render that finishes after the text changed or the app closed
+    let cancelled = false;
+    async function renderDiagram(diag: string) {
       try {
-        const { svg } = await mermaid.render(id, diag);
+        // idPrefix keeps SVG ids unique when several diagrams share a board
+        const { svg } = await renderAsync(diag, { fontSize: 20, idPrefix: `diagram-${props._id}-` });
+        if (cancelled) return;
         if (mermaidRef.current) {
           mermaidRef.current.innerHTML = svg;
           const svgElement = mermaidRef.current.querySelector('svg');
@@ -122,12 +131,16 @@ function AppComponent(props: MermaidApp): JSX.Element {
         }
         setError(null);
       } catch (err: any) {
-        setError(err?.message || 'Unknown error rendering Mermaid diagram');
+        if (cancelled) return;
+        setError(err?.message || 'Unknown error rendering diagram');
         if (mermaidRef.current) mermaidRef.current.innerHTML = '';
       }
     }
-    renderMermaid(data);
-  }, [id, theme, data]);
+    renderDiagram(data);
+    return () => {
+      cancelled = true;
+    };
+  }, [props._id, data]);
 
   return (
     <AppWindow app={props} hideBackgroundIcon={MdCode}>
@@ -136,6 +149,7 @@ function AppComponent(props: MermaidApp): JSX.Element {
           <CustomErrorComponent error={error} mermaidCode={data} />
         ) : (
           <Box ref={mermaidRef} borderRadius={'md'}
+            className="mermaid-app"
             width="100%"
             height="100%"
             p={0}
@@ -145,6 +159,7 @@ function AppComponent(props: MermaidApp): JSX.Element {
             display="flex"
             alignItems="center"
             justifyContent="center"
+            style={peleTheme}
           />
         )}
       </Box>
