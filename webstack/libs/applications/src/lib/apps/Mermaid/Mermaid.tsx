@@ -75,12 +75,12 @@ function AppComponent(props: MermaidApp): JSX.Element {
   // Styling
   const bgColor = useColorModeValue('gray.100', 'gray.700');
   const borderColor = useColorModeValue('gray.700', 'gray.100');
-  // Diagram colors, passed to pele as CSS variables
+  // Diagram colors, passed to pele as CSS variables (nodes tinted with the SAGE3 teal)
   const [peleBg, peleFg, peleMuted, peleLine, peleSurface, peleSurfaceAlt, peleBorder, peleAccent] = useToken(
     'colors',
     useColorModeValue(
-      ['gray.100', 'gray.800', 'gray.500', 'gray.700', 'white', 'gray.50', 'gray.400', 'teal.500'],
-      ['gray.700', 'gray.100', 'gray.400', 'gray.200', 'gray.600', 'gray.800', 'gray.400', 'teal.200']
+      ['gray.100', 'gray.800', 'gray.500', 'gray.700', 'teal.50', 'teal.100', 'teal.600', 'teal.500'],
+      ['gray.700', 'gray.100', 'gray.400', 'gray.200', 'teal.800', 'teal.900', 'teal.400', 'teal.200']
     )
   );
   const peleTheme = {
