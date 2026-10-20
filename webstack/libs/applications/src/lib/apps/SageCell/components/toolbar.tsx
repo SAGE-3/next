@@ -14,7 +14,7 @@ import {
   MdAdd,
   MdArrowDropDown,
   MdFileDownload,
-  MdFileUpload,
+  MdCloudUpload,
   MdHelp,
   MdWeb,
   MdRemove,
@@ -336,7 +336,7 @@ export function ToolbarComponent(props: SageCellApp): JSX.Element {
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top" hasArrow={true} label={'Save Code in Asset Manager'} openDelay={400}>
           <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }} isDisabled={s.code.length === 0} size="xs" px={0}>
-            <MdFileUpload size="16px" />
+            <MdCloudUpload size="16px" />
           </Button>
         </Tooltip>
 

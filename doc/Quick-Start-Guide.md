@@ -185,6 +185,7 @@ Applications are content windows on the board. There are two ways to open them:
 - Drop a Word document (.docx) → **DOCXViewer**
 - Drop a video → **VideoViewer**
 - Drop a CSV → **CSVViewer**
+- Drop a Mermaid diagram (.mmd) → **Mermaid**
 - Drop a Markdown file → **Stickie**
 - Drop an unsupported file → **AssetLink** (download button)
 
@@ -259,6 +260,7 @@ All board changes are synchronized in real time across every connected user.
 | Share your screen | Open the Screenshare panel and click **Start Sharing** |
 | Open a web page | Paste a URL onto the board |
 | Write collaborative notes | Open "Notepad" from the Applications panel |
+| Draw a diagram | Drop a Mermaid file (`.mmd`), or open a CodeEditor, set the language to Mermaid and click **Preview** |
 | Run Python code | Open "SageCell", select a kernel, write code, press `Shift + Enter` |
 | Save a file | Drag from the Asset panel onto the board, or use in-app upload buttons |
 | Zoom to all apps | `Navigation panel → Show All Apps` |
