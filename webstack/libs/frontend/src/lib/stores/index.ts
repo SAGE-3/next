@@ -17,6 +17,7 @@ export * from './screenshare';
 export * from './ui';
 export * from './message';
 export * from './plugin';
+export * from './pluginContext';
 export * from './config';
 export * from './kernel';
 export * from './insight';

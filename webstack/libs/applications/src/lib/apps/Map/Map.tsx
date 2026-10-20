@@ -714,7 +714,7 @@ function LegendOverlay(props: { layers: LayerType[]; appId: string }) {
   };
 
   // Color the text selection
-  const colorLayer = (assetId: string, value: string) => {
+  const colorLayer = (assetId: string, value: LayerType['color']) => {
     const updatedLayers = props.layers.map((layer) => {
       if (layer.assetId === assetId) {
         return { ...layer, color: value };
@@ -724,7 +724,7 @@ function LegendOverlay(props: { layers: LayerType[]; appId: string }) {
     useAppStore.getState().updateState(props.appId, { layers: updatedLayers });
   };
 
-  const setLayerColorScale = (assetId: string, value: string) => {
+  const setLayerColorScale = (assetId: string, value: LayerType['colorScale']) => {
     const updatedLayers = props.layers.map((layer) => {
       if (layer.assetId === assetId) {
         return { ...layer, colorScale: value };
@@ -797,7 +797,7 @@ function LegendOverlay(props: { layers: LayerType[]; appId: string }) {
     '#e14109, #c52603, #a41301, #7a0403' +
     ')';
 
-  const colorScales = [
+  const colorScales: { name: string; value: LayerType['colorScale']; hex: string }[] = [
     { name: 'Greyscale', value: 'greys', hex: greys },
     { name: 'Inferno', value: 'inferno', hex: inferno },
     { name: 'Viridis', value: 'viridis', hex: viridis },

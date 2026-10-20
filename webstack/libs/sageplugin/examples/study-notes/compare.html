@@ -1,0 +1,253 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>compare papers</title>
+    <script src="compare.js" defer></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Kalam:wght@400;700&family=Patrick+Hand&display=swap" />
+    <link rel="stylesheet" href="base.css" />
+    <style>
+      body {
+        padding: 14px;
+      }
+
+      .wrap {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        border: 4px solid var(--ink);
+        border-radius: var(--wobble);
+        padding: 16px 20px;
+        box-shadow: 7px 9px 0 rgba(0, 0, 0, 0.3);
+      }
+
+      header {
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+
+      header h1 {
+        font-family: var(--marker);
+        font-weight: 700;
+        font-size: 42px;
+        margin: 0;
+      }
+
+      header h1 span {
+        background: linear-gradient(100deg, transparent 1%, var(--orange) 3%, var(--orange) 97%, transparent 99%);
+        padding: 0 12px;
+        border-radius: 6px 14px 8px 16px;
+      }
+
+      header .sub {
+        font-family: var(--script);
+        font-size: 27px;
+        color: var(--ink2);
+      }
+
+      .themes {
+        margin-left: auto;
+        display: flex;
+        gap: 6px;
+        font-size: 19px;
+      }
+
+      .th {
+        border: 2px solid var(--ink);
+        border-radius: 999px;
+        padding: 1px 10px;
+        background: #fff;
+        cursor: pointer;
+      }
+
+      .th.on {
+        background: var(--c);
+        box-shadow: 2px 2px 0 var(--ink);
+      }
+
+      .scroll {
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+        border: 3px solid var(--ink);
+        border-radius: 4px;
+        background: #fff;
+      }
+
+      table {
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 20px;
+        line-height: 1.28;
+      }
+
+      th,
+      td {
+        border-right: 2px solid #d8d1c3;
+        border-bottom: 2px solid #d8d1c3;
+        padding: 8px 12px;
+        vertical-align: top;
+        min-width: 255px;
+        max-width: 300px;
+        transition:
+          opacity 0.25s,
+          background 0.25s;
+      }
+
+      thead th {
+        position: sticky;
+        top: 0;
+        z-index: 3;
+        background: var(--c);
+        font-weight: normal;
+        text-align: left;
+        cursor: pointer;
+        border-bottom: 3px solid var(--ink);
+      }
+
+      thead th .t {
+        font-family: var(--marker);
+        font-weight: 700;
+        font-size: 22px;
+        line-height: 1.1;
+        display: block;
+      }
+
+      thead th .a {
+        font-family: var(--script);
+        font-size: 22px;
+      }
+
+      thead th .m {
+        font-size: 15px;
+        display: inline-block;
+        margin-top: 3px;
+        padding: 0 6px;
+        border: 1.5px solid var(--ink);
+        border-radius: 999px;
+        background: #fff;
+      }
+
+      tbody th {
+        position: sticky;
+        left: 0;
+        z-index: 2;
+        background: var(--paper2);
+        text-align: left;
+        font-family: var(--script);
+        font-size: 27px;
+        font-weight: 700;
+        min-width: 190px;
+        max-width: 190px;
+        border-right: 3px solid var(--ink);
+      }
+
+      thead th.corner {
+        left: 0;
+        z-index: 4;
+        background: var(--paper2);
+        border-right: 3px solid var(--ink);
+        min-width: 190px;
+      }
+
+      td.dim,
+      th.dim {
+        opacity: 0.22;
+      }
+
+      td.spot {
+        background: #fffbe0;
+      }
+
+      .lk {
+        font-size: 16px;
+        color: var(--ink);
+        margin-right: 8px;
+      }
+
+      td b {
+        font-family: var(--marker);
+        font-weight: 700;
+      }
+
+      tr:hover td {
+        background: #fafafa;
+      }
+
+      td[contenteditable]:focus,
+      th[contenteditable]:focus {
+        outline: 3px solid var(--blue);
+        background: #fff;
+      }
+
+      thead th .ctl {
+        float: right;
+        display: flex;
+        gap: 2px;
+        margin: -2px -6px 0 6px;
+      }
+      .ctl button,
+      tbody th .x {
+        border: none;
+        background: none;
+        font-size: 20px;
+        line-height: 1;
+        padding: 0 3px;
+        cursor: pointer;
+        opacity: 0.35;
+      }
+      .ctl button:hover,
+      tbody th .x:hover {
+        opacity: 1;
+      }
+      tbody th .x {
+        float: right;
+        opacity: 0;
+      }
+      tbody tr:hover th .x {
+        opacity: 0.4;
+      }
+      thead th .g {
+        margin-left: 4px;
+        background: var(--paper2);
+      }
+      [contenteditable]:empty::before {
+        content: attr(data-ph);
+        opacity: 0.4;
+      }
+      [contenteditable]:focus {
+        outline: 2px solid var(--blued);
+        border-radius: 3px;
+      }
+      thead th {
+        cursor: default;
+      }
+      .hint {
+        padding: 12px 16px;
+        font-size: 18px;
+        color: var(--ink2);
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="wrap paper">
+      <header>
+        <h1><span>paper vs paper</span></h1>
+        <div class="sub">click anything to edit · ◎ spotlights a paper</div>
+        <button class="btn" id="addpaper" style="font-size: 18px">＋ paper</button>
+        <select class="btn" id="frompdf" style="font-size: 18px"><option value="">＋ paper from a pdf…</option></select>
+        <button class="btn" id="addrow" style="font-size: 18px">＋ row</button>
+        <div class="themes" id="themes"></div>
+      </header>
+
+      <div class="scroll">
+        <table id="t"></table>
+        <p class="hint" id="empty">no papers yet… ＋ paper adds a column, or pick a pdf that's already on the board</p>
+      </div>
+    </div>
+  </body>
+</html>

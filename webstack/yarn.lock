@@ -16564,6 +16564,11 @@ y-quill@1.0.0:
     lib0 "^0.2.93"
     y-protocols "^1.0.6"
 
+y-textarea@^1.0.0:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/y-textarea/-/y-textarea-1.0.2.tgz#a86e26d8938b9c49e8f3aa7dcc6fa3a3e779e2d8"
+  integrity sha512-8A9uXZe+GjVZ4IgmLzBdhspsrVVesuyyzV6NAr6O//7OdtySV9Qt6yuGktS6gFNIgiUY7ZAwJZXTJ5lPps7M9w==
+
 y-utility@^0.1.4:
   version "0.1.4"
   resolved "https://registry.yarnpkg.com/y-utility/-/y-utility-0.1.4.tgz#d475644b28b25a4fb40b97b0412e2d115b8d0f6c"

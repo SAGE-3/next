@@ -1,0 +1,93 @@
+.sage-pdf-text-frame {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.sage-pdf-text-page {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+}
+
+/* Scoped PDF.js TextLayer layout rules; the existing page image stays the renderer. */
+.sage-pdf-text-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: clip;
+  line-height: 1;
+  text-align: initial;
+  letter-spacing: normal;
+  word-spacing: normal;
+  text-size-adjust: none;
+  -webkit-text-size-adjust: none;
+  forced-color-adjust: none;
+  transform-origin: 0 0;
+
+  --min-font-size: 1;
+  --text-scale-factor: calc(var(--total-scale-factor) * var(--min-font-size));
+  --min-font-size-inv: calc(1 / var(--min-font-size));
+}
+
+.sage-pdf-text-layer :is(span, br) {
+  color: transparent;
+  position: absolute;
+  white-space: pre;
+  cursor: text;
+  transform-origin: 0 0;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.sage-pdf-text-layer > :not(.markedContent),
+.sage-pdf-text-layer .markedContent span:not(.markedContent) {
+  z-index: 1;
+  --font-height: 0;
+  font-size: calc(var(--text-scale-factor) * var(--font-height));
+  --scale-x: 1;
+  --rotate: 0deg;
+  transform: rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv));
+}
+
+.sage-pdf-text-layer .markedContent {
+  display: contents;
+}
+
+.sage-pdf-text-layer [role='img'] {
+  user-select: none;
+}
+
+.sage-pdf-text-layer ::selection {
+  color: transparent;
+  background: rgb(0 100 255 / 0.3);
+}
+
+.sage-pdf-text-layer br::selection {
+  background: transparent;
+}
+
+.sage-pdf-text-layer[data-main-rotation='90'] {
+  transform: rotate(90deg) translateY(-100%);
+}
+
+.sage-pdf-text-layer[data-main-rotation='180'] {
+  transform: rotate(180deg) translate(-100%, -100%);
+}
+
+.sage-pdf-text-layer[data-main-rotation='270'] {
+  transform: rotate(270deg) translateX(-100%);
+}
+
+.sage-pdf-text-error {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  background: white;
+  color: #333;
+  font-size: 12px;
+  pointer-events: none;
+}

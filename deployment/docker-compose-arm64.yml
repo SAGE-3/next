@@ -114,7 +114,7 @@ services:
       - "redis-server"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.files-server.rule=Host(`${SAGE3_SERVER}`) && (PathPrefix(`/api/assets/upload`) || PathPrefix(`/api/assets/static`) || PathPrefix(`/api/files`))"
+      - "traefik.http.routers.files-server.rule=Host(`${SAGE3_SERVER}`) && (PathPrefix(`/api/assets/upload`) || PathPrefix(`/api/assets/static`) || PathPrefix(`/api/assets/plugins`) || PathPrefix(`/api/files`))"
       - "traefik.http.routers.files-server.priority=300"
       - "traefik.http.routers.files-server.entrypoints=websecure"
       - "traefik.http.services.files-server.loadbalancer.server.port=3002"

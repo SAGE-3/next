@@ -24,7 +24,7 @@ export const schema = z.object({
 });
 export type state = z.infer<typeof schema>;
 
-export const init: Partial<state> = {
+export const init: state = {
   originalTotal: 300,
   total: 300,
   clientStartTime: 0,
