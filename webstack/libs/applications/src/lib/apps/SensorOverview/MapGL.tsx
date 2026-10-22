@@ -13,7 +13,7 @@ import { MdAdd, MdRemove, MdMap, MdTerrain } from 'react-icons/md';
 // Data store
 import { create } from 'zustand';
 // Map library
-import maplibregl from 'maplibre-gl';
+import { maplibregl } from '../../components/maplibre';
 // Geocoding
 import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
 // Turfjs geojson utilities functions
@@ -29,7 +29,6 @@ import { state as AppState } from './index';
 import { stationData } from './SensorOverview';
 
 // Styling
-import './maplibre-gl.css';
 import React from 'react';
 
 // Get a URL for an asset
@@ -397,7 +396,7 @@ const MapGL = (
           });
 
           map.on('click', 'notSelectedCircle', (e: any) => {
-            const stationInfo = JSON.parse(e.features[0].properties.stationInfo);
+            const stationInfo = e.features[0].properties.stationInfo;
 
             // Create marker
             const el = document.createElement('div');
@@ -423,7 +422,7 @@ const MapGL = (
           });
 
           map.on('click', 'selectedCircle', (e: any) => {
-            const stationInfo = JSON.parse(e.features[0].properties.stationInfo);
+            const stationInfo = e.features[0].properties.stationInfo;
             console.log(stationInfo.station_id)
             const element = document.getElementById(`marker-${stationInfo.station_id}`);
 
@@ -469,7 +468,7 @@ const MapGL = (
 
           map.on('mouseenter', 'notSelectedCircle', (e: any) => {
             map.getCanvas().style.cursor = 'pointer';
-            const stationInfo = JSON.parse(e.features[0].properties.stationInfo);
+            const stationInfo = e.features[0].properties.stationInfo;
             if (stationInfo) {
               showTooltip(e.originalEvent, stationInfo);
             }
@@ -482,7 +481,7 @@ const MapGL = (
 
           map.on('mouseenter', 'selectedCircle', (e: any) => {
             map.getCanvas().style.cursor = 'pointer';
-            const stationInfo = JSON.parse(e.features[0].properties.stationInfo);
+            const stationInfo = e.features[0].properties.stationInfo;
             if (stationInfo) {
               showTooltip(e.originalEvent, stationInfo);
             }
