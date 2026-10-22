@@ -23,7 +23,7 @@ import {
 } from '@chakra-ui/react';
 import { MdAdd, MdCheckCircle, MdChevronLeft, MdChevronRight, MdError, MdFileUpload } from 'react-icons/md';
 
-import { useAppStore, useAssetStore, useFiles, useMessageStore, useUIStore, useUser } from '@sage3/frontend';
+import { useAppStore, useAssetStore, useFiles, useMessageStore, useUser, viewCenter, placeNewApps } from '@sage3/frontend';
 import { Message } from '@sage3/shared/types';
 
 type UploadNoticeStatus = 'loading' | 'success' | 'error' | 'info';
@@ -310,11 +310,10 @@ export function UploadNotificationCenter(props: UploadNotificationCenterProps) {
       setCreatingKeys((keys) => [...keys, notice.key]);
       try {
         await updateAssets(props.roomId);
-        const ui = useUIStore.getState();
-        const x = Math.floor(-ui.boardPosition.x + window.innerWidth / ui.scale / 2);
-        const y = Math.floor(-ui.boardPosition.y + window.innerHeight / ui.scale / 2);
+        // Set up the app around the center of the view, then move it to a free spot near there
+        const { x, y } = viewCenter();
         const app = await openAppForFile(notice.assetId, x, y, props.roomId, props.boardId);
-        if (app) await createApp(app);
+        if (app) await createApp(placeNewApps([app])[0]);
       } finally {
         setCreatingKeys((keys) => keys.filter((key) => key !== notice.key));
       }

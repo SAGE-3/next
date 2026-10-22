@@ -7,6 +7,9 @@
  */
 
 import { z } from 'zod';
+import type { App } from '../../schema';
+
+export const name = 'LocalScreenshare';
 
 /**
  * SAGE3 application: Screenshare (self-hosted LiveKit SFU)
@@ -24,4 +27,4 @@ export const init: Partial<state> = {
   aspectRatio: 16 / 9,
 };
 
-export const name = 'LocalScreenshare';
+export type ScreenshareApp = App<typeof name>;

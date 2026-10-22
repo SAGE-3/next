@@ -7,10 +7,10 @@
  */
 
 // Import the React library
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'react-router';
-import { Box, Button, ButtonGroup, Textarea, Tooltip, useColorModeValue, useToast, useDisclosure } from '@chakra-ui/react';
-import { MdRemove, MdAdd, MdFileDownload, MdFileUpload, MdLock, MdLockOpen, MdStickyNote2 } from 'react-icons/md';
+import { Box, Button, ButtonGroup, Tooltip, useColorModeValue, useToast, useDisclosure } from '@chakra-ui/react';
+import { MdRemove, MdAdd, MdFileDownload, MdCloudUpload, MdLock, MdLockOpen, MdStickyNote2 } from 'react-icons/md';
 
 // Date manipulation (for filename)
 import { format } from 'date-fns/format';
@@ -34,26 +34,55 @@ import {
 import { SAGEColors } from '@sage3/shared';
 import { InsightSchema } from '@sage3/shared/types';
 
-import { state as AppState } from './';
-import { App, AppGroup } from '../../schema';
+import { StickieApp, state as StickieState } from '.';
 import { AppWindow } from '../../components';
 
 // Styling for the placeholder text
 import './styling.css';
 
-// Yjs Imports
-import { TextAreaBinding } from 'y-textarea';
+// Editor: CodeMirror, with the text in Yjs and Markdown shown as a live preview
+import { Compartment, EditorState, Extension, Transaction } from '@codemirror/state';
+import { EditorView, keymap, placeholder } from '@codemirror/view';
+import { defaultKeymap } from '@codemirror/commands';
+import { yCollab, yRemoteSelections, yUndoManagerKeymap } from 'y-codemirror.next';
+import * as Y from 'yjs';
 import { debounce } from 'throttle-debounce';
+import { MarkdownSegment, markdownCss, markdownLivePreview, readOnly, renderMarkdownLines } from './livePreview';
+import { remoteCursors } from './remoteCursors';
+
+// Typing with pauses shorter than this is undone in one step (Yjs's default is 0.5 s)
+const UNDO_GROUP_MS = 1000;
+
+// The note's look, as the Stickie's textarea (a theme, so it wins over CodeMirror's own)
+const stickieTheme = EditorView.theme({
+  '&': { height: '100%' },
+  '&.cm-focused': { outline: 'none' },
+  '.cm-scroller': {
+    fontFamily: 'Arial',
+    lineHeight: 1.2,
+    padding: '1rem',
+    overflowY: 'scroll',
+    overflowX: 'hidden',
+    scrollPaddingBlock: '1em',
+  },
+  '.cm-content': { padding: 0, caretColor: 'black' },
+  '.cm-line': { padding: 0 },
+  '.cm-placeholder': { color: 'black', opacity: 0.3 },
+  // Others' cursors without their name label (the caret and selection stay)
+  '.cm-ySelectionInfo': { display: 'none' },
+});
 
 /**
- * NoteApp SAGE3 application
+ * Stickie SAGE3 application: a sticky note whose text is Markdown, shown rendered except on
+ * the line being edited (see livePreview.ts). The text lives in the board's Yjs apps room
+ * while the note is open, and is saved to the app state.
  *
  * @param {AppSchema} props
  * @returns {JSX.Element}
  */
-function AppComponent(props: App): JSX.Element {
+function AppComponent(props: StickieApp): JSX.Element {
   // Get the data for this app from the props
-  const s = props.data.state as AppState;
+  const s = props.data.state;
 
   const { user } = useUser();
   const { boardId, roomId } = useParams();
@@ -63,9 +92,15 @@ function AppComponent(props: App): JSX.Element {
   const setSelectedApp = useUIStore((state) => state.setSelectedApp);
   const backgroundColor = useHexColor(s.color + '.200');
   const scrollbarColor = useHexColor(s.color + '.300');
+  // This user's color as hex, for the selection others see (the awareness has its name)
+  const myColor = useHexColor(user?.data.color || 'teal');
 
-  // Keep a reference to the input element
-  const textbox = useRef<HTMLTextAreaElement>(null);
+  // The editor's element, and the editor
+  const editorParent = useRef<HTMLDivElement>(null);
+  const viewRef = useRef<EditorView | null>(null);
+  const undoRef = useRef<Y.UndoManager | null>(null);
+  // The lock, changed without rebuilding the editor
+  const lockCompartment = useRef(new Compartment());
   // Font size: this will be updated as the text or size of the sticky changes
   const [fontSize, setFontSize] = useState(s.fontSize);
 
@@ -100,7 +135,7 @@ function AppComponent(props: App): JSX.Element {
         yText.insert(0, text);
       });
     },
-    [yApps, user]
+    [yApps, user],
   );
 
   // Detect if an update happens to s.text
@@ -110,11 +145,47 @@ function AppComponent(props: App): JSX.Element {
     }
   }, [s.text]);
 
-  const connectToYjs = async (textArea: HTMLTextAreaElement, yRoom: YjsRoomConnection) => {
+  // Saving the text after 1sec of inactivity
+  const debounceSave = debounce(1000, (val) => {
+    updateState(props._id, { text: val });
+  });
+  // Keep a copy of the function
+  const debounceFunc = useRef(debounceSave);
+
+  // Shift-Tab creates another stickie next to this one (the latest props, for the editor's keymap)
+  const createNext = useRef<() => void>(() => undefined);
+  createNext.current = () => {
+    if (!user) return;
+    createApp({
+      title: user.data.name,
+      roomId: roomId!,
+      boardId: boardId!,
+      position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
+      size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
+      rotation: { x: 0, y: 0, z: 0 },
+      type: 'Stickie',
+      // keep the same color, like a clone operation except for the text
+      state: { ...s, text: '' },
+      raised: true,
+      dragging: false,
+      pinned: false,
+    });
+  };
+
+  // The note's Yjs text and its undo history (kept between editing sessions), once joined
+  const [yText, setYText] = useState<Y.Text | null>(null);
+  // The text, for the plain view
+  const [text, setText] = useState(s.text);
+  // Someone else's cursor is in this note
+  const [othersEditing, setOthersEditing] = useState(false);
+  // Where the note is scrolled to, carried between the plain view and the editor
+  const scrollTop = useRef(0);
+
+  // Join the note's Yjs text: the first one here loads the saved text into it
+  const joinYjs = async (yRoom: YjsRoomConnection) => {
     const yText = yRoom.doc.getText(props._id);
     const provider = yRoom.provider;
 
-    new TextAreaBinding(yText, textArea);
     const users = provider.awareness.getStates();
     const count = users.size;
 
@@ -143,114 +214,218 @@ function AppComponent(props: App): JSX.Element {
         syncStateWithDatabase();
       }
     }
+
+    // Others draw our selection with the awareness user's colorLight, else with color + '33':
+    // our color is a name ('teal'), which that would turn into an invalid CSS color
+    const me = provider.awareness.getLocalState()?.user;
+    if (me && /^#[0-9a-f]{6}$/i.test(myColor) && me.colorLight !== myColor + '40') {
+      provider.awareness.setLocalStateField('user', { ...me, colorLight: myColor + '40' });
+    }
+
+    // Undo and redo of this user's own changes, a burst of typing at a time
+    undoRef.current?.destroy();
+    undoRef.current = new Y.UndoManager(yText, { captureTimeout: UNDO_GROUP_MS });
+    // An undo or redo changes the text without typing: save it too (the editor's save only sees
+    // typing, and the saved text is what the next first visitor loads into Yjs)
+    undoRef.current.on('stack-item-popped', () => debounceFunc.current(yText.toString()));
+    setText(yText.toString());
+    setYText(yText);
   };
 
   useEffect(() => {
-    if (textbox.current && yApps) {
-      connectToYjs(textbox.current, yApps);
-    }
-  }, [textbox, yApps]);
+    if (yApps) joinYjs(yApps);
+    return () => {
+      undoRef.current?.destroy();
+      undoRef.current = null;
+      setYText(null);
+    };
+  }, [yApps]);
 
-  // Saving the text after 1sec of inactivity
-  const debounceSave = debounce(1000, (val) => {
-    updateState(props._id, { text: val });
-  });
-  // Keep a copy of the function
-  const debounceFunc = useRef(debounceSave);
+  // The plain view follows the text (everyone's changes)
+  useEffect(() => {
+    if (!yText) return;
+    const changed = () => setText(yText.toString());
+    yText.observe(changed);
+    return () => yText.unobserve(changed);
+  }, [yText]);
 
-  // callback for textarea change
-  function handleTextChange(ev: React.ChangeEvent<HTMLTextAreaElement>) {
-    const inputValue = ev.target.value;
-    // Update Remote state *** REMOVE FOR RIGHT NO FOR TESTING
-    debounceFunc.current(inputValue);
-  }
+  // Is someone else editing this note (their cursor is in it): then it has an editor here too,
+  // so their cursor shows
+  useEffect(() => {
+    if (!yText || !yApps) return;
+    const awareness = yApps.provider.awareness;
+    const check = () => {
+      const me = awareness.doc.clientID;
+      let found = false;
+      awareness.getStates().forEach((state, client) => {
+        const head = client !== me ? state.cursor?.head : null;
+        if (!found && head)
+          found = Y.createAbsolutePositionFromRelativePosition(Y.createRelativePositionFromJSON(head), yApps.doc)?.type === yText;
+      });
+      setOthersEditing(found);
+    };
+    check();
+    awareness.on('change', check);
+    return () => awareness.off('change', check);
+  }, [yText, yApps]);
 
-  // Key down handler: Tab creates another stickie
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (!user) return;
-    if (e.repeat) return;
-    // if not selected, don't do anything
+  // An editor only while the note is being edited: selected here, or someone else is in it.
+  // Otherwise the plain view, which costs much less (a board can hold many notes)
+  const selected = useUIStore((state) => state.selectedAppId === props._id);
+  const editing = !!yText && (selected || othersEditing);
 
-    if (e.code === 'Escape') {
-      // Deselect the app
-      setSelectedApp('');
-      // Deselect the text area
-      textbox.current?.blur();
-      return;
-    }
-    if (e.code === 'Tab') {
-      e.preventDefault();
-      if (e.shiftKey) {
-        // Create a new stickie
-        createApp({
-          title: user.data.name,
-          roomId: roomId!,
-          boardId: boardId!,
-          position: { x: props.data.position.x + props.data.size.width + 20, y: props.data.position.y, z: 0 },
-          size: { width: props.data.size.width, height: props.data.size.height, depth: 0 },
-          rotation: { x: 0, y: 0, z: 0 },
-          type: 'Stickie',
-          // keep the same color, like a clone operation except for the text
-          state: { ...s, text: '' },
-          raised: true,
-          dragging: false,
-          pinned: false,
-        });
-      }
-    }
-  };
+  useEffect(() => {
+    const parent = editorParent.current;
+    if (!editing || !parent || !yText || !yApps) return;
+    const provider = yApps.provider;
+    const view = new EditorView({
+      parent,
+      state: EditorState.create({
+        doc: yText.toString(),
+        extensions: [
+          keymap.of([
+            // Escape: deselect the app and leave the text
+            {
+              key: 'Escape',
+              run: (view) => {
+                setSelectedApp('');
+                view.contentDOM.blur();
+                return true;
+              },
+            },
+            // Tab doesn't leave the note; Shift-Tab creates the next one
+            { key: 'Tab', run: () => true },
+            {
+              key: 'Shift-Tab',
+              run: () => {
+                createNext.current();
+                return true;
+              },
+            },
+            // Undo and redo your own changes only (Yjs's undo manager, from yCollab), not others'
+            ...yUndoManagerKeymap,
+            ...defaultKeymap,
+          ]),
+          // Sync and undo from yCollab; others' cursors from remoteCursors, which takes this
+          // user's cursor back when they leave the note
+          ...(yCollab(yText, provider.awareness, { undoManager: undoRef.current ?? false }) as Extension[]).filter(
+            (extension) => extension !== yRemoteSelections,
+          ),
+          remoteCursors,
+          markdownLivePreview(),
+          lockCompartment.current.of(readOnly(s.lock)),
+          placeholder('Type here...'),
+          stickieTheme,
+          EditorView.lineWrapping,
+          // Saved when this user types (not when others' changes arrive through Yjs)
+          EditorView.updateListener.of((update) => {
+            const typed = update.transactions.some((tr) => tr.docChanged && tr.annotation(Transaction.userEvent) !== undefined);
+            if (typed) debounceFunc.current(update.state.doc.toString());
+          }),
+        ],
+      }),
+    });
+    // Where the plain view was scrolled to
+    view.scrollDOM.scrollTop = scrollTop.current;
+    const onScroll = () => (scrollTop.current = view.scrollDOM.scrollTop);
+    view.scrollDOM.addEventListener('scroll', onScroll);
+    viewRef.current = view;
+    return () => {
+      view.scrollDOM.removeEventListener('scroll', onScroll);
+      view.destroy();
+      viewRef.current = null;
+    };
+  }, [editing, yText, yApps]);
+
+  // Deselected while someone else keeps it open: leave the text (the cursor others saw goes away)
+  useEffect(() => {
+    const view = viewRef.current;
+    if (!selected && view?.hasFocus) view.contentDOM.blur();
+  }, [selected]);
+
+  // Locking and unlocking, without rebuilding the editor
+  useEffect(() => {
+    viewRef.current?.dispatch({ effects: lockCompartment.current.reconfigure(readOnly(s.lock)) });
+  }, [s.lock]);
+
+  // The plain view's lines (the text as the editor shows it without the focus)
+  const lines = useMemo(() => (editing ? [] : renderMarkdownLines(text)), [editing, text]);
+  const plainView = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!editing && plainView.current) plainView.current.scrollTop = scrollTop.current;
+  }, [editing]);
 
   // React component
   return (
     <AppWindow app={props} hideBackgroundColor={backgroundColor} hideBordercolor={scrollbarColor} hideBackgroundIcon={MdStickyNote2}>
-      <Box bgColor={backgroundColor} color="black" w={'100%'} h={'100%'} p={0}>
-        <Textarea
-          ref={textbox}
-          resize={'none'}
-          w="100%"
-          h="100%"
-          variant="outline"
-          borderWidth="0px"
-          p={4}
-          style={{ resize: 'none' }}
-          aria-label="Note text"
-          placeholder="Type here..."
-          fontFamily="Arial"
-          focusBorderColor={backgroundColor}
-          fontSize={fontSize + 'px'}
-          lineHeight="1.2em"
-          onInput={handleTextChange}
-          onKeyDown={handleKeyDown}
-          readOnly={s.lock}
-          zIndex={1}
-          name={'stickie' + props._id}
-          whiteSpace={'pre-wrap'}
-          css={{
-            scrollPaddingBlock: '1em',
-            // Balance the text, improve text layouts, pretty or balance
-            textWrap: 'pretty',
-            '&::-webkit-scrollbar': {
-              background: `${backgroundColor}`,
-              width: '24px',
-              height: '2px',
-              scrollbarGutter: 'stable',
-            },
-            '&::-webkit-scrollbar-thumb': {
-              background: `${scrollbarColor}`,
-              borderRadius: '8px',
-            },
-          }}
-          // overflow={fontSize !== 10 ? 'hidden' : 'auto'}
-          overflowY="scroll"
-          overflowX="hidden"
-        />
+      <Box
+        bgColor={backgroundColor}
+        color="black"
+        w={'100%'}
+        h={'100%'}
+        p={0}
+        fontSize={fontSize + 'px'}
+        aria-label="Note text"
+        css={{
+          // The Markdown styles, shared by the editor and the plain view
+          ...markdownCss,
+          // The scrollbar, in both; the editor's other styles are in stickieTheme
+          '.cm-scroller::-webkit-scrollbar, .stickie-plain::-webkit-scrollbar': {
+            background: `${backgroundColor}`,
+            width: '24px',
+            height: '2px',
+            scrollbarGutter: 'stable',
+          },
+          '.cm-scroller::-webkit-scrollbar-thumb, .stickie-plain::-webkit-scrollbar-thumb': {
+            background: `${scrollbarColor}`,
+            borderRadius: '8px',
+          },
+        }}
+      >
+        {editing ? (
+          <Box ref={editorParent} w="100%" h="100%" />
+        ) : (
+          // As the editor's lines, without an editor (same font, padding and line height)
+          <Box
+            ref={plainView}
+            className="stickie-plain"
+            w="100%"
+            h="100%"
+            p="1rem"
+            fontFamily="Arial"
+            lineHeight={1.2}
+            whiteSpace="pre-wrap"
+            wordBreak="break-word"
+            overflowY="scroll"
+            overflowX="hidden"
+            onScroll={(event) => (scrollTop.current = event.currentTarget.scrollTop)}
+          >
+            {text.length === 0 ? (
+              <Box opacity={0.3}>Type here...</Box>
+            ) : (
+              lines.map((line, n) => (
+                <div key={n} className={line.classNames.join(' ')}>
+                  {line.segments.length === 0 ? <br /> : line.segments.map((segment, i) => <PlainSegment key={i} segment={segment} />)}
+                </div>
+              ))
+            )}
+          </Box>
+        )}
       </Box>
     </AppWindow>
   );
 }
 
-function ToolbarComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+/** A piece of a line in the plain view: styled text, a bullet, or a (display only) checkbox */
+function PlainSegment(props: { segment: MarkdownSegment }): JSX.Element {
+  const segment = props.segment;
+  if ('bullet' in segment) return <span className="cm-md-bullet">•</span>;
+  if ('task' in segment) return <input type="checkbox" className="cm-md-task" checked={segment.checked} readOnly tabIndex={-1} />;
+  return <span className={segment.classNames.join(' ') || undefined}>{segment.text}</span>;
+}
+
+function ToolbarComponent(props: StickieApp): JSX.Element {
+  const s = props.data.state;
   // Update functions from the store
   const updateState = useAppStore((state) => state.updateState);
   // Access the list of users
@@ -347,7 +522,7 @@ function ToolbarComponent(props: App): JSX.Element {
           });
       }
     },
-    [s.text, roomId]
+    [s.text, roomId],
   );
 
   const handleColorChange = (color: string) => {
@@ -394,7 +569,7 @@ function ToolbarComponent(props: App): JSX.Element {
       <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
         <Tooltip placement="top" hasArrow={true} label={'Save in Asset Manager'} openDelay={400}>
           <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }} isDisabled={s.text.length === 0} size="xs" px={0}>
-            <MdFileUpload size="16px" />
+            <MdCloudUpload size="16px" />
           </Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={'Download as Markdown'} openDelay={400}>
@@ -484,14 +659,14 @@ function getSet(appid: string, oldvalue: string, newvalue: string): string[] {
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
+const GroupedToolbarComponent = (props: { apps: StickieApp[] }) => {
   const updateStateBatch = useAppStore((state) => state.updateStateBatch);
   const updateInsightBatch = useInsightStore((state) => state.updateBatch);
   const { user } = useUser();
 
   const handleColorChange = (color: string) => {
     // Array of update to batch at once
-    const ba: Array<{ id: string; updates: Partial<AppState> }> = [];
+    const ba: Array<{ id: string; updates: Partial<StickieState> }> = [];
     const bi: Array<{ id: string; updates: Partial<InsightSchema> }> = [];
     // Iterate through all the selected apps
     props.apps.forEach((app) => {
@@ -506,7 +681,7 @@ const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
 
   const handleIncreaseFont = () => {
     // Array of update to batch at once
-    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    const ps: Array<{ id: string; updates: Partial<StickieState> }> = [];
     props.apps.forEach((app) => {
       if (app.data.state.lock) return;
       const size = app.data.state.fontSize + 8;
@@ -519,7 +694,7 @@ const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
 
   const handleDecreaseFont = () => {
     // Array of update to batch at once
-    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    const ps: Array<{ id: string; updates: Partial<StickieState> }> = [];
     props.apps.forEach((app) => {
       if (app.data.state.lock) return;
       const size = app.data.state.fontSize - 8;
@@ -533,7 +708,7 @@ const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
   const handleSetFont = () => {
     const min = Math.min(...props.apps.map((app) => app.data.state.fontSize));
     // Array of update to batch at once
-    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    const ps: Array<{ id: string; updates: Partial<StickieState> }> = [];
     props.apps.forEach((app) => {
       if (app.data.state.lock) return;
       ps.push({ id: app._id, updates: { fontSize: min } });
@@ -544,7 +719,7 @@ const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
 
   const handleLock = () => {
     // Array of update to batch at once
-    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    const ps: Array<{ id: string; updates: Partial<StickieState> }> = [];
     props.apps.forEach((app) => {
       if (app._createdBy !== user?._id) return;
       ps.push({ id: app._id, updates: { lock: true } });
@@ -555,7 +730,7 @@ const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
 
   const handleUnlock = () => {
     // Array of update to batch at once
-    const ps: Array<{ id: string; updates: Partial<AppState> }> = [];
+    const ps: Array<{ id: string; updates: Partial<StickieState> }> = [];
     props.apps.forEach((app) => {
       if (app._createdBy !== user?._id) return;
       ps.push({ id: app._id, updates: { lock: false } });
@@ -573,7 +748,9 @@ const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
           </Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={'Set Font Size'} openDelay={400}>
-          <Button onClick={() => handleSetFont()} size="xs" px={0}>{Math.min(...props.apps.map((app) => app.data.state.fontSize))}</Button>
+          <Button onClick={() => handleSetFont()} size="xs" px={0}>
+            {Math.min(...props.apps.map((app) => app.data.state.fontSize))}
+          </Button>
         </Tooltip>
         <Tooltip placement="top" hasArrow={true} label={'Increase Font Size'} openDelay={400}>
           <Button onClick={() => handleIncreaseFont()} size="xs" px={0}>

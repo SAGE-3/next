@@ -7,6 +7,9 @@
  */
 
 import { z } from 'zod';
+import type { App } from '../../schema';
+
+export const name = 'Screenshare';
 
 /**
  * SAGE3 application: Twilio
@@ -26,4 +29,4 @@ export const init: Partial<state> = {
   accessId: '',
 };
 
-export const name = 'Screenshare';
+export type TwilioScreenshareApp = App<typeof name>;

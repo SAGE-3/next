@@ -14,7 +14,7 @@ import {
   MdAdd,
   MdArrowDropDown,
   MdFileDownload,
-  MdFileUpload,
+  MdCloudUpload,
   MdHelp,
   MdWeb,
   MdRemove,
@@ -36,8 +36,7 @@ import {
 } from '@sage3/frontend';
 import { KernelInfo } from '@sage3/shared/types';
 
-import { App, AppGroup } from '../../../schema';
-import { state as AppState } from '../index';
+import { SageCellApp, state as AppState } from '../index';
 import { HelpModal } from './help';
 import { useStore } from './store';
 import { VscRunAbove, VscRunAll, VscRunBelow } from 'react-icons/vsc';
@@ -48,7 +47,7 @@ import { VscRunAbove, VscRunAll, VscRunBelow } from 'react-icons/vsc';
  * @param {App} props
  * @returns {JSX.Element}
  */
-export function ToolbarComponent(props: App): JSX.Element {
+export function ToolbarComponent(props: SageCellApp): JSX.Element {
   // Abilties
   const canExecuteCode = useAbility('execute', 'kernels');
   // Store between toolbar and appWindow
@@ -56,7 +55,7 @@ export function ToolbarComponent(props: App): JSX.Element {
   const setExecuteAll = useStore((state) => state.setExecuteAll);
   const setInterrupt = useStore((state) => state.setInterrupt);
   // App State
-  const s = props.data.state as AppState;
+  const s = props.data.state;
   const updateState = useAppStore((state) => state.updateState);
   // Abilities
   const canCreateKernels = useAbility('create', 'kernels');
@@ -337,7 +336,7 @@ export function ToolbarComponent(props: App): JSX.Element {
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top" hasArrow={true} label={'Save Code in Asset Manager'} openDelay={400}>
           <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }} isDisabled={s.code.length === 0} size="xs" px={0}>
-            <MdFileUpload size="16px" />
+            <MdCloudUpload size="16px" />
           </Button>
         </Tooltip>
 
@@ -370,7 +369,7 @@ export function ToolbarComponent(props: App): JSX.Element {
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-export const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
+export const GroupedToolbarComponent = (props: { apps: SageCellApp[] }) => {
   // Disclousre for the create kernel modal
   const { isOpen, onOpen, onClose } = useDisclosure();
 

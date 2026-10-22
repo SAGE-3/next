@@ -91,6 +91,12 @@ There are two ways to get an image:
 
 Either way the image is generated, saved into the room's assets, and opened as an ImageViewer window on the board, linked back to the Chat that made it. Image generation needs a model that declares the `imagegen` capability — see [AI Configuration](Server-Deployment.md#ai-configuration) — so it is not available with a personal API key, which is assumed to cover text tasks only.
 
+### Diagrams
+
+When an answer contains a Mermaid code block (a fenced block marked `mermaid`), its header shows an **Open in App** button <img src="icons/applications/BsDiagram3.svg" width="20" /> next to **Copy**. It opens the diagram in a [Mermaid](#mermaid) app next to the Chat, linked to it.
+
+Example prompts: *"Draw a flowchart of the steps to publish a dataset, as a Mermaid diagram."*, *"Show the classes of this code as a Mermaid class diagram."*
+
 ### Asking about content (images, PDFs, sticky notes)
 
 You can ask the AI about content already on the board:
@@ -155,7 +161,7 @@ A shared web browser that streams a live Firefox session to all users on the boa
 
 ## CodeEditor
 
-A collaborative code editor for writing and reviewing code in real time. Changes are synchronized across all users, making it ideal for pair programming, code reviews, or group problem-solving. Supports many languages including Python, JavaScript, TypeScript, C/C++, Java, HTML, CSS, JSON, Markdown, R, and YAML.
+A collaborative code editor for writing and reviewing code in real time. Changes are synchronized across all users, making it ideal for pair programming, code reviews, or group problem-solving. Supports many languages including Python, JavaScript, TypeScript, C/C++, Java, HTML, CSS, JSON, Markdown, Mermaid, R, and YAML.
 
 
 ![CodeEditor](images/applications/applications_codeeditor.jpeg)
@@ -168,9 +174,9 @@ A collaborative code editor for writing and reviewing code in real time. Changes
 | Font Size - | Button | <img src="icons/applications/MdRemove.svg" width="20" /> | Decrease the font size |
 | Font Size + | Button | <img src="icons/applications/MdAdd.svg" width="20" /> | Increase the font size |
 | Read Only / Edit | Toggle | <img src="icons/applications/MdLock.svg" width="20" /> <img src="icons/applications/MdLockOpen.svg" width="20" /> | Toggle between locked and editable modes |
-| Save to Asset Manager | Button | <img src="icons/applications/MdFileUpload.svg" width="20" /> | Upload the code to the server's asset manager |
+| Save to Asset Manager | Button | <img src="icons/applications/MdCloudUpload.svg" width="20" /> | Upload the code to the server's asset manager |
 | Download | Button | <img src="icons/applications/MdFileDownload.svg" width="20" /> | Download the code as a file |
-| Preview | Button | <img src="icons/applications/MdSlideshow.svg" width="20" /> | For Markdown or HTML, opens a rendered preview |
+| Preview | Button | <img src="icons/applications/MdSlideshow.svg" width="20" /> | For Markdown or HTML, opens a rendered preview. For Mermaid, opens the diagram in a [Mermaid](#mermaid) app that updates as you edit |
 
 ---
 
@@ -202,6 +208,35 @@ A viewer for DeepZoom images -- a tiled format for displaying extremely large, h
 ![DeepZoomImage](images/applications/applications_deepzoomimage.jpeg)
 
 **Toolbar:** Default toolbar only (Zoom to App, Duplicate, Close).
+
+---
+
+## DOCXViewer
+
+> *Opens automatically when a Word document (.docx) is uploaded to the board, or when one is opened from the asset manager.*
+
+![DOCXViewer](images/applications/applications_docxviewer.jpeg)
+
+View Word documents uploaded to the asset manager. The document is rendered directly in the browser, including text, styles, tables, lists, headers and footers, and images, and shown page by page like a printed document: each page fills the window, and the window takes the shape of the pages. The page on screen is shared: when anyone changes page, everyone viewing the board follows.
+
+The renderer lays text out continuously, so SAGE3 splits it into pages itself: paragraphs move whole to the next page, long tables are split between rows, and each page repeats the section's header and footer. Page breaks can therefore fall in slightly different places than in Word, and an image taller than a page is cut off at the bottom of its page.
+
+**Several pages:** the **+** and **−** buttons show more or fewer pages side by side, starting at the current one, like the PDF viewer. The window widens or narrows so the pages keep their size. Only the first page's links respond; the pages beside it are pictures of their pages.
+
+**Keyboard:** select the app, then with the pointer over it use **→**, **↓**, **Page Down**, or **Space** for the next page, **←**, **↑**, or **Page Up** for the previous one, **Home** / **End** or **1** / **0** for the first and last, and **+** / **−** to show more or fewer pages side by side.
+
+Only the newer `.docx` format is supported. Older `.doc` files open as an **AssetLink** with a download button. Links to web pages open in a new tab, links inside the document go to the page of their target, and embedded HTML content is not shown.
+
+| Name | Type | Icon | Description |
+|------|------|------|-------------|
+| Show Fewer Pages | Button | <img src="icons/applications/MdRemove.svg" width="20" /> | Decrease the number of pages shown side by side |
+| Show More Pages | Button | <img src="icons/applications/MdAdd.svg" width="20" /> | Increase the number of pages shown side by side |
+| First Page | Button | <img src="icons/applications/MdSkipPrevious.svg" width="20" /> | Jump to the first page |
+| Previous Page | Button | <img src="icons/applications/MdNavigateBefore.svg" width="20" /> | Go to the previous page |
+| Next Page | Button | <img src="icons/applications/MdNavigateNext.svg" width="20" /> | Go to the next page |
+| Last Page | Button | <img src="icons/applications/MdSkipNext.svg" width="20" /> | Jump to the last page |
+| Page counter | Text | | Current page (or pages) and total, e.g. `3 / 12` or `3–4 / 12` |
+| Download Document | Button | <img src="icons/applications/MdFileDownload.svg" width="20" /> | Download the original .docx file |
 
 ---
 
@@ -266,6 +301,29 @@ An interactive map powered by MapGL. Navigate by panning and zooming with the mo
 
 ---
 
+## Mermaid
+
+> *Opens automatically when a Mermaid file (`.mmd`, `.mermaid`) is uploaded to the board.*
+
+Renders diagrams written in the [Mermaid](https://mermaid.js.org) text syntax: flowcharts, sequence, class, state and entity-relationship diagrams, Git graphs, Gantt charts, pie and XY charts, mind maps, timelines, and more. Diagrams are drawn with [pele](https://pele.run) and follow the board's light or dark mode.
+
+![Mermaid](images/applications/applications_mermaid.jpeg)
+
+*Sequence diagram, Git graph, flowchart, XY chart, entity-relationship and class diagrams.*
+
+You can also create a diagram without a file:
+
+- **From a CodeEditor:** set the language to **Mermaid** and click **Preview** <img src="icons/applications/MdSlideshow.svg" width="20" />. The diagram opens next to the editor and updates as you edit.
+- **From Chat:** when SAGE answers with a Mermaid code block, click **Open in App** in the block's header (see [Chat](#chat)).
+
+| Name | Type | Icon | Description |
+|------|------|------|-------------|
+| Edit in Code Editor | Button | <img src="icons/applications/MdEdit.svg" width="20" /> | Opens the diagram code in a CodeEditor next to the diagram, which then updates as you edit. If an editor is already linked, selects it |
+| Download Mermaid File | Button | <img src="icons/applications/PiGraph.svg" width="20" /> | Download the diagram code as a `.mmd` file |
+| Download as SVG | Button | <img src="icons/applications/BsFiletypeSvg.svg" width="20" /> | Download the rendered diagram as an `.svg` image |
+
+---
+
 ## Notepad
 
 A collaborative rich-text editor for writing formatted documents together in real time. Supports text styling (bold, italic, underline, strikethrough), font sizes, colors, alignment, and lists. Edits from all users are merged seamlessly. The finished document can be downloaded as an HTML file.
@@ -324,6 +382,38 @@ Select one or more PDFs and choose **Open in Chat** to ask the AI questions abou
 
 ---
 
+## PPTXViewer
+
+> *Opens automatically when a PowerPoint file (.pptx) is uploaded to the board, or when one is opened from the asset manager.*
+
+![PPTXViewer](images/applications/applications_pptxviewer.jpeg)
+
+View PowerPoint presentations uploaded to the asset manager. Slides are rendered directly in the browser, including text, shapes, tables, charts, and images, and the window takes the shape of the slides. The slide on screen is shared: when anyone changes slide, everyone viewing the board follows.
+
+Embedded videos and audio clips play inside their slide. When someone plays or stops a clip, it plays or stops for everyone viewing that slide. Only play and stop are shared, not the position in the clip. A browser may refuse to start a clip with sound until someone has clicked on that page, which can happen on an unattended wall display.
+
+**Thumbnails:** a column of slide thumbnails is shown on the left of the app; click one to go to that slide, for everyone. The thumbnail button in the toolbar hides or shows it. The column is shared like the current slide, so everyone viewing the board sees it open or close.
+
+**Several slides:** the **+** and **−** buttons show more or fewer slides side by side, starting at the current one, like the PDF viewer's pages. The window widens or narrows so the slides keep their size, and the slides on screen are highlighted in the thumbnails. Only the first slide plays its videos and follows its links; the others are pictures of their slides.
+
+**Keyboard:** select the app, then with the pointer over it use **→**, **↓**, **Page Down**, or **Space** for the next slide, **←**, **↑**, or **Page Up** for the previous one, **Home** / **End** or **1** / **0** for the first and last, and **+** / **−** to show more or fewer slides side by side.
+
+Only the newer `.pptx` format is supported. Older `.ppt` files open as an **AssetLink** with a download button. Videos play only in formats the browser supports, in practice MP4 (H.264); Windows Media (`.wmv`) clips and online videos linked from the deck do not play.
+
+| Name | Type | Icon | Description |
+|------|------|------|-------------|
+| Thumbnails | Button | <img src="icons/applications/MdViewSidebar.svg" width="20" /> | Show or hide the slide thumbnails on the left |
+| Show Fewer Slides | Button | <img src="icons/applications/MdRemove.svg" width="20" /> | Decrease the number of slides shown side by side |
+| Show More Slides | Button | <img src="icons/applications/MdAdd.svg" width="20" /> | Increase the number of slides shown side by side |
+| First Slide | Button | <img src="icons/applications/MdSkipPrevious.svg" width="20" /> | Jump to the first slide |
+| Previous Slide | Button | <img src="icons/applications/MdNavigateBefore.svg" width="20" /> | Go to the previous slide |
+| Next Slide | Button | <img src="icons/applications/MdNavigateNext.svg" width="20" /> | Go to the next slide |
+| Last Slide | Button | <img src="icons/applications/MdSkipNext.svg" width="20" /> | Jump to the last slide |
+| Slide counter | Text | | Current slide (or slides) and total, e.g. `3 / 34` or `3–4 / 34` |
+| Download Presentation | Button | <img src="icons/applications/MdFileDownload.svg" width="20" /> | Download the original .pptx file |
+
+---
+
 ## Poll
 
 Create polls and vote on options in real time. Set a question, add multiple answer choices, and let participants vote. Results are displayed as a horizontal bar graph that updates live as votes come in.
@@ -357,7 +447,7 @@ A computational code cell backed by a Jupyter kernel. Write and execute Python, 
 | Help | Button | <img src="icons/applications/MdHelp.svg" width="20" /> | Open the SageCell help reference |
 | Font Size - | Button | <img src="icons/applications/MdRemove.svg" width="20" /> | Decrease the font size |
 | Font Size + | Button | <img src="icons/applications/MdAdd.svg" width="20" /> | Increase the font size |
-| Save to Asset Manager | Button | <img src="icons/applications/MdFileUpload.svg" width="20" /> | Upload the code to the asset manager |
+| Save to Asset Manager | Button | <img src="icons/applications/MdCloudUpload.svg" width="20" /> | Upload the code to the asset manager |
 | Download | Button | <img src="icons/applications/MdFileDownload.svg" width="20" /> | Download the code as a `.py`, `.R`, or `.jl` file |
 
 ---
@@ -387,6 +477,8 @@ Several people can share at the same time, and one person can share **up to four
 
 Virtual sticky notes for quick text entry. Choose from multiple colors, resize the note, and adjust the font size. Notes can be locked to prevent editing by other users. Content can be saved or downloaded as Markdown. Uploading a `.md` file from the asset manager will open it as a new Stickie.
 
+The text is Markdown, shown as a live preview: headings, bold and italic text, lists, task lists (`- [ ]`), quotes, links and code are rendered, and only the line where your cursor is shows the raw Markdown characters. When nobody is editing a note, the whole note is rendered. Several people can type in the same note at once; their cursors and selections are shown in their colors. Undo and redo (Cmd/Ctrl+Z, Shift+Cmd/Ctrl+Z) only affect your own changes. Press Escape to leave the note and Shift-Tab to open another note to the right.
+
 <!-- TODO: Screenshot of Stickie app -->
 ![Stickie](images/applications/applications_stickie.jpeg)
 
@@ -399,7 +491,7 @@ Virtual sticky notes for quick text entry. Choose from multiple colors, resize t
 | Font Size + | Button | <img src="icons/applications/MdAdd.svg" width="20" /> | Increase the font size |
 | Lock / Unlock | Toggle | <img src="icons/applications/MdLock.svg" width="20" /> <img src="icons/applications/MdLockOpen.svg" width="20" /> | Prevent or allow editing by other users (owner only) |
 | Color | Color Picker | <img src="icons/applications/MdStickyNote2.svg" width="20" /> | Change the stickie color |
-| Save to Asset Manager | Button | <img src="icons/applications/MdFileUpload.svg" width="20" /> | Upload the note as a `.md` file |
+| Save to Asset Manager | Button | <img src="icons/applications/MdCloudUpload.svg" width="20" /> | Upload the note as a `.md` file |
 | Download as Markdown | Button | <img src="icons/applications/MdFileDownload.svg" width="20" /> | Download the note as a `.md` file |
 
 ---
@@ -455,7 +547,7 @@ Paste a URL onto the board to create a WebpageLink. It fetches and displays meta
 | Stream Webview | Button | <img src="icons/applications/MdViewSidebar.svg" width="20" /> | Stream the webview content (Electron client) |
 | Open in Desktop | Button | <img src="icons/applications/MdDesktopMac.svg" width="20" /> | Open the URL in your system browser |
 | Copy URL | Button | <img src="icons/applications/MdCopyAll.svg" width="20" /> | Copy the URL to your clipboard |
-| Save to Asset Manager | Button | <img src="icons/applications/MdFileUpload.svg" width="20" /> | Save the link as a `.url` file |
+| Save to Asset Manager | Button | <img src="icons/applications/MdCloudUpload.svg" width="20" /> | Save the link as a `.url` file |
 | Download Link | Button | <img src="icons/applications/MdFileDownload.svg" width="20" /> | Download as a `.url` file |
 
 ---
@@ -483,7 +575,7 @@ An embedded web browser within the board. Enter any URL to load a web page direc
 | Zoom In | Button | <img src="icons/applications/MdAdd.svg" width="20" /> | Increase the page zoom level |
 | Zoom Out | Button | <img src="icons/applications/MdRemove.svg" width="20" /> | Decrease the page zoom level |
 | Mute | Toggle | <img src="icons/applications/MdVolumeOff.svg" width="20" /> | Toggle audio |
-| Save URL | Button | <img src="icons/applications/MdFileUpload.svg" width="20" /> | Save the URL to the asset manager |
+| Save URL | Button | <img src="icons/applications/MdCloudUpload.svg" width="20" /> | Save the URL to the asset manager |
 | Copy URL | Button | <img src="icons/applications/MdCopyAll.svg" width="20" /> | Copy the URL to your clipboard |
 | Open in Desktop | Button | <img src="icons/applications/MdOpenInNew.svg" width="20" /> | Open the URL in your system browser |
 

@@ -9,6 +9,7 @@ import { name as ClockName } from './apps/Clock';
 import { name as CobrowseName } from './apps/Cobrowse';
 import { name as CodeEditorName } from './apps/CodeEditor';
 import { name as CounterName } from './apps/Counter';
+import { name as DOCXViewerName } from './apps/DOCXViewer';
 import { name as DeepZoomImageName } from './apps/DeepZoomImage';
 import { name as DrawingName } from './apps/Drawing';
 import { name as GLTFViewerName } from './apps/GLTFViewer';
@@ -21,6 +22,7 @@ import { name as MermaidName } from './apps/Mermaid';
 import { name as NotepadName } from './apps/Notepad';
 import { name as PDFResultName } from './apps/PDFResult';
 import { name as PDFViewerName } from './apps/PDFViewer';
+import { name as PPTXViewerName } from './apps/PPTXViewer';
 import { name as PluginAppName } from './apps/PluginApp';
 import { name as PollName } from './apps/Poll';
 import { name as SageCellName } from './apps/SageCell';
@@ -47,6 +49,7 @@ import Clock from './apps/Clock/Clock';
 import Cobrowse from './apps/Cobrowse/Cobrowse';
 import CodeEditor from './apps/CodeEditor/CodeEditor';
 import Counter from './apps/Counter/Counter';
+import DOCXViewer from './apps/DOCXViewer/DOCXViewer';
 import DeepZoomImage from './apps/DeepZoomImage/DeepZoomImage';
 import Drawing from './apps/Drawing/Drawing';
 import GLTFViewer from './apps/GLTFViewer/GLTFViewer';
@@ -59,6 +62,7 @@ import Mermaid from './apps/Mermaid/Mermaid';
 import Notepad from './apps/Notepad/Notepad';
 import PDFResult from './apps/PDFResult/PDFResult';
 import PDFViewer from './apps/PDFViewer/PDFViewer';
+import PPTXViewer from './apps/PPTXViewer/PPTXViewer';
 import PluginApp from './apps/PluginApp/PluginApp';
 import Poll from './apps/Poll/Poll';
 import SageCell from './apps/SageCell/SageCell';
@@ -119,6 +123,11 @@ export const Applications = {
     ToolbarComponent: Counter.ToolbarComponent,
     GroupedToolbarComponent: Counter.GroupedToolbarComponent,
   },
+  [DOCXViewerName]: {
+    AppComponent: React.memo(DOCXViewer.AppComponent),
+    ToolbarComponent: DOCXViewer.ToolbarComponent,
+    GroupedToolbarComponent: DOCXViewer.GroupedToolbarComponent,
+  },
   [DeepZoomImageName]: {
     AppComponent: React.memo(DeepZoomImage.AppComponent),
     ToolbarComponent: DeepZoomImage.ToolbarComponent,
@@ -178,6 +187,11 @@ export const Applications = {
     AppComponent: React.memo(PDFViewer.AppComponent),
     ToolbarComponent: PDFViewer.ToolbarComponent,
     GroupedToolbarComponent: PDFViewer.GroupedToolbarComponent,
+  },
+  [PPTXViewerName]: {
+    AppComponent: React.memo(PPTXViewer.AppComponent),
+    ToolbarComponent: PPTXViewer.ToolbarComponent,
+    GroupedToolbarComponent: PPTXViewer.GroupedToolbarComponent,
   },
   [PluginAppName]: {
     AppComponent: React.memo(PluginApp.AppComponent),

@@ -7,19 +7,22 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
+import { MermaidApp } from '.';
 
-import { Button, ButtonGroup, Tooltip, Box, useColorModeValue, border } from '@chakra-ui/react';
-import mermaid, { type MermaidConfig } from "mermaid";
+import { Button, ButtonGroup, Tooltip, Box, useColorModeValue, useToken } from '@chakra-ui/react';
+import { renderAsync } from 'pele/lazy';
+import { create } from 'zustand';
 
 // Utility functions from SAGE3
-import { useAppStore, isUUIDv4, useAssetStore, apiUrls } from '@sage3/frontend';
+import { useAppStore, isUUIDv4, useAssetStore, apiUrls, downloadFile, useLinkStore, useUIStore, setupApp } from '@sage3/frontend';
 import { Asset } from '@sage3/shared/types';
 
-import { MdCode } from 'react-icons/md';
+import { MdCode, MdEdit } from 'react-icons/md';
+import { BsFiletypeSvg } from 'react-icons/bs';
+import { PiGraph } from 'react-icons/pi';
 
-import { state as AppState } from "./index";
-import { App, AppGroup } from "../../schema";
 import { AppWindow } from '../../components';
+import { isApp } from '../../schema';
 
 import './styles.css';
 
@@ -38,18 +41,58 @@ function CustomErrorComponent({ error, mermaidCode }: { error: string; mermaidCo
 }
 
 
+// Last rendered SVG of each Mermaid app, for the toolbar's SVG download
+const useSvgStore = create<{
+  svg: Record<string, string>;
+  setSvg: (id: string, svg: string) => void;
+  removeSvg: (id: string) => void;
+}>()((set) => ({
+  svg: {},
+  setSvg: (id, svg) => set((state) => ({ svg: { ...state.svg, [id]: svg } })),
+  removeSvg: (id) =>
+    set((state) => {
+      const { [id]: _removed, ...rest } = state.svg;
+      return { svg: rest };
+    }),
+}));
+
+// Text of the CodeEditor this diagram was opened from, while it exists and is in Mermaid mode
+function useSourceCode(app: MermaidApp): string | undefined {
+  const sourceId = app.data.sourceApps?.[0];
+  return useAppStore((state) => {
+    const source = sourceId ? state.apps.find((a) => a._id === sourceId) : undefined;
+    if (source && isApp(source, 'CodeEditor') && source.data.state.language === 'mermaid') return source.data.state.content;
+    return undefined;
+  });
+}
+
 /* App component for Mermaid */
-function AppComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function AppComponent(props: MermaidApp): JSX.Element {
+  const s = props.data.state;
   const assets = useAssetStore((state) => state.assets);
   const update = useAppStore((state) => state.update);
 
   // Styling
-  const theme = useColorModeValue('forest', 'dark');
   const bgColor = useColorModeValue('gray.100', 'gray.700');
   const borderColor = useColorModeValue('gray.700', 'gray.100');
-  // Unique ID for the mermaid container
-  const id = `mermaid-${props._id}`;
+  // Diagram colors, passed to pele as CSS variables (nodes tinted with the SAGE3 teal)
+  const [peleBg, peleFg, peleMuted, peleLine, peleSurface, peleSurfaceAlt, peleBorder, peleAccent] = useToken(
+    'colors',
+    useColorModeValue(
+      ['gray.100', 'gray.800', 'gray.500', 'gray.700', 'teal.50', 'teal.100', 'teal.600', 'teal.500'],
+      ['gray.700', 'gray.100', 'gray.400', 'gray.200', 'teal.800', 'teal.900', 'teal.400', 'teal.200']
+    )
+  );
+  const peleTheme = {
+    '--pele-bg': peleBg,
+    '--pele-fg': peleFg,
+    '--pele-muted': peleMuted,
+    '--pele-line': peleLine,
+    '--pele-surface': peleSurface,
+    '--pele-surface-alt': peleSurfaceAlt,
+    '--pele-border': peleBorder,
+    '--pele-accent': peleAccent,
+  } as React.CSSProperties;
   // Ref for the mermaid container
   const mermaidRef = useRef<HTMLDivElement>(null);
   // Error state
@@ -58,6 +101,12 @@ function AppComponent(props: App): JSX.Element {
   const [file, setFile] = useState<Asset>();
   // Get the data
   const [data, setData] = useState<string>("");
+  // Forget this app's SVG when it closes
+  useEffect(() => () => useSvgStore.getState().removeSvg(props._id), [props._id]);
+  // Diagram text: the source editor's live code, else the stored content, else the asset
+  const sourceCode = useSourceCode(props);
+  const code = sourceCode ?? s.content;
+  const text = code !== undefined ? code : data;
 
   // Convert the ID to an asset
   useEffect(() => {
@@ -95,19 +144,15 @@ function AppComponent(props: App): JSX.Element {
 
 
   useEffect(() => {
-    if (!mermaidRef.current || !data) return;
-    async function renderMermaid(diag: string) {
-      const mermaidConfig: MermaidConfig = {
-        theme: theme,
-        fontSize: 20,
-      };
-      mermaid.initialize({
-        startOnLoad: false,
-        suppressErrorRendering: true,
-        ...mermaidConfig,
-      });
+    if (!mermaidRef.current || !text) return;
+    // Ignore a render that finishes after the text changed or the app closed
+    let cancelled = false;
+    async function renderDiagram(diag: string) {
       try {
-        const { svg } = await mermaid.render(id, diag);
+        // idPrefix keeps SVG ids unique when several diagrams share a board
+        const { svg } = await renderAsync(diag, { fontSize: 20, idPrefix: `diagram-${props._id}-` });
+        if (cancelled) return;
+        useSvgStore.getState().setSvg(props._id, svg);
         if (mermaidRef.current) {
           mermaidRef.current.innerHTML = svg;
           const svgElement = mermaidRef.current.querySelector('svg');
@@ -122,20 +167,26 @@ function AppComponent(props: App): JSX.Element {
         }
         setError(null);
       } catch (err: any) {
-        setError(err?.message || 'Unknown error rendering Mermaid diagram');
+        if (cancelled) return;
+        useSvgStore.getState().setSvg(props._id, '');
+        setError(err?.message || 'Unknown error rendering diagram');
         if (mermaidRef.current) mermaidRef.current.innerHTML = '';
       }
     }
-    renderMermaid(data);
-  }, [id, theme, data]);
+    renderDiagram(text);
+    return () => {
+      cancelled = true;
+    };
+  }, [props._id, text]);
 
   return (
     <AppWindow app={props} hideBackgroundIcon={MdCode}>
       <Box p={1} border={'none'} overflow="hidden" height="100%" borderRadius={'md'} background={borderColor}>
         {error ? (
-          <CustomErrorComponent error={error} mermaidCode={data} />
+          <CustomErrorComponent error={error} mermaidCode={text} />
         ) : (
           <Box ref={mermaidRef} borderRadius={'md'}
+            className="mermaid-app"
             width="100%"
             height="100%"
             p={0}
@@ -145,6 +196,7 @@ function AppComponent(props: App): JSX.Element {
             display="flex"
             alignItems="center"
             justifyContent="center"
+            style={peleTheme}
           />
         )}
       </Box>
@@ -153,16 +205,94 @@ function AppComponent(props: App): JSX.Element {
 }
 
 /* App toolbar component for the app Mermaid */
-function ToolbarComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
-  const updateState = useAppStore((state) => state.updateState);
+function ToolbarComponent(props: MermaidApp): JSX.Element {
+  const s = props.data.state;
+  const assets = useAssetStore((state) => state.assets);
+  const [file, setFile] = useState<Asset>();
+  const code = useSourceCode(props) ?? s.content;
+  const svg = useSvgStore((state) => state.svg[props._id]);
+  const createApp = useAppStore((state) => state.create);
+  const update = useAppStore((state) => state.update);
+  const addLink = useLinkStore((state) => state.addLink);
+  // The CodeEditor this diagram follows, if it still exists
+  const sourceId = props.data.sourceApps?.[0];
+  const editorId = useAppStore((state) =>
+    sourceId && state.apps.some((a) => a._id === sourceId && a.data.type === 'CodeEditor') ? sourceId : undefined
+  );
+
+  useEffect(() => {
+    const asset = assets.find((a) => a._id === s.assetid);
+    if (asset) {
+      setFile(asset);
+    }
+  }, [s.assetid, assets]);
+
+  // Edit the diagram code in a CodeEditor, which the diagram then follows
+  const editCode = async () => {
+    // Already linked to an editor: select it
+    if (editorId) {
+      useUIStore.getState().setSelectedApp(editorId);
+      return;
+    }
+    // Code from the stored content, else from the asset
+    let text = code;
+    if (text === undefined && file) {
+      const response = await fetch(apiUrls.assets.getAssetById(file.data.file));
+      text = await response.text();
+    }
+    const { position, size, roomId, boardId } = props.data;
+    const app = setupApp('CodeEditor', 'CodeEditor', position.x - 620, position.y, roomId, boardId, { w: 600, h: size.height }, {
+      content: text ?? '',
+      language: 'mermaid',
+      ...(file ? { filename: file.data.originalfilename } : {}),
+    });
+    const res = await createApp(app);
+    if (res.success === true) {
+      // Follow the new editor (first source), keeping earlier sources such as a Chat
+      update(props._id, { sourceApps: [res.data._id, ...(props.data.sourceApps ?? [])] });
+      addLink(res.data._id, props._id, boardId, 'provenance');
+    }
+  };
 
   return (
     <>
-      <ButtonGroup isAttached size="xs" colorScheme="teal" mr="1">
-        <Tooltip placement="top-start" hasArrow={true} label={'Action'} openDelay={400}>
-          <Button onClick={console.log}>
-            Action
+      <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
+        <Tooltip placement="top" hasArrow={true} label={editorId ? 'Show Code Editor' : 'Edit in Code Editor'} openDelay={400}>
+          <Button onClick={editCode} isDisabled={!editorId && !file && code === undefined} size="xs" px={0}>
+            <MdEdit size="16px" />
+          </Button>
+        </Tooltip>
+      </ButtonGroup>
+      <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
+        <Tooltip placement="top" hasArrow={true} label={'Download Mermaid File'} openDelay={400}>
+          <Button
+            isDisabled={!file && !code}
+            onClick={() => {
+              if (file) {
+                const dl = apiUrls.assets.getAssetById(file.data.file);
+                downloadFile(dl, file.data.originalfilename);
+              } else if (code) {
+                downloadFile('data:text/plain;charset=utf-8,' + encodeURIComponent(code), 'diagram.mmd');
+              }
+            }}
+            size="xs"
+            px={0}
+          >
+            <PiGraph size="16px" />
+          </Button>
+        </Tooltip>
+        <Tooltip placement="top" hasArrow={true} label={'Download as SVG'} openDelay={400}>
+          <Button
+            isDisabled={!svg}
+            onClick={() => {
+              // Name it after the source file when there is one
+              const base = file ? file.data.originalfilename.replace(/\.[^.]+$/, '') : 'diagram';
+              downloadFile('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg), `${base}.svg`);
+            }}
+            size="xs"
+            px={0}
+          >
+            <BsFiletypeSvg size="16px" />
           </Button>
         </Tooltip>
       </ButtonGroup>
@@ -174,6 +304,6 @@ function ToolbarComponent(props: App): JSX.Element {
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = (props: { apps: AppGroup }) => { return null; };
+const GroupedToolbarComponent = (props: { apps: MermaidApp[] }) => { return null; };
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };

@@ -9,6 +9,7 @@ import { name as ClockName, init as defaultClock } from './apps/Clock';
 import { name as CobrowseName, init as defaultCobrowse } from './apps/Cobrowse';
 import { name as CodeEditorName, init as defaultCodeEditor } from './apps/CodeEditor';
 import { name as CounterName, init as defaultCounter } from './apps/Counter';
+import { name as DOCXViewerName, init as defaultDOCXViewer } from './apps/DOCXViewer';
 import { name as DeepZoomImageName, init as defaultDeepZoomImage } from './apps/DeepZoomImage';
 import { name as DrawingName, init as defaultDrawing } from './apps/Drawing';
 import { name as GLTFViewerName, init as defaultGLTFViewer } from './apps/GLTFViewer';
@@ -21,6 +22,7 @@ import { name as MermaidName, init as defaultMermaid } from './apps/Mermaid';
 import { name as NotepadName, init as defaultNotepad } from './apps/Notepad';
 import { name as PDFResultName, init as defaultPDFResult } from './apps/PDFResult';
 import { name as PDFViewerName, init as defaultPDFViewer } from './apps/PDFViewer';
+import { name as PPTXViewerName, init as defaultPPTXViewer } from './apps/PPTXViewer';
 import { name as PluginAppName, init as defaultPluginApp } from './apps/PluginApp';
 import { name as PollName, init as defaultPoll } from './apps/Poll';
 import { name as SageCellName, init as defaultSageCell } from './apps/SageCell';
@@ -45,6 +47,7 @@ export const initialValues = {
   [CobrowseName]: defaultCobrowse,
   [CodeEditorName]: defaultCodeEditor,
   [CounterName]: defaultCounter,
+  [DOCXViewerName]: defaultDOCXViewer,
   [DeepZoomImageName]: defaultDeepZoomImage,
   [DrawingName]: defaultDrawing,
   [GLTFViewerName]: defaultGLTFViewer,
@@ -57,6 +60,7 @@ export const initialValues = {
   [NotepadName]: defaultNotepad,
   [PDFResultName]: defaultPDFResult,
   [PDFViewerName]: defaultPDFViewer,
+  [PPTXViewerName]: defaultPPTXViewer,
   [PluginAppName]: defaultPluginApp,
   [PollName]: defaultPoll,
   [SageCellName]: defaultSageCell,

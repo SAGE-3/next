@@ -1,0 +1,17 @@
+/**
+ * Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
+ * University of Hawaii, University of Illinois Chicago, Virginia Tech
+ *
+ * Distributed under the terms of the SAGE3 License.  The full license is in
+ * the file LICENSE, distributed as part of this software.
+ */
+
+/* CSS definitions for the app DOCXViewer */
+
+/* The renderer's wrapper (and its copies in the other columns) keeps its natural width;
+   DOCXViewer.tsx moves and scales it so one page fills a column. Its gray background is
+   replaced by the app's light/dark one. */
+.docx-viewer-body div[class$='-wrapper'] {
+  width: max-content;
+  background: transparent;
+}

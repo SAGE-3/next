@@ -1,77 +1,80 @@
 // SAGE3 Generated from apps.json file
 
-import { state as AssetLinkState, name as AssetLinkName } from './apps/AssetLink';
-import { state as BoardLinkState, name as BoardLinkName } from './apps/BoardLink';
-import { state as CSVViewerState, name as CSVViewerName } from './apps/CSVViewer';
-import { state as CalculatorState, name as CalculatorName } from './apps/Calculator';
-import { state as ChatState, name as ChatName } from './apps/Chat';
-import { state as ClockState, name as ClockName } from './apps/Clock';
-import { state as CobrowseState, name as CobrowseName } from './apps/Cobrowse';
-import { state as CodeEditorState, name as CodeEditorName } from './apps/CodeEditor';
-import { state as CounterState, name as CounterName } from './apps/Counter';
-import { state as DeepZoomImageState, name as DeepZoomImageName } from './apps/DeepZoomImage';
-import { state as DrawingState, name as DrawingName } from './apps/Drawing';
-import { state as GLTFViewerState, name as GLTFViewerName } from './apps/GLTFViewer';
-import { state as IFrameState, name as IFrameName } from './apps/IFrame';
-import { state as ImageViewerState, name as ImageViewerName } from './apps/ImageViewer';
-import { state as LeafLetState, name as LeafLetName } from './apps/LeafLet';
-import { state as LinkerState, name as LinkerName } from './apps/Linker';
-import { state as MapState, name as MapName } from './apps/Map';
-import { state as MermaidState, name as MermaidName } from './apps/Mermaid';
-import { state as NotepadState, name as NotepadName } from './apps/Notepad';
-import { state as PDFResultState, name as PDFResultName } from './apps/PDFResult';
-import { state as PDFViewerState, name as PDFViewerName } from './apps/PDFViewer';
-import { state as PluginAppState, name as PluginAppName } from './apps/PluginApp';
-import { state as PollState, name as PollName } from './apps/Poll';
-import { state as SageCellState, name as SageCellName } from './apps/SageCell';
-import { state as SageIdeatorState, name as SageIdeatorName } from './apps/SageIdeator';
-import { state as ScreenshareState, name as ScreenshareName } from './apps/Screenshare';
-import { state as StickieState, name as StickieName } from './apps/Stickie';
-import { state as TimerState, name as TimerName } from './apps/Timer';
-import { state as TwilioScreenshareState, name as TwilioScreenshareName } from './apps/TwilioScreenshare';
-import { state as VegaLiteState, name as VegaLiteName } from './apps/VegaLite';
-import { state as VegaLiteViewerState, name as VegaLiteViewerName } from './apps/VegaLiteViewer';
-import { state as VideoViewerState, name as VideoViewerName } from './apps/VideoViewer';
-import { state as WebpageLinkState, name as WebpageLinkName } from './apps/WebpageLink';
-import { state as WebviewState, name as WebviewName } from './apps/Webview';
+import * as AssetLink from './apps/AssetLink';
+import * as BoardLink from './apps/BoardLink';
+import * as CSVViewer from './apps/CSVViewer';
+import * as Calculator from './apps/Calculator';
+import * as Chat from './apps/Chat';
+import * as Clock from './apps/Clock';
+import * as Cobrowse from './apps/Cobrowse';
+import * as CodeEditor from './apps/CodeEditor';
+import * as Counter from './apps/Counter';
+import * as DOCXViewer from './apps/DOCXViewer';
+import * as DeepZoomImage from './apps/DeepZoomImage';
+import * as Drawing from './apps/Drawing';
+import * as GLTFViewer from './apps/GLTFViewer';
+import * as IFrame from './apps/IFrame';
+import * as ImageViewer from './apps/ImageViewer';
+import * as LeafLet from './apps/LeafLet';
+import * as Linker from './apps/Linker';
+import * as Map from './apps/Map';
+import * as Mermaid from './apps/Mermaid';
+import * as Notepad from './apps/Notepad';
+import * as PDFResult from './apps/PDFResult';
+import * as PDFViewer from './apps/PDFViewer';
+import * as PPTXViewer from './apps/PPTXViewer';
+import * as PluginApp from './apps/PluginApp';
+import * as Poll from './apps/Poll';
+import * as SageCell from './apps/SageCell';
+import * as SageIdeator from './apps/SageIdeator';
+import * as Screenshare from './apps/Screenshare';
+import * as Stickie from './apps/Stickie';
+import * as Timer from './apps/Timer';
+import * as TwilioScreenshare from './apps/TwilioScreenshare';
+import * as VegaLite from './apps/VegaLite';
+import * as VegaLiteViewer from './apps/VegaLiteViewer';
+import * as VideoViewer from './apps/VideoViewer';
+import * as WebpageLink from './apps/WebpageLink';
+import * as Webview from './apps/Webview';
 
+export type AppStateMap = {
+  [AssetLink.name]: AssetLink.state;
+  [BoardLink.name]: BoardLink.state;
+  [CSVViewer.name]: CSVViewer.state;
+  [Calculator.name]: Calculator.state;
+  [Chat.name]: Chat.state;
+  [Clock.name]: Clock.state;
+  [Cobrowse.name]: Cobrowse.state;
+  [CodeEditor.name]: CodeEditor.state;
+  [Counter.name]: Counter.state;
+  [DOCXViewer.name]: DOCXViewer.state;
+  [DeepZoomImage.name]: DeepZoomImage.state;
+  [Drawing.name]: Drawing.state;
+  [GLTFViewer.name]: GLTFViewer.state;
+  [IFrame.name]: IFrame.state;
+  [ImageViewer.name]: ImageViewer.state;
+  [LeafLet.name]: LeafLet.state;
+  [Linker.name]: Linker.state;
+  [Map.name]: Map.state;
+  [Mermaid.name]: Mermaid.state;
+  [Notepad.name]: Notepad.state;
+  [PDFResult.name]: PDFResult.state;
+  [PDFViewer.name]: PDFViewer.state;
+  [PPTXViewer.name]: PPTXViewer.state;
+  [PluginApp.name]: PluginApp.state;
+  [Poll.name]: Poll.state;
+  [SageCell.name]: SageCell.state;
+  [SageIdeator.name]: SageIdeator.state;
+  [Screenshare.name]: Screenshare.state;
+  [Stickie.name]: Stickie.state;
+  [Timer.name]: Timer.state;
+  [TwilioScreenshare.name]: TwilioScreenshare.state;
+  [VegaLite.name]: VegaLite.state;
+  [VegaLiteViewer.name]: VegaLiteViewer.state;
+  [VideoViewer.name]: VideoViewer.state;
+  [WebpageLink.name]: WebpageLink.state;
+  [Webview.name]: Webview.state;
+};
 
-export type AppState =
-  | {}
-  | AssetLinkState
-  | BoardLinkState
-  | CSVViewerState
-  | CalculatorState
-  | ChatState
-  | ClockState
-  | CobrowseState
-  | CodeEditorState
-  | CounterState
-  | DeepZoomImageState
-  | DrawingState
-  | GLTFViewerState
-  | IFrameState
-  | ImageViewerState
-  | LeafLetState
-  | LinkerState
-  | MapState
-  | MermaidState
-  | NotepadState
-  | PDFResultState
-  | PDFViewerState
-  | PluginAppState
-  | PollState
-  | SageCellState
-  | SageIdeatorState
-  | ScreenshareState
-  | StickieState
-  | TimerState
-  | TwilioScreenshareState
-  | VegaLiteState
-  | VegaLiteViewerState
-  | VideoViewerState
-  | WebpageLinkState
-  | WebviewState;
-
-
-export type AppName = typeof AssetLinkName | typeof BoardLinkName | typeof CSVViewerName | typeof CalculatorName | typeof ChatName | typeof ClockName | typeof CobrowseName | typeof CodeEditorName | typeof CounterName | typeof DeepZoomImageName | typeof DrawingName | typeof GLTFViewerName | typeof IFrameName | typeof ImageViewerName | typeof LeafLetName | typeof LinkerName | typeof MapName | typeof MermaidName | typeof NotepadName | typeof PDFResultName | typeof PDFViewerName | typeof PluginAppName | typeof PollName | typeof SageCellName | typeof SageIdeatorName | typeof ScreenshareName | typeof StickieName | typeof TimerName | typeof TwilioScreenshareName | typeof VegaLiteName | typeof VegaLiteViewerName | typeof VideoViewerName | typeof WebpageLinkName | typeof WebviewName;
+export type AppName = keyof AppStateMap;
+export type AppState = AppStateMap[AppName];

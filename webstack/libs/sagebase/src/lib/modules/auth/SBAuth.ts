@@ -15,6 +15,15 @@ import * as passport from 'passport';
 
 import { SBAuthDatabase, SBAuthDB, SBAuthSchema } from './SBAuthDatabase';
 import { createRateLimiter } from './SBRateLimit';
+import {
+  MOBILE_LOGIN_REDIRECT,
+  issueMobileCode,
+  makeMobileExchangeHandler,
+  mobileChallengeFromState,
+  mobileLoginState,
+  rememberMobileLogin,
+  takeMobileChallenge,
+} from './SBMobileLogin';
 export type { SBAuthSchema } from './SBAuthDatabase';
 export type { JWTPayload } from './adapters';
 import {
@@ -94,9 +103,10 @@ export class SBAuth {
    * Creates a generalized OAuth callback handler with enhanced error logging and security validation
    * @param providerName Human-readable provider name (e.g., 'google', 'cilogon', 'apple')
    * @param strategyName Passport strategy name (e.g., 'google', 'openidconnect', 'apple')
+   * @param mobileFromState The iOS app's challenge comes back in the OAuth state, not the session (Apple)
    * @returns Express middleware function for handling OAuth callbacks
    */
-  private createOAuthCallbackHandler(providerName: string, strategyName: string) {
+  private createOAuthCallbackHandler(providerName: string, strategyName: string, mobileFromState = false) {
     return (req: Request, res: Response, next: NextFunction) => {
       // Log OAuth callback details for debugging
       // console.log(`${providerName}> OAuth callback received:`, {
@@ -116,6 +126,9 @@ export class SBAuth {
             encodeURIComponent((req.query.error_description as string) || (req.query.error as string)),
         );
       }
+
+      // A login started by the iOS app (see SBMobileLogin); read before req.logIn replaces the session
+      const mobileChallenge = mobileFromState ? mobileChallengeFromState(req) : takeMobileChallenge(req);
 
       passport.authenticate(strategyName, (err: any, user: any, info: any) => {
         if (err) {
@@ -154,6 +167,13 @@ export class SBAuth {
           //   sessionId: req.sessionID,
           //   timestamp: new Date().toISOString(),
           // });
+
+          // Started by the iOS app: hand it a one-time code for its own session
+          if (mobileChallenge) {
+            return issueMobileCode(this._redisClient, this._prefix, user, mobileChallenge)
+              .then((code) => res.redirect(`${MOBILE_LOGIN_REDIRECT}?code=${code}`))
+              .catch(next);
+          }
 
           return res.redirect('/');
         });
@@ -208,6 +228,7 @@ export class SBAuth {
         if (passportGoogleSetup(config.googleConfig)) {
           express.get(
             config.googleConfig.routeEndpoint,
+            rememberMobileLogin,
             passport.authenticate('google', {
               prompt: 'select_account',
               scope: ['profile', 'email'],
@@ -217,12 +238,19 @@ export class SBAuth {
           express.get(config.googleConfig.callbackURL, loginLimiter, this.createOAuthCallbackHandler('google', 'google'));
         }
       }
+      // The iOS app trades a login's one-time code for its session (SBMobileLogin)
+      if ((config.strategies.includes('google') && config.googleConfig) || (config.strategies.includes('apple') && config.appleConfig)) {
+        express.post('/auth/mobile/exchange', createRateLimiter(10), makeMobileExchangeHandler(this._redisClient, this._prefix));
+      }
 
       // Apple Setup
       if (config.strategies.includes('apple') && config.appleConfig) {
         if (passportAppleSetup(config.appleConfig)) {
-          express.get(config.appleConfig.routeEndpoint, passport.authenticate('apple'));
-          express.post(config.appleConfig.callbackURL, loginLimiter, this.createOAuthCallbackHandler('apple', 'apple'));
+          // The iOS app's challenge (?mobile=) rides in the state; otherwise the strategy's own
+          express.get(config.appleConfig.routeEndpoint, (req, res, next) =>
+            passport.authenticate('apple', { state: mobileLoginState(req) } as passport.AuthenticateOptions)(req, res, next),
+          );
+          express.post(config.appleConfig.callbackURL, loginLimiter, this.createOAuthCallbackHandler('apple', 'apple', true));
         }
       }
 

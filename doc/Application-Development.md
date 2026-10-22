@@ -382,6 +382,17 @@ createApp({
 });
 ```
 
+The example places the new app next to yours. To open it near the center of the user's view instead, the way the menus do, use `placeNewApp` from `@sage3/frontend`. It returns the free spot closest to the center, at least 40 pixels from the other apps and at least half in view, or the center itself when the view is full:
+
+```typescript
+import { placeNewApp } from '@sage3/frontend';
+
+const { x, y } = placeNewApp({ width: 400, height: 300 });
+createApp({ ...newApp, position: { x, y, z: 0 } });
+```
+
+`placeNewApps(apps)` does the same for several apps already set up with positions (for example with `setupAppForFile`), moving them as one block. Options: `margin` (default 40), `minVisible` (default 0.5), and `target`, a board point to place around instead of the view's center. The underlying pure function is `findAppPlacement` in `@sage3/shared`.
+
 ---
 
 ### Available Stores

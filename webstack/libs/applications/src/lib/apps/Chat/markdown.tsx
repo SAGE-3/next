@@ -8,7 +8,9 @@
 
 import { useState } from 'react';
 import { Box, Table, Tr, Td, Th, Thead, Tbody } from '@chakra-ui/react';
-import { BsCopy, BsCheck } from 'react-icons/bs';
+import { BsCopy, BsCheck, BsDiagram3 } from 'react-icons/bs';
+
+import { useAppStore, useLinkStore, setupApp } from '@sage3/frontend';
 
 // markdown-to-jsx overrides used when rendering SAGE answers.
 
@@ -25,8 +27,31 @@ export const MdUnorderedList: React.FC<{ children: React.ReactNode }> = ({ child
   </ul>
 );
 
+// Open Mermaid code in a Mermaid app next to the Chat app, linked to it
+async function openDiagram(chatId: string, code: string) {
+  const chat = useAppStore.getState().apps.find((a) => a._id === chatId);
+  if (!chat) return;
+  const { position, size, roomId, boardId } = chat.data;
+  const app = setupApp(
+    'Mermaid',
+    'Mermaid',
+    position.x + size.width + 20,
+    position.y,
+    roomId,
+    boardId,
+    { w: 800, h: 600 },
+    { content: code },
+  );
+  app.sourceApps = [chatId];
+  const res = await useAppStore.getState().create(app);
+  if (res.success === true) {
+    useLinkStore.getState().addLink(chatId, res.data._id, boardId, 'provenance');
+  }
+}
+
 // Render a fenced code block with a language label header and a copy button.
-export const MdCode: React.FC<{ children: React.ReactNode }> = ({ children, ...props }) => {
+// Mermaid blocks also get a button to open the diagram in a Mermaid app.
+export const MdCode: React.FC<{ children: React.ReactNode; appId?: string }> = ({ children, appId, ...props }) => {
   // @ts-ignore
   const lang = props.className ? props.className.replace('lang-', '') : 'text';
   const [copied, setCopied] = useState(false);
@@ -48,19 +73,36 @@ export const MdCode: React.FC<{ children: React.ReactNode }> = ({ children, ...p
               <span>
                 <b>{lang}</b>
               </span>
-              <Box
-                display={'flex'}
-                alignItems={'center'}
-                userSelect={'none'}
-                _hover={{ cursor: 'pointer' }}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCopied(true);
-                  // Copy the code to clipboard
-                  navigator.clipboard.writeText(children as string);
-                }}
-              >
-                {copied ? <BsCheck /> : <BsCopy />} <span> {copied ? 'Copied' : 'Copy'} </span>
+              <Box display={'flex'} alignItems={'center'} gap={3}>
+                <Box
+                  display={'flex'}
+                  alignItems={'center'}
+                  userSelect={'none'}
+                  _hover={{ cursor: 'pointer' }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCopied(true);
+                    // Copy the code to clipboard
+                    navigator.clipboard.writeText(children as string);
+                  }}
+                >
+                  {copied ? <BsCheck /> : <BsCopy />} <span> {copied ? 'Copied' : 'Copy'} </span>
+                </Box>
+                {lang === 'mermaid' && appId && (
+                  <Box
+                    display={'flex'}
+                    alignItems={'center'}
+                    gap={1}
+                    userSelect={'none'}
+                    _hover={{ cursor: 'pointer' }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openDiagram(appId, children as string);
+                    }}
+                  >
+                    <BsDiagram3 /> <span>Open in App</span>
+                  </Box>
+                )}
               </Box>
             </Box>
           </Th>

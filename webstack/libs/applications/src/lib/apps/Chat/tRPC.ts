@@ -37,7 +37,7 @@ const makeRpcPost = async (mth: string, data: object) => {
     const base = apiUrls.ai.agents.base;
     // withUserCredentials attaches the user's own key only when the request
     // names their own provider; every other request is sent unchanged
-    const response = await ky.post<Response>(`${base}${mth}`, { json: withUserCredentials(data), timeout: 120 * 1000 }).json();
+    const response = await ky.post<Response>(`${base}${mth}`, { json: await withUserCredentials(data), timeout: 120 * 1000 }).json();
     return response;
   } catch (e) {
     const error = e as HTTPError<Response>;
