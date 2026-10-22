@@ -11,4 +11,5 @@ export * from './subscription-cache';
 export * from './presence';
 export * from './twilio';
 export * from './livekit';
+export * from './veo';
 export * from './url-metadata';

@@ -53,7 +53,11 @@ export interface ServerConfiguration {
   // Python server for agents
   agents: { url: string };
   // VEO VNC container orchestration server
-  veoServer?: { url: string };
+  // url: VEO's origin (browsers connect to its stream). callbackUrl: base URL VEO's API
+  // container uses to reach /api/veo/callback on this server. secret: VEO's VEO_SECRET.
+  // callbackKey: HMAC key for the per-app callback secrets. The VEO_SECRET and
+  // VEO_CALLBACK_KEY environment variables override the two secrets. Server-side only.
+  veoServer?: { url: string; callbackUrl?: string; secret?: string; callbackKey?: string };
   // Webserver configuration
   webserver: {
     logLevel: 'all' | 'partial' | 'none';
