@@ -199,7 +199,7 @@
     "rimraf": "^3.0.2",
     "simple-zustand-devtools": "^1.1.0",
     "supertest": "^6.3.3",
-    "ts-jest": "^29.4.11",
+    "ts-jest": "^29.4.15",
     "typescript": "6.0.3",
     "typescript-native": "npm:typescript@7.0.2",
     "webpack": "5.108.4",
