@@ -44,7 +44,8 @@ import {
   Text,
 } from '@chakra-ui/react';
 import { MdAdd, MdMap, MdTerrain, MdArrowDropUp, MdArrowDropDown, MdCenterFocusStrong } from 'react-icons/md';
-import maplibregl, { MapLayerEventType } from 'maplibre-gl';
+import { maplibregl } from '../../components/maplibre';
+import { MapLayerEventType } from 'maplibre-gl';
 import * as esriLeafletGeocoder from 'esri-leaflet-geocoder';
 import { fromUrl, TypedArray } from 'geotiff';
 import { bbox } from '@turf/bbox';
@@ -62,7 +63,6 @@ import { LayerType, MapApp } from './index';
 
 import { getHexColor, SAGEColors, colors } from '@sage3/shared';
 
-import './maplibre-gl.css';
 
 // Maplibre and MapTiler configuration
 const mapTilerAPI = 'elzgvVROErSfCRbrVabp';
