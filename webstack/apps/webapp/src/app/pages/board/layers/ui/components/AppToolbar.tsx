@@ -76,6 +76,7 @@ import { formatDistance } from 'date-fns';
 
 import {
   useAbility,
+  PluginActions,
   useAppStore,
   useHexColor,
   useThrottleApps,
@@ -94,6 +95,7 @@ import {
 } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
 import { AI_ENABLED_APPS, Applications } from '@sage3/applications/apps';
+import { isApp } from '@sage3/applications/schema';
 import { Link, Position, Size } from '@sage3/shared/types';
 import ky from 'ky';
 import { FaLink, FaUnlink } from 'react-icons/fa';
@@ -823,6 +825,10 @@ export function AppToolbar(props: AppToolbarProps) {
           )}
         >
           <>
+            {/* Extension commands keep their natural width; the app's own controls take the rest. */}
+            <HStack spacing={1} flexShrink={0} mr={2}>
+              <PluginActions placement="toolbar" app={app} />
+            </HStack>
             <Box display="flex" flexDirection="row" alignItems="center" justifyContent="space-between" width="100%">
               <Box display="flex" flexDirection="row" alignItems="center" justifyContent="left" width="100%">
             <Component key={app._id} {...app}></Component>
@@ -904,6 +910,7 @@ export function AppToolbar(props: AppToolbarProps) {
                   {previousLocation.set && previousLocation.app === app._id ? 'Zoom Back' : 'Zoom to Application'}
                 </MenuItem>
                 <MenuDivider />
+                <PluginActions placement="context-menu" app={app} menuItems />
 
                 <MenuItem icon={<MdDeselect size="16px" />} onClick={() => setSelectedApp('')} py="1px" m="0">
                   Deselect Application
@@ -981,15 +988,15 @@ export function AppToolbar(props: AppToolbarProps) {
       const y = app.data.position.y;
       let context = '';
       // Specific cases for each app to build a context for the LLM
-      if (app.data.type === 'Stickie') {
+      if (isApp(app, 'Stickie')) {
         const selection = getTextSelection(app._id);
         context = selection || app.data.state.text;
-      } else if (app.data.type === 'CodeEditor') {
+      } else if (isApp(app, 'CodeEditor')) {
         const selection = getTextSelection(app._id);
         const code = selection || app.data.state.content;
         // Get the source code of the editor
         context = `Language ${app.data.state.language}:\n\n${code}`;
-      } else if (app.data.type === 'CSVViewer') {
+      } else if (isApp(app, 'CSVViewer')) {
         // Get information about the asset
         const asset = useAssetStore.getState().assets.find((a) => a._id === app.data.state.assetid);
         if (asset) {

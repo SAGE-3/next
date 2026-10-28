@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>edit note</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Kalam:wght@400;700&family=Patrick+Hand&display=swap" />
+    <link rel="stylesheet" href="base.css" />
+    <style>
+      body {
+        padding: 14px 16px;
+        overflow: auto;
+        background: var(--paper);
+        font-size: 17px;
+      }
+
+      label {
+        display: block;
+        font-family: var(--script);
+        font-weight: 700;
+        font-size: 22px;
+        margin: 10px 0 2px;
+      }
+
+      input[type='text'],
+      textarea,
+      select {
+        width: 100%;
+        font-family: var(--hand);
+        font-size: 18px;
+        border: 2px solid var(--ink);
+        border-radius: 6px;
+        padding: 6px 10px;
+        background: #fff;
+        color: var(--ink);
+      }
+
+      textarea {
+        height: 330px;
+        resize: vertical;
+        font-family: ui-monospace, Menlo, monospace;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .tools {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin: 6px 0 2px;
+      }
+
+      .tools button {
+        font-size: 15px;
+        padding: 2px 9px;
+        background: #fff;
+        border: 2px solid var(--ink);
+        border-radius: 6px 10px 5px 9px;
+      }
+
+      .tools button:hover {
+        background: var(--yellow);
+      }
+
+      .row {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .row > div {
+        flex: 1;
+        min-width: 130px;
+      }
+
+      .swatches {
+        display: flex;
+        gap: 6px;
+        margin-top: 4px;
+      }
+
+      .swatches button {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        border: 2.5px solid var(--ink);
+      }
+
+      .swatches button.on {
+        box-shadow:
+          0 0 0 3px var(--paper),
+          0 0 0 5px var(--ink);
+      }
+
+      input[type='range'] {
+        width: 100%;
+      }
+
+      .check {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        font-size: 18px;
+        margin-top: 12px;
+      }
+
+      #status {
+        margin-top: 10px;
+        font-family: var(--script);
+        font-size: 20px;
+        color: var(--ink2);
+        min-height: 24px;
+      }
+
+      .cheat {
+        font-size: 14px;
+        color: var(--ink2);
+        line-height: 1.5;
+        margin-top: 8px;
+      }
+
+      code {
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 0 4px;
+      }
+    </style>
+    <script src="edit.js" defer></script>
+  </head>
+  <body>
+    <label for="title">title</label>
+    <input id="title" type="text" placeholder="title" />
+
+    <label for="body">note</label>
+    <div class="tools">
+      <button type="button" data-wrap="==|==" title="highlight">hl</button>
+      <button type="button" data-wrap="~~|~~" title="cross out"><s>cross</s></button>
+      <button type="button" data-wrap="((|))" title="circle">(circle)</button>
+      <button type="button" data-wrap="__|__" title="squiggle underline">squiggle</button>
+      <button type="button" data-line=">> " title="margin scribble">margin</button>
+      <button type="button" data-line="[ ] " title="checkbox">todo</button>
+      <button type="button" data-line="?? " title="question">?</button>
+      <button type="button" data-link title="turn the selection into a link">🔗 link</button>
+    </div>
+    <textarea id="body" spellcheck="false"></textarea>
+
+    <div class="row">
+      <div>
+        <label for="style">paper</label>
+        <select id="style">
+          <option value="paper">grid</option>
+          <option value="lined">lined</option>
+          <option value="index">index card</option>
+          <option value="sticky">sticky</option>
+          <option value="torn">torn</option>
+          <option value="banner">banner</option>
+        </select>
+      </div>
+      <div>
+        <label for="deco">stuck on with</label>
+        <select id="deco">
+          <option value="">nothing</option>
+          <option value="pin">pin</option>
+          <option value="pins">2 pins</option>
+          <option value="tape">tape</option>
+          <option value="tape2">2 tapes</option>
+        </select>
+      </div>
+    </div>
+
+    <label>color</label>
+    <div class="swatches" id="accent"></div>
+
+    <div class="row">
+      <div>
+        <label for="tilt">tilt</label>
+        <input id="tilt" type="range" min="-3" max="3" step="0.1" />
+      </div>
+      <div>
+        <label class="check"> <input id="cols" type="checkbox" /> 2 columns </label>
+      </div>
+    </div>
+    <label class="check"> <input id="collect" type="checkbox" /> 📌 collect quotes from pdfs here </label>
+
+    <div id="status" role="status" aria-live="polite">connecting…</div>
+    <div class="cheat">
+      <code>## heading</code>
+      <code>* bullet</code>
+      <code>1) step</code>
+      <code>&gt; bubble</code>
+      <code>!! big box</code>
+      <code>=&gt; arrow</code>
+      <code>stat: 75% | label</code>
+      <code>bar: label | 4 | 10 | pink</code>
+      <code>~~~</code> squiggle line · quotes from a pdf come in as <code>[p3](sage3://document/APP_ID?page=2)</code>, which shows as a ↪
+      button that turns the pdf.
+    </div>
+  </body>
+</html>

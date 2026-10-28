@@ -7,6 +7,7 @@
  */
 
 import { URLMetadata } from '@sage3/backend';
+import { isApp } from '@sage3/applications/schema';
 import { generateReadableID } from '@sage3/shared';
 import { throttle } from 'throttle-debounce';
 import {
@@ -122,9 +123,10 @@ export async function loadCollections(): Promise<void> {
   AppsCollection.subscribeAll((message) => {
     if (message.type === 'CREATE') {
       message.doc.forEach((doc) => {
-        if (doc.data.type === 'WebpageLink') {
-          URLMetadata(doc.data.state.url).then((metadata) => {
-            AppsCollection.update(doc._id, 'NODE_SERVER', { state: { ...doc.data.state, meta: metadata } });
+        if (isApp(doc, 'WebpageLink')) {
+          const state = doc.data.state;
+          URLMetadata(state.url).then((metadata) => {
+            AppsCollection.update(doc._id, 'NODE_SERVER', { state: { ...state, meta: metadata } });
           });
         }
       });

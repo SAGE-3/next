@@ -12,3 +12,4 @@ export * from './presence';
 export * from './twilio';
 export * from './livekit';
 export * from './url-metadata';
+export * from './plugin-assets';
