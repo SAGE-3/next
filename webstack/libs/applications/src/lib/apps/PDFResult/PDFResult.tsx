@@ -13,8 +13,7 @@ import { useParams } from 'react-router';
 import { humanFileSize } from '@sage3/shared';
 import { useAppStore, useUser } from '@sage3/frontend';
 
-import { App } from '../../schema';
-import { state as AppState } from './index';
+import { PDFResultApp } from './index';
 import { AppWindow } from '../../components';
 
 type TocItem = {
@@ -31,8 +30,8 @@ import './styling.css';
 
 /* App component for PDFResult */
 
-function AppComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function AppComponent(props: PDFResultApp): JSX.Element {
+  const s = props.data.state;
   const [keywords, setKeywords] = useState([]);
   const [references, setReferences] = useState<string[]>([]);
   const [title, setTitle] = useState('');
@@ -170,8 +169,8 @@ function AppComponent(props: App): JSX.Element {
 
 /* App toolbar component for the app PDFResult */
 
-function ToolbarComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function ToolbarComponent(props: PDFResultApp): JSX.Element {
+  const s = props.data.state;
   const updateState = useAppStore((state) => state.updateState);
 
   return <></>;

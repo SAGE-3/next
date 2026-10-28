@@ -176,7 +176,8 @@ class ChatAgent:
             # Annotate the answer
             text = response.strip()
             response = text + "\n\n---\n"
-            response += "Text generated using an AI model [" + qq.model + "]\n"
+            model_name = self.manager.model_label(qq.model, ["chat"], user_llm)
+            response += "Text generated using an AI model [" + model_name + "]\n"
 
             # Propose the answer to the user
             action1 = json.dumps(

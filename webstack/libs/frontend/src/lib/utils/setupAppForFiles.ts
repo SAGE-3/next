@@ -20,6 +20,8 @@ import {
   isGeoJSON,
   isPython,
   isGLTF,
+  isPPTX,
+  isDOCX,
   isGIF,
   isCode,
   isR,
@@ -246,6 +248,36 @@ export async function setupAppForFile(
         rotation: { x: 0, y: 0, z: 0 },
         type: 'GLTFViewer',
         state: { ...initialValues['GLTFViewer'], assetid: file.id },
+        raised: true,
+        dragging: false,
+        pinned: false,
+      };
+    } else if (isPPTX(file.type)) {
+      // 16:9 to start; the viewer adopts the deck's own aspect ratio once loaded
+      return {
+        title: file.originalfilename,
+        roomId: roomId,
+        boardId: boardId,
+        position: { x: xDrop - 480, y: yDrop - 270, z: 0 },
+        size: { width: 960, height: 540, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        type: 'PPTXViewer',
+        state: { ...initialValues['PPTXViewer'], assetid: file.id },
+        raised: true,
+        dragging: false,
+        pinned: false,
+      };
+    } else if (isDOCX(file.type)) {
+      // A page's proportions (US Letter); the document is fitted to the width
+      return {
+        title: file.originalfilename,
+        roomId: roomId,
+        boardId: boardId,
+        position: { x: xDrop - 306, y: yDrop - 396, z: 0 },
+        size: { width: 612, height: 792, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        type: 'DOCXViewer',
+        state: { ...initialValues['DOCXViewer'], assetid: file.id },
         raised: true,
         dragging: false,
         pinned: false,

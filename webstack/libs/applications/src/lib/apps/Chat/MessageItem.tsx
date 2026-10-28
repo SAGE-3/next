@@ -184,7 +184,7 @@ export function MessageItem(props: MessageItemProps): JSX.Element {
                         overrides: {
                           ol: { component: MdOrderedList },
                           ul: { component: MdUnorderedList },
-                          code: { component: MdCode },
+                          code: { component: MdCode, props: { appId } },
                         },
                       }}
                       style={{ userSelect: isFocused ? 'text' : 'none' }}

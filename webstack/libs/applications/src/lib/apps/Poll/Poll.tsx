@@ -11,8 +11,7 @@ import { Box, useColorModeValue } from '@chakra-ui/react';
 
 import { useAppStore } from '@sage3/frontend';
 
-import { App } from '../../schema';
-import { state as AppState } from './index';
+import { PollApp } from './index';
 import { AppWindow } from '../../components';
 import { usePollsStore } from './stores/pollStore';
 import { NewPollForm, PollView } from './components';
@@ -20,8 +19,8 @@ import { NewPollForm, PollView } from './components';
 
 /* App component for poll */
 
-function AppComponent(props: App): JSX.Element {
-  const { poll } = props.data.state as AppState;
+function AppComponent(props: PollApp): JSX.Element {
+  const { poll } = props.data.state;
   const updateState = useAppStore((state) => state.updateState);
   const pollStore = usePollsStore((state) => updateState(props._id, { poll: state }));
   const backgroundColor = useColorModeValue('white', 'gray.700');

@@ -58,9 +58,8 @@ import { Asset } from '@sage3/shared/types';
 import { isGeoTiff, isTiff } from '@sage3/shared';
 import { useAppStore, useAssetStore, apiUrls, useHexColor } from '@sage3/frontend';
 
-import { App } from '../../schema';
 import { AppWindow } from '../../components';
-import { state as AppState, LayerType } from './index';
+import { LayerType, MapApp } from './index';
 
 import { getHexColor, SAGEColors, colors } from '@sage3/shared';
 
@@ -394,8 +393,8 @@ export const useStore = create<MapStore>((set) => ({
 }));
 
 // The map app component
-function AppComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function AppComponent(props: MapApp): JSX.Element {
+  const s = props.data.state;
   const updateState = useAppStore((state) => state.updateState);
 
   // Ref to hold the single MapLibre instance
@@ -504,8 +503,8 @@ function AppComponent(props: App): JSX.Element {
   );
 }
 
-function ToolbarComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function ToolbarComponent(props: MapApp): JSX.Element {
+  const s = props.data.state;
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
 

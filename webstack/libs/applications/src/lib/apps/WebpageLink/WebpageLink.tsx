@@ -25,15 +25,15 @@ import {
   DrawerHeader,
   DrawerBody,
 } from '@chakra-ui/react';
-import { MdWeb, MdViewSidebar, MdDesktopMac, MdCopyAll, MdFileDownload, MdFileUpload, MdLink } from 'react-icons/md';
+import { MdWeb, MdViewSidebar, MdDesktopMac, MdCopyAll, MdFileDownload, MdCloudUpload, MdLink } from 'react-icons/md';
 
 import { isElectron, useAppStore, processContentURL, downloadFile, ConfirmValueModal, apiUrls } from '@sage3/frontend';
 import { throttle } from 'throttle-debounce';
 // Zustand
 import { create } from 'zustand';
 
-import { state as AppState } from './index';
-import { App, AppSchema } from '../../schema';
+import { WebpageLinkApp } from './index';
+import { AppSchema } from '../../schema';
 import { AppWindow } from '../../components';
 
 // Electron and Browser components
@@ -52,8 +52,8 @@ export const useStore = create<SockStore>()((set) => ({
 
 /* App component for WebpageLink */
 
-function AppComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function AppComponent(props: WebpageLinkApp): JSX.Element {
+  const s = props.data.state;
   // UI Stuff
   const dividerColor = useColorModeValue('gray.300', 'gray.600');
   const backgroundColor = useColorModeValue('red.400', 'red.400');
@@ -196,8 +196,8 @@ function AppComponent(props: App): JSX.Element {
 
 /* App toolbar component for the app BoardLink */
 
-function ToolbarComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function ToolbarComponent(props: WebpageLinkApp): JSX.Element {
+  const s = props.data.state;
   // Stores
   const createApp = useAppStore((state) => state.create);
   const sock = useStore((state) => state.sock[props._id]);
@@ -500,7 +500,7 @@ function ToolbarComponent(props: App): JSX.Element {
       <ButtonGroup isAttached size="xs" colorScheme="teal">
         <Tooltip placement="top" hasArrow={true} label={'Save URL in Asset Manager'} openDelay={400}>
           <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }} size="xs" px={0}>
-            <MdFileUpload size="16px" />
+            <MdCloudUpload size="16px" />
           </Button>
         </Tooltip>
 

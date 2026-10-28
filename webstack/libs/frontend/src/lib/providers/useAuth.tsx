@@ -16,6 +16,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { SBAuthSchema } from '@sage3/sagebase';
 
+import { clearUserLLM } from '../utils/userllm';
+
 /**
  * Endpoint to login with Google OAuth
  */
@@ -95,6 +97,9 @@ async function logout(): Promise<void> {
     },
   });
   if (res.status === 200) {
+    // The user's own LLM key lives in this browser's localStorage. It must not
+    // outlive the login on a shared machine, so it goes when the session does.
+    await clearUserLLM();
     // return to homepage
     window.location.replace('/');
   }
@@ -172,7 +177,19 @@ export function AuthProvider(props: React.PropsWithChildren<Record<string, unkno
           spectatorLogin,
         });
       } else {
-        setAuth({ auth: null, verify, loading: false, expire: 0, logout, googleLogin, appleLogin, ciLogin, keycloakLogin, guestLogin, spectatorLogin });
+        setAuth({
+          auth: null,
+          verify,
+          loading: false,
+          expire: 0,
+          logout,
+          googleLogin,
+          appleLogin,
+          ciLogin,
+          keycloakLogin,
+          guestLogin,
+          spectatorLogin,
+        });
       }
     }
 

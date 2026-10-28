@@ -1,6 +1,6 @@
 {
   "name": "SAGE3",
-  "version": "1.0.67",
+  "version": "1.0.68",
   "description": "Electron-based SAGE3 client",
   "main": "electron.js",
   "type": "module",
@@ -20,7 +20,7 @@
     "@electron/notarize": "^3.1.1",
     "@electron/packager": "^20.3.0",
     "electron-osx-sign": "^0.6.0",
-    "electron": "^44.1.1"
+    "electron": "^44.5.1"
   },
   "optionalDependencies": {
     "electron-installer-debian": "^4.0.0",

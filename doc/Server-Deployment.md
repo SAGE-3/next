@@ -821,20 +821,33 @@ The form takes three things:
 | Field | Meaning |
 |---|---|
 | **API key** | The user's key. Required. |
-| **Base URL** | Optional. Blank means `https://api.openai.com/v1`. Any OpenAI-compatible endpoint works; `/v1` is appended if missing, so `https://myhost` is enough. |
+| **Base URL** | Optional. Blank means `https://api.openai.com/v1`. Any OpenAI-compatible endpoint works; `/v1` is appended if missing, so `https://myhost` is enough. An Azure OpenAI resource address (`https://myresource.openai.azure.com`) is completed to its `/openai/v1` surface. |
 | **Model** | The model to call. Chosen from a dropdown when the endpoint can be queried, typed by hand otherwise. |
 
 As soon as a key and base URL are entered, the browser calls `GET {baseUrl}/models` with the key and offers the result as a dropdown. The lookup is debounced, and any lookup still in flight is cancelled when either field changes again. If the endpoint does not answer — no `/models` route, a rejected key, or a network or CSP failure — the field falls back to free text so the model name can be typed instead.
 
 **Capabilities.** A user-supplied model is assumed to handle `chat`, `code`, and `vision`, which enables the *chat*, *coding*, *image* and *pdf_processing* tasks. It never advertises `imagegen` or `embeddings`: there is no way to ask an arbitrary endpoint what its model supports, so claiming those would light up UI that then fails at request time. Image generation therefore stays on the server's providers.
 
-**Where the key lives.** The key is stored **only in that browser**, under the `s3_user_llm` local-storage key — never in the SAGE3 database and never in the user's account record. It is sent with each AI request the user makes, used for that one request, and never persisted server-side. It is kept out of the `s3_user_settings` bundle deliberately, so that *Restore Default Settings* cannot silently delete it. Clearing the browser's site data removes it, and it does not follow the user to another machine.
+**Where the key lives.** Only in that browser, never in the SAGE3 database and never in the user's account record. It is sent with each AI request the user makes, used for that one request, and never persisted server-side. It is kept out of the `s3_user_settings` bundle deliberately, so that *Restore Default Settings* cannot silently delete it. Clearing the browser's site data for the server removes it, and so does logging out of SAGE3, so a key does not outlive its owner's session on a shared machine. How it is stored is described next.
 
-Two consequences worth stating plainly to users: requests made this way are **billed to their own account**, and anyone with access to their browser profile can read the key — the same exposure as any credential kept in a browser.
+**How the key is protected.** The key is stored encrypted, using only what the browser provides:
+
+- On the first save, the browser generates a **256-bit AES-GCM key** with the WebCrypto API, marked **non-extractable**, and keeps it in **IndexedDB** (database `s3_user_llm_keys`). A non-extractable key can be *used* by scripts on that origin to encrypt and decrypt, but its bytes can never be read out, exported, copied, or backed up in usable form. The browser enforces this, not SAGE3.
+- The API key is encrypted with it, using a fresh random 96-bit IV each time it is saved, and the result is written to `localStorage` under `s3_user_llm` as `{ v: 2, modelId, baseUrl, enc }`, where `enc` is the IV followed by the ciphertext, base64-encoded. The model id and base URL are not secrets and stay readable, so the settings form and the provider list do not depend on a decryption.
+- Decryption happens only when a request needs the key or the settings panel opens. Ciphertext whose IndexedDB key is gone (site data partially cleared, storage synced without IndexedDB) is discarded and the panel behaves as if no key was ever saved; the user re-enters it once.
+- Removing the key, and a successful logout, delete both the ciphertext and the IndexedDB key.
+- A key saved by a SAGE3 version older than this one, in clear, is re-saved encrypted the first time it is read.
+- Where IndexedDB or WebCrypto is unavailable (strict private modes, some kiosks), the key is held in memory for the session only rather than written in clear.
+
+What this protects against: reading the key out of `localStorage` in DevTools, out of a copied browser profile, or out of a backup, and any tool that scrapes local storage. What it does **not** protect against: a script running on the SAGE3 origin in that browser while the key is stored, which can decrypt it exactly as SAGE3 does. That is the nature of any credential a browser holds; the mitigations are the content-security policy the server already sends and the removal on logout. Nothing is asked of the user: no passphrase, no prompt, no permission dialog.
+
+To confirm on a running server: save a key, then in the browser's developer tools look at *Application > Local Storage* for the server's origin. The `s3_user_llm` entry should show an `enc` value and no recognisable key, and *Application > IndexedDB* should list `s3_user_llm_keys`.
+
+Two consequences worth stating plainly to users: requests made this way are **billed to their own account**, and while the key is stored it can be used by anything running SAGE3 in that browser profile, which is why it is removed on logout.
 
 **Who may use it.** Registered users and admins only. Guests and spectators are refused: they are transient, unverified accounts, and a key pasted into a shared guest session would outlive whoever pasted it. Opening Settings as a guest also clears any key a previous account left behind in that browser.
 
-**Which endpoints work.** A key with no base URL is spoken to as OpenAI; a base URL is treated as a generic OpenAI-compatible endpoint. **Azure OpenAI is not supported this way**, because it needs an `api_version` the form has no field for — Azure must be configured server-side. Note also that the browser contacts the endpoint directly for the model lookup, so an `http://` endpoint is blocked by the web app's content-security policy; use `https://`, or configure that endpoint server-side instead.
+**Which endpoints work.** A key with no base URL is spoken to as OpenAI; a base URL is treated as a generic OpenAI-compatible endpoint. **Azure OpenAI** works through its OpenAI-compatible `/openai/v1` surface: enter the resource address and the form completes the path; the model field takes the *deployment* name. The classic Azure API with `api-version` is not used here. If the model lookup fails, the form says why (key rejected, wrong address, endpoint unreachable or not allowing browser requests) and the model can still be typed by hand.
 
 **Turning it off.** There is no server switch for this today. Leaving `models.providers` empty disables AI entirely, including user-supplied keys.
 

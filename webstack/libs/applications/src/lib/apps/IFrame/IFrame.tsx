@@ -17,15 +17,14 @@ import Markdown from 'markdown-to-jsx';
 import { useAppStore } from '@sage3/frontend';
 
 import { AppWindow } from '../../components';
-import { App, AppGroup } from '../../schema';
-import { state as AppState } from './index';
+import { IFrameApp } from './index';
 
 
 
 /* App component for IFrame */
 
-function AppComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function AppComponent(props: IFrameApp): JSX.Element {
+  const s = props.data.state;
 
   const allow = "clipboard-write *; clipboard-read *; geolocation *; microphone *; camera *;";
 
@@ -38,7 +37,7 @@ function AppComponent(props: App): JSX.Element {
 }
 
 /* App toolbar component for the app IFrame */
-function ToolbarComponent(props: App): JSX.Element {
+function ToolbarComponent(props: IFrameApp): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
 
   const reloadFrame = () => {
@@ -81,7 +80,7 @@ function ToolbarComponent(props: App): JSX.Element {
  * Grouped App toolbar component, this component will display when a group of apps are selected
  * @returns JSX.Element | null
  */
-const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
+const GroupedToolbarComponent = (props: { apps: IFrameApp[] }) => {
   return null;
 };
 

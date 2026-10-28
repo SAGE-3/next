@@ -7,6 +7,9 @@
  */
 
 import { z } from 'zod';
+import type { App } from '../../schema';
+
+export const name = 'BoardLink';
 
 /**
  * SAGE3 application: BoardLink
@@ -24,4 +27,4 @@ export const init: Partial<state> = {
   cardTitle: '',
 };
 
-export const name = 'BoardLink';
+export type BoardLinkApp = App<typeof name>;

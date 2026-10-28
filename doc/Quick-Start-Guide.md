@@ -81,10 +81,17 @@ Once you enter a board, you'll see the **infinite canvas**. This is where everyt
 | Zoom in/out | Mouse wheel or two-finger trackpad scroll |
 | Zoom to fit all apps | Navigation panel → "Show All Apps" |
 | Zoom to a specific app | Select the app, press `Z` |
+| Zoom to each new app automatically | Main Menu → **Settings** → turn on **Zoom to New Applications**. Every app you create is zoomed to and selected (apps created together, as a group); press `Z` over it to zoom back out |
 | Revert zoom | `Shift + Z` |
 | Reset view | Right-click → Reset View |
 
 ![BoardPage](images/quick-start/board-page.jpeg)
+
+**Zoom to New Applications:** with this setting on (Main Menu → **Settings** → **Board Visibility**), each app you create is zoomed to and selected, ready to use. Apps created together, such as several files dropped at once, are zoomed to as a group.
+
+![Zoom to New Applications setting](images/quick-start/zoom-to-new-apps-setting.jpeg)
+
+![Dropping a file with Zoom to New Applications on](images/quick-start/zoom-to-new-apps.gif)
 
 ---
 
@@ -128,19 +135,19 @@ Lists all currently opened screenshares on the board, listed by usernames. Click
 ![Screenshare](images/quick-start/board-page-screenshare.jpeg)
 
 ### Applications Panel
-Lists all available applications. Click to open an app at the center of your view, or **drag** the app name to place it at a specific location on the board.
+Lists all available applications. Click to open an app near the center of your view, or **drag** the app name to place it at a specific location on the board.
 
 ![Applications](images/quick-start/board-page-applications.jpeg)
 
 ### Plugins Panel
-Lists custom plugin applications uploaded to the server.  Click to open a plugin at the center of your view, or **drag** the app name to place it at a specific location on the board. To upload a new Plugin click the **Upload** button.
+Lists custom plugin applications uploaded to the server.  Click to open a plugin near the center of your view, or **drag** the app name to place it at a specific location on the board. To upload a new Plugin click the **Upload** button.
 
 ![Plugins](images/quick-start/board-page-plugins.jpeg)
 
 ### Assets Panel
 Shows all files uploaded to the current room.
 - **Drag** a file name onto the board to open it in its default viewer.
-- **Double-click** a file name to open it at the center of your view.
+- **Double-click** a file name to open it near the center of your view.
 - Click **Upload** to add files (supports folder upload).
 - Or simply **drag files from your desktop** directly onto the board.
 
@@ -166,14 +173,19 @@ Contains a **minimap** showing all apps on the board and user positions. Clickin
 Applications are content windows on the board. There are two ways to open them:
 
 **From the Applications Panel:**
-- Click an app name → opens at the center of your view
+- Click an app name → opens near the center of your view
 - Drag an app name → places it where you drop it
+
+> **Where new apps open:** an app opened from a menu, the asset manager, or Alfred's `app` command goes to the free spot closest to the center of your view, at least 40 pixels away from the other apps, so it never covers what's already there. It may stick out of the screen a little, but at least half of it stays in view. When there's no free spot, it opens in the center, on top of the others. Apps you drag, drop, or paste go exactly where you put them.
 
 **By dropping files on the board:**
 - Drop an image → **ImageViewer**
 - Drop a PDF → **PDFViewer**
+- Drop a PowerPoint file (.pptx) → **PPTXViewer**
+- Drop a Word document (.docx) → **DOCXViewer**
 - Drop a video → **VideoViewer**
 - Drop a CSV → **CSVViewer**
+- Drop a Mermaid diagram (.mmd) → **Mermaid**
 - Drop a Markdown file → **Stickie**
 - Drop an unsupported file → **AssetLink** (download button)
 
@@ -248,6 +260,7 @@ All board changes are synchronized in real time across every connected user.
 | Share your screen | Open the Screenshare panel and click **Start Sharing** |
 | Open a web page | Paste a URL onto the board |
 | Write collaborative notes | Open "Notepad" from the Applications panel |
+| Draw a diagram | Drop a Mermaid file (`.mmd`), or open a CodeEditor, set the language to Mermaid and click **Preview** |
 | Run Python code | Open "SageCell", select a kernel, write code, press `Shift + Enter` |
 | Save a file | Drag from the Asset panel onto the board, or use in-app upload buttons |
 | Zoom to all apps | `Navigation panel → Show All Apps` |

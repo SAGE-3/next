@@ -53,9 +53,9 @@ const IDEATOR_TIMEOUT_MS = 60 * 1000;
  * name; if it is anything other than the user's own, the payload is returned
  * untouched, so requests against server-configured providers are unchanged.
  */
-export function withUserCredentials<T extends object>(data: T): T {
+export async function withUserCredentials<T extends object>(data: T): Promise<T> {
   if ((data as { model?: string }).model !== USER_PROVIDER_NAME) return data;
-  const userllm = userLLMPayload();
+  const userllm = await userLLMPayload();
   // Selected but no credentials stored: send as-is and let the backend report
   // the failure rather than silently pretending a different provider was meant
   if (!userllm) return data;
@@ -83,7 +83,7 @@ export async function toSError(error: HTTPError<Response>): Promise<SError> {
 
 async function agentPost<T>(path: string, data: object, timeoutMs = AGENT_TIMEOUT_MS, signal?: AbortSignal): Promise<T | SError> {
   try {
-    return await ky.post<T>(path, { json: withUserCredentials(data), timeout: timeoutMs, signal }).json();
+    return await ky.post<T>(path, { json: await withUserCredentials(data), timeout: timeoutMs, signal }).json();
   } catch (e) {
     if (e instanceof Error && e.name === 'AbortError') {
       return { message: 'Cancelled' };

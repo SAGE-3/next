@@ -1,0 +1,10 @@
+// Copyright (c) SAGE3 Development Team 2026. All Rights Reserved
+// University of Hawaii, University of Illinois Chicago, Virginia Tech
+//
+// Distributed under the terms of the SAGE3 License.  The full license is in
+// the file LICENSE, distributed as part of this software.
+
+// Build settings of the SAGE3 target, under the ones in the project.
+// Your own settings (the signing team) go in Local.xcconfig next to this file, which git
+// ignores: see the README. Without it the app still builds for the simulator.
+#include? "Local.xcconfig"

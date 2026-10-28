@@ -39,8 +39,7 @@ import * as d3 from 'd3';
 import { SAGEColors } from '@sage3/shared';
 import { useAppStore, useHexColor, ColorPicker } from '@sage3/frontend';
 
-import { App } from '../../schema';
-import { state as AppState } from './index';
+import { ClockApp } from './index';
 import { AppWindow } from '../../components';
 import { ReactComponent as Clock } from './clock.svg';
 
@@ -193,9 +192,9 @@ function synthesizeGMT(zone: string, date: Date): string {
 // Renders the clock display with real-time updates and timezone support
 // ===============================================================================
 
-function AppComponent(props: App): JSX.Element {
+function AppComponent(props: ClockApp): JSX.Element {
   // Extract state and setup hooks
-  const s = props.data.state as AppState;
+  const s = props.data.state;
   const svgRef = useRef<SVGSVGElement>(null); // Reference to SVG clock element
   const updateState = useAppStore((state) => state.updateState);
 
@@ -433,9 +432,8 @@ function AppComponent(props: App): JSX.Element {
   );
 }
 
-function ToolbarComponent(props: App): JSX.Element {
+function ToolbarComponent(props: ClockApp): JSX.Element {
   const updateState = useAppStore((state) => state.updateState);
-  const locked = props.data.state.lock;
 
   // Build timezone list with abbreviations (same logic as AppComponent)
   // Memoized to avoid recalculation on every render
@@ -512,7 +510,7 @@ function ToolbarComponent(props: App): JSX.Element {
           </FormControl>
         </div>
         <div style={{ marginLeft: 'auto', marginRight: '0.5rem' }}>
-          <ColorPicker onChange={handleColorChange} selectedColor={props.data.state.color as SAGEColors} size="xs" disabled={locked} />
+          <ColorPicker onChange={handleColorChange} selectedColor={props.data.state.color as SAGEColors} size="xs" />
         </div>
       </div>
     </div>

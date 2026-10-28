@@ -6,8 +6,9 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { ReactElement, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ReactElement, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Box, IconButton, useColorModeValue } from '@chakra-ui/react';
+import { MdClose } from 'react-icons/md';
 
 import { SAGEColors } from '@sage3/shared';
 import { useHexColor } from '@sage3/frontend';
@@ -68,7 +69,8 @@ export function RadialMenu(props: RadialMenuProps) {
   // Same colors the toolbar buttons use: the scheme in light mode, the .200
   // shade in dark mode, gray.600 in dark mode when inactive
   const lineColor = useHexColor(colorScheme);
-  const hubBg = useColorModeValue('var(--chakra-colors-gray-100)', 'var(--chakra-colors-gray-600)');
+  // Several menus could be up at once, so the clip path id must be unique
+  const clipId = useId();
   // The hovered item label reads as a tooltip, so it uses the same colors
   // Chakra's Tooltip theme does
   const labelBg = useColorModeValue('gray.700', 'gray.300');
@@ -201,7 +203,11 @@ export function RadialMenu(props: RadialMenuProps) {
     return { x: Math.cos(radians) * radius, y: Math.sin(radians) * radius };
   };
 
-  const hoveredLabel = ring.find((item) => item.id === hoveredId)?.label;
+  // The cursor sits in the deadzone: nothing is hovered and releasing/clicking
+  // there closes the menu, so the hub reads as a close button
+  const inHub = !!cursor && Math.hypot(cursor.x - center.x, cursor.y - center.y) < MIN_ACTIVATION_DISTANCE;
+
+  const hoveredLabel = inHub ? 'Close' : ring.find((item) => item.id === hoveredId)?.label;
 
   return (
     <>
@@ -211,9 +217,15 @@ export function RadialMenu(props: RadialMenuProps) {
       <Box position="fixed" top="0" left="0" right="0" bottom="0" zIndex={RADIAL_SHIELD_Z} />
 
       <Box position="fixed" left={`${center.x}px`} top={`${center.y}px`} zIndex={RADIAL_MENU_Z} pointerEvents="none">
-        {/* Selection line from the center to the cursor */}
+        {/* Selection line from the center to the cursor, clipped to the ring so
+            it stops at the center of the items rather than running past them */}
         {cursor && hoveredId && (
           <svg style={{ position: 'absolute', left: -radius * 2, top: -radius * 2, width: radius * 4, height: radius * 4 }}>
+            <defs>
+              <clipPath id={clipId}>
+                <circle cx={radius * 2} cy={radius * 2} r={radius} />
+              </clipPath>
+            </defs>
             <line
               x1={radius * 2}
               y1={radius * 2}
@@ -221,21 +233,32 @@ export function RadialMenu(props: RadialMenuProps) {
               y2={cursor.y - center.y + radius * 2}
               stroke={lineColor}
               strokeWidth="2"
-              strokeDasharray="4 4"
+              clipPath={`url(#${clipId})`}
             />
           </svg>
         )}
 
-        {/* Center hub */}
-        <Box
+        {/* Center hub: a close button, highlighted like an item when the cursor is over it */}
+        <IconButton
+          aria-label="Close"
+          icon={<MdClose />}
+          size="sm"
+          fontSize="xl"
+          colorScheme={inHub ? 'red' : 'gray'}
+          sx={{
+            _dark: {
+              bg: inHub ? 'red.200' : 'gray.600',
+            },
+          }}
           position="absolute"
-          width={`${HUB_SIZE}px`}
-          height={`${HUB_SIZE}px`}
+          borderRadius="full"
+          boxSize={`${HUB_SIZE}px`}
+          minWidth={`${HUB_SIZE}px`}
           left={`${-HUB_SIZE / 2}px`}
           top={`${-HUB_SIZE / 2}px`}
-          borderRadius="full"
-          background={hubBg}
           boxShadow="lg"
+          transition="transform 150ms"
+          transform={inHub ? 'scale(1.15)' : 'scale(1)'}
         />
 
         {/* Items */}

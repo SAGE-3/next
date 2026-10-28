@@ -43,6 +43,8 @@ import {
   MdOutlineImage,
   MdOutlineFilePresent,
   MdOndemandVideo,
+  MdSlideshow,
+  MdDescription,
 } from 'react-icons/md';
 import { FaPython } from 'react-icons/fa';
 import { LuFileCode, LuFileJson } from 'react-icons/lu';
@@ -52,13 +54,14 @@ import {
   useUser,
   useAuth,
   useAppStore,
-  useUIStore,
   useCursorBoardPosition,
   AssetHTTPService,
   useAbility,
   apiUrls,
   setupAppForFile,
   useConfigStore,
+  viewCenter,
+  placeNewApps,
 } from '@sage3/frontend';
 import { getExtension, humanFileSize } from '@sage3/shared';
 import { FileEntry } from '@sage3/shared/types';
@@ -69,7 +72,6 @@ export type RowFileProps = {
   file: FileEntry;
   clickCB: (p: FileEntry, shift: boolean, modif: boolean) => void;
   dragCB: (e: React.DragEvent<HTMLDivElement>) => void;
-  scale: number;
 };
 
 /**
@@ -79,7 +81,7 @@ export type RowFileProps = {
  * @param p FileEntry
  * @returns
  */
-export function RowFile({ file, clickCB, dragCB, scale }: RowFileProps) {
+export function RowFile({ file, clickCB, dragCB }: RowFileProps) {
   // check if user is a guest
   const { user } = useUser();
   const { auth } = useAuth();
@@ -100,8 +102,6 @@ export function RowFile({ file, clickCB, dragCB, scale }: RowFileProps) {
   // Room and board
   const { boardId, roomId } = useParams();
   if (!boardId || !roomId) return <></>;
-  // UI Store
-  const boardPosition = useUIStore((state) => state.boardPosition);
   const { getBoardCursor } = useCursorBoardPosition();
 
   // Abilities
@@ -230,6 +230,10 @@ export function RowFile({ file, clickCB, dragCB, scale }: RowFileProps) {
         return <FaPython style={{ color: 'lightblue' }} size={'20px'} />;
       case 'pdf':
         return <MdOutlinePictureAsPdf style={{ color: 'tomato' }} size={'20px'} />;
+      case 'pptx':
+        return <MdSlideshow style={{ color: 'orange' }} size={'20px'} />;
+      case 'docx':
+        return <MdDescription style={{ color: 'cornflowerblue' }} size={'20px'} />;
       case 'jpeg':
       case 'png':
       case 'gif':
@@ -274,13 +278,10 @@ export function RowFile({ file, clickCB, dragCB, scale }: RowFileProps) {
   // Create an app for a file
   const onDoubleClick = async (event: React.MouseEvent<HTMLDivElement>) => {
     if (!user || !canCreateApp) return;
-    // Get around  the center of the board
-    const xDrop = Math.floor(-boardPosition.x + window.innerWidth / scale / 2);
-    const yDrop = Math.floor(-boardPosition.y + window.innerHeight / scale / 2);
-
-    // Create the app
-    const setup = await setupAppForFile(file, xDrop, yDrop, roomId, boardId, user);
-    if (setup) createApp(setup);
+    // Set up the app around the center of the view, then move it to a free spot near there
+    const { x, y } = viewCenter();
+    const setup = await setupAppForFile(file, x, y, roomId, boardId, user);
+    if (setup) createApp(placeNewApps([setup])[0]);
   };
 
   return (
