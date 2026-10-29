@@ -26,7 +26,8 @@ cp PRIVATE_KEY_FILE configurations/traefik/certs/private.key
 ```
 
 `certificate.crt` holds the full chain (server certificate first, then intermediates). After a renewal,
-replace both files and run `docker compose restart traefik`. See `configurations/traefik/certs/README.md`.
+replace both files and restart Traefik from the server folder (`docker compose restart traefik` in an installed
+server package; in this repository folder, add `-f docker-compose-<arch>.yml`). See `configurations/traefik/certs/README.md`.
 
 ## Running
 

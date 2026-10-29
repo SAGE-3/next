@@ -137,9 +137,9 @@ Each service has a folder inside the ‘configuration’ directory.
 Traefik handles HTTPS for the whole server, with the SSL certificate stored in \`traefik/certs\`:
 
 * **Copy \`certificate.crt\` and \`private.key\` from the \`traefik/certs\` folder of your old installation into the new one.** These two exact names are required.  
-  * If your old installation still has the certificate in \`node/keys\` (servers installed before 2025), copy it from there and rename it: the certificate (with its intermediate certificates) becomes \`certificate.crt\`, the key becomes \`private.key\`.  
+  * If your old installation still has the certificate in \`node/keys\` (servers installed from a 1.4 or older package; Traefik came with v1.5), copy it from there and rename it: the certificate (with its intermediate certificates) becomes \`certificate.crt\`, the key becomes \`private.key\`.  
   * Make sure your HTTPS certificate is up to date.  
-* Copy the new \`traefik.yml\` and \`dynamic.yml\` (see "Updating to v1.6" above).  
+* Copy the new \`traefik.yml\` (see "Updating to v1.6" above). If you are updating from a 1.4 or older package, which had no \`traefik\` folder, copy the whole \`traefik\` folder, including \`dynamic.yml\`, then add your certificate.  
 * Details, including renewals: [SSL certificate](Server-Deployment.md#ssl-certificate) in the deployment guide.
 
 ## \`redis\`

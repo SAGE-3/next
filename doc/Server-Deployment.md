@@ -22,6 +22,8 @@ To update a server, here are the files to keep/move/backup:
   - Files to save if you want to backup your server.
 - The database data (rooms, boards, users, …) is in `configurations/redis/data/dump.rdb` file
   - File to save if you want to backup your server.
+- Your SSL certificate is in `configurations/traefik/certs`: `certificate.crt` and `private.key` (see [SSL certificate](#ssl-certificate))
+  - Files to save, and to copy into the new installation when you update.
 
 ## Requirements
 
