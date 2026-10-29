@@ -94,10 +94,7 @@ Each service has a folder inside the ‘configuration’ directory.
 * **Copy the new \`node/sage3-prod.hjson\` file**  
   * Edit the file and update the fields  
     * serverName: string describing your server  
-    * SSL certificate: make sure your HTTPS certificate is up to date  
-      * "certificateFile": "XXX-server.crt",  
-      * "certificateKeyFile": "XXX-server.key"  
-      * Stored in the \`keys\` sub folder  
+    * There is no SSL certificate setting in this file: the certificate is in the \`traefik\` folder (see below)  
     * Services:  
       * Twilio: screen sharing key (copy from old configuration), or leave it empty and use the self-hosted screen sharing (see "Screen sharing without Twilio" above)  
       * Openai: API key, optional  
@@ -134,6 +131,16 @@ Each service has a folder inside the ‘configuration’ directory.
   * Files to save if you want to backup your server.  
 * Your plugins are in the \`plugins\` sub folder.  
   * Files to save if you want to backup your server.
+
+## \`traefik\`
+
+Traefik handles HTTPS for the whole server, with the SSL certificate stored in \`traefik/certs\`:
+
+* **Copy \`certificate.crt\` and \`private.key\` from the \`traefik/certs\` folder of your old installation into the new one.** These two exact names are required.  
+  * If your old installation still has the certificate in \`node/keys\` (servers installed before 2025), copy it from there and rename it: the certificate (with its intermediate certificates) becomes \`certificate.crt\`, the key becomes \`private.key\`.  
+  * Make sure your HTTPS certificate is up to date.  
+* Copy the new \`traefik.yml\` and \`dynamic.yml\` (see "Updating to v1.6" above).  
+* Details, including renewals: [SSL certificate](Server-Deployment.md#ssl-certificate) in the deployment guide.
 
 ## \`redis\`
 

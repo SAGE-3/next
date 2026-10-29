@@ -15,6 +15,19 @@ This folder contains the Docker configuration and scripts needed to run a SAGE3 
 | `docker-compose-backend-arm64.yml` | Backend services only, ARM64 |
 | `docker-compose-backend-amd64.yml` | Backend services only, AMD64 |
 
+## SSL Certificate
+
+Traefik handles HTTPS (port 443) for all services. Before starting, copy the server's certificate and
+private key into `configurations/traefik/certs`, with these exact names:
+
+```bash
+cp CERTIFICATE_FILE configurations/traefik/certs/certificate.crt
+cp PRIVATE_KEY_FILE configurations/traefik/certs/private.key
+```
+
+`certificate.crt` holds the full chain (server certificate first, then intermediates). After a renewal,
+replace both files and run `docker compose restart traefik`. See `configurations/traefik/certs/README.md`.
+
 ## Running
 
 Use the compose file matching your architecture. For example on Apple Silicon:
