@@ -58,7 +58,7 @@ Rotation, dashed lines, images inside drawings, groups inside groups, elbow arro
 | `points` | pen: the stroke's points, simplified when the stroke ends |
 | `stroke` | colour name from the palette |
 | `fill` | colour name or `none` (box shapes only) |
-| `size` | `S`, `M` or `L`: line thickness for shapes and lines, text size for text |
+| `size` | `S`, `M` or `L`: line thickness, and the size of the text (text boxes and labels in shapes, lines and arrows; labels followed it from 2026-11-02, at the user's request) |
 | `label` | text inside a shape, or on a line or arrow |
 | `z` | layer order: a number between its neighbours, so reordering one shape does not renumber the others |
 | `group` | group id, or none. One level of grouping only. |
@@ -69,17 +69,15 @@ Rotation, dashed lines, images inside drawings, groups inside groups, elbow arro
 
 ## 2. Editor, tools and interaction
 
-**Canvas:** the drawing fills the app window. A bigger window shows more of the drawing at the same scale. Each person's view (position and zoom) is personal and saved in the browser, per app. The background is always white, or white with a dotted grid, including in dark mode, so colours look the same on screen and in exports.
+**Canvas:** the drawing fills the app window. A bigger window shows more of the drawing at the same scale. Each person's view (position and zoom) is personal and saved in the browser, per app. The canvas follows the SAGE3 colour mode: white in light mode, dark (`#1a202c`) in dark mode, optionally with a dotted grid. In dark mode the same colour names are drawn with a dark-mode palette (light lines, darker fills), and the tool column, label editor and handles follow the mode. Exports always use the light palette on white, so files look the same for everyone (changed 2026-11-02 at the user's request; it was always white before).
 
-**Controls:**
+**Controls** (changed 2026-11-02 at the user's request: editing moved from the SAGE3 toolbar into the app; the grid adapts to the zoom):
 
-- Inside the app, along the left edge, a column of tool buttons: Select, Pan, Pen, Rectangle, Rounded rectangle, Ellipse, Diamond, Line, Arrow, Text.
-- In the SAGE3 app toolbar, shown when the app is selected:
-  - stroke colour, fill colour, size S/M/L and arrow heads, for the selected shapes or the next shape drawn;
-  - undo and redo;
-  - group and ungroup; front, forward, backward, back; align left, centre, right, top, middle, bottom;
-  - zoom out, zoom in, fit the drawing, 100%;
-  - export: download SVG, download PNG, save to the Asset Manager.
+- While the app is selected, inside the app:
+  - along the left edge, a column of tool buttons: Select, Pan, Pen, Rectangle, Rounded rectangle, Ellipse, Diamond, Line, Arrow, Text;
+  - along the top, the editing panel: undo and redo; stroke colour, fill colour, size S/M/L and arrow heads (for the selected shapes or the next shape drawn); group and ungroup; an Arrange menu (front, forward, backward, back, and the six alignments); delete; zoom out, zoom in, fit the drawing, 100%; the grid toggle.
+- In the SAGE3 app toolbar: export (download SVG, download PNG, save to the Asset Manager).
+- The grid's dots are a power-of-two multiple of 20 units apart, chosen so they stay 16 to 32 screen pixels apart at any zoom.
 
 **Drawing:**
 
@@ -90,7 +88,7 @@ Rotation, dashed lines, images inside drawings, groups inside groups, elbow arro
 
 **Selecting and editing:**
 
-- Click a shape; Shift-click to add to the selection; drag a box on empty canvas to select everything inside it.
+- Click a shape; Shift-click to add to the selection; drag a box on empty canvas to select every shape it touches (crossing its outline or path, or inside it; changed 2026-11-02 at the user's request, it used to select only shapes entirely inside).
 - Drag to move. Box shapes have 8 resize handles. Lines and arrows have a handle at each end, and one in the middle that bends them.
 - Clicking any shape in a group selects the whole group.
 
