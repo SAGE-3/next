@@ -35,49 +35,8 @@ const buildOptions = {
   ...(configValues[configuration] || {}),
 };
 
-// Nx's PostcssCliResources plugin scans every url() token in a declaration,
-// including url(%23...) fragment references embedded inside SVG data-URIs
-// (tldraw.css cursors), and fails trying to resolve them as files. Mask those
-// tokens behind a '#'-prefixed placeholder (which the plugin skips) before it
-// runs, and restore them afterwards.
-const MASK = 'url(#__enc23__';
-const maskEncodedFragmentUrls = {
-  postcssPlugin: 'mask-encoded-fragment-urls',
-  Once(root) {
-    root.walkDecls((decl) => {
-      if (decl.value && decl.value.includes('url(%23')) {
-        decl.value = decl.value.split('url(%23').join(MASK);
-      }
-    });
-  },
-};
-const unmaskEncodedFragmentUrls = {
-  postcssPlugin: 'unmask-encoded-fragment-urls',
-  OnceExit(root) {
-    root.walkDecls((decl) => {
-      if (decl.value && decl.value.includes(MASK)) {
-        decl.value = decl.value.split(MASK).join('url(%23');
-      }
-    });
-  },
-};
-
-function wrapPostcssOptions(use) {
-  if (!use || !use.loader || !use.loader.includes('postcss-loader')) return;
-  const orig = use.options && use.options.postcssOptions;
-  if (!orig) return;
-  const wrap = (opts) => ({
-    ...opts,
-    plugins: [maskEncodedFragmentUrls, ...(opts.plugins || []), unmaskEncodedFragmentUrls],
-  });
-  use.options = {
-    ...use.options,
-    postcssOptions: typeof orig === 'function' ? (loader) => wrap(orig(loader)) : wrap(orig),
-  };
-}
-
 // Runs after the Nx plugins have populated compiler.options, so the style
-// rules they add can be adjusted (sass deprecation silencing + postcss mask).
+// rules they add can be adjusted (sass deprecation silencing).
 const sageStyleTweaksPlugin = {
   apply(compiler) {
     (compiler.options.module?.rules || []).forEach((rule) => {
@@ -97,7 +56,6 @@ const sageStyleTweaksPlugin = {
               },
             };
           }
-          wrapPostcssOptions(use);
         });
       });
     });
