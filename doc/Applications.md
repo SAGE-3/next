@@ -253,10 +253,8 @@ A collaborative drawing for quick diagrams and sketches. Draw rectangles, rounde
 - **Dark mode**: the canvas and the colours follow the SAGE3 colour mode, with light lines and darker fills on a dark canvas.
 - **Export**: download the drawing, or only the selected shapes, as SVG or PNG, or save it in the Asset Manager. Exports always use the light colours on a white background.
 
-<!-- TODO: Screenshot of Drawing app -->
 ![Drawing](images/applications/applications_drawing.jpeg)
 
-<!-- TODO: Screenshot of Drawing toolbar -->
 ![DrawingToolbar](images/applications/applications_drawing_toolbar.jpeg)
 
 When the app is selected, the tools are in a column on the left of the drawing and the editing panel is along its top.
