@@ -123,6 +123,23 @@ class MesonetAnswer(BaseModel):
     actions: List[Json]  # actions to be performed
 
 
+class SlideQuery(BaseModel):
+    user: str  # user name
+    model: str  # AI provider, as for ImageQuery
+    userllm: Optional[UserLLM] = None  # the user's own credentials, when they chose their own provider
+    image: str  # the screenshot, as a data URL
+
+
+class SlideAnswer(BaseModel):
+    success: bool = True  # the model answered
+    found: bool = False  # a slide was found
+    image: Optional[str] = None  # the slide, cropped from the full-resolution screenshot (PNG data URL)
+    box: List[float] = []  # where it was: [left, top, right, bottom] as fractions of the screenshot
+    slideNumber: Optional[int] = None  # the slide's number, when shown on it or in the window
+    slideTitle: Optional[str] = None  # the slide's title, when it has one
+    r: str = ""  # an error message, if any
+
+
 class ImageAnswer(BaseModel):
     r: str  # answer
     success: bool = True  # success flag

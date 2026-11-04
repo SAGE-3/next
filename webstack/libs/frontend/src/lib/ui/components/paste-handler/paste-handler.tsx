@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useToast, useDisclosure, Popover, Portal, PopoverContent, PopoverHeader, PopoverBody, Button, Center } from '@chakra-ui/react';
 
 import { initialValues } from '@sage3/applications/initialValues';
@@ -21,7 +21,37 @@ import {
   useAppStore,
   useCursorBoardPosition,
   useUIStore,
+  isElectron,
+  viewCenter,
+  placeNewApps,
+  useUserSettings,
+  useConfigStore,
+  withUserProvider,
+  seerAgents,
+  dataURLtoBlob,
 } from '@sage3/frontend';
+import { AppSchema } from '@sage3/applications/schema';
+import { LLMConfigManager } from '@sage3/shared/types';
+
+// Captured windows in a series: the next one goes right of the previous, unless it comes
+// this long after it, which starts a new row below
+const CAPTURE_ROW_GAP = 5 * 60 * 1000;
+// Space between captures, in board pixels
+const CAPTURE_SPACING = 40;
+// Captures are shown this much larger than a pasted image (readable slide text)
+const CAPTURE_SCALE = 1.4;
+// A slide's caption (its number and title): a note above the capture, as wide as it
+const CAPTION_HEIGHT = 120;
+const CAPTION_GAP = 10;
+
+// The current series of captured windows on a board: its row, and the last capture
+type CaptureSeries = {
+  boardId: string;
+  rowX: number;
+  rowY: number;
+  rowHeight: number;
+  last: { x: number; y: number; width: number; height: number; at: number };
+};
 
 // Development or production
 const development: boolean = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
@@ -58,6 +88,150 @@ export const PasteHandler = (props: PasteProps): JSX.Element => {
   const [dropCursor, setDropCursor] = useState({ x: 0, y: 0 });
   // hooks
   const { uploadFiles, uploadInProgress } = useFiles();
+  // The latest upload function, for the Electron listener below (registered once per board)
+  const uploadRef = useRef(uploadFiles);
+  uploadRef.current = uploadFiles;
+  const seriesRef = useRef<CaptureSeries | null>(null);
+  // The user's AI model, and whether it can see images (as the Chat app checks)
+  const { settings } = useUserSettings();
+  const serverConfig = useConfigStore((state) => state.config);
+  const canSeeImages = (): boolean => {
+    if (!serverConfig?.models || !settings.aiModel) return false;
+    return new LLMConfigManager(withUserProvider(serverConfig.models)).canProviderPerformTask(settings.aiModel, 'image');
+  };
+  const canSeeRef = useRef(canSeeImages);
+  canSeeRef.current = canSeeImages;
+  const modelRef = useRef(settings.aiModel);
+  modelRef.current = settings.aiModel;
+
+  // Place a captured window: the first of a series in the free spot closest to the view's
+  // center; the next ones in a row to its right, and in a new row below after a long pause.
+  // Moving or deleting the last capture starts a new series. With a caption, a note with it
+  // goes just above the capture, in the same slot of the grid.
+  const arrangeCapture = (apps: AppSchema[], caption?: string): AppSchema[] => {
+    const [pasted] = apps;
+    if (!pasted) return apps;
+    // Larger, keeping its shape (whole pixels, as it is compared below)
+    const size = {
+      ...pasted.size,
+      width: Math.round(pasted.size.width * CAPTURE_SCALE),
+      height: Math.round(pasted.size.height * CAPTURE_SCALE),
+    };
+    const app = { ...pasted, size };
+    const now = Date.now();
+    const series = seriesRef.current;
+    const last = series?.last;
+    const lastStillThere =
+      series?.boardId === props.boardId &&
+      useAppStore
+        .getState()
+        .apps.some(
+          (a) =>
+            a.data.position.x === last?.x && a.data.position.y === last?.y && a.data.size.width === last?.width && a.data.size.height === last?.height
+        );
+    const { width, height } = app.size;
+    // The slot in the grid: the caption's note above the capture, when there is one
+    const above = caption ? CAPTION_HEIGHT + CAPTION_GAP : 0;
+    const slotHeight = height + above;
+    // Whole pixels, as the app is created, so the next capture finds this one again
+    const at = (p: { x: number; y: number }) => ({ x: Math.round(p.x), y: Math.round(p.y) });
+    // Where the slot goes (its top left corner)
+    let slot: { x: number; y: number };
+    if (!series || !last || !lastStillThere) {
+      slot = at(placeNewApps([{ ...app, size: { ...app.size, height: slotHeight } }])[0].position);
+      seriesRef.current = { boardId: props.boardId, rowX: slot.x, rowY: slot.y, rowHeight: slotHeight, last: { x: 0, y: 0, width, height, at: now } };
+    } else if (now - last.at < CAPTURE_ROW_GAP) {
+      slot = at({ x: last.x + last.width + CAPTURE_SPACING, y: series.rowY });
+      series.rowHeight = Math.max(series.rowHeight, slotHeight);
+    } else {
+      slot = at({ x: series.rowX, y: series.rowY + series.rowHeight + CAPTURE_SPACING });
+      seriesRef.current = { ...series, rowY: slot.y, rowHeight: slotHeight };
+    }
+    // The capture at the bottom of its slot, remembered to find it again
+    const position = { x: slot.x, y: slot.y + above };
+    if (seriesRef.current) seriesRef.current.last = { ...position, width, height, at: now };
+    const placed: AppSchema[] = [{ ...app, position: { ...app.position, ...position } }];
+    if (caption) {
+      placed.push({
+        ...app,
+        title: user?.data.name ?? '',
+        type: 'Stickie',
+        position: { ...app.position, ...slot },
+        size: { width, height: CAPTION_HEIGHT, depth: 0 },
+        state: { ...initialValues['Stickie'], text: caption, fontSize: 24, color: user?.data.color || 'yellow' },
+      } as AppSchema);
+    }
+    return placed;
+  };
+  const arrangeRef = useRef(arrangeCapture);
+  arrangeRef.current = arrangeCapture;
+
+  // Electron: the tray menu's "Capture Presentation Slide" sends the captured window. When the
+  // user's AI model can see images, seer crops it to the presentation slide in it; then it's
+  // uploaded like a pasted image and placed by arrangeCapture
+  useEffect(() => {
+    if (!isElectron()) return;
+    window.electron.on('captured-window', async (capture: { name: string; data: Uint8Array<ArrayBuffer> }) => {
+      if (auth?.provider === 'guest') {
+        toast({ title: 'Guests cannot upload assets', status: 'warning', duration: 4000, isClosable: true });
+        return;
+      }
+      // Shown while the slide is found and uploaded (a few seconds), then turned into the result
+      const progress = toast({ title: 'Capturing the slide…', status: 'loading', duration: null });
+      const finish = (title: string, status: 'success' | 'info' | 'warning' | 'error', description?: string) =>
+        toast.update(progress, { title, description, status, duration: 4000, isClosable: true });
+      try {
+        const now = new Date();
+        const stamp = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()} ${now.getHours()}.${String(now.getMinutes()).padStart(2, '0')}.${String(now.getSeconds()).padStart(2, '0')}`;
+        let image: Blob = new Blob([capture.data], { type: 'image/png' });
+        let name = capture.name;
+        let caption: string | undefined;
+        let result: Parameters<typeof finish> = ['Window added', 'success'];
+        if (canSeeRef.current()) {
+          const slide = await findSlide(image, modelRef.current);
+          if ('image' in slide) {
+            image = slide.image;
+            name = 'Slide';
+            // A note with the slide's number and title, or whichever of them was read
+            if (slide.number && slide.title) caption = `Slide ${slide.number}: ${slide.title}`;
+            else if (slide.title) caption = slide.title;
+            else if (slide.number) caption = `Slide ${slide.number}`;
+            result = ['Slide added', 'success', caption];
+          } else {
+            result = [slide.problem, slide.status, 'The whole window was added.'];
+          }
+        }
+        const file = new File([image], `${name} ${stamp}.png`, { type: 'image/png' });
+        const center = viewCenter();
+        await uploadRef.current([file], center.x, center.y, props.roomId, props.boardId, (apps) => arrangeRef.current(apps, caption));
+        finish(...result);
+      } catch (error) {
+        finish('Could not add the capture', 'error', error instanceof Error ? error.message : undefined);
+      }
+    });
+    return () => window.electron.removeAllListeners('captured-window');
+  }, [props.roomId, props.boardId, auth?.provider]);
+
+  // The presentation slide in a screenshot, cropped by seer, with its number and title when
+  // read; or why there is none (the whole screenshot is used then)
+  const findSlide = async (
+    image: Blob,
+    model: string,
+  ): Promise<{ image: Blob; number?: number; title?: string } | { problem: string; status: 'info' | 'warning' }> => {
+    const dataURL = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.readAsDataURL(image);
+    });
+    const answer = await seerAgents.slide({ user: user?.data.name ?? '', model, image: dataURL });
+    if (!('found' in answer)) return { problem: `Could not look for a slide: ${answer.message}`, status: 'warning' };
+    if (!answer.found || !answer.image) return { problem: 'No slide found', status: 'info' };
+    return {
+      image: dataURLtoBlob(answer.image),
+      number: answer.slideNumber ?? undefined,
+      title: answer.slideTitle ?? undefined,
+    };
+  };
 
   useEffect(() => {
     if (!user) return;

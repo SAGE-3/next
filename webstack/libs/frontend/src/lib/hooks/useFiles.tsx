@@ -115,9 +115,12 @@ export function setupApp(
   };
 }
 
+// Moves the new apps before they're created (for instead of at the drop point)
+export type ArrangeApps = (apps: AppSchema[]) => AppSchema[];
+
 // Functions to export
 type UseFiles = {
-  uploadFiles: (input: File[], dx: number, dy: number, roomId: string, boardId: string) => void;
+  uploadFiles: (input: File[], dx: number, dy: number, roomId: string, boardId: string, arrange?: ArrangeApps) => Promise<void>;
   openAppForFile: (fileID: string, xDrop: number, yDrop: number, roomId: string, boardId: string) => Promise<AppSchema | null>;
   uploadInProgress: boolean;
 };
@@ -466,7 +469,12 @@ export function useFiles(): UseFiles {
   // Upload success
   const [uploadSuccess, setUploadSuccess] = useState<string[]>([]);
   // Save the drop position
-  const [configDrop, setConfigDrop] = useState({ xDrop: 0, yDrop: 0, roomId: '', boardId: '' });
+  const [configDrop, setConfigDrop] = useState<{ xDrop: number; yDrop: number; roomId: string; boardId: string; arrange?: ArrangeApps }>({
+    xDrop: 0,
+    yDrop: 0,
+    roomId: '',
+    boardId: '',
+  });
   // Upload in progress
   const [uploadInProgress, setUploadInProgress] = useState(false);
 
@@ -494,7 +502,7 @@ export function useFiles(): UseFiles {
             });
           }
         }
-        createBatch(batch);
+        createBatch(configDrop.arrange ? configDrop.arrange(batch) : batch);
         setUploadSuccess([]);
       }
     }
@@ -511,8 +519,9 @@ export function useFiles(): UseFiles {
    * @param {number} dy - The y-coordinate where the files were dropped
    * @param {string} roomId - The ID of the room
    * @param {string} boardId - The ID of the board
+   * @param {ArrangeApps} arrange - Optional: moves the new apps (by default, at the drop point)
    */
-  async function uploadFiles(input: File[], dx: number, dy: number, roomId: string, boardId: string) {
+  async function uploadFiles(input: File[], dx: number, dy: number, roomId: string, boardId: string, arrange?: ArrangeApps) {
     if (input) {
       let filenames = '';
       // Uploaded with a Form object
@@ -589,7 +598,7 @@ export function useFiles(): UseFiles {
       fd.append('room', roomId);
 
       // Save the drop position
-      setConfigDrop({ xDrop: dx, yDrop: dy, roomId: roomId, boardId: boardId });
+      setConfigDrop({ xDrop: dx, yDrop: dy, roomId: roomId, boardId: boardId, arrange });
       setUploadInProgress(true);
 
       let responseData: string[] | null = null;

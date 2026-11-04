@@ -20,6 +20,8 @@ import {
   WebAnswer,
   ImageQuery,
   ImageAnswer,
+  SlideQuery,
+  SlideAnswer,
   PDFQuery,
   PDFAnswer,
   WebScreenshot,
@@ -117,6 +119,7 @@ export const seerAgents = {
   web: (data: WebQuery) => agentPost<WebAnswer>(`${apiUrls.ai.agents.base}${AgentRoutes.web}`, data),
   webshot: (data: WebScreenshot) => agentPost<WebScreenshotAnswer>(`${apiUrls.ai.agents.base}${AgentRoutes.webshot}`, data),
   image: (data: ImageQuery) => agentPost<ImageAnswer>(`${apiUrls.ai.agents.base}${AgentRoutes.image}`, data),
+  slide: (data: SlideQuery) => agentPost<SlideAnswer>(`${apiUrls.ai.agents.base}${AgentRoutes.slide}`, data),
   pdf: (data: PDFQuery) => agentPost<PDFAnswer>(`${apiUrls.ai.agents.base}${AgentRoutes.pdf}`, data),
 };
 

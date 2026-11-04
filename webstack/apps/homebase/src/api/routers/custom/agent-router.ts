@@ -19,12 +19,12 @@ import {
   WebAnswer,
   ImageQuery,
   ImageAnswer,
+  SlideQuery,
+  SlideAnswer,
   PDFQuery,
   PDFAnswer,
   WebScreenshot,
   WebScreenshotAnswer,
-  MesonetRequest,
-  MesonetResponse,
   IdeatorRoutes,
   IdeatorDimensionsRequest,
   IdeatorDimensionsResponse,
@@ -102,6 +102,10 @@ const imageHandler: RpcHandlerPost<ImageQuery, ImageAnswer> = (req) => {
   const route = AgentRoutes.image;
   return fetchPost(`${config.agents.url}${route}`, req);
 };
+const slideHandler: RpcHandlerPost<SlideQuery, SlideAnswer> = (req) => {
+  const route = AgentRoutes.slide;
+  return fetchPost(`${config.agents.url}${route}`, req);
+};
 const pdfHandler: RpcHandlerPost<PDFQuery, PDFAnswer> = (req) => {
   const route = AgentRoutes.pdf;
   return fetchPost(`${config.agents.url}${route}`, req);
@@ -134,6 +138,7 @@ handlers[AgentRoutes.summary] = { func: summaryHandler, method: 'POST' };
 handlers[AgentRoutes.web] = { func: webHandler, method: 'POST' };
 handlers[AgentRoutes.webshot] = { func: webshotHandler, method: 'POST' };
 handlers[AgentRoutes.image] = { func: imageHandler, method: 'POST' };
+handlers[AgentRoutes.slide] = { func: slideHandler, method: 'POST' };
 handlers[AgentRoutes.pdf] = { func: pdfHandler, method: 'POST' };
 handlers[AgentRoutes.code] = { func: codeHandler, method: 'POST' };
 // Ideator routes mounted under /ideator/... to avoid collisions with agent routes
