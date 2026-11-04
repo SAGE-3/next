@@ -24,6 +24,8 @@ export const schema = z.object({
   init: z.boolean(),
   audio: z.boolean(),
   refreshSeed: z.number(),
+  // Open tabs: sent as FIREFOX_URLS when the container starts, updated by VEO's callbacks
+  urls: z.array(z.string()),
 });
 export type state = z.infer<typeof schema>;
 
@@ -34,6 +36,7 @@ export const init: Partial<state> = {
   init: false,
   audio: true,
   refreshSeed: 0,
+  urls: [],
 };
 
 export type CobrowseApp = App<typeof name>;

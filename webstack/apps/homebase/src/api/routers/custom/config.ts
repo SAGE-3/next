@@ -62,7 +62,8 @@ export function ConfigRouter(): express.Router {
       // info only — secrets (apiKey/url) are stripped before sending to them.
       models: isService ? config.services.models : sanitizeLLMConfiguration(config.services.models),
       fluentd: config.fluentd || {},
-      veoServer: config.veoServer || {},
+      // Browsers only need VEO's origin for the stream; callbackUrl is internal
+      veoServer: config.veoServer ? { url: config.veoServer.url } : {},
     } as OpenConfiguration;
     res.json(configuration);
   });

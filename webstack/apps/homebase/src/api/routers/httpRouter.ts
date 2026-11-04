@@ -38,7 +38,17 @@ import {
 import { SAGEBase, createRateLimiter } from '@sage3/sagebase';
 
 // Custom Routes
-import { ConfigRouter, InfoRouter, TimeRouter, LogsRouter, KernelsRouter, PresenceThrottle, AgentRouter } from './custom';
+import {
+  ConfigRouter,
+  InfoRouter,
+  TimeRouter,
+  LogsRouter,
+  KernelsRouter,
+  PresenceThrottle,
+  AgentRouter,
+  VeoVmRouter,
+  VeoCallbackRouter,
+} from './custom';
 
 import { config } from '../../config';
 
@@ -56,6 +66,12 @@ export function expressAPIRouter(): express.Router {
   router.use('/info', InfoRouter());
   router.use('/time', TimeRouter());
   router.use('/logs', LogsRouter());
+
+  // Virtual Environment Orchestrator callbacks: must stay before authenticate.
+  // VEO has no user session; each callback carries its app's HMAC callback secret as a
+  // Bearer token, which authenticate would mistake for a SAGE3 JWT and reject.
+  // All of them come from VEO's one host, so the per-IP limit is higher than the API's.
+  router.use('/veo/callback', createRateLimiter(3000), VeoCallbackRouter());
 
   // Rate limit (generous per-IP backstop), then authenticate all API Routes
   router.use(createRateLimiter(400));
@@ -87,6 +103,10 @@ export function expressAPIRouter(): express.Router {
 
   // Agent Routes (includes ideator routes under /agents/ideator/...)
   router.use('/agents', AgentRouter());
+
+  // Virtual Environment Orchestrator
+  // VEO container routes (start / check a VM), proxied with this server's VEO credentials
+  router.use('/veo/vm', VeoVmRouter());
 
   // Initialize Custom Presence Throttle
   PresenceThrottle.init();
