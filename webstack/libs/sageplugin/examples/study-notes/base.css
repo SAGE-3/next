@@ -1,0 +1,189 @@
+:root {
+  --paper: #fdfaf2;
+  --paper2: #f6f0e1;
+  --grid: rgba(90, 120, 160, 0.13);
+  --ink: #23201c;
+  --ink2: #5b554c;
+  --red: #c9302c;
+  --pink: #ffb7c9;
+  --pinkd: #e8577d;
+  --green: #b9dc8c;
+  --greend: #5f9a2d;
+  --yellow: #fff08c;
+  --yellowd: #d9b300;
+  --blue: #b3dbff;
+  --blued: #2f7bc4;
+  --purple: #dccbf6;
+  --purpled: #7d55c7;
+  --orange: #ffd2a1;
+  --oranged: #e07b14;
+  --hand: 'Patrick Hand', 'Kalam', 'Comic Sans MS', cursive;
+  --script: 'Caveat', 'Kalam', cursive;
+  --marker: 'Kalam', 'Caveat', cursive;
+  --wobble: 255px 12px 225px 12px / 12px 225px 12px 255px;
+  --wobble2: 12px 225px 12px 255px / 255px 12px 225px 12px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  font-family: var(--hand);
+  color: var(--ink);
+  background: transparent;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+.paper {
+  background-color: var(--paper);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 26px 26px;
+}
+.lined {
+  background-color: var(--paper);
+  background-image: repeating-linear-gradient(var(--paper) 0 31px, rgba(80, 120, 190, 0.22) 31px 32px);
+}
+
+.hand-border {
+  border: 3px solid var(--ink);
+  border-radius: var(--wobble);
+}
+
+.hand-border2 {
+  border: 3px solid var(--ink);
+  border-radius: var(--wobble2);
+}
+
+/* highlighter strokes */
+.hl {
+  padding: 0 0.18em;
+  border-radius: 0.3em 0.6em 0.4em 0.7em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.hl.yellow {
+  background: linear-gradient(100deg, transparent 2%, var(--yellow) 4%, var(--yellow) 96%, transparent 98%);
+}
+
+.hl.pink {
+  background: linear-gradient(100deg, transparent 2%, var(--pink) 4%, var(--pink) 96%, transparent 98%);
+}
+
+.hl.green {
+  background: linear-gradient(100deg, transparent 2%, var(--green) 4%, var(--green) 96%, transparent 98%);
+}
+
+.hl.blue {
+  background: linear-gradient(100deg, transparent 2%, var(--blue) 4%, var(--blue) 96%, transparent 98%);
+}
+
+.hl.purple {
+  background: linear-gradient(100deg, transparent 2%, var(--purple) 4%, var(--purple) 96%, transparent 98%);
+}
+
+.hl.orange {
+  background: linear-gradient(100deg, transparent 2%, var(--orange) 4%, var(--orange) 96%, transparent 98%);
+}
+
+/* washi tape */
+.tape {
+  position: absolute;
+  width: 150px;
+  height: 38px;
+  opacity: 0.85;
+  z-index: 5;
+  background: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.35) 0 8px, transparent 8px 16px), var(--tapec, #f4c2d0);
+  clip-path: polygon(3% 0, 97% 4%, 100% 50%, 96% 100%, 2% 96%, 0 50%);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+/* push pin */
+.pin {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  z-index: 6;
+  background: radial-gradient(circle at 35% 30%, #ff8a80 0 18%, var(--red) 45%, #7d1512 100%);
+  box-shadow: 2px 4px 5px rgba(0, 0, 0, 0.35);
+}
+.pin::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.chip {
+  display: inline-block;
+  font-family: var(--hand);
+  font-size: 0.8em;
+  padding: 0.05em 0.6em;
+  margin: 0.1em 0.15em;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: #fff;
+  white-space: nowrap;
+}
+
+button {
+  font-family: var(--hand);
+  cursor: pointer;
+}
+
+.btn {
+  font-size: 22px;
+  padding: 6px 18px;
+  background: #fff;
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  border-radius: var(--wobble);
+  box-shadow: 3px 3px 0 var(--ink);
+  transition:
+    transform 0.08s,
+    box-shadow 0.08s;
+}
+.btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 8px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-family: var(--script);
+  font-size: 40px;
+  color: var(--ink2);
+}

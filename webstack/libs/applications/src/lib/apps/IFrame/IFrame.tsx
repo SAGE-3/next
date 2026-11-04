@@ -15,6 +15,7 @@ import Markdown from 'markdown-to-jsx';
 
 // SAGE3
 import { useAppStore } from '@sage3/frontend';
+import { isApp } from '../../schema';
 
 import { AppWindow } from '../../components';
 import { IFrameApp } from './index';
@@ -45,7 +46,7 @@ function ToolbarComponent(props: IFrameApp): JSX.Element {
       if (props.data.sourceApps.length === 1) {
         const sourceApp = props.data.sourceApps[0];
         const app = useAppStore.getState().apps.find((app) => app._id === sourceApp);
-        if (app && app.data.type === 'CodeEditor') {
+        if (app && isApp(app, 'CodeEditor')) {
           const doc = app.data.state.content;
           if (app.data.state.language === 'html') {
             updateState(props._id, { doc: doc });

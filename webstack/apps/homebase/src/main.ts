@@ -29,6 +29,7 @@ import { setupWsforLogs } from './api/routers/custom';
 
 // Create the web server with Express
 import { createApp, listenApp, serveApp } from './web';
+import { servePluginHost } from './web/plugin-host';
 
 // Check the token on websocket connection
 import * as jwt from 'jsonwebtoken';
@@ -292,21 +293,33 @@ async function startServer() {
 
   // Serve the static react files from webapp folder
   serveApp(app, path.join(__dirname, 'webapp'));
-  // Serve the plugins folder. Plugin documents run in their own same-origin
-  // iframes and load third-party (CDN, inline) scripts, so they get their own
-  // permissive CSP — CSP is per-document, so this does not weaken the main
-  // app's policy. frame-ancestors 'self' keeps plugin pages embeddable only
-  // by SAGE3 itself.
-  app.use('/plugins', (req, res, next) => {
+  app.get('/plugins/host', servePluginHost);
+
+  // Apply isolation even when a package page is opened directly, not just in
+  // the host's sandboxed iframe. Extensions access SAGE3 only through the bridge.
+  // HTTPS stylesheets and fonts are allowed so packages can link web fonts; this
+  // is an outbound channel an approved extension can use to send data out.
+  app.use('/plugins/apps', (req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     res.setHeader(
       'Content-Security-Policy',
-      "default-src 'self' https: data: blob:; script-src 'self' https: 'unsafe-inline' 'unsafe-eval'; " +
-        "style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data: blob:; " +
-        "connect-src 'self' https: wss: data: blob:; worker-src 'self' blob:; frame-ancestors 'self'",
+      "sandbox allow-scripts allow-forms; default-src 'none'; script-src 'self' 'unsafe-inline'; " +
+        "style-src 'self' 'unsafe-inline' https:; img-src 'self' data: blob:; font-src 'self' data: https:; " +
+        "connect-src 'none'; worker-src 'none'; frame-src 'none'; object-src 'none'; " +
+        "base-uri 'none'; form-action 'none'; frame-ancestors 'self'",
     );
+
     next();
   });
-  app.use('/plugins', express.static(path.join(__dirname, 'plugins'), { cacheControl: false }));
+  app.use(
+    '/plugins/apps',
+    express.static(path.join(__dirname, 'plugins', 'apps'), {
+      cacheControl: false,
+      dotfiles: 'deny',
+    }),
+  );
 
   // Handle termination
   function exitHandler() {

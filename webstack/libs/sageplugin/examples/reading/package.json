@@ -1,0 +1,7 @@
+{
+  "name": "sage-reading-example",
+  "private": true,
+  "scripts": {
+    "package": "node build.cjs"
+  }
+}

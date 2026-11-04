@@ -27,7 +27,7 @@ import {
   Box,
 } from '@chakra-ui/react';
 
-import { MdAttachFile, MdDescription, MdOutlineDriveFileRenameOutline } from 'react-icons/md';
+import { MdAttachFile } from 'react-icons/md';
 import { usePluginStore, useUser } from '@sage3/frontend';
 
 import { isZip } from '@sage3/shared';
@@ -39,13 +39,6 @@ interface PluginUploadModalProps {
   onClose: () => void;
 }
 
-function sanitizeFilename(filename: string) {
-  const validChars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  // Remove any invalid characters
-  const sanitizedFilename = [...filename].filter((char) => validChars.includes(char)).join('');
-  return sanitizedFilename;
-}
-
 /**
  * Modal to show the user's plugins and allow them to upload new ones
  * @param props
@@ -54,8 +47,6 @@ function sanitizeFilename(filename: string) {
 export function PluginUploadModal(props: PluginUploadModalProps): JSX.Element {
   // Form state
   const [input, setInput] = useState<File[]>([]);
-  const [description, setDescription] = useState<string>('');
-  const [name, setName] = useState<string>('');
 
   // Uploading Status
   const [uploading, setUploading] = useState<boolean>(false);
@@ -70,18 +61,18 @@ export function PluginUploadModal(props: PluginUploadModalProps): JSX.Element {
   const toast = useToast();
 
   const resetInputFields = () => {
-    setName('');
-    setDescription('');
     setInput([]);
   };
 
   // Perform the actual upload
   const handleUpload = async () => {
     const roomId = props.roomId;
+    const selectedFile = input[0];
+
     // Check for required fields
-    if (input[0] && user && name && description && roomId) {
+    if (selectedFile && user && roomId) {
       // Check file extension is a ZIP file
-      if (!isZip(input[0].type)) {
+      if (!isZip(selectedFile.type) && !selectedFile.name.toLowerCase().endsWith('.zip')) {
         toast({
           title: 'Plugin Upload',
           description: 'Invalid file type. (Required: Zip File)',
@@ -89,54 +80,35 @@ export function PluginUploadModal(props: PluginUploadModalProps): JSX.Element {
           duration: 3000,
           isClosable: true,
         });
-        resetInputFields();
+
         return;
       }
+
       // Set uploading to true, shows spinner
       setUploading(true);
-      // Upload with a POST request
-      const response = await upload(input[0], name, description, user.data.name, roomId);
-      // Handle case where response might be undefined (shouldn't happen, but safety check)
-      if (!response) {
-        toast({
-          title: 'Plugin Upload',
-          description: 'Upload failed. Please try again.',
-          status: 'error',
-          duration: 3000,
-          isClosable: true,
-        });
+
+      // The store resolves every upload outcome, including network failures.
+      const response = await upload(selectedFile, user.data.name, roomId);
+
         setUploading(false);
-        return;
-      }
-      // Upload Successful
-      if (response.success) {
+
         toast({
           title: 'Plugin Upload',
-          description: response.message, // uploaded or updated
-          status: 'success',
-          duration: 3000,
+        description: response.success
+          ? `${response.message} Boards with owner-approved future-upload trust stay enabled within their capability ceiling. Other changed packages need approval.`
+          : response.message,
+        status: response.success ? 'success' : 'error',
+        duration: 5000,
           isClosable: true,
         });
-      } else {
-        // Determine error status based on response
-        // 403 = permission denied (not owner), 400 = validation error, others = server error
-        const statusCode = response.status ?? 500;
-        const isError = statusCode === 403 || statusCode === 400;
-        toast({ 
-          title: 'Plugin Upload', 
-          description: response.message, 
-          status: isError ? 'error' : 'warning', 
-          duration: 4000, 
-          isClosable: true 
-        });
-      }
-      // Show spinner for just a little longer so it doesnt look like UI is flashing.
-      setTimeout(() => setUploading(false), 500);
+
+      if (response.success) {
       resetInputFields();
+      }
     } else {
       toast({
         title: 'Plugin Upload',
-        description: 'Missing input fields. (Required: Zip File, Name, and Description)',
+        description: 'Select a non-empty ZIP package to upload to this room.',
         status: 'error',
         duration: 3000,
         isClosable: true,
@@ -145,26 +117,13 @@ export function PluginUploadModal(props: PluginUploadModalProps): JSX.Element {
   };
 
   // Files have been selected
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const files = Object.values(e.target.files) as File[];
-      // Ignore .DS_Store and empty files
-      const filteredList = files.filter((f: File) => f.name !== '.DS_Store' || f.size === 0);
-      setInput(filteredList);
-      // Pre-populate the name and description fields with the filename
-      setName(sanitizeFilename(filteredList[0].name.split('.')[0]));
-      setDescription(sanitizeFilename(filteredList[0].name.split('.')[0]));
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      const files = Array.from(event.target.files);
+      const nonEmptyFiles = files.filter((file) => file.name !== '.DS_Store' && file.size > 0);
+
+      setInput(nonEmptyFiles);
     }
-  };
-
-  // Handle the description change from the form
-  const handleDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setDescription(e.target.value);
-  };
-
-  // Handle the name change from the form
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setName(sanitizeFilename(e.target.value));
   };
 
   return (
@@ -175,11 +134,24 @@ export function PluginUploadModal(props: PluginUploadModalProps): JSX.Element {
         <ModalBody>
           {uploading ? (
             <Box width="100%" height="220px" display="flex" justifyContent="center">
-              <Spinner thickness="12px" speed="0.65s" emptyColor="gray.200" color="teal.300" size="xl" width="220px" height="220px" />
+              <Spinner
+                thickness="12px"
+                speed="0.65s"
+                emptyColor="gray.200"
+                color="teal.300"
+                size="xl"
+                width="220px"
+                height="220px"
+              />
             </Box>
           ) : (
             <FormControl isRequired>
-              <FormHelperText mb="2">Select Zip file containing a plugin</FormHelperText>
+              <FormHelperText mb="2">
+                Select an API v1 ZIP package containing manifest.json and its declared HTML entry and view files. The package name and
+                description come from its manifest. Only the original uploader can replace it. Uploads preserve saved data. A changed
+                package runs automatically only on boards where the current room owner explicitly trusts future uploads within the approved
+                capabilities; otherwise it needs fresh approval. Uploading identical ZIP bytes retains existing approval.
+              </FormHelperText>
               <InputGroup>
                 <InputLeftElement pointerEvents="none" children={<Icon as={MdAttachFile} />} />
 
@@ -194,46 +166,11 @@ export function PluginUploadModal(props: PluginUploadModalProps): JSX.Element {
                 />
                 <br />
               </InputGroup>
-              <FormHelperText mb="2">Plugin Name (only letters and numbers, maximum 20 characters)</FormHelperText>
-              <InputGroup>
-                <InputLeftElement pointerEvents="none" children={<Icon as={MdOutlineDriveFileRenameOutline} />} />
-
-                <Input
-                  variant="outline"
-                  padding={'4px 35px'}
-                  id="name"
-                  type="text"
-                  value={name}
-                  placeholder="Name"
-                  _placeholder={{ opacity: 0.5, color: 'gray.300' }}
-                  autoComplete="off"
-                  maxLength={20}
-                  pattern="[A-Za-z0-9]+"
-                  onChange={handleNameChange}
-                />
-              </InputGroup>
-              <FormHelperText mb="2">Plugin Description (maximum 40 characters)</FormHelperText>
-              <InputGroup>
-                <InputLeftElement pointerEvents="none" children={<Icon as={MdDescription} />} />
-
-                <Input
-                  variant="outline"
-                  padding={'4px 35px'}
-                  id="description"
-                  type="text"
-                  value={description}
-                  placeholder="Description"
-                  _placeholder={{ opacity: 0.5, color: 'gray.300' }}
-                  maxLength={40}
-                  autoComplete="off"
-                  onChange={handleDescriptionChange}
-                />
-              </InputGroup>
             </FormControl>
           )}
         </ModalBody>
         <ModalFooter>
-          <Button type="submit" colorScheme="green" mr={5} onClick={handleUpload}>
+          <Button type="submit" colorScheme="green" mr={5} onClick={handleUpload} isDisabled={uploading}>
             Upload
           </Button>
           <Button mr={3} onClick={props.onClose}>

@@ -11,6 +11,9 @@ import { v4 } from 'uuid';
 import { PathValue, DotNestedKeys } from './Util';
 import { SBLogger } from '../logger/SBLogger';
 
+// Lua scripts run atomically, so one staging key never holds two scripts' data.
+const stagingKey = 'sagebase:staged';
+
 // The Supported primitives and types in the Database
 export type SBJSON = { [prop: string]: SBPrimitive };
 type SBArray = Array<SBPrimitive>;
@@ -33,6 +36,26 @@ export type SBDocWriteResult<Type extends SBJSON> = {
   success: boolean;
   writetime: number;
   doc: SBDocument<Type> | undefined;
+};
+
+export type SBConditionalWriteResult<Type extends SBJSON> = SBDocWriteResult<Type> & {
+  conflict?: boolean;
+};
+
+export type SBJSONChange =
+  | { readonly op: 'set'; readonly path: readonly string[]; readonly value: SBPrimitive }
+  | { readonly op: 'delete'; readonly path: readonly string[] };
+
+export type SBNestedChange = {
+  readonly segments: readonly string[];
+  readonly value: SBPrimitive | undefined;
+};
+
+export type SBNestedCondition = SBNestedChange;
+
+type NestedRevision = {
+  readonly segments: readonly string[];
+  readonly expected?: number;
 };
 
 export type SBDocumentCreateMessage<Type extends SBJSON> = {
@@ -59,16 +82,23 @@ export type SBDocumentMessage<Type extends SBJSON> =
   | SBDocumentUpdateMessage<Type>
   | SBDocumentDeleteMessage<Type>;
 
+// Depend on document commands, not client module/function generic parameters.
+type DocumentRedisClient = Pick<RedisClientType, 'json' | 'expire' | 'exists' | 'eval' | 'publish'> & {
+  duplicate(): Pick<RedisClientType, 'subscribe' | 'unsubscribe' | 'disconnect'> & {
+    connect(): Promise<unknown>;
+  };
+};
+
 /**
  * A database reference to the SAGEBase Document.
  */
 export class SBDocumentRef<Type extends SBJSON> {
   private _id: string;
   private _path: string;
-  private _redisClient: RedisClientType;
+  private readonly _redisClient: DocumentRedisClient;
   private _colName: string;
 
-  constructor(id: string, collection: string, path: string, redisClient: RedisClientType) {
+  constructor(id: string, collection: string, path: string, redisClient: DocumentRedisClient) {
     this._id = id;
     this._path = path;
     this._colName = collection;
@@ -86,7 +116,7 @@ export class SBDocumentRef<Type extends SBJSON> {
   }
 
   //
-  private get redis(): RedisClientType {
+  private get redis(): DocumentRedisClient {
     return this._redisClient;
   }
 
@@ -107,23 +137,24 @@ export class SBDocumentRef<Type extends SBJSON> {
   }
 
   /**
-   * Set this document in the database. Overwrites the current data.
+   * Set this document in the database. createOnly atomically refuses an existing key.
    * @param data The data
    * @returns
    */
-  public async set(data: Type, by: string, ttl: number, publish = true): Promise<SBDocWriteResult<Type>> {
+  public async set(data: Type, by: string, ttl: number, publish = true, createOnly = false): Promise<SBDocWriteResult<Type>> {
     try {
       const doc = generateSBDocumentTemplate<Type>(data, by);
       doc._id = this.id;
-      const redisRes = await this._redisClient.json.set(this.path, '.', doc);
+      const redisRes = await this._redisClient.json.set(this.path, '.', doc, createOnly ? { NX: true } : undefined);
+      if (redisRes !== 'OK') {
+        return generateWriteResult('create', this._colName, false);
+      }
+
       if (ttl > -1) {
         // Set the Time to Live, in sec.
         this._redisClient.expire(this.path, ttl);
       }
-      const response =
-        redisRes == 'OK'
-          ? generateWriteResult<Type>('create', this._colName, true, doc)
-          : generateWriteResult<Type>('create', this._colName, false);
+      const response = generateWriteResult<Type>('create', this._colName, true, doc);
       if (publish) {
         await this.publishCreateAction(doc);
       }
@@ -183,6 +214,191 @@ export class SBDocumentRef<Type extends SBJSON> {
     } catch (error) {
       this.ERRORLOG(error);
       return generateWriteResult<Type>('update', this._colName, false);
+    }
+  }
+
+  /**
+   * Atomically set/remove a nested field, including missing object namespaces.
+   */
+  public async updateNested(
+    segments: readonly string[],
+    value: SBPrimitive | undefined,
+    by: string
+  ): Promise<SBDocWriteResult<Type>> {
+    return this.updateNestedMany([{ segments, value }], by);
+  }
+
+  /**
+   * Commit a batch only when every supplied snapshot still matches. An undefined
+   * condition means the path is absent, not JSON null. No partial batch is stored.
+   */
+  public async updateNestedMany(
+    changes: readonly SBNestedChange[],
+    by: string,
+    conditions: readonly SBNestedCondition[] = []
+  ): Promise<SBConditionalWriteResult<Type>> {
+    return this.writeNested(changes, by, conditions);
+  }
+
+  public async compareAndSwapNested(
+    segments: readonly string[],
+    expected: SBPrimitive | undefined,
+    value: SBPrimitive,
+    by: string,
+    conditions: readonly SBNestedCondition[] = []
+  ): Promise<SBConditionalWriteResult<Type>> {
+    return this.updateNestedMany([{ segments, value }], by, [...conditions, { segments, value: expected }]);
+  }
+
+  /**
+   * Field-level object changes with a separate monotonic namespace revision.
+   * Arrays are replacement values, never containers traversed by a change.
+   */
+  public async patchNested(
+    segments: readonly string[],
+    revisionSegments: readonly string[],
+    changes: readonly SBJSONChange[],
+    by: string,
+    expectedRevision?: number,
+    conditions: readonly SBNestedCondition[] = []
+  ): Promise<SBConditionalWriteResult<Type>> {
+    return this.writeNested(
+      changes.map((change) => ({
+        segments: [...segments, ...change.path],
+        value: change.op === 'set' ? change.value : undefined,
+      })),
+      by,
+      conditions,
+      { segments: revisionSegments, expected: expectedRevision }
+    );
+  }
+
+  private async writeNested(
+    changes: readonly SBNestedChange[],
+    by: string,
+    conditions: readonly SBNestedCondition[],
+    revision?: NestedRevision
+  ): Promise<SBConditionalWriteResult<Type>> {
+    // Callers pass identifier segments ([a-zA-Z0-9_-], never prototype keys).
+    try {
+      const result = await this._redisClient.eval(
+        `
+        local original = redis.call('JSON.GET', KEYS[1])
+        if not original then
+          return false
+        end
+
+        local changes = cjson.decode(ARGV[1])
+        local conditions = cjson.decode(ARGV[2])
+        local revision = cjson.decode(ARGV[3])
+        local function pathFor(root, segments)
+          for _, segment in ipairs(segments) do
+            root = root .. '.' .. segment
+          end
+          return root
+        end
+
+        -- Stage with RedisJSON rather than cjson roundtrips: [] and {} must stay
+        -- distinct. This private key exists only during the atomic Lua invocation.
+        redis.call('JSON.SET', KEYS[2], '.', '{"doc":' .. original .. ',"expected":null}')
+        local ok, result = pcall(function()
+          for _, condition in ipairs(conditions) do
+            local path = pathFor('.data', condition.segments)
+            local current = redis.call('JSON.TYPE', KEYS[1], path) and redis.call('JSON.GET', KEYS[1], path)
+            if condition.absent then
+              if current then
+                return 'conflict'
+              end
+            else
+              redis.call('JSON.SET', KEYS[2], '.expected', condition.json)
+              if current ~= redis.call('JSON.GET', KEYS[2], '.expected') then
+                return 'conflict'
+              end
+            end
+          end
+
+          local nextRevision
+          if revision ~= cjson.null then
+            local path = pathFor('.data', revision.segments)
+            local raw = redis.call('JSON.TYPE', KEYS[1], path) and redis.call('JSON.GET', KEYS[1], path)
+            local current = 0
+            if raw then
+              current = cjson.decode(raw)
+            end
+            if revision.expected ~= cjson.null and current ~= revision.expected then
+              return 'conflict'
+            end
+
+            nextRevision = current + 1
+          end
+
+          local function write(segments, value, remove)
+            local path = '.doc.data'
+            for index, segment in ipairs(segments) do
+              local parentType = redis.call('JSON.TYPE', KEYS[2], path)
+              if not parentType then
+                redis.call('JSON.SET', KEYS[2], path, '{}')
+              elseif parentType ~= 'object' then
+                error('Nested changes require object parents.')
+              end
+              path = path .. '.' .. segment
+            end
+            if remove then
+              redis.call('JSON.DEL', KEYS[2], path)
+            else
+              redis.call('JSON.SET', KEYS[2], path, value)
+            end
+          end
+
+          for _, change in ipairs(changes) do
+            write(change.segments, change.json, change.absent)
+          end
+          if nextRevision then
+            write(revision.segments, tostring(nextRevision), false)
+          end
+
+          redis.call('JSON.SET', KEYS[2], '.doc._updatedAt', ARGV[4])
+          redis.call('JSON.SET', KEYS[2], '.doc._updatedBy', ARGV[5])
+          local doc = redis.call('JSON.GET', KEYS[2], '.doc')
+          local data = redis.call('JSON.GET', KEYS[2], '.doc.data')
+          local message = '{"type":"UPDATE","col":' .. ARGV[6] .. ',"doc":[' .. doc ..
+            '],"updates":[{"id":' .. ARGV[7] .. ',"updates":' .. data .. '}]}'
+
+          redis.call('JSON.SET', KEYS[1], '.', doc)
+          redis.call('PUBLISH', KEYS[1], message)
+          return doc
+        end)
+        redis.call('DEL', KEYS[2])
+        if not ok then
+          return false
+        end
+        return result
+        `,
+        {
+          keys: [this.path, stagingKey],
+          arguments: [
+            JSON.stringify(changes.map(serializeNestedChange)),
+            JSON.stringify(conditions.map(serializeNestedChange)),
+            JSON.stringify(revision ? { segments: revision.segments, expected: revision.expected ?? null } : null),
+            String(Date.now()),
+            JSON.stringify(by),
+            JSON.stringify(this._colName),
+            JSON.stringify(this.id),
+          ],
+        }
+      );
+
+      if (result === 'conflict') {
+        return { ...generateWriteResult<Type>('update', this._colName, false), conflict: true };
+      }
+      if (typeof result !== 'string') {
+        return generateWriteResult('update', this._colName, false);
+      }
+
+      return generateWriteResult('update', this._colName, true, JSON.parse(result) as SBDocument<Type>);
+    } catch (error) {
+      this.ERRORLOG(error);
+      return generateWriteResult('update', this._colName, false);
     }
   }
 
@@ -250,18 +466,69 @@ export class SBDocumentRef<Type extends SBJSON> {
     }
   }
 
-  public async delete(publish = true): Promise<SBDocWriteResult<Type>> {
+  public async delete(
+    publish = true,
+    conditions: readonly SBNestedCondition[] = []
+  ): Promise<SBConditionalWriteResult<Type>> {
     try {
-      const oldValue = await this.read();
-      if (oldValue == undefined) {
+      const result = await this._redisClient.eval(
+        `
+        local original = redis.call('JSON.GET', KEYS[1])
+        if not original then
+          return false
+        end
+
+        redis.call('JSON.SET', KEYS[2], '.', '{"expected":null}')
+        local ok, result = pcall(function()
+          for _, condition in ipairs(cjson.decode(ARGV[1])) do
+            local path = '.data'
+            for _, segment in ipairs(condition.segments) do
+              path = path .. '.' .. segment
+            end
+            local current = redis.call('JSON.TYPE', KEYS[1], path) and redis.call('JSON.GET', KEYS[1], path)
+            if condition.absent then
+              if current then
+                return 'conflict'
+              end
+            else
+              redis.call('JSON.SET', KEYS[2], '.expected', condition.json)
+              if current ~= redis.call('JSON.GET', KEYS[2], '.expected') then
+                return 'conflict'
+              end
+            end
+          end
+
+          redis.call('JSON.DEL', KEYS[1])
+          if ARGV[2] == 'true' then
+            redis.call('PUBLISH', KEYS[1], '{"type":"DELETE","col":' .. ARGV[3] .. ',"doc":[' .. original .. ']}')
+          end
+          return original
+        end)
+        redis.call('DEL', KEYS[2])
+        if not ok then
+          return false
+        end
+        return result
+        `,
+        {
+          keys: [this.path, stagingKey],
+          arguments: [
+            JSON.stringify(conditions.map(serializeNestedChange)),
+            String(publish),
+            JSON.stringify(this._colName),
+          ],
+        }
+      );
+
+      if (result === 'conflict') {
+        return { ...generateWriteResult<Type>('delete', this._colName, false), conflict: true };
+      }
+
+      if (typeof result !== 'string') {
         return generateWriteResult('delete', this._colName, false);
       }
-      const redisRes = await this._redisClient.json.del(`${this.path}`);
-      const res = redisRes === undefined || redisRes === 0 ? false : true;
-      if (res === true && publish) {
-        await this.publishDeleteAction(oldValue);
-      }
-      return generateWriteResult('delete', this._colName, res, oldValue);
+
+      return generateWriteResult('delete', this._colName, true, JSON.parse(result) as SBDocument<Type>);
     } catch (error) {
       this.ERRORLOG(error);
       return generateWriteResult('delete', this._colName, false);
@@ -301,15 +568,6 @@ export class SBDocumentRef<Type extends SBJSON> {
       doc: [doc],
       updates: [{ id: doc._id, updates }],
     } as SBDocumentUpdateMessage<Type>;
-    await this._redisClient.publish(`${this._path}`, JSON.stringify(action));
-    return;
-  }
-  private async publishDeleteAction(doc: SBDocument<Type>): Promise<void> {
-    const action = {
-      type: 'DELETE',
-      col: this._colName,
-      doc: [doc],
-    } as SBDocumentDeleteMessage<Type>;
     await this._redisClient.publish(`${this._path}`, JSON.stringify(action));
     return;
   }
@@ -353,4 +611,13 @@ export function generateSBDocumentTemplate<Type extends SBJSON>(data: Type, by: 
     data: { ...dataCopy },
   } as SBDocument<Type>;
   return doc;
+}
+
+
+function serializeNestedChange(change: SBNestedChange) {
+  return {
+    segments: change.segments,
+    absent: change.value === undefined,
+    json: JSON.stringify(change.value ?? null),
+  };
 }

@@ -33,8 +33,8 @@ const pollDataStateSchema = z.object({
 
 export type state = z.infer<typeof pollDataStateSchema>;
 
-export const init: Partial<state> = {
-  poll: undefined,
+export const init: state = {
+  poll: null,
 };
 
 // Export the array schema

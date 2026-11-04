@@ -1,0 +1,26 @@
+{
+  "id": "shared-note-starter",
+  "apiVersion": 1,
+  "name": "Shared note starter",
+  "description": "A collaborative plain-text note using the SAGE3 API 1 SDK.",
+  "entry": "controller.html",
+  "capabilities": [],
+  "commands": [
+    {
+      "id": "new-note",
+      "title": "New shared note",
+      "placements": ["board-menu"],
+      "action": { "type": "create", "viewId": "note" }
+    }
+  ],
+  "views": [
+    {
+      "id": "note",
+      "title": "Shared note",
+      "kind": "app",
+      "entry": "note.html",
+      "width": 420,
+      "height": 320
+    }
+  ]
+}

@@ -37,7 +37,7 @@ export const schema = z.object({
 });
 export type state = z.infer<typeof schema>;
 
-export const init: Partial<state> = {
+export const init: state = {
   executeInfo: { executeFunc: '', params: {} },
   assetid: '',
   annotations: false,

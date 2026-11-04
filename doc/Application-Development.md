@@ -6,133 +6,27 @@ SAGE3 supports two types of applications: **Plugin Applications** (developed ext
 
 ## Plugin Applications
 
-Plugin apps are web applications developed outside the SAGE3 codebase and uploaded to a SAGE3 server. They run inside an isolated iframe on the board. Any web framework is supported (Vanilla JS, React, Vue, Svelte, etc.).
+Plugins are browser extensions uploaded as ZIP packages. They can contribute commands to board menus, app toolbars and context menus; declare local panels and app overlays; and create persistent custom board apps. They use the typed `@sage3/sageplugin` bridge rather than accessing SAGE3 internals directly.
 
-The optional `@sage3/sageplugin` npm package lets your plugin sync state across all connected users.
+Packages require a `manifest.json` containing their stable ID, display name, controller entry, capabilities, and optional commands/views. Bundle dependencies and use relative asset paths: CDN imports and arbitrary network calls are blocked by the sandbox. The old two-function SDK and automatic iframe previews are no longer supported.
 
-**Key requirement:** All asset paths in your `index.html` must be **relative** (e.g. `./script.js` not `/script.js`), so the app loads correctly when hosted inside SAGE3.
+1. Build your package, including the manifest and every declared HTML entry.
+2. Open **Plugins → Upload** on a board and choose the ZIP. The manifest supplies its name and description.
+3. The room owner opens **Enable…**, reviews the capabilities, and approves that exact package for the board.
+4. Use its commands, panels, overlays, or **Create** buttons for declared board-app views.
 
----
+Disabling preserves shared extension state and custom app content; unavailable custom apps remain as placeholders. Changing package bytes requires approval again unless the room owner opted into future uploads within the approved capabilities. Explicit deletion removes the catalogue and extension-level board state while leaving board apps and native notes.
 
-### Building a Plugin with TypeScript / Vite
+For the manifest, API, persistence rules, native app adapters, sandbox restrictions, and publication instructions, see the [SDK guide](../webstack/libs/sageplugin/README.md). A complete [reading extension](../webstack/libs/sageplugin/examples/reading) demonstrates passage-linked native Notepad creation, provenance links, persistent bookmarks, and shared PDF navigation.
 
-1. **Create a new Vite project:**
+Build that example from `webstack/`:
 
-```bash
-npm create vite@latest my-sage3-plugin
-# Select: Vanilla → TypeScript (or any framework)
+```sh
+yarn nx build sageplugin
+node libs/sageplugin/examples/reading/build.cjs
 ```
 
-2. **Install and configure:**
-
-```bash
-cd my-sage3-plugin
-npm install
-```
-
-Create or update `vite.config.ts` to set relative paths and a consistent output folder:
-
-```typescript
-import { defineConfig } from 'vite';
-
-export default defineConfig({
-  base: './',
-  build: {
-    outDir: './dist/sage3_plugin_app',
-  },
-});
-```
-
-3. **(Optional) Add the SAGE3 plugin library:**
-
-```bash
-npm install @sage3/sageplugin
-```
-
-4. **Use the plugin API to sync state:**
-
-```typescript
-import { SAGE3Plugin } from '@sage3/sageplugin';
-
-type MyState = { count: number };
-
-const s3 = new SAGE3Plugin<MyState>();
-
-// React to state changes from other users
-s3.subscribeToUpdates((state) => {
-  const count = state.data.state.count;
-  document.getElementById('counter')!.innerText = String(count);
-});
-
-// Push a state update to all users
-document.getElementById('increment')!.addEventListener('click', () => {
-  const current = s3.state.data.state.count;
-  s3.update({ state: { count: current + 1 } });
-});
-```
-
-5. **Build:**
-
-```bash
-npm run build
-```
-
-The output is in `dist/sage3_plugin_app/`. It must contain an `index.html`.
-
-6. **ZIP the folder:**
-
-```bash
-cd dist
-zip -r my-sage3-plugin.zip sage3_plugin_app/
-```
-
----
-
-### Building a Plugin with Plain JavaScript
-
-No build step required. Create a folder with your HTML, CSS, and JS files. Use relative paths and load scripts as modules:
-
-```html
-<script type="module" src="./index.js"></script>
-```
-
-Optionally, load the plugin library directly from a CDN:
-
-```javascript
-import { SAGE3Plugin } from 'https://unpkg.com/@sage3/sageplugin@latest/src/lib/sageplugin.js';
-```
-
-ZIP the folder and upload.
-
----
-
-### Building a Unity WebGL Plugin
-
-1. Set Build Target to WebGL in Unity.
-2. Disable compression: **Player Settings → Publishing Settings → Compression Format → Disabled**.
-3. Build the project.
-4. ZIP the Build output folder.
-5. Upload (see below).
-
----
-
-### Uploading a Plugin
-
-1. Open SAGE3 and navigate to a board.
-2. Open the **Plugin Menu** from the main toolbar at the bottom and click **Upload**.
-
-<img src="images/app-development/app-development_upload_to_a_sage3_server_1.jpeg" height="300"/>
-
-3. Select your `.zip` file. Enter a name and description. Click **Upload**.
-
-<img src="images/app-development/app-development_upload_to_a_sage3_server_2.jpeg" height="400"/>
-
-4. If successful your plugin should be listed in the **Plugins Menu**.
-
-<img src="images/app-development/app-development_upload_to_a_sage3_server_3.jpeg" height="400"/>
-
-5. Click your Plugin to open an instance on the board.
-
+Upload `dist/plugins/sage-reading.zip`. Select a PDF app before selecting its text, then use its toolbar or right-click menu to create a linked note.
 
 ---
 
@@ -188,6 +82,9 @@ Defines the app's state shape using [Zod](https://github.com/colinhacks/zod), it
 
 ```typescript
 import { z } from 'zod';
+import type { App } from '@sage3/applications/schema';
+
+export const name = 'Counter';
 
 export const schema = z.object({
   count: z.number(),
@@ -199,15 +96,15 @@ export const schema = z.object({
 });
 export type state = z.infer<typeof schema>;
 
-export const init: Partial<state> = {
+export const init: state = {
   count: 42,
   executeInfo: { executeFunc: '', params: {} },
 };
 
-export const name = 'Counter';
+export type CounterApp = App<typeof name>;
 ```
 
-The four exports — `schema`, `state`, `init`, and `name` — are required. The generator adds your app to the shared `apps.ts`, `types.ts`, and `initialValues.ts` files automatically.
+The four exports — `schema`, `state`, `init`, and `name` — are required. `init` supplies every required state field. The generator also exports the app-specific type and registers the app in `apps.ts`, `types.ts`, and `initialValues.ts`.
 
 ---
 
@@ -219,7 +116,7 @@ Every app exports two components: `AppComponent` (the window) and `ToolbarCompon
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
 ```
 
-Both components receive the full application element as a React prop (`props: App`) and return a `JSX.Element`. The prop includes the app's state, position, size, and the system-managed fields `_id`, `_createdAt`, `_updatedAt`, `_updatedBy`, and `_createdBy`.
+Both components receive the full application element as a React prop (`props: CounterApp`, or your app's corresponding type) and return a `JSX.Element`. The prop includes the app's typed state, position, size, and the system-managed fields `_id`, `_createdAt`, `_updatedAt`, `_updatedBy`, and `_createdBy`.
 
 ---
 
@@ -228,16 +125,19 @@ Both components receive the full application element as a React prop (`props: Ap
 Every SAGE3 app instance is stored in the `apps` collection with the following shape:
 
 ```typescript
-type AppSchema = {
+type AppSchema<T extends AppName = AppName> = {
   title: string;       // Display title in the app title bar
   roomId: string;      // Room the app belongs to
   boardId: string;     // Board the app is placed on
   position: { x: number; y: number; z: number };
   size: { width: number; height: number; depth: number };
   rotation: { x: number; y: number; z: number };
-  type: AppName;       // e.g. 'Stickie', 'PDFViewer', 'Counter'
-  state: AppState;     // Your app's custom state
+  type: T;             // e.g. 'Stickie', 'PDFViewer', 'Counter'
+  state: AppStateMap[T]; // The state for that app name
   raised: boolean;     // Whether the app is raised above others
+  dragging: boolean;
+  pinned: boolean;
+  sourceApps?: string[];
 };
 ```
 
@@ -257,14 +157,18 @@ Every document in SAGEBase also gets these system-managed fields added automatic
 
 ### Accessing State
 
-Extract the typed state at the start of each component:
+Use your app-specific prop type to read state without a cast:
 
 ```typescript
-function AppComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+import type { CounterApp } from './index';
+
+function AppComponent(props: CounterApp): JSX.Element {
+  const s = props.data.state;
   // s.count is typed as number — hover in VSCode to inspect
 }
 ```
+
+When reading another app from the store, use `isApp(app, 'PDFViewer')` before accessing PDF state. A plain `app.data.type` comparison does not narrow the generic `App` type.
 
 **Wrapping your UI in `AppWindow`:**
 

@@ -27,7 +27,7 @@ export const schema = z.object({
 });
 export type state = z.infer<typeof schema>;
 
-export const init: Partial<state> = {
+export const init: state = {
   nonOwnerViewOnly: false,
   clipboard: '',
   lastImage: undefined,

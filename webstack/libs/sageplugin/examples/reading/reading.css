@@ -1,0 +1,76 @@
+:root {
+  color-scheme: light dark;
+  font:
+    14px/1.5 system-ui,
+    sans-serif;
+}
+
+body {
+  margin: 16px;
+}
+
+h1 {
+  margin: 0 0 12px;
+  font-size: 1.2rem;
+}
+
+label {
+  display: block;
+  font-weight: 600;
+}
+
+textarea,
+select {
+  box-sizing: border-box;
+  width: 100%;
+}
+
+input {
+  width: 5rem;
+}
+
+textarea,
+input,
+select,
+button {
+  font: inherit;
+  padding: 6px;
+  border: 1px solid #888;
+  border-radius: 4px;
+}
+
+button {
+  cursor: pointer;
+  margin: 6px 4px 6px 0;
+}
+
+button:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+:focus-visible {
+  outline: 3px solid #4b9aff;
+  outline-offset: 2px;
+}
+
+blockquote {
+  margin: 12px 0;
+  padding: 8px 12px;
+  border-left: 3px solid #888;
+  white-space: pre-wrap;
+  max-height: 140px;
+  overflow: auto;
+}
+
+#status {
+  overflow-wrap: anywhere;
+}
+
+#status[role='alert'] {
+  color: light-dark(#9e1b1b, #ffadad);
+}
+
+details {
+  margin-top: 10px;
+}

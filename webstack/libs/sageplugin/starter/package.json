@@ -1,0 +1,15 @@
+{
+  "name": "sage3-extension-starter",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "sageplugin-build",
+    "watch": "sageplugin-build --watch"
+  },
+  "dependencies": {
+    "@sage3/sageplugin": "0.1.0"
+  },
+  "engines": {
+    "node": "^22.13 || ^24"
+  }
+}

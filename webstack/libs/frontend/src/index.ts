@@ -13,3 +13,5 @@ export * from './lib/stores';
 export * from './lib/utils';
 export * from './lib/ui';
 export * from './lib/providers';
+export * from './lib/plugins';
+export * from './lib/plugin-annotations';

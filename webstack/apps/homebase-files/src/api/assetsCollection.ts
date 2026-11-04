@@ -249,7 +249,7 @@ class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
    * Best-effort: missing files are ignored and errors are logged, never thrown, so
    * a filesystem problem can't block the (already committed) database delete.
    */
-  private deleteAssetFiles(assets: AssetSchema[]): void {
+  public deleteAssetFiles(assets: Pick<AssetSchema, 'file'>[]): void {
     if (assets.length === 0) return;
     const dir = config.public;
     // UUID basenames whose files should be removed (e.g. "<uuid>" from "<uuid>.pdf")
@@ -257,8 +257,8 @@ class SAGE3AssetsCollection extends SAGE3Collection<AssetSchema> {
     try {
       if (!fs.existsSync(dir)) return;
       for (const entry of fs.readdirSync(dir)) {
-        // "<uuid>." matches the original + metadata; "<uuid>-" matches derived files
-        if (bases.some((base) => entry.startsWith(`${base}.`) || entry.startsWith(`${base}-`))) {
+        // "<uuid>" matches an extensionless original, "<uuid>." the original + metadata, "<uuid>-" derived files
+        if (bases.some((base) => entry === base || entry.startsWith(`${base}.`) || entry.startsWith(`${base}-`))) {
           try {
             fs.unlinkSync(path.join(dir, entry));
           } catch (err) {

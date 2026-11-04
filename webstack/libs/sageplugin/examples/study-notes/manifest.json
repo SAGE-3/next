@@ -1,0 +1,122 @@
+{
+  "id": "study-notes",
+  "apiVersion": 1,
+  "name": "Study notes",
+  "description": "Hand drawn note cards with a docked editor, quote collecting from PDFs, flashcards and a paper comparison table. Import a board export.",
+  "entry": "controller.html",
+  "capabilities": [
+    "apps.read",
+    "apps.write",
+    "links.read",
+    "links.write",
+    "documents.read",
+    "documents.navigate",
+    "assets.read",
+    "assets.write",
+    "urls.open",
+    "downloads.write"
+  ],
+  "commands": [
+    {
+      "id": "edit-card",
+      "title": "✎ edit note",
+      "placements": ["toolbar", "context-menu"],
+      "target": { "viewIds": ["card"] },
+      "action": { "type": "panel", "viewId": "edit" }
+    },
+    {
+      "id": "collect-here",
+      "title": "collect quotes here",
+      "placements": ["toolbar", "context-menu"],
+      "target": { "viewIds": ["card"] }
+    },
+    {
+      "id": "duplicate-card",
+      "title": "duplicate note",
+      "placements": ["context-menu"],
+      "target": { "viewIds": ["card"] }
+    },
+    {
+      "id": "quote-to-card",
+      "title": "quote into note card",
+      "placements": ["toolbar", "context-menu"],
+      "target": { "appTypes": ["PDFViewer"] },
+      "shortcut": "Ctrl+Alt+Q"
+    },
+    {
+      "id": "sticky-from-pdf",
+      "title": "sticky from selection",
+      "placements": ["context-menu"],
+      "target": { "appTypes": ["PDFViewer"] }
+    },
+    {
+      "id": "new-card",
+      "title": "New note card",
+      "placements": ["board-menu"],
+      "action": { "type": "create", "viewId": "card" }
+    },
+    {
+      "id": "new-flashcards",
+      "title": "New flashcards",
+      "placements": ["board-menu"],
+      "action": { "type": "create", "viewId": "flashcards" }
+    },
+    {
+      "id": "new-compare",
+      "title": "New comparison table",
+      "placements": ["board-menu"],
+      "action": { "type": "create", "viewId": "compare" }
+    },
+    {
+      "id": "portable-board",
+      "title": "Export or import board",
+      "placements": ["board-menu"],
+      "action": { "type": "panel", "viewId": "import" }
+    }
+  ],
+  "views": [
+    {
+      "id": "card",
+      "title": "Note card",
+      "entry": "card.html",
+      "kind": "app",
+      "width": 700,
+      "height": 600
+    },
+    {
+      "id": "flashcards",
+      "title": "Flashcards",
+      "entry": "flashcards.html",
+      "kind": "app",
+      "width": 1300,
+      "height": 820
+    },
+    {
+      "id": "compare",
+      "title": "Comparison table",
+      "entry": "compare.html",
+      "kind": "app",
+      "width": 2300,
+      "height": 830
+    },
+    {
+      "id": "edit",
+      "title": "Edit note",
+      "entry": "edit.html",
+      "kind": "panel",
+      "scope": "app",
+      "target": { "viewIds": ["card"] },
+      "width": 520,
+      "height": 760
+    },
+    {
+      "id": "import",
+      "title": "Export or import board",
+      "entry": "import.html",
+      "kind": "panel",
+      "scope": "board",
+      "width": 460,
+      "height": 560
+    }
+  ]
+}

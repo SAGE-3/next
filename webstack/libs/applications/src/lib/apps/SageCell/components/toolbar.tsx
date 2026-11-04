@@ -37,6 +37,7 @@ import {
 import { KernelInfo } from '@sage3/shared/types';
 
 import { SageCellApp, state as AppState } from '../index';
+import { isApp } from '../../../schema';
 import { HelpModal } from './help';
 import { useStore } from './store';
 import { VscRunAbove, VscRunAll, VscRunBelow } from 'react-icons/vsc';
@@ -453,7 +454,9 @@ export const GroupedToolbarComponent = (props: { apps: SageCellApp[] }) => {
   // Execute the app without any checks, used for sequential execution
   async function executeAppNoChecks(appid: string, userid: string) {
     // Get the code from the store
-    const code = useAppStore.getState().apps.find((app) => app._id === appid)?.data.state.code;
+    const app = useAppStore.getState().apps.find((app) => app._id === appid);
+    if (!app || !isApp(app, 'SageCell')) return false;
+    const code = app.data.state.code;
     // Get the kernel from the store, since function executed from monaco editor
     const kernel = useStore.getState().kernel[appid];
     if (kernel && code) {
