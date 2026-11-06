@@ -85,6 +85,10 @@ export function ApplicationsMenu(props: ApplicationProps) {
     } else if (appName === 'Chat') {
       w = 800;
       h = 620;
+    } else if (appName === 'Drawing') {
+      // Wide: room for the tool column, the editing panel and the drawing
+      w = 800;
+      h = 500;
     } else if (appName === 'Screenshare') {
       w = 1280;
       h = 720;

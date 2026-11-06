@@ -463,7 +463,7 @@ export function AppWindow(props: WindowProps) {
 
   function handleAppTouchMove(e: React.PointerEvent) {
     // Don't swallow pointer moves for the selected app — its content may need them.
-    // e.g. Drawing/tldraw draws on pointermove; stopping here leaves only a single dot.
+    // e.g. the Drawing app draws on pointermove; stopping here leaves only a single dot.
     // (The board pans on mouse/touch/wheel events, not pointer events, so letting
     // pointer moves through here does not trigger board panning.)
     if (!selected) e.stopPropagation();

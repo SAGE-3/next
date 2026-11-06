@@ -146,6 +146,7 @@ export function Alfred(props: props) {
     // Per-app size overrides (applied last so they're never clobbered)
     const appSizeOverrides: Record<string, { w: number; h: number }> = {
       SageIdeator: { w: 1400, h: 800 },
+      Drawing: { w: 800, h: 500 },
     };
     const sizeOverride = appSizeOverrides[appName as string];
     if (sizeOverride) { w = sizeOverride.w; h = sizeOverride.h; }
