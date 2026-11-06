@@ -286,11 +286,10 @@ export class SBAuth {
         if (ready) {
           express.get(
             config.cilogonConfig.routeEndpoint,
-            passport.authenticate('openidconnect', {
-              prompt: 'consent',
-              scope: ['openid', 'email', 'profile'],
-              // Note: State parameter validation handled by OpenID Connect strategy
-            }),
+            // The strategy adds 'openid' itself, so this requests 'openid email'.
+            // No 'profile' scope: CILogon rejects scopes the client is not registered for.
+            // The state parameter is checked by the OpenID Connect strategy.
+            passport.authenticate('openidconnect', { prompt: 'consent', scope: ['email'] }),
           );
           express.get(config.cilogonConfig.callbackURL, loginLimiter, this.createOAuthCallbackHandler('cilogon', 'openidconnect'));
         }
