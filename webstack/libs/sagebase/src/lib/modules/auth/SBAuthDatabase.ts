@@ -91,11 +91,15 @@ export class SBAuthDatabase {
           type: SchemaFieldTypes.TAG,
           AS: 'email',
         },
+        '$.id': {
+          type: SchemaFieldTypes.TAG,
+          AS: 'id',
+        },
       },
       {
         ON: 'JSON',
         PREFIX: this._prefix,
-      }
+      },
     );
     return;
   }
@@ -187,6 +191,36 @@ export class SBAuthDatabase {
       console.log('SAGEBase SBAuthDatabase error> ', error);
       return undefined;
     }
+  }
+
+  /**
+   * Search the auth records on a TAG field (id or email).
+   * Every non-alphanumeric character is escaped, as in deleteAuthByEmail.
+   */
+  private async searchTag(field: 'id' | 'email', value: string): Promise<SBAuthSchema[]> {
+    try {
+      const escaped = value.replace(/[^a-zA-Z0-9]/g, '\\$&');
+      const response = await this._redisClient.ft.search(this._indexName, `@${field}:{${escaped}}`);
+      return response.documents.map((d) => d.value as unknown as SBAuthSchema);
+    } catch (error) {
+      this.ERRORLOG(error);
+      return [];
+    }
+  }
+
+  /**
+   * Find the auth record with this id (the id is also the user's document id)
+   */
+  public async findAuthById(id: string): Promise<SBAuthSchema | undefined> {
+    const docs = await this.searchTag('id', id);
+    return docs.length === 1 ? docs[0] : undefined;
+  }
+
+  /**
+   * Find the auth records with this email (one person can log in with several providers)
+   */
+  public async findAuthsByEmail(email: string): Promise<SBAuthSchema[]> {
+    return this.searchTag('email', email);
   }
 
   /**

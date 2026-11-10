@@ -11,7 +11,7 @@ import { SAGE3Collection, sageRouter } from '@sage3/backend';
 
 import { SAGEBase, SBAuthSchema, createRateLimiter } from '@sage3/sagebase';
 
-import { config } from '../../config';
+import { isAdmin, firstAdminId } from '../admins';
 import { RoomsCollection } from './rooms';
 import { BoardsCollection } from './boards';
 import { AppsCollection } from './apps';
@@ -96,11 +96,8 @@ class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
         return;
       }
 
-      // Is the user making the rqeuest the same as the user to delete?
-      let isSameUser = false;
-      if (userRequestingDeletion.id === userIdToDelete) {
-        isSameUser = true;
-      }
+      // Is the user making the request the same as the user to delete?
+      const isSameUser = userRequestingDeletion.id === userIdToDelete;
 
       // Get the user from the database
       const userToDelete = await this.get(userIdToDelete);
@@ -111,30 +108,23 @@ class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
         return;
       }
 
-      // Does ther user have an email? If not, they are a guest and cannot be deleted
-      if (!userToDelete.data.email) {
+      // The login record of the user to delete (same id as the user document).
+      // Its email comes from the identity provider; the profile email can be edited by the user.
+      const authToDelete = await SAGEBase.Auth.findAuthById(userIdToDelete);
+      const userEmail = authToDelete?.email;
+      if (!authToDelete || !userEmail || authToDelete.provider === 'guest' || authToDelete.provider === 'spectator') {
         res.status(404).send({ success: false, message: 'User is not registered and may be a guest.' });
         return;
       }
 
-      // Check if the user to be deleted is an admin
-      const adminEmails = config.auth.admins || [];
-      const userEmail = userToDelete.data.email;
-      if (adminEmails.includes(userEmail)) {
+      // Admins can not be deleted
+      if (isAdmin(authToDelete)) {
         res.status(401).send({ success: false, message: 'Unauthorized. Admins can not be deleted.' });
         return;
       }
 
-      // Check if the user who is requesting the deletion is an admin
-      let isAdmin = false;
-      const userPerformingDeletion = await this.get(userRequestingDeletion.id);
-      const userEmailPerformingDeletion = userPerformingDeletion ? userPerformingDeletion.data.email : null;
-      if (userEmailPerformingDeletion) {
-        isAdmin = adminEmails.includes(userEmailPerformingDeletion);
-      }
-
       // Only admins or the user themselves can delete their account
-      if (!isAdmin && !isSameUser) {
+      if (!isSameUser && !isAdmin(userRequestingDeletion)) {
         res.status(401).send({ success: false, message: 'Unauthorized' });
         return;
       }
@@ -142,13 +132,8 @@ class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
       // Check if the user wants to delete all data
       const deleteAllData = body.deleteAllData ? body.deleteAllData : false;
       // If the user doesnt want to delete their data, ensure there is an admin account to transfer the data to
-      const adminEmail = adminEmails[0];
-      if (!deleteAllData && !adminEmail) {
-        res.status(400).send({ success: false, message: 'No admin account to transfer data to. Please contact the server administrator.' });
-        return;
-      }
-      const adminAccounts = await this.query('email', adminEmail);
-      const adminAccount = adminAccounts ? adminAccounts[0] : null;
+      const transferId = deleteAllData ? undefined : await firstAdminId();
+      const adminAccount = transferId ? await this.get(transferId) : undefined;
       if (!deleteAllData && !adminAccount) {
         res
           .status(400)
@@ -164,14 +149,12 @@ class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
       const userCollectionRemoval = userCollDelete ? true : false;
       this.userDeleteLog(`User Collection Delete ${userCollectionRemoval ? 'Success' : 'Failed'}`, userEmail);
 
-      const authCollDelete = await SAGEBase.Auth.deleteAuthByEmail(userEmail);
-      const authCollectionRemoval = authCollDelete ? true : false;
+      const authCollectionRemoval = await SAGEBase.Auth.deleteAuth(authToDelete);
       this.userDeleteLog(`Auth Collection Delete ${authCollectionRemoval ? 'Success' : 'Failed'}`, userEmail);
 
       // If the data is not to be deleted, transfer ownership of rooms, boards, apps, assets, and plugins to the server admins
       if (!deleteAllData && adminAccount) {
         const adminId = adminAccount._id;
-
         this.userDeleteLog(`User data will be transferred to admin account with email: ${adminAccount.data.email}`, userEmail);
 
         // Transfer Rooms
