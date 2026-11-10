@@ -120,7 +120,12 @@ export class SBAuthDatabase {
       // Providers that never resolve a role (extras.role undefined) leave
       // whatever's already stored untouched.
       if (extras?.role !== undefined && auth.role !== extras.role) {
-        auth = await this.updateAuthRole(provider, providerId, extras.role);
+        auth = await this.updateAuthField(provider, providerId, 'role', extras.role);
+      }
+      // Same for the email: the identity provider is the reference, and a record
+      // created without an email (a login without the email scope) gets it at the next login.
+      if (auth && extras?.email && auth.email !== extras.email) {
+        auth = await this.updateAuthField(provider, providerId, 'email', extras.email);
       }
       return auth;
     } else {
@@ -133,9 +138,16 @@ export class SBAuthDatabase {
    * Update the persisted role on an existing Auth record.
    */
   public async updateAuthRole(provider: string, providerId: string, role: string): Promise<SBAuthSchema | undefined> {
+    return this.updateAuthField(provider, providerId, 'role', role);
+  }
+
+  /**
+   * Update one field (role or email) of an existing Auth record.
+   */
+  private async updateAuthField(provider: string, providerId: string, field: 'role' | 'email', value: string) {
     try {
       const key = provider + providerId;
-      await this._redisClient.json.set(`${this._prefix}:${key}`, '$.role', role);
+      await this._redisClient.json.set(`${this._prefix}:${key}`, `$.${field}`, value);
       return await this.readAuth(provider, providerId);
     } catch (error) {
       this.ERRORLOG(error);
@@ -194,74 +206,52 @@ export class SBAuthDatabase {
   }
 
   /**
-   * Search the auth records on a TAG field (id or email).
-   * Every non-alphanumeric character is escaped, as in deleteAuthByEmail.
+   * Search the auth records on a TAG field (id or email). Throws when the search fails.
+   * RediSearch TAG queries treat most punctuation as syntax characters, and a backslash
+   * in the input can escape the query's own delimiters. Every non-alphanumeric character
+   * is escaped (harmless for characters that don't need it): the single pass covers the
+   * backslash itself, and legal email characters like '-' and '+' are not a syntax error.
    */
   private async searchTag(field: 'id' | 'email', value: string): Promise<SBAuthSchema[]> {
-    try {
-      const escaped = value.replace(/[^a-zA-Z0-9]/g, '\\$&');
-      const response = await this._redisClient.ft.search(this._indexName, `@${field}:{${escaped}}`);
-      return response.documents.map((d) => d.value as unknown as SBAuthSchema);
-    } catch (error) {
-      this.ERRORLOG(error);
-      return [];
-    }
+    const escaped = value.replace(/[^a-zA-Z0-9]/g, '\\$&');
+    const response = await this._redisClient.ft.search(this._indexName, `@${field}:{${escaped}}`);
+    return response.documents.map((d) => d.value as unknown as SBAuthSchema);
   }
 
   /**
-   * Find the auth record with this id (the id is also the user's document id)
+   * Find the auth record with this id (the id is also the user's document id).
+   * Returns undefined when there is none; throws when the search fails or finds several.
    */
   public async findAuthById(id: string): Promise<SBAuthSchema | undefined> {
     const docs = await this.searchTag('id', id);
-    return docs.length === 1 ? docs[0] : undefined;
+    if (docs.length > 1) throw new Error('SBAuth> Found multiple auths with the same id');
+    return docs[0];
   }
 
   /**
-   * Find the auth records with this email (one person can log in with several providers)
+   * Find the auth records with this email (one person can log in with several providers).
+   * Throws when the search fails.
    */
   public async findAuthsByEmail(email: string): Promise<SBAuthSchema[]> {
     return this.searchTag('email', email);
   }
 
   /**
-   * Find an Auth by email
+   * Delete the Auth with this email, when there is exactly one
    * @param email The email to search for
    */
   public async deleteAuthByEmail(email: string): Promise<SBAuthSchema | undefined> {
     try {
-      // RediSearch TAG queries treat most punctuation as syntax characters,
-      // and a backslash in the input can escape the query's own delimiters.
-      // Escape every non-alphanumeric character (harmless for characters
-      // that don't need it): the single pass covers backslash itself, so an
-      // input backslash can't defeat the escaping, and legal email
-      // characters like '-' and '+' no longer cause a syntax error that
-      // this method's catch block would swallow as "no match found".
-      const escapedQuery = email.replace(/[^a-zA-Z0-9]/g, '\\$&');
-      const response = await this._redisClient.ft.search(this._indexName, `@email:{${escapedQuery}}`);
-      const docs = response.documents;
+      const docs = await this.searchTag('email', email);
       if (docs.length > 1) {
         console.log('SBAuth> Error Found Multiple Auths with the same email');
-        console.log(docs);
         return undefined;
-      } else if (docs.length == 0) {
-        return undefined;
-      } else {
-        // Delete the auth
-        const provider = docs[0].value.provider as string;
-        const providerId = docs[0].value.providerId as string;
-        if (provider && providerId) {
-          const result = await this.deleteAuth(provider, providerId);
-          if (result) {
-            console.log('SBAuth> Auth Deleted', provider, providerId);
-            return docs[0].value as SBAuthSchema;
-          } else {
-            return undefined;
-          }
-        } else {
-          console.log('SBAuth> Error Auth not found');
-          return undefined;
-        }
       }
+      const auth = docs[0];
+      if (!auth?.provider || !auth?.providerId) return undefined;
+      const result = await this.deleteAuth(auth.provider, auth.providerId);
+      if (result) console.log('SBAuth> Auth Deleted', auth.provider, auth.providerId);
+      return result ? auth : undefined;
     } catch (error) {
       console.log('SAGEBase> SBAuthDatabase error', error);
       return undefined;

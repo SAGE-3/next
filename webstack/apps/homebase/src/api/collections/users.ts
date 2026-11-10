@@ -6,15 +6,12 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { Router } from 'express';
-import { WebSocket } from 'ws';
+import { UserSchema } from '@sage3/shared/types';
+import { CollectionWrite, SAGE3Collection, convertProviderToRole, sageRouter } from '@sage3/backend';
 
-import { APIClientWSMessage, UserSchema } from '@sage3/shared/types';
-import { SAGE3Collection, SubscriptionCache, sageRouter } from '@sage3/backend';
+import { SAGEBase, SBAuthSchema, SBDocument, createRateLimiter } from '@sage3/sagebase';
 
-import { SAGEBase, SBAuthSchema, createRateLimiter } from '@sage3/sagebase';
-
-import { isAdmin, firstAdminId } from '../admins';
+import { isAdmin, adminLogins } from '../admins';
 import { RoomsCollection } from './rooms';
 import { BoardsCollection } from './boards';
 import { AppsCollection } from './apps';
@@ -22,29 +19,26 @@ import { AssetsCollection } from './assets';
 import { PluginsCollection } from './plugins';
 import { RoomMembersCollection } from './roommembers';
 
-// The only POST routes on users: the generic POST would add documents with any id and email
-const USER_POST_ROUTES = ['/create', '/userStats', '/accountDeletion'];
-// Profile fields set by the server from the login, never by an update
-const PROTECTED_FIELDS = ['email', 'userRole'];
+// Profile fields a user can change. The email and the role are set by the server from the login.
+// An allow-list: the update turns each key into a path in the document, so only known keys go through.
+const EDITABLE_FIELDS = ['name', 'color', 'profilePicture', 'userType', 'savedBoards', 'recentBoards'];
 
 /**
- * Check a write to the users collection, for the REST and the WebSocket routes.
- * A user can update only their own document, and not its protected fields (removed from the body).
+ * Rules for the generic writes on users (REST and WebSocket).
+ * A user can update only their own document, and only its editable fields (others are removed from the body).
  * Documents are created with /create and deleted with /accountDeletion only.
  * @returns an error message, or undefined when the write is allowed
  */
-function userWriteError(method: string, path: string, body: unknown, auth: SBAuthSchema): string | undefined {
-  if (['GET', 'HEAD', 'OPTIONS', 'SUB', 'UNSUB'].includes(method)) return undefined;
-  if (method === 'POST') return USER_POST_ROUTES.includes(path) ? undefined : 'Use /api/users/create';
-  if (method === 'PUT') {
-    const id = path.split('/').filter(Boolean)[0];
-    if (!id || id !== auth.id) return 'You can only update your own user document';
-    if (body && typeof body === 'object') {
-      for (const field of PROTECTED_FIELDS) delete (body as Record<string, unknown>)[field];
-    }
-    return undefined;
+export function checkUserWrite(write: CollectionWrite, auth: SBAuthSchema): string | undefined {
+  if (write.action === 'create') return 'Use /api/users/create';
+  if (write.action === 'delete') return 'Use /api/users/accountDeletion';
+  if (!auth?.id || write.id !== auth.id) return 'You can only update your own user document';
+  const body = write.body;
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return 'Invalid update';
+  for (const field of Object.keys(body)) {
+    if (!EDITABLE_FIELDS.includes(field)) delete (body as Record<string, unknown>)[field];
   }
-  return 'Use /api/users/accountDeletion';
+  return undefined;
 }
 
 type UserStats = {
@@ -74,7 +68,8 @@ class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
       if (auth?.id) {
         const guestLike = auth.provider === 'guest' || auth.provider === 'spectator';
         const email = guestLike ? auth.email || auth.displayName || '' : auth.email || '';
-        const userRole = guestLike ? (auth.provider as UserSchema['userRole']) : 'user';
+        // The role the server uses for this login (an LDAP group can map to spectator)
+        const userRole = convertProviderToRole(auth) ?? 'user';
         doc = await this.add({ ...body, email, userRole }, auth.id, auth.id);
       }
       if (doc) res.status(200).send({ success: true, data: [doc] });
@@ -143,12 +138,24 @@ class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
 
       // The login record of the user to delete (same id as the user document).
       // Its email comes from the identity provider; the profile email can be edited by the user.
-      const authToDelete = await SAGEBase.Auth.findAuthById(userIdToDelete);
-      const userEmail = authToDelete?.email;
-      if (!authToDelete || !userEmail || authToDelete.provider === 'guest' || authToDelete.provider === 'spectator') {
+      // A failed search is an error, not a missing record.
+      let authToDelete: SBAuthSchema | undefined;
+      let admins: SBAuthSchema[] = [];
+      try {
+        authToDelete = await SAGEBase.Auth.findAuthById(userIdToDelete);
+        admins = await adminLogins();
+      } catch (error) {
+        console.log('USER DELETION >> Could not read the login records', error);
+        res.status(500).send({ success: false, message: 'Could not read the login records. Please try again.' });
+        return;
+      }
+      // Guests and spectators are temporary accounts
+      if (!authToDelete || authToDelete.provider === 'guest' || authToDelete.provider === 'spectator') {
         res.status(404).send({ success: false, message: 'User is not registered and may be a guest.' });
         return;
       }
+      // Name used in the log (some logins have no email)
+      const userEmail = authToDelete.email || authToDelete.displayName || userIdToDelete;
 
       // Admins can not be deleted
       if (isAdmin(authToDelete)) {
@@ -165,8 +172,12 @@ class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
       // Check if the user wants to delete all data
       const deleteAllData = body.deleteAllData ? body.deleteAllData : false;
       // If the user doesnt want to delete their data, ensure there is an admin account to transfer the data to
-      const transferId = deleteAllData ? undefined : await firstAdminId();
-      const adminAccount = transferId ? await this.get(transferId) : undefined;
+      // An admin can have several logins (Google, CILogon, ...): use the first one that has a user document
+      let adminAccount: SBDocument<UserSchema> | undefined;
+      for (const admin of deleteAllData ? [] : admins) {
+        adminAccount = await this.get(admin.id);
+        if (adminAccount) break;
+      }
       if (!deleteAllData && !adminAccount) {
         res
           .status(400)
@@ -279,27 +290,12 @@ class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
       }
     });
 
-    // Check every write before the generic and custom routes
-    const guarded = Router();
-    guarded.use((req, res, next) => {
-      const error = userWriteError(req.method, req.path, req.body, req.user as SBAuthSchema);
-      if (error) res.status(403).send({ success: false, message: error });
-      else next();
-    });
-    guarded.use(router);
-    this.httpRouter = guarded;
+    this.httpRouter = router;
   }
 
-  // Same check for the WebSocket routes ('/api/users/<id>')
-  public override wsRouter(socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, cache: SubscriptionCache): Promise<void> {
-    const route = message.route.split('?')[0];
-    const path = message.body?.batch ? '/' : route.replace(/^\/api\/users/, '') || '/';
-    const error = userWriteError(message.method, path, message.body, user);
-    if (error) {
-      socket.send(JSON.stringify({ id: message.id, success: false, message: error }));
-      return Promise.resolve();
-    }
-    return super.wsRouter(socket, message, user, cache);
+  // Rules for the generic REST and WebSocket writes
+  public override checkWrite(write: CollectionWrite, auth: SBAuthSchema): string | undefined {
+    return checkUserWrite(write, auth);
   }
 
   private userDeleteLog(message: string, email: string) {

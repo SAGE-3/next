@@ -24,12 +24,15 @@ export function isAdmin(auth: SBAuthSchema | undefined): boolean {
 }
 
 /**
- * The profile document id of the first configured admin who has logged in, or undefined.
- * Used to transfer the data of a deleted account.
+ * The logins of the configured admins, in the order of `auth.admins`.
+ * Used to find the account that receives the data of a deleted account.
+ * Throws when the login records can not be searched.
  */
-export async function firstAdminId(): Promise<string | undefined> {
-  const email = (config.auth.admins || [])[0];
-  if (!email) return undefined;
-  const auths = await SAGEBase.Auth.findAuthsByEmail(email);
-  return auths.find((a) => isAdmin(a))?.id;
+export async function adminLogins(): Promise<SBAuthSchema[]> {
+  const logins: SBAuthSchema[] = [];
+  for (const email of config.auth.admins || []) {
+    const auths = await SAGEBase.Auth.findAuthsByEmail(email);
+    logins.push(...auths.filter((a) => isAdmin(a)));
+  }
+  return logins;
 }

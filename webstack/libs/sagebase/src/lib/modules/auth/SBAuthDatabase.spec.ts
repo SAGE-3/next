@@ -99,6 +99,17 @@ describe('SBAuthDatabase — CRUD', () => {
     expect(second?.displayName).toBe('Dave');
   });
 
+  it('findOrAddAuth fills in or updates the email from the identity provider at a later login', async () => {
+    const first = await db.findOrAddAuth('cilogon', 'cilogon-id-9', { displayName: 'Ivy' });
+    expect(first?.email).toBeUndefined();
+    const second = await db.findOrAddAuth('cilogon', 'cilogon-id-9', { email: 'ivy@example.com' });
+    expect(second?.id).toBe(first?.id);
+    expect(second?.email).toBe('ivy@example.com');
+    // A login without an email keeps the stored one
+    const third = await db.findOrAddAuth('cilogon', 'cilogon-id-9', {});
+    expect(third?.email).toBe('ivy@example.com');
+  });
+
   it('deleteAuth removes an existing record and returns true', async () => {
     await db.addAuth('google', 'google-id-5', { displayName: 'Eve' });
     const deleted = await db.deleteAuth('google', 'google-id-5');

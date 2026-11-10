@@ -401,10 +401,6 @@ export class SBAuth {
     }
   }
 
-  public deleteAuthByEmail(email: string): Promise<SBAuthSchema | undefined> {
-    return this._database.deleteAuthByEmail(email);
-  }
-
   /** The auth record with this id (the user's document id) */
   public findAuthById(id: string): Promise<SBAuthSchema | undefined> {
     return this._database.findAuthById(id);

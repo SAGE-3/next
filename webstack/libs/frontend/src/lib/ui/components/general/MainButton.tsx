@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useParams } from 'react-router';
 
 import {
