@@ -6,8 +6,11 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { UserSchema } from '@sage3/shared/types';
-import { SAGE3Collection, sageRouter } from '@sage3/backend';
+import { Router } from 'express';
+import { WebSocket } from 'ws';
+
+import { APIClientWSMessage, UserSchema } from '@sage3/shared/types';
+import { SAGE3Collection, SubscriptionCache, sageRouter } from '@sage3/backend';
 
 import { SAGEBase, SBAuthSchema, createRateLimiter } from '@sage3/sagebase';
 
@@ -18,6 +21,31 @@ import { AppsCollection } from './apps';
 import { AssetsCollection } from './assets';
 import { PluginsCollection } from './plugins';
 import { RoomMembersCollection } from './roommembers';
+
+// The only POST routes on users: the generic POST would add documents with any id and email
+const USER_POST_ROUTES = ['/create', '/userStats', '/accountDeletion'];
+// Profile fields set by the server from the login, never by an update
+const PROTECTED_FIELDS = ['email', 'userRole'];
+
+/**
+ * Check a write to the users collection, for the REST and the WebSocket routes.
+ * A user can update only their own document, and not its protected fields (removed from the body).
+ * Documents are created with /create and deleted with /accountDeletion only.
+ * @returns an error message, or undefined when the write is allowed
+ */
+function userWriteError(method: string, path: string, body: unknown, auth: SBAuthSchema): string | undefined {
+  if (['GET', 'HEAD', 'OPTIONS', 'SUB', 'UNSUB'].includes(method)) return undefined;
+  if (method === 'POST') return USER_POST_ROUTES.includes(path) ? undefined : 'Use /api/users/create';
+  if (method === 'PUT') {
+    const id = path.split('/').filter(Boolean)[0];
+    if (!id || id !== auth.id) return 'You can only update your own user document';
+    if (body && typeof body === 'object') {
+      for (const field of PROTECTED_FIELDS) delete (body as Record<string, unknown>)[field];
+    }
+    return undefined;
+  }
+  return 'Use /api/users/accountDeletion';
+}
 
 type UserStats = {
   userId: string;
@@ -38,11 +66,16 @@ class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
 
     const router = sageRouter<UserSchema>(this);
 
+    // The user's own document, with the id of their login.
+    // The email and role come from the login, not from the request.
     router.post('/create', async ({ body, user }, res) => {
       let doc = null;
-      const id = (user as any).id;
-      if (user) {
-        doc = await this.add(body, id, id);
+      const auth = user as SBAuthSchema;
+      if (auth?.id) {
+        const guestLike = auth.provider === 'guest' || auth.provider === 'spectator';
+        const email = guestLike ? auth.email || auth.displayName || '' : auth.email || '';
+        const userRole = guestLike ? (auth.provider as UserSchema['userRole']) : 'user';
+        doc = await this.add({ ...body, email, userRole }, auth.id, auth.id);
       }
       if (doc) res.status(200).send({ success: true, data: [doc] });
       else res.status(500).send({ success: false, message: 'Failed to create user.' });
@@ -246,7 +279,27 @@ class SAGE3UsersCollection extends SAGE3Collection<UserSchema> {
       }
     });
 
-    this.httpRouter = router;
+    // Check every write before the generic and custom routes
+    const guarded = Router();
+    guarded.use((req, res, next) => {
+      const error = userWriteError(req.method, req.path, req.body, req.user as SBAuthSchema);
+      if (error) res.status(403).send({ success: false, message: error });
+      else next();
+    });
+    guarded.use(router);
+    this.httpRouter = guarded;
+  }
+
+  // Same check for the WebSocket routes ('/api/users/<id>')
+  public override wsRouter(socket: WebSocket, message: APIClientWSMessage, user: SBAuthSchema, cache: SubscriptionCache): Promise<void> {
+    const route = message.route.split('?')[0];
+    const path = message.body?.batch ? '/' : route.replace(/^\/api\/users/, '') || '/';
+    const error = userWriteError(message.method, path, message.body, user);
+    if (error) {
+      socket.send(JSON.stringify({ id: message.id, success: false, message: error }));
+      return Promise.resolve();
+    }
+    return super.wsRouter(socket, message, user, cache);
   }
 
   private userDeleteLog(message: string, email: string) {
