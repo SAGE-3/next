@@ -401,7 +401,18 @@ export class SBAuth {
     }
   }
 
-  public deleteAuthByEmail(email: string): Promise<SBAuthSchema | undefined> {
-    return this._database.deleteAuthByEmail(email);
+  /** The auth record with this id (the user's document id) */
+  public findAuthById(id: string): Promise<SBAuthSchema | undefined> {
+    return this._database.findAuthById(id);
+  }
+
+  /** The auth records with this email, one per login provider */
+  public findAuthsByEmail(email: string): Promise<SBAuthSchema[]> {
+    return this._database.findAuthsByEmail(email);
+  }
+
+  /** Delete one auth record */
+  public deleteAuth(auth: SBAuthSchema): Promise<boolean> {
+    return this._database.deleteAuth(auth.provider, auth.providerId);
   }
 }

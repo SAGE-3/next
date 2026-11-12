@@ -46,7 +46,7 @@ const PROVIDERS_WITH_DYNAMIC_ROLE = ['ldap'];
 // (e.g. LDAP group mapping) over the coarse per-provider default, so that
 // e.g. an LDAP group mapped to "spectator" actually grants read-only access
 // instead of the provider-wide default of "user".
-const convertProviderToRole = (auth: SBAuthSchema): RoleArg | undefined => {
+export const convertProviderToRole = (auth: SBAuthSchema): RoleArg | undefined => {
   if (auth.role && PROVIDERS_WITH_DYNAMIC_ROLE.includes(auth.provider)) {
     return auth.role as RoleArg;
   }
