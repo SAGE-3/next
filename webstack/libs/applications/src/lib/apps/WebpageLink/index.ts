@@ -29,7 +29,7 @@ export const schema = z.object({
 });
 export type state = z.infer<typeof schema>;
 
-export const init: Partial<state> = {
+export const init: state = {
   url: 'http://google.com',
   streaming: false,
   meta: {

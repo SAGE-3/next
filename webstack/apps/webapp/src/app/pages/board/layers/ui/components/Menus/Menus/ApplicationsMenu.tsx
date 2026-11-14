@@ -11,7 +11,7 @@ import { useColorModeValue, VStack } from '@chakra-ui/react';
 
 import { Applications } from '@sage3/applications/apps';
 import { initialValues } from '@sage3/applications/initialValues';
-import { AppName, AppState } from '@sage3/applications/schema';
+import { AppName } from '@sage3/applications/schema';
 import { useAppStore, useUser, GetConfiguration, placeNewApp } from '@sage3/frontend';
 
 import { MenuButton } from './MenuButton';
@@ -68,7 +68,7 @@ export function ApplicationsMenu(props: ApplicationProps) {
   const newApplication = async (appName: AppName) => {
     if (!user) return;
 
-    const state = {} as AppState;
+    const state = appName === 'Screenshare' ? { ...initialValues.Screenshare, accessId } : { ...initialValues[appName] };
 
     // Setup initial size
     let w = 400;
@@ -88,7 +88,6 @@ export function ApplicationsMenu(props: ApplicationProps) {
     } else if (appName === 'Screenshare') {
       w = 1280;
       h = 720;
-      state.accessId = accessId;
       // } else if (appName === 'Hawaii Mesonet') {
       //   w = 650;
       //   h = 650;
@@ -109,7 +108,7 @@ export function ApplicationsMenu(props: ApplicationProps) {
       size: { width: w, height: h, depth: 0 },
       rotation: { x: 0, y: 0, z: 0 },
       type: appName,
-      state: { ...(initialValues[appName] as any), ...state },
+      state,
       raised: true,
       dragging: false,
       pinned: false,

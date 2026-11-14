@@ -21,6 +21,8 @@ import {
   useInsightStore,
   useUserSettings,
   useCursorBoardPosition,
+  PluginOverlays,
+  openPluginContextMenu,
 } from '@sage3/frontend';
 
 // Window Components
@@ -596,21 +598,27 @@ export function AppWindow(props: WindowProps) {
   const memoizedChildren = useMemo(() => props.children, [props.children]);
 
   const isFocused = useUIStore((state) => state.focusedAppId === props.app._id);
+  const windowZ = isFocused ? 999999999 : props.lockToBackground ? 0 : myZ;
 
   return isFocused ? (
     <Portal>
       <Box
         id={'app_' + props.app._id}
+        data-sage-app-window={props.app._id}
+        data-sage-board-id={props.app.data.boardId}
+        data-sage-app-z={windowZ}
         overflow="hidden"
         left="0px"
         top="0px"
         position={'absolute'}
         width="100%"
         height="100%"
-        zIndex={999999999}
+        zIndex={windowZ}
         background={'backgroundColor'}
+        onContextMenu={(event) => openPluginContextMenu(event, props.app)}
       >
         {memoizedChildren}
+        <PluginOverlays app={props.app} />
       </Box>
       <Button
         position="absolute"
@@ -633,13 +641,16 @@ export function AppWindow(props: WindowProps) {
     </Portal>
   ) : (
     <div
+      data-sage-app-window={props.app._id}
+      data-sage-board-id={props.app.data.boardId}
+      data-sage-app-z={windowZ}
       style={{
         position: 'absolute',
         left: pos.x,
         top: pos.y,
         width: size.width,
         height: size.height,
-        zIndex: props.lockToBackground ? 0 : myZ,
+        zIndex: windowZ,
         pointerEvents: lassoMode || (!canMove && !canResize) ? 'none' : 'auto',
         borderRadius: outerBorderRadius,
         touchAction: 'none',
@@ -647,6 +658,7 @@ export function AppWindow(props: WindowProps) {
         boxSizing: 'border-box',
       }}
       onClick={handleAppClick}
+      onContextMenu={(event) => openPluginContextMenu(event, props.app)}
       onDoubleClick={onDoubleClick}
       onPointerDown={handleAppTouchStart}
       onPointerMove={handleAppTouchMove}
@@ -687,6 +699,7 @@ export function AppWindow(props: WindowProps) {
       {/* The Application */}
       <Box
         id={'app_' + props.app._id}
+        position="relative"
         width="100%"
         height="100%"
         overflow="hidden"
@@ -697,6 +710,7 @@ export function AppWindow(props: WindowProps) {
         style={{ contentVisibility: hideApp ? 'hidden' : 'visible' }}
       >
         {memoizedChildren}
+        <PluginOverlays app={props.app} />
       </Box>
 
       {/* Full-window drag overlay when app is NOT selected */}

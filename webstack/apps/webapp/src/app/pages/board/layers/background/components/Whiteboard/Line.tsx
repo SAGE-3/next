@@ -12,7 +12,7 @@ import { getStroke } from 'perfect-freehand';
 import * as Y from 'yjs';
 
 
-import { useHexColor, useUIStore, useUserSettings } from '@sage3/frontend';
+import { toPairs, useHexColor, useUIStore, useUserSettings } from '@sage3/frontend';
 
 /**
  * The presentational data needed to render a single annotation shape.  This is
@@ -397,17 +397,3 @@ export function useLine(line: Y.Map<any>) {
   return { points: pts, color, isComplete, alpha, size, type, text };
 }
 
-/**
- * Converts an array into an array of pairs by grouping consecutive elements.
- *
- * @template T - The type of elements in the input array
- * @param arr - The input array to be converted into pairs
- * @returns An array of pairs, where each pair is a two-element array containing consecutive elements from the input array
- */
-export function toPairs<T>(arr: T[]): T[][] {
-  const pairs: T[][] = [];
-  for (let i = 0; i < arr.length - 1; i += 2) {
-    pairs.push([arr[i], arr[i + 1]]);
-  }
-  return pairs;
-}

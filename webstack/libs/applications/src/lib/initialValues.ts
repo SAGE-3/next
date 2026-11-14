@@ -1,5 +1,6 @@
 // SAGE3 Generated from apps.json file
 
+import type { AppStateMap } from './types';
 import { name as AssetLinkName, init as defaultAssetLink } from './apps/AssetLink';
 import { name as BoardLinkName, init as defaultBoardLink } from './apps/BoardLink';
 import { name as CSVViewerName, init as defaultCSVViewer } from './apps/CSVViewer';
@@ -37,7 +38,7 @@ import { name as VideoViewerName, init as defaultVideoViewer } from './apps/Vide
 import { name as WebpageLinkName, init as defaultWebpageLink } from './apps/WebpageLink';
 import { name as WebviewName, init as defaultWebview } from './apps/Webview';
 
-export const initialValues = {
+export const initialValues: AppStateMap = {
   [AssetLinkName]: defaultAssetLink,
   [BoardLinkName]: defaultBoardLink,
   [CSVViewerName]: defaultCSVViewer,

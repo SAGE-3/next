@@ -65,7 +65,7 @@ export class SBCollectionRef<Type extends SBJSON> {
       if (forcedId) doc._id = forcedId;
       const docPath = `${this._path}:${doc._id}`;
       const docRef = new SBDocumentRef<Type>(doc._id, this._name, docPath, this._redisClient);
-      const redisRes = await docRef.set(data, by, this._ttl);
+      const redisRes = await docRef.set(data, by, this._ttl, true, true);
       if (redisRes.success) {
         return docRef;
       } else {
@@ -87,7 +87,7 @@ export class SBCollectionRef<Type extends SBJSON> {
         const doc = generateSBDocumentTemplate<Type>(d, by);
         const docPath = `${this._path}:${doc._id}`;
         const docRef = new SBDocumentRef<Type>(doc._id, this._name, docPath, this._redisClient);
-        return await docRef.set(d, by, this._ttl, false);
+        return await docRef.set(d, by, this._ttl, false, true);
       });
       const res = await Promise.all(promises);
       // Filter out the docs that were successfully added and publish to subscribers

@@ -22,7 +22,7 @@ SAGE3 is a distributed real-time collaborative platform. The backend is composed
 
 All external traffic enters through a **Traefik** reverse proxy that routes requests based on path:
 - `/yjs`, `/rtc` → Homebase-YJS
-- `/api/assets/upload`, `/api/assets/static` → Homebase-Files
+- `/api/assets/upload`, `/api/assets/static`, `/api/assets/plugins`, `/api/files` → Homebase-Files
 - `/sfu` → LiveKit (screen-sharing signaling; the media itself goes directly to LiveKit over UDP 7882 / TCP 7881)
 - Everything else → Homebase
 
@@ -161,6 +161,11 @@ A dedicated server for file upload and static asset delivery.
 
 - Handles `POST /api/assets/upload` for file uploads (via Multer).
 - Serves `GET /api/assets/static/:file` for direct file access.
+- Handles SDK v2 binary assets at `/api/assets/plugins/:pluginId/boards/:boardId`:
+  - `POST /upload` accepts one multipart `files` field (50 MB maximum).
+  - `GET /:assetId` reads the original; `?page=0` reads a zero-based PDF page image.
+  - The server checks session authentication, the `x-sage3-plugin-digest` header, the current board grant, the declared capability, and native asset permissions.
+  - The room comes from the installed extension and board, never the upload body. Uploads use the native processing pipeline and return sanitized metadata rather than filesystem paths.
 - Runs separately to avoid blocking the main Homebase server during large uploads.
 
 ```

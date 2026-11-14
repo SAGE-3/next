@@ -1,0 +1,55 @@
+{
+  "id": "sage-reading",
+  "apiVersion": 1,
+  "name": "Reading notes",
+  "description": "Create collaborative native notes with PDF quotes and durable source links; keep shared page bookmarks.",
+  "entry": "controller.html",
+  "capabilities": ["apps.read", "apps.write", "links.write", "documents.read", "documents.navigate"],
+  "commands": [
+    {
+      "id": "note",
+      "title": "Note from this PDF page",
+      "placements": ["toolbar", "context-menu"],
+      "target": { "appTypes": ["PDFViewer"] },
+      "action": { "type": "panel", "viewId": "compose" }
+    },
+    {
+      "id": "bookmark",
+      "title": "Bookmark this PDF page",
+      "placements": ["toolbar", "context-menu"],
+      "target": { "appTypes": ["PDFViewer"] }
+    },
+    {
+      "id": "return",
+      "title": "Return to reading source",
+      "placements": ["toolbar", "context-menu"],
+      "target": { "appTypes": ["Notepad"] }
+    },
+    {
+      "id": "create-bookmark",
+      "title": "Reading bookmark",
+      "placements": ["board-menu"],
+      "action": { "type": "create", "viewId": "bookmark" }
+    }
+  ],
+  "views": [
+    {
+      "id": "compose",
+      "title": "Create reading note",
+      "entry": "panel.html",
+      "kind": "panel",
+      "scope": "app",
+      "target": { "appTypes": ["PDFViewer"] },
+      "width": 440,
+      "height": 520
+    },
+    {
+      "id": "bookmark",
+      "title": "Reading bookmark",
+      "entry": "bookmark.html",
+      "kind": "app",
+      "width": 360,
+      "height": 240
+    }
+  ]
+}

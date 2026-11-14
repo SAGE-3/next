@@ -22,7 +22,7 @@ export const schema = z.object({
 });
 export type state = z.infer<typeof schema>;
 
-export const init: Partial<state> = {
+export const init: state = {
   webviewurl: 'https://www.google.com/',
   zoom: 1.0,
 };

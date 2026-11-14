@@ -14,6 +14,7 @@ import { MdCode, MdDelete, MdLock, MdLockOpen, MdRestartAlt } from 'react-icons/
 // SAGE3 imports
 import { CreateKernelModal, useAppStore, useHexColor, useKernelStore, useUser, placeNewApp } from '@sage3/frontend';
 import { KernelInfo } from '@sage3/shared/types';
+import { initialValues } from '@sage3/applications/initialValues';
 
 // Props to the Kernels Panel component
 export interface KernelsMenuProps {
@@ -133,6 +134,7 @@ export function KernelsMenu(props: KernelsMenuProps) {
       rotation: { x: 0, y: 0, z: 0 },
       type: 'SageCell',
       state: {
+        ...initialValues.SageCell,
         code: '',
         msgId: '',
         history: [],
