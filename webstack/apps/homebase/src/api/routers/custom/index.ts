@@ -13,3 +13,4 @@ export * from './logs';
 export * from './presencethrottle';
 export * from './kernels';
 export * from './agent-router';
+export * from './veo';

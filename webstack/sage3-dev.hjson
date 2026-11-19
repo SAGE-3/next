@@ -45,6 +45,12 @@
   // VEO VNC container orchestration server
   "veoServer": {
     "url": "https://sage3-vnc.cis230038.projects.jetstream-cloud.org"
+    // Where VEO's API container reaches this server's callbacks (unset = no callbacks)
+    // "callbackUrl": "http://<this-host>:3000/api/veo/callback"
+    // VEO's VEO_SECRET, sent on every call to VEO (empty = VEO runs without auth)
+    "secret": "",
+    // Random key for the per-app callback secrets, e.g. `openssl rand -hex 32` (empty = no callbacks)
+    "callbackKey": ""
   },
   
   // External Services
