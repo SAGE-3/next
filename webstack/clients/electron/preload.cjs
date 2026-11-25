@@ -21,6 +21,7 @@ const validChannels = [
   'asynchronous-message',
   'close-connect-page',
   'take-screenshot',
+  'captured-window',
   'streamview',
   'streamview_stop',
   'paint',

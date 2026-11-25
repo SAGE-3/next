@@ -1,3 +1,21 @@
+## Features
+
+### Capture Presentation Slide
+
+When someone presents slides in a Zoom meeting, the SAGE3 client can put each slide on the board you are viewing in one click: choose **Capture Presentation Slide** in the SAGE3 menu bar (tray) icon's menu. The command is available only while a board is open.
+
+![Captured slides on a board, each with a note giving its number and title](images/electron-client/capture-presentation-slide.jpg)
+
+What happens:
+
+- The client captures the Zoom meeting window at full resolution. The window can be behind other windows, but not minimized.
+- If your AI model (in your SAGE3 settings) can see images, it finds the slide in the capture, which is then cropped to the slide only. When the model also reads the slide's number or title, a note with them is added above the slide.
+- Without a vision-capable model, or when no slide is found, the whole window is added.
+- The image is added a little larger than a pasted image. The first capture goes in the free space closest to the center of your view; the next ones line up to its right. After a pause of 5 minutes, a new row starts below.
+- A message on the board shows the progress, then the result.
+
+On macOS, the first capture asks for the **Screen Recording** permission (System Settings > Privacy & Security > Screen & System Audio Recording). After allowing it, restart SAGE3. Guests can't add captures, since they can't upload files.
+
 ## Sources
 
 The development team mainly uses the `dev` branch to develop new features and fix bugs. The main branch is updated for main releases.

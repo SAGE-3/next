@@ -16,7 +16,26 @@ import windowStore from './windowstore.js';
 import bookmarkStore from './bookmarkstore.js';
 
 // Utils
-import { updateLandingPage, dialogUserTextInput, checkServerIsSage, takeScreenshot } from './utils.js';
+import { updateLandingPage, dialogUserTextInput, checkServerIsSage, takeScreenshot, captureZoomWindow } from './utils.js';
+
+// The menubar (tray) icon and its menu, and whether capturing a slide is possible (on a board)
+let tray = null;
+let trayMenu = null;
+let canCapture = false;
+
+/**
+ * Enable the tray's Capture Presentation Slide only while the window shows a board
+ *
+ * @param {boolean} enabled
+ */
+function setCaptureEnabled(enabled) {
+  canCapture = enabled;
+  const item = trayMenu?.getMenuItemById('capture-slide');
+  if (!item || item.enabled === enabled) return;
+  item.enabled = enabled;
+  // Linux shows a menu's changes only once it is set again
+  tray.setContextMenu(trayMenu);
+}
 
 /**
  * Build a menu template for a window
@@ -25,7 +44,6 @@ import { updateLandingPage, dialogUserTextInput, checkServerIsSage, takeScreensh
  */
 function buildSageMenu(window, commander) {
   // System tray (menubar) icon with its own quick-access context menu, built once the app is ready
-  let tray = null;
   app.whenReady().then(() => {
     tray = new Tray(nativeImage.createFromPath(path.join(import.meta.dirname, '..', 'images', 'trayTemplate.png')));
     const contextMenu = Menu.buildFromTemplate([
@@ -42,22 +60,12 @@ function buildSageMenu(window, commander) {
         },
       },
       {
-        label: 'Check for Updates...',
+        // Handy from the menubar while Zoom is in front; only on a board (setCaptureEnabled)
+        id: 'capture-slide',
+        label: 'Capture Presentation Slide',
+        enabled: canCapture,
         click() {
-          // Trigger the electron auto-updater; only show a dialog when already up to date
-          const autoUpdater = electron.autoUpdater;
-          autoUpdater.once('update-not-available', (e) => {
-            const version = electron.app.getVersion();
-            const dialogOpts = {
-              type: 'info',
-              buttons: ['Ok'],
-              title: 'Application Update',
-              message: 'No SAGE3 update available.',
-              detail: `You are running the latest version (${version}) of the SAGE3 client.`,
-            };
-            dialog.showMessageBox(dialogOpts);
-          });
-          autoUpdater.checkForUpdates();
+          captureZoomWindow(window);
         },
       },
       {
@@ -70,6 +78,7 @@ function buildSageMenu(window, commander) {
     ]);
     tray.setToolTip('SAGE3 Menubar');
     tray.setContextMenu(contextMenu);
+    trayMenu = contextMenu;
   });
 
   // Bookmarks == saved "Hubs" (SAGE3 servers). Reused as menu items in the Hubs menu below.
@@ -548,4 +557,4 @@ function buildMenu(window, commander) {
   electron.Menu.setApplicationMenu(electron.Menu.buildFromTemplate(menu));
 }
 
-export { buildMenu };
+export { buildMenu, setCaptureEnabled };

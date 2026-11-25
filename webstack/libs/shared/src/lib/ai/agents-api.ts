@@ -97,6 +97,22 @@ export type ImageQuery = {
   model: string;
   q: string;
 };
+// Find a presentation slide in a screenshot (seer's image agent)
+export type SlideQuery = {
+  user: string;
+  model: string; // AI provider, which must have a vision model
+  image: string; // the screenshot, as a data URL
+};
+export type SlideAnswer = {
+  success: boolean; // the model answered
+  found: boolean; // a slide was found
+  image?: string; // the slide, cropped from the full-resolution screenshot (PNG data URL)
+  box: number[]; // where it was: [left, top, right, bottom] as fractions of the screenshot
+  slideNumber?: number | null; // the slide's number, when shown
+  slideTitle?: string | null; // the slide's title, when it has one
+  r: string; // an error message, if any
+};
+
 export type ImageAnswer = {
   r: string;
   success: boolean;
@@ -163,6 +179,7 @@ export const AgentRoutes = {
   web: '/web',
   webshot: '/webshot',
   image: '/image',
+  slide: '/slide',
   pdf: '/pdf',
   code: '/code',
 } as const;
