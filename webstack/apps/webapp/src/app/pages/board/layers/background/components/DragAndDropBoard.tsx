@@ -208,6 +208,10 @@ export const useDragAndDropBoard = (props: useDragAndDropBoardProps) => {
             } else if (appName === 'Chat') {
               w = 800;
               h = 420;
+            } else if (appName === 'Drawing') {
+              // Same size as from the Applications menu: room for the tool column and the editing panel
+              w = 800;
+              h = 500;
             } else if (appName === 'Clock') {
               w = 320 * 1.5;
               h = 130 * 1.5;

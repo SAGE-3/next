@@ -5,263 +5,311 @@
  * Distributed under the terms of the SAGE3 License.  The full license is in
  * the file LICENSE, distributed as part of this software.
  */
-import { useEffect, useCallback, useState } from 'react';
-import { ButtonGroup, Button, Tooltip, Box } from '@chakra-ui/react';
-// Data store
-import { create } from 'zustand';
-// Drawing
-import { Tldraw, TLUiComponents, Editor } from 'tldraw';
-import { throttle } from 'throttle-debounce';
 
-import { useYjsStore } from './useYjsStore'
+/**
+ * Drawing app: a collaborative drawing with shapes, labels, magnetic arrows, pen and text.
+ * The drawing lives in the board's Yjs document and is saved to the app state for durability.
+ */
 
-// SAGE3
-import { setupApp, useAppStore, useUIStore, useUser } from '@sage3/frontend';
-import { DrawingApp } from './index';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Box, Button, ButtonGroup, Tooltip, useDisclosure, useToast } from '@chakra-ui/react';
+import { MdAddPhotoAlternate, MdCloudUpload } from 'react-icons/md';
+import { BsFiletypeSvg, BsFiletypePng } from 'react-icons/bs';
+import { debounce } from 'throttle-debounce';
+import { format } from 'date-fns/format';
+
+import { ConfirmValueModal, downloadFile, useAppStore, useLinkStore, useUIStore, useYjs } from '@sage3/frontend';
+import { SAGE3Ability, SAGEColors, getHexColor } from '@sage3/shared';
 import { AppWindow } from '../../components';
+import { DrawingApp } from './index';
+import { DrawingDoc, isElectedSaver, prepareSave } from './model/doc';
+import { Canvas } from './editor/Canvas';
+import { useDrawingStore, useEditor } from './editor/store';
+import { exportSvg, svgSize, svgToPng, uploadToAssets } from './export';
+import { canvasMeasure } from './render/text';
+import { useDrawingTheme } from './render/theme';
 
-// Styling
-import { MdUndo, MdRedo, MdSaveAlt, MdZoomInMap, MdZoomOutMap } from 'react-icons/md';
-import { RiUserFollowFill } from 'react-icons/ri';
-import 'tldraw/tldraw.css';
+const presenceKey = (appId: string) => 'drawing:' + appId;
+const SAVE_DELAY_MS = 2000;
 
-// Default tick rate is 3 times per second
-const defaultTickRate = 1000 / 3;
+// What each person with the drawing open shares: their selection, and whether they may save the app state
+type Presence = { ids: string[]; canSave: boolean };
 
-// Zustand store to communicate with toolbar
-interface DrawStore {
-  ed: { [key: string]: Editor };
-  saveEditor: (id: string, ed: Editor) => void;
+/** A user's colour as CSS: SAGE3 colour names are mapped to their hex value */
+function cssColor(color: unknown): string {
+  if (typeof color !== 'string' || !color) return '#718096';
+  if (color.startsWith('#')) return color;
+  try {
+    return getHexColor(color as SAGEColors);
+  } catch {
+    return '#718096';
+  }
 }
-const useStore = create<DrawStore>()((set) => ({
-  ed: {},
-  saveEditor: (id: string, ed: Editor) => set((state) => ({ ed: { ...state.ed, ...{ [id]: ed } } })),
-}));
 
-/* App component for Drawing */
 function AppComponent(props: DrawingApp): JSX.Element {
   const s = props.data.state;
-  const saveEditor = useStore((state) => state.saveEditor);
+  const appId = props._id;
+  const { yApps } = useYjs();
+  const selected = useUIStore((state) => state.selectedAppId === appId);
   const updateState = useAppStore((state) => state.updateState);
-  const store = useYjsStore({ roomId: props._id })
-  const scale = useUIStore((state) => state.scale);
-  const ed: Editor = useStore((state) => state.ed[props._id]);
-  const selectedApp = useUIStore((state) => state.selectedAppId);
-  const [selected, setSelected] = useState(false);
-  const { user } = useUser();
+  const setDoc = useDrawingStore((state) => state.setDoc);
+  const editor = useEditor(appId);
+  const toast = useToast();
+  const [remoteSelections, setRemoteSelections] = useState<{ ids: string[]; color: string }[]>([]);
+  const theme = useDrawingTheme();
 
-  // Fit the editor to the window when the state is true
+  const doc = useMemo(() => (yApps ? new DrawingDoc(yApps.doc, appId) : null), [yApps, appId]);
+
+  // Make the document reachable from the toolbar
   useEffect(() => {
-    if (s.fit) {
-      if (ed) ed.zoomToFit();
-      updateState(props._id, { fit: false });
-    }
-  }, [s.fit]);
-
-  useEffect(() => {
-    if (ed && user && s.camera) {
-      if (s.follow !== '' && s.follow !== user._id) {
-        ed.setCamera({ x: s.camera.x, y: s.camera.y, z: s.camera.z });
-      }
-    }
-  }, [ed, s.follow, s.camera?.x, s.camera?.y, s.camera?.z]);
-
-  // When zoom changes, fit the editor to the window
-  useEffect(() => {
-    if (ed) ed.zoomToFit();
-  }, [scale]);
-
-  useEffect(() => {
-    if (user && ed) {
-      ed.user.updateUserPreferences({ color: user.data.color, name: '' });
-    }
-  }, [ed, user]);
-
-  // Slow down the updates
-  const updateCamera = throttle(defaultTickRate, (x: number, y: number, z: number) => {
-    if (ed) {
-      updateState(props._id, { camera: { x: x, y, z } });
-    }
-  });
-  // Keep the reference
-  const updateCameraRef = useCallback(updateCamera, [ed]);
-
-  useEffect(() => {
-    if (!ed) return;
-
-    const cb = ed.sideEffects.registerAfterChangeHandler('camera', (prev, next, source) => {
-      if (s.follow === user?._id) {
-        updateCameraRef(next.x, next.y, next.z);
-        // updateState(props._id, { camera: { x: next.x, y: next.y, z: next.z } });
-      }
-    });
+    if (!doc) return;
+    setDoc(appId, doc);
     return () => {
-      cb();
+      setDoc(appId, null);
+      doc.destroy();
     };
-  }, [ed, s.follow, user?._id]);
+  }, [doc]);
 
-  // Track if the app is selected
+  // The latest saved copy, for seeding
+  const savedShapes = useRef(s.shapes);
+  savedShapes.current = s.shapes;
+
+  // Once synced with the Yjs server, fill an empty drawing from the saved copy. Only once:
+  // y-websocket fires 'sync' again on every reconnect, and a drawing someone cleared must stay empty.
   useEffect(() => {
-    if (selectedApp !== props._id && selected) {
-      setSelected(false);
-    }
-    if (selectedApp === props._id && !selected) {
-      setSelected(true);
-    }
-  }, [selectedApp]);
+    if (!doc || !yApps) return;
+    const provider = yApps.provider;
+    let seeded = false;
+    const onSync = (isSynced: boolean) => {
+      if (!isSynced || seeded) return;
+      seeded = true;
+      provider.off('sync', onSync);
+      doc.seed(savedShapes.current);
+    };
+    if (provider.synced) onSync(true);
+    else provider.on('sync', onSync);
+    return () => provider.off('sync', onSync);
+  }, [doc]);
 
-  // Save the editor instance to the store
-  const onMount = (editor: Editor) => {
-    if (editor) {
-      saveEditor(props._id, editor);
-      editor.setCurrentTool('hand');
-      editor.zoomToFit();
-      editor.updateInstanceState({ isGridMode: true });
-      editor.stopFollowingUser();
-    }
-  };
+  // Save the drawing to the app state, 2 s after the last change, by one of the people who have it open
+  useEffect(() => {
+    if (!doc || !yApps) return;
+    const awareness = yApps.provider.awareness;
+    let warned = false;
+    const save = debounce(SAVE_DELAY_MS, () => {
+      // Elected among the people who have the drawing open and may update apps (not spectators)
+      const savers = [...awareness.getStates().entries()].filter(([, st]) => st?.[presenceKey(appId)]?.canSave).map(([id]) => id);
+      if (!SAGE3Ability.canCurrentUser('update', 'apps') || !isElectedSaver(savers, yApps.doc.clientID)) return;
+      const shapes = doc.getShapes();
+      if (!prepareSave(shapes).ok) {
+        if (!warned) {
+          warned = true;
+          toast({
+            title: 'Drawing',
+            description: 'This drawing is too large to save; remove some pen strokes',
+            status: 'warning',
+            duration: 8000,
+            isClosable: true,
+          });
+        }
+        return;
+      }
+      updateState(appId, { shapes });
+    });
+    const off = doc.observe(save);
+    return () => {
+      off();
+      save.cancel();
+    };
+  }, [doc]);
 
-  const components: TLUiComponents = {
-    // ContextMenu: null,
-    // ActionsMenu: null,
-    // HelpMenu: null,
-    // ZoomMenu: null,
-    // MainMenu: null,
-    // Minimap: null,
-    // StylePanel: null,
-    // NavigationPanel: null,
-    // Toolbar: null,
-    // KeyboardShortcutsDialog: null,
-    // QuickActions: null,
-    // HelperButtons: null,
-    // MenuPanel: null,
-    // TopPanel: null,
-
-    SharePanel: null,
-    PageMenu: null,
-    DebugPanel: null,
-    DebugMenu: null,
-  };
+  // Presence: tell others what I have selected here (an empty list still says "I have this drawing open")
+  useEffect(() => {
+    const presence: Presence = { ids: editor.selection, canSave: SAGE3Ability.canCurrentUser('update', 'apps') };
+    yApps?.provider.awareness.setLocalStateField(presenceKey(appId), presence);
+  }, [yApps, editor.selection]);
+  useEffect(() => {
+    const awareness = yApps?.provider.awareness;
+    if (!awareness) return;
+    let previous = '';
+    const onChange = () => {
+      const list: { ids: string[]; color: string }[] = [];
+      awareness.getStates().forEach((st, clientId) => {
+        const ids = (st?.[presenceKey(appId)] as Presence | undefined)?.ids;
+        if (clientId !== awareness.clientID && Array.isArray(ids) && ids.length) list.push({ ids, color: cssColor(st.user?.color) });
+      });
+      // Awareness changes for every cursor and field on the board: re-render only when this drawing's outlines change
+      const key = JSON.stringify(list);
+      if (key === previous) return;
+      previous = key;
+      setRemoteSelections(list);
+    };
+    awareness.on('change', onChange);
+    onChange();
+    return () => {
+      awareness.off('change', onChange);
+      awareness.setLocalStateField(presenceKey(appId), null);
+    };
+  }, [yApps]);
 
   return (
     <AppWindow app={props}>
-      <Box
-        // position="fixed"
-        inset={0}
-        borderRadius={8}
-        overflow="hidden"
-        transform={`scale(${1 / scale})`}
-        transformOrigin={'top left'}
-        width={props.data.size.width * scale}
-        height={props.data.size.height * scale}
-      >
-        <Tldraw components={components} store={store} onMount={onMount} hideUi={!selected} />
-      </Box>
+      {doc ? (
+        <Canvas appId={appId} doc={doc} selected={selected} background={s.background ?? 'white'} remoteSelections={remoteSelections} />
+      ) : (
+        <Box width="100%" height="100%" background={theme.canvas} />
+      )}
     </AppWindow>
   );
 }
 
-/* App toolbar component for the app Drawing */
-const ToolbarComponent = (props: DrawingApp) => {
-  const s = props.data.state;
-  const ed: Editor = useStore((state) => state.ed[props._id]);
+/* App toolbar component for the app Drawing: export (editing and the grid are in the panel inside the app) */
+function ToolbarComponent(props: DrawingApp): JSX.Element {
+  const appId = props._id;
+  const selection = useDrawingStore((state) => state.editors[appId]?.selection);
+  const toast = useToast();
+  const { isOpen, onOpen, onClose } = useDisclosure();
   const createApp = useAppStore((state) => state.create);
-  const updateState = useAppStore((state) => state.updateState);
-  const { user } = useUser();
+  const addLink = useLinkStore((state) => state.addLink);
+  const [placing, setPlacing] = useState(false);
+  const sel = selection ?? [];
 
-  const handleUndo = () => {
-    ed.undo();
+  // The shapes, read when a button is used
+  const svgOf = () => exportSvg(useDrawingStore.getState().shapes[appId] ?? {}, sel.length ? sel : null, canvasMeasure);
+  const downloadSvg = () => {
+    const svg = svgOf();
+    if (svg) downloadFile('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg), 'drawing.svg');
   };
-  const handleRedo = () => {
-    ed.redo();
+  const downloadPng = async () => {
+    const svg = svgOf();
+    if (!svg) return;
+    try {
+      const url = URL.createObjectURL(await svgToPng(svg, 2));
+      downloadFile(url, 'drawing.png');
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    } catch (error) {
+      // For example a drawing too large for a canvas at 2x
+      toast({
+        title: 'Drawing',
+        description: 'PNG export failed: ' + (error as Error).message,
+        status: 'warning',
+        duration: 4000,
+        isClosable: true,
+      });
+    }
   };
-  const handleExport = async () => {
-    const shapes = ed.getCurrentPageShapes().map((shape) => shape.id);
-    // tldraw v5: exportToBlob was removed in favor of editor.toImage()
-    const { blob } = await ed.toImage(shapes, { format: 'png' });
-    const file = new File([blob], blob.type);
-    const b64Data = (await blobToBase64(file)) as string;
-    getImageDimensionsFromBase64(b64Data).then((size) => {
-      const xdrop = props.data.position.x + props.data.size.width + 20;
-      const ydrop = props.data.position.y;
-      createApp(
-        setupApp(
-          'Drawing.png',
-          'ImageViewer',
-          xdrop,
-          ydrop,
-          props.data.roomId,
-          props.data.boardId,
-          { w: size.w, h: size.h },
-          { assetid: b64Data },
-        ),
-      );
-    });
-  };
-
-  // Fit the editor to the window
-  const handleFit = () => {
-    if (ed) ed.zoomToFit();
-    updateState(props._id, { fit: true });
-  };
-
-  // Reset zoom to 100%
-  const handleHundred = () => {
-    if (ed) ed.resetZoom();
-    // updateState(props._id, { fit: true });
-  };
-
-  // Follow the user
-  const handleFollow = () => {
-    if (user) {
-      if (s.follow !== '') {
-        updateState(props._id, { follow: '' });
-      } else {
-        const cam = ed.getCamera();
-        updateState(props._id, { follow: user._id, camera: { x: cam.x, y: cam.y, z: cam.z } });
-      }
+  const saveToAssets = async (name: string) => {
+    const svg = svgOf();
+    if (!svg) return;
+    try {
+      const isSvg = name.toLowerCase().endsWith('.svg');
+      const filename = isSvg || name.toLowerCase().endsWith('.png') ? name : name + '.png';
+      const blob = isSvg ? new Blob([svg], { type: 'image/svg+xml' }) : await svgToPng(svg, 2);
+      await uploadToAssets(new File([blob], filename, { type: blob.type }), props.data.roomId);
+      toast({ title: 'Upload', description: 'Upload complete', status: 'info', duration: 4000, isClosable: true });
+    } catch (error) {
+      toast({
+        title: 'Upload',
+        description: 'Upload failed: ' + (error as Error).message,
+        status: 'warning',
+        duration: 4000,
+        isClosable: true,
+      });
     }
   };
 
+  /** Upload the drawing (or the selection) as a PNG and open it in an ImageViewer to the right of the app */
+  const openImageNextToApp = async () => {
+    const svg = svgOf();
+    if (!svg) return;
+    setPlacing(true);
+    try {
+      const png = await svgToPng(svg, 2);
+      const name = 'drawing-' + format(new Date(), 'yyyy-MM-dd-HH-mm-ss') + '.png';
+      const [assetId] = await uploadToAssets(new File([png], name, { type: 'image/png' }), props.data.roomId);
+      if (!assetId) throw new Error('no asset id returned');
+      // Same proportions as the drawing, as tall as the app
+      const { w, h } = svgSize(svg);
+      const height = props.data.size.height;
+      const width = Math.round(w && h ? (height * w) / h : height);
+      const { position, size, roomId, boardId } = props.data;
+      const res = await createApp({
+        title: name,
+        roomId,
+        boardId,
+        position: { x: position.x + size.width + 20, y: position.y, z: 0 },
+        size: { width, height, depth: 0 },
+        rotation: { x: 0, y: 0, z: 0 },
+        type: 'ImageViewer',
+        state: { assetid: assetId },
+        raised: true,
+        dragging: false,
+        pinned: false,
+      });
+      // Show where the image came from
+      if (res.success) addLink(appId, res.data._id, boardId, 'provenance');
+    } catch (error) {
+      toast({
+        title: 'Drawing',
+        description: 'Could not open the image: ' + (error as Error).message,
+        status: 'warning',
+        duration: 4000,
+        isClosable: true,
+      });
+    } finally {
+      setPlacing(false);
+    }
+  };
+
+  const tip = (label: string, child: JSX.Element) => (
+    <Tooltip placement="top" hasArrow label={label} openDelay={400}>
+      {child}
+    </Tooltip>
+  );
+
   return (
     <>
-      <ButtonGroup isAttached size="xs" colorScheme="teal" mr="1">
-        <Tooltip placement="top" hasArrow={true} label={'Undo'} openDelay={400}>
-          <Button onClick={() => handleUndo()} size="xs" px={0}>
-            <MdUndo size="16px" />
-          </Button>
-        </Tooltip>
-        <Tooltip placement="top" hasArrow={true} label={'Redo'} openDelay={400}>
-          <Button onClick={() => handleRedo()} size="xs" px={0}>
-            <MdRedo size="16px" />
-          </Button>
-        </Tooltip>
-        <Tooltip placement="top" hasArrow={true} label={'Zoom to Fit'} openDelay={400}>
-          <Button onClick={() => handleFit()} size="xs" px={0}>
-            <MdZoomInMap size="16px" />
-          </Button>
-        </Tooltip>
-        <Tooltip placement="top" hasArrow={true} label={'Zoom to 100%'} openDelay={400}>
-          <Button onClick={() => handleHundred()} size="xs" px={0}>
-            <MdZoomOutMap size="16px" />
-          </Button>
-        </Tooltip>
-        <Tooltip placement="top" hasArrow={true} label={'Follow Me'} openDelay={400}>
-          <Button onClick={() => handleFollow()} size="xs" px={0}>
-            <RiUserFollowFill size="16px" />
-          </Button>
-        </Tooltip>
+      <ButtonGroup isAttached size="xs" colorScheme="teal" mx={1}>
+        {tip(
+          sel.length ? 'Download the selection as SVG' : 'Download as SVG',
+          <Button onClick={downloadSvg} px={0}>
+            <BsFiletypeSvg size="14px" />
+          </Button>,
+        )}
+        {tip(
+          sel.length ? 'Download the selection as PNG' : 'Download as PNG',
+          <Button onClick={downloadPng} px={0}>
+            <BsFiletypePng size="14px" />
+          </Button>,
+        )}
+        {tip(
+          sel.length ? 'Open the selection as an image next to the drawing' : 'Open as an image next to the drawing',
+          <Button onClick={openImageNextToApp} isLoading={placing} px={0}>
+            <MdAddPhotoAlternate size="16px" />
+          </Button>,
+        )}
+        {tip(
+          'Save in Asset Manager',
+          <Button onClick={onOpen} px={0}>
+            <MdCloudUpload size="16px" />
+          </Button>,
+        )}
       </ButtonGroup>
-      <ButtonGroup isAttached size="xs" colorScheme="teal" mr="1">
-        <Tooltip placement="top" hasArrow={true} label={'Export Image to Board'} openDelay={400}>
-          <Button onClick={() => handleExport()} size="xs" px={0}>
-            <MdSaveAlt size="16px" />
-          </Button>
-        </Tooltip>
-      </ButtonGroup>
+
+      <ConfirmValueModal
+        isOpen={isOpen}
+        onClose={onClose}
+        onConfirm={(name: string) => saveToAssets(name)}
+        title="Save Drawing in Asset Manager"
+        message="Select a file name (.png or .svg):"
+        initiaValue={'drawing-' + format(new Date(), 'yyyy-MM-dd-HH:mm:ss') + '.png'}
+        cancelText="Cancel"
+        confirmText="Save"
+        confirmColor="green"
+      />
     </>
   );
-};
+}
 
 /**
  * Grouped App toolbar component, this component will display when a group of apps are selected
@@ -272,35 +320,3 @@ const GroupedToolbarComponent = (props: { apps: DrawingApp[] }) => {
 };
 
 export default { AppComponent, ToolbarComponent, GroupedToolbarComponent };
-
-/**
- * Convert a blob to a base64 string
- * @param blob
- * @returns
- */
-const blobToBase64 = (blob: Blob) => {
-  const reader = new FileReader();
-  reader.readAsDataURL(blob);
-  return new Promise((resolve) => {
-    reader.onloadend = () => {
-      resolve(reader.result);
-    };
-  });
-};
-
-/**
- * Get the dimensions of an image from a base64 string
- *
- * @export
- * @param {string} file
- * @returns {Promise<{w: number, h: number}>}
- */
-function getImageDimensionsFromBase64(file: string): Promise<{ w: number; h: number }> {
-  return new Promise(function (resolved, _rejected) {
-    const i = new Image();
-    i.onload = function () {
-      resolved({ w: i.width, h: i.height });
-    };
-    i.src = file;
-  });
-}

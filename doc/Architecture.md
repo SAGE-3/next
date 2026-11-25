@@ -148,8 +148,8 @@ webstack/apps/homebase/src/processors/
 
 A dedicated server for Y.js CRDT-based collaborative editing and WebRTC signaling.
 
-- **Y.js WebSocket (`/yjs`)** — enables conflict-free real-time collaborative editing for apps like Notepad and CodeEditor. Multiple users can type simultaneously with automatic merge.
-- **WebRTC signaling (`/rtc`)** — room-based signaling for peer-to-peer connections used by the Drawing (TLDraw) app's collaborative canvas.
+- **Y.js WebSocket (`/yjs`)** — enables conflict-free real-time collaborative editing for apps like Notepad, CodeEditor, Stickie and Drawing. Multiple users can type simultaneously with automatic merge.
+- **WebRTC signaling (`/rtc`)** — room-based signaling for peer-to-peer connections (the `usePeer` hook and the WebpageLink app).
 
 ```
 webstack/apps/homebase-yjs/

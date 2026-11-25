@@ -242,22 +242,61 @@ Only the newer `.docx` format is supported. Older `.doc` files open as an **Asse
 
 ## Drawing
 
-A collaborative drawing application built on the TLDraw library. Draw freehand, create shapes, and add text on a shared canvas. All actions are synchronized in real time across users, making it great for brainstorming, sketching diagrams, or visual communication.
+A collaborative drawing for quick diagrams and sketches. Draw rectangles, rounded rectangles, ellipses, diamonds, lines, arrows, freehand pen strokes and text on a shared canvas. Everyone on the board sees each change as it happens. A bigger app window shows more of the drawing.
 
-<!-- TODO: Screenshot of Drawing app -->
+- **Labels**: double-click a shape, a line or an arrow to type a label. Enter saves it, Shift+Enter starts a new line, and Escape cancels.
+- **Magnetic arrows**: drag a line or arrow end near a shape and it snaps to one of the shape's four anchors (the middle of each side). Attached arrows follow when the shape moves or is resized. Drag the middle handle of a line or arrow to curve it.
+- **Simple settings**: lines and text come in Small, Medium and Large, with eight colours for lines and the same eight as light fills.
+- **Your own view**: each person pans and zooms on their own. Pan with the Pan tool, the middle mouse button, or by holding the space bar while dragging. The mouse wheel zooms the drawing while the app is selected.
+- **Editing**: Shift-click, or drag a box across shapes, to select several (the box selects every shape it touches); group them, change their order, or align them. Undo and redo only affect your own changes.
+- **Keyboard**, while the app is selected: Delete removes the selection, Ctrl/Cmd+Z undoes, Ctrl/Cmd+Shift+Z redoes, Ctrl/Cmd+G groups, Ctrl/Cmd+Shift+G ungroups, the arrow keys move the selection (10 units with Shift), and Escape clears it.
+- **Dark mode**: the canvas and the colours follow the SAGE3 colour mode, with light lines and darker fills on a dark canvas.
+- **Export**: download the drawing, or only the selected shapes, as SVG or PNG, or save it in the Asset Manager. Exports always use the light colours on a white background.
+
 ![Drawing](images/applications/applications_drawing.jpeg)
 
-<!-- TODO: Screenshot of Drawing toolbar -->
 ![DrawingToolbar](images/applications/applications_drawing_toolbar.jpeg)
+
+When the app is selected, the tools are in a column on the left of the drawing and the editing panel is along its top.
+
+**Tools**, in the column on the left:
+
+| Name | Icon | Description |
+|------|------|-------------|
+| Select | <img src="icons/applications/PiCursorBold.svg" width="20" /> | Select, move and resize shapes; drag a box across shapes to select every shape it touches |
+| Pan | <img src="icons/applications/PiHandBold.svg" width="20" /> | Move your view of the drawing |
+| Pen | <img src="icons/applications/PiPencilSimpleBold.svg" width="20" /> | Draw freehand; stays on until you choose another tool |
+| Rectangle | <img src="icons/applications/PiSquareBold.svg" width="20" /> | Drag to draw; hold Shift for a square |
+| Rounded rectangle | <img src="icons/applications/RoundRectBold.svg" width="20" /> | Drag to draw; hold Shift for a square |
+| Ellipse | <img src="icons/applications/PiCircleBold.svg" width="20" /> | Drag to draw; hold Shift for a circle |
+| Diamond | <img src="icons/applications/PiDiamondBold.svg" width="20" /> | Drag to draw |
+| Line | <img src="icons/applications/PiLineSegmentBold.svg" width="20" /> | Drag to draw; hold Shift for 45° steps; ends snap to shapes |
+| Arrow | <img src="icons/applications/PiArrowUpRightBold.svg" width="20" /> | Like Line, with arrow heads |
+| Text | <img src="icons/applications/PiTextTBold.svg" width="20" /> | Click to place a text box and type |
+
+**Panel**, along the top of the drawing:
 
 | Name | Type | Icon | Description |
 |------|------|------|-------------|
-| Undo | Button | <img src="icons/applications/MdUndo.svg" width="20" /> | Undo the last action |
-| Redo | Button | <img src="icons/applications/MdRedo.svg" width="20" /> | Redo the last undone action |
-| Zoom to Fit | Button | <img src="icons/applications/MdZoomInMap.svg" width="20" /> | Fit the entire canvas into the window |
-| Zoom to 100% | Button | <img src="icons/applications/MdZoomOutMap.svg" width="20" /> | Reset zoom level |
-| Follow Me | Toggle | <img src="icons/applications/RiUserFollowFill.svg" width="20" /> | Other users' views follow your camera position |
-| Export Image | Button | <img src="icons/applications/MdSaveAlt.svg" width="20" /> | Export the drawing as an image on the board |
+| Undo | Button | <img src="icons/applications/MdUndo.svg" width="20" /> | Undo your last change |
+| Redo | Button | <img src="icons/applications/MdRedo.svg" width="20" /> | Redo your last undone change |
+| Line colour | Menu | | Colour of lines and text, for the selection and the next shapes |
+| Fill colour | Menu | | Fill of shapes, or no fill |
+| Size | Buttons | | Small, Medium or Large lines and text |
+| Arrow heads | Menu | <img src="icons/applications/MdCallMade.svg" width="20" /> | Arrow or dot at each end |
+| Group / Ungroup | Buttons | <img src="icons/applications/BsBoundingBox.svg" width="20" /> <img src="icons/applications/BsBoundingBoxCircles.svg" width="20" /> | Group the selected shapes so they move together, or ungroup them |
+| Arrange | Menu | <img src="icons/applications/MdFlipToFront.svg" width="20" /> | Bring to front, bring forward, send backward, send to back; align two or more shapes left, centre, right, top, middle or bottom |
+| Delete | Button | <img src="icons/applications/MdDelete.svg" width="20" /> | Delete the selected shapes |
+| Zoom | Buttons | <img src="icons/applications/MdZoomOut.svg" width="20" /> <img src="icons/applications/MdZoomIn.svg" width="20" /> <img src="icons/applications/MdFitScreen.svg" width="20" /> | Zoom out, zoom in, fit the whole drawing; the percentage button returns to 100% |
+| Grid | Toggle | <img src="icons/applications/MdGridOn.svg" width="20" /> | Show or hide a dotted grid, whose spacing adapts to the zoom (not exported) |
+
+**Toolbar**, the SAGE3 app toolbar shown when the app is selected:
+
+| Name | Type | Icon | Description |
+|------|------|------|-------------|
+| Download as SVG / PNG | Buttons | <img src="icons/applications/BsFiletypeSvg.svg" width="20" /> <img src="icons/applications/BsFiletypePng.svg" width="20" /> | Download the drawing, or the selection |
+| Open as image | Button | <img src="icons/applications/MdAddPhotoAlternate.svg" width="20" /> | Upload the drawing (or the selection) as a PNG and open it in an ImageViewer to the right of the drawing, linked to it |
+| Save to Asset Manager | Button | <img src="icons/applications/MdCloudUpload.svg" width="20" /> | Upload the drawing as a `.png` or `.svg` file |
 
 ---
 
