@@ -98,3 +98,11 @@
     padding: 3px;
   }
 }
+
+/* Pele draws these labels in the background color, which is unreadable on
+   the colored shapes once the background is dark: keep them white */
+.mermaid-app .pele-slice-labels,
+.mermaid-app .pele-leaves,
+.mermaid-app .pele-period > text {
+  fill: #ffffff;
+}

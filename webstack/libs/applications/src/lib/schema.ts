@@ -8,24 +8,28 @@
 
 // import and re-export all the apps
 import { Position, Rotation, SBDoc, Size } from '@sage3/shared/types';
-import { AppName, AppState } from './types';
-export { AppName, AppState } from './types';
+import type { AppName, AppStateMap } from './types';
+export type { AppName, AppState, AppStateMap } from './types';
 
 // build the main schema
-export type AppSchema = {
+export type AppSchema<T extends AppName = AppName> = {
   title: string;
   roomId: string;
   boardId: string;
   position: Position;
   size: Size;
   rotation: Rotation;
-  type: AppName;
-  state: AppState;
+  type: T;
+  state: AppStateMap[T];
   raised: boolean;
   dragging: boolean;
   pinned: boolean;
   sourceApps?: SBDoc['_id'][];
 };
 
-export type App = SBDoc & { data: AppSchema };
-export type AppGroup = Array<App>;
+export type App<T extends AppName = AppName> = SBDoc & { data: AppSchema<T> };
+export type AppGroup<T extends AppName = AppName> = Array<App<T>>;
+
+export function isApp<T extends AppName>(app: App, type: T): app is App<T> {
+  return app.data.type === type;
+}

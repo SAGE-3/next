@@ -35,6 +35,12 @@ export async function sageWSRouter<T extends SBJSON>(
 
   // Create a URL object to parse the route:
   // second argument required because the route is a relative URL but otherwise meaningless
+  // Collection specific check of the documents this message is about to write
+  const refused = (error: string | undefined): boolean => {
+    if (error) socket.send(JSON.stringify({ id: message.id, success: false, message: error }));
+    return !!error;
+  };
+
   const socket_url = new URL(message.route, 'ws://localhost');
   const route = message.route;
   // get all the parameters and their values into an array, instead of a Map
@@ -52,11 +58,13 @@ export async function sageWSRouter<T extends SBJSON>(
         // If 'batch' is present on the body this is a batch post
         if (message.body.batch) {
           const body = message.body.batch as T[];
+          if (refused(collection.checkWrites('create', Array.isArray(body) ? body.map((b) => ({ body: b })) : body, user))) return;
           const docs = await collection.addBatch(body, user.id);
           if (docs) socket.send(JSON.stringify({ id: message.id, success: true, data: docs }));
           else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to create docs.' }));
         } else {
           const body = message.body as T;
+          if (refused(collection.checkWrites('create', [{ body }], user))) return;
           const doc = await collection.add(body, user.id);
           if (doc) socket.send(JSON.stringify({ id: message.id, success: true, data: doc }));
           else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to create doc.' }));
@@ -105,6 +113,8 @@ export async function sageWSRouter<T extends SBJSON>(
         // Batch PUT: Update multiple docs.
         if (body.batch) {
           const batch = body.batch as { id: string; updates: SBDocumentUpdate<T> }[];
+          const updates = Array.isArray(batch) ? batch.map((u) => ({ id: u?.id, body: u?.updates })) : batch;
+          if (refused(collection.checkWrites('update', updates, user))) return;
           const docs = await collection.updateBatch(batch, user.id);
           if (docs) socket.send(JSON.stringify({ id: message.id, success: true, data: docs }));
           else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to update docs.' }));
@@ -118,6 +128,7 @@ export async function sageWSRouter<T extends SBJSON>(
           }
           // Get Body
           const body = message.body as SBDocumentUpdate<T>;
+          if (refused(collection.checkWrites('update', [{ id, body }], user))) return;
           const doc = await collection.update(id, user.id, body);
           if (doc) socket.send(JSON.stringify({ id: message.id, success: true, data: doc }));
           else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to create doc.' }));
@@ -131,6 +142,7 @@ export async function sageWSRouter<T extends SBJSON>(
       const body = message.body;
       if (body && body.batch) {
         const batch = body.batch as string[];
+        if (refused(collection.checkWrites('delete', Array.isArray(batch) ? batch.map((id) => ({ id })) : batch, user))) return;
         const docs = await collection.deleteBatch(batch);
         if (docs) socket.send(JSON.stringify({ id: message.id, success: true, data: docs }));
         else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to delete docs.' }));
@@ -140,6 +152,7 @@ export async function sageWSRouter<T extends SBJSON>(
           socket.send(JSON.stringify({ id: message.id, success: false, message: 'No id provided' }));
           return;
         }
+        if (refused(collection.checkWrites('delete', [{ id }], user))) return;
         const del = await collection.delete(id);
         if (del) socket.send(JSON.stringify({ id: message.id, success: true }));
         else socket.send(JSON.stringify({ id: message.id, success: false, message: 'Failed to delete doc' }));

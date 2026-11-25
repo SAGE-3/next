@@ -21,7 +21,7 @@ import {
   MdVolumeUp,
   MdOpenInNew,
   MdCopyAll,
-  MdFileUpload,
+  MdCloudUpload,
   MdWeb,
   MdCallMade,
   MdCallReceived,
@@ -30,8 +30,7 @@ import {
 import { create } from 'zustand';
 
 import { useAppStore, useUser, processContentURL, ConfirmValueModal, apiUrls, useUIStore, useWindowResize } from '@sage3/frontend';
-import { App } from '../../schema';
-import { state as AppState } from './index';
+import { WebviewApp } from './index';
 import { AppWindow, ElectronRequired } from '../../components';
 import { isElectron } from './util';
 
@@ -109,9 +108,9 @@ function partitionForURL(raw: string, appId: string): string {
 
 /* App component for Webview */
 
-function AppComponent(props: App): JSX.Element {
+function AppComponent(props: WebviewApp): JSX.Element {
   // App State
-  const s = props.data.state as AppState;
+  const s = props.data.state;
   const update = useAppStore((state) => state.update);
   const updateState = useAppStore((state) => state.updateState);
 
@@ -379,8 +378,8 @@ function AppComponent(props: App): JSX.Element {
 
 /* App toolbar component for the app Webview */
 
-function ToolbarComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function ToolbarComponent(props: WebviewApp): JSX.Element {
+  const s = props.data.state;
   const updateState = useAppStore((state) => state.updateState);
   const mute = useStore((state) => state.mute[props._id]);
   const setMute = useStore((state) => state.setMute);
@@ -678,7 +677,7 @@ function ToolbarComponent(props: App): JSX.Element {
 
             <Tooltip placement="top" hasArrow={true} label={'Save URL in Asset Manager'} openDelay={400}>
               <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }} size="xs" px={0}>
-                <MdFileUpload size="16px" />
+                <MdCloudUpload size="16px" />
               </Button>
             </Tooltip>
 

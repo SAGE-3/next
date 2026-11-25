@@ -65,6 +65,7 @@ import {
   PartyButton,
 } from '@sage3/frontend';
 import { SAGEColors } from '@sage3/shared';
+import { isApp } from '@sage3/applications/schema';
 
 import {
   BoardRadialMenu,
@@ -159,10 +160,10 @@ export function UILayer(props: UILayerProps) {
   const screenshareBackend = useScreenshareBackend();
 
   // Connect to Twilio only if there are Screenshares or Webcam apps
-  const twilioConnect = screenshareBackend === 'twilio' && apps.filter((el) => el.data.type === 'Screenshare').length > 0;
+  const twilioConnect = screenshareBackend === 'twilio' && apps.filter((el) => isApp(el, 'Screenshare')).length > 0;
 
   // Connect to the LiveKit SFU only if there are LocalScreenshare apps
-  const livekitConnect = screenshareBackend === 'livekit' && apps.filter((el) => el.data.type === 'LocalScreenshare').length > 0;
+  const livekitConnect = screenshareBackend === 'livekit' && apps.filter((el) => isApp(el, 'LocalScreenshare')).length > 0;
 
   // Unhide UI
   const { toggleShowUI } = useUserSettings();

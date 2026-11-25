@@ -13,8 +13,8 @@ import { useUserSettings, useHotkeys, useUIStore, useKeyPress, useLinkStore } fr
 
 // True when the user is typing into an editable element, so global single-key
 // shortcuts (1/2/3/4) must not fire. Covers plain inputs/textareas/contentEditable
-// and the Monaco code editor, whose focused element slips past hotkeys-js's
-// default form-tag filter (unlike the Stickie textarea, which it blocks).
+// (the Stickie's CodeMirror editor) and the Monaco code editor, whose focused element
+// slips past hotkeys-js's default form-tag filter.
 function isEditingTarget(): boolean {
   const el = document.activeElement as HTMLElement | null;
   if (!el) return false;

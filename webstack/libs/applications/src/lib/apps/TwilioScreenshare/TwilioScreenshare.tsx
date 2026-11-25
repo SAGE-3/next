@@ -39,8 +39,8 @@ import { useAppStore, useUser, useTwilioStore, useHexColor, useUIStore, isElectr
 import { genId } from '@sage3/shared';
 
 // App
-import { App } from '../../schema';
-import { state as AppState } from './index';
+import { isApp } from '../../schema';
+import { TwilioScreenshareApp } from './index';
 import { AppWindow } from '../../components';
 import { MdScreenShare } from 'react-icons/md';
 
@@ -54,8 +54,8 @@ type ElectronSource = {
 const screenShareTimeLimit = 3600 * 1000 * 6; // 6 hours
 
 /* App component for Twilio */
-function AppComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function AppComponent(props: TwilioScreenshareApp): JSX.Element {
+  const s = props.data.state;
 
   // Current User
   const { user, accessId } = useUser();
@@ -103,7 +103,7 @@ function AppComponent(props: App): JSX.Element {
 
   // Other apps
   const apps = useAppStore((state) => state.apps);
-  const otherScreenshares = apps.filter((el) => el.data.type === 'Screenshare' && el._createdBy === user?._id && el._id !== props._id);
+  const otherScreenshares = apps.filter((el) => isApp(el, 'Screenshare') && el._createdBy === user?._id && el._id !== props._id);
   const [closeApp, setCloseApp] = useState(false);
 
   // Check if user already has a screenshare going
@@ -498,7 +498,7 @@ function AppComponent(props: App): JSX.Element {
 
 /* App toolbar component for the app Twilio */
 
-function ToolbarComponent(props: App): JSX.Element {
+function ToolbarComponent(props: TwilioScreenshareApp): JSX.Element {
   // Current User
   const { user } = useUser();
   const yours = user?._id === props._createdBy;

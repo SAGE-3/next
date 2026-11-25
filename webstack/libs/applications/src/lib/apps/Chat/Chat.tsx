@@ -27,7 +27,7 @@ import {
 } from '@chakra-ui/react';
 import { MdSend, MdExpandCircleDown, MdStopCircle, MdChangeCircle, MdChat, MdSettings, MdOpenInNew } from 'react-icons/md';
 
-import { AppName } from '@sage3/applications/schema';
+import { AppName, isApp } from '@sage3/applications/schema';
 import { initialValues } from '@sage3/applications/initialValues';
 import {
   useAppStore,
@@ -49,8 +49,7 @@ import {
 import { genId, AskRequest, ImageQuery, PDFQuery, CodeRequest, WebQuery, WebScreenshot, isGeoJSON } from '@sage3/shared';
 import { LLMConfigManager, TaskType } from '@sage3/shared/types';
 
-import { App } from '../../schema';
-import { state as AppState, init as initialState } from './index';
+import { state as AppState, init as initialState, ChatApp } from './index';
 import { AppWindow } from '../../components';
 
 import { callImage, callPDF, callAsk, callCode, callWeb, callWebshot } from './tRPC';
@@ -62,8 +61,8 @@ import { PromptBars } from './PromptBars';
 
 /* App component for Chat */
 
-function AppComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function AppComponent(props: ChatApp): JSX.Element {
+  const s = props.data.state;
   const { roomId, boardId } = useParams();
 
   const { user } = useUser();
@@ -553,7 +552,7 @@ function AppComponent(props: App): JSX.Element {
       if (apps && apps[0].data.type === 'ImageViewer') {
         if (roomId && boardId) {
           // All linked images, so the model can describe or compare several at once
-          const assetids = apps.filter((a) => a.data.type === 'ImageViewer').map((a) => a.data.state.assetid);
+          const assetids = apps.filter((a) => isApp(a, 'ImageViewer')).map((a) => a.data.state.assetid);
           // Too many images overwhelm the vision model: block before posting anything to the transcript
           if (assetids.length > MAX_IMAGES) {
             toast({
@@ -636,7 +635,7 @@ function AppComponent(props: App): JSX.Element {
             // corresponding ImageViewers on the board.
             if (response.selected && response.selected.length > 0) {
               const matchedAppIds = apps
-                .filter((a) => a.data.type === 'ImageViewer' && response.selected!.includes(a.data.state.assetid))
+                .filter((a) => isApp(a, 'ImageViewer') && response.selected!.includes(a.data.state.assetid))
                 .map((a) => a._id);
               if (matchedAppIds.length > 0) {
                 useUIStore.getState().setSelectedAppsIds(matchedAppIds);
@@ -670,7 +669,7 @@ function AppComponent(props: App): JSX.Element {
       // Only consider linked PDFViewer apps: a Chat can be linked to a mix of
       // app types, so mapping asset ids over all apps would inflate the PDF
       // count and send undefined ids for non-PDF apps.
-      const pdfApps = apps.filter((a) => a.data.type === 'PDFViewer');
+      const pdfApps = apps.filter((a) => isApp(a, 'PDFViewer'));
       if (pdfApps.length > 0) {
         if (roomId && boardId) {
           // Too many PDFs overwhelm the context: block the question before posting anything to the transcript

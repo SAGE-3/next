@@ -7,6 +7,9 @@
  */
 
 import { z } from 'zod';
+import type { App } from '../../schema';
+
+export const name = 'AssetLink';
 
 /**
  * SAGE3 application: AssetLink
@@ -22,4 +25,4 @@ export const init: Partial<state> = {
   assetid: '',
 };
 
-export const name = 'AssetLink';
+export type AssetLinkApp = App<typeof name>;

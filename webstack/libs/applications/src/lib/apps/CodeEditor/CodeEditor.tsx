@@ -26,7 +26,7 @@ import {
   MenuItem,
 } from '@chakra-ui/react';
 import { debounce } from 'throttle-debounce';
-import { MdLock, MdLockOpen, MdRemove, MdAdd, MdFileDownload, MdFileUpload, MdCode, MdSlideshow } from 'react-icons/md';
+import { MdLock, MdLockOpen, MdRemove, MdAdd, MdFileDownload, MdCloudUpload, MdCode, MdSlideshow } from 'react-icons/md';
 
 // Markdown
 import Markdown from 'markdown-to-jsx';
@@ -51,9 +51,8 @@ import {
   useLinkStore,
 } from '@sage3/frontend';
 
-import { App } from '../../schema';
 import { AppWindow } from '../../components';
-import { state as AppState } from '.';
+import { CodeEditorApp } from '.';
 
 // Yjs Imports
 import { MonacoBinding } from 'y-monaco';
@@ -92,9 +91,9 @@ const useStore = create<CodeStore>()((set) => ({
 }));
 
 /* App component for CodeEditor */
-function AppComponent(props: App): JSX.Element {
+function AppComponent(props: CodeEditorApp): JSX.Element {
   // SAGE state
-  const s = props.data.state as AppState;
+  const s = props.data.state;
   const updateState = useAppStore((state) => state.updateState);
 
   // User
@@ -236,8 +235,8 @@ function AppComponent(props: App): JSX.Element {
 }
 
 /* App toolbar component for the app CodeEditor */
-function ToolbarComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function ToolbarComponent(props: CodeEditorApp): JSX.Element {
+  const s = props.data.state;
   // Room and board
   const { roomId, boardId } = useParams();
   // display some notifications
@@ -289,6 +288,21 @@ function ToolbarComponent(props: App): JSX.Element {
       const x = props.data.position.x + w + 20;
       const y = props.data.position.y;
       const app = setupApp('Markdown', 'IFrame', x, y, roomId, boardId, { w, h }, { doc: htmlResult });
+      app.sourceApps = [props._id]; // Link to the original app
+      const res = await createApp(app);
+      // If the app was created successfully, add a link to the provenance
+      if (res.success === true) {
+        const sourceId = props._id;
+        const targetId = res.data._id;
+        addLink(sourceId, targetId, props.data.boardId, 'provenance');
+      }
+    } else if (s.language === 'mermaid') {
+      // Open a Mermaid app that follows this editor's code
+      const w = props.data.size.width;
+      const h = props.data.size.height;
+      const x = props.data.position.x + w + 20;
+      const y = props.data.position.y;
+      const app = setupApp('Mermaid', 'Mermaid', x, y, roomId, boardId, { w, h }, { content: s.content });
       app.sourceApps = [props._id]; // Link to the original app
       const res = await createApp(app);
       // If the app was created successfully, add a link to the provenance
@@ -441,7 +455,7 @@ function ToolbarComponent(props: App): JSX.Element {
       <ButtonGroup isAttached size="xs" colorScheme="teal" ml={1}>
         <Tooltip placement="top" hasArrow={true} label={'Save Code in Asset Manager'} openDelay={400}>
           <Button onClick={saveOnOpen} _hover={{ opacity: 0.7 }} isDisabled={s.content.length === 0} size='xs' px={0}>
-            <MdFileUpload size="16px" />
+            <MdCloudUpload size="16px" />
           </Button>
         </Tooltip>
 
@@ -451,7 +465,7 @@ function ToolbarComponent(props: App): JSX.Element {
           </Button>
         </Tooltip>
       </ButtonGroup>
-      {(s.language === 'markdown' || s.language === 'html') && (
+      {(s.language === 'markdown' || s.language === 'html' || s.language === 'mermaid') && (
         <ButtonGroup isAttached size="xs" colorScheme="teal" ml={1}>
           <Tooltip placement="top" hasArrow={true} label={'Preview Content'} openDelay={400}>
             <Button onClick={previewContent} _hover={{ opacity: 0.7 }} size='xs' px={0}>

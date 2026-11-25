@@ -9,8 +9,7 @@ import { useEffect, useRef } from 'react';
 
 import { useUser } from '@sage3/frontend';
 
-import { App } from '../../schema';
-import { state as AppState } from './index';
+import { PluginAppApp } from './index';
 import { AppWindow } from '../../components';
 
 // Styling
@@ -26,8 +25,8 @@ declare module 'react' {
 // React., HTMLIFrameElement>
 
 /* App component for PluginApp */
-function AppComponent(props: App): JSX.Element {
-  const pluginName = (props.data.state as AppState).pluginName;
+function AppComponent(props: PluginAppApp): JSX.Element {
+  const pluginName = props.data.state.pluginName;
   const roomId = props.data.roomId;
   const iRef = useRef<HTMLIFrameElement>(null);
   const { user } = useUser();

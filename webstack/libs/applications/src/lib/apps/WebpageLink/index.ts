@@ -7,6 +7,9 @@
  */
 
 import { z } from 'zod';
+import type { App } from '../../schema';
+
+export const name = 'WebpageLink';
 
 /**
  * SAGE3 application: WebpageLink
@@ -36,4 +39,4 @@ export const init: Partial<state> = {
   },
 };
 
-export const name = 'WebpageLink';
+export type WebpageLinkApp = App<typeof name>;

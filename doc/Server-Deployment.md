@@ -22,6 +22,8 @@ To update a server, here are the files to keep/move/backup:
   - Files to save if you want to backup your server.
 - The database data (rooms, boards, users, …) is in `configurations/redis/data/dump.rdb` file
   - File to save if you want to backup your server.
+- Your SSL certificate is in `configurations/traefik/certs`: `certificate.crt` and `private.key` (see [SSL certificate](#ssl-certificate))
+  - Files to save, and to copy into the new installation when you update.
 
 ## Requirements
 
@@ -31,7 +33,7 @@ To update a server, here are the files to keep/move/backup:
   - i.e. A hostname recognized on a public network or your institutions private network
     - Ex. myserver.mycompany.com
     - Ex. myserver.cs.university.edu
-- SSL Certificates for server (or wildcard certificate for a domain)
+- SSL certificate for the server (or a wildcard certificate for the domain) and its private key, copied into `configurations/traefik/certs` during installation (see [SSL certificate](#ssl-certificate))
 - Optional services:
   - Google OAuth credentials, for authentication
   - CILogin OAuth credentials, for authentication
@@ -122,14 +124,14 @@ tar xvfz SAGE3-amd64.tgz
 cd SAGE3-1.6
 ```
 
-4. Copy your SSL Certificates to the configurations folder. There should be two files, your PRIVATE key and the CERTIFICATE file
+4. Copy your SSL certificate and its private key into the Traefik folder, `configurations/traefik/certs`. Traefik handles HTTPS for the whole server and reads exactly these two file names: `certificate.crt` and `private.key`. See [SSL certificate](#ssl-certificate) for the file format and for renewals.
 
 ```bash
 # Open a Terminal
 
-# Copy SSL Certs to the SAGE3 Keys folder. Remember these names for later when setting up the configuration file (step 7).
-cp PRIVATE_KEY_FILE ~/SAGE3-1.6/configurations/node/keys
-cp CERTIFICATE_FILE ~/SAGE3-1.6/configurations/node/keys
+# Copy your certificate and private key into the Traefik certs folder, renaming them
+cp CERTIFICATE_FILE ~/SAGE3-1.6/configurations/traefik/certs/certificate.crt
+cp PRIVATE_KEY_FILE ~/SAGE3-1.6/configurations/traefik/certs/private.key
 ```
 
 5. Generate JWT Keys and Token
@@ -259,15 +261,15 @@ tar xvfz SAGE3-amd64.tgz
 cd SAGE3-1.6
 ```
 
-5. Copy your SSL Certificates to the configurations folder. There should be two files, your PRIVATE key and the CERTIFICATE file
+5. Copy your SSL certificate and its private key into the Traefik folder, `configurations/traefik/certs`. Traefik handles HTTPS for the whole server and reads exactly these two file names: `certificate.crt` and `private.key`. See [SSL certificate](#ssl-certificate) for the file format and for renewals.
 
 ```
 # Open Powershell and switch to WSL
 wsl
 
-# Copy SSL Certs to the SAGE3 Keys folder. Remember these names for later when setting up the configuration file (step 8).
-cp PRIVATE_KEY_FILE ~/SAGE3-1.6/configurations/node/keys
-cp CERTIFICATE_FILE ~/SAGE3-1.6/configurations/node/keys
+# Copy your certificate and private key into the Traefik certs folder, renaming them
+cp CERTIFICATE_FILE ~/SAGE3-1.6/configurations/traefik/certs/certificate.crt
+cp PRIVATE_KEY_FILE ~/SAGE3-1.6/configurations/traefik/certs/private.key
 ```
 
 6. Generate JWT Keys and Token
@@ -386,14 +388,14 @@ tar xvfz SAGE3-arm64.tgz
 cd SAGE3-1.6
 ```
 
-4. Copy your SSL Certificates to the configurations folder. There should be two files, your PRIVATE key and the CERTIFICATE file
+4. Copy your SSL certificate and its private key into the Traefik folder, `configurations/traefik/certs`. Traefik handles HTTPS for the whole server and reads exactly these two file names: `certificate.crt` and `private.key`. See [SSL certificate](#ssl-certificate) for the file format and for renewals.
 
 ```
 # Open a Terminal
 
-# Copy SSL Certs to the SAGE3 Keys folder. Remember these names for later when setting up the configuration file (step 7).
-cp PRIVATE_KEY_FILE ~/SAGE3-1.6/configurations/node/keys
-cp CERTIFICATE_FILE ~/SAGE3-1.6/configurations/node/keys
+# Copy your certificate and private key into the Traefik certs folder, renaming them
+cp CERTIFICATE_FILE ~/SAGE3-1.6/configurations/traefik/certs/certificate.crt
+cp PRIVATE_KEY_FILE ~/SAGE3-1.6/configurations/traefik/certs/private.key
 ```
 
 
@@ -495,16 +497,12 @@ This file allows you to configure your server to your specific needs.
    // Name of the server to show in the UI
   "serverName": "My Local Server",
 
-  // HTTP Settings
-  "port": 443,
-  "tlsVersion": "TLSv1.2",
-
-  // SSL Certificate names
-  "ssl": {
-    // Located in the `/configurations/node/keys' folder
-    "certificateFile": "localhost-server.crt",
-    "certificateKeyFile": "localhost-server.key"
-  },
+  // Internal ports of the SAGE3 services, behind Traefik. Leave as is.
+  // HTTPS (port 443) and the SSL certificate are handled by Traefik,
+  // see "SSL certificate" below: there is no certificate setting in this file.
+  "port": 3000,
+  "port_yjs": 3001,
+  "port_files": 3002,
 
   // These can be left alone, they are used to find the assets
   "root": ".",
@@ -764,6 +762,29 @@ This file allows you to configure your server to your specific needs.
   // Namespace for signing UUID v5 keys: generate yours or https://www.uuidtools.com/generate/v4
   "namespace": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
 }
+```
+
+### SSL certificate
+
+Traefik, the reverse proxy in front of all SAGE3 services, handles HTTPS on port 443. It reads the certificate from two files in `configurations/traefik/certs`, with these exact names (set in `configurations/traefik/dynamic.yml`):
+
+- `certificate.crt`: your server certificate in PEM format. If your certificate authority gave you intermediate certificates (a "CA bundle" or "chain"), put them in the same file after your server certificate, so that browsers and the SAGE3 clients can verify it:
+
+  ```bash
+  cat YOUR_SERVER_CERTIFICATE YOUR_CA_BUNDLE > configurations/traefik/certs/certificate.crt
+  ```
+
+- `private.key`: the private key of that certificate in PEM format, without a passphrase.
+
+There is no certificate setting in `sage3-prod.hjson`, and the `configurations/node/keys` folder holds only the JWT keys and token. To check the files, see the [FAQ](FAQ.md).
+
+To renew the certificate, replace both files and restart Traefik:
+
+```bash
+cd ~/SAGE3-1.6
+cp NEW_CERTIFICATE_FILE configurations/traefik/certs/certificate.crt
+cp NEW_PRIVATE_KEY_FILE configurations/traefik/certs/private.key
+docker compose restart traefik
 ```
 
 ### Authentication

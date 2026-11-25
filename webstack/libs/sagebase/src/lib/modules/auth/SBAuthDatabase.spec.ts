@@ -29,10 +29,12 @@ function createFakeRedisClient() {
       dropIndex: async () => undefined,
       create: async () => undefined,
       search: async (_index: string, query: string) => {
-        const emailMatch = query.match(/@email:\{([^}]+)\}/);
-        const email = emailMatch ? emailMatch[1].replace(/\\(.)/g, '$1') : undefined;
+        // '@email:{...}' or '@id:{...}', with the value escaped as the module does
+        const match = query.match(/@(email|id):\{([^}]+)\}/);
+        const field = match ? match[1] : 'email';
+        const wanted = match ? match[2].replace(/\\(.)/g, '$1') : undefined;
         const documents = [...store.values()]
-          .filter((v): v is Record<string, unknown> => !!v && typeof v === 'object' && (v as any).email === email)
+          .filter((v): v is Record<string, unknown> => !!v && typeof v === 'object' && (v as any)[field] === wanted)
           .map((value) => ({ value }));
         return { documents };
       },
@@ -97,6 +99,17 @@ describe('SBAuthDatabase — CRUD', () => {
     expect(second?.displayName).toBe('Dave');
   });
 
+  it('findOrAddAuth fills in or updates the email from the identity provider at a later login', async () => {
+    const first = await db.findOrAddAuth('cilogon', 'cilogon-id-9', { displayName: 'Ivy' });
+    expect(first?.email).toBeUndefined();
+    const second = await db.findOrAddAuth('cilogon', 'cilogon-id-9', { email: 'ivy@example.com' });
+    expect(second?.id).toBe(first?.id);
+    expect(second?.email).toBe('ivy@example.com');
+    // A login without an email keeps the stored one
+    const third = await db.findOrAddAuth('cilogon', 'cilogon-id-9', {});
+    expect(third?.email).toBe('ivy@example.com');
+  });
+
   it('deleteAuth removes an existing record and returns true', async () => {
     await db.addAuth('google', 'google-id-5', { displayName: 'Eve' });
     const deleted = await db.deleteAuth('google', 'google-id-5');
@@ -117,6 +130,21 @@ describe('SBAuthDatabase — CRUD', () => {
 
   it('deleteAuthByEmail returns undefined when no record matches', async () => {
     expect(await db.deleteAuthByEmail('nobody@example.com')).toBeUndefined();
+  });
+
+  it('findAuthById returns the record with that id', async () => {
+    const added = await db.addAuth('cilogon', 'cilogon-id-1', { email: 'gina@example.com' });
+    const found = await db.findAuthById(added!.id);
+    expect(found?.providerId).toBe('cilogon-id-1');
+    expect(await db.findAuthById('not-an-id')).toBeUndefined();
+  });
+
+  it('findAuthsByEmail returns one record per provider with that email', async () => {
+    await db.addAuth('google', 'google-id-7', { email: 'hank@example.com' });
+    await db.addAuth('cilogon', 'cilogon-id-2', { email: 'hank@example.com' });
+    const found = await db.findAuthsByEmail('hank@example.com');
+    expect(found.map((a) => a.provider).sort()).toEqual(['cilogon', 'google']);
+    expect(await db.findAuthsByEmail('nobody@example.com')).toEqual([]);
   });
 });
 

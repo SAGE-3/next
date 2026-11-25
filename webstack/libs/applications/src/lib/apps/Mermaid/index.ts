@@ -7,6 +7,9 @@
  */
 
 import { z } from 'zod';
+import type { App } from '../../schema';
+
+export const name = 'Mermaid';
 
 /**
  * SAGE3 application: Mermaid
@@ -15,6 +18,8 @@ import { z } from 'zod';
 
 export const schema = z.object({
   assetid: z.string(),
+  // Diagram text, used instead of the asset (e.g. a CodeEditor preview)
+  content: z.string().optional(),
 });
 export type state = z.infer<typeof schema>;
 
@@ -22,4 +27,4 @@ export const init: Partial<state> = {
   assetid: '',
 };
 
-export const name = 'Mermaid';
+export type MermaidApp = App<typeof name>;

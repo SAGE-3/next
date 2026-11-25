@@ -7,6 +7,8 @@
  */
 
 import { z } from 'zod';
+
+export const name = 'Hawaii Mesonet';
 const Baselayer = z.enum(['OpenStreetMap', 'World Imagery']);
 
 export type Baselayer = z.infer<typeof Baselayer>;
@@ -63,5 +65,3 @@ export const init: Partial<state> = {
   url: '',
   stationFriendlyNames: [],
 };
-
-export const name = 'Hawaii Mesonet';

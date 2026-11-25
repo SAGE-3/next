@@ -20,10 +20,21 @@ export function sageRouter<T extends SBJSON>(collection: SAGE3Collection<T>): ex
   //  Check permissions on collections
   router.use(checkPermissionsREST(collection.name as AuthSubject));
 
+  // Collection specific check of the documents a route is about to write
+  const refused = (res: express.Response, error: string | undefined): boolean => {
+    if (error) res.status(403).send({ success: false, message: error, data: undefined });
+    return !!error;
+  };
+  const asBodies = (batch: unknown) => (Array.isArray(batch) ? batch.map((body) => ({ body })) : batch) as { body: unknown }[];
+  const asUpdates = (batch: unknown) =>
+    (Array.isArray(batch) ? batch.map((u) => ({ id: u?.id, body: u?.updates })) : batch) as { id: string; body: unknown }[];
+  const asIds = (batch: unknown) => (Array.isArray(batch) ? batch.map((id) => ({ id })) : batch) as { id: string }[];
+
   // POST: Add new document or multiple docs with a batch request
   router.post('/', async ({ body, user }, res) => {
     const auth = user as SBAuthSchema;
     const userId = auth?.id || '-';
+    if (refused(res, collection.checkWrites('create', body && body.batch ? asBodies(body.batch) : [{ body }], auth))) return;
     // Check if body has property 'batch', if so this is a batch request
     if (body && body.batch) {
       const docs = await collection.addBatch(body.batch, userId);
@@ -69,6 +80,7 @@ export function sageRouter<T extends SBJSON>(collection: SAGE3Collection<T>): ex
     const auth = user as SBAuthSchema;
     const userId = auth?.id || '-';
     if (body && body.batch) {
+      if (refused(res, collection.checkWrites('update', asUpdates(body.batch), auth))) return;
       const success = await collection.updateBatch(body.batch, userId);
       if (success) res.status(200).send({ success: true, message: 'Successfully updated documents.', data: success });
       else res.status(500).send({ success: false, message: 'Failed to update documents.', data: undefined });
@@ -81,14 +93,16 @@ export function sageRouter<T extends SBJSON>(collection: SAGE3Collection<T>): ex
   router.put('/:id', async ({ params, body, user }, res) => {
     const auth = user as SBAuthSchema;
     const userId = auth?.id || '-';
+    if (refused(res, collection.checkWrites('update', [{ id: params.id, body }], auth))) return;
     const update = await collection.update(params.id, userId, body);
     if (update) res.status(200).send({ success: true, message: 'Successfully updated the document.', data: [update] });
     else res.status(500).send({ success: false, message: 'Failed to update document.', data: undefined });
   });
 
   // DELETE: Delete multiple docs with batch
-  router.delete('', async ({ body }, res) => {
+  router.delete('', async ({ body, user }, res) => {
     if (body && body.batch) {
+      if (refused(res, collection.checkWrites('delete', asIds(body.batch), user as SBAuthSchema))) return;
       const success = await collection.deleteBatch(body.batch);
       if (success) res.status(200).send({ success: true, message: 'Successfully deleted the documents.', data: success });
       else res.status(500).send({ success: false, message: 'Failed to delete the documents.', data: undefined });
@@ -98,7 +112,8 @@ export function sageRouter<T extends SBJSON>(collection: SAGE3Collection<T>): ex
   });
 
   // DELETE: Delete one doc
-  router.delete('/:id', async ({ params }, res) => {
+  router.delete('/:id', async ({ params, user }, res) => {
+    if (refused(res, collection.checkWrites('delete', [{ id: params.id }], user as SBAuthSchema))) return;
     const del = await collection.delete(params.id);
     if (del) res.status(200).send({ success: true, message: 'Successfully deleted the document.', data: [del] });
     else res.status(500).send({ success: false, message: 'Failed to delete document.', data: undefined });

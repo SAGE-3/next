@@ -21,14 +21,14 @@ The Webstack uses the following technologies for its core software stack. There 
   - Contains the core **apps** 'homebase' and 'webapp'.
     - `/apps/homebase` Web server that manages user services, files, walls...etc.
     - `/apps/webapp` React frontend web application
-- `/certificates`
-  - Directory to stage your HTTPS/SSL keys. Contains certificates for localhost development.
 - `/clients`
   - Contains the SAGE3 electron client and future native applications to run SAGE3 on different platforms (ex. VR, AR, Mobile).
 - `/database`
   - Directory for the backend to store various database files.
 - `/docs`
   - Directory for Typedoc to store all its files.
+- `/keys`
+  - JWT keys and token for development. Development runs over HTTP and needs no SSL certificate; in production, Traefik handles HTTPS with the certificate in `deployment/configurations/traefik/certs`.
 - `/libs`
   - SAGE3 Libs for the 'apps' to use.
     - `/libs/applications` Contains all the SAGE3 Applications.

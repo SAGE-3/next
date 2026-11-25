@@ -26,8 +26,9 @@ Pillow
 playwright
 html2text
 
-# PDF
-pymupdf4llm
+# PDF: pymupdf 2.x moved the pymupdf4llm code into pymupdf; stay on 1.x until tested
+pymupdf<2
+pymupdf4llm<2
 # olmOCR: PDF -> Markdown via a remote vLLM server (models.pdf2md). Heavy deps;
 # only needed when the pdf2md config block is set.
 olmocr

@@ -93,6 +93,19 @@ describeIfRedis('SBAuthDatabase — integration (real Redis Stack)', () => {
     expect(raw).toBeNull();
   });
 
+  it('findAuthById finds a uuid (with dashes) through the real RediSearch TAG index', async () => {
+    const written = await db.addAuth('cilogon', 'real-redis-id-1', { email: 'ivan@example.com' });
+    const found = await db.findAuthById(written!.id);
+    expect(found?.providerId).toBe('real-redis-id-1');
+  });
+
+  it('findAuthsByEmail finds every provider record for one email through the real index', async () => {
+    await db.addAuth('google', 'real-redis-id-2', { email: 'judy.o+s3@example.com' });
+    await db.addAuth('cilogon', 'real-redis-id-3', { email: 'judy.o+s3@example.com' });
+    const found = await db.findAuthsByEmail('judy.o+s3@example.com');
+    expect(found).toHaveLength(2);
+  });
+
   it('deleteAuthByEmail exercises the real RediSearch TAG index, including special characters', async () => {
     // '@' and '.' are exactly the characters deleteAuthByEmail escapes before
     // building the RediSearch query — this is the real reason to test against

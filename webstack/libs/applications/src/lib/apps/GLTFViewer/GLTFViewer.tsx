@@ -23,9 +23,8 @@ import { useAppStore, useAssetStore, useUIStore, apiUrls, downloadFile } from '@
 import { Asset } from '@sage3/shared/types';
 
 // App
-import { App } from '../../schema';
 import { AppWindow } from '../../components';
-import { state as AppState } from './index';
+import { GLTFViewerApp } from './index';
 
 type CameraProps = {
   id: string;
@@ -100,9 +99,9 @@ function Model3D({ url }: { url: string }) {
   // return <primitive ref={mesh} object={gltf.scene} />;
 }
 
-function AppComponent(props: App): JSX.Element {
+function AppComponent(props: GLTFViewerApp): JSX.Element {
   // App state
-  const s = props.data.state as AppState;
+  const s = props.data.state;
   // Update the app
   const update = useAppStore((state) => state.update);
   // Asset store
@@ -163,8 +162,8 @@ function AppComponent(props: App): JSX.Element {
   );
 }
 
-function ToolbarComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function ToolbarComponent(props: GLTFViewerApp): JSX.Element {
+  const s = props.data.state;
   const assets = useAssetStore((state) => state.assets);
   const [file, setFile] = useState<Asset>();
 

@@ -45,6 +45,10 @@ type BoardListPanelProps = {
 
 const NO_USERS: PresencePartial[] = [];
 const NO_APPS: AppInfo[] = [];
+// Room above and below the boards so a selected card/row's scale-up isn't clipped
+// (Virtuoso sets the list's vertical padding inline, overriding any CSS padding)
+const ListSpacer = () => <Box height="6px" />;
+const SPACER_COMPONENTS = { Header: ListSpacer, Footer: ListSpacer };
 
 export function BoardListPanel(props: BoardListPanelProps) {
   const { setBoardListView, settings } = useUserSettings();
@@ -158,7 +162,7 @@ export function BoardListPanel(props: BoardListPanelProps) {
         maxWidth="2200px"
         css={{
           '& [data-virtuoso-scroller]': scrollbarCss,
-          '& .sage-board-grid': { display: 'flex', flexWrap: 'wrap', gap: '16px', padding: '4px 8px' },
+          '& .sage-board-grid': { display: 'flex', flexWrap: 'wrap', gap: '16px', padding: '0 8px' },
           '& .sage-board-grid-item': { width: '250px', height: '190px', flex: 'none' },
         }}
       >
@@ -169,6 +173,7 @@ export function BoardListPanel(props: BoardListPanelProps) {
             style={{ height: 'calc(100svh - 270px)', width: '100%' }}
             listClassName="sage-board-grid"
             itemClassName="sage-board-grid-item"
+            components={SPACER_COMPONENTS}
             increaseViewportBy={206}
             initialTopMostItemIndex={Math.max(0, selectedIndex)}
             computeItemKey={(_index, board) => board._id}
@@ -189,6 +194,7 @@ export function BoardListPanel(props: BoardListPanelProps) {
             data={filteredBoards}
             style={{ height: 'calc(100svh - 270px)', width: '100%' }}
             fixedItemHeight={68}
+            components={SPACER_COMPONENTS}
             increaseViewportBy={136}
             initialTopMostItemIndex={Math.max(0, selectedIndex)}
             computeItemKey={(_index, board) => board._id}

@@ -6,7 +6,7 @@
  * the file LICENSE, distributed as part of this software.
  */
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useParams } from 'react-router';
 
 import {
@@ -116,7 +116,8 @@ export function MainButton(props: MainButtonProps) {
     editSettingsOnOpen();
   };
 
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  // The server says whether this login is an admin
+  const isAdmin = !!props.config?.isAdmin;
 
   // Boards
   const boards = useBoardStore((state) => state.boards);
@@ -133,14 +134,6 @@ export function MainButton(props: MainButtonProps) {
   // Enter Board Modal
   const { isOpen: enterBoardIsOpen, onOpen: enterBoardOnOpen, onClose: enterBoardOnClose } = useDisclosure();
   const [enterBoard, setEnterBoard] = useState<Board | undefined>(undefined);
-
-  useEffect(() => {
-    if (user && props.config) {
-      if (props.config.admins) {
-        setIsAdmin(props.config.admins.includes(user.data.email));
-      }
-    }
-  }, [user, props.config]);
 
   const toast = useToast();
   // Copy a sharable link to the user's os clipboard

@@ -93,7 +93,8 @@ export type PublicInformation = Pick<ServerConfiguration, 'serverName' | 'versio
 // Public to authenticated users from server to the configuration request, for security reasons
 export type OpenConfiguration = Pick<ServerConfiguration, 'serverName' | 'version' | 'production' | 'namespace' | 'features'> & {
   token: string;
-  admins: ServerConfiguration['auth']['admins'];
+  // Is the user asking one of the server admins
+  isAdmin: boolean;
   logins: ServerConfiguration['auth']['strategies'];
   features: ServerConfiguration['features'];
   models: ServerConfiguration['services']['models'];

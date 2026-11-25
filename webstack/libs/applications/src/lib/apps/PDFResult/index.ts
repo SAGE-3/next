@@ -7,6 +7,9 @@
  */
 
 import { z } from 'zod';
+import type { App } from '../../schema';
+
+export const name = 'PDFResult';
 
 /**
  * SAGE3 application: PDFResult
@@ -22,4 +25,4 @@ export const init: Partial<state> = {
   result: '',
 };
 
-export const name = 'PDFResult';
+export type PDFResultApp = App<typeof name>;

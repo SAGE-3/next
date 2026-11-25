@@ -10,9 +10,8 @@ import { useEffect } from 'react';
 
 // SAGE imports
 import { useAppStore } from '@sage3/frontend';
-import { App } from '../../schema';
 import { AppWindow } from '../../components';
-import { state as AppState } from './index';
+import { VegaLiteViewerApp } from './index';
 
 // Vega-Lite Imports
 import vegaEmbed from 'vega-embed';
@@ -33,9 +32,9 @@ const useStore = create<VegaStore>()((set) => ({
 
 /* App component for VegaLiteViewer */
 
-function AppComponent(props: App): JSX.Element {
+function AppComponent(props: VegaLiteViewerApp): JSX.Element {
   //state
-  const s = props.data.state as AppState;
+  const s = props.data.state;
   const updateState = useAppStore((state) => state.updateState);
   const setView = useStore((state) => state.setView);
 
@@ -77,7 +76,7 @@ function AppComponent(props: App): JSX.Element {
 
 /* App toolbar component for the app VegaLiteViewer */
 
-function ToolbarComponent(props: App): JSX.Element {
+function ToolbarComponent(props: VegaLiteViewerApp): JSX.Element {
   const view = useStore((state) => state.view[props._id]);
 
   const downloadAction = () => {

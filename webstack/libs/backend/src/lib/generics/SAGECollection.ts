@@ -15,6 +15,12 @@ import { APIClientWSMessage } from '@sage3/shared/types';
 import { SubscriptionCache } from '../utils';
 import { sageWSRouter } from './SAGEWSRouter';
 
+/**
+ * A write about to be done by the generic REST or WebSocket routes.
+ * `id` is the document the route will update or delete; `body` is the new document or the update.
+ */
+export type CollectionWrite = { action: 'create' | 'update' | 'delete'; id?: string; body?: unknown };
+
 ///////////////////////////////////////////////////////////////////////////////
 // SAGE3 Collection collection
 ///////////////////////////////////////////////////////////////////////////////
@@ -43,6 +49,30 @@ export class SAGE3Collection<T extends SBJSON> {
 
   public get name(): string {
     return this._name;
+  }
+
+  /**
+   * Check a write coming from the generic REST and WebSocket routes, after the role check.
+   * Called once per document, with the id the route is about to use. A collection overrides
+   * it to add its own rules (see the users collection); it can also remove fields from the body.
+   * @returns an error message to refuse the write, or undefined to allow it
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public checkWrite(_write: CollectionWrite, _auth: SBAuthSchema): string | undefined {
+    return undefined;
+  }
+
+  /**
+   * Check all the writes of one request
+   * @returns the first error message, or undefined when all are allowed
+   */
+  public checkWrites(action: CollectionWrite['action'], items: { id?: string; body?: unknown }[], auth: SBAuthSchema): string | undefined {
+    if (!Array.isArray(items)) return 'Invalid batch';
+    for (const item of items) {
+      const error = this.checkWrite({ action, id: item?.id, body: item?.body }, auth);
+      if (error) return error;
+    }
+    return undefined;
   }
 
   /**

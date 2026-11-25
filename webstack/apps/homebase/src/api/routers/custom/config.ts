@@ -11,6 +11,7 @@ import { SBAuthSchema } from '@sage3/sagebase';
 import express from 'express';
 import { createClient } from 'redis';
 import { config } from '../../../config';
+import { isAdmin } from '../../admins';
 
 import { PresenceCollection } from '../../collections';
 
@@ -57,7 +58,8 @@ export function ConfigRouter(): express.Router {
       namespace: config.namespace,
       // Jupyter token
       token: token,
-      admins: config.auth.admins || [],
+      // Is the user asking one of the admins (the list itself stays on the server)
+      isAdmin: isAdmin(user),
       // Service caller (JWT) gets the full config; browser users get capability
       // info only — secrets (apiKey/url) are stripped before sending to them.
       models: isService ? config.services.models : sanitizeLLMConfiguration(config.services.models),

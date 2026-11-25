@@ -1,0 +1,9 @@
+# Xcode per-user and build files (Local.xcconfig: your signing team)
+Local.xcconfig
+xcuserdata/
+DerivedData/
+build/
+*.xcuserstate
+
+# macOS Finder
+.DS_Store

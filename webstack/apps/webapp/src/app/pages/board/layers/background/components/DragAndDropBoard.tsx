@@ -216,7 +216,7 @@ export const useDragAndDropBoard = (props: useDragAndDropBoardProps) => {
             const appstatestr = event.dataTransfer.getData('app_state');
             if (appstatestr) {
               const appstate = JSON.parse(appstatestr);
-              const newState = {
+              const newState: AppSchema = {
                 title: user.data.name,
                 roomId: props.roomId,
                 boardId: props.boardId,

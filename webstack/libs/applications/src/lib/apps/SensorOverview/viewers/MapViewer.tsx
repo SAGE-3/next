@@ -13,7 +13,8 @@ import variableUnits from '../data/variableUnits';
 // Data store
 import { create } from 'zustand';
 // Map library
-import maplibregl, { Marker } from 'maplibre-gl';
+import { maplibregl } from '../../../components/maplibre';
+import { Marker } from 'maplibre-gl';
 // Geocoding
 // Turfjs geojson utilities functions
 import bbox from '@turf/bbox';
@@ -29,7 +30,6 @@ import { state as AppState } from '../index';
 import { variable_dict } from '../data/variableConversion';
 
 // Styling
-import './maplibre-gl.css';
 import { StationDataType } from '../SensorOverview';
 
 // Get a URL for an asset

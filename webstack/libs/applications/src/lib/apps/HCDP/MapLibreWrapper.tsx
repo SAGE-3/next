@@ -12,7 +12,7 @@ import { Box, useToast } from '@chakra-ui/react';
 // Data store
 import create from 'zustand';
 // Map library
-import maplibregl from 'maplibre-gl';
+import { maplibregl } from '../../components/maplibre';
 // Geocoding
 // Turfjs geojson utilities functions
 import bbox from '@turf/bbox';
@@ -29,7 +29,6 @@ import { App } from '../../schema';
 import { state as AppState } from './index';
 
 // Styling
-import './maplibre-gl.css';
 
 // Get a URL for an asset
 export function getStaticAssetUrl(filename: string): string {

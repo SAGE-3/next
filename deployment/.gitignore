@@ -9,6 +9,10 @@ configurations/node/keys/*.pem
 configurations/jupyter/conf/keys/*.crt
 configurations/jupyter/conf/keys/*.key
 
+configurations/traefik/certs/*.crt
+configurations/traefik/certs/*.key
+configurations/traefik/certs/*.pem
+
 pysage3/ai_services
 pysage3/media_server
 pysage3/message_broker

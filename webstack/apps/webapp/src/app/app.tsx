@@ -237,8 +237,8 @@ export const ProtectedAdminRoute = (props: RouteProps): JSX.Element => {
     if (!config.production) {
       return <> {props.children}</>;
     } else {
-      // In production, check user role and admin list
-      return isSignedInUser && config.admins.includes(user?.data.email) ? <> {props.children}</> : <Navigate to="/#/home" replace />;
+      // In production, check user role and ask the server if this login is an admin
+      return isSignedInUser && config.isAdmin ? <> {props.children}</> : <Navigate to="/#/home" replace />;
     }
   }
 };

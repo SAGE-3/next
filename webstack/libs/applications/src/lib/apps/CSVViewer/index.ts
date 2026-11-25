@@ -12,6 +12,9 @@
  */
 
 import { z } from 'zod';
+import type { App } from '../../schema';
+
+export const name = 'CSVViewer';
 
 export const schema = z.object({
   assetid: z.string(),
@@ -22,4 +25,4 @@ export const init: Partial<state> = {
   assetid: '',
 };
 
-export const name = 'CSVViewer';
+export type CSVViewerApp = App<typeof name>;

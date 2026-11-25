@@ -19,63 +19,55 @@ export type SBAuthCILogonConfig = {
   callbackURL: string;
 };
 
-// URL to query for information
+// CILogon's OpenID Connect discovery document
 const CILogonURL = 'https://cilogon.org/.well-known/openid-configuration';
 
 /**
  * Setup function of the CILogon Passport Strategy.
- * @param router The express router
+ * The login route requests the scopes 'openid email' (see SBAuth): CILogon rejects any
+ * scope the client was not registered with, and the 'profile' scope is not needed.
+ * Without it the display name is the start of the email address.
+ * @param config The CILogon section of the server configuration
+ * @returns true when the strategy is ready
  */
-export async function passportCILogonSetup(config: SBAuthCILogonConfig) {
+export async function passportCILogonSetup(config: SBAuthCILogonConfig): Promise<boolean> {
   // Increase timeout to 10 seconds
   custom.setHttpOptionsDefaults({ timeout: 10000 });
-  // Get information from CILogon
-  const ciLogon = await Issuer.discover(CILogonURL).catch(function (err) {
+  // Get the endpoints from CILogon
+  const ciLogon = await Issuer.discover(CILogonURL).catch((err) => {
     console.log('CILogon> Failed to get CILogon information', err);
   });
-  if (ciLogon) {
-    console.log('CILogon> Received cilogon information', ciLogon.issuer);
-    // Pass it along with site specific info
-    const cilongconfig = {
-      // cilogon info
-      issuer: ciLogon.issuer,
-      authorizationURL: ciLogon.authorization_endpoint,
-      tokenURL: ciLogon.token_endpoint,
-      userInfoURL: ciLogon.userinfo_endpoint,
-
-      // site specific info
-      clientID: config.clientID,
-      callbackURL: config.callbackURL,
-    } as any;
-    // add the secret if specified
-    if (config.clientSecret) cilongconfig.clientSecret = config.clientSecret;
-
-    passport.use(
-      'openidconnect',
-      new Strategy(
-        cilongconfig,
-        async (_issuer: string, profile: passport.Profile, _context: unknown, _refreshToken: unknown, done: VerifyCallback) => {
-          const email = profile.emails ? profile.emails[0].value : '';
-          const displayName = profile.displayName ? profile.displayName : email.split('@')[0];
-          const picture = profile.photos ? profile.photos[0].value : '';
-          const extras = {
-            displayName: displayName ?? '',
-            email: email ?? '',
-            picture: picture ?? '',
-          };
-          const authRecord = await SBAuthDB.findOrAddAuth('cilogon', profile.id, extras);
-          if (authRecord != undefined) {
-            done(null, authRecord);
-          } else {
-            done(null, false);
-          }
-        }
-      )
-    );
-    console.log('CILogon> Setup done');
-    return true;
-  } else {
+  if (!ciLogon) {
     console.log('CILogon> Failed setup');
     return false;
   }
+  console.log('CILogon> Received cilogon information', ciLogon.issuer);
+
+  const options = {
+    // CILogon endpoints
+    issuer: ciLogon.issuer,
+    authorizationURL: ciLogon.authorization_endpoint,
+    tokenURL: ciLogon.token_endpoint,
+    userInfoURL: ciLogon.userinfo_endpoint,
+    // Site specific: the secret is left out for a public client
+    clientID: config.clientID,
+    callbackURL: config.callbackURL,
+    ...(config.clientSecret ? { clientSecret: config.clientSecret } : {}),
+  } as any;
+
+  passport.use(
+    'openidconnect',
+    new Strategy(options, async (_issuer: string, profile: passport.Profile, _context: object, _idToken: unknown, done: VerifyCallback) => {
+      const email = profile.emails?.[0]?.value ?? '';
+      const extras = {
+        displayName: profile.displayName || email.split('@')[0],
+        email,
+        picture: profile.photos?.[0]?.value ?? '',
+      };
+      const authRecord = await SBAuthDB.findOrAddAuth('cilogon', profile.id, extras);
+      done(null, authRecord ?? false);
+    }),
+  );
+  console.log('CILogon> Setup done');
+  return true;
 }

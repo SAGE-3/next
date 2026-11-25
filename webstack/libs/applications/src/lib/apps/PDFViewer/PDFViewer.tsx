@@ -43,20 +43,19 @@ import {
 import { Asset, ExtraPDFType, ImageInfoType } from '@sage3/shared/types';
 
 // App components and types
-import { App, AppGroup } from '../../schema';
-import { state as AppState } from './index';
+import { state as AppState, PDFViewerApp } from './index';
 import { AppWindow } from '../../components';
 
 /**
  * Main PDFViewer application component
  * Handles PDF display, navigation, and collaborative features
  */
-function AppComponent(props: App): JSX.Element {
+function AppComponent(props: PDFViewerApp): JSX.Element {
   // State management hooks
   const updateState = useAppStore((state) => state.updateState);
   const update = useAppStore((state) => state.update);
   const assets = useAssetStore((state) => state.assets);
-  const s = props.data.state as AppState;
+  const s = props.data.state;
   
   // Local state for PDF rendering
   const [pages, setPages] = useState<ExtraPDFType>([]);
@@ -520,8 +519,8 @@ function getPDFPageImage(page: ImageInfoType[] | undefined, targetWidth: number,
  * Toolbar component for the PDFViewer app
  * Provides navigation controls and actions for individual PDF viewers
  */
-function ToolbarComponent(props: App): JSX.Element {
-  const s = props.data.state as AppState;
+function ToolbarComponent(props: PDFViewerApp): JSX.Element {
+  const s = props.data.state;
   const updateState = useAppStore((state) => state.updateState);
   const assets = useAssetStore((state) => state.assets);
   const update = useAppStore((state) => state.update);
@@ -687,7 +686,7 @@ function ToolbarComponent(props: App): JSX.Element {
  * Grouped App toolbar component
  * Provides navigation controls for multiple selected PDF viewers simultaneously
  */
-const GroupedToolbarComponent = (props: { apps: AppGroup }) => {
+const GroupedToolbarComponent = (props: { apps: PDFViewerApp[] }) => {
   const updateStateBatch = useAppStore((state) => state.updateStateBatch);
 
   // Batch operation: Add pages to all selected viewers
